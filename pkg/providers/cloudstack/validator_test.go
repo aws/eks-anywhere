@@ -216,7 +216,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	if err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+		t.Fatalf("validator.ValidateClusterMachineConfigs() err = %v, want err = nil", err)
 	}
 }
 
@@ -282,7 +282,7 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	if err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+		t.Fatalf("validator.ValidateClusterMachineConfigs() err = %v, want err = nil", err)
 	}
 }
 

@@ -36,21 +36,27 @@ import (
 )
 
 const (
-	CredentialsObjectName    = "vsphere-credentials"
-	EksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	eksaLicense              = "EKSA_LICENSE"
-	vSphereUsernameKey       = "VSPHERE_USERNAME"
-	vSpherePasswordKey       = "VSPHERE_PASSWORD"
-	vSphereServerKey         = "VSPHERE_SERVER"
-	govcInsecure             = "GOVC_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	defaultTemplateLibrary   = "eks-a-templates"
-	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
-	maxRetries               = 30
-	backOffPeriod            = 5 * time.Second
+	CredentialsObjectName  = "vsphere-credentials"
+	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
+	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
+	// Username and password for cloud provider
+	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
+	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
+	// Username and password for the CSI driver
+	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
+	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
+	eksaLicense               = "EKSA_LICENSE"
+	vSphereUsernameKey        = "VSPHERE_USERNAME"
+	vSpherePasswordKey        = "VSPHERE_PASSWORD"
+	vSphereServerKey          = "VSPHERE_SERVER"
+	govcInsecure              = "GOVC_INSECURE"
+	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
+	defaultTemplateLibrary    = "eks-a-templates"
+	defaultTemplatesFolder    = "vm/Templates"
+	bottlerocketDefaultUser   = "ec2-user"
+	ubuntuDefaultUser         = "capv"
+	maxRetries                = 30
+	backOffPeriod             = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -688,6 +694,25 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
 
+	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
+	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
+
+	// Cloud provider credentials
+	eksaCPUsername := os.Getenv(EksavSphereCPUsernameKey)
+	eksaCPassword := os.Getenv(EksavSphereCPPasswordKey)
+
+	if eksaCPUsername == "" {
+		eksaCPUsername = eksaVsphereUsername
+		eksaCPassword = eksaVspherePassword
+	}
+	// CSI driver credentials
+	eksaCSIUsername := os.Getenv(EksavSphereCSIUsernameKey)
+	eksaCSIPassword := os.Getenv(EksavSphereCSIPasswordKey)
+	if eksaCSIUsername == "" {
+		eksaCSIUsername = eksaVsphereUsername
+		eksaCSIPassword = eksaVspherePassword
+	}
+
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -734,8 +759,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  os.Getenv(EksavSphereUsernameKey),
-		"eksaVspherePassword":                  os.Getenv(EksavSpherePasswordKey),
+		"eksaVsphereUsername":                  eksaVsphereUsername,
+		"eksaVspherePassword":                  eksaVspherePassword,
+		"eksaCloudProviderUsername":            eksaCPUsername,
+		"eksaCloudProviderPassword":            eksaCPassword,
+		"eksaCSIUsername":                      eksaCSIUsername,
+		"eksaCSIPassword":                      eksaCSIPassword,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -1339,10 +1368,6 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 		return false, err
 	}
 	return machineConfigsSpecChanged, nil
-}
-
-func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return nil
 }
 
 func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {

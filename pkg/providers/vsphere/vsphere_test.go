@@ -3128,3 +3128,78 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 		t.Fatalf("expected spec change but none was detected")
 	}
 }
+
+func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
+	tests := []struct {
+		testName   string
+		wantCPFile string
+		envMap     map[string]string
+	}{
+		{
+			testName:   "specify cloud provider credentials",
+			wantCPFile: "testdata/expected_results_main_cp_cloud_provider_credentials.yaml",
+			envMap:     map[string]string{EksavSphereCPUsernameKey: "EksavSphereCPUsername", EksavSphereCPPasswordKey: "EksavSphereCPPassword"},
+		},
+		{
+			testName:   "specify CSI credentials",
+			wantCPFile: "testdata/expected_results_main_cp_csi_driver_credentials.yaml",
+			envMap:     map[string]string{EksavSphereCSIUsernameKey: "EksavSphereCSIUsername", EksavSphereCSIPasswordKey: "EksavSphereCSIPassword"},
+		},
+		{
+			testName:   "specify cloud provider and CSI credentials",
+			wantCPFile: "testdata/expected_results_main_cp_cloud_provder_and_csi_driver_credentials.yaml",
+			envMap: map[string]string{
+				EksavSphereCSIUsernameKey: "EksavSphereCSIUsername",
+				EksavSphereCSIPasswordKey: "EksavSphereCSIPassword",
+				EksavSphereCPUsernameKey:  "EksavSphereCPUsername",
+				EksavSphereCPPasswordKey:  "EksavSphereCPPassword",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			previousValues := map[string]string{}
+			for k, v := range tt.envMap {
+				previousValues[k] = os.Getenv(k)
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf(err.Error())
+				}
+			}
+
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+			datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+			machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			cp, _, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			for k, v := range previousValues {
+				if err := os.Setenv(k, v); err != nil {
+					t.Fatalf(err.Error())
+				}
+			}
+		})
+	}
+}
