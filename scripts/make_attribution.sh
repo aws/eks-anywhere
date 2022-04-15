@@ -43,8 +43,7 @@ source "$REPO_ROOT/scripts/attribution_helpers.sh"
 
 function build::attribution::generate(){
     cd $REPO_ROOT
-    build::common::use_go_version "$GOLANG_VERSION"
-    go mod vendor
+    $(build::common::get_go_path "$GOLANG_VERSION")/go mod vendor
     make eks-a
     make eks-a-cluster-controller
     build::create_git_tag

@@ -24,7 +24,6 @@ GOLANG_VERSION?="1.17"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
-export PATH := $(GO_VERSION):$(PATH)
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
@@ -320,7 +319,6 @@ cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGE
 
 
 .PHONY: generate-attribution
-generate-attribution: GOLANG_VERSION ?= "1.16"
 generate-attribution:
 	scripts/make_attribution.sh $(GOLANG_VERSION)
 
