@@ -383,7 +383,7 @@ func (p *nutanixProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClu
 	return nil
 }
 
-func (p *nutanixProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+func (p *nutanixProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
 }
