@@ -163,5 +163,5 @@ func (v *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
 }
 
 func RequiredCloudstackEnvVars() []string {
-	return requiredEnvVars
+	return requiredCloudStackEnvVars
 }
