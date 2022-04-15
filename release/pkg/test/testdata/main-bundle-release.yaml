@@ -225,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1b32e911ab05c4e04040aa21fbb471315f7e244b
+      gitCommit: 1d0e3f8751df1fdcfdce07996c204e07f4e8064b
       kindNode:
         arch:
         - amd64
@@ -909,7 +909,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1b32e911ab05c4e04040aa21fbb471315f7e244b
+      gitCommit: 1d0e3f8751df1fdcfdce07996c204e07f4e8064b
       kindNode:
         arch:
         - amd64
@@ -1593,7 +1593,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1b32e911ab05c4e04040aa21fbb471315f7e244b
+      gitCommit: 1d0e3f8751df1fdcfdce07996c204e07f4e8064b
       kindNode:
         arch:
         - amd64
