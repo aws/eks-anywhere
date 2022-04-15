@@ -439,11 +439,8 @@ func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
 
 func (vb *VersionsBundle) Images() []v1alpha1.Image {
 	var images []v1alpha1.Image
-	images = append(images, vb.SharedImages()...)
+	images = append(images, vb.VersionsBundle.Images()...)
 	images = append(images, vb.KubeDistroImages()...)
-	images = append(images, vb.DockerImages()...)
-	images = append(images, vb.VsphereImages()...)
-	images = append(images, vb.CloudStackImages()...)
 
 	return images
 }

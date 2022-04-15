@@ -108,6 +108,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupCloudStackEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupFluxEnv(regex)
 	if err != nil {
 		return err

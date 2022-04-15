@@ -577,8 +577,8 @@ stringData:
         thumbprint = "{{.thumbprint}}"
 
         [VirtualCenter "{{.vsphereServer}}"]
-        user = "{{.eksaVsphereUsername}}"
-        password = "{{.eksaVspherePassword}}"
+        user = "{{.eksaCSIUsername}}"
+        password = "{{.eksaCSIPassword}}"
         datacenters = "{{.vsphereDatacenter}}"
         insecure-flag = "{{.insecure}}"
 
@@ -1043,8 +1043,8 @@ stringData:
       name: cloud-provider-vsphere-credentials
       namespace: kube-system
     stringData:
-      {{.vsphereServer}}.password: "{{.eksaVspherePassword}}"
-      {{.vsphereServer}}.username: "{{.eksaVsphereUsername}}"
+      {{.vsphereServer}}.password: "{{.eksaCloudProviderPassword}}"
+      {{.vsphereServer}}.username: "{{.eksaCloudProviderUsername}}"
     type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---

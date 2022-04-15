@@ -225,20 +225,17 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, commandContext.ClusterSpec, commandContext.CurrentClusterSpec); err != nil {
+	target := getManagementCluster(commandContext)
+	newSpec := commandContext.ClusterSpec
+
+	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, newSpec, commandContext.CurrentClusterSpec, target); err != nil {
 		commandContext.SetError(err)
 		return nil
 	} else if upgradeNeeded {
 		logger.V(3).Info("Provider needs a cluster upgrade")
 		return &pauseEksaAndFluxReconcile{}
 	}
-
-	target := getManagementCluster(commandContext)
-
-	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
-	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
-	newSpec := commandContext.ClusterSpec
-	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs)
+	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

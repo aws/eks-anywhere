@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -161,6 +162,30 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 		),
 	)
 	runFluxFlow(test)
+}
+
+func TestCloudStackKubernetes120GitopsOptionsFlux(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFlux(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+	)
+
+	test.RunClusterFlowWithGitOps(
+		framework.WithClusterUpgradeGit(
+			api.WithWorkerNodeCount(3),
+		),
+		// Needed in order to replace the CloudStackDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
+	)
 }
 
 func TestVSphereKubernetes121To122FluxUpgrade(t *testing.T) {

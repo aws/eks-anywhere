@@ -60,12 +60,41 @@ func NewMachineConfigDefaulters(d *Defaulters) *MachineConfigDefaulters {
 	}
 }
 
+func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context) (int, error) {
+	var count int
+	for ip, client := range md.defaulters.awsClientMap {
+		keyExists, err := client.EC2KeyNameExists(ctx, defaultAwsSshKeyName)
+		if err != nil {
+			return count, fmt.Errorf("describing key pair on snow device [deviceIP=%s]: %v", ip, err)
+		}
+		if keyExists {
+			count += 1
+		}
+	}
+	return count, nil
+}
+
 func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.SshKeyName != "" {
 		return nil
 	}
 
 	if md.keyGenerated {
+		m.Spec.SshKeyName = defaultAwsSshKeyName
+		return nil
+	}
+
+	keyCount, err := md.defaultKeyCount(ctx)
+	if err != nil {
+		return err
+	}
+
+	if keyCount > 0 && keyCount < len(md.defaulters.awsClientMap) {
+		return fmt.Errorf("default key [keyName=%s] only exists on some of the devices. Use 'aws ec2 import-key-pair' to import this key to all the devices", defaultAwsSshKeyName)
+	}
+
+	if keyCount == len(md.defaulters.awsClientMap) {
+		md.keyGenerated = true
 		m.Spec.SshKeyName = defaultAwsSshKeyName
 		return nil
 	}

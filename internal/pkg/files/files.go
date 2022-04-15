@@ -47,10 +47,9 @@ type singleFileRouter struct {
 }
 
 func (s singleFileRouter) ExtractPath(header *tar.Header) string {
-	name := header.FileInfo().Name()
-	if strings.TrimPrefix(name, "./") != s.fileName {
+	if strings.TrimPrefix(header.Name, "./") != s.fileName {
 		return ""
 	}
 
-	return filepath.Join(s.folder, name)
+	return filepath.Join(s.folder, header.FileInfo().Name())
 }

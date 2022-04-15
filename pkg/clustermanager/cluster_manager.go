@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -235,37 +234,19 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
 	}
 
-	logger.V(3).Info("Waiting for workload kubeconfig secret to be ready", "cluster", workloadCluster.Name)
-	err = c.Retrier.Retry(
-		func() error {
-			found, err := c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
-			if err == nil && !found {
-				err = fmt.Errorf("kubeconfig secret does not exist")
-			}
-			return err
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("checking availability of kubeconfig secret: %v", err)
-	}
-
-	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
-	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-	if err != nil {
-		return nil, fmt.Errorf("generating workload kubeconfig: %v", err)
-	}
-
-	logger.V(3).Info("Run post control plane creation operations")
-	err = provider.RunPostControlPlaneCreation(ctx, clusterSpec, workloadCluster)
-	if err != nil {
-		return nil, fmt.Errorf("running post control plane creation operations: %v", err)
-	}
-
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
+
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
+	err = c.Retrier.Retry(
+		func() error {
+			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+			return err
+		},
+	)
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
@@ -449,7 +430,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
 	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
@@ -477,107 +458,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same, checking provider spec")
-	// compare provider spec
-	switch cc.Spec.DatacenterRef.Kind {
-	case v1alpha1.VSphereDatacenterKind:
-		machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		vdc := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
-		if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
-			logger.V(3).Info("New provider spec is different from the new spec")
-			return true, nil
-		}
-
-		for _, config := range machineConfigs {
-			mc := config.(*v1alpha1.VSphereMachineConfig)
-			machineConfigMap[mc.Name] = mc
-		}
-		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		cpVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
-			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
-			return true, nil
-		}
-		for _, workerNodeGroupConfiguration := range cc.Spec.WorkerNodeGroupConfigurations {
-			existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			wnVmc := machineConfigMap[workerNodeGroupConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
-				logger.V(3).Info("New worker node machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			etcdVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
-				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-	case v1alpha1.CloudStackDatacenterKind:
-		existingCsdc, err := c.clusterClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
-		if !existingCsdc.Spec.Equal(&csDc.Spec) {
-			logger.V(3).Info("New provider spec is different from the new spec")
-			return true, nil
-		}
-
-		machineConfigsSpecChanged, err := c.cloudstackMachineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
-		if err != nil {
-			return false, err
-		}
-		if machineConfigsSpecChanged {
-			return true, nil
-		}
-		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
-	default:
-		// Run upgrade flow
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func (c *ClusterManager) cloudstackMachineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
-	machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
-	for _, config := range machineConfigs {
-		mc := config.(*v1alpha1.CloudStackMachineConfig)
-		machineConfigMap[mc.Name] = mc
-	}
-
-	for _, oldMcRef := range cc.MachineConfigRefs() {
-		existingCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		csmc, ok := machineConfigMap[oldMcRef.Name]
-		if !ok {
-			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
-			return true, nil
-		}
-		if !existingCsmc.Spec.Equal(&csmc.Spec) {
-			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
-			return true, nil
-		}
-	}
-
+	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 

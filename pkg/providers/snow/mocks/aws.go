@@ -35,18 +35,18 @@ func (m *MockAwsClient) EXPECT() *MockAwsClientMockRecorder {
 }
 
 // EC2ImageExists mocks base method.
-func (m *MockAwsClient) EC2ImageExists(ctx context.Context, keyName string) (bool, error) {
+func (m *MockAwsClient) EC2ImageExists(ctx context.Context, imageID string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EC2ImageExists", ctx, keyName)
+	ret := m.ctrl.Call(m, "EC2ImageExists", ctx, imageID)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EC2ImageExists indicates an expected call of EC2ImageExists.
-func (mr *MockAwsClientMockRecorder) EC2ImageExists(ctx, keyName interface{}) *gomock.Call {
+func (mr *MockAwsClientMockRecorder) EC2ImageExists(ctx, imageID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImageExists", reflect.TypeOf((*MockAwsClient)(nil).EC2ImageExists), ctx, keyName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImageExists", reflect.TypeOf((*MockAwsClient)(nil).EC2ImageExists), ctx, imageID)
 }
 
 // EC2ImportKeyPair mocks base method.
@@ -64,16 +64,16 @@ func (mr *MockAwsClientMockRecorder) EC2ImportKeyPair(ctx, keyName, keyMaterial 
 }
 
 // EC2KeyNameExists mocks base method.
-func (m *MockAwsClient) EC2KeyNameExists(ctx context.Context, imageID string) (bool, error) {
+func (m *MockAwsClient) EC2KeyNameExists(ctx context.Context, keyName string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EC2KeyNameExists", ctx, imageID)
+	ret := m.ctrl.Call(m, "EC2KeyNameExists", ctx, keyName)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EC2KeyNameExists indicates an expected call of EC2KeyNameExists.
-func (mr *MockAwsClientMockRecorder) EC2KeyNameExists(ctx, imageID interface{}) *gomock.Call {
+func (mr *MockAwsClientMockRecorder) EC2KeyNameExists(ctx, keyName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2KeyNameExists", reflect.TypeOf((*MockAwsClient)(nil).EC2KeyNameExists), ctx, imageID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2KeyNameExists", reflect.TypeOf((*MockAwsClient)(nil).EC2KeyNameExists), ctx, keyName)
 }

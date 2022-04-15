@@ -46,6 +46,7 @@ func (c *Config) DeepCopy() *Config {
 		DockerDatacenter:  c.DockerDatacenter.DeepCopy(),
 		GitOpsConfig:      c.GitOpsConfig.DeepCopy(),
 		NutanixDatacenter: c.NutanixDatacenter.DeepCopy(),
+		FluxConfig:        c.FluxConfig.DeepCopy(),
 	}
 
 	if c.VSphereMachineConfigs != nil {

@@ -884,14 +884,9 @@ func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
-}
-
-func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	// TODO: Figure out if something is needed here
-	return nil
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {

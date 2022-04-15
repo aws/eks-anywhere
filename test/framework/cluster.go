@@ -136,6 +136,14 @@ func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
 	return e.HardwarePool
 }
 
+func (e *ClusterE2ETest) RunClusterFlowWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
+	e.GenerateClusterConfig()
+	e.createCluster()
+	e.UpgradeWithGitOps(clusterOpts...)
+	time.Sleep(5 * time.Minute)
+	e.deleteCluster()
+}
+
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.clusterFillers = append(e.clusterFillers, f...)

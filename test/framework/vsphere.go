@@ -76,35 +76,35 @@ type VSphere struct {
 type VSphereOpt func(*VSphere)
 
 func UpdateUbuntuTemplate118Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate119Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate120Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate121Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate122Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate122() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate120() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines)
 }
 
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
@@ -114,16 +114,16 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 		t:          t,
 		GovcClient: c,
 		fillers: []api.VSphereFiller{
-			api.WithStringFromEnvVar(vsphereDatacenterVar, api.WithDatacenter),
-			api.WithStringFromEnvVar(vsphereDatastoreVar, api.WithDatastoreForAllMachines),
-			api.WithStringFromEnvVar(vsphereFolderVar, api.WithFolderForAllMachines),
-			api.WithStringFromEnvVar(vsphereNetworkVar, api.WithNetwork),
-			api.WithStringFromEnvVar(vsphereResourcePoolVar, api.WithResourcePoolForAllMachines),
-			api.WithStringFromEnvVar(vsphereServerVar, api.WithServer),
-			api.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHAuthorizedKeyForAllMachines),
-			api.WithStringFromEnvVar(vsphereStoragePolicyNameVar, api.WithStoragePolicyNameForAllMachines),
-			api.WithBoolFromEnvVar(vsphereTlsInsecureVar, api.WithTLSInsecure),
-			api.WithStringFromEnvVar(vsphereTlsThumbprintVar, api.WithTLSThumbprint),
+			api.WithVSphereStringFromEnvVar(vsphereDatacenterVar, api.WithDatacenter),
+			api.WithVSphereStringFromEnvVar(vsphereDatastoreVar, api.WithDatastoreForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereFolderVar, api.WithFolderForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereNetworkVar, api.WithNetwork),
+			api.WithVSphereStringFromEnvVar(vsphereResourcePoolVar, api.WithResourcePoolForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereServerVar, api.WithServer),
+			api.WithVSphereStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHAuthorizedKeyForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereStoragePolicyNameVar, api.WithStoragePolicyNameForAllMachines),
+			api.WithVSphereBoolFromEnvVar(vsphereTlsInsecureVar, api.WithTLSInsecure),
+			api.WithVSphereStringFromEnvVar(vsphereTlsThumbprintVar, api.WithTLSThumbprint),
 		},
 	}
 
@@ -139,7 +139,7 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 func WithUbuntu122() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -148,7 +148,7 @@ func WithUbuntu122() VSphereOpt {
 func WithUbuntu121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -157,7 +157,7 @@ func WithUbuntu121() VSphereOpt {
 func WithUbuntu120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -166,7 +166,7 @@ func WithUbuntu120() VSphereOpt {
 func WithUbuntu119() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -175,7 +175,7 @@ func WithUbuntu119() VSphereOpt {
 func WithUbuntu118() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -184,7 +184,7 @@ func WithUbuntu118() VSphereOpt {
 func WithBottleRocket120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
@@ -193,7 +193,7 @@ func WithBottleRocket120() VSphereOpt {
 func WithBottleRocket121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
@@ -202,7 +202,7 @@ func WithBottleRocket121() VSphereOpt {
 func WithBottleRocket122() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
@@ -211,7 +211,7 @@ func WithBottleRocket122() VSphereOpt {
 func WithPrivateNetwork() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
+			api.WithVSphereStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
 		)
 		v.cidr = os.Getenv(privateNetworkCidrVar)
 	}
@@ -311,7 +311,7 @@ func vSphereMachineConfig(name string, fillers ...api.VSphereMachineConfigFiller
 	)
 	f = append(f, fillers...)
 
-	return api.WithMachineConfig(name, f...)
+	return api.WithVSphereMachineConfig(name, f...)
 }
 
 func buildVSphereWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {

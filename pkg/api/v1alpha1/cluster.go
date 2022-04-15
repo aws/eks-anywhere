@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -247,15 +246,20 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	return nil
 }
 
+type kindObject struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+		k := &kindObject{}
+		if err := yaml.Unmarshal([]byte(c), k); err != nil {
 			return err
 		}
 
-		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
+		if k.Kind == clusterConfig.ExpectedKind() {
 			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
@@ -546,7 +550,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != constants.SnowProviderName {
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
 	return nil

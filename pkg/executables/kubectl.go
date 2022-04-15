@@ -966,7 +966,12 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	params := []string{"get", eksaClusterResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("getting eksa cluster: %v", err)
+		params := []string{"get", eksaClusterResourceType, "-A", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
+		stdOut, err = k.Execute(ctx, params...)
+		if err != nil {
+			return nil, fmt.Errorf("getting eksa cluster: %v", err)
+		}
+		return nil, fmt.Errorf("cluster %s not found of custom resource type %s", clusterName, eksaClusterResourceType)
 	}
 
 	response := &v1alpha1.Cluster{}

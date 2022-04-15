@@ -230,7 +230,7 @@ func (p *snowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldCluste
 	return nil
 }
 
-func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	return false, nil
 }
 
@@ -245,10 +245,6 @@ func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster
 
 func (p *snowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
 	// No validations
-	return nil
-}
-
-func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
 }
 

@@ -1,3 +1,4 @@
+//go:build conformance_e2e
 // +build conformance_e2e
 
 package e2e
@@ -98,6 +99,25 @@ func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.
 	runConformanceFlow(test)
 }
 
+func TestCloudStackKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithRedhat120()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithRedhat121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
 func TestVSphereKubernetes122BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

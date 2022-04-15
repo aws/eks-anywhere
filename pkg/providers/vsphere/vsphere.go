@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -35,21 +36,27 @@ import (
 )
 
 const (
-	CredentialsObjectName    = "vsphere-credentials"
-	EksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	eksaLicense              = "EKSA_LICENSE"
-	vSphereUsernameKey       = "VSPHERE_USERNAME"
-	vSpherePasswordKey       = "VSPHERE_PASSWORD"
-	vSphereServerKey         = "VSPHERE_SERVER"
-	govcInsecure             = "GOVC_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	defaultTemplateLibrary   = "eks-a-templates"
-	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
-	maxRetries               = 30
-	backOffPeriod            = 5 * time.Second
+	CredentialsObjectName  = "vsphere-credentials"
+	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
+	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
+	// Username and password for cloud provider
+	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
+	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
+	// Username and password for the CSI driver
+	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
+	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
+	eksaLicense               = "EKSA_LICENSE"
+	vSphereUsernameKey        = "VSPHERE_USERNAME"
+	vSpherePasswordKey        = "VSPHERE_PASSWORD"
+	vSphereServerKey          = "VSPHERE_SERVER"
+	govcInsecure              = "GOVC_INSECURE"
+	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
+	defaultTemplateLibrary    = "eks-a-templates"
+	defaultTemplatesFolder    = "vm/Templates"
+	bottlerocketDefaultUser   = "ec2-user"
+	ubuntuDefaultUser         = "capv"
+	maxRetries                = 30
+	backOffPeriod             = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -197,6 +204,32 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	// customize generated kube config
 	return nil
+}
+
+func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
+	for _, config := range p.MachineConfigs(nil) {
+		mc := config.(*v1alpha1.VSphereMachineConfig)
+		machineConfigMap[mc.Name] = mc
+	}
+
+	for _, oldMcRef := range cc.MachineConfigRefs() {
+		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csmc, ok := machineConfigMap[oldMcRef.Name]
+		if !ok {
+			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+		if !reflect.DeepEqual(existingVmc.Spec, csmc.Spec) {
+			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
@@ -661,6 +694,25 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
 
+	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
+	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
+
+	// Cloud provider credentials
+	eksaCPUsername := os.Getenv(EksavSphereCPUsernameKey)
+	eksaCPassword := os.Getenv(EksavSphereCPPasswordKey)
+
+	if eksaCPUsername == "" {
+		eksaCPUsername = eksaVsphereUsername
+		eksaCPassword = eksaVspherePassword
+	}
+	// CSI driver credentials
+	eksaCSIUsername := os.Getenv(EksavSphereCSIUsernameKey)
+	eksaCSIPassword := os.Getenv(EksavSphereCSIPasswordKey)
+	if eksaCSIUsername == "" {
+		eksaCSIUsername = eksaVsphereUsername
+		eksaCSIPassword = eksaVspherePassword
+	}
+
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -707,8 +759,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  os.Getenv(EksavSphereUsernameKey),
-		"eksaVspherePassword":                  os.Getenv(EksavSpherePasswordKey),
+		"eksaVsphereUsername":                  eksaVsphereUsername,
+		"eksaVspherePassword":                  eksaVspherePassword,
+		"eksaCloudProviderUsername":            eksaCPUsername,
+		"eksaCloudProviderPassword":            eksaCPassword,
+		"eksaCSIUsername":                      eksaCSIUsername,
+		"eksaCSIPassword":                      eksaCSIPassword,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -1288,17 +1344,30 @@ func resourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-crs-0", clusterSpec.Cluster.Name)
 }
 
-func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
 
-	return newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
+	if newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
 		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
 		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
-		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
-}
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
+		return true, nil
+	}
+	cc := currentSpec.Cluster
+	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+	if !reflect.DeepEqual(existingVdc.Spec, p.datacenterConfig.Spec) {
+		logger.V(3).Info("New provider spec is different from the new spec")
+		return true, nil
+	}
 
-func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return nil
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
+	if err != nil {
+		return false, err
+	}
+	return machineConfigsSpecChanged, nil
 }
 
 func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {

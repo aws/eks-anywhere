@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -35,7 +36,7 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes121MulticlusterWorkloadClusterDemo(t *testing.T) {
+func TestVSphereKubernetes121MulticlusterWorkloadCluster(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -138,5 +139,73 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
 		// compared to when it was initially created without it.
 		provider.WithProviderUpgradeGit(),
+	)
+}
+
+func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat121())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	runWorkloadClusterFlow(test)
+}
+
+func TestCloudStackUpgradeMulticlusterWorkloadClusterWithFlux(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFlux(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFlux(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	runWorkloadClusterFlowWithGitOps(
+		test,
+		framework.WithClusterUpgradeGit(
+			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(3),
+		),
+		provider.WithProviderUpgradeGit(
+			framework.UpdateRedhatTemplate121Var(),
+		),
 	)
 }
