@@ -15,7 +15,7 @@ func WithWorkerNodeGroup(name string, fillers ...api.WorkerNodeGroupFiller) *Wor
 	}
 }
 
-func (w *WorkerNodeGroup) clusterFiller() api.ClusterFiller {
+func (w *WorkerNodeGroup) ClusterFiller() api.ClusterFiller {
 	wf := make([]api.WorkerNodeGroupFiller, 0, len(w.Fillers)+1)
 	wf = append(wf, api.WithMachineGroupRef(w.MachineConfigName, w.MachineConfigKind))
 	wf = append(wf, w.Fillers...)
