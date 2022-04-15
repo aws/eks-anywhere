@@ -44,8 +44,6 @@ source "$REPO_ROOT/scripts/attribution_helpers.sh"
 function build::attribution::generate(){
     cd $REPO_ROOT
     $(build::common::get_go_path "$GOLANG_VERSION")/go mod vendor
-    make eks-a
-    make eks-a-cluster-controller
     build::create_git_tag
     build::fix_licenses
     build::gather_licenses _output "./cmd/eksctl-anywhere ./controllers"
