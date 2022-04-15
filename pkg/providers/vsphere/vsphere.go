@@ -943,10 +943,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		if err != nil {
 			return nil, nil, err
 		}
-
-		if err != nil {
-			return nil, nil, err
-		}
 		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs, oldWorkerNodeVmc, newWorkerNodeVmc)
 		if err != nil {
 			return nil, nil, err
