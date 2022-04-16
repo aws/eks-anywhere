@@ -353,6 +353,16 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
+func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
+	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
+	e.RunEKSA(downloadArtifactsArgs, opts...)
+	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Log("Downloaded artifacts saved at eks-anywhere-downloads.tar.gz")
+	}
+}
+
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 	e.createCluster(opts...)
 }
