@@ -41,6 +41,9 @@ func TestDockerKubernetes122Taints(t *testing.T) {
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoScheduleTaint()), api.WithCount(2)),
+			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
 	)
 
