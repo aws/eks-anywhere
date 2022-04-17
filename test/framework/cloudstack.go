@@ -36,6 +36,7 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
+	cloudStackClusterIPPoolEnvVar,
 	podCidrVar,
 	serviceCidrVar,
 	cloudstackFeatureGateEnvVar,
