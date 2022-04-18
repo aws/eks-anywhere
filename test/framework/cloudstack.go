@@ -205,7 +205,7 @@ func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfig
 }
 
 func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
-	// Set worker node group ref to vsphere machine config
+	// Set worker node group ref to cloudstack machine config
 	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()

@@ -104,34 +104,6 @@ func WithCloudStackConfigNamespace(ns string) CloudStackFiller {
 	}
 }
 
-//func WithCloudStackSSHUsernameAndAuthorizedKey(username string, key string) CloudStackFiller {
-//	return func(config CloudStackConfig) {
-//		if len(config.cpMachineConfig.Spec.Users) == 0 {
-//			config.cpMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-//		}
-//		if len(config.workerMachineConfig.Spec.Users) == 0 {
-//			config.workerMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-//		}
-//		config.cpMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-//			Name:              username,
-//			SshAuthorizedKeys: []string{key},
-//		}
-//		config.workerMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-//			Name:              username,
-//			SshAuthorizedKeys: []string{key},
-//		}
-//		if config.etcdMachineConfig != nil {
-//			if len(config.etcdMachineConfig.Spec.Users) == 0 {
-//				config.etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-//			}
-//			config.etcdMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-//				Name:              username,
-//				SshAuthorizedKeys: []string{key},
-//			}
-//		}
-//	}
-//}
-
 func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for _, m := range config.machineConfigs {
