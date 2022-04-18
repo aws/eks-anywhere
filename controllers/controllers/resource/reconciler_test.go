@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +20,6 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/resource"
@@ -589,7 +589,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
 			tt.prepare(ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
 
-			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, log.NullLogger{})
+			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
 
 			if err := cor.Reconcile(ctx, tt.args.objectKey, false); (err != nil) != tt.wantErr {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
@@ -1028,7 +1028,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
 			tt.prepare(ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
 
-			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, log.NullLogger{})
+			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
 
 			if err := cor.Reconcile(ctx, tt.args.objectKey, false); (err != nil) != tt.wantErr {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)

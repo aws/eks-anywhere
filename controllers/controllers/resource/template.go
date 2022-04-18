@@ -166,7 +166,8 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		values["eksaVspherePassword"] = string(passwordBytes)
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)
+	return 
+  (templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)
 }
 
 func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, csdc anywherev1.CloudStackDatacenterConfig, cpCsmc, etcdCsmc anywherev1.CloudStackMachineConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -393,8 +394,25 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 		controlPlaneTemplateName = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		// Check changes in KubeadmConfigTemplate
+		oldWn, err := r.ExistingWorkerNodeGroupConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		if docker.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
+		} else {
+			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+			if err != nil {
+				return nil, err
+			}
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+		}
+
+		// Check changes in DockerMachineTemplate
 		existingWorkerNodeImage, err := r.ExistingWorkerKindNodeImage(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
 			return nil, err
@@ -433,8 +451,8 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 			values["kindNodeImage"] = existingControlPlaneNodeImage
 		}
 	}
-
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt)
+  
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, nil)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
