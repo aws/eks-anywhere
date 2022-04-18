@@ -167,15 +167,15 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 func TestCloudStackKubernetes120GitopsOptionsFlux(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewClusterE2ETest(
-			t,
-			provider,
-			framework.WithFlux(),
-			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube120),
-				api.WithControlPlaneCount(1),
-				api.WithWorkerNodeCount(1),
-				api.WithStackedEtcdTopology(),
-			),
+		t,
+		provider,
+		framework.WithFlux(),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube120),
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(1),
+			api.WithStackedEtcdTopology(),
+		),
 	)
 
 	test.RunClusterFlowWithGitOps(

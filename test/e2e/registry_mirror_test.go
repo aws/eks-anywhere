@@ -48,7 +48,7 @@ func TestVSphereKubernetes122BottlerocketRegistryMirrorAndCert(t *testing.T) {
 func TestCloudStackKubernetes121RedhatRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),

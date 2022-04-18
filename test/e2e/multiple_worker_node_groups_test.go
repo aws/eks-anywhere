@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -41,6 +42,46 @@ func TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
 		),
 		provider.WithNewVSphereWorkerNodeGroup(
+			"worker-1",
+			framework.WithWorkerNodeGroup(
+				"workers-3",
+				api.WithCount(1),
+			),
+		),
+	)
+}
+
+func TestCloudStackKubernetes121RedhatAndAndRemoveWorkerNodeGroups(t *testing.T) {
+	provider := framework.NewCloudStack(t,
+		framework.WithCloudStackWorkerNodeGroup(
+			"worker-1",
+			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
+		),
+		framework.WithCloudStackWorkerNodeGroup(
+			"worker-1",
+			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
+		),
+		framework.WithCloudStackRedhat121(),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(anywherev1.Kube121),
+			api.WithExternalEtcdTopology(1),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
+		),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		anywherev1.Kube121,
+		framework.WithClusterUpgrade(
+			api.RemoveWorkerNodeGroup("workers-2"),
+			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),
+		),
+		provider.WithNewCloudStackWorkerNodeGroup(
 			"worker-1",
 			framework.WithWorkerNodeGroup(
 				"workers-3",
