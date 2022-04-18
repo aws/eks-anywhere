@@ -1074,16 +1074,7 @@ func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.Machine
 			}
 		}
 	}
-	return configsMapToSlice(configs)
-}
-
-func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
-	configs := make([]providers.MachineConfig, 0, len(c))
-	for _, config := range c {
-		configs = append(configs, config)
-	}
-
-	return configs
+	return providers.ConfigsMapToSlice(configs)
 }
 
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
