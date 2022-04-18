@@ -125,13 +125,19 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 		OldVersion:    "v0.0.1",
 		NewVersion:    "v0.0.2",
 	})
+	eksdChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "eks-d",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name).Return(currentSpec, nil),
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, expectedCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
-		c.clusterManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
+		c.clusterManager.EXPECT().EksaUpgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
+		c.clusterManager.EXPECT().EksdUpgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
 }
 

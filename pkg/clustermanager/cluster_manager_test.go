@@ -728,8 +728,8 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/test_components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/test_components.yaml"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}

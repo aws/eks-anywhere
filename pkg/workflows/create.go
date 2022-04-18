@@ -265,6 +265,12 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
+		logger.Info("Installing EKS-D components on workload cluster")
+		err = commandContext.ClusterManager.InstallEksdComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	logger.Info("Creating EKS-A CRDs instances on workload cluster")

@@ -38,14 +38,6 @@ func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *
 		return fmt.Errorf("applying eksd release crd: %v", err)
 	}
 
-	if err = c.Retry(
-		func() error {
-			return c.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseManifestContent, constants.EksaSystemNamespace)
-		},
-	); err != nil {
-		return fmt.Errorf("applying eksd release manifest: %v", err)
-	}
-
 	return nil
 }
 

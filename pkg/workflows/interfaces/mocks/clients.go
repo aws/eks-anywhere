@@ -182,6 +182,36 @@ func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EKSAClusterSpecChanged", reflect.TypeOf((*MockClusterManager)(nil).EKSAClusterSpecChanged), arg0, arg1, arg2)
 }
 
+// EksaUpgrade mocks base method.
+func (m *MockClusterManager) EksaUpgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EksaUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EksaUpgrade indicates an expected call of EksaUpgrade.
+func (mr *MockClusterManagerMockRecorder) EksaUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaUpgrade", reflect.TypeOf((*MockClusterManager)(nil).EksaUpgrade), arg0, arg1, arg2, arg3)
+}
+
+// EksdUpgrade mocks base method.
+func (m *MockClusterManager) EksdUpgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EksdUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// EksdUpgrade indicates an expected call of EksdUpgrade.
+func (mr *MockClusterManagerMockRecorder) EksdUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksdUpgrade", reflect.TypeOf((*MockClusterManager)(nil).EksdUpgrade), arg0, arg1, arg2, arg3)
+}
+
 // GetCurrentClusterSpec mocks base method.
 func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*cluster.Spec, error) {
 	m.ctrl.T.Helper()
@@ -368,21 +398,6 @@ func (m *MockClusterManager) SaveLogsWorkloadCluster(arg0 context.Context, arg1 
 func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsWorkloadCluster), arg0, arg1, arg2, arg3)
-}
-
-// Upgrade mocks base method.
-func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*types.ChangeDiff)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Upgrade indicates an expected call of Upgrade.
-func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockClusterManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
 }
 
 // UpgradeCluster mocks base method.
