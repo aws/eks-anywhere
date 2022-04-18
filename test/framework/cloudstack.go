@@ -5,9 +5,8 @@ import (
 	"os"
 	"testing"
 
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 const (

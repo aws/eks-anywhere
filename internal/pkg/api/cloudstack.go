@@ -2,9 +2,9 @@ package api
 
 import (
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -12,7 +12,7 @@ import (
 )
 
 type CloudStackConfig struct {
-	datacenterConfig    *anywherev1.CloudStackDatacenterConfig
+	datacenterConfig *anywherev1.CloudStackDatacenterConfig
 	machineConfigs   map[string]*anywherev1.CloudStackMachineConfig
 }
 
