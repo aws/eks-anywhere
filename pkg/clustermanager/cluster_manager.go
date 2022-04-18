@@ -647,6 +647,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 		return nil
 	}
 
+	logger.Info("Installing storage class on cluster")
 	err := c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
