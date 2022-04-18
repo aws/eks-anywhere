@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strconv"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -1183,7 +1184,11 @@ func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Con
 }
 
 func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeconfigFile)
+	if err := p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeconfigFile); err != nil {
+		return err
+	}
+	kubeVipDisabledString := strconv.FormatBool(features.IsActive(features.CloudStackKubeVipDisabled()))
+	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, kubeVipDisabledString, kubeconfigFile)
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
