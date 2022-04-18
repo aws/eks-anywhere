@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -1440,5 +1441,27 @@ func TestClusterUpgradeNeededMachineConfigsChanged(t *testing.T) {
 	}
 	if !specChanged {
 		t.Fatalf("expected spec change but none was detected")
+	}
+}
+
+func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
+	kubeConfigFile := "test"
+
+	oldCloudstackKubeVipDisabledVal := os.Getenv(features.CloudStackKubeVipDisabledEnvVar)
+	os.Unsetenv(features.CloudStackKubeVipDisabledEnvVar)
+	defer os.Setenv(features.CloudStackKubeVipDisabledEnvVar, oldCloudstackKubeVipDisabledVal)
+	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeConfigFile).Return(nil)
+	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, "false", kubeConfigFile).Return(nil)
+	if err := provider.InstallCustomProviderComponents(ctx, kubeConfigFile); err != nil {
+		t.Fatalf("unexpected failure %v", err)
 	}
 }
