@@ -1182,7 +1182,7 @@ func (p *vsphereProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineCon
 			}
 		}
 	}
-	return configsMapToSlice(configs)
+	return providers.ConfigsMapToSlice(configs)
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -1364,15 +1364,6 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 		return false, err
 	}
 	return machineConfigsSpecChanged, nil
-}
-
-func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
-	configs := make([]providers.MachineConfig, 0, len(c))
-	for _, config := range c {
-		configs = append(configs, config)
-	}
-
-	return configs
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
