@@ -95,6 +95,10 @@ func (c *GitOpsConfig) ConvertToFluxConfig() *FluxConfig {
 			Kind:       FluxConfigKind,
 			APIVersion: c.APIVersion,
 		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.Name,
+			Namespace: c.Namespace,
+		},
 		Spec: FluxConfigSpec{
 			SystemNamespace:   c.Spec.Flux.Github.FluxSystemNamespace,
 			Branch:            c.Spec.Flux.Github.Branch,
