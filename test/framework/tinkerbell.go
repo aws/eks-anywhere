@@ -35,10 +35,6 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellSSHAuthorizedKey,
 }
 
-func RequiredTinkerbellEnvVars() []string {
-	return requiredEnvVars
-}
-
 type TinkerbellOpt func(*Tinkerbell)
 
 type Tinkerbell struct {
