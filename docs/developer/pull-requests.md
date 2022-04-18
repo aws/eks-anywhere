@@ -123,3 +123,10 @@ And finally, you can move forward to the code itself:
 * When necessary, encourage folks to create follow-up tickets, so feedback and improvement ideas don't get lost.
 
 If you get here, you are done. Approve it.
+
+### PRs authored as an approver
+
+If you are on the approvers list, you may add an `/approve` comment to signify that you are fine with merging the
+PR as is with just 1 `/lgtm`. This allows the default behavior of a PR to not be merge by default instead
+of having to specify `/hold` in order to achieve that. By not specifying `/approve`, it is assumed that the 
+author gets to decide when to get the PR approved and which reviewers they want to have the PR looked at.
