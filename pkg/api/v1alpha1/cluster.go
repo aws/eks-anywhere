@@ -574,12 +574,20 @@ func validateGitOps(clusterConfig *Cluster) error {
 		return nil
 	}
 
-	if gitOpsRef.Kind == FluxConfigKind && !features.IsActive(features.GenericGitProviderSupport()) {
-		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported")
+	gitOpsRefKind := gitOpsRef.Kind
+	fluxConfigActive := features.IsActive(features.GenericGitProviderSupport())
+
+	if gitOpsRefKind == FluxConfigKind && !fluxConfigActive {
+		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
+			"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
 	}
 
-	if gitOpsRef.Kind != GitOpsConfigKind && gitOpsRef.Kind != FluxConfigKind {
+	if gitOpsRefKind != GitOpsConfigKind && !fluxConfigActive {
 		return errors.New("only GitOpsConfig Kind is supported at this time")
+	}
+
+	if gitOpsRefKind != GitOpsConfigKind && gitOpsRefKind != FluxConfigKind {
+		return errors.New("only GitOpsConfig or FluxConfig Kind are supported at this time")
 	}
 
 	if gitOpsRef.Name == "" {
