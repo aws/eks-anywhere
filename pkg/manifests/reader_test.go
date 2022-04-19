@@ -9,7 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test/mocks"
 	"github.com/aws/eks-anywhere/pkg/manifests"
-	"github.com/aws/eks-anywhere/pkg/releases"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 

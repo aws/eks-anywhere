@@ -6,7 +6,7 @@ import (
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere/pkg/eksd"
+	"github.com/aws/eks-anywhere/pkg/manifests/eksd"
 )
 
 func TestImages(t *testing.T) {

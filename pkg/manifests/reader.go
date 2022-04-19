@@ -5,8 +5,8 @@ import (
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
-	"github.com/aws/eks-anywhere/pkg/bundles"
-	"github.com/aws/eks-anywhere/pkg/releases"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
