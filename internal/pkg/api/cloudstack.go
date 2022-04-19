@@ -180,22 +180,34 @@ func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 		if len(config.workerMachineConfig.Spec.Users) == 0 {
 			config.workerMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capc"}}
 		}
-		if len(config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-			config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+		for _, user := range config.workerMachineConfig.Spec.Users {
+			if len(user.SshAuthorizedKeys) == 0 {
+				user.SshAuthorizedKeys = []string{""}
+			}
+			for i := range user.SshAuthorizedKeys {
+				user.SshAuthorizedKeys[i] = value
+			}
 		}
-		if len(config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-			config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+		for _, user := range config.workerMachineConfig.Spec.Users {
+			if len(user.SshAuthorizedKeys) == 0 {
+				user.SshAuthorizedKeys = []string{""}
+			}
+			for i := range user.SshAuthorizedKeys {
+				user.SshAuthorizedKeys[i] = value
+			}
 		}
-		config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
-		config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
 		if config.etcdMachineConfig != nil {
 			if len(config.cpMachineConfig.Spec.Users) == 0 {
 				config.etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capc"}}
 			}
-			if len(config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-				config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+			for _, user := range config.etcdMachineConfig.Spec.Users {
+				if len(user.SshAuthorizedKeys) == 0 {
+					user.SshAuthorizedKeys = []string{""}
+				}
+				for i := range user.SshAuthorizedKeys {
+					user.SshAuthorizedKeys[i] = value
+				}
 			}
-			config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
 		}
 	}
 }

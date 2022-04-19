@@ -358,10 +358,13 @@ spec:
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
     useExperimentalRetryJoin: true
-    users:
-    - name: {{.controlPlaneSshUsername}}
+    users:{{ range $user := .controlPlaneSshUsers }}
+    - name: {{ $user.Name }}
       sshAuthorizedKeys:
-      - '{{.cloudstackControlPlaneSshAuthorizedKey}}'
+      {{- range $user.SshAuthorizedKeys }}
+      - '{{.}}'
+      {{- end }}
+    {{- end}}
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
@@ -391,10 +394,13 @@ spec:
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
-    users:
-    - name: {{.etcdSshUsername}}
+    users:{{ range $user := .etcdSshUsers }}
+    - name: {{ $user.Name }}
       sshAuthorizedKeys:
-      - '{{.cloudstackEtcdSshAuthorizedKey}}'
+      {{- range $user.SshAuthorizedKeys }}
+      - '{{.}}'
+      {{- end }}
+    {{- end}}
       sudo: ALL=(ALL) NOPASSWD:ALL
 {{- if .proxyConfig }}
     proxy:

@@ -73,10 +73,13 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
-      users:
-      - name: {{.workerSshUsername}}
+      users:{{ range $user := .workerSshUsers }}
+      - name: {{ $user.Name }}
         sshAuthorizedKeys:
-        - '{{.cloudstackWorkerSshAuthorizedKey}}'
+        {{- range $user.SshAuthorizedKeys }}
+        - '{{.}}'
+        {{- end }}
+      {{- end}}
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: {{.format}}
 ---
