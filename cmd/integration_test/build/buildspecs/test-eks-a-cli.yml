@@ -59,7 +59,6 @@ env:
     T_CLOUDSTACK_CIDR: "cloudstack_ci_beta_connection:cidr"
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
-    T_CLOUDSTACK_CLUSTER_IP_POOL: "cloudstack_ci_beta_connection:cluster_ip_pool"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
 
 phases:
