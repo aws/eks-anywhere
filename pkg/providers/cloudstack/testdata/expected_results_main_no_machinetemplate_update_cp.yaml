@@ -35,8 +35,10 @@ spec:
     port: 6443
   zones:
     - network:
-        name: "net1"
-      name: "zone1"
+        name: net1
+      name: zone1
+  domain: domain1
+  account: admin
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
@@ -59,10 +61,11 @@ metadata:
   name: test
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: CloudStackMachineTemplate
-    name: test-control-plane-template-original
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: CloudStackMachineTemplate
+      name: test-control-plane-template-original
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -84,6 +87,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -95,18 +99,15 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
-          readOnly: false
       controllerManager:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
         apiVersion: v1
@@ -118,22 +119,30 @@ spec:
         spec:
           containers:
           - args:
-            - start
+            - manager
             env:
             - name: vip_arp
               value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
             - name: vip_leaderelection
               value: "true"
-            - name: vip_address
-              value: 1.2.3.4
-            - name: vip_interface
-              value: ens3
             - name: vip_leaseduration
               value: "15"
             - name: vip_renewdeadline
               value: "10"
             - name: vip_retryperiod
               value: "2"
+            - name: address
+              value: 1.2.3.4
             image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
@@ -142,7 +151,7 @@ spec:
               capabilities:
                 add:
                 - NET_ADMIN
-                - SYS_TIME
+                - NET_RAW
             volumeMounts:
             - mountPath: /etc/kubernetes/admin.conf
               name: kubeconfig
@@ -150,7 +159,6 @@ spec:
           volumes:
           - hostPath:
               path: /etc/kubernetes/admin.conf
-              type: FileOrCreate
             name: kubeconfig
         status: {}
       owner: root:root
@@ -320,7 +328,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -328,7 +338,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     preKubeadmCommands:
     - swapoff -a
     - hostname "{{ ds.meta_data.local_hostname }}"
@@ -366,6 +378,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -390,4 +403,3 @@ spec:
         name: centos7-k8s-118
       affinitygroupids:
       - etcd-affinity
----

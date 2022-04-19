@@ -22,7 +22,7 @@ func WithPublicRead() UploadOpt {
 func UploadFile(session *session.Session, file, key, bucket string, opts ...UploadOpt) error {
 	fileBody, err := os.Open(file)
 	if err != nil {
-		return fmt.Errorf("error opening file for upload: %v", err)
+		return fmt.Errorf("opening file for upload: %v", err)
 	}
 
 	return upload(session, fileBody, key, bucket, opts...)
@@ -46,7 +46,7 @@ func upload(session *session.Session, body io.Reader, key, bucket string, opts .
 
 	_, err := s3Uploader.Upload(i)
 	if err != nil {
-		return fmt.Errorf("error uploading to s3: %v", err)
+		return fmt.Errorf("uploading to s3: %v", err)
 	}
 
 	return nil

@@ -38,7 +38,7 @@ func ListInstances(session *session.Session, key string, value string, maxAge fl
 	for {
 		result, err := service.DescribeInstances(input)
 		if err != nil {
-			return nil, fmt.Errorf("error describing EC2 instances: %v", err)
+			return nil, fmt.Errorf("describing EC2 instances: %v", err)
 		}
 		reservations := result.Reservations
 		for _, reservation := range reservations {

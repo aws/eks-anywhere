@@ -106,6 +106,7 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 	artifacts := r.BundleArtifactsTable["kindnetd"]
 
 	var sourceBranch string
+	var componentChecksum string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
@@ -129,7 +130,11 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
 		componentChecksum,

@@ -20,7 +20,7 @@ func TagInstance(session *session.Session, instanceId, key, value string) error 
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error tagging instance: %v", err)
+		return fmt.Errorf("tagging instance: %v", err)
 	}
 
 	return nil

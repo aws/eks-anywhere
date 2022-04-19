@@ -36,7 +36,7 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
 			content, err := ioutil.ReadFile(caCert)
 			if err != nil {
-				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
+				return fmt.Errorf("reading the cert file %s: %v", caCert, err)
 			}
 			logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
 			clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)

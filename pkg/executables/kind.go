@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 const kindPath = "kind"
@@ -47,6 +48,7 @@ type kindExecConfig struct {
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
 	RegistryCACertPath     string
+	ExtraPortMappings      []int
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
 }
@@ -84,7 +86,7 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Cluster.Name), "kubeconfig", kubeconfigName)
 	_, err = k.ExecuteWithEnv(ctx, k.execConfig.env, executionArgs...)
 	if err != nil {
-		return "", fmt.Errorf("error executing create cluster: %v", err)
+		return "", fmt.Errorf("executing create cluster: %v", err)
 	}
 
 	return kubeconfigName, nil
@@ -94,7 +96,7 @@ func (k *Kind) ClusterExists(ctx context.Context, clusterName string) (bool, err
 	internalName := getInternalName(clusterName)
 	stdOut, err := k.Execute(ctx, "get", "clusters")
 	if err != nil {
-		return false, fmt.Errorf("error executing get clusters: %v", err)
+		return false, fmt.Errorf("executing get clusters: %v", err)
 	}
 
 	logger.V(5).Info("Executed kind get clusters", "response", stdOut.String())
@@ -117,7 +119,7 @@ func (k *Kind) GetKubeconfig(ctx context.Context, clusterName string) (string, e
 	internalName := getInternalName(clusterName)
 	stdOut, err := k.Execute(ctx, "get", "kubeconfig", "--name", internalName)
 	if err != nil {
-		return "", fmt.Errorf("error executing get kubeconfig: %v", err)
+		return "", fmt.Errorf("executing get kubeconfig: %v", err)
 	}
 	return k.createKubeConfig(clusterName, stdOut.Bytes())
 }
@@ -129,6 +131,22 @@ func (k *Kind) WithExtraDockerMounts() bootstrapper.BootstrapClusterClientOption
 		}
 
 		k.execConfig.DockerExtraMounts = true
+		return nil
+	}
+}
+
+func (k *Kind) WithExtraPortMappings(ports []int) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		if len(ports) == 0 {
+			return errors.New("no ports found in the list")
+		}
+
+		k.execConfig.ExtraPortMappings = ports
+
 		return nil
 	}
 }
@@ -177,7 +195,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
 	_, err := k.Execute(ctx, "delete", "cluster", "--name", internalName)
 	if err != nil {
-		return fmt.Errorf("error executing delete cluster: %v", err)
+		return fmt.Errorf("executing delete cluster: %v", err)
 	}
 	return err
 }
@@ -185,7 +203,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            clusterSpec.Cluster.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
+		KindImage:            urls.ReplaceHost(bundle.EksD.KindNode.VersionedImage(), clusterSpec.Cluster.RegistryMirror()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
@@ -218,7 +236,7 @@ func (k *Kind) buildConfigFile() error {
 	t := templater.New(k.writer)
 	writtenFileName, err := t.WriteToFile(kindConfigTemplate, k.execConfig, configFileName)
 	if err != nil {
-		return fmt.Errorf("error creating file for kind config: %v", err)
+		return fmt.Errorf("creating file for kind config: %v", err)
 	}
 
 	k.execConfig.ConfigFile = writtenFileName
@@ -239,7 +257,7 @@ func (k *Kind) execArguments(clusterName string, kubeconfigName string) []string
 func (k *Kind) createKubeConfig(clusterName string, content []byte) (string, error) {
 	fileName, err := k.writer.Write(fmt.Sprintf("%s.kind.kubeconfig", clusterName), content)
 	if err != nil {
-		return "", fmt.Errorf("error generating temp file for storing kind kubeconfig: %v", err)
+		return "", fmt.Errorf("generating temp file for storing kind kubeconfig: %v", err)
 	}
 	return fileName, nil
 }

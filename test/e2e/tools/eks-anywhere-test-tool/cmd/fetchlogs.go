@@ -25,17 +25,17 @@ var e2eFetchLogsCommand = &cobra.Command{
 		fmt.Println("Let's fetch some logs! \U0001FAB5")
 		buildAccountCodebuild, err := codebuild.New(awsprofiles.BuildAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating codebuild client: %v", err)
+			return fmt.Errorf("creating codebuild client: %v", err)
 		}
 
 		buildAccountCw, err := cloudwatch.New(awsprofiles.BuildAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating cloudwatch logs client: %v", err)
+			return fmt.Errorf("creating cloudwatch logs client: %v", err)
 		}
 
 		testAccountCw, err := cloudwatch.New(awsprofiles.TestAccount)
 		if err != nil {
-			return fmt.Errorf("error when instantiating CW profile: %v", err)
+			return fmt.Errorf("instantiating CW profile: %v", err)
 		}
 
 		var fetcherOpts []logfetcher.LogFetcherOpt

@@ -39,6 +39,12 @@ func (d *Docker) CustomizeProviderConfig(file string) []byte {
 	return providerOutput
 }
 
+func (d *Docker) WithProviderUpgradeGit() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = d.CustomizeProviderConfig(e.clusterConfigGitPath())
+	}
+}
+
 func (d *Docker) ClusterConfigFillers() []api.ClusterFiller {
 	return nil
 }

@@ -403,6 +403,20 @@ func (mr *MockProviderKubectlClientMockRecorder) SearchCloudStackMachineConfig(a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchCloudStackMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).SearchCloudStackMachineConfig), arg0, arg1, arg2, arg3)
 }
 
+// SetEksaControllerEnvVar mocks base method.
+func (m *MockProviderKubectlClient) SetEksaControllerEnvVar(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetEksaControllerEnvVar", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetEksaControllerEnvVar indicates an expected call of SetEksaControllerEnvVar.
+func (mr *MockProviderKubectlClientMockRecorder) SetEksaControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEksaControllerEnvVar", reflect.TypeOf((*MockProviderKubectlClient)(nil).SetEksaControllerEnvVar), arg0, arg1, arg2, arg3)
+}
+
 // UpdateAnnotation mocks base method.
 func (m *MockProviderKubectlClient) UpdateAnnotation(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 ...executables.KubectlOpt) error {
 	m.ctrl.T.Helper()

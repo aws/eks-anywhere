@@ -27,7 +27,8 @@ type Upgrade struct {
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Upgrade {
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
+) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
 		bootstrapper:      bootstrapper,
@@ -182,7 +183,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 
 	logger.Info("Upgrading core components")
 
-	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -224,20 +225,17 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, commandContext.ClusterSpec, commandContext.CurrentClusterSpec); err != nil {
+	target := getManagementCluster(commandContext)
+	newSpec := commandContext.ClusterSpec
+
+	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, newSpec, commandContext.CurrentClusterSpec, target); err != nil {
 		commandContext.SetError(err)
 		return nil
 	} else if upgradeNeeded {
 		logger.V(3).Info("Provider needs a cluster upgrade")
 		return &pauseEksaAndFluxReconcile{}
 	}
-
-	target := getManagementCluster(commandContext)
-
-	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
-	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
-	newSpec := commandContext.ClusterSpec
-	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs)
+	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -450,7 +448,8 @@ func (s *writeClusterConfigTask) Name() string {
 
 func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.OriginalError != nil {
-		_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
+		c := CollectDiagnosticsTask{}
+		c.Run(ctx, commandContext)
 	}
 	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, true); err != nil {

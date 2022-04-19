@@ -103,7 +103,7 @@ func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error
 	}
 
 	if err := fc.gitOpts.Git.Add(fc.path()); err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", fc.path(), err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", fc.path(), err)}
 	}
 
 	if err := fc.FluxAddonClient.pushToRemoteRepo(ctx, fc.path(), upgradeFluxconfigCommitMessage); err != nil {
@@ -169,7 +169,7 @@ func (fc *fluxForCluster) generateUpdatedEksaConfig(fileName string) ([]byte, er
 		}
 		resourceYaml, err := yaml.Marshal(resource.Object)
 		if err != nil {
-			return nil, fmt.Errorf("error outputting yaml: %v", err)
+			return nil, fmt.Errorf("outputting yaml: %v", err)
 		}
 		resources = append(resources, resourceYaml)
 	}

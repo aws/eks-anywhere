@@ -111,7 +111,7 @@ func runE2E(ctx context.Context) error {
 
 	err := e2e.RunTestsInParallel(runConf)
 	if err != nil {
-		return fmt.Errorf("error running e2e tests: %v", err)
+		return fmt.Errorf("running e2e tests: %v", err)
 	}
 
 	return nil

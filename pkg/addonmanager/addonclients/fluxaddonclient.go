@@ -77,7 +77,7 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig 
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
 	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &gitOpsConfig.Spec)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Git provider: %v", err)
+		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
 	err = gitProvider.Validate(ctx)
 	if err != nil {
@@ -86,7 +86,7 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig 
 	localGitWriterPath := filepath.Join("git", gitOpsConfig.Spec.Flux.Github.Repository)
 	gitwriter, err := writer.WithDir(localGitWriterPath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating file writer: %v", err)
+		return nil, fmt.Errorf("creating file writer: %v", err)
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
@@ -260,7 +260,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 	path := fc.eksaSystemDir()
 	err := f.gitOpts.Git.Add(path)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", path, err)}
 	}
 
 	err = f.pushToRemoteRepo(ctx, path, updateClusterconfigCommitMessage)
@@ -322,7 +322,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 
 	err := f.gitOpts.Git.Remove(p)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", p, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", p, err)}
 	}
 
 	err = f.pushToRemoteRepo(ctx, p, deleteClusterconfigCommitMessage)
@@ -337,14 +337,14 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 func (f *FluxAddonClient) pushToRemoteRepo(ctx context.Context, path, msg string) error {
 	err := f.gitOpts.Git.Commit(msg)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when committing %s to git:  %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("committing %s to git:  %v", path, err)}
 	}
 
 	err = f.retrier.Retry(func() error {
 		return f.gitOpts.Git.Push(ctx)
 	})
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when pushing %s to git: %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("pushing %s to git: %v", path, err)}
 	}
 	return nil
 }
@@ -393,7 +393,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
 	err = fc.gitOpts.Git.Add(p)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", p, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", p, err)}
 	}
 
 	err = fc.FluxAddonClient.pushToRemoteRepo(ctx, p, initialClusterconfigCommitMessage)
@@ -428,7 +428,7 @@ func (fc *fluxForCluster) initEksaWriter() (filewriter.FileWriter, error) {
 	eksaSystemDir := fc.eksaSystemDir()
 	w, err := fc.gitOpts.Writer.WithDir(eksaSystemDir)
 	if err != nil {
-		err = fmt.Errorf("error creating %s directory: %v", eksaSystemDir, err)
+		err = fmt.Errorf("creating %s directory: %v", eksaSystemDir, err)
 	}
 	w.CleanUpTemp()
 	return w, err
@@ -455,7 +455,7 @@ func (fc *fluxForCluster) generateClusterConfigFile(w filewriter.FileWriter) err
 		return err
 	}
 	if filePath, err := w.Write(clusterConfigFileName, resourcesSpec, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error writing eks-a cluster config file into %s: %v", filePath, err)
+		return fmt.Errorf("writing eks-a cluster config file into %s: %v", filePath, err)
 	}
 
 	return nil
@@ -467,7 +467,7 @@ func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) err
 	}
 	t := templater.New(w)
 	if filePath, err := t.WriteToFile(eksaKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error writing eks-a kustomization manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("writing eks-a kustomization manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -475,7 +475,7 @@ func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) err
 func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
 	w, err := fc.gitOpts.Writer.WithDir(fc.fluxSystemDir())
 	if err != nil {
-		err = fmt.Errorf("error creating %s directory: %v", fc.fluxSystemDir(), err)
+		err = fmt.Errorf("creating %s directory: %v", fc.fluxSystemDir(), err)
 	}
 	w.CleanUpTemp()
 	return w, err
@@ -512,14 +512,14 @@ func (fc *fluxForCluster) generateFluxKustomizeFile(t *templater.Templater) erro
 		"Namespace": fc.namespace(),
 	}
 	if filePath, err := t.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system kustomization manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system kustomization manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
 
 func (f *FluxAddonClient) generateFluxSyncFile(t *templater.Templater) error {
 	if filePath, err := t.WriteToFile(fluxSyncContent, nil, fluxSyncFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system sync manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system sync manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -534,7 +534,7 @@ func (fc *fluxForCluster) generateFluxPatchFile(t *templater.Templater) error {
 		"NotificationControllerImage": bundle.Flux.NotificationController.VersionedImage(),
 	}
 	if filePath, err := t.WriteToFile(fluxPatchContent, values, fluxPatchFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system patch manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system patch manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -631,11 +631,11 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 
 	// git requires at least one commit in the repo to branch from
 	if err = fc.gitOpts.Git.Commit("initializing repository"); err != nil {
-		return fmt.Errorf("error when initializing repository: %v", err)
+		return fmt.Errorf("initializing repository: %v", err)
 	}
 
 	if err = fc.gitOpts.Git.Branch(fc.branch()); err != nil {
-		return fmt.Errorf("error when creating branch: %v", err)
+		return fmt.Errorf("creating branch: %v", err)
 	}
 	return nil
 }

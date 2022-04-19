@@ -214,6 +214,20 @@ func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundle", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundle), arg0)
 }
 
+// InstallCustomProviderComponents mocks base method.
+func (m *MockProvider) InstallCustomProviderComponents(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallCustomProviderComponents", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallCustomProviderComponents indicates an expected call of InstallCustomProviderComponents.
+func (mr *MockProviderMockRecorder) InstallCustomProviderComponents(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomProviderComponents", reflect.TypeOf((*MockProvider)(nil).InstallCustomProviderComponents), arg0, arg1)
+}
+
 // MachineConfigs mocks base method.
 func (m *MockProvider) MachineConfigs(arg0 *cluster.Spec) []providers.MachineConfig {
 	m.ctrl.T.Helper()
@@ -284,18 +298,18 @@ func (mr *MockProviderMockRecorder) PostBootstrapSetup(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetup", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetup), arg0, arg1, arg2)
 }
 
-// RunPostControlPlaneCreation mocks base method.
-func (m *MockProvider) RunPostControlPlaneCreation(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+// PostClusterDeleteValidate mocks base method.
+func (m *MockProvider) PostClusterDeleteValidate(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunPostControlPlaneCreation", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PostClusterDeleteValidate", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// RunPostControlPlaneCreation indicates an expected call of RunPostControlPlaneCreation.
-func (mr *MockProviderMockRecorder) RunPostControlPlaneCreation(arg0, arg1, arg2 interface{}) *gomock.Call {
+// PostClusterDeleteValidate indicates an expected call of PostClusterDeleteValidate.
+func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneCreation", reflect.TypeOf((*MockProvider)(nil).RunPostControlPlaneCreation), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClusterDeleteValidate", reflect.TypeOf((*MockProvider)(nil).PostClusterDeleteValidate), arg0, arg1)
 }
 
 // RunPostControlPlaneUpgrade mocks base method.
@@ -327,17 +341,17 @@ func (mr *MockProviderMockRecorder) SetupAndValidateCreateCluster(arg0, arg1 int
 }
 
 // SetupAndValidateDeleteCluster mocks base method.
-func (m *MockProvider) SetupAndValidateDeleteCluster(arg0 context.Context) error {
+func (m *MockProvider) SetupAndValidateDeleteCluster(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetupAndValidateDeleteCluster", arg0)
+	ret := m.ctrl.Call(m, "SetupAndValidateDeleteCluster", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetupAndValidateDeleteCluster indicates an expected call of SetupAndValidateDeleteCluster.
-func (mr *MockProviderMockRecorder) SetupAndValidateDeleteCluster(arg0 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) SetupAndValidateDeleteCluster(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateDeleteCluster", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateDeleteCluster), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateDeleteCluster", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateDeleteCluster), arg0, arg1)
 }
 
 // SetupAndValidateUpgradeCluster mocks base method.
@@ -383,18 +397,18 @@ func (mr *MockProviderMockRecorder) UpdateSecrets(arg0, arg1 interface{}) *gomoc
 }
 
 // UpgradeNeeded mocks base method.
-func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec) (bool, error) {
+func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec, arg3 *types.Cluster) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpgradeNeeded indicates an expected call of UpgradeNeeded.
-func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2, arg3)
 }
 
 // ValidateNewSpec mocks base method.

@@ -42,7 +42,7 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 	oldClusterConfigPath := ofc.path()
 	updateNeeded, err := nfc.filesUpdateNeeded(oldClusterConfigPath)
 	if err != nil {
-		return fmt.Errorf("error updating git repo: %v", err)
+		return fmt.Errorf("updating git repo: %v", err)
 	}
 	if !updateNeeded {
 		logger.V(1).Info("Git repo file structure is already up-to-date")
@@ -54,7 +54,7 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 	}
 
 	if err := nfc.gitOpts.Git.Add(nfc.path()); err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", nfc.path(), err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", nfc.path(), err)}
 	}
 
 	if err := nfc.FluxAddonClient.pushToRemoteRepo(ctx, nfc.path(), upgradeFluxconfigCommitMessage); err != nil {
@@ -99,7 +99,7 @@ func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 	if oldEksaPath != nfc.eksaSystemDir() {
 		err = nfc.gitOpts.Git.Remove(oldEksaPath)
 		if err != nil {
-			return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", oldEksaPath, err)}
+			return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", oldEksaPath, err)}
 		}
 	}
 
@@ -131,7 +131,7 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 
 		gitopsYaml, err := yaml.Marshal(gitopsconfig.ConvertConfigToConfigGenerateStruct())
 		if err != nil {
-			return nil, fmt.Errorf("error outputting yaml: %v", err)
+			return nil, fmt.Errorf("outputting yaml: %v", err)
 		}
 		resources = append(resources, gitopsYaml)
 	}

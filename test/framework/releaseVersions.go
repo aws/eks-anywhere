@@ -8,8 +8,9 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/files"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/releases"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -121,7 +122,7 @@ func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 
 		binaryUri, err := r.binaryUri()
 		if err != nil {
-			return "", fmt.Errorf("error determining URI for EKS-A binary: %v", err)
+			return "", fmt.Errorf("determining URI for EKS-A binary: %v", err)
 		}
 		err = files.GzipFileDownloadExtract(binaryUri, releaseBinaryName, latestReleaseBinaryFolder)
 		if err != nil {
@@ -161,9 +162,9 @@ func (p *platformAwareRelease) binaryUri() (binaryUri string, err error) {
 }
 
 func prodReleases() (release *releasev1alpha1.Release, err error) {
-	reader := cluster.NewManifestReader()
+	reader := filereader.NewReader()
 	logger.Info("Reading prod release manifest", "manifest", prodReleasesManifest)
-	releases, err := reader.GetReleases(prodReleasesManifest)
+	releases, err := releases.ReadReleasesFromURL(reader, prodReleasesManifest)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,6 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
-
-const eksdReleaseObjDoesNotExist = "the server doesn't have a resource type \"releases\""
 
 type BundlesFetch func(ctx context.Context, name, namespace string) (*v1alpha1release.Bundles, error)
 
@@ -74,12 +71,8 @@ func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bu
 	}
 	eksd, err := fetch(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
 	if err != nil {
-		if strings.Contains(err.Error(), eksdReleaseObjDoesNotExist) {
-			logger.V(4).Info("EKS-D release objects are not present on the cluster. EKS-D release manifest will be retrieved from the URL in the bundle")
-			return nil, nil
-		} else {
-			return nil, fmt.Errorf("failed fetching EKS-D release for cluster: %v", err)
-		}
+		logger.V(4).Info("EKS-D release objects cannot be retrieved from the cluster. Fetching EKS-D release manifest from the URL in the bundle")
+		return nil, nil
 	}
 
 	return eksd, nil

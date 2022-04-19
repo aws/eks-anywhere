@@ -44,9 +44,7 @@ Generate hardware JSON and YAML files used for Tinkerbell provider. Tinkerbell
 hardware JSON are registered with a Tinkerbell stack. Use --skip-registration 
 to prevent Tinkerbell stack interactions.
 `,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return hOpts.generateHardware(cmd.Context())
-	},
+	RunE: hOpts.generateHardware,
 }
 
 func init() {
@@ -60,18 +58,24 @@ func init() {
 	}
 
 	flags.StringVar(&hOpts.tinkerbellIp, generateHardwareTinkerbellIpFlagName, "", "Tinkerbell stack IP address; not required with --skip-registration")
-	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareTinkerbellIpFlagName); err != nil {
-		panic(err)
-	}
-
 	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files; Tinkerbell JSON files are stored under a \"json\" subdirectory")
 	flags.StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
 	flags.StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
 	flags.BoolVar(&hOpts.skipRegistration, "skip-registration", false, "skip hardware registration with the Tinkerbell stack")
 }
 
-func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
+func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	if !hOpts.skipRegistration {
+		// If we aren't skipping registration we want to make the tinkerbell IP mandatory.
+		if err := cmd.MarkFlagRequired(generateHardwareTinkerbellIpFlagName); err != nil {
+			return err
+		}
+
+		if err := cmd.ParseFlags(args); err != nil {
+			return err
+		}
+
 		if err := validateOptions(hOpts); err != nil {
 			return err
 		}

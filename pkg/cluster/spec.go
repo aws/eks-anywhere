@@ -10,9 +10,10 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/bundles"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
-	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -33,7 +34,7 @@ type Spec struct {
 	bundlesManifestURL        string
 	configFS                  embed.FS
 	userAgent                 string
-	reader                    *ManifestReader
+	reader                    *files.Reader
 	VersionsBundle            *VersionsBundle
 	eksdRelease               *eksdv1alpha1.Release
 	Bundles                   *v1alpha1.Bundles
@@ -151,7 +152,7 @@ func NewSpec(opts ...SpecOpt) *Spec {
 		opt(s)
 	}
 
-	s.reader = s.newManifestReader()
+	s.reader = s.newReader()
 
 	return s
 }
@@ -172,17 +173,17 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	bundles, err := s.GetBundles(cliVersion)
+	bundlesManifest, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig.Cluster.Spec.KubernetesVersion, bundles)
+	versionsBundle, err := s.getVersionsBundle(clusterConfig.Cluster.Spec.KubernetesVersion, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
 
-	eksd, err := s.reader.GetEksdRelease(versionsBundle)
+	eksd, err := bundles.ReadEKSD(s.reader, *versionsBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +193,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	s.Bundles = bundles
+	s.Bundles = bundlesManifest
 	s.Config = clusterConfig
 	s.VersionsBundle = &VersionsBundle{
 		VersionsBundle: versionsBundle,
@@ -236,16 +237,16 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	return s, nil
 }
 
-func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
+func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundlesManifest *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
-	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundles)
+	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
 
 	if s.eksdRelease == nil {
-		eksd, err := s.reader.GetEksdRelease(versionsBundle)
+		eksd, err := bundles.ReadEKSD(s.reader, *versionsBundle)
 		if err != nil {
 			return nil, err
 		}
@@ -256,7 +257,7 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		return nil, err
 	}
 
-	s.Bundles = bundles
+	s.Bundles = bundlesManifest
 	s.Config.Cluster = cluster
 	s.VersionsBundle = &VersionsBundle{
 		VersionsBundle: versionsBundle,
@@ -266,8 +267,8 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 	return s, nil
 }
 
-func (s *Spec) newManifestReader() *ManifestReader {
-	return NewManifestReader(files.WithEmbedFS(s.configFS), files.WithUserAgent(s.userAgent))
+func (s *Spec) newReader() *files.Reader {
+	return files.NewReader(files.WithEmbedFS(s.configFS), files.WithUserAgent(s.userAgent))
 }
 
 func (s *Spec) getVersionsBundle(kubeVersion eksav1alpha1.KubernetesVersion, bundles *v1alpha1.Bundles) (*v1alpha1.VersionsBundle, error) {
@@ -282,40 +283,11 @@ func (s *Spec) getVersionsBundle(kubeVersion eksav1alpha1.KubernetesVersion, bun
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	bundlesURL := s.bundlesManifestURL
 	if bundlesURL == "" {
-		release, err := s.GetRelease(cliVersion)
-		if err != nil {
-			return nil, err
-		}
-
-		bundlesURL = release.BundleManifestUrl
+		manifestReader := manifests.NewReader(s.reader, manifests.WithReleasesManifest(s.releasesManifestURL))
+		return manifestReader.ReadBundlesForVersion(cliVersion.GitVersion)
 	}
 
-	return s.reader.GetBundles(bundlesURL)
-}
-
-func (s *Spec) GetRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error) {
-	cliSemVersion, err := semver.New(cliVersion.GitVersion)
-	if err != nil {
-		return nil, fmt.Errorf("invalid cli version: %v", err)
-	}
-
-	releases, err := s.reader.GetReleases(s.releasesManifestURL)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, release := range releases.Spec.Releases {
-		releaseVersion, err := semver.New(release.Version)
-		if err != nil {
-			return nil, fmt.Errorf("invalid version for release %d: %v", release.Number, err)
-		}
-
-		if cliSemVersion.SamePrerelease(releaseVersion) {
-			return &release, nil
-		}
-	}
-
-	return nil, fmt.Errorf("eksa release %s does not exist in manifest %s", cliVersion, s.releasesManifestURL)
+	return bundles.Read(s.reader, bundlesURL)
 }
 
 func (s *Spec) KubeDistroImages() []v1alpha1.Image {
@@ -394,27 +366,6 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	return i.Image()[:lastInd], i.Tag()
 }
 
-func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster) (*v1alpha1.EksDRelease, *eksdv1alpha1.Release, error) {
-	s := newWithCliVersion(cliVersion)
-
-	bundles, err := s.GetBundles(cliVersion)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	versionsBundle, err := s.getVersionsBundle(clusterConfig.Spec.KubernetesVersion, bundles)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	eksdRelease, err := s.reader.GetEksdRelease(versionsBundle)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return &versionsBundle.EksD, eksdRelease, nil
-}
-
 // GetVersionsBundleForVersion returns the  versionBundle for gitVersion and kubernetes version
 func GetVersionsBundleForVersion(cliVersion version.Info, kubernetesVersion eksav1alpha1.KubernetesVersion) (*v1alpha1.VersionsBundle, error) {
 	s := newWithCliVersion(cliVersion)
@@ -488,18 +439,12 @@ func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
 
 func (vb *VersionsBundle) Images() []v1alpha1.Image {
 	var images []v1alpha1.Image
-	images = append(images, vb.SharedImages()...)
+	images = append(images, vb.VersionsBundle.Images()...)
 	images = append(images, vb.KubeDistroImages()...)
-	images = append(images, vb.DockerImages()...)
-	images = append(images, vb.VsphereImages()...)
 
 	return images
 }
 
 func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
-}
-
-func (s *Spec) GetReleaseManifestUrl() string {
-	return s.releasesManifestURL
 }

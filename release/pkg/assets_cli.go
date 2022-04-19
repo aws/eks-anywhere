@@ -33,6 +33,7 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 	artifacts := []Artifact{}
 	for _, os := range osList {
 		releaseName := fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
+		releaseName = strings.ReplaceAll(releaseName, "+", "-")
 
 		var sourceS3Key string
 		var sourceS3Prefix string

@@ -142,7 +142,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 		}
 
 		if err := ioutil.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
-			return fmt.Errorf("error generating file for infrastructure bundle %s: %v", m.Filename, err)
+			return fmt.Errorf("generating file for infrastructure bundle %s: %v", m.Filename, err)
 		}
 	}
 
@@ -168,7 +168,7 @@ func (c *Clusterctl) GetWorkloadKubeconfig(ctx context.Context, clusterName stri
 		"--namespace", constants.EksaSystemNamespace,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error executing get kubeconfig: %v", err)
+		return nil, fmt.Errorf("executing get kubeconfig: %v", err)
 	}
 	return stdOut.Bytes(), nil
 }
@@ -207,7 +207,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 
 	_, err = c.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
-		return fmt.Errorf("error executing init: %v", err)
+		return fmt.Errorf("executing init: %v", err)
 	}
 
 	return nil
@@ -286,7 +286,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 
 	filePath, err := t.WriteToFile(clusterctlConfigTemplate, data, clusterctlConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("error generating configuration file for clusterctl: %v", err)
+		return nil, fmt.Errorf("generating configuration file for clusterctl: %v", err)
 	}
 	if err := buildOverridesLayer(clusterSpec, clusterName, provider); err != nil {
 		return nil, err
@@ -393,7 +393,7 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 
 	_, err = c.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
-		return fmt.Errorf("error executing init: %v", err)
+		return fmt.Errorf("executing init: %v", err)
 	}
 
 	return nil

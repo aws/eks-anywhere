@@ -19,9 +19,9 @@ import (
 
 const (
 	expectedSnowProviderName = "snow"
-	credsFileEnvVar          = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
+	credsFileEnvVar          = "EKSA_AWS_CREDENTIALS_FILE"
 	credsFilePath            = "testdata/credentials"
-	certsFileEnvVar          = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
+	certsFileEnvVar          = "EKSA_AWS_CA_BUNDLES_FILE"
 	certsFilePath            = "testdata/certificates"
 )
 
@@ -29,6 +29,7 @@ type snowTest struct {
 	*WithT
 	ctx         context.Context
 	kubectl     *mocks.MockProviderKubectlClient
+	aws         *mocks.MockAwsClient
 	provider    *snowProvider
 	cluster     *types.Cluster
 	clusterSpec *cluster.Spec
@@ -37,14 +38,16 @@ type snowTest struct {
 func newSnowTest(t *testing.T) snowTest {
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	mockaws := mocks.NewMockAwsClient(ctrl)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(t, kubectl)
+	provider := newProvider(t, kubectl, mockaws)
 	return snowTest{
 		WithT:       NewWithT(t),
 		ctx:         context.Background(),
 		kubectl:     kubectl,
+		aws:         mockaws,
 		provider:    provider,
 		cluster:     cluster,
 		clusterSpec: givenClusterSpec(),
@@ -182,7 +185,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 }
 
 func givenProvider(t *testing.T) *snowProvider {
-	return newProvider(t, nil)
+	return newProvider(t, nil, nil)
 }
 
 func givenEmptyClusterSpec() *cluster.Spec {
@@ -191,10 +194,17 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(t *testing.T, kubectl ProviderKubectlClient) *snowProvider {
+func newProvider(t *testing.T, kubectl ProviderKubectlClient, mockaws *mocks.MockAwsClient) *snowProvider {
+	awsClients := AwsClientMap{
+		"device-1": mockaws,
+		"device-2": mockaws,
+	}
+	validator := NewValidatorFromAwsClientMap(awsClients)
+	defaulters := NewDefaultersFromAwsClientMap(awsClients, nil, nil)
+	configManager := NewConfigManager(defaulters, validator)
 	return NewProvider(
 		kubectl,
-		nil,
+		configManager,
 		test.FakeNow,
 	)
 }
@@ -229,6 +239,8 @@ func TestName(t *testing.T) {
 func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 }
@@ -238,7 +250,7 @@ func TestSetupAndValidateCreateClusterNoCredsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
@@ -246,13 +258,13 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(Succeed())
 }
 
@@ -260,16 +272,16 @@ func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
@@ -331,14 +343,14 @@ func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubectl.EXPECT().DeleteEksaDatacenterConfig(
 		tt.ctx,
-		snowDatacenterResourceType,
+		"snowdatacenterconfigs.anywhere.eks.amazonaws.com",
 		tt.clusterSpec.SnowDatacenter.Name,
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		tt.clusterSpec.SnowDatacenter.Namespace,
 	).Return(nil)
 	tt.kubectl.EXPECT().DeleteEksaMachineConfig(
 		tt.ctx,
-		snowMachineResourceType,
+		"snowmachineconfigs.anywhere.eks.amazonaws.com",
 		gomock.Any(),
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		gomock.Any(),

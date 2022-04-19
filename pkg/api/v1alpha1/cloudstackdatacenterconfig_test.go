@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -151,4 +152,52 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
+	Domain:  "domain1",
+	Account: "admin",
+	Zones: []CloudStackZone{
+		{
+			Name: "zone1",
+			Network: CloudStackResourceIdentifier{
+				Name: "net1",
+			},
+		},
+	},
+	ManagementApiEndpoint: "testEndpoint",
+}
+
+func TestCloudStackDatacenterConfigSpecEqual(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeTrue(), "deep copy CloudStackDatacenterConfigSpec showing as non-equal")
+}
+
+func TestCloudStackDatacenterConfigSpecNotEqualEndpoint(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2.ManagementApiEndpoint = "newEndpoint"
+	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "ManagementApiEndpoint comparison in CloudStackDatacenterConfigSpec not detected")
+}
+
+func TestCloudStackDatacenterConfigSpecNotEqualDomain(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2.Domain = "newDomain"
+	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Domain comparison in CloudStackDatacenterConfigSpec not detected")
+}
+
+func TestCloudStackDatacenterConfigSpecNotEqualAccount(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2.Account = "newAccount"
+	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackDatacenterConfigSpec not detected")
+}
+
+func TestCloudStackDatacenterConfigSpecNotEqualZonesNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2.Zones = nil
+	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Zones comparison in CloudStackDatacenterConfigSpec not detected")
 }

@@ -41,6 +41,11 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Setup Go
+GOLANG_VERSION?="1.17"
+GO_VERSION ?= $(shell source ../scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= $(GO_VERSION)/go
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -79,21 +84,21 @@ generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 fmt: ## Run go fmt against code.
-	go fmt ./...
+	$(GO) fmt ./...
 
 vet: ## Run go vet against code.
-	go vet ./...
+	$(GO) vet ./...
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.2/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); $(GO) test ./... -coverprofile cover.out
 
 ##@ Build
 
 build: clean fmt vet ## Build release binary.
-	go build -o bin/eks-anywhere-release main.go
+	$(GO) build -o bin/eks-anywhere-release main.go
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -104,8 +109,11 @@ bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat $(REPO_ROOT)/.github/workf
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
+unit-test: ## Run go test against code.
+	$(GO) test -count=1 ./...
+
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+	$(GO) run ./main.go
 
 ##@ Release
 

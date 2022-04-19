@@ -12,6 +12,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -24,6 +25,7 @@ type clusterReconciler struct {
 	ResourceFetcher
 	ResourceUpdater
 	vsphereTemplate      VsphereTemplate
+	cloudStackTemplate   CloudStackTemplate
 	dockerTemplate       DockerTemplate
 	awsIamConfigTemplate AWSIamConfigTemplate
 }
@@ -34,6 +36,11 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 		ResourceFetcher: resourceFetcher,
 		ResourceUpdater: resourceUpdater,
 		vsphereTemplate: VsphereTemplate{
+			ResourceFetcher: resourceFetcher,
+			ResourceUpdater: resourceUpdater,
+			now:             now,
+		},
+		cloudStackTemplate: CloudStackTemplate{
 			ResourceFetcher: resourceFetcher,
 			ResourceUpdater: resourceUpdater,
 			now:             now,
@@ -96,6 +103,41 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 			return err
 		}
 		resources = append(resources, r...)
+	case anywherev1.CloudStackDatacenterKind:
+		if !features.IsActive(features.CloudStackProvider()) {
+			return fmt.Errorf("cloudstack provider is not supported in eks-a controller")
+		}
+		csdc := &anywherev1.CloudStackDatacenterConfig{}
+		cpCsmc := &anywherev1.CloudStackMachineConfig{}
+		etcdCsmc := &anywherev1.CloudStackMachineConfig{}
+		workerCsmc := &anywherev1.CloudStackMachineConfig{}
+		workerCsmcs := make(map[string]anywherev1.CloudStackMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations))
+		err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, csdc)
+		if err != nil {
+			return err
+		}
+		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, cpCsmc)
+		if err != nil {
+			return err
+		}
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerCsmc)
+			if err != nil {
+				return err
+			}
+			workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerCsmc
+		}
+		if cs.Spec.ExternalEtcdConfiguration != nil {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdCsmc)
+			if err != nil {
+				return err
+			}
+		}
+		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCsmc, *etcdCsmc, workerCsmcs)
+		if err != nil {
+			return err
+		}
+		resources = append(resources, r...)
 	case anywherev1.DockerDatacenterKind:
 		r, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
 		if err != nil {
@@ -106,7 +148,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		return fmt.Errorf("unsupport Provider %s", cs.Spec.DatacenterRef.Kind)
 	}
 
-	// Reconcling IdentityProviders
+	// Reconcile IdentityProviders
 	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:

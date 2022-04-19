@@ -45,3 +45,12 @@ nodes:
     - hostPath: /var/run/docker.sock
       containerPath: /var/run/docker.sock
 {{- end }}
+{{- if ne (len .ExtraPortMappings) 0 }}
+nodes:
+- role: control-plane
+  extraPortMappings:
+{{- range .ExtraPortMappings }}
+  - containerPort: {{ . }}
+    hostPort: {{ . }}
+{{- end }}
+{{- end }}

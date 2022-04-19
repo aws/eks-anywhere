@@ -13,7 +13,6 @@ Here are some key customer benefits of using Amazon EKS Anywhere:
 * **Consistent and reliable** - Amazon EKS Anywhere gives you on-premises Kubernetes operational tooling that’s consistent with Amazon EKS. It builds on the strengths of Amazon EKS Distro and provides open-source software that’s up-to-date and patched, so you can have a Kubernetes environment on-premises that is more reliable than self-managed Kubernetes offerings.
 
 ## Use-cases supported by EKS Anywhere
-
 EKS Anywhere is suitable for the following use-cases:
 
 * **Hybrid cloud consistency** - You may have lots of Kubernetes workloads on Amazon EKS but also need to operate Kubernetes clusters on-premises. Amazon EKS Anywhere offers strong operational consistency with Amazon EKS so you can standardize your Kubernetes operations based on a unified toolset.

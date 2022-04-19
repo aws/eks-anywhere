@@ -126,6 +126,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 	sortedComponentNames := sortArtifactsMap(etcdadmControllerBundleArtifacts)
 
 	var sourceBranch string
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
@@ -168,7 +169,11 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, etcdadmControllerProjectPath, sourceBranch, r),
 		componentChecksum,

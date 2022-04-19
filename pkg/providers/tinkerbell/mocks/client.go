@@ -10,9 +10,13 @@ import (
 
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
+	hardware "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
-	hardware "github.com/tinkerbell/tink/protos/hardware"
+	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
+	hardware0 "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -40,18 +44,18 @@ func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecor
 	return m.recorder
 }
 
-// ApplyHardware mocks base method.
-func (m *MockProviderKubectlClient) ApplyHardware(arg0 context.Context, arg1, arg2 string) error {
+// ApplyKubeSpecFromBytesForce mocks base method.
+func (m *MockProviderKubectlClient) ApplyKubeSpecFromBytesForce(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyHardware", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesForce", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ApplyHardware indicates an expected call of ApplyHardware.
-func (mr *MockProviderKubectlClientMockRecorder) ApplyHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ApplyKubeSpecFromBytesForce indicates an expected call of ApplyKubeSpecFromBytesForce.
+func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyHardware), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
 // DeleteEksaDatacenterConfig mocks base method.
@@ -80,6 +84,36 @@ func (m *MockProviderKubectlClient) DeleteEksaMachineConfig(arg0 context.Context
 func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
+}
+
+// GetBmcsPowerState mocks base method.
+func (m *MockProviderKubectlClient) GetBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3 string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBmcsPowerState", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBmcsPowerState indicates an expected call of GetBmcsPowerState.
+func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
+}
+
+// GetHardwareWithLabel mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareWithLabel", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]v1alpha1.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareWithLabel indicates an expected call of GetHardwareWithLabel.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithLabel(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithLabel", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithLabel), arg0, arg1, arg2, arg3)
 }
 
 // GetMachineDeployment mocks base method.
@@ -125,11 +159,30 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 	return m.recorder
 }
 
+// DeleteWorkflow mocks base method.
+func (m *MockProviderTinkClient) DeleteWorkflow(arg0 context.Context, arg1 ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteWorkflow", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWorkflow indicates an expected call of DeleteWorkflow.
+func (mr *MockProviderTinkClientMockRecorder) DeleteWorkflow(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).DeleteWorkflow), varargs...)
+}
+
 // GetHardware mocks base method.
-func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
+func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware0.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHardware", arg0)
-	ret0, _ := ret[0].([]*hardware.Hardware)
+	ret0, _ := ret[0].([]*hardware0.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -138,6 +191,21 @@ func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.
 func (mr *MockProviderTinkClientMockRecorder) GetHardware(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardware), arg0)
+}
+
+// GetHardwareByUuid mocks base method.
+func (m *MockProviderTinkClient) GetHardwareByUuid(arg0 context.Context, arg1 string) (*hardware.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareByUuid", arg0, arg1)
+	ret0, _ := ret[0].(*hardware.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareByUuid indicates an expected call of GetHardwareByUuid.
+func (mr *MockProviderTinkClientMockRecorder) GetHardwareByUuid(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareByUuid", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardwareByUuid), arg0, arg1)
 }
 
 // GetWorkflow mocks base method.
@@ -153,6 +221,20 @@ func (m *MockProviderTinkClient) GetWorkflow(arg0 context.Context) ([]*workflow.
 func (mr *MockProviderTinkClientMockRecorder) GetWorkflow(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).GetWorkflow), arg0)
+}
+
+// PushHardware mocks base method.
+func (m *MockProviderTinkClient) PushHardware(arg0 context.Context, arg1 []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushHardware", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushHardware indicates an expected call of PushHardware.
+func (mr *MockProviderTinkClientMockRecorder) PushHardware(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).PushHardware), arg0, arg1)
 }
 
 // MockProviderPbnjClient is a mock of ProviderPbnjClient interface.
@@ -191,6 +273,48 @@ func (m *MockProviderPbnjClient) GetPowerState(arg0 context.Context, arg1 pbnj.B
 func (mr *MockProviderPbnjClientMockRecorder) GetPowerState(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowerState", reflect.TypeOf((*MockProviderPbnjClient)(nil).GetPowerState), arg0, arg1)
+}
+
+// PowerOff mocks base method.
+func (m *MockProviderPbnjClient) PowerOff(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PowerOff", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PowerOff indicates an expected call of PowerOff.
+func (mr *MockProviderPbnjClientMockRecorder) PowerOff(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PowerOff", reflect.TypeOf((*MockProviderPbnjClient)(nil).PowerOff), arg0, arg1)
+}
+
+// PowerOn mocks base method.
+func (m *MockProviderPbnjClient) PowerOn(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PowerOn", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PowerOn indicates an expected call of PowerOn.
+func (mr *MockProviderPbnjClientMockRecorder) PowerOn(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PowerOn", reflect.TypeOf((*MockProviderPbnjClient)(nil).PowerOn), arg0, arg1)
+}
+
+// SetBootDevice mocks base method.
+func (m *MockProviderPbnjClient) SetBootDevice(arg0 context.Context, arg1 pbnj.BmcSecretConfig, arg2 v1.BootDevice) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBootDevice", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBootDevice indicates an expected call of SetBootDevice.
+func (mr *MockProviderPbnjClientMockRecorder) SetBootDevice(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBootDevice", reflect.TypeOf((*MockProviderPbnjClient)(nil).SetBootDevice), arg0, arg1, arg2)
 }
 
 // MockSSHAuthKeyGenerator is a mock of SSHAuthKeyGenerator interface.

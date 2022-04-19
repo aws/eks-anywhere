@@ -23,6 +23,7 @@ func snowEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			SetSnowMachineConfigsAnnotations,
 		},
 		Validations: []Validation{
 			func(c *Config) error {
@@ -79,4 +80,23 @@ func processSnowMachineConfig(c *Config, objects ObjectLookup, machineRef *anywh
 	}
 
 	c.SnowMachineConfigs[m.GetName()] = m.(*anywherev1.SnowMachineConfig)
+}
+
+func SetSnowMachineConfigsAnnotations(c *Config) error {
+	if c.SnowMachineConfigs == nil {
+		return nil
+	}
+
+	c.SnowMachineConfigs[c.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].SetControlPlaneAnnotation()
+
+	if c.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		c.SnowMachineConfigs[c.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].SetEtcdAnnotation()
+	}
+
+	if c.Cluster.IsManaged() {
+		for _, mc := range c.SnowMachineConfigs {
+			mc.SetManagedBy(c.Cluster.ManagedBy())
+		}
+	}
+	return nil
 }

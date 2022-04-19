@@ -64,7 +64,7 @@ func cleanUpAwsTestResources(ctx context.Context) error {
 
 	err := e2e.CleanUpAwsTestResources(storageBucket, maxAge, tag)
 	if err != nil {
-		return fmt.Errorf("error running cleanup for aws test resources: %v", err)
+		return fmt.Errorf("running cleanup for aws test resources: %v", err)
 	}
 
 	return nil

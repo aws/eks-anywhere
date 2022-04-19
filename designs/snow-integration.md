@@ -83,8 +83,8 @@ As of initial launch, a user creates a job in Snow console, which triggers the S
 1. store the AWS credentials of all the devices with the device IP as profile name to a file (default: `~/.aws/config`)
 2. get the Snow certificates of all the devices and store them to a file
 3. export both credentials and CA bundle files location as environment variables
-    1. `export EKSA_SNOW_DEVICES_CREDENTIALS_FILE = ~/.aws/config`
-    2. `export EKSA_SNOW_DEVICES_CA_BUNDLES_FILE = ~/eksa/ca-bundles`
+    1. `export EKSA_AWS_CREDENTIALS_FILE = ~/.aws/config`
+    2. `export EKSA_AWS_CA_BUNDLES_FILE = ~/eksa/ca-bundles`
 4. generate the cluster config file with the newly introduced provider arg: `eksctl anywhere generate clusterconfig $CLUSTER_NAME -p snow`
 5. populate all the container images necessary to run EKS-A to the existing user managed local container registry: `eksctl anywhere import-images ...`
 6. provision and manage Snow cluster with `eksctl anywhere create/upgrade/delete cluster ...` The EKS-D Node AMI defined in the `SnowMachineConfig` is chosen to launch the cluster node instance.
@@ -94,8 +94,8 @@ As of initial launch, a user creates a job in Snow console, which triggers the S
 
 In CAPAS, the user needs to specify a list of environment variables:
 
-* `AWS_B64ENCODED_CREDENTIALS` — Base64 encoded AWS credentials of all the devices (order agnostic)
-* `AWS_B64ENCODED_CA_BUNDLES` — Base64 encoded Snow Certificates of all the devices (order agnostic)
+* `EKSA_AWS_CREDENTIALS_FILE` — Base64 encoded AWS credentials of all the devices (order agnostic)
+* `EKSA_AWS_CA_BUNDLES_FILE` — Base64 encoded Snow Certificates of all the devices (order agnostic)
 
 and run `clusterctl init -p snow`  to set up Snow components in the bootstrap cluster. The credentials and certificates will be stored as `manager-bootstrap-credentials` secret in the management cluster to be used for EKS-A cluster controller.
 
@@ -104,12 +104,12 @@ and run `clusterctl init -p snow`  to set up Snow components in the bootstrap cl
 Snow requires the AWS credentials profile name be defined as the Snowball device IP to better support multi-device cluster setting. For example, 
 
 ```bash
-[profile 10.111.60.128] # device_1 IP
+[10.111.60.128] # device_1 IP
 aws_access_key_id = ABCDEFGHIJKLMNOPQR2T
 aws_secret_access_key = AfSD7sYz/TBZtzkReBl6PuuISzJ2WtNkeePw+nNzJ
 region = snow
 
-[profile 10.111.60.130] # device_2 IP
+[10.111.60.130] # device_2 IP
 aws_access_key_id = ABCDEFGHIJKLMNOPQR3T
 aws_secret_access_key = Rq2AsrGU/RBCtzkReBl6PIneNX22WtNkeePw+WxzY
 region = snow

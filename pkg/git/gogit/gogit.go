@@ -250,7 +250,7 @@ func (g *GoGit) Push(ctx context.Context) error {
 
 	err = g.Client.PushWithContext(ctx, r, g.Opts.Auth)
 	if err != nil {
-		return fmt.Errorf("error pushing: %v", err)
+		return fmt.Errorf("pushing: %v", err)
 	}
 	return err
 }
@@ -259,12 +259,12 @@ func (g *GoGit) Pull(ctx context.Context, branch string) error {
 	logger.V(3).Info("Pulling from remote", "repo", g.Opts.RepositoryDirectory, "remote", gogit.DefaultRemoteName)
 	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
 	if err != nil {
-		return fmt.Errorf("error pulling from remote: %v", err)
+		return fmt.Errorf("pulling from remote: %v", err)
 	}
 
 	w, err := g.Client.OpenWorktree(r)
 	if err != nil {
-		return fmt.Errorf("error pulling from remote: %v", err)
+		return fmt.Errorf("pulling from remote: %v", err)
 	}
 
 	branchRef := plumbing.NewBranchReferenceName(branch)
@@ -277,17 +277,17 @@ func (g *GoGit) Pull(ctx context.Context, branch string) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("error pulling from remote: %v", err)
+		return fmt.Errorf("pulling from remote: %v", err)
 	}
 
 	ref, err := g.Client.Head(r)
 	if err != nil {
-		return fmt.Errorf("error pulling from remote: %v", err)
+		return fmt.Errorf("pulling from remote: %v", err)
 	}
 
 	commit, err := g.Client.CommitObject(r, ref.Hash())
 	if err != nil {
-		return fmt.Errorf("error accessing latest commit after pulling from remote: %v", err)
+		return fmt.Errorf("accessing latest commit after pulling from remote: %v", err)
 	}
 	logger.V(3).Info("Successfully pulled from remote", "repo", g.Opts.RepositoryDirectory, "remote", gogit.DefaultRemoteName, "latest commit", commit.Hash)
 	return nil
@@ -300,7 +300,7 @@ func (g *GoGit) Init(url string) error {
 	}
 
 	if _, err = g.Client.Create(r, url); err != nil {
-		return fmt.Errorf("error initializing repository: %v", err)
+		return fmt.Errorf("initializing repository: %v", err)
 	}
 	return nil
 }
@@ -308,7 +308,7 @@ func (g *GoGit) Init(url string) error {
 func (g *GoGit) Branch(name string) error {
 	r, err := g.Client.OpenDir(g.Opts.RepositoryDirectory)
 	if err != nil {
-		return fmt.Errorf("error creating branch %s: %v", name, err)
+		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
 
 	localBranchRef := plumbing.NewBranchReferenceName(name)
@@ -323,7 +323,7 @@ func (g *GoGit) Branch(name string) error {
 	branchExistsLocally := errors.As(err, &gogit.ErrBranchExists)
 
 	if err != nil && !branchExistsLocally {
-		return fmt.Errorf("error creating branch %s: %v", name, err)
+		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
 
 	if branchExistsLocally {
@@ -334,18 +334,18 @@ func (g *GoGit) Branch(name string) error {
 		logger.V(3).Info("Branch does not exist locally", "branch", name)
 		headref, err := g.Client.Head(r)
 		if err != nil {
-			return fmt.Errorf("error creating branch %s: %v", name, err)
+			return fmt.Errorf("creating branch %s: %v", name, err)
 		}
 		h := headref.Hash()
 		err = g.Client.SetRepositoryReference(r, plumbing.NewHashReference(localBranchRef, h))
 		if err != nil {
-			return fmt.Errorf("error creating branch %s: %v", name, err)
+			return fmt.Errorf("creating branch %s: %v", name, err)
 		}
 	}
 
 	w, err := g.Client.OpenWorktree(r)
 	if err != nil {
-		return fmt.Errorf("error creating branch %s: %v", name, err)
+		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
 
 	err = g.Client.Checkout(w, &gogit.CheckoutOptions{
@@ -353,12 +353,12 @@ func (g *GoGit) Branch(name string) error {
 		Force:  true,
 	})
 	if err != nil {
-		return fmt.Errorf("error creating branch %s: %v", name, err)
+		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
 
 	err = g.pullIfRemoteExists(r, w, name, localBranchRef)
 	if err != nil {
-		return fmt.Errorf("error when creating branch %s: %v", name, err)
+		return fmt.Errorf("creating branch %s: %v", name, err)
 	}
 
 	return nil
@@ -372,13 +372,13 @@ func (g *GoGit) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, branc
 	err := g.Retrier.Retry(func() error {
 		remoteExists, err := g.remoteBranchExists(r, localBranchRef)
 		if err != nil {
-			return fmt.Errorf("error checking if remote branch exists %s: %v", branchName, err)
+			return fmt.Errorf("checking if remote branch exists %s: %v", branchName, err)
 		}
 
 		if remoteExists {
 			err = g.Client.PullWithContext(context.Background(), w, g.Opts.Auth, localBranchRef)
 			if err != nil && !errors.Is(err, gogit.NoErrAlreadyUpToDate) && !errors.Is(err, gogit.ErrRemoteNotFound) {
-				return fmt.Errorf("error pulling from remote when checking out existing branch %s: %v", branchName, err)
+				return fmt.Errorf("pulling from remote when checking out existing branch %s: %v", branchName, err)
 			}
 		}
 		return nil
@@ -392,7 +392,7 @@ func (g *GoGit) remoteBranchExists(r *gogit.Repository, localBranchRef plumbing.
 		if strings.Contains(err.Error(), emptyRepoError) {
 			return false, nil
 		}
-		return false, fmt.Errorf("error when listing remotes: %v", err)
+		return false, fmt.Errorf("listing remotes: %v", err)
 	}
 	lb := localBranchRef.String()
 	for _, ref := range reflist {

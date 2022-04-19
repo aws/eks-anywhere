@@ -45,7 +45,7 @@ func NewDefaultTinkerbellTemplateConfigGenerate(name string, versionBundle v1alp
 		},
 	}
 
-	defaultActions := WithDefaultActionsFromBundle(versionBundle)
+	defaultActions := GetDefaultActionsFromBundle(versionBundle)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}

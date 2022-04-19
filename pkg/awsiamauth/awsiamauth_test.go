@@ -48,7 +48,7 @@ func TestGenerateCertKeyPairSecretSuccess(t *testing.T) {
 
 func TestGenerateCertKeyPairSecretFail(t *testing.T) {
 	certGenErr := fmt.Errorf("cert gen error")
-	wantErr := fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: cert gen error")
+	wantErr := fmt.Errorf("generating aws-iam-authenticator cert key pair secret: cert gen error")
 	awsIamAuth, mockCertgen := newAwsIamAuth(t)
 
 	mockCertgen.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return(nil, nil, certGenErr)

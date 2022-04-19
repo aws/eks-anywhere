@@ -72,6 +72,7 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 	artifacts := r.BundleArtifactsTable["flux"]
 
 	var sourceBranch string
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
 
@@ -92,7 +93,11 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(
 		newMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
 			fluxcdRootPath,

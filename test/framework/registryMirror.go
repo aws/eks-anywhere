@@ -36,6 +36,15 @@ func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 				api.WithRegistryMirror(endpoint, string(certificate)),
 			)
 		}
+		// Set env vars for helm login/push
+		err = os.Setenv("REGISTRY_USERNAME", username)
+		if err != nil {
+			e.T.Fatalf("unable to set REGISTRY_USERNAME: %v", err)
+		}
+		err = os.Setenv("REGISTRY_PASSWORD", password)
+		if err != nil {
+			e.T.Fatalf("unable to set REGISTRY_PASSWORD: %v", err)
+		}
 	}
 }
 

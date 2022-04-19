@@ -26,7 +26,7 @@ func (t *Templater) WriteToFile(templateContent string, data interface{}, fileNa
 	}
 	writtenFilePath, err := t.writer.Write(fileName, bytes, f...)
 	if err != nil {
-		return "", fmt.Errorf("error writing template file: %v", err)
+		return "", fmt.Errorf("writing template file: %v", err)
 	}
 
 	return writtenFilePath, nil
@@ -35,7 +35,7 @@ func (t *Templater) WriteToFile(templateContent string, data interface{}, fileNa
 func (t *Templater) WriteBytesToFile(content []byte, fileName string, f ...filewriter.FileOptionsFunc) (filePath string, err error) {
 	writtenFilePath, err := t.writer.Write(fileName, content, f...)
 	if err != nil {
-		return "", fmt.Errorf("error writing template file: %v", err)
+		return "", fmt.Errorf("writing template file: %v", err)
 	}
 
 	return writtenFilePath, nil
@@ -54,13 +54,13 @@ func Execute(templateContent string, data interface{}) ([]byte, error) {
 
 	temp, err := temp.Parse(templateContent)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing template: %v", err)
+		return nil, fmt.Errorf("parsing template: %v", err)
 	}
 
 	var buf bytes.Buffer
 	err = temp.Execute(&buf, data)
 	if err != nil {
-		return nil, fmt.Errorf("error substituting values for template: %v", err)
+		return nil, fmt.Errorf("substituting values for template: %v", err)
 	}
 	return buf.Bytes(), nil
 }

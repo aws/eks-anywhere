@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -259,6 +260,67 @@ func TestKubectlWaitError(t *testing.T) {
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
 		t.Errorf("Kubectl.Wait() error = nil, want not nil")
+	}
+}
+
+func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackMachineConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackMachineConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 machine configs, got %d", len(mc))
+	}
+}
+
+func TestKubectlSearchCloudStackDatacenterConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackDatacenterConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackDatacenterConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 datacenter configs, got %d", len(mc))
+	}
+}
+
+func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
+	var kubeconfig, namespace, clusterName, machineTemplateName string
+	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
+	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+	expectedParam1 := []string{
+		"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
+		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	expectedParam2 := []string{
+		"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template",
+		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
+	_, err := k.CloudstackWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
 	}
 }
 
@@ -937,6 +999,24 @@ func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
 
 	if gotUrl != wantUrl {
 		t.Fatalf("Kubectl.GetApiServerUrl() url = %s, want %s", gotUrl, wantUrl)
+	}
+}
+
+func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
+	envVar := "TEST_VAR"
+	envVarValue := "TEST_VALUE"
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{
+			"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarValue),
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+		},
+	).Return(bytes.Buffer{}, nil)
+
+	err := k.SetEksaControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
+	if err != nil {
+		t.Fatalf("Kubectl.GetApiServerUrl() error = %v, want nil", err)
 	}
 }
 
@@ -1621,4 +1701,61 @@ func TestApplyTolerationsFromTaints(t *testing.T) {
 		tt.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, nil)
 	var taints []corev1.Taint
 	tt.Expect(tt.k.ApplyTolerationsFromTaints(tt.ctx, taints, taints, "ds", "test", tt.cluster.KubeconfigFile, "testNs", "/test")).To(Succeed())
+}
+
+func TestGetBmcsPowerState(t *testing.T) {
+	tt := newKubectlTest(t)
+	bmcNames := []string{"bmc-1", "bmc-2"}
+	params := []string{
+		"get", "bmc.tinkerbell.org", "bmc-1", "bmc-2",
+		"-o", "jsonpath={.items[*].status.powerState}",
+		"--kubeconfig", tt.cluster.KubeconfigFile, "-n", tt.namespace,
+	}
+	want := []string{"POWER_ACTION_HARDOFF", "POWER_ACTION_HARDOFF"}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString("POWER_ACTION_HARDOFF POWER_ACTION_HARDOFF"), nil)
+	got, err := tt.k.GetBmcsPowerState(tt.ctx, bmcNames, tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestGetHardwareWithLabel(t *testing.T) {
+	tt := newKubectlTest(t)
+	ownerNameLabel := "v1alpha1.tinkerbell.org/ownerName"
+	hardwaresJson := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
+	wantHardwares := []tinkv1alpha1.Hardware{
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "hw1",
+				Labels: map[string]string{
+					ownerNameLabel: "tink-test-md-0-clc85",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Hardware",
+				APIVersion: "tinkerbell.org/v1alpha1",
+			},
+		},
+		{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "hw2",
+				Labels: map[string]string{
+					ownerNameLabel: "tink-test-controlplane-0-ccl90",
+				},
+			},
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Hardware",
+				APIVersion: "tinkerbell.org/v1alpha1",
+			},
+		},
+	}
+
+	params := []string{
+		"get", "hardware.tinkerbell.org", "-o", "json", "--kubeconfig",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace, fmt.Sprintf("--selector=%s", ownerNameLabel),
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwaresJson), nil)
+
+	got, err := tt.k.GetHardwareWithLabel(tt.ctx, ownerNameLabel, tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(got).To(Equal(wantHardwares))
 }

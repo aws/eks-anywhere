@@ -32,11 +32,11 @@ func (t *Troubleshoot) Collect(ctx context.Context, bundlePath string, sinceTime
 
 	output, err := t.Execute(ctx, params...)
 	if err != nil {
-		return "", fmt.Errorf("error when executing support-bundle: %v", err)
+		return "", fmt.Errorf("executing support-bundle: %v", err)
 	}
 	archivePath, err = parseArchivePathFromCollectOutput(output.String())
 	if err != nil {
-		return "", fmt.Errorf("error when parsing support-bundle output: %v", err)
+		return "", fmt.Errorf("parsing support-bundle output: %v", err)
 	}
 	return archivePath, nil
 }
@@ -45,12 +45,12 @@ func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath string, archi
 	params := []string{"analyze", bundleSpecPath, "--bundle", archivePath, "--output", "json"}
 	output, err := t.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("error when analyzing support bundle %s with analyzers %s: %v", archivePath, bundleSpecPath, err)
+		return nil, fmt.Errorf("analyzing support bundle %s with analyzers %s: %v", archivePath, bundleSpecPath, err)
 	}
 	var analysisOutput []*SupportBundleAnalysis
 	err = json.Unmarshal(output.Bytes(), &analysisOutput)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling support-bundle analyze output: %v", err)
+		return nil, fmt.Errorf("unmarshalling support-bundle analyze output: %v", err)
 	}
 	return analysisOutput, err
 }
@@ -58,11 +58,11 @@ func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath string, archi
 func parseArchivePathFromCollectOutput(tsLogs string) (archivePath string, err error) {
 	r, err := regexp.Compile(supportBundleArchiveRegex)
 	if err != nil {
-		return "", fmt.Errorf("error parsing support-bundle output: %v", err)
+		return "", fmt.Errorf("parsing support-bundle output: %v", err)
 	}
 	archivePath = r.FindString(tsLogs)
 	if archivePath == "" {
-		return "", fmt.Errorf("error parsing support-bundle output: could not find archive path in output")
+		return "", fmt.Errorf("parsing support-bundle output: could not find archive path in output")
 	}
 	return archivePath, nil
 }

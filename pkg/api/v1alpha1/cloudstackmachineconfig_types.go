@@ -32,6 +32,8 @@ type CloudStackMachineConfigSpec struct {
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
+	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
+	Affinity string `json:"affinity,omitempty"`
 	// AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity Groups. Any VM’s created with this spec will be added to the affinity group, which will dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group must be on separate physical hosts for high availability. If they are type “affinity”, all VM’s in the group must be on the same physical host for improved performance
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
@@ -113,6 +115,37 @@ type CloudStackMachineConfig struct {
 func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	// This method must be defined to implement the providers.MachineConfig interface, but it's not actually used
 	return ""
+}
+
+func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool {
+	if c == o {
+		return true
+	}
+	if c == nil || o == nil {
+		return false
+	}
+	if !c.Template.Equal(&o.Template) ||
+		!c.ComputeOffering.Equal(&o.ComputeOffering) {
+		return false
+	}
+	if c.Affinity != o.Affinity {
+		return false
+	}
+	if !SliceEqual(c.AffinityGroupIds, o.AffinityGroupIds) {
+		return false
+	}
+	if !UsersSliceEqual(c.Users, o.Users) {
+		return false
+	}
+	if len(c.UserCustomDetails) != len(o.UserCustomDetails) {
+		return false
+	}
+	for detail, value := range c.UserCustomDetails {
+		if value != o.UserCustomDetails[detail] {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {

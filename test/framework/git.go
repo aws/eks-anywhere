@@ -42,7 +42,7 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
 	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &gitOpsConfig.Spec)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Git provider: %v", err)
+		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
 	err = gitProvider.Validate(ctx)
 	if err != nil {
@@ -50,7 +50,7 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 	}
 	gitwriter, err := writer.WithDir(localGitWriterPath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating file writer: %v", err)
+		return nil, fmt.Errorf("creating file writer: %v", err)
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{

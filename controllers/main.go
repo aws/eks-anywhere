@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/spf13/pflag"
@@ -17,6 +18,7 @@ import (
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -46,6 +48,8 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
+	utilruntime.Must(dockerv1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme))
@@ -110,11 +114,11 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			setupLog.Error(err, "unable to build dependencies")
 			os.Exit(1)
 		}
-
+		logger := ctrl.Log.WithName("remote").WithName("ClusterCacheTracker")
 		tracker, err := remote.NewClusterCacheTracker(
 			mgr,
 			remote.ClusterCacheTrackerOptions{
-				Log:     ctrl.Log.WithName("remote").WithName("ClusterCacheTracker"),
+				Log:     &logger,
 				Indexes: remote.DefaultIndexes,
 			},
 		)

@@ -15,12 +15,8 @@
 package pkg
 
 import (
-	crand "crypto/rand"
-	"crypto/sha256"
-	"crypto/sha512"
 	"fmt"
 	"io/ioutil"
-	mrand "math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,6 +31,7 @@ import (
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
 	"github.com/aws/eks-anywhere/release/pkg/git"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 type EksDLatestRelease struct {
@@ -53,12 +50,12 @@ func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
 	var sha256, sha512 string
 	var err error
 	if r.DryRun {
-		sha256, err = GenerateRandomSha(256)
+		sha256, err = utils.GetFakeSHA(256)
 		if err != nil {
 			return "", "", errors.Cause(err)
 		}
 
-		sha512, err = GenerateRandomSha(512)
+		sha512, err = utils.GetFakeSHA(512)
 		if err != nil {
 			return "", "", errors.Cause(err)
 		}
@@ -283,27 +280,6 @@ func (r *ReleaseConfig) PutEksAReleaseVersion(version string) error {
 		return errors.Cause(err)
 	}
 	return nil
-}
-
-func GenerateRandomSha(hashType int) (string, error) {
-	if (hashType != 256) && (hashType != 512) {
-		return "", fmt.Errorf("Unsupported hash algorithm: %d", hashType)
-	}
-	l := mrand.Intn(1000)
-	buff := make([]byte, l)
-
-	_, err := crand.Read(buff)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	var shaSum string
-	if hashType == 256 {
-		shaSum = fmt.Sprintf("%x", sha256.Sum256(buff))
-	} else {
-		shaSum = fmt.Sprintf("%x", sha512.Sum512(buff))
-	}
-	return shaSum, nil
 }
 
 func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {

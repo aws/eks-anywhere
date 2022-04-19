@@ -158,7 +158,7 @@ func TestGoGitPull(t *testing.T) {
 			name:       "repo already up-to-date",
 			wantErr:    true,
 			throwError: fmt.Errorf("already up-to-date"),
-			matchError: fmt.Errorf("error pulling from remote: %v", goGit.NoErrAlreadyUpToDate),
+			matchError: fmt.Errorf("pulling from remote: %v", goGit.NoErrAlreadyUpToDate),
 		},
 	}
 	for _, tt := range tests {

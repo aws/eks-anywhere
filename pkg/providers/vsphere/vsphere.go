@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -35,21 +36,27 @@ import (
 )
 
 const (
-	CredentialsObjectName    = "vsphere-credentials"
-	EksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	eksaLicense              = "EKSA_LICENSE"
-	vSphereUsernameKey       = "VSPHERE_USERNAME"
-	vSpherePasswordKey       = "VSPHERE_PASSWORD"
-	vSphereServerKey         = "VSPHERE_SERVER"
-	govcInsecure             = "GOVC_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	defaultTemplateLibrary   = "eks-a-templates"
-	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
-	maxRetries               = 30
-	backOffPeriod            = 5 * time.Second
+	CredentialsObjectName  = "vsphere-credentials"
+	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
+	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
+	// Username and password for cloud provider
+	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
+	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
+	// Username and password for the CSI driver
+	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
+	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
+	eksaLicense               = "EKSA_LICENSE"
+	vSphereUsernameKey        = "VSPHERE_USERNAME"
+	vSpherePasswordKey        = "VSPHERE_PASSWORD"
+	vSphereServerKey          = "VSPHERE_SERVER"
+	govcInsecure              = "GOVC_INSECURE"
+	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
+	defaultTemplateLibrary    = "eks-a-templates"
+	defaultTemplatesFolder    = "vm/Templates"
+	bottlerocketDefaultUser   = "ec2-user"
+	ubuntuDefaultUser         = "capv"
+	maxRetries                = 30
+	backOffPeriod             = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -199,6 +206,32 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
+	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
+	for _, config := range p.MachineConfigs(nil) {
+		mc := config.(*v1alpha1.VSphereMachineConfig)
+		machineConfigMap[mc.Name] = mc
+	}
+
+	for _, oldMcRef := range cc.MachineConfigRefs() {
+		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csmc, ok := machineConfigMap[oldMcRef.Name]
+		if !ok {
+			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+		if !reflect.DeepEqual(existingVmc.Spec, csmc.Spec) {
+			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.Server, p.clusterConfig)
 }
@@ -328,6 +361,11 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 		}
 	}
 	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaVSphereDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+}
+
+func (p *vsphereProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -477,12 +515,12 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
 	if err != nil {
-		return fmt.Errorf("error loading secrets object: %v", err)
+		return fmt.Errorf("loading secrets object: %v", err)
 	}
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -608,7 +646,7 @@ func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spe
 	bundle := clusterSpec.VersionsBundle
 	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
 	if err != nil {
-		return false, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+		return false, fmt.Errorf("parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
 	}
 	if vs.fromController && k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		return true, nil
@@ -656,6 +694,25 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
 
+	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
+	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
+
+	// Cloud provider credentials
+	eksaCPUsername := os.Getenv(EksavSphereCPUsernameKey)
+	eksaCPassword := os.Getenv(EksavSphereCPPasswordKey)
+
+	if eksaCPUsername == "" {
+		eksaCPUsername = eksaVsphereUsername
+		eksaCPassword = eksaVspherePassword
+	}
+	// CSI driver credentials
+	eksaCSIUsername := os.Getenv(EksavSphereCSIUsernameKey)
+	eksaCSIPassword := os.Getenv(EksavSphereCSIPasswordKey)
+	if eksaCSIUsername == "" {
+		eksaCSIUsername = eksaVsphereUsername
+		eksaCSIPassword = eksaVspherePassword
+	}
+
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -702,8 +759,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  os.Getenv(EksavSphereUsernameKey),
-		"eksaVspherePassword":                  os.Getenv(EksavSpherePasswordKey),
+		"eksaVsphereUsername":                  eksaVsphereUsername,
+		"eksaVspherePassword":                  eksaVspherePassword,
+		"eksaCloudProviderUsername":            eksaCPUsername,
+		"eksaCloudProviderPassword":            eksaCPassword,
+		"eksaCSIUsername":                      eksaCSIUsername,
+		"eksaCSIPassword":                      eksaCSIPassword,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -882,10 +943,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		if err != nil {
 			return nil, nil, err
 		}
-
-		if err != nil {
-			return nil, nil, err
-		}
 		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs, oldWorkerNodeVmc, newWorkerNodeVmc)
 		if err != nil {
 			return nil, nil, err
@@ -996,7 +1053,7 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -1004,7 +1061,7 @@ func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootst
 func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -1033,7 +1090,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	}
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
-		return fmt.Errorf("error creating secret object template: %v", err)
+		return fmt.Errorf("creating secret object template: %v", err)
 	}
 
 	values := map[string]string{
@@ -1046,7 +1103,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
-		return fmt.Errorf("error substituting values for secret object template: %v", err)
+		return fmt.Errorf("substituting values for secret object template: %v", err)
 	}
 	return nil
 }
@@ -1125,7 +1182,7 @@ func (p *vsphereProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineCon
 			}
 		}
 	}
-	return configsMapToSlice(configs)
+	return providers.ConfigsMapToSlice(configs)
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -1235,7 +1292,7 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 	nPassword := os.Getenv(vSpherePasswordKey)
 	oSecret, err := p.providerKubectlClient.GetSecret(ctx, CredentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
-		return false, fmt.Errorf("error when obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
+		return false, fmt.Errorf("obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
 	}
 
 	if string(oSecret.Data["password"]) != nPassword {
@@ -1283,26 +1340,30 @@ func resourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-crs-0", clusterSpec.Cluster.Name)
 }
 
-func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
 
-	return newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
+	if newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
 		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
 		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
-		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
-}
-
-func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return nil
-}
-
-func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
-	configs := make([]providers.MachineConfig, 0, len(c))
-	for _, config := range c {
-		configs = append(configs, config)
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
+		return true, nil
+	}
+	cc := currentSpec.Cluster
+	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+	if !reflect.DeepEqual(existingVdc.Spec, p.datacenterConfig.Spec) {
+		logger.V(3).Info("New provider spec is different from the new spec")
+		return true, nil
 	}
 
-	return configs
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
+	if err != nil {
+		return false, err
+	}
+	return machineConfigsSpecChanged, nil
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
@@ -1325,4 +1386,8 @@ func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
+}
+
+func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
 }

@@ -29,7 +29,7 @@ func LoadManagement(kubeconfig string) (*types.Cluster, error) {
 	kc.Clusters = []*kubeConfigCluster{}
 	err = yaml.Unmarshal(kubeConfigBytes, &kc)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
+		return nil, fmt.Errorf("parsing kubeconfig file: %v", err)
 	}
 	return &types.Cluster{
 		Name:               kc.Clusters[0].Name,

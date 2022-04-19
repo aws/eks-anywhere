@@ -24,8 +24,14 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		marshallables = append(marshallables, machineConfig.Marshallable())
 	}
 
+	// If a GitOpsConfig is present, marshal the GitOpsConfig to file; otherwise, use the FluxConfig
+	// Allows us to use the FluxConfig internally but preserve the provided spec while GitOpsConfig is being deprecated
 	if clusterSpec.GitOpsConfig != nil {
 		marshallables = append(marshallables, clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct())
+	}
+
+	if clusterSpec.FluxConfig != nil && clusterSpec.GitOpsConfig == nil {
+		marshallables = append(marshallables, clusterSpec.FluxConfig.ConvertConfigToConfigGenerateStruct())
 	}
 
 	if clusterSpec.OIDCConfig != nil {
@@ -50,7 +56,7 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 			removeFromDefaultConfig := []string{"spec.clusterNetwork.dns"}
 			resource, err = api.CleanupPathsFromYaml(resource, removeFromDefaultConfig)
 			if err != nil {
-				return nil, fmt.Errorf("error cleaning paths from yaml: %v", err)
+				return nil, fmt.Errorf("cleaning paths from yaml: %v", err)
 			}
 		}
 		resources = append(resources, resource)
@@ -64,7 +70,7 @@ func WriteClusterConfig(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		return err
 	}
 	if filePath, err := writer.Write(fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.Cluster.ObjectMeta.Name), resourcesSpec, filewriter.PersistentFile); err != nil {
-		err = fmt.Errorf("error writing eks-a cluster config file into %s: %v", filePath, err)
+		err = fmt.Errorf("writing eks-a cluster config file into %s: %v", filePath, err)
 		return err
 	}
 

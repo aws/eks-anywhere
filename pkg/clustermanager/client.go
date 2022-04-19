@@ -20,7 +20,7 @@ func (c *client) waitForDeployments(ctx context.Context, deploymentsByNamespace 
 		for _, deployment := range deployments {
 			err := c.WaitForDeployment(ctx, cluster, deploymentWaitStr, "Available", deployment, namespace)
 			if err != nil {
-				return fmt.Errorf("error waiting for %s in namespace %s: %v", deployment, namespace, err)
+				return fmt.Errorf("waiting for %s in namespace %s: %v", deployment, namespace, err)
 			}
 		}
 	}

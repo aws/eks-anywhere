@@ -27,10 +27,13 @@ type CloudStackDatacenterConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+	//
 	Domain string `json:"domain"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZone `json:"zones"`
-	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
+	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`
@@ -43,6 +46,19 @@ type CloudStackResourceIdentifier struct {
 	// Name of a resource in the CloudStack environment. Mutually exclusive with Id
 	// +optional
 	Name string `json:"name,omitempty"`
+}
+
+func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id {
+		return false
+	}
+	return r.Id == "" && o.Id == "" && r.Name == o.Name
 }
 
 // CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
@@ -122,7 +138,27 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
-func (z *CloudStackZone) Equals(o *CloudStackZone) bool {
+func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
+	if s == o {
+		return true
+	}
+	if s == nil || o == nil {
+		return false
+	}
+	if len(s.Zones) != len(o.Zones) {
+		return false
+	}
+	for i, z := range s.Zones {
+		if !z.Equal(&o.Zones[i]) {
+			return false
+		}
+	}
+	return s.ManagementApiEndpoint == o.ManagementApiEndpoint &&
+		s.Domain == o.Domain &&
+		s.Account == o.Account
+}
+
+func (z *CloudStackZone) Equal(o *CloudStackZone) bool {
 	if z == o {
 		return true
 	}

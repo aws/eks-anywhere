@@ -134,6 +134,11 @@ type RegistryMirrorConfiguration struct {
 
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
+
+	// InsecureSkipVerify skips the registry certificate verification.
+	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
@@ -143,7 +148,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
 }
 
 type ControlPlaneConfiguration struct {
@@ -401,6 +406,25 @@ func (n *KindnetdConfig) Equal(o *KindnetdConfig) bool {
 	}
 	if n == nil || o == nil {
 		return false
+	}
+	return true
+}
+
+func UsersSliceEqual(a, b []UserConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string][]string, len(a))
+	for _, v := range a {
+		m[v.Name] = v.SshAuthorizedKeys
+	}
+	for _, v := range b {
+		if _, ok := m[v.Name]; !ok {
+			return false
+		}
+		if !SliceEqual(v.SshAuthorizedKeys, m[v.Name]) {
+			return false
+		}
 	}
 	return true
 }
@@ -703,29 +727,29 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
-func (s *Cluster) IsSelfManaged() bool {
-	return s.Spec.ManagementCluster.Name == "" || s.Spec.ManagementCluster.Name == s.Name
+func (c *Cluster) IsSelfManaged() bool {
+	return c.Spec.ManagementCluster.Name == "" || c.Spec.ManagementCluster.Name == c.Name
 }
 
-func (s *Cluster) SetManagedBy(managementClusterName string) {
-	if s.Annotations == nil {
-		s.Annotations = map[string]string{}
+func (c *Cluster) SetManagedBy(managementClusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
 	}
 
-	s.Annotations[managementAnnotation] = managementClusterName
-	s.Spec.ManagementCluster.Name = managementClusterName
+	c.Annotations[managementAnnotation] = managementClusterName
+	c.Spec.ManagementCluster.Name = managementClusterName
 }
 
-func (s *Cluster) SetSelfManaged() {
-	s.Spec.ManagementCluster.Name = s.Name
+func (c *Cluster) SetSelfManaged() {
+	c.Spec.ManagementCluster.Name = c.Name
 }
 
 func (c *ClusterGenerate) SetSelfManaged() {
 	c.Spec.ManagementCluster.Name = c.Name
 }
 
-func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
+func (c *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
+	return c.IsSelfManaged() && s2.IsSelfManaged() || c.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {

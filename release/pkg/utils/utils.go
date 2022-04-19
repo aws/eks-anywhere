@@ -24,12 +24,15 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const hexAlphabet = "0123456789abcdef"
+
 func ExecCommand(cmd *exec.Cmd) (string, error) {
 	stdout, err := cmd.Output()
+	stdoutStr := strings.TrimSpace(string(stdout))
 	if err != nil {
-		return string(stdout), errors.Cause(err)
+		return stdoutStr, errors.Cause(err)
 	}
-	return string(stdout), nil
+	return stdoutStr, nil
 }
 
 func SliceContains(s []string, str string) bool {
@@ -82,4 +85,18 @@ func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string
 		}
 	}
 	return manifestFilepath
+}
+
+func GetFakeSHA(hashType int) (string, error) {
+	if (hashType != 256) && (hashType != 512) {
+		return "", fmt.Errorf("unsupported hash algorithm: %d", hashType)
+	}
+
+	var shaSum string
+	if hashType == 256 {
+		shaSum = strings.Repeat(hexAlphabet, 4)
+	} else {
+		shaSum = strings.Repeat(hexAlphabet, 8)
+	}
+	return shaSum, nil
 }

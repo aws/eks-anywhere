@@ -31,7 +31,7 @@ type discoveryResponse struct {
 func GenerateMinimalProvider(issuerURL string) (*MinimalProvider, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 1024)
 	if err != nil {
-		return nil, fmt.Errorf("error generating rsa key for OIDC: %v", err)
+		return nil, fmt.Errorf("generating rsa key for OIDC: %v", err)
 	}
 
 	pubKey := &privateKey.PublicKey
@@ -44,7 +44,7 @@ func GenerateMinimalProvider(issuerURL string) (*MinimalProvider, error) {
 	sha := sha1.New()
 	_, err = sha.Write(pubKeyEncoded)
 	if err != nil {
-		return nil, fmt.Errorf("error generating sha1 checksum for pubkey: %v", err)
+		return nil, fmt.Errorf("generating sha1 checksum for pubkey: %v", err)
 	}
 
 	kid := fmt.Sprintf("%x", sha.Sum(nil))
@@ -59,7 +59,7 @@ func GenerateMinimalProvider(issuerURL string) (*MinimalProvider, error) {
 
 	keysJson, err := json.MarshalIndent(keyResponse{Keys: keys}, "", "    ")
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling keys.json for OIDC: %v", err)
+		return nil, fmt.Errorf("marshalling keys.json for OIDC: %v", err)
 	}
 
 	d := &discoveryResponse{
@@ -74,7 +74,7 @@ func GenerateMinimalProvider(issuerURL string) (*MinimalProvider, error) {
 
 	discoveryJson, err := json.MarshalIndent(d, "", "    ")
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling json discovery for OIDC: %v", err)
+		return nil, fmt.Errorf("marshalling json discovery for OIDC: %v", err)
 	}
 
 	marshalledPrivateKey, err := marshalPrivateKey(privateKey)
@@ -93,7 +93,7 @@ func GenerateMinimalProvider(issuerURL string) (*MinimalProvider, error) {
 func marshalPubKey(pubKey *rsa.PublicKey) ([]byte, error) {
 	pubKeyBytes, err := x509.MarshalPKIXPublicKey(pubKey)
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling pub key for oidc provider: %v", err)
+		return nil, fmt.Errorf("marshalling pub key for oidc provider: %v", err)
 	}
 
 	pubKeyBlock := &pem.Block{
@@ -104,7 +104,7 @@ func marshalPubKey(pubKey *rsa.PublicKey) ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	err = pem.Encode(buffer, pubKeyBlock)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding public key for oidc provider: %v", err)
+		return nil, fmt.Errorf("encoding public key for oidc provider: %v", err)
 	}
 
 	return buffer.Bytes(), nil
@@ -121,7 +121,7 @@ func marshalPrivateKey(k *rsa.PrivateKey) ([]byte, error) {
 	buffer := &bytes.Buffer{}
 	err := pem.Encode(buffer, keyBlock)
 	if err != nil {
-		return nil, fmt.Errorf("error encoding private key for oidc provider: %v", err)
+		return nil, fmt.Errorf("encoding private key for oidc provider: %v", err)
 	}
 
 	return buffer.Bytes(), nil

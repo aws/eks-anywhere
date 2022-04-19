@@ -65,4 +65,5 @@ type CloudStackExecConfig struct {
 	SecretKey     string
 	ManagementUrl string
 	VerifySsl     string
+	Timeout       string
 }
