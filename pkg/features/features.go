@@ -10,6 +10,7 @@ const (
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
+	GenericGitProviderEnvVar        = "GENERIC_GIT_PROVIDER_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -78,5 +79,12 @@ func NutanixProvider() Feature {
 	return Feature{
 		Name:     "Nutanix provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(NutanixProviderEnvVar),
+	}
+}
+
+func GenericGitProviderSupport() Feature {
+	return Feature{
+		Name:     "Generic Git Provider Support",
+		IsActive: globalFeatures.isActiveForEnvVar(GenericGitProviderEnvVar),
 	}
 }

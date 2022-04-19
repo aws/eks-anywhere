@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
-func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
+func TestSetDefaultFluxConfigPath(t *testing.T) {
 	tests := []struct {
 		name           string
 		config         *cluster.Config
@@ -29,7 +29,7 @@ func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
 						},
 					},
 				},
-				GitOpsConfig: &anywherev1.GitOpsConfig{},
+				FluxConfig: &anywherev1.FluxConfig{},
 			},
 			wantConfigPath: "clusters/c-1",
 		},
@@ -46,7 +46,7 @@ func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
 						},
 					},
 				},
-				GitOpsConfig: &anywherev1.GitOpsConfig{},
+				FluxConfig: &anywherev1.FluxConfig{},
 			},
 			wantConfigPath: "clusters/c-m",
 		},
@@ -63,13 +63,9 @@ func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
 						},
 					},
 				},
-				GitOpsConfig: &anywherev1.GitOpsConfig{
-					Spec: anywherev1.GitOpsConfigSpec{
-						Flux: anywherev1.Flux{
-							Github: anywherev1.Github{
-								ClusterConfigPath: "my-path",
-							},
-						},
+				FluxConfig: &anywherev1.FluxConfig{
+					Spec: anywherev1.FluxConfigSpec{
+						ClusterConfigPath: "my-path",
 					},
 				},
 			},
@@ -80,8 +76,8 @@ func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 
-			g.Expect(cluster.SetDefaultFluxGitHubConfigPath(tt.config)).To(Succeed())
-			g.Expect(tt.config.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath).To(Equal(tt.wantConfigPath))
+			g.Expect(cluster.SetDefaultFluxConfigPath(tt.config)).To(Succeed())
+			g.Expect(tt.config.FluxConfig.Spec.ClusterConfigPath).To(Equal(tt.wantConfigPath))
 		})
 	}
 }

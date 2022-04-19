@@ -21,18 +21,18 @@ type filesTest struct {
 	ctx         context.Context
 	currentSpec *cluster.Spec
 	newSpec     *cluster.Spec
-	fluxConfig  v1alpha1.Flux
+	fluxConfig  v1alpha1.FluxConfig
 }
 
 func newFilesTest(t *testing.T) *filesTest {
-	fluxConfig := v1alpha1.Flux{
-		Github: v1alpha1.Github{
-			Owner:               "mFowler",
-			Repository:          "testRepo",
-			FluxSystemNamespace: "flux-system",
-			Branch:              "testBranch",
-			ClusterConfigPath:   "clusters/management-cluster",
-			Personal:            true,
+	fluxConfigSpec := v1alpha1.FluxConfigSpec{
+		SystemNamespace:   "flux-system",
+		ClusterConfigPath: "clusters/management-cluster",
+		Branch:            "testBranch",
+		Github: &v1alpha1.GithubProviderConfig{
+			Owner:      "mFowler",
+			Repository: "testRepo",
+			Personal:   true,
 		},
 	}
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -41,10 +41,8 @@ func newFilesTest(t *testing.T) *filesTest {
 				Name: "management-cluster",
 			},
 		}
-		s.GitOpsConfig = &v1alpha1.GitOpsConfig{
-			Spec: v1alpha1.GitOpsConfigSpec{
-				Flux: fluxConfig,
-			},
+		s.FluxConfig = &v1alpha1.FluxConfig{
+			Spec: fluxConfigSpec,
 		}
 	})
 
@@ -53,14 +51,14 @@ func newFilesTest(t *testing.T) *filesTest {
 		ctx:         context.Background(),
 		currentSpec: currentSpec,
 		newSpec:     currentSpec.DeepCopy(),
-		fluxConfig:  fluxConfig,
+		fluxConfig:  v1alpha1.FluxConfig{Spec: fluxConfigSpec},
 	}
 }
 
 func TestUpdateLegacyFileStructureNoGitOpsConfig(t *testing.T) {
 	tt := newFilesTest(t)
 	f, _, _ := newAddonClient(t)
-	tt.newSpec.GitOpsConfig = nil
+	tt.newSpec.FluxConfig = nil
 
 	tt.Expect(f.UpdateLegacyFileStructure(tt.ctx, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
@@ -77,9 +75,9 @@ func TestUpdateLegacyFileStructureNoChanges(t *testing.T) {
 		t.Errorf("failed to create test eksa-system directory: %v", err)
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
+	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
+	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 
 	tt.Expect(f.UpdateLegacyFileStructure(tt.ctx, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
@@ -112,19 +110,19 @@ func TestUpdateLegacyFileStructureSuccess(t *testing.T) {
 		t.Fatalf("failed to write kustomization.yaml in test: %v", err)
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
+	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Github.ClusterConfigPath).Return(nil)
+	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 	m.git.EXPECT().Remove("clusters/management-cluster/eksa-system").Return(nil)
 
 	tt.Expect(f.UpdateLegacyFileStructure(tt.ctx, tt.currentSpec, tt.newSpec)).To(BeNil())
 
-	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultEksaClusterConfigFileName)
+	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Spec.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
 
-	expectedEksaKustomizationPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultKustomizationManifestFileName)
+	expectedEksaKustomizationPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Spec.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultKustomizationManifestFileName)
 	test.AssertFilesEquals(t, expectedEksaKustomizationPath, "./testdata/kustomization.yaml")
 }
