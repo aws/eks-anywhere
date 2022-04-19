@@ -2699,7 +2699,7 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 	assert.Error(t, err, "StoragePolicyName should be immutable")
 }
 
-func TestValidateNewSpecTLSInsecureMutable(t *testing.T) {
+func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 
@@ -2711,14 +2711,7 @@ func TestValidateNewSpecTLSInsecureMutable(t *testing.T) {
 	newProviderConfig.Spec.Insecure = !newProviderConfig.Spec.Insecure
 
 	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	clusterVsphereSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Data: map[string][]byte{
-			"username": []byte(expectedVSphereUsername),
-			"password": []byte(expectedVSpherePassword),
-		},
-	}
+
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
@@ -2726,15 +2719,14 @@ func TestValidateNewSpecTLSInsecureMutable(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.NoError(t, err, nil)
+	assert.Error(t, err, "Insecure should be immutable")
 }
 
-func TestValidateNewSpecTLSThumbprintMutable(t *testing.T) {
+func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 
@@ -2751,24 +2743,14 @@ func TestValidateNewSpecTLSThumbprintMutable(t *testing.T) {
 		s.Cluster.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
 	})
-	clusterVsphereSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Data: map[string][]byte{
-			"username": []byte(expectedVSphereUsername),
-			"password": []byte(expectedVSpherePassword),
-		},
-	}
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
-
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.NoError(t, err, nil)
+	assert.Error(t, err, "Thumbprint should be immutable")
 }
 
 func TestGetMHCSuccess(t *testing.T) {

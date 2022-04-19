@@ -1228,6 +1228,14 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return fmt.Errorf("spec.network is immutable. Previous value %s, new value %s", oSpec.Network, nSpec.Network)
 	}
 
+	if nSpec.Insecure != oSpec.Insecure {
+		return fmt.Errorf("spec.insecure is immutable. Previous value %t, new value %t", oSpec.Insecure, nSpec.Insecure)
+	}
+
+	if nSpec.Thumbprint != oSpec.Thumbprint {
+		return fmt.Errorf("spec.thumbprint is immutable. Previous value %s, new value %s", oSpec.Thumbprint, nSpec.Thumbprint)
+	}
+
 	secretChanged, err := p.secretContentsChanged(ctx, cluster)
 	if err != nil {
 		return err
