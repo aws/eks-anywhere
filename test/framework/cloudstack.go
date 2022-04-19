@@ -23,6 +23,7 @@ const (
 	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
 	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
 	cloudstackFeatureGateEnvVar        = "CLOUDSTACK_PROVIDER"
+	cloudstackB64EncodedSecretEnvVar   = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 )
 
 var requiredCloudStackEnvVars = []string{
@@ -40,6 +41,7 @@ var requiredCloudStackEnvVars = []string{
 	podCidrVar,
 	serviceCidrVar,
 	cloudstackFeatureGateEnvVar,
+	cloudstackB64EncodedSecretEnvVar,
 }
 
 type CloudStack struct {
