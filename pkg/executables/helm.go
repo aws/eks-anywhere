@@ -84,6 +84,26 @@ func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) er
 	return err
 }
 
+func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error {
+	valueArgs := GetHelmValueArgs(values)
+	params := []string{"install", chart, ociURI, "--version", version, insecureSkipVerifyFlag}
+	params = append(params, valueArgs...)
+	params = append(params, "--kubeconfig", kubeconfigFilePath)
+
+	logger.Info("Installing helm chart on cluster", "chart", chart, "version", version)
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(helmTemplateEnvVars).Run()
+	return err
+}
+
 func (h *Helm) url(originalURL string) string {
 	return urls.ReplaceHost(originalURL, h.registryMirror)
+}
+
+func GetHelmValueArgs(values []string) []string {
+	valueArgs := []string{}
+	for _, value := range values {
+		valueArgs = append(valueArgs, "--set", value)
+	}
+
+	return valueArgs
 }
