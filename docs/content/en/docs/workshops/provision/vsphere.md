@@ -1,6 +1,6 @@
 ---
-title: "VSphere/Production Cluster Setup"
-linkTitle: "VSphere/Production Cluster Setup"
+title: "vSphere cluster"
+linkTitle: "vSphere cluster"
 weight: 50
 date: 2021-11-11
 description: >  
@@ -31,7 +31,7 @@ This approach also reduces provider permissions for workload clusters.
 ## Prerequisite Checklist
 
 EKS Anywhere needs to be run on an administrative machine that has certain [machine
-requirements]({{< relref "../install" >}}).
+requirements]({{< relref "../../getting-started/install" >}}).
 An EKS Anywhere deployment will also require the availability of certain
 [resources from your VMware vSphere deployment]({{< relref "/docs/reference/vsphere/vsphere-prereq/_index.md" >}}).
 
