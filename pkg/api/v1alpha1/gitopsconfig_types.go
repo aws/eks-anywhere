@@ -86,6 +86,33 @@ func (c *GitOpsConfig) ExpectedKind() string {
 	return GitOpsConfigKind
 }
 
+func (c *GitOpsConfig) ConvertToFluxConfig() *FluxConfig {
+	if c == nil {
+		return nil
+	}
+	config := &FluxConfig{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       FluxConfigKind,
+			APIVersion: c.APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      c.Name,
+			Namespace: c.Namespace,
+		},
+		Spec: FluxConfigSpec{
+			SystemNamespace:   c.Spec.Flux.Github.FluxSystemNamespace,
+			Branch:            c.Spec.Flux.Github.Branch,
+			ClusterConfigPath: c.Spec.Flux.Github.ClusterConfigPath,
+			Github: &GithubProviderConfig{
+				Owner:      c.Spec.Flux.Github.Owner,
+				Repository: c.Spec.Flux.Github.Repository,
+				Personal:   c.Spec.Flux.Github.Personal,
+			},
+		},
+	}
+	return config
+}
+
 func (c *GitOpsConfig) ConvertConfigToConfigGenerateStruct() *GitOpsConfigGenerate {
 	namespace := defaultEksaNamespace
 	if c.Namespace != "" {

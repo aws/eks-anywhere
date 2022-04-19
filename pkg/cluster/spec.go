@@ -131,6 +131,7 @@ func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
+		s.FluxConfig = gitOpsConfig.ConvertToFluxConfig()
 	}
 }
 

@@ -129,7 +129,7 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, "")
+	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -153,7 +153,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, "")
+	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -176,7 +176,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -192,7 +192,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}

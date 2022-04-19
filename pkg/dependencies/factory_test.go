@@ -65,7 +65,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false, false).
-		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.GitOpsConfig).
+		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig).
 		WithWriter().
 		WithDiagnosticCollectorImage("public.ecr.aws/collector").
 		WithAnalyzerFactory().
