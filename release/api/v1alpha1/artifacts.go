@@ -32,6 +32,11 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.VSphere.ClusterTemplate.URI,
 			&vb.VSphere.Metadata.URI,
 		},
+		"cluster-api-provider-nutanix": {
+			&vb.Nutanix.Components.URI,
+			&vb.Nutanix.ClusterTemplate.URI,
+			&vb.Nutanix.Metadata.URI,
+		},
 		"cluster-api-provider-cloudstack": {
 			&vb.CloudStack.Components.URI,
 			&vb.CloudStack.Metadata.URI,
@@ -94,6 +99,12 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 	}
 }
 
+func (vb *VersionsBundle) NutanixImages() []Image {
+	return []Image{
+		vb.Nutanix.ClusterAPIController,
+	}
+}
+
 func (vb *VersionsBundle) DockerImages() []Image {
 	return []Image{
 		vb.Docker.KubeProxy,
@@ -146,6 +157,7 @@ func (vb *VersionsBundle) Images() []Image {
 		vb.VsphereImages(),
 		vb.CloudStackImages(),
 		vb.SnowImages(),
+		vb.NutanixImages(),
 	}
 
 	size := 0
