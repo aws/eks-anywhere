@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/files"
 	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/releases"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
