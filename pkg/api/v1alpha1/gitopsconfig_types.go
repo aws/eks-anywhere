@@ -110,7 +110,6 @@ func (c *GitOpsConfig) ConvertToFluxConfig() *FluxConfig {
 			},
 		},
 	}
-	config.ObjectMeta.Name = c.Name
 	return config
 }
 
