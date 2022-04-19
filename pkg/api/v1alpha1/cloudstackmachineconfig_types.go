@@ -95,6 +95,10 @@ func (c *CloudStackMachineConfig) GetName() string {
 	return c.Name
 }
 
+func (c *CloudStackMachineConfig) Validate() error {
+	return nil
+}
+
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
