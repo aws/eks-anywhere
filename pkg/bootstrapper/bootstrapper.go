@@ -44,7 +44,7 @@ func New(clusterClient ClusterClient) *Bootstrapper {
 func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterOption) (*types.Cluster, error) {
 	kubeconfigFile, err := b.clusterClient.CreateBootstrapCluster(ctx, clusterSpec, b.getClientOptions(opts)...)
 	if err != nil {
-		return nil, fmt.Errorf("error creating bootstrap cluster: %v, try rerunning with --force-cleanup to force delete previously created bootstrap cluster", err)
+		return nil, fmt.Errorf("creating bootstrap cluster: %v, try rerunning with --force-cleanup to force delete previously created bootstrap cluster", err)
 	}
 
 	c := &types.Cluster{
@@ -61,7 +61,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 
 	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)
 	if err != nil {
-		return nil, fmt.Errorf("error applying extra objects to bootstrap cluster: %v", err)
+		return nil, fmt.Errorf("applying extra objects to bootstrap cluster: %v", err)
 	}
 
 	return c, nil
@@ -70,7 +70,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, isUpgrade bool) error {
 	clusterExists, err := b.clusterClient.ClusterExists(ctx, cluster.Name)
 	if err != nil {
-		return fmt.Errorf("error deleting bootstrap cluster: %v", err)
+		return fmt.Errorf("deleting bootstrap cluster: %v", err)
 	}
 	if !clusterExists {
 		logger.V(4).Info("Skipping delete bootstrap cluster, cluster doesn't exist")
@@ -78,7 +78,7 @@ func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *type
 	}
 	mgmtCluster, err := b.managementInCluster(ctx, cluster)
 	if err != nil {
-		return fmt.Errorf("error deleting bootstrap cluster: %v", err)
+		return fmt.Errorf("deleting bootstrap cluster: %v", err)
 	}
 
 	if mgmtCluster != nil {
@@ -94,7 +94,7 @@ func (b *Bootstrapper) managementInCluster(ctx context.Context, cluster *types.C
 	if cluster.KubeconfigFile == "" {
 		kubeconfig, err := b.clusterClient.GetKubeconfig(ctx, cluster.Name)
 		if err != nil {
-			return nil, fmt.Errorf("error fetching bootstrap cluster's kubeconfig: %v", err)
+			return nil, fmt.Errorf("fetching bootstrap cluster's kubeconfig: %v", err)
 		}
 		cluster.KubeconfigFile = kubeconfig
 	}

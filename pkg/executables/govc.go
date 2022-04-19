@@ -108,7 +108,7 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
 	templateResponse, err := g.exec(ctx, params...)
 	if err != nil {
-		return "", fmt.Errorf("error getting template: %v", err)
+		return "", fmt.Errorf("getting template: %v", err)
 	}
 
 	templateJson := templateResponse.String()
@@ -170,7 +170,7 @@ func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element stri
 	elementInfo := make([]libElement, 0)
 	err = yaml.Unmarshal([]byte(elementInfoJson), &elementInfo)
 	if err != nil {
-		return "", fmt.Errorf("error unmarshalling library element info: %v", err)
+		return "", fmt.Errorf("unmarshalling library element info: %v", err)
 	}
 
 	if len(elementInfo) == 0 {
@@ -199,13 +199,13 @@ func (g *Govc) ResizeDisk(ctx context.Context, datacenter, template, diskName st
 func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) (interface{}, error) {
 	response, err := g.exec(ctx, "device.info", "-dc", datacenter, "-vm", template, "-json")
 	if err != nil {
-		return nil, fmt.Errorf("error getting template device information: %v", err)
+		return nil, fmt.Errorf("getting template device information: %v", err)
 	}
 
 	var devicesInfo map[string]interface{}
 	err = yaml.Unmarshal(response.Bytes(), &devicesInfo)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling devices info: %v", err)
+		return nil, fmt.Errorf("unmarshalling devices info: %v", err)
 	}
 	return devicesInfo["Devices"], nil
 }
@@ -240,7 +240,7 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, datastore string) 
 	params := []string{"datastore.info", "-json=true", datastore}
 	result, err := g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
-		return 0, fmt.Errorf("error getting datastore info: %v", err)
+		return 0, fmt.Errorf("getting datastore info: %v", err)
 	}
 
 	response := &datastoreResponse{}
@@ -253,12 +253,12 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, datastore string) 
 		spaceGiB := freeSpace / byteToGiB
 		return spaceGiB, nil
 	}
-	return 0, fmt.Errorf("error getting datastore available space response: %v", err)
+	return 0, fmt.Errorf("getting datastore available space response: %v", err)
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
 	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-		return fmt.Errorf("error creating library %s: %v", library, err)
+		return fmt.Errorf("creating library %s: %v", library, err)
 	}
 	return nil
 }
@@ -310,7 +310,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 
 		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, diskSizeInGB)
 		if err != nil {
-			return fmt.Errorf("error resizing disk %v to 20G: %v", diskName, err)
+			return fmt.Errorf("resizing disk %v to 20G: %v", diskName, err)
 		}
 	}
 
@@ -332,7 +332,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string) error {
 	logger.V(4).Info("Importing template", "ova", ovaURL, "templateName", name)
 	if _, err := g.exec(ctx, "library.import", "-k", "-pull", "-n", name, library, ovaURL); err != nil {
-		return fmt.Errorf("error importing template: %v", err)
+		return fmt.Errorf("importing template: %v", err)
 	}
 	return nil
 }
@@ -360,7 +360,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		errString := strings.ToLower(errBuffer.String())
 		if err != nil {
 			if !strings.Contains(errString, "not found") {
-				return fmt.Errorf("error obtaining folder information: %v", err)
+				return fmt.Errorf("obtaining folder information: %v", err)
 			} else {
 				bFolderNotFound = true
 			}
@@ -373,12 +373,12 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 			errBuffer, err := g.ExecuteWithEnv(ctx, envMap, params...)
 			errString := strings.ToLower(errBuffer.String())
 			if err != nil && !strings.Contains(errString, "already exists") {
-				return fmt.Errorf("error creating folder: %v", err)
+				return fmt.Errorf("creating folder: %v", err)
 			}
 			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("error creating folder: %v", err)
+			return fmt.Errorf("creating folder: %v", err)
 		}
 	}
 
@@ -392,7 +392,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		templateInLibraryPath, templateName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
-		return fmt.Errorf("error deploying template: %v", err)
+		return fmt.Errorf("deploying template: %v", err)
 	}
 
 	return nil
@@ -421,14 +421,14 @@ func (g *Govc) markAsVM(ctx context.Context, resourcePool, path string) error {
 
 func (g *Govc) removeSnapshotsFromVM(ctx context.Context, path string) error {
 	if _, err := g.exec(ctx, "snapshot.remove", "-vm", path, "*"); err != nil {
-		return fmt.Errorf("error removing snapshots from vm: %v", err)
+		return fmt.Errorf("removing snapshots from vm: %v", err)
 	}
 	return nil
 }
 
 func (g *Govc) deleteVM(ctx context.Context, path string) error {
 	if _, err := g.exec(ctx, "vm.destroy", path); err != nil {
-		return fmt.Errorf("error deleting vm: %v", err)
+		return fmt.Errorf("deleting vm: %v", err)
 	}
 	return nil
 }
@@ -442,7 +442,7 @@ func (g *Govc) createVMSnapshot(ctx context.Context, datacenter, name string) er
 
 func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) error {
 	if _, err := g.exec(ctx, "vm.markastemplate", "-dc", datacenter, vmName); err != nil {
-		return fmt.Errorf("error marking VM as template: %v", err)
+		return fmt.Errorf("marking VM as template: %v", err)
 	}
 	return nil
 }
@@ -511,7 +511,7 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 	params = strings.Fields("find -type VirtualMachine -name " + clusterName + "*")
 	result, err = g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
-		return fmt.Errorf("error getting vm list: %v", err)
+		return fmt.Errorf("getting vm list: %v", err)
 	}
 	scanner := bufio.NewScanner(strings.NewReader(result.String()))
 	for scanner.Scan() {
@@ -579,7 +579,7 @@ func (g *Govc) GetCertThumbprint(ctx context.Context) (string, error) {
 func (g *Govc) ConfigureCertThumbprint(ctx context.Context, server, thumbprint string) error {
 	path, err := g.writer.Write(filepath.Base(govcTlsHostsFile), []byte(fmt.Sprintf("%s %s", server, thumbprint)))
 	if err != nil {
-		return fmt.Errorf("error writing to file %s: %v", govcTlsHostsFile, err)
+		return fmt.Errorf("writing to file %s: %v", govcTlsHostsFile, err)
 	}
 
 	if err = os.Setenv(govcTlsKnownHostsKey, path); err != nil {
@@ -704,7 +704,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("error getting resource pool: %v", err)
+		return fmt.Errorf("getting resource pool: %v", err)
 	}
 
 	poolInfoJson := poolInfoResponse.String()
@@ -759,7 +759,7 @@ func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, machi
 	err := g.retrier.Retry(func() error {
 		_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
-			return fmt.Errorf("error creating folder: %v", err)
+			return fmt.Errorf("creating folder: %v", err)
 		}
 		return nil
 	})

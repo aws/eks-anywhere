@@ -22,7 +22,7 @@ func WaitForSSMReady(session *session.Session, instanceId string) error {
 		return Run(session, instanceId, "ls")
 	})
 	if err != nil {
-		return fmt.Errorf("error waiting for ssm to be ready: %v", err)
+		return fmt.Errorf("waiting for ssm to be ready: %v", err)
 	}
 
 	return nil
@@ -83,13 +83,13 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 	err = retrier.Retry(10, 5*time.Second, func() error {
 		_, err := service.GetCommandInvocation(commandIn)
 		if err != nil {
-			return fmt.Errorf("error getting ssm command invocation: %v", err)
+			return fmt.Errorf("getting ssm command invocation: %v", err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error waiting for ssm command to be registered: %v", err)
+		return nil, fmt.Errorf("waiting for ssm command to be registered: %v", err)
 	}
 
 	logger.V(2).Info("Waiting for ssm command to finish")

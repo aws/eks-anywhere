@@ -20,7 +20,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -35,7 +34,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             "instance-type-1",
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -66,7 +64,6 @@ func TestSnowSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					PhysicalNetworkConnector: "network-1",
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 				},
 			},
 		},
@@ -125,4 +122,18 @@ func TestSnowValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetControlPlaneAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	m := &SnowMachineConfig{}
+	m.SetControlPlaneAnnotation()
+	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/control-plane": "true"}))
+}
+
+func TestSetEtcdAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	m := &SnowMachineConfig{}
+	m.SetEtcdAnnotation()
+	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/etcd": "true"}))
 }

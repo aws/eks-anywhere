@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: {{.clusterName}}-md-0
+  name: {{.workloadkubeadmconfigTemplateName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -9,12 +9,24 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+{{- if .workerNodeGroupTaints }}
+          taints:{{ range .workerNodeGroupTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- else}}
+          taints: []
+{{- end }}
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
             read-only-port: "0"
             anonymous-auth: "false"
-{{- if .cgroupDriverSystemd}}
-            cgroup-driver: systemd
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{`{{ ds.meta_data.local_hostname }}`}}'
 {{- if or .proxyConfig .registryMirrorConfiguration }}
@@ -73,7 +85,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.clusterName}}-md-0
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
@@ -89,7 +101,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: {{.clusterName}}-md-0
+          name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -125,6 +137,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackAffinity }}
+      affinity: '{{ .cloudstackAffinity }}'
+{{- end }}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}

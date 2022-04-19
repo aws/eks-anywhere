@@ -93,6 +93,7 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 	}
 	sortedComponentNames := sortArtifactsMap(eksABundleArtifacts)
 
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
@@ -132,7 +133,11 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource), componentChecksum)
 	if err != nil {
 		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")

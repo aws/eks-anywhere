@@ -19,6 +19,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -266,12 +267,13 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 
 		v.Log.Info("About to apply CNI")
 
-		// TODO use NewCilium, create string slice of namespaces used for capv for calling cilium.GenerateManifest
-		cilium := cilium.Cilium{}
+		helm := executables.NewHelm(executables.NewExecutable("helm"))
+		cilium := cilium.NewCilium(nil, helm)
+
 		if err != nil {
 			return reconciler.Result{}, err
 		}
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{})
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{constants.CapvSystemNamespace})
 		if err != nil {
 			return reconciler.Result{}, err
 		}

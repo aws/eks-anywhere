@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -128,7 +129,7 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, "")
+	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -152,7 +153,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, "")
+	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -175,7 +176,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -191,7 +192,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -407,7 +408,7 @@ func (e *ClusterE2ETest) validateDeploymentsInManagementCluster(ctx context.Cont
 			executables.WithNamespace(namespace),
 		)
 		if err != nil {
-			return fmt.Errorf("error getting deployments: %v", err)
+			return fmt.Errorf("getting deployments: %v", err)
 		}
 
 		for _, deployment := range deployments {
@@ -492,7 +493,7 @@ func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 		e.T.Log("Attempting to validate worker nodes...")
 		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterConfig.Name, e.managementKubeconfigFilePath()); err != nil {
 			e.T.Logf("Worker node validation failed: %v", err)
-			return fmt.Errorf("error while validating worker nodes: %v", err)
+			return fmt.Errorf("validating worker nodes: %v", err)
 		}
 		return nil
 	})
@@ -571,6 +572,44 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 			}
 			if vsphereClusterConfig.Spec.Thumbprint != vsMachineTemplate.Spec.Template.Spec.Thumbprint {
 				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", vsMachineTemplate.Name, vsphereClusterConfig.Spec.Thumbprint, vsMachineTemplate.Spec.Template.Spec.Thumbprint)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			e.T.Logf("Worker MachineTemplate values have matched expected values")
+			return nil
+		})
+	case v1alpha1.CloudStackDatacenterKind:
+		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		cloudstackMachineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		cloudstackWorkerConfig := cloudstackMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		return retrier.Retry(120, time.Second*10, func() error {
+			csMachineTemplate, err := e.KubectlClient.CloudstackWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.managementKubeconfigFilePath(), constants.EksaSystemNamespace)
+			if err != nil {
+				return err
+			}
+			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Spec.Spec.Template.Name {
+				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Spec.Spec.Template)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Spec.Spec.Offering.Name {
+				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Spec.Spec.Offering)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details) {
+				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs) {
+				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
@@ -669,7 +708,7 @@ func (e *ClusterE2ETest) clusterConfigGitPath() string {
 func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
 	s, err := cluster.NewSpecFromClusterConfig(
 		e.clusterConfigGitPath(),
-		version.Info{GitVersion: "v0.0.0-dev"},
+		version.Get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build spec from git: %v", err)

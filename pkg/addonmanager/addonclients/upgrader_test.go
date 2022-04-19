@@ -25,7 +25,7 @@ type upgraderTest struct {
 	currentSpec *cluster.Spec
 	newSpec     *cluster.Spec
 	cluster     *types.Cluster
-	fluxConfig  v1alpha1.Flux
+	fluxConfig  v1alpha1.FluxConfig
 }
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
@@ -53,14 +53,16 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 			Name:           "management-cluster",
 			KubeconfigFile: "k.kubeconfig",
 		},
-		fluxConfig: v1alpha1.Flux{
-			Github: v1alpha1.Github{
-				Owner:               "mFowler",
-				Repository:          "testRepo",
-				FluxSystemNamespace: "flux-system",
-				Branch:              "testBranch",
-				ClusterConfigPath:   "clusters/management-cluster",
-				Personal:            true,
+		fluxConfig: v1alpha1.FluxConfig{
+			Spec: v1alpha1.FluxConfigSpec{
+				SystemNamespace:   "flux-system",
+				ClusterConfigPath: "clusters/management-cluster",
+				Branch:            "testBranch",
+				Github: &v1alpha1.GithubProviderConfig{
+					Owner:      "mFowler",
+					Repository: "testRepo",
+					Personal:   true,
+				},
 			},
 		},
 	}
@@ -86,15 +88,12 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
 
-	tt.newSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
-		Spec: v1alpha1.GitOpsConfigSpec{
-			Flux: tt.fluxConfig,
-		},
-	}
+	tt.newSpec.FluxConfig = &tt.fluxConfig
+
 	f, m, g := newAddonClient(t)
 
 	if err := setupTestFiles(t, g); err != nil {
-		t.Errorf("error setting up files: %v", err)
+		t.Errorf("setting up files: %v", err)
 	}
 
 	wantDiff := &types.ChangeDiff{
@@ -107,16 +106,16 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
+	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Github.ClusterConfigPath).Return(nil)
+	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
-	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
-	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
-	m.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
+	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	m.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
@@ -125,26 +124,22 @@ func TestFluxUpgradeError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
 
-	tt.newSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
-		Spec: v1alpha1.GitOpsConfigSpec{
-			Flux: tt.fluxConfig,
-		},
-	}
+	tt.newSpec.FluxConfig = &tt.fluxConfig
 	f, m, g := newAddonClient(t)
 
 	if err := setupTestFiles(t, g); err != nil {
-		t.Errorf("error setting up files: %v", err)
+		t.Errorf("setting up files: %v", err)
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
+	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Github.ClusterConfigPath).Return(nil)
+	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
-	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
-	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig).Return(errors.New("error from client"))
+	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
 	_, err := f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -153,7 +148,7 @@ func TestFluxUpgradeError(t *testing.T) {
 func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt := newUpgraderTest(t)
 	f, _, _ := newAddonClient(t)
-	tt.newSpec.GitOpsConfig = nil
+	tt.newSpec.FluxConfig = nil
 
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }

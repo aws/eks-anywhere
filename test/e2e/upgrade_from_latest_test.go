@@ -114,6 +114,29 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
+		api.WithTemplateForAllMachines(""), // Use default template from bundle
+		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+	))
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromLatestReleaseFlow(
+		test,
+		anywherev1.Kube121,
+		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways)),
+		provider.WithProviderUpgrade(
+			framework.UpdateUbuntuTemplate121Var(), // Set the template so it doesn't get autoimported
+		),
+	)
+}
+
 func TestDockerKubernetes121UpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(

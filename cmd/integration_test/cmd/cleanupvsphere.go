@@ -58,7 +58,7 @@ func cleanUpVsphereTestResources(ctx context.Context) error {
 	clusterName := viper.GetString(clusterNameFlagName)
 	err := e2e.CleanUpVsphereTestResources(ctx, clusterName)
 	if err != nil {
-		return fmt.Errorf("error running cleanup for vsphere vcenter vms: %v", err)
+		return fmt.Errorf("running cleanup for vsphere vcenter vms: %v", err)
 	}
 
 	return nil

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -256,6 +257,64 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 		{
 			testName: "valid 1.20",
 			fileName: "testdata/cluster_1_20.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube120,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: 3,
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "namespace mismatch between cluster and datacenter",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
+			wantErr:  true,
+		},
+		{
+			testName: "namespace mismatch between cluster and machineconfigs",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_machineconfigs",
+			wantErr:  true,
+		},
+		{
+			testName: "valid 1.20 with non eksa resources",
+			fileName: "testdata/cluster_1_20_with_non_eksa_resources.yaml",
 			wantCluster: &Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       ClusterKind,
@@ -1015,7 +1074,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: line 12: did not find expected key"),
+			matchError: fmt.Errorf("converting YAML to JSON: yaml: line 12: did not find expected key"),
 		},
 		{
 			name: "Invalid key",
@@ -1024,7 +1083,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
 		},
 		{
 			name: "Invalid yaml",
@@ -1033,7 +1092,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: did not find expected node content"),
+			matchError: fmt.Errorf("unable to parse testdata/invalid_format.yaml file: error converting YAML to JSON: yaml: did not find expected node content"),
 		},
 		{
 			name: "Invalid spec field",
@@ -1042,7 +1101,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
 		},
 		{
 			name: "Cluster definition at the end",
@@ -1843,14 +1902,14 @@ func TestValidateCNIConfig(t *testing.T) {
 	}{
 		{
 			name:    "CNI plugin not specified",
-			wantErr: fmt.Errorf("error validating cniConfig: no cni plugin specified"),
+			wantErr: fmt.Errorf("validating cniConfig: no cni plugin specified"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{},
 			},
 		},
 		{
 			name:    "multiple CNI plugins specified",
-			wantErr: fmt.Errorf("error validating cniConfig: cannot specify more than one cni plugins"),
+			wantErr: fmt.Errorf("validating cniConfig: cannot specify more than one cni plugins"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium:   &CiliumConfig{},
@@ -1860,7 +1919,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode",
-			wantErr: fmt.Errorf("error validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
+			wantErr: fmt.Errorf("validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
@@ -1871,7 +1930,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode and > 1 plugins",
-			wantErr: fmt.Errorf("error validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
+			wantErr: fmt.Errorf("validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
@@ -1921,6 +1980,122 @@ func TestValidateCNIConfig(t *testing.T) {
 			if !reflect.DeepEqual(tt.wantErr, got) {
 				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
 			}
+		})
+	}
+}
+
+func TestValidateMirrorConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "registry mirror not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: nil,
+				},
+			},
+		},
+		{
+			name:    "endpoint not specified",
+			wantErr: "no value set for RegistryMirrorConfiguration.Endpoint",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid port",
+			wantErr: "registry mirror port 65536 is invalid",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "65536",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on non snow provider",
+			wantErr: "insecureSkipVerify is only supported for snow provider",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: "nonsnow",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on snow provider",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMirrorConfig(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestClusterRegistryMirror(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    string
+	}{
+		{
+			name: "with registry mirror",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: "1.2.3.4:443",
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
 		})
 	}
 }

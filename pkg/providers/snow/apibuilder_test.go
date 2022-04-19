@@ -33,7 +33,9 @@ func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := SnowCluster(tt.clusterSpec)
 	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	kubeadmControlPlane, err := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
 	got := CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
 	want := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -75,12 +77,9 @@ func TestCAPICluster(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestKubeadmControlPlane(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	got := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	wantReplicas := int32(3)
-	want := &controlplanev1.KubeadmControlPlane{
+	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
 			Kind:       "KubeadmControlPlane",
@@ -147,17 +146,99 @@ func TestKubeadmControlPlane(t *testing.T) {
 				PostKubeadmCommands: []string{
 					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
+				Files: []bootstrapv1.File{},
 			},
 			Replicas: &wantReplicas,
 			Version:  "v1.21.5-eks-1-21-9",
 		},
 	}
+}
+
+func wantRegistryMirrorCommands() []string {
+	return []string{
+		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
+		"sudo systemctl daemon-reload",
+		"sudo systemctl restart containerd",
+	}
+}
+
+func TestKubeadmControlPlane(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	got, err := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
+	want := wantKubeadmControlPlane()
 	tt.Expect(got).To(Equal(want))
+}
+
+func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
+	tests := []struct {
+		name                 string
+		registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
+		wantFiles            []bootstrapv1.File
+	}{
+		{
+			name: "with ca cert",
+			registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint:      "1.2.3.4",
+				Port:          "443",
+				CACertContent: "xyz",
+			},
+			wantFiles: []bootstrapv1.File{
+				{
+					Path:  "/etc/containerd/config_append.toml",
+					Owner: "root:root",
+					Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
+				},
+				{
+					Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
+					Owner:   "root:root",
+					Content: "xyz",
+				},
+			},
+		},
+		{
+			name: "without ca cert",
+			registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+				Endpoint: "1.2.3.4",
+				Port:     "443",
+			},
+			wantFiles: []bootstrapv1.File{
+				{
+					Path:  "/etc/containerd/config_append.toml",
+					Owner: "root:root",
+					Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]`,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
+			controlPlaneMachineTemplate := SnowMachineTemplate(g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			got, err := KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
+			g.Expect(err).To(Succeed())
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), want.Spec.KubeadmConfigSpec.PreKubeadmCommands...)
+			g.Expect(got).To(Equal(want))
+		})
+	}
 }
 
 func TestKubeadmConfigTemplates(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := KubeadmConfigTemplates(tt.clusterSpec)
+	got, err := KubeadmConfigTemplates(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+
 	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
 		"md-0": {
 			TypeMeta: metav1.TypeMeta{
@@ -192,6 +273,7 @@ func TestKubeadmConfigTemplates(t *testing.T) {
 							"/etc/eks/bootstrap.sh",
 						},
 						PostKubeadmCommands: []string{},
+						Files:               []bootstrapv1.File{},
 					},
 				},
 			},
@@ -202,7 +284,9 @@ func TestKubeadmConfigTemplates(t *testing.T) {
 
 func TestMachineDeployments(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	kubeadmConfigTemplates := KubeadmConfigTemplates(tt.clusterSpec)
+	kubeadmConfigTemplates, err := KubeadmConfigTemplates(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+
 	workerMachineTemplates := SnowMachineTemplates(tt.clusterSpec, tt.machineConfigs)
 	got := MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
 	wantVersion := "v1.21.5-eks-1-21-9"

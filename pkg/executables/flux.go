@@ -29,13 +29,13 @@ func NewFlux(executable Executable) *Flux {
 // BootstrapToolkitsComponents creates the GitHub repository if it doesn’t exist, and commits the toolkit
 // components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
 // If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
 		gitProvider,
-		"--repository", c.Repository,
-		"--owner", c.Owner,
+		"--repository", c.Github.Repository,
+		"--owner", c.Github.Owner,
 		"--path", c.ClusterConfigPath,
 		"--ssh-key-algorithm", privateKeyAlgorithm,
 	}
@@ -43,19 +43,19 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
-	if c.Personal {
+	if c.Github.Personal {
 		params = append(params, "--personal")
 	}
 	if c.Branch != "" {
 		params = append(params, "--branch", c.Branch)
 	}
-	if c.FluxSystemNamespace != "" {
-		params = append(params, "--namespace", c.FluxSystemNamespace)
+	if c.SystemNamespace != "" {
+		params = append(params, "--namespace", c.SystemNamespace)
 	}
 
 	token, err := github.GetGithubAccessTokenFromEnv()
 	if err != nil {
-		return fmt.Errorf("error setting token env: %v", err)
+		return fmt.Errorf("setting token env: %v", err)
 	}
 
 	env := make(map[string]string)
@@ -63,14 +63,14 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 
 	_, err = f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux bootstrap: %v", err)
+		return fmt.Errorf("executing flux bootstrap: %v", err)
 	}
 
 	return err
 }
 
-func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{
 		"uninstall",
 		"--silent",
@@ -78,23 +78,23 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
-	if c.FluxSystemNamespace != "" {
-		params = append(params, "--namespace", c.FluxSystemNamespace)
+	if c.SystemNamespace != "" {
+		params = append(params, "--namespace", c.SystemNamespace)
 	}
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error uninstalling flux: %v", err)
+		return fmt.Errorf("uninstalling flux: %v", err)
 	}
 	return err
 }
 
-func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
-	if c.FluxSystemNamespace == "" {
-		return fmt.Errorf("error executing flux suspend kustomization: namespace empty")
+func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
+	if c.SystemNamespace == "" {
+		return fmt.Errorf("executing flux suspend kustomization: namespace empty")
 	}
-	params := []string{"suspend", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
+	params := []string{"suspend", "ks", c.SystemNamespace, "--namespace", c.SystemNamespace}
 
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -102,18 +102,18 @@ func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, g
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux suspend kustomization: %v", err)
+		return fmt.Errorf("executing flux suspend kustomization: %v", err)
 	}
 
 	return err
 }
 
-func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
-	if c.FluxSystemNamespace == "" {
-		return fmt.Errorf("error executing flux resume kustomization: namespace empty")
+func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
+	if c.SystemNamespace == "" {
+		return fmt.Errorf("executing flux resume kustomization: namespace empty")
 	}
-	params := []string{"resume", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
+	params := []string{"resume", "ks", c.SystemNamespace, "--namespace", c.SystemNamespace}
 
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -121,18 +121,18 @@ func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, 
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux resume kustomization: %v", err)
+		return fmt.Errorf("executing flux resume kustomization: %v", err)
 	}
 
 	return err
 }
 
-func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{"reconcile", "source", "git"}
 
-	if c.FluxSystemNamespace != "" {
-		params = append(params, c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace)
+	if c.SystemNamespace != "" {
+		params = append(params, c.SystemNamespace, "--namespace", c.SystemNamespace)
 	} else {
 		params = append(params, "flux-system")
 	}
@@ -142,7 +142,7 @@ func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConf
 	}
 
 	if _, err := f.Execute(ctx, params...); err != nil {
-		return fmt.Errorf("error executing flux reconcile: %v", err)
+		return fmt.Errorf("executing flux reconcile: %v", err)
 	}
 
 	return nil

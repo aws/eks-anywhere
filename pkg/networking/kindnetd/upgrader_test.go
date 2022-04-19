@@ -55,7 +55,7 @@ func TestUpgraderUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, tt.manifest)
 
-	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(tt.wantChangeDiff), "upgrader.Upgrade() should succeed and return correct ChangeDiff")
+	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(Equal(tt.wantChangeDiff), "upgrader.Upgrade() should succeed and return correct ChangeDiff")
 }
 
 func TestUpgraderUpgradeNotNeeded(t *testing.T) {
@@ -63,5 +63,5 @@ func TestUpgraderUpgradeNotNeeded(t *testing.T) {
 	tt.currentSpec.VersionsBundle.Kindnetd.Version = "v1.0.0"
 	tt.newSpec.VersionsBundle.Kindnetd.Version = "v1.0.0"
 
-	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
+	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
 }

@@ -2,9 +2,7 @@ package logfetcher
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
@@ -13,8 +11,8 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
+	"github.com/aws/eks-anywhere-test-tool/pkg/testResults"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type FetchLogsOpt func(options *fetchLogsConfig) (err error)
@@ -40,26 +38,9 @@ type fetchLogsConfig struct {
 	project string
 }
 
-var (
-	ssmCommandExecutionLogStreamTemplate = "%s/%s/aws-runShellScript/%s"
-	individualTestLogFileTemplate        = "%s-%s-%s"
-)
-
-type testResult struct {
-	InstanceId string `json:"instanceId"`
-	JobId      string `json:"jobId"`
-	CommandId  string `json:"commandId"`
-	Tests      string `json:"tests"`
-	Status     string `json:"status"`
-	Error      string `json:"error"`
-}
-
-func (t *testResult) OutputFileName() string {
-	return fmt.Sprintf(individualTestLogFileTemplate, t.Tests, t.InstanceId, t.JobId)
-}
+var ssmCommandExecutionLogStreamTemplate = "%s/%s/aws-runShellScript/%s"
 
 type (
-	testFilter        func(logs []*cloudwatchlogs.OutputLogEvent) (filteredTestsLogs *bytes.Buffer, filteredTestResults []testResult, err error)
 	codebuildConsumer func(*awscodebuild.Build) error
 	messagesConsumer  func(allMessages, filteredMessages *bytes.Buffer) error
 	testConsumer      func(testName string, logs []*cloudwatchlogs.OutputLogEvent) error
@@ -69,7 +50,7 @@ type LogFetcherOpt func(*testLogFetcher)
 
 func WithTestFilterByName(tests []string) LogFetcherOpt {
 	return func(l *testLogFetcher) {
-		l.filterTests = newTestFilterByName(tests)
+		l.filterTests = testResults.NewTestFilterByName(tests)
 	}
 }
 
@@ -86,7 +67,7 @@ type testLogFetcher struct {
 	testAccountCwClient         *cloudwatch.Cloudwatch
 	buildAccountCodebuildClient *codebuild.Codebuild
 	writer                      *testsWriter
-	filterTests                 testFilter
+	filterTests                 testResults.TestFilter
 	processCodebuild            codebuildConsumer
 	processMessages             messagesConsumer
 	processTest                 testConsumer
@@ -105,7 +86,7 @@ func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloud
 	defultOutputFolder := time.Now().Format(time.RFC3339 + "-logs")
 
 	if l.filterTests == nil {
-		l.filterTests = filterFailedTests
+		l.filterTests = testResults.GetFailedTests
 	}
 
 	if l.processCodebuild == nil {
@@ -159,11 +140,11 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 	return nil
 }
 
-func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]testResult, error) {
+func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]testResults.TestResult, error) {
 	logger.Info("Fetching build project logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching build project logs for project %s: %v", project, err)
+		return nil, fmt.Errorf("fetching build project logs for project %s: %v", project, err)
 	}
 
 	g := build.Logs.GroupName
@@ -171,7 +152,7 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]
 
 	logs, err := l.buildAccountCwClient.GetLogs(*g, *s)
 	if err != nil {
-		return nil, fmt.Errorf("error when fetching cloudwatch logs: %v", err)
+		return nil, fmt.Errorf("fetching cloudwatch logs: %v", err)
 	}
 
 	allMsg := allMessages(logs)
@@ -191,7 +172,7 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]
 	return filteredTests, nil
 }
 
-func (l *testLogFetcher) FetchTestLogs(tests []testResult) error {
+func (l *testLogFetcher) FetchTestLogs(tests []testResults.TestResult) error {
 	logger.Info("Fetching individual test logs...")
 	for _, test := range tests {
 		stdout := fmt.Sprintf(ssmCommandExecutionLogStreamTemplate, test.CommandId, test.InstanceId, "stdout")
@@ -222,28 +203,6 @@ func (l *testLogFetcher) ensureWriter(folderPath string) error {
 	return nil
 }
 
-func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestMessages *bytes.Buffer, failedTestResults []testResult, err error) {
-	var failedTests []testResult
-	failedTestMessages = &bytes.Buffer{}
-	for _, event := range logs {
-		if strings.Contains(*event.Message, constants.FailedMessage) {
-			msg := *event.Message
-			i := strings.Index(msg, "{")
-			subMsg := msg[i:]
-			var r testResult
-			err = json.Unmarshal([]byte(subMsg), &r)
-			if err != nil {
-				logger.Info("error when unmarshalling json of test results", "error", err)
-				return nil, nil, err
-			}
-			failedTests = append(failedTests, r)
-			failedTestMessages.WriteString(subMsg)
-		}
-	}
-
-	return failedTestMessages, failedTests, nil
-}
-
 func allMessages(logs []*cloudwatchlogs.OutputLogEvent) *bytes.Buffer {
 	allMsg := new(bytes.Buffer)
 	for _, event := range logs {
@@ -251,39 +210,4 @@ func allMessages(logs []*cloudwatchlogs.OutputLogEvent) *bytes.Buffer {
 	}
 
 	return allMsg
-}
-
-func newTestFilterByName(tests []string) testFilter {
-	lookup := types.SliceToLookup(tests)
-	return func(logs []*cloudwatchlogs.OutputLogEvent) (filteredTestsLogs *bytes.Buffer, filteredTestResults []testResult, err error) {
-		filteredTestsLogs = &bytes.Buffer{}
-		for _, event := range logs {
-			if !isResultMessage(*event.Message) {
-				continue
-			}
-
-			msg := *event.Message
-			i := strings.Index(msg, "{")
-			subMsg := msg[i:]
-			var r testResult
-			err = json.Unmarshal([]byte(subMsg), &r)
-			if err != nil {
-				logger.Info("error when unmarshalling json of test results", "error", err)
-				return nil, nil, err
-			}
-
-			if !lookup.IsPresent(r.Tests) {
-				continue
-			}
-
-			filteredTestResults = append(filteredTestResults, r)
-			filteredTestsLogs.WriteString(subMsg)
-		}
-
-		return filteredTestsLogs, filteredTestResults, nil
-	}
-}
-
-func isResultMessage(message string) bool {
-	return strings.Contains(message, constants.FailedMessage) || strings.Contains(message, constants.SuccessMEssage)
 }

@@ -60,6 +60,11 @@ spec:
 ## Import images into a private registry
 You can use the `import-images` command to pull images from `public.ecr.aws` and push them to your
 private registry.
+Starting with release 0.8, import-images command also pulls the cilium chart from `public.ecr.aws` and pushes it to the registry mirror. It requires the registry credentials for performing a login. Set the following environment variables for the login:
+```bash
+export REGISTRY_USERNAME=<username>
+export REGISTRY_PASSWORD=<password>
+```
 
 ```bash
 docker login https://<private registry endpoint>
@@ -86,6 +91,7 @@ bottlerocket
 eks-anywhere
 eks-distro
 isovalent
+cilium-chart
 ```
 
 For example, if a registry is available at `private-registry.local`, then the following 
@@ -96,4 +102,5 @@ https://private-registry.local/bottlerocket
 https://private-registry.local/eks-anywhere
 https://private-registry.local/eks-distro
 https://private-registry.local/isovalent
+https://private-registry.local/cilium-chart
 ```

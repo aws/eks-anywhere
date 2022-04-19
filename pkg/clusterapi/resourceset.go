@@ -100,7 +100,7 @@ func marshall(objects ...interface{}) ([]byte, error) {
 	for _, o := range objects {
 		b, err := yaml.Marshal(o)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling object for cluster resource set: %v", err)
+			return nil, fmt.Errorf("marshalling object for cluster resource set: %v", err)
 		}
 
 		bytes = append(bytes, b)

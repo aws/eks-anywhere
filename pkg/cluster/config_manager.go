@@ -75,7 +75,7 @@ func (c *ConfigManager) SetDefaults(config *Config) error {
 
 	if len(allErrs) > 0 {
 		aggregate := utilerrors.NewAggregate(allErrs)
-		return fmt.Errorf("error setting defaults on cluster config: %v", aggregate)
+		return fmt.Errorf("setting defaults on cluster config: %v", aggregate)
 	}
 
 	return nil

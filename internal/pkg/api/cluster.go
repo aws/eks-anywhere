@@ -35,7 +35,7 @@ func AutoFillClusterFromYaml(yamlContent []byte, fillers ...ClusterFiller) ([]by
 
 	clusterOutput, err := yaml.Marshal(clusterConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling cluster config: %v", err)
+		return nil, fmt.Errorf("marshalling cluster config: %v", err)
 	}
 
 	return clusterOutput, nil

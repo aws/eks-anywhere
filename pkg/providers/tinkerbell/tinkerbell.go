@@ -3,13 +3,18 @@ package tinkerbell
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
+	corev1 "k8s.io/api/core/v1"
+	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,6 +30,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -35,6 +41,10 @@ const (
 	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
 	tinkerbellIPKey                = "TINKERBELL_IP"
 	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
+	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
+	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
+	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
+	Provisioning                   = "provisioning"
 )
 
 //go:embed config/template-cp.yaml
@@ -51,23 +61,27 @@ const defaultUsername = "ec2-user"
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
 )
 
 type tinkerbellProvider struct {
 	clusterConfig         *v1alpha1.Cluster
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
+	hardwares             []tinkv1alpha1.Hardware
 	providerKubectlClient ProviderKubectlClient
 	providerTinkClient    ProviderTinkClient
+	pbnj                  ProviderPbnjClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
-	skipPowerActions      bool
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
-	// TODO: Update hardwareConfig to proper type
+
+	skipIpCheck      bool
+	skipPowerActions bool
+	setupTinkerbell  bool
+	force            bool
 }
 
 type TinkerbellClients struct {
@@ -77,19 +91,27 @@ type TinkerbellClients struct {
 
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
-	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
+	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
 }
 
 type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
+	GetHardwareByUuid(ctx context.Context, uuid string) (*hardware.Hardware, error)
+	PushHardware(ctx context.Context, hardware []byte) error
 	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
+	DeleteWorkflow(ctx context.Context, workflowIDs ...string) error
 }
 
 type ProviderPbnjClient interface {
 	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
+	PowerOff(context.Context, pbnj.BmcSecretConfig) error
+	PowerOn(context.Context, pbnj.BmcSecretConfig) error
+	SetBootDevice(ctx context.Context, info pbnj.BmcSecretConfig, mode pbnj.BootDevice) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -108,6 +130,8 @@ func NewProvider(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
+	force bool,
 ) *tinkerbellProvider {
 	return NewProviderCustomDep(
 		datacenterConfig,
@@ -122,6 +146,8 @@ func NewProvider(
 		skipIpCheck,
 		hardwareConfigFile,
 		skipPowerActions,
+		setupTinkerbell,
+		force,
 	)
 }
 
@@ -138,6 +164,8 @@ func NewProviderCustomDep(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
+	force bool,
 ) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -161,6 +189,7 @@ func NewProviderCustomDep(
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
 		providerTinkClient:    providerTinkClient,
+		pbnj:                  pbnjClient,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -170,14 +199,18 @@ func NewProviderCustomDep(
 		},
 		hardwareConfigFile: hardwareConfigFile,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
-		skipIpCheck:        skipIpCheck,
-		skipPowerActions:   skipPowerActions,
 		writer:             writer,
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
-		keyGenerator: sshAuthKeyGenerator{},
+		keyGenerator: common.SshAuthKeyGenerator{},
+
+		// Behavioral flags.
+		skipIpCheck:      skipIpCheck,
+		skipPowerActions: skipPowerActions,
+		setupTinkerbell:  setupTinkerbell,
+		force:            force,
 	}
 }
 
@@ -195,14 +228,19 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
 		env["NO_PROXY"] = noProxy
 	}
+
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
-	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
+	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()
 	if err != nil {
-		return fmt.Errorf("error applying hardware yaml: %v", err)
+		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
+	if err != nil {
+		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
 	return nil
 }
@@ -226,6 +264,37 @@ func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *c
 		}
 	}
 	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaTinkerbellMachineResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+}
+
+func (p *tinkerbellProvider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
+	// We want to validate cluster nodes are powered off.
+	// We wait on BMC status.powerState to check for power off.
+	bmcRefs := make([]string, 0, len(p.hardwares))
+	for _, hw := range p.hardwares {
+		bmcRefs = append(bmcRefs, hw.Spec.BmcRef)
+	}
+
+	// TODO (pokearu): The retry logic can be substituted by changing GetBmcsPowerState to use kubectl wait --for
+	// In the current version of kubectl in EKSA --for does not support jsonpath.
+	err := retrier.Retry(10, 10*time.Second, func() error {
+		powerStates, err := p.providerKubectlClient.GetBmcsPowerState(ctx, bmcRefs, managementCluster.KubeconfigFile, constants.EksaSystemNamespace)
+		if err != nil {
+			return fmt.Errorf("retrieving bmc power state: %w", err)
+		}
+
+		for _, state := range powerStates {
+			if !strings.Contains(state, bmcStatePowerActionHardoff) {
+				return fmt.Errorf("bmc current power state '%s'; expected power state '%s'", state, bmcStatePowerActionHardoff)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func ensureMachineConfigsHaveAtLeast1User(machines map[string]*v1alpha1.TinkerbellMachineConfig) {
@@ -293,6 +362,12 @@ func (p *tinkerbellProvider) configureSshKeys() error {
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
+	hardware, err := p.providerTinkClient.GetHardware(ctx)
+	if err != nil {
+		return fmt.Errorf("retrieving tinkerbell hardware: %v", err)
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
+
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -303,14 +378,34 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
-		return err
-	}
-
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions, p.force); err != nil {
+		return err
+	}
+
+	if p.force {
+		if err := p.setHardwareStateToProvisining(ctx); err != nil {
+			return err
+		}
+
+		if !p.skipPowerActions {
+			if err := p.setMachinesToPXEBoot(ctx); err != nil {
+				return err
+			}
+		}
+
+		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
+			return err
+		}
+	} else if !p.skipPowerActions {
+		if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
+			return fmt.Errorf("validating machines are powered off: %w", err)
+		}
+	}
+
+	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
 		return err
 	}
 
@@ -318,11 +413,11 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating control plane template config: %v", err)
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
@@ -341,12 +436,201 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	return nil
 }
 
-func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) error {
+	for _, hardware := range p.validator.hardwareConfig.Hardwares {
+		tinkHardware, err := p.providerTinkClient.GetHardwareByUuid(ctx, hardware.Spec.ID)
+		if err != nil {
+			return fmt.Errorf("getting hardware with UUID '%s': %v", hardware.Spec.ID, err)
+		}
+
+		if tinkHardware.Metadata.State != Provisioning {
+			tinkHardware.Metadata.State = Provisioning
+
+			patchedHardware, err := json.Marshal(tinkHardware)
+			if err != nil {
+				return fmt.Errorf("marshaling hardware %s: %v", tinkHardware.Id, err)
+			}
+
+			logger.Info(fmt.Sprintf("Attempting to set state of hardware '%s' to '%s'", tinkHardware.Id, Provisioning))
+
+			if err := p.providerTinkClient.PushHardware(ctx, patchedHardware); err != nil {
+				return fmt.Errorf("patching hardware state: %v", err)
+			}
+		}
+	}
+	return nil
+}
+
+// setMachinesToPXEBoot iterates over all p.validator.hardwareConfig.Bmcs and instructs them to turn off
+// and boot from PXE and turn on.
+func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
+	// We're reaching into an unexported member of p.validator because of the lazy loading we're doing with
+	// hardware configuration. This effectively defines a concrete tight coupling between the validator and the
+	// Tinkerbell construct that desperately needs teething apart.
+
+	secrets := make(map[string]corev1.Secret, len(p.validator.hardwareConfig.Secrets))
+	for _, secret := range p.validator.hardwareConfig.Secrets {
+		secrets[secret.Name] = secret
+	}
+
+	var errs []error
+	for _, bmc := range p.validator.hardwareConfig.Bmcs {
+		secret, found := secrets[bmc.Spec.AuthSecretRef.Name]
+		if !found {
+			errs = append(errs, fmt.Errorf("could not find bmc secret for '%v'", bmc.Name))
+		}
+
+		conf := pbnj.BmcSecretConfig{
+			Host:     bmc.Spec.Host,
+			Username: string(secret.Data["username"]),
+			Password: string(secret.Data["password"]),
+			Vendor:   bmc.Spec.Vendor,
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		if err := p.pbnj.PowerOff(ctx, conf); err != nil {
+			errs = append(errs, err)
+		}
+
+		if err := p.pbnj.SetBootDevice(ctx, conf, pbnj.BootDevicePXE); err != nil {
+			errs = append(errs, err)
+		}
+
+		cancel()
+	}
+
+	return errorutil.NewAggregate(errs)
+}
+
+// scrubWorkflowsFromTinkerbell removes all workflows in the Tinkerbell stack that feature in hardware by retrieving
+// hardware MAC addresses using tinkerbellHardware. tinkerbellHardware is necessary because MAC addresses aren't
+// available on the Hardware object type.
+func (p *tinkerbellProvider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
+	workflows, err := p.providerTinkClient.GetWorkflow(ctx)
+	if err != nil {
+		return fmt.Errorf("retrieving workflows: %w", err)
+	}
+
+	hardwareMACLookup, err := createHardwareIDToMACMapping(tinkerbellHardware)
+	if err != nil {
+		return err
+	}
+
+	manifestHardwareMACs, err := createMACSetFromHardwareManifests(hardwareMACLookup, hardware)
+	if err != nil {
+		return err
+	}
+
+	workflowIDs, err := getWorkflowsIDsFromMACs(manifestHardwareMACs, workflows)
+	if err != nil {
+		return err
+	}
+
+	if err := p.providerTinkClient.DeleteWorkflow(ctx, workflowIDs...); err != nil {
+		return fmt.Errorf("could not delete tinkerbell workflow: %v", err)
+	}
+
+	return nil
+}
+
+func createHardwareIDToMACMapping(hardware []*tinkhardware.Hardware) (map[string]string, error) {
+	hardwareMACLookup := make(map[string]string)
+	for _, h := range hardware {
+		if len(h.Network.Interfaces) == 0 {
+			return nil, fmt.Errorf("hardware manifest without interface: hardware ID = '%v'", h.Id)
+		}
+		hardwareMACLookup[h.Id] = h.Network.Interfaces[0].Dhcp.Mac
+	}
+
+	return hardwareMACLookup, nil
+}
+
+func createMACSetFromHardwareManifests(hardwareMACLookup map[string]string, hardware []tinkv1alpha1.Hardware) (macAddressSet, error) {
+	manifestHardwareMACs := make(macAddressSet)
+	for _, h := range hardware {
+		mac, found := hardwareMACLookup[h.Spec.ID]
+		if !found {
+			return nil, fmt.Errorf("couldn't find mac address for hardware manifest: manifest hardware ID = '%v'", h.Spec.ID)
+		}
+
+		manifestHardwareMACs.Insert(mac)
+	}
+
+	return manifestHardwareMACs, nil
+}
+
+func getWorkflowsIDsFromMACs(hardwareMACs macAddressSet, workflows []*tinkworkflow.Workflow) ([]string, error) {
+	var workflowIDs []string
+	for _, w := range workflows {
+		mac, err := macFromWorkflow(w)
+		if err != nil {
+			return nil, err
+		}
+
+		if hardwareMACs.Contains(mac) {
+			workflowIDs = append(workflowIDs, w.Id)
+		}
+	}
+
+	return workflowIDs, nil
+}
+
+func macFromWorkflow(workflow *tinkworkflow.Workflow) (string, error) {
+	var data struct {
+		Mac string `json:"device_1"` // Assume the hardware device data uses device_1 as the key.
+	}
+
+	if err := json.Unmarshal([]byte(workflow.Hardware), &data); err != nil {
+		return "", err
+	}
+
+	return data.Mac, nil
+}
+
+type macAddressSet map[string]struct{}
+
+func (m *macAddressSet) Contains(mac string) bool {
+	_, found := (*m)[strings.ToLower(mac)]
+	return found
+}
+
+func (m *macAddressSet) Insert(mac string) {
+	(*m)[strings.ToLower(mac)] = struct{}{}
+}
+
+func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
 	// TODO: validations?
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	hardwares, err := p.providerKubectlClient.GetHardwareWithLabel(ctx, tinkerbellOwnerNameLabel, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	filteredHws, err := filterHardwareForCluster(hardwares, cluster.Name)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	p.hardwares = filteredHws
+
 	return nil
+}
+
+// filterHardwareForCluster filters hardware with ownerName label that contains cluster name.
+func filterHardwareForCluster(hardwares []tinkv1alpha1.Hardware, clusterName string) ([]tinkv1alpha1.Hardware, error) {
+	var filteredHardwareList []tinkv1alpha1.Hardware
+	for _, hw := range hardwares {
+		if strings.Contains(hw.Labels[tinkerbellOwnerNameLabel], clusterName) {
+			filteredHardwareList = append(filteredHardwareList, hw)
+		}
+	}
+	// Ensure that there are one or more hardware CRDs presnt in the hardware list for a cluster.
+	if len(filteredHardwareList) == 0 {
+		return nil, fmt.Errorf("no hardware found for cluster %s", clusterName)
+	}
+	return filteredHardwareList, nil
 }
 
 func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
@@ -457,7 +741,7 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -600,14 +884,9 @@ func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
-}
-
-func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	// TODO: Figure out if something is needed here
-	return nil
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
@@ -677,4 +956,8 @@ func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
+}
+
+func (p *tinkerbellProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
 }

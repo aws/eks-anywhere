@@ -8,7 +8,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 
 * View the published EKS Anywhere [user documentation](https://anywhere.eks.amazonaws.com/docs/).
 * Fork and clone the [eks-anywhere](https://github.com/aws/eks-anywhere) project.
-* See [EKS Anywhere Documentation](https://github.com/aws/eks-anywhere/tree/main/docs) to set up your own docs test site.
+* See [EKS Anywhere Documentation](https://github.com/aws/eks-anywhere/tree/main/docs#eks-anywhere-documentation) to set up your own docs test site.
 * See the [General Guidelines](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/community/contributing.md) for contributing to the EKS Anywhere project
 * Create EKS Anywhere documentation [Issues](https://github.com/aws/eks-anywhere/issues) and [Pull Requests](https://github.com/aws/eks-anywhere/pulls).
 
@@ -18,21 +18,31 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 * **Line breaks**: Put each sentence on its own line and don’t do a line break in the middle of a sentence. 
   We are using a modified [Semantic Line Breaking](https://sembr.org/) in that we are requiring a break at the end of every sentence, but not at commas or other semantic boundaries.
 * **Headings**: Use sentence case in headings. So do “Cluster specification reference” and not “Cluster Specification Reference”
-* **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. For example:
+* **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. Here is an example of a cross reference (code and results):
    ```
-     [troubleshooting section]({{< relref "../tasks/troubleshoot" >}})
+     See the [troubleshooting section]({{< relref "../tasks/troubleshoot" >}}) page.
    ```
+     See the [troubleshooting section]({{< relref "../tasks/troubleshoot" >}}) page.
+
 * **Notes, Warnings, etc.**: You can use this form for notes:
-    
+
+   ```   
+    {{% alert title="Note" color="primary" %}}
+    <put note here, multiple paragraphs are allowed>
+    {{% /alert %}}
+   ```
+
     {{% alert title="Note" color="primary" %}}
     <put note here, multiple paragraphs are allowed>
     {{% /alert %}}
 
 * **Embedding content**: If you want to read in content from a separate file, you can use the following format.
   Do this if you think the content might be useful in multiple pages:
-  ```
-  {{% content "./newfile.md" %}}
-  ```
+
+   ```
+    {{% content "./newfile.md" %}}
+   ```
+
 * **General style issues**: Unless otherwise instructed, follow the [Kubernetes Documentation Style Guide](https://kubernetes.io/docs/contribute/style/style-guide/) for formatting and presentation guidance.
 
 ## Where to put content
@@ -83,4 +93,4 @@ In line with these general guidelines, we recommend that even acceptable third-p
 * **Not be marketing oriented**. The content shouldn’t sell a third-party products or make vague claims of quality.
 * **Not outside the scope of EKS Anywhere**:  Just because some projects or products of a partner are appropriate for EKS Anywhere docs, it doesn’t mean that any project or product by that partner can be documented in EKS Anywhere.
 * **Stick to the facts**:  So, for example, docs about third-party software could say: “To set up load balancer ABC, do XYZ” or “Make these modifications to improve speed and efficiency.” It should not make blanket statements like: “ABC load balancer is the best one in the industry.”
-* **EKS features**: Features that relate to EKS which runs in AWS or requires an AWS account should link to [the official documentation](https://docs.aws.amazon.com/eks/latest/) as much as possible.
+* **EKS features**: Features that relate to EKS which runs in AWS or requires an AWS account should link to [the official documentation](https://docs.aws.amazon.com/eks/) as much as possible.

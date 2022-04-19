@@ -7,7 +7,9 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/conformance"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -58,16 +60,20 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 func (e *ClusterE2ETest) getEksdReleaseKubeVersion() (string, error) {
 	c, err := v1alpha1.GetClusterConfig(e.ClusterConfigLocation)
 	if err != nil {
-		return "", fmt.Errorf("error fetching cluster config from file: %v", err)
+		return "", fmt.Errorf("fetching cluster config from file: %v", err)
 	}
-	eksdRelease, _, err := cluster.GetEksdRelease(version.Get(), c)
+	r := manifests.NewReader(files.NewReader())
+	b, err := r.ReadBundlesForVersion(version.Get().GitVersion)
 	if err != nil {
-		return "", fmt.Errorf("error getting EKS-D release spec from bundle: %v", err)
+		return "", fmt.Errorf("getting EKS-D release spec from bundle: %v", err)
 	}
-	if kubeVersion := eksdRelease.KubeVersion; kubeVersion != "" {
-		return kubeVersion, nil
+	versionsBundle := bundles.VersionsBundleForKubernetesVersion(b, string(c.Spec.KubernetesVersion))
+	versionsBundleKubeVersion := versionsBundle.EksD.KubeVersion
+	if versionsBundleKubeVersion == "" {
+		return "", fmt.Errorf("getting KubeVersion from EKS-D release spec: value empty")
 	}
-	return "", fmt.Errorf("error getting KubeVersion from EKS-D release spec: value empty")
+
+	return versionsBundleKubeVersion, nil
 }
 
 // Function to parse the conformace test results and look for any failed tests.

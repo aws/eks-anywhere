@@ -96,7 +96,14 @@ Set the remaining fields in [cluster spec](https://anywhere.eks.amazonaws.com/do
 
 1. After hosting the service account public signing key and OIDC discovery documents, the applications running in pods can start accessing the desired AWS resources, as long as the pod is mounted with the right service account tokens. This part of configuring the pods with the right service account tokens and env vars is automated by the [amazon pod identity webhook](https://github.com/aws/amazon-eks-pod-identity-webhook). Once the webhook is deployed, it mutates any pods launched using service accounts annotated with `eks.amazonaws.com/role-arn`
 
-1. Follow the [in-cluster installation steps](https://github.com/aws/amazon-eks-pod-identity-webhook#in-cluster) for amazon-eks-pod-identity-webhook. While running the make target, make sure the $KUBECONFIG env var is set to the path of the EKS Anywhere cluster.
+1. Check out [this commit](https://github.com/aws/amazon-eks-pod-identity-webhook/commit/a65cc3d9c61cf6fc43f0f985818c474e0867d786) of the amazon-eks-pod-identity-webhook.
+
+1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
+1. Run the following command:
+
+    ```bash
+    make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:a65cc3d
+    ```
 
 
 #### Configure the trust relationship for the OIDC provider's IAM Role

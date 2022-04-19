@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -72,7 +71,7 @@ func AutoFillTinkerbellProvider(filename string, fillers ...TinkerbellFiller) ([
 	for _, r := range resources {
 		yamlContent, err := yaml.Marshal(r)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling tinkerbell resource: %v", err)
+			return nil, fmt.Errorf("marshalling tinkerbell resource: %v", err)
 		}
 
 		yamlResources = append(yamlResources, yamlContent)
@@ -124,16 +123,7 @@ func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellF
 
 func WithTinkerbellHegelURL(value string) TinkerbellFiller {
 	return func(config TinkerbellConfig) error {
-		for _, t := range config.templateConfigs {
-			for _, task := range t.Spec.Template.Tasks {
-				for _, action := range task.Actions {
-					if action.Name == "add-tink-cloud-init-config" {
-						contents := action.Environment["CONTENTS"]
-						action.Environment["CONTENTS"] = strings.ReplaceAll(contents, "http://<REPLACE WITH TINKERBELL IP>:50061", value)
-					}
-				}
-			}
-		}
+		config.datacenterConfig.Spec.TinkerbellHegelURL = value
 		return nil
 	}
 }

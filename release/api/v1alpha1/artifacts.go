@@ -41,6 +41,10 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Tinkerbell.ClusterTemplate.URI,
 			&vb.Tinkerbell.Metadata.URI,
 		},
+		"cluster-api-provider-snow": {
+			&vb.Snow.Components.URI,
+			&vb.Snow.Metadata.URI,
+		},
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
@@ -75,6 +79,7 @@ func (vb *VersionsBundle) Ovas() []Archive {
 func (vb *VersionsBundle) CloudStackImages() []Image {
 	return []Image{
 		vb.CloudStack.ClusterAPIController,
+		vb.CloudStack.KubeVip,
 	}
 }
 
@@ -93,6 +98,13 @@ func (vb *VersionsBundle) DockerImages() []Image {
 	return []Image{
 		vb.Docker.KubeProxy,
 		vb.Docker.Manager,
+	}
+}
+
+func (vb *VersionsBundle) SnowImages() []Image {
+	return []Image{
+		vb.Snow.KubeVip,
+		vb.Snow.Manager,
 	}
 }
 
@@ -128,16 +140,32 @@ func (vb *VersionsBundle) SharedImages() []Image {
 }
 
 func (vb *VersionsBundle) Images() []Image {
-	shared := vb.SharedImages()
-	docker := vb.DockerImages()
-	vsphere := vb.VsphereImages()
-	cloudstack := vb.CloudStackImages()
+	groupedImages := [][]Image{
+		vb.SharedImages(),
+		vb.DockerImages(),
+		vb.VsphereImages(),
+		vb.CloudStackImages(),
+		vb.SnowImages(),
+	}
 
-	images := make([]Image, 0, len(shared)+len(docker)+len(vsphere)+len(cloudstack))
-	images = append(images, shared...)
-	images = append(images, docker...)
-	images = append(images, vsphere...)
-	images = append(images, cloudstack...)
+	size := 0
+	for _, g := range groupedImages {
+		size += len(g)
+	}
+
+	images := make([]Image, 0, size)
+	for _, g := range groupedImages {
+		images = append(images, g...)
+	}
 
 	return images
+}
+
+func (vb *VersionsBundle) Charts() map[string]*Image {
+	return map[string]*Image{
+		"cilium": &vb.Cilium.HelmChart,
+		// Temporarily disabling this chart until we fix the error
+		// when pushing it to harbor
+		//"eks-anywhere-packages": &vb.PackageController.HelmChart,
+	}
 }

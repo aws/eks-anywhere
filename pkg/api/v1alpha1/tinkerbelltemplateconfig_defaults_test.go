@@ -14,7 +14,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	wantActions := []tinkerbell.Action{
 		{
 			Name:    "stream-image",
-			Image:   "image2disk:v1.0.0",
+			Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
 			Timeout: 360,
 			Environment: map[string]string{
 				"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
@@ -23,23 +23,11 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			},
 		},
 		{
-			Name:    "install-openssl",
-			Image:   "cexec:v1.0.0",
-			Timeout: 90,
-			Environment: map[string]string{
-				"BLOCK_DEVICE":        "/dev/sda1",
-				"FS_TYPE":             "ext4",
-				"CHROOT":              "y",
-				"DEFAULT_INTERPRETER": "/bin/sh -c",
-				"CMD_LINE":            "apt -y update && apt -y install openssl",
-			},
-		},
-		{
 			Name:    "write-netplan",
-			Image:   "writefile:v1.0.0",
+			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/netplan/config.yaml",
 				"CONTENTS":  netplan,
@@ -51,10 +39,10 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 		{
 			Name:    "add-tink-cloud-init-config",
-			Image:   "writefile:v1.0.0",
+			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  cloudInit,
@@ -66,10 +54,10 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 		{
 			Name:    "add-tink-cloud-init-ds-config",
-			Image:   "writefile:v1.0.0",
+			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 				"CONTENTS":  "datasource: Ec2\n",
@@ -81,17 +69,17 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 		{
 			Name:    "kexec-image",
-			Image:   "kexec:v1.0.0",
+			Image:   "public.ecr.aws/eks-anywhere/kexec:latest",
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"BLOCK_DEVICE": "/dev/sda1",
+				"BLOCK_DEVICE": "/dev/sda2",
 				"FS_TYPE":      "ext4",
 			},
 		},
 	}
 
-	opts := WithDefaultActionsFromBundle(vBundle)
+	opts := GetDefaultActionsFromBundle(vBundle)
 	for _, opt := range opts {
 		opt(&givenActions)
 	}
@@ -102,13 +90,28 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 }
 
 func givenVersionBundle() v1alpha1.VersionsBundle {
-	return v1alpha1.VersionsBundle{EksD: v1alpha1.EksDRelease{
-		Raw: v1alpha1.OSImageBundle{
-			Ubuntu: v1alpha1.OSImage{
-				Archive: v1alpha1.Archive{
-					URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
+	return v1alpha1.VersionsBundle{
+		EksD: v1alpha1.EksDRelease{
+			Raw: v1alpha1.OSImageBundle{
+				Ubuntu: v1alpha1.OSImage{
+					Archive: v1alpha1.Archive{
+						URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
+					},
 				},
 			},
 		},
-	}}
+		Tinkerbell: v1alpha1.TinkerbellBundle{
+			Actions: v1alpha1.Actions{
+				ImageToDisk: v1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/image2disk:latest",
+				},
+				WriteFile: v1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/writefile:latest",
+				},
+				Kexec: v1alpha1.Image{
+					URI: "public.ecr.aws/eks-anywhere/kexec:latest",
+				},
+			},
+		},
+	}
 }

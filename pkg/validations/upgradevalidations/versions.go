@@ -18,17 +18,17 @@ const supportedMinorVersionIncrement = 1
 func ValidateServerVersionSkew(ctx context.Context, compareVersion v1alpha1.KubernetesVersion, cluster *types.Cluster, kubectl validations.KubectlClient) error {
 	versions, err := kubectl.Version(ctx, cluster)
 	if err != nil {
-		return fmt.Errorf("error while fetching cluster version: %v", err)
+		return fmt.Errorf("fetching cluster version: %v", err)
 	}
 
 	parsedInputVersion, err := version.ParseGeneric(string(compareVersion))
 	if err != nil {
-		return fmt.Errorf("error while parsing comparison version: %v", err)
+		return fmt.Errorf("parsing comparison version: %v", err)
 	}
 
 	parsedServerVersion, err := version.ParseSemantic(versions.ServerVersion.GitVersion)
 	if err != nil {
-		return fmt.Errorf("error while parsing cluster version: %v", err)
+		return fmt.Errorf("parsing cluster version: %v", err)
 	}
 
 	logger.V(3).Info("calculating version differences", "inputVersion", parsedInputVersion, "clusterVersion", parsedServerVersion)

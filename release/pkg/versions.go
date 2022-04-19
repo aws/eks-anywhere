@@ -13,6 +13,8 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
+const fakeComponentChecksum = "abcdef1"
+
 func BuildComponentVersion(versioner projectVersioner, componentCheckSum string) (string, error) {
 	patchVersion, err := versioner.patchVersion()
 	if err != nil {

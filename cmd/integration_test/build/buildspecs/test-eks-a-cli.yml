@@ -3,10 +3,11 @@ version: 0.2
 env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 120
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 20
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 120
     T_VSPHERE_CIDR: "198.18.128.0/17"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
-    SKIPPED_TESTS: "TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow"
+    SKIPPED_TESTS: "TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120ThreeWorkersConformanceFlow,TestCloudStackKubernetes121ThreeWorkersConformanceFlow,TestCloudStackKubernetes121GitopsOptionsFlux,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestCloudStackKubernetes120SimpleFlow,TestCloudStackKubernetes121DifferentNamespaceSimpleFlow,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120To121CpComputeOfferingUpgrade,TestCloudStackKubernetes120RedhatTo121Upgrade,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes121WorkloadClusterDemo,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFlux,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes121WorkloadCluster,TestCloudStackKubernetes120GitopsOptionsFlux"
+    CLOUDSTACK_PROVIDER: true
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -44,6 +45,21 @@ env:
     T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
     T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
     T_AWS_IAM_ROLE_ARN: "aws-iam-auth-role:ec2_role_arn"
+    T_CLOUDSTACK_DOMAIN: "cloudstack_ci_beta_connection:domain"
+    T_CLOUDSTACK_ZONE: "cloudstack_ci_beta_connection:zone"
+    T_CLOUDSTACK_ACCOUNT: "cloudstack_ci_beta_connection:account"
+    T_CLOUDSTACK_NETWORK: "cloudstack_ci_beta_connection:network"
+    T_CLOUDSTACK_MANAGEMENT_SERVER: "cloudstack_ci_beta_connection:management_server"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_20: "cloudstack_ci_beta_connection:template_redhat_1_20"
+    T_CLOUDSTACK_TEMPLATE_REDHAT_1_21: "cloudstack_ci_beta_connection:template_redhat_1_21"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
+    T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
+    T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
+    EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    T_CLOUDSTACK_CIDR: "cloudstack_ci_beta_connection:cidr"
+    T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
+    T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
+    T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
 
 phases:
   pre_build:

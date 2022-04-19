@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -217,7 +218,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube121
+	return Kube122
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
@@ -246,15 +247,20 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	return nil
 }
 
+type kindObject struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+		k := &kindObject{}
+		if err := yaml.Unmarshal([]byte(c), k); err != nil {
 			return err
 		}
 
-		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
+		if k.Kind == clusterConfig.ExpectedKind() {
 			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
@@ -275,12 +281,12 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) UseImageMirror(defaultImage string) string {
+func (c *Cluster) RegistryMirror() string {
 	if c.Spec.RegistryMirrorConfiguration == nil {
-		return defaultImage
+		return ""
 	}
-	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port) + imageUrl.Path
+
+	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -474,7 +480,7 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 
 	if len(allErrs) > 0 {
 		aggregate := utilerrors.NewAggregate(allErrs)
-		return fmt.Errorf("error validating cniConfig: %v", aggregate)
+		return fmt.Errorf("validating cniConfig: %v", aggregate)
 	}
 
 	return nil
@@ -538,13 +544,16 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return errors.New("no value set for ECRMirror.Endpoint")
+		return errors.New("no value set for RegistryMirrorConfiguration.Endpoint")
 	}
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
+		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
 	return nil
 }
 
@@ -569,11 +578,25 @@ func validateGitOps(clusterConfig *Cluster) error {
 	if gitOpsRef == nil {
 		return nil
 	}
-	if gitOpsRef.Kind != GitOpsConfigKind {
+
+	gitOpsRefKind := gitOpsRef.Kind
+	fluxConfigActive := features.IsActive(features.GenericGitProviderSupport())
+
+	if gitOpsRefKind == FluxConfigKind && !fluxConfigActive {
+		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
+			"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
+	}
+
+	if gitOpsRefKind != GitOpsConfigKind && !fluxConfigActive {
 		return errors.New("only GitOpsConfig Kind is supported at this time")
 	}
+
+	if gitOpsRefKind != GitOpsConfigKind && gitOpsRefKind != FluxConfigKind {
+		return errors.New("only GitOpsConfig or FluxConfig Kind are supported at this time")
+	}
+
 	if gitOpsRef.Name == "" {
-		return errors.New("GitOpsConfig name can't be empty; specify a valid name for GitOpsConfig")
+		return errors.New("GitOpsRef name can't be empty; specify a valid GitOpsConfig name")
 	}
 	return nil
 }

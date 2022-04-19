@@ -31,6 +31,7 @@ type CommandContext struct {
 	CurrentClusterSpec *cluster.Spec
 	UpgradeChangeDiff  *types.ChangeDiff
 	BootstrapCluster   *types.Cluster
+	ManagementCluster  *types.Cluster
 	WorkloadCluster    *types.Cluster
 	Profiler           *Profiler
 	OriginalError      error

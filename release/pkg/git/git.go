@@ -49,3 +49,8 @@ func GetHead(gitRoot string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "rev-parse", "HEAD")
 	return utils.ExecCommand(cmd)
 }
+
+func GetRepoRoot() (string, error) {
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	return utils.ExecCommand(cmd)
+}

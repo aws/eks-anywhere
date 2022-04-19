@@ -25,8 +25,9 @@ const (
 	testDataDir                         = "testdata"
 	expectedTinkerbellIP                = "1.2.3.4"
 	expectedTinkerbellGRPCAuth          = "1.2.3.4:42113"
-	expectedTinkerbellCertURL           = "1.2.3.4:42114/cert"
+	expectedTinkerbellCertURL           = "http://1.2.3.4:42114/cert"
 	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
+	expectedTinkerbellHegelURL          = "http://1.2.3.4:50051"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
@@ -72,6 +73,8 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		true,
 		"testdata/hardware_config.yaml",
 		false,
+		false,
+		false,
 	)
 }
 
@@ -84,6 +87,8 @@ type testContext struct {
 	isTinkerbellGRPCAuthSet          bool
 	oldTinkerbellPBnJGRPCAuthority   string
 	isTinkerbellPBnJGRPCAuthoritySet bool
+	isTinkerbellHegelURLSet          bool
+	oldTinkerbellHegelURL            string
 }
 
 func (tctx *testContext) SaveContext() {
@@ -91,10 +96,12 @@ func (tctx *testContext) SaveContext() {
 	tctx.oldTinkerbellCertURL, tctx.isTinkerbellCertURLSet = os.LookupEnv(tinkerbellCertURLKey)
 	tctx.oldtinkerbellGRPCAuth, tctx.isTinkerbellGRPCAuthSet = os.LookupEnv(tinkerbellGRPCAuthKey)
 	tctx.oldTinkerbellPBnJGRPCAuthority, tctx.isTinkerbellPBnJGRPCAuthoritySet = os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey)
+	tctx.oldTinkerbellHegelURL, tctx.isTinkerbellHegelURLSet = os.LookupEnv(tinkerbellHegelURLKey)
 	os.Setenv(tinkerbellIPKey, expectedTinkerbellIP)
 	os.Setenv(tinkerbellCertURLKey, expectedTinkerbellCertURL)
 	os.Setenv(tinkerbellGRPCAuthKey, expectedTinkerbellGRPCAuth)
 	os.Setenv(tinkerbellPBnJGRPCAuthorityKey, expectedTinkerbellPBnJGRPCAuthority)
+	os.Setenv(tinkerbellHegelURLKey, expectedTinkerbellHegelURL)
 	os.Setenv(features.TinkerbellProviderEnvVar, "true")
 }
 
@@ -119,6 +126,11 @@ func (tctx *testContext) RestoreContext() {
 	} else {
 		os.Unsetenv(tinkerbellPBnJGRPCAuthorityKey)
 	}
+	if tctx.isTinkerbellHegelURLSet {
+		os.Setenv(tinkerbellHegelURLKey, tctx.oldTinkerbellHegelURL)
+	} else {
+		os.Unsetenv(tinkerbellHegelURLKey)
+	}
 }
 
 func setupContext(t *testing.T) {
@@ -130,11 +142,13 @@ func setupContext(t *testing.T) {
 }
 
 func setupHardware() []*tinkhardware.Hardware {
+	metadata := `{"state": "provisioning"}`
+
 	var hardwares []*tinkhardware.Hardware
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820ba"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820bb"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "d2c14d26-640a-48f0-baee-a737c68a75f5"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "0c9d1701-f884-499e-80b8-6dcfc0973e85"})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820ba", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820bb", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "d2c14d26-640a-48f0-baee-a737c68a75f5", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "0c9d1701-f884-499e-80b8-6dcfc0973e85", Metadata: metadata})
 
 	return hardwares
 }
@@ -159,7 +173,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(8)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -196,7 +210,7 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(8)
 
 	const sshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="
 	keyGenerator.EXPECT().GenerateSSHAuthKey(gomock.Any()).Return(sshKey, nil)
@@ -237,7 +251,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
-	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(8)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -273,7 +287,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(8)
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)

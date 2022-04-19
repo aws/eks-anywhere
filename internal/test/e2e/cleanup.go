@@ -16,25 +16,25 @@ import (
 func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
 	session, err := session.NewSession()
 	if err != nil {
-		return fmt.Errorf("error creating session: %v", err)
+		return fmt.Errorf("creating session: %v", err)
 	}
 	logger.V(1).Info("Fetching list of EC2 instances")
 	key := "Integration-Test"
 	value := tag
 	maxAgeFloat, err := strconv.ParseFloat(maxAge, 64)
 	if err != nil {
-		return fmt.Errorf("error parsing max age: %v", err)
+		return fmt.Errorf("parsing max age: %v", err)
 	}
 	results, err := ec2.ListInstances(session, key, value, maxAgeFloat)
 	if err != nil {
-		return fmt.Errorf("error listing EC2 instances: %v", err)
+		return fmt.Errorf("listing EC2 instances: %v", err)
 	}
 	logger.V(1).Info("Successfully listed EC2 instances for termination")
 	if len(results) != 0 {
 		logger.V(1).Info("Terminating EC2 instances")
 		err = ec2.TerminateEc2Instances(session, results)
 		if err != nil {
-			return fmt.Errorf("error terminating EC2 instacnes: %v", err)
+			return fmt.Errorf("terminating EC2 instacnes: %v", err)
 		}
 		logger.V(1).Info("Successfully terminated EC2 instances")
 	} else {
@@ -44,11 +44,11 @@ func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) er
 	s3MaxAge := "604800" // one week
 	s3MaxAgeFloat, err := strconv.ParseFloat(s3MaxAge, 64)
 	if err != nil {
-		return fmt.Errorf("error parsing S3 max age: %v", err)
+		return fmt.Errorf("parsing S3 max age: %v", err)
 	}
 	err = s3.CleanUpS3Bucket(session, storageBucket, s3MaxAgeFloat)
 	if err != nil {
-		return fmt.Errorf("error clean up s3 bucket objects: %v", err)
+		return fmt.Errorf("clean up s3 bucket objects: %v", err)
 	}
 	logger.V(1).Info("Successfully cleaned up s3 bucket")
 
@@ -58,11 +58,11 @@ func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) er
 func CleanUpVsphereTestResources(ctx context.Context, clusterName string) error {
 	clusterName, err := validations.ValidateClusterNameArg([]string{clusterName})
 	if err != nil {
-		return fmt.Errorf("error validating cluster name: %v", err)
+		return fmt.Errorf("validating cluster name: %v", err)
 	}
 	err = vsphereRmVms(ctx, clusterName)
 	if err != nil {
-		return fmt.Errorf("error removing vcenter vms: %v", err)
+		return fmt.Errorf("removing vcenter vms: %v", err)
 	}
 	logger.V(1).Info("Vsphere vcenter vms cleanup complete")
 	return nil

@@ -136,6 +136,14 @@ func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
 	return e.HardwarePool
 }
 
+func (e *ClusterE2ETest) RunClusterFlowWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
+	e.GenerateClusterConfig()
+	e.createCluster()
+	e.UpgradeWithGitOps(clusterOpts...)
+	time.Sleep(5 * time.Minute)
+	e.deleteCluster()
+}
+
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.clusterFillers = append(e.clusterFillers, f...)
@@ -228,6 +236,24 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
+func (e *ClusterE2ETest) PowerOnHardware() {
+	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
+	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
+	if err != nil {
+		e.T.Fatalf("failed to create pbnj client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	for _, h := range e.TestHardware {
+		bmcInfo := api.NewBmcSecretConfig(h)
+		err := pbnjClient.PowerOn(ctx, bmcInfo)
+		if err != nil {
+			e.T.Fatalf("failed to power on hardware: %v", err)
+		}
+	}
+}
+
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
 	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
@@ -242,13 +268,22 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		bmcInfo := api.NewBmcSecretConfig(h)
 
 		powerState, err := pbnjClient.GetPowerState(ctx, bmcInfo)
-		if err != nil {
-			e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+		// add sleep retries to give the machine time to power off
+		timeout := 15
+		for powerState != pbnj.PowerStateOff && timeout > 0 {
+			if err != nil {
+				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+			}
+			time.Sleep(5 * time.Second)
+			timeout = timeout - 5
+			powerState, err = pbnjClient.GetPowerState(ctx, bmcInfo)
 		}
 
 		if powerState != pbnj.PowerStateOff {
 			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 			failedToDecomm = append(failedToDecomm, h)
+		} else {
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 		}
 	}
 
@@ -318,6 +353,16 @@ func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
 	e.RunEKSA(importImagesArgs, opts...)
 }
 
+func (e *ClusterE2ETest) DownloadArtifacts(opts ...CommandOpt) {
+	downloadArtifactsArgs := []string{"download", "artifacts", "-f", e.ClusterConfigLocation}
+	e.RunEKSA(downloadArtifactsArgs, opts...)
+	if _, err := os.Stat("eks-anywhere-downloads.tar.gz"); err != nil {
+		e.T.Fatal(err)
+	} else {
+		e.T.Log("Downloaded artifacts saved at eks-anywhere-downloads.tar.gz")
+	}
+}
+
 func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
 	e.createCluster(opts...)
 }
@@ -346,7 +391,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	err := r.Retry(func() error {
 		err := e.KubectlClient.ValidateNodes(ctx, e.cluster().KubeconfigFile)
 		if err != nil {
-			return fmt.Errorf("error validating nodes status: %v", err)
+			return fmt.Errorf("validating nodes status: %v", err)
 		}
 		return nil
 	})
@@ -356,7 +401,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	e.T.Log("Validating cluster node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
 		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion); err != nil {
-			return fmt.Errorf("error validating nodes version: %v", err)
+			return fmt.Errorf("validating nodes version: %v", err)
 		}
 		return nil
 	})

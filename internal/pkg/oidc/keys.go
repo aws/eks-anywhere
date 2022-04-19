@@ -28,7 +28,7 @@ func parseKeys(bytes []byte) (*keyResponse, error) {
 	keys := &keyResponse{}
 	err := json.Unmarshal(bytes, keys)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing keys.json to get kid: %v", err)
+		return nil, fmt.Errorf("parsing keys.json to get kid: %v", err)
 	}
 
 	return keys, nil

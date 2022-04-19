@@ -20,25 +20,6 @@ type VSphereMachineConfigSpec struct {
 	Users             []UserConfiguration `json:"users,omitempty"`
 }
 
-func UsersSliceEqual(a, b []UserConfiguration) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	m := make(map[string][]string, len(a))
-	for _, v := range a {
-		m[v.Name] = v.SshAuthorizedKeys
-	}
-	for _, v := range b {
-		if _, ok := m[v.Name]; !ok {
-			return false
-		}
-		if !SliceEqual(v.SshAuthorizedKeys, m[v.Name]) {
-			return false
-		}
-	}
-	return true
-}
-
 func (c *VSphereMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }

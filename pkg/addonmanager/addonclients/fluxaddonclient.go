@@ -63,11 +63,11 @@ type GitOptions struct {
 	Writer filewriter.FileWriter
 }
 
-func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig, writer filewriter.FileWriter) (*GitOptions, error) {
-	if gitOpsConfig == nil {
+func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitOptions, error) {
+	if fluxConfig == nil {
 		return nil, nil
 	}
-	localGitRepoPath := filepath.Join(cluster.Name, "git", gitOpsConfig.Spec.Flux.Github.Repository)
+	localGitRepoPath := filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
 	gogitOptions := gogit.Options{
 		RepositoryDirectory: localGitRepoPath,
 	}
@@ -75,18 +75,18 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig 
 
 	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: goGit}
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
-	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &gitOpsConfig.Spec)
+	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &fluxConfig.Spec)
 	if err != nil {
-		return nil, fmt.Errorf("error creating Git provider: %v", err)
+		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
 	err = gitProvider.Validate(ctx)
 	if err != nil {
 		return nil, err
 	}
-	localGitWriterPath := filepath.Join("git", gitOpsConfig.Spec.Flux.Github.Repository)
+	localGitWriterPath := filepath.Join("git", fluxConfig.Spec.Github.Repository)
 	gitwriter, err := writer.WithDir(localGitWriterPath)
 	if err != nil {
-		return nil, fmt.Errorf("error creating file writer: %v", err)
+		return nil, fmt.Errorf("creating file writer: %v", err)
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
@@ -106,16 +106,16 @@ func NewFluxAddonClient(flux Flux, gitOpts *GitOptions) *FluxAddonClient {
 // Flux is an interface that abstracts the basic commands of flux executable.
 type Flux interface {
 	// BootstrapToolkitsComponents bootstraps toolkit components in a GitHub repository.
-	BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
+	BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// UninstallToolkitsComponents UninstallFluxComponents removes the Flux components and the toolkit.fluxcd.io resources from the cluster.
-	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
+	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// PauseKustomization pauses reconciliation of Kustomization
-	PauseKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
+	PauseKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// ResumeKustomization resumes a paused Kustomization
-	ResumeKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
+	ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// ForceReconcileGitRepo sync git repo with latest commit
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, namespace string) error
@@ -124,7 +124,7 @@ type Flux interface {
 	DeleteFluxSystemSecret(ctx context.Context, cluster *types.Cluster, namespace string) error
 
 	// Reconcile reconciles sources and resources
-	Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
+	Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 }
 
 func (f *FluxAddonClient) SetRetier(retrier *retrier.Retrier) {
@@ -141,7 +141,7 @@ func (f *FluxAddonClient) ForceReconcileGitRepo(ctx context.Context, cluster *ty
 		clusterSpec:     clusterSpec,
 	}
 
-	return f.flux.ForceReconcileGitRepo(ctx, cluster, fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
+	return f.flux.ForceReconcileGitRepo(ctx, cluster, fc.clusterSpec.FluxConfig.Spec.SystemNamespace)
 }
 
 // InstallGitOps validates and sets up the gitops/flux config, creates a repository if one doesn’t exist,
@@ -166,7 +166,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 
 	if !cluster.ExistingManagement {
 		err := f.retrier.Retry(func() error {
-			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
+			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
 		})
 		if err != nil {
 			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
@@ -197,7 +197,7 @@ func (f *FluxAddonClient) uninstallGitOpsToolkits(ctx context.Context, cluster *
 	}
 
 	return f.retrier.Retry(func() error {
-		return fc.flux.UninstallToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
+		return fc.flux.UninstallToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
 	})
 }
 
@@ -215,7 +215,7 @@ func (f *FluxAddonClient) PauseGitOpsKustomization(ctx context.Context, cluster 
 	logger.V(3).Info("pause reconciliation of all Kustomization", "namespace", fc.namespace())
 
 	return f.retrier.Retry(func() error {
-		return fc.flux.PauseKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
+		return fc.flux.PauseKustomization(ctx, cluster, clusterSpec.FluxConfig)
 	})
 }
 
@@ -232,7 +232,7 @@ func (f *FluxAddonClient) ResumeGitOpsKustomization(ctx context.Context, cluster
 
 	logger.V(3).Info("resume reconciliation of all Kustomization", "namespace", fc.namespace())
 	return f.retrier.Retry(func() error {
-		return fc.flux.ResumeKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
+		return fc.flux.ResumeKustomization(ctx, cluster, clusterSpec.FluxConfig)
 	})
 }
 
@@ -260,7 +260,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 	path := fc.eksaSystemDir()
 	err := f.gitOpts.Git.Add(path)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", path, err)}
 	}
 
 	err = f.pushToRemoteRepo(ctx, path, updateClusterconfigCommitMessage)
@@ -322,7 +322,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 
 	err := f.gitOpts.Git.Remove(p)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", p, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", p, err)}
 	}
 
 	err = f.pushToRemoteRepo(ctx, p, deleteClusterconfigCommitMessage)
@@ -337,14 +337,14 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 func (f *FluxAddonClient) pushToRemoteRepo(ctx context.Context, path, msg string) error {
 	err := f.gitOpts.Git.Commit(msg)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when committing %s to git:  %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("committing %s to git:  %v", path, err)}
 	}
 
 	err = f.retrier.Retry(func() error {
 		return f.gitOpts.Git.Push(ctx)
 	})
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when pushing %s to git: %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("pushing %s to git: %v", path, err)}
 	}
 	return nil
 }
@@ -362,8 +362,8 @@ type fluxForCluster struct {
 // These will later be used by Flux and our controllers to reconcile the repository contents and the cluster configuration.
 func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) error {
 	logger.Info("Adding cluster configuration files to Git")
-	config := fc.clusterSpec.GitOpsConfig
-	repository := config.Spec.Flux.Github.Repository
+	config := fc.clusterSpec.FluxConfig
+	repository := config.Spec.Github.Repository
 
 	if err := fc.setupRepository(ctx); err != nil {
 		return err
@@ -390,10 +390,10 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	} else {
 		logger.V(3).Info("Skipping flux custom manifest files")
 	}
-	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
+	p := path.Dir(config.Spec.ClusterConfigPath)
 	err = fc.gitOpts.Git.Add(p)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", p, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", p, err)}
 	}
 
 	err = fc.FluxAddonClient.pushToRemoteRepo(ctx, p, initialClusterconfigCommitMessage)
@@ -428,7 +428,7 @@ func (fc *fluxForCluster) initEksaWriter() (filewriter.FileWriter, error) {
 	eksaSystemDir := fc.eksaSystemDir()
 	w, err := fc.gitOpts.Writer.WithDir(eksaSystemDir)
 	if err != nil {
-		err = fmt.Errorf("error creating %s directory: %v", eksaSystemDir, err)
+		err = fmt.Errorf("creating %s directory: %v", eksaSystemDir, err)
 	}
 	w.CleanUpTemp()
 	return w, err
@@ -455,7 +455,7 @@ func (fc *fluxForCluster) generateClusterConfigFile(w filewriter.FileWriter) err
 		return err
 	}
 	if filePath, err := w.Write(clusterConfigFileName, resourcesSpec, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error writing eks-a cluster config file into %s: %v", filePath, err)
+		return fmt.Errorf("writing eks-a cluster config file into %s: %v", filePath, err)
 	}
 
 	return nil
@@ -467,7 +467,7 @@ func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) err
 	}
 	t := templater.New(w)
 	if filePath, err := t.WriteToFile(eksaKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error writing eks-a kustomization manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("writing eks-a kustomization manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -475,7 +475,7 @@ func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) err
 func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
 	w, err := fc.gitOpts.Writer.WithDir(fc.fluxSystemDir())
 	if err != nil {
-		err = fmt.Errorf("error creating %s directory: %v", fc.fluxSystemDir(), err)
+		err = fmt.Errorf("creating %s directory: %v", fc.fluxSystemDir(), err)
 	}
 	w.CleanUpTemp()
 	return w, err
@@ -512,14 +512,14 @@ func (fc *fluxForCluster) generateFluxKustomizeFile(t *templater.Templater) erro
 		"Namespace": fc.namespace(),
 	}
 	if filePath, err := t.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system kustomization manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system kustomization manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
 
 func (f *FluxAddonClient) generateFluxSyncFile(t *templater.Templater) error {
 	if filePath, err := t.WriteToFile(fluxSyncContent, nil, fluxSyncFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system sync manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system sync manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -534,7 +534,7 @@ func (fc *fluxForCluster) generateFluxPatchFile(t *templater.Templater) error {
 		"NotificationControllerImage": bundle.Flux.NotificationController.VersionedImage(),
 	}
 	if filePath, err := t.WriteToFile(fluxPatchContent, values, fluxPatchFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system patch manifest file into %s: %v", filePath, err)
+		return fmt.Errorf("creating flux-system patch manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -631,11 +631,11 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 
 	// git requires at least one commit in the repo to branch from
 	if err = fc.gitOpts.Git.Commit("initializing repository"); err != nil {
-		return fmt.Errorf("error when initializing repository: %v", err)
+		return fmt.Errorf("initializing repository: %v", err)
 	}
 
 	if err = fc.gitOpts.Git.Branch(fc.branch()); err != nil {
-		return fmt.Errorf("error when creating branch: %v", err)
+		return fmt.Errorf("creating branch: %v", err)
 	}
 	return nil
 }
@@ -664,27 +664,27 @@ func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Conte
 }
 
 func (fc *fluxForCluster) namespace() string {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
+	return fc.clusterSpec.FluxConfig.Spec.SystemNamespace
 }
 
 func (fc *fluxForCluster) repository() string {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository
+	return fc.clusterSpec.FluxConfig.Spec.Github.Repository
 }
 
 func (fc *fluxForCluster) owner() string {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Owner
+	return fc.clusterSpec.FluxConfig.Spec.Github.Owner
 }
 
 func (fc *fluxForCluster) branch() string {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch
+	return fc.clusterSpec.FluxConfig.Spec.Branch
 }
 
 func (fc *fluxForCluster) personal() bool {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Personal
+	return fc.clusterSpec.FluxConfig.Spec.Github.Personal
 }
 
 func (fc *fluxForCluster) path() string {
-	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
+	return fc.clusterSpec.FluxConfig.Spec.ClusterConfigPath
 }
 
 type ConfigVersionControlFailedError struct {

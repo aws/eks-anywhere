@@ -27,6 +27,7 @@ type createClusterOptions struct {
 	skipIpCheck      bool
 	hardwareFileName string
 	skipPowerActions bool
+	setupTinkerbell  bool
 }
 
 var cc = &createClusterOptions{}
@@ -46,6 +47,9 @@ func init() {
 	if features.IsActive(features.TinkerbellProvider()) {
 		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
 		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
+		if features.IsActive(features.TinkerbellStackSetup()) {
+			createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
+		}
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -128,8 +132,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
+		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
 		WithWriter().
 		Build(ctx)
 	if err != nil {

@@ -19,7 +19,7 @@ func CleanUpS3Bucket(session *session.Session, bucket string, maxAge float64) er
 	}
 	result, err := service.ListObjectsV2(input)
 	if err != nil {
-		return fmt.Errorf("error listing s3 bucket objects: %v", err)
+		return fmt.Errorf("listing s3 bucket objects: %v", err)
 	}
 
 	var objectList []*string
@@ -45,7 +45,7 @@ func CleanUpS3Bucket(session *session.Session, bucket string, maxAge float64) er
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("error deleting object %s: %v", *object, err)
+				return fmt.Errorf("deleting object %s: %v", *object, err)
 			}
 		}
 	} else {

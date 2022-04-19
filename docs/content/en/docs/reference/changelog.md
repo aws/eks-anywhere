@@ -10,7 +10,29 @@ menu:
 ## Unreleased
 
 ### Added
-- Add support for Kubernetes 1.22 [#1549](https://github.com/aws/eks-anywhere/pull/1549)
+
+## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
+
+### Fixed
+- Fix issue with upgrading cluster from a previous minor version [#1819](https://github.com/aws/eks-anywhere/issues/1819)
+
+## [v0.8.1](https://github.com/aws/eks-anywhere/releases/tag/v0.8.1)
+
+### Fixed
+- Fix issue with downloading artifacts [#1753](https://github.com/aws/eks-anywhere/issues/1753)
+
+## [v0.8.0](https://github.com/aws/eks-anywhere/releases/tag/v0.8.0)
+### Added
+- SSH keys and Users are now mutable [#1208](https://github.com/aws/eks-anywhere/issues/1208)
+- OIDC configuration is now mutable [#676](https://github.com/aws/eks-anywhere/issues/676)
+- Add support for Cilium's policy enforcement mode [#726](https://github.com/aws/eks-anywhere/issues/726)
+
+### Changed
+- Install Cilium networking through Helm instead of static manifest
+## [v0.7.2](https://github.com/aws/eks-anywhere/releases/tag/v0.7.2) - 2022-02-28
+
+### Fixed
+- Fix issue with downloading artifacts [#1327](https://github.com/aws/eks-anywhere/pull/1327)
 
 ## [v0.7.1](https://github.com/aws/eks-anywhere/releases/tag/v0.7.1) - 2022-02-25
 

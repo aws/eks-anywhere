@@ -154,9 +154,10 @@ func newValidTinkerbellDatacenterConfig() *v1alpha1.TinkerbellDatacenterConfig {
 		Status: v1alpha1.TinkerbellDatacenterConfigStatus{},
 		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
 			TinkerbellIP:           "1.1.1.1",
-			TinkerbellCertURL:      "http://domain.com/path",
+			TinkerbellCertURL:      "http://1.1.1.1:444/path",
 			TinkerbellGRPCAuth:     "1.1.1.1:444",
 			TinkerbellPBnJGRPCAuth: "1.1.1.1:444",
+			TinkerbellHegelURL:     "http://1.1.1.1:444",
 		},
 	}
 }

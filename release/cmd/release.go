@@ -206,7 +206,7 @@ var releaseCmd = &cobra.Command{
 			fmt.Printf("\n%s\n", string(bundleManifest))
 
 			if !dryRun {
-				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o755)
+				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o644)
 				if err != nil {
 					fmt.Printf("Error writing bundles manifest file to disk: %v\n", err)
 					os.Exit(1)

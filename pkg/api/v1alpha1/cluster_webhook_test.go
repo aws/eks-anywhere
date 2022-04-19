@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
@@ -1237,6 +1238,29 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(cluster.ValidateCreate()).NotTo(Succeed())
 	os.Unsetenv("FULL_LIFECYCLE_API")
+}
+
+func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
+	os.Setenv(features.CloudStackProviderEnvVar, "true")
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"},
+		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test2"})
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.CloudStackDatacenterKind,
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(cluster.ValidateCreate()).NotTo(Succeed())
+	os.Unsetenv(features.CloudStackProviderEnvVar)
 }
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {

@@ -17,7 +17,7 @@ func NewWriter(dir string) (FileWriter, error) {
 	if _, err := os.Stat(newFolder); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(newFolder, os.ModePerm)
 		if err != nil {
-			return nil, fmt.Errorf("error creating directory [%s]: %v", dir, err)
+			return nil, fmt.Errorf("creating directory [%s]: %v", dir, err)
 		}
 	}
 	return &writer{dir: dir}, nil
@@ -37,7 +37,7 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 	filePath := filepath.Join(currentDir, fileName)
 	err := ioutil.WriteFile(filePath, content, op.Permissions)
 	if err != nil {
-		return "", fmt.Errorf("error writing to file [%s]: %v", filePath, err)
+		return "", fmt.Errorf("writing to file [%s]: %v", filePath, err)
 	}
 
 	return filePath, nil

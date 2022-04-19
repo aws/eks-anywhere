@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 )
@@ -17,6 +18,7 @@ import (
 type tlsTest struct {
 	*WithT
 	tlsValidator *mocks.MockTlsValidator
+	provider     *providermocks.MockProvider
 	clusterSpec  *cluster.Spec
 	certContent  string
 	host, port   string
@@ -29,6 +31,7 @@ func newTlsTest(t *testing.T) *tlsTest {
 	return &tlsTest{
 		WithT:        NewWithT(t),
 		tlsValidator: mocks.NewMockTlsValidator(ctrl),
+		provider:     providermocks.NewMockProvider(ctrl),
 		clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 				Endpoint: host,
@@ -82,4 +85,11 @@ func TestValidateCertForRegistryMirrorNoCertSelfSigned(t *testing.T) {
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("registry https://host.h is using self-signed certs, please provide the certificate using caCertContent field")),
 	)
+}
+
+func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
+
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }

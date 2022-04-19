@@ -288,7 +288,7 @@ func TestGoGithubDeleteRepoFail(t *testing.T) {
 				Owner:      "owner1",
 				Repository: "repo1",
 			},
-			wantErr:  fmt.Errorf("error when deleting repository repo1: github client threw error"),
+			wantErr:  fmt.Errorf("deleting repository repo1: github client threw error"),
 			throwErr: fmt.Errorf("github client threw error"),
 		},
 	}

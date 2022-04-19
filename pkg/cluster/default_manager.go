@@ -11,8 +11,10 @@ func init() {
 		gitOpsEntry(),
 		fluxEntry(),
 		vsphereEntry(),
+		cloudstackEntry(),
 		dockerEntry(),
 		snowEntry(),
+		tinkerbellEntry(),
 	)
 	if err != nil {
 		panic(err)
