@@ -20,6 +20,21 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       --provider docker > $CLUSTER_NAME.yaml
    ```
 
+1. Generate a curated-packages config
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+   ```bash
+   KUBE_VERSION=1.21
+   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
+   ```
+   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   ```bash
+   eksctl anywhere generate package flux harbor -d .
+   ```
+
 1. Create a cluster
 
    ```bash
@@ -76,4 +91,8 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    ```
 
    Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
-   See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+
+## Next steps:
+* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on curated packages installation.

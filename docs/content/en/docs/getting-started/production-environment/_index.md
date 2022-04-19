@@ -75,6 +75,21 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_LICENSE='my-license-here'
    ```
 
+1. Generate a curated-packages config
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+   ```bash
+   KUBE_VERSION=1.21
+   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
+   ```
+   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   ```bash
+   eksctl anywhere generate package flux harbor -d .
+   ```
+
 1. Create the initial cluster
 
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster:
@@ -143,6 +158,20 @@ Follow these steps if you want to use your initial cluster to create and manage 
    Refer to the initial config described earlier for the required and optional settings.
    The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
 
+1. Generate a curated-packages config
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+   ```bash
+   KUBE_VERSION=1.21
+   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
+   ```
+   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   ```bash
+   eksctl anywhere generate package flux harbor -d .
+   ```
 
 1. Create a workload cluster
 
@@ -177,4 +206,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
 
-See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+## Next steps:
+* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on curated packages installation.
