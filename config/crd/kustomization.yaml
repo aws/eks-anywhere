@@ -18,6 +18,8 @@ resources:
 - bases/anywhere.eks.amazonaws.com_tinkerbelltemplateconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_snowdatacenterconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_snowmachineconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_nutanixdatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_nutanixmachineconfigs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

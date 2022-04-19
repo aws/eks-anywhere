@@ -24,7 +24,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func (r *ReleaseConfig) GetNutanixBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.VSphereBundle, error) {
+func (r *ReleaseConfig) GetNutanixBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.NutanixBundle, error) {
 	nutanixBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-nutanix": r.BundleArtifactsTable["cluster-api-provider-nutanix"],
 		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
@@ -67,7 +67,7 @@ func (r *ReleaseConfig) GetNutanixBundle(eksDReleaseChannel string, imageDigests
 
 				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
 				if err != nil {
-					return anywherev1alpha1.VSphereBundle{}, err
+					return anywherev1alpha1.NutanixBundle{}, err
 				}
 				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
@@ -75,9 +75,9 @@ func (r *ReleaseConfig) GetNutanixBundle(eksDReleaseChannel string, imageDigests
 		}
 	}
 
-	vSphereCloudProviderArtifacts := r.BundleArtifactsTable[fmt.Sprintf("cloud-provider-nutanix-%s", eksDReleaseChannel)]
+	nutanixCloudProviderArtifacts := r.BundleArtifactsTable[fmt.Sprintf("cloud-provider-nutanix-%s", eksDReleaseChannel)]
 
-	for _, artifact := range vSphereCloudProviderArtifacts {
+	for _, artifact := range nutanixCloudProviderArtifacts {
 		imageArtifact := artifact.Image
 
 		bundleArtifact := anywherev1alpha1.Image{
@@ -102,17 +102,12 @@ func (r *ReleaseConfig) GetNutanixBundle(eksDReleaseChannel string, imageDigests
 		componentChecksum,
 	)
 	if err != nil {
-		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-nutanix")
+		return anywherev1alpha1.NutanixBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-nutanix")
 	}
 
-	bundle := anywherev1alpha1.VSphereBundle{
+	bundle := anywherev1alpha1.NutanixBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-nutanix-controller"],
-		KubeProxy:            bundleImageArtifacts["kube-rbac-proxy"],
-		Manager:              bundleImageArtifacts["cloud-provider-nutanix"],
-		KubeVip:              bundleImageArtifacts["kube-vip"],
-		Driver:               bundleImageArtifacts["nutanix-csi-driver"],
-		Syncer:               bundleImageArtifacts["nutanix-csi-syncer"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
