@@ -17,14 +17,10 @@ func gitOpsEntry() *ConfigManagerEntry {
 		Defaulters: []Defaulter{
 			setGitOpsDefaults,
 			SetDefaultFluxGitHubConfigPath,
-			setFluxDefaults,
-			SetDefaultFluxConfigPath,
 		},
 		Validations: []Validation{
 			validateGitOps,
 			validateGitOpsNamespace,
-			validateFlux,
-			validateFluxNamespace,
 		},
 	}
 }
