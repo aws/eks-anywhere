@@ -93,6 +93,17 @@ It’s totally OK to take a look to a PR and leave comments even if you don’t 
 
 If that’s case, make it clear so the author doesn't keep waiting for your approval.
 
+### Labels used to approve
+
+Our CI blocks the merge of PRs unless both labels are specified (without a `do-not-merge` label):
+
+`lgtm` - Used when a trusted reviewer thinks no other changes need to be made in order to merge the PR. This can be added to a
+PR by specifying `/lgtm` as a comment or approving the PR using the Github UI.
+
+`approve` - Used when an approver deems that the PR can be automatically merged. This can be added to a PR by specifying `/approve`
+as a comment. Please note the `PRs authored as an approver` section below on specifics on how this label can be used.
+
+
 ### When to approve
 
 These are some questions to ask oneself that can useful in this process:
@@ -123,3 +134,9 @@ And finally, you can move forward to the code itself:
 * When necessary, encourage folks to create follow-up tickets, so feedback and improvement ideas don't get lost.
 
 If you get here, you are done. Approve it.
+
+### PRs authored as an approver
+
+If you are on the approvers list, you may add an `/approve` comment if you want to merge the PR with just `/lgtm` from
+another reviewer. This allows the author who is also an approver to control who they want the PR to be reviewed by 
+instead of having another reviewer decide that.

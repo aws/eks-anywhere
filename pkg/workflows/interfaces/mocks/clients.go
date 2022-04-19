@@ -168,18 +168,18 @@ func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2, arg3, 
 }
 
 // EKSAClusterSpecChanged mocks base method.
-func (m *MockClusterManager) EKSAClusterSpecChanged(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) (bool, error) {
+func (m *MockClusterManager) EKSAClusterSpecChanged(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EKSAClusterSpecChanged", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "EKSAClusterSpecChanged", arg0, arg1, arg2)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // EKSAClusterSpecChanged indicates an expected call of EKSAClusterSpecChanged.
-func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EKSAClusterSpecChanged", reflect.TypeOf((*MockClusterManager)(nil).EKSAClusterSpecChanged), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EKSAClusterSpecChanged", reflect.TypeOf((*MockClusterManager)(nil).EKSAClusterSpecChanged), arg0, arg1, arg2)
 }
 
 // GetCurrentClusterSpec mocks base method.

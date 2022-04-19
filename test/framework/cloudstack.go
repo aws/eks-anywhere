@@ -22,6 +22,7 @@ const (
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
 	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
 	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
+	cloudstackFeatureGateEnvVar        = "CLOUDSTACK_PROVIDER"
 )
 
 var requiredCloudStackEnvVars = []string{
@@ -35,8 +36,10 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
+	cloudStackClusterIPPoolEnvVar,
 	podCidrVar,
 	serviceCidrVar,
+	cloudstackFeatureGateEnvVar,
 }
 
 type CloudStack struct {
@@ -163,5 +166,5 @@ func (v *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
 }
 
 func RequiredCloudstackEnvVars() []string {
-	return requiredEnvVars
+	return requiredCloudStackEnvVars
 }

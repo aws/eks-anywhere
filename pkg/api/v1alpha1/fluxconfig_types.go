@@ -78,8 +78,7 @@ type FluxConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec   FluxConfigSpec   `json:"spec,omitempty"`
-	Status FluxConfigStatus `json:"status,omitempty"`
+	Spec FluxConfigSpec `json:"spec,omitempty"`
 }
 
 func (e *FluxConfigSpec) Equal(n *FluxConfigSpec) bool {

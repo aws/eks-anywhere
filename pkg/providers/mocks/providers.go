@@ -312,20 +312,6 @@ func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClusterDeleteValidate", reflect.TypeOf((*MockProvider)(nil).PostClusterDeleteValidate), arg0, arg1)
 }
 
-// RunPostControlPlaneCreation mocks base method.
-func (m *MockProvider) RunPostControlPlaneCreation(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RunPostControlPlaneCreation", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RunPostControlPlaneCreation indicates an expected call of RunPostControlPlaneCreation.
-func (mr *MockProviderMockRecorder) RunPostControlPlaneCreation(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneCreation", reflect.TypeOf((*MockProvider)(nil).RunPostControlPlaneCreation), arg0, arg1, arg2)
-}
-
 // RunPostControlPlaneUpgrade mocks base method.
 func (m *MockProvider) RunPostControlPlaneUpgrade(arg0 context.Context, arg1, arg2 *cluster.Spec, arg3, arg4 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -411,18 +397,18 @@ func (mr *MockProviderMockRecorder) UpdateSecrets(arg0, arg1 interface{}) *gomoc
 }
 
 // UpgradeNeeded mocks base method.
-func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec) (bool, error) {
+func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec, arg3 *types.Cluster) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpgradeNeeded indicates an expected call of UpgradeNeeded.
-func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2, arg3)
 }
 
 // ValidateNewSpec mocks base method.

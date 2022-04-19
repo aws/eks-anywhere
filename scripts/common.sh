@@ -94,10 +94,8 @@ function build::gather_licenses() {
   local -r outputdir=$1
   local -r patterns=$2
 
-  # reset the gopath change to make sure and always use
-  # the latest go for generating deps list
-  # older versions behave differently in some cases
-  build::common::remove_go_path
+  # force 1.16 since thats the version used to install go-licenses in builder-base
+  build::common::use_go_version 1.16
 
   # Force deps to only be pulled form vendor directories
   # this is important in a couple cases where license files
@@ -181,29 +179,11 @@ function build::common::remove_go_path() {
 
 function build::common::get_go_path() {
   local -r version=$1
-  local gobinaryversion=""
-
-  if [[ $version == "1.13"* ]]; then
-    gobinaryversion="1.13"
-  fi
-  if [[ $version == "1.14"* ]]; then
-    gobinaryversion="1.14"
-  fi
-  if [[ $version == "1.15"* ]]; then
-    gobinaryversion="1.15"
-  fi
-  if [[ $version == "1.16"* ]]; then
-    gobinaryversion="1.16"
-  fi
-
-  if [[ "$gobinaryversion" == "" ]]; then
-    return
-  fi
 
   # This is the path where the specific go binary versions reside in our builder-base image
-  local -r gorootbinarypath="/go/go${gobinaryversion}/bin"
+  local -r gorootbinarypath="/go/go${version}/bin"
   # This is the path that will most likely be correct if running locally
-  local -r gopathbinarypath="$GOPATH/go${gobinaryversion}/bin"
+  local -r gopathbinarypath="$GOPATH/go${version}/bin"
   if [ -d "$gorootbinarypath" ]; then
     echo $gorootbinarypath
   elif [ -d "$gopathbinarypath" ]; then
