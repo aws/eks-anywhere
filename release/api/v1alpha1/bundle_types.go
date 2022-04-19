@@ -84,7 +84,7 @@ type VersionsBundle struct {
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
 	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 	Snow                   SnowBundle                  `json:"snow,omitempty"`
-	Nutanix                NutanixBundle               `json:"nutanix,omitempty"`
+	Nutanix                NutanixBundle               `json:"nutanix"`
 }
 
 type EksDRelease struct {
