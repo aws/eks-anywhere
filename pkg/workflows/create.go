@@ -198,7 +198,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	logger.Info("Installing storage class on workload cluster")
 	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
