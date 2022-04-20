@@ -5,7 +5,7 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere/pkg/bundles"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 

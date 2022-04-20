@@ -11,7 +11,7 @@ spec:
   controlPlaneConfiguration: {}
   datacenterRef: {}
   gitOpsRef:
-    kind: GitOpsConfig
+    kind: FluxConfig
     name: test-gitops
   kubernetesVersion: "1.19"
   managementCluster:
@@ -45,18 +45,17 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: GitOpsConfig
+kind: FluxConfig
 metadata:
   name: test-gitops
   namespace: default
 spec:
-  flux:
-    github:
-      branch: testBranch
-      clusterConfigPath: clusters/management-cluster
-      fluxSystemNamespace: flux-system
-      owner: mFowler
-      personal: true
-      repository: testRepo
+  branch: testBranch
+  clusterConfigPath: clusters/management-cluster
+  github:
+    owner: mFolwer
+    personal: true
+    repository: testRepo
+  systemNamespace: flux-system
 
 ---

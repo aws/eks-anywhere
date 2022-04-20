@@ -20,6 +20,57 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       --provider docker > $CLUSTER_NAME.yaml
    ```
 
+The command above creates a file named eksa-cluster.yaml with the contents below in the path where it is executed.
+The configuration specification is divided into two sections:
+
+* Cluster
+* DockerDatacenterConfig
+
+   ```yaml
+   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+   kind: Cluster
+   metadata:
+   name: dev-cluster
+   spec:
+   clusterNetwork:
+      cni: cilium
+      pods:
+         cidrBlocks:
+         - 192.168.0.0/16
+      services:
+         cidrBlocks:
+         - 10.96.0.0/12
+   controlPlaneConfiguration:
+      count: 1
+   datacenterRef:
+      kind: DockerDatacenterConfig
+      name: dev-cluster
+   externalEtcdConfiguration:
+      count: 1
+   kubernetesVersion: "1.21"
+   managementCluster:
+      name: dev-cluster
+   workerNodeGroupConfigurations:
+   - count: 1
+      name: md-0
+   ---
+   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+   kind: DockerDatacenterConfig
+   metadata:
+   name: dev-cluster
+   spec: {}
+   ```
+
+  Some key considerations and configuration parameters:
+  * Apart from the base configuration, you can add additional optional configuration to enable supported functionalities
+    * [OIDC](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/oidc/) 
+    * [etcd](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/etcd/)
+    * [proxy](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/proxy/)
+    * [gitops](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/gitops/)
+
+
+For full EKS Anywhere configuration reference for a VMware vSphere cluster and explanation on each parameter in the configuration generated above refer vSphere configuration
+
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
    * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.

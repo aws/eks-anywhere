@@ -6,8 +6,8 @@ import (
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests/eksd"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 

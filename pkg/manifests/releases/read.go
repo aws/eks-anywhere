@@ -5,7 +5,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/bundles"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
