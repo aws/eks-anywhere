@@ -8,6 +8,6 @@ description: >
 
 The following topics are covered part of this chapter:
 
-* EKS-anywhere service overview
+* EKS Anywhere service overview
 * Benefits & service considerations
 * Frequently asked questions (FAQs)

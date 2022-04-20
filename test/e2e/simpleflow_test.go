@@ -269,3 +269,13 @@ func TestTinkerbellKubernetes121HPSimpleFlow(t *testing.T) {
 	)
 	runTinkerbellSimpleFlow(test)
 }
+
+func TestSnowKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runSimpleFlow(test)
+}

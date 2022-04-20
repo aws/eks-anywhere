@@ -326,6 +326,10 @@ generate-attribution:
 update-attribution-files: generate-attribution
 	scripts/create_pr.sh
 
+.PHONY: generate-checksums
+generate-checksums:
+	scripts/generate_checksum.sh
+
 .PHONY: clean
 clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
