@@ -22,21 +22,21 @@ var pbnjManifest string
 const defaultEksaNamespace = "eksa-system"
 
 type TinkerbellStack struct {
-	values map[string]string
+	values map[string]interface{}
 }
 
 func NewTinkerbellStack(bundle cluster.VersionsBundle, tinkerbellIp string) *TinkerbellStack {
 	return &TinkerbellStack{
-		values: map[string]string{
+		values: map[string]interface{}{
 			"tinkServerImage":  bundle.Tinkerbell.TinkServer.URI,
 			"pbnjImage":        bundle.Tinkerbell.Pbnj.URI,
 			"hegelImage":       bundle.Tinkerbell.Hegel.URI,
 			"namespace":        defaultEksaNamespace,
 			"tinkerbellHostIp": tinkerbellIp,
-			"tinkGrpcPort":     "42113",
-			"tinkCertPort":     "42114",
-			"pbnjGrpcPort":     "50051",
-			"hegelPort":        "50061",
+			"tinkGrpcPort":     42113,
+			"tinkCertPort":     42114,
+			"pbnjGrpcPort":     50051,
+			"hegelPort":        50061,
 		},
 	}
 }

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tink-server
-  namespace: {{.namespace}}
+  namespace: eksa-system
 spec:
   replicas: 1
   selector:
@@ -19,14 +19,14 @@ spec:
         command: ["/code/tls/generate.sh"]
         env:
         - name: TINKERBELL_HOST_IP
-          value: {{.tinkerbellHostIp}}
+          value: 
         volumeMounts:
         - name: tls-gen-code
           mountPath: /code/tls
         - name: certs
           mountPath: /certs/onprem
       - name: apply-migrations
-        image: {{.tinkServerImage}}
+        image: public.ecr.aws/eks-anywhere/tink-server:latest
         env:
           - name: ONLY_MIGRATION
             value: "true"
@@ -53,9 +53,9 @@ spec:
           - name: ROLLBAR_TOKEN
             value: ignored
           - name: TINKERBELL_GRPC_AUTHORITY
-            value: :{{.tinkGrpcPort}}
+            value: :42113
           - name: TINKERBELL_HTTP_AUTHORITY
-            value: :{{.tinkCertPort}}
+            value: :42114
           - name: TINK_AUTH_PASSWORD
             value: admin
           - name: TINK_AUTH_USERNAME
@@ -92,23 +92,23 @@ spec:
           - name: TINK_AUTH_USERNAME
             value: admin
           - name: TINKERBELL_GRPC_AUTHORITY
-            value: :{{.tinkGrpcPort}}
+            value: :42113
           - name: TINKERBELL_HTTP_AUTHORITY
-            value: :{{.tinkCertPort}}
-        image: {{.tinkServerImage}}
+            value: :42114
+        image: public.ecr.aws/eks-anywhere/tink-server:latest
         name: tink-server
         ports:
-          - containerPort: {{.tinkGrpcPort}}
-            hostPort: {{.tinkGrpcPort}}
+          - containerPort: 42113
+            hostPort: 42113
             name: grpc
-          - containerPort: {{.tinkCertPort}}
-            hostPort: {{.tinkCertPort}}
+          - containerPort: 42114
+            hostPort: 42114
             name: cert
         livenessProbe:
           httpGet:
             scheme: HTTP
             path: /cert
-            port: {{.tinkCertPort}}
+            port: 42114
         volumeMounts:
         - mountPath: /certs/onprem
           name: certs
@@ -132,11 +132,11 @@ metadata:
 spec:
   ports:
     - name: grpc
-      port: {{.tinkGrpcPort}}
-      targetPort: {{.tinkGrpcPort}}
+      port: 42113
+      targetPort: 42113
     - name: cert
-      port: {{.tinkCertPort}}
-      targetPort: {{.tinkCertPort}}
+      port: 42114
+      targetPort: 42114
   selector:
     app: tink-server
   type: ClusterIP
@@ -152,7 +152,7 @@ data:
     {
       "CN": "Tinkerbell",
       "hosts": [
-        "{{.tinkerbellHostIp}}",
+        "",
         "tink-server.default.svc.cluster.local",
         "tink-server",
         "127.0.0.1",

@@ -34,7 +34,7 @@ func TestGenerateDatabaseManifestSuccess(t *testing.T) {
 		t.Fatalf("failed to generate tink manifest: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(db), "testdata/pbnj_expected_manifest.yaml")
+	test.AssertContentToFile(t, string(db), "testdata/database_expected_manifest.yaml")
 }
 
 func TestGenerateTinkManifestSuccess(t *testing.T) {
@@ -44,7 +44,7 @@ func TestGenerateTinkManifestSuccess(t *testing.T) {
 		t.Fatalf("failed to generate tink manifest: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(tink), "testdata/pbnj_expected_manifest.yaml")
+	test.AssertContentToFile(t, string(tink), "testdata/tink_expected_manifest.yaml")
 }
 
 func TestGenerateHegelManifestSuccess(t *testing.T) {
