@@ -398,7 +398,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${GOPATH}/bin/mockgen -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
-	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager
+	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager,Eksd
 	${GOPATH}/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GitProviderClient,GithubProviderClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Provider
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
@@ -431,6 +431,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
+	${GOPATH}/bin/mockgen -destination=pkg/eksd/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/eksd" EksdInstallerClient
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

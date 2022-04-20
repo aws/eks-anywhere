@@ -26,6 +26,7 @@ type createTestSetup struct {
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
+	eksd             *mocks.MockEksd
 	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
@@ -43,9 +44,10 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	addonManager := mocks.NewMockAddonManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
+	eksd := mocks.NewMockEksd(mockCtrl)
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer)
+	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer, eksd)
 	validator := mocks.NewMockValidator(mockCtrl)
 
 	return &createTestSetup{
@@ -56,6 +58,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
+		eksd:             eksd,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -145,7 +148,7 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider),
 
-		c.clusterManager.EXPECT().InstallEksdComponents(c.ctx, c.clusterSpec, c.workloadCluster),
+		c.eksd.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster),
 
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 
@@ -154,6 +157,9 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
 		),
+
+		c.eksd.EXPECT().InstallEksdManifest(
+			c.ctx, c.clusterSpec, c.workloadCluster),
 
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider),
 	)
@@ -164,7 +170,7 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider).Times(0),
 
-		c.clusterManager.EXPECT().InstallEksdComponents(c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
+		c.eksd.EXPECT().InstallEksdCRDs(c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
 
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 
@@ -173,6 +179,9 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.bootstrapCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
 		),
+
+		c.eksd.EXPECT().InstallEksdManifest(
+			c.ctx, c.clusterSpec, c.bootstrapCluster),
 
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider),
 	)

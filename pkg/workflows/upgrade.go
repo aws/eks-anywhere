@@ -22,12 +22,13 @@ type Upgrade struct {
 	addonManager      interfaces.AddonManager
 	writer            filewriter.FileWriter
 	capiManager       interfaces.CAPIManager
+	eksd              interfaces.Eksd
 	upgradeChangeDiff *types.ChangeDiff
 }
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksd interfaces.Eksd,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
@@ -37,6 +38,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 		addonManager:      addonManager,
 		writer:            writer,
 		capiManager:       capiManager,
+		eksd:              eksd,
 		upgradeChangeDiff: upgradeChangeDiff,
 	}
 }
@@ -61,6 +63,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		Validations:       validator,
 		Writer:            c.writer,
 		CAPIManager:       c.capiManager,
+		Eksd:              c.eksd,
 		UpgradeChangeDiff: c.upgradeChangeDiff,
 	}
 
@@ -200,14 +203,18 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.EksaUpgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.EksdUpgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	target := commandContext.ManagementCluster
+	if commandContext.ManagementCluster.ExistingManagement {
+		target = commandContext.WorkloadCluster
+	}
+	changeDiff, err = commandContext.Eksd.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -382,6 +389,11 @@ func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	err = commandContext.Eksd.InstallEksdManifest(ctx, commandContext.ClusterSpec, commandContext.ManagementCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

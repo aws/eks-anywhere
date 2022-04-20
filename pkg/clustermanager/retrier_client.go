@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -22,23 +21,6 @@ func NewRetrierClient(client *client, retrier *retrier.Retrier) *retrierClient {
 		client:  client,
 		Retrier: retrier,
 	}
-}
-
-func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	eksdComponents, err := clusterSpec.ReadEksdManifests(clusterSpec.VersionsBundle.EksD)
-	if err != nil {
-		return fmt.Errorf("failed loading manifest for eksd components: %v", err)
-	}
-
-	if err = c.Retry(
-		func() error {
-			return c.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseCrdContent, constants.EksaSystemNamespace)
-		},
-	); err != nil {
-		return fmt.Errorf("applying eksd release crd: %v", err)
-	}
-
-	return nil
 }
 
 func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {

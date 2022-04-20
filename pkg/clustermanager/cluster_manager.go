@@ -832,10 +832,6 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
-func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installEksdComponents(ctx, clusterSpec, cluster)
-}
-
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
 ) error {
@@ -853,14 +849,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	logger.V(4).Info("Applying eksa yaml resources to cluster")
 	logger.V(6).Info(string(resourcesSpec))
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
-		return err
-	}
-	eksdComponents, err := clusterSpec.ReadEksdManifests(clusterSpec.VersionsBundle.EksD)
-	if err != nil {
-		return fmt.Errorf("failed loading manifest for eksd components: %v", err)
-	}
-	logger.V(4).Info("Applying eksd manifest to cluster")
-	if err = c.applyEksdManifest(ctx, cluster, eksdComponents); err != nil {
 		return err
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
@@ -964,17 +952,6 @@ func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Clust
 	)
 	if err != nil {
 		return fmt.Errorf("applying eks-a spec: %v", err)
-	}
-	return nil
-}
-
-func (c *ClusterManager) applyEksdManifest(ctx context.Context, cluster *types.Cluster, eksdComponents *cluster.EksdManifests) error {
-	if err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseManifestContent, constants.EksaSystemNamespace)
-		},
-	); err != nil {
-		return fmt.Errorf("applying eksd release manifest: %v", err)
 	}
 	return nil
 }
