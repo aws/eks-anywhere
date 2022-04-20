@@ -90,31 +90,6 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty", err)
 }
 
-func TestValidateMachineConfigsMultipleWorkerNodeGroupsUnsupported(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk)
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
-	}
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-	cloudStackClusterSpec := &Spec{
-		Spec:                 clusterSpec,
-		datacenterConfig:     datacenterConfig,
-		machineConfigsLookup: machineConfigs,
-	}
-
-	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-
-	thenErrorExpected(t, "multiple worker node groups are not yet supported by the Cloudstack provider", err)
-}
-
 func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 	ctx := context.Background()
 	setupContext()

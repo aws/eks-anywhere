@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strconv"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -203,14 +204,9 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 
 func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec)
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 0 && clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] != nil {
-		spec := machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
-		name := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-		workerNodeGroupMachineSpecs[name] = spec
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
@@ -275,23 +271,26 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 		controlPlaneUser.SshAuthorizedKeys[0] = generatedKey
 		useKeyGeneratedForControlplane = true
 	}
-	workerUser := p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0]
-	if len(workerUser.SshAuthorizedKeys[0]) > 0 {
-		workerUser.SshAuthorizedKeys[0], err = common.StripSshAuthorizedKeyComment(workerUser.SshAuthorizedKeys[0])
-		if err != nil {
-			return err
-		}
-	} else {
-		if useKeyGeneratedForControlplane { // use the same key
-			workerUser.SshAuthorizedKeys[0] = controlPlaneUser.SshAuthorizedKeys[0]
-		} else {
-			logger.Info("Provided worker sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-			generatedKey, err := common.GenerateSSHAuthKey(p.writer)
+	var workerUser v1alpha1.UserConfiguration
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerUser = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		if len(workerUser.SshAuthorizedKeys[0]) > 0 {
+			workerUser.SshAuthorizedKeys[0], err = common.StripSshAuthorizedKeyComment(workerUser.SshAuthorizedKeys[0])
 			if err != nil {
 				return err
 			}
-			workerUser.SshAuthorizedKeys[0] = generatedKey
-			useKeyGeneratedForWorker = true
+		} else {
+			if useKeyGeneratedForControlplane { // use the same key
+				workerUser.SshAuthorizedKeys[0] = controlPlaneUser.SshAuthorizedKeys[0]
+			} else {
+				logger.Info("Provided worker sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
+				generatedKey, err := common.GenerateSSHAuthKey(p.writer)
+				if err != nil {
+					return err
+				}
+				workerUser.SshAuthorizedKeys[0] = generatedKey
+				useKeyGeneratedForWorker = true
+			}
 		}
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
@@ -724,7 +723,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
-		"workerReplicas":                   clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
+		"workerReplicas":                   workerNodeGroupConfiguration.Count,
 		"workerSshUsername":                workerNodeGroupMachineSpec.Users[0].Name,
 		"cloudstackWorkerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"format":                           format,
@@ -786,10 +785,6 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) > 1 {
-		return nil, nil, fmt.Errorf("error generating cluster api Spec contents: multiple worker node group configurations are not supported for CloudStack provider")
 	}
 
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
@@ -1052,30 +1047,35 @@ func (p *cloudstackProvider) DatacenterConfig(_ *cluster.Spec) providers.Datacen
 }
 
 func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
-	var configs []providers.MachineConfig
+	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
 		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
 	}
+	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
 
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
-	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName])
-		if p.clusterConfig.IsManaged() {
-			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
-		}
-	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
-		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName])
-			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		if etcdMachineName != controlPlaneMachineName {
+			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
+			}
 		}
 	}
-	return configs
+
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if _, ok := configs[workerMachineName]; !ok {
+			configs[workerMachineName] = p.machineConfigs[workerMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+	return providers.ConfigsMapToSlice(configs)
 }
 
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
@@ -1183,7 +1183,11 @@ func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Con
 }
 
 func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeconfigFile)
+	if err := p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeconfigFile); err != nil {
+		return err
+	}
+	kubeVipDisabledString := strconv.FormatBool(features.IsActive(features.CloudStackKubeVipDisabled()))
+	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, kubeVipDisabledString, kubeconfigFile)
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {

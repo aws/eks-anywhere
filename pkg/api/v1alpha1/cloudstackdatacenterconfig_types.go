@@ -138,6 +138,10 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
+func (v *CloudStackDatacenterConfig) Validate() error {
+	return nil
+}
+
 func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
 	if s == o {
 		return true

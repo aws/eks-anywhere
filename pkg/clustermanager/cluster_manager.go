@@ -323,12 +323,17 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, provider providers.Provider) error {
-	currentSpec, err := c.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Cluster.Name)
+	eksaMgmtCluster := workloadCluster
+	if managementCluster != nil && managementCluster.ExistingManagement {
+		eksaMgmtCluster = managementCluster
+	}
+
+	currentSpec, err := c.GetCurrentClusterSpec(ctx, eksaMgmtCluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("getting current cluster spec: %v", err)
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, currentSpec, newClusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, eksaMgmtCluster, currentSpec, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("generating capi spec: %v", err)
 	}
@@ -418,12 +423,12 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCAPI(ctx, workloadCluster, provider, externalEtcdTopology)
+	err = c.waitForCAPI(ctx, eksaMgmtCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster capi components to be ready: %v", err)
 	}
 
-	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, newClusterSpec); err != nil {
+	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, eksaMgmtCluster, newClusterSpec); err != nil {
 		return fmt.Errorf("applying extra resources to workload cluster: %v", err)
 	}
 
@@ -528,6 +533,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 		return nil
 	}
 
+	logger.Info("Installing storage class on cluster")
 	err := c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)

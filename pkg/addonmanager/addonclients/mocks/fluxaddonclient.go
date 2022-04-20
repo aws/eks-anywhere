@@ -37,7 +37,7 @@ func (m *MockFlux) EXPECT() *MockFluxMockRecorder {
 }
 
 // BootstrapToolkitsComponents mocks base method.
-func (m *MockFlux) BootstrapToolkitsComponents(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.GitOpsConfig) error {
+func (m *MockFlux) BootstrapToolkitsComponents(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BootstrapToolkitsComponents", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -79,7 +79,7 @@ func (mr *MockFluxMockRecorder) ForceReconcileGitRepo(arg0, arg1, arg2 interface
 }
 
 // PauseKustomization mocks base method.
-func (m *MockFlux) PauseKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.GitOpsConfig) error {
+func (m *MockFlux) PauseKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PauseKustomization", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -93,7 +93,7 @@ func (mr *MockFluxMockRecorder) PauseKustomization(arg0, arg1, arg2 interface{})
 }
 
 // Reconcile mocks base method.
-func (m *MockFlux) Reconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.GitOpsConfig) error {
+func (m *MockFlux) Reconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Reconcile", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -107,7 +107,7 @@ func (mr *MockFluxMockRecorder) Reconcile(arg0, arg1, arg2 interface{}) *gomock.
 }
 
 // ResumeKustomization mocks base method.
-func (m *MockFlux) ResumeKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.GitOpsConfig) error {
+func (m *MockFlux) ResumeKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResumeKustomization", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -121,7 +121,7 @@ func (mr *MockFluxMockRecorder) ResumeKustomization(arg0, arg1, arg2 interface{}
 }
 
 // UninstallToolkitsComponents mocks base method.
-func (m *MockFlux) UninstallToolkitsComponents(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.GitOpsConfig) error {
+func (m *MockFlux) UninstallToolkitsComponents(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UninstallToolkitsComponents", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

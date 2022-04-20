@@ -55,10 +55,10 @@ env:
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
     T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
-    T_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    T_CLOUDSTACK_CIDR: "cloudstack_ci_beta_connection:cidr"
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
-    T_CLOUDSTACK_CLUSTER_IP_POOL: "cloudstack_ci_beta_connection:cluster_ip_pool"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
 
 phases:

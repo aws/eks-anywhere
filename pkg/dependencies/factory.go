@@ -618,7 +618,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) *Factory {
+func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -626,7 +626,7 @@ func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alph
 			return nil
 		}
 
-		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, gitOpsConfig, f.dependencies.Writer)
+		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
 		if err != nil {
 			return err
 		}

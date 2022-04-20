@@ -70,3 +70,6 @@ do
 done
 
 echo "Generated the check sum files inside the ${SHASUM_FILES} folder at the directory where you ran this script from."
+
+rm release.yaml
+rm latest_release.yaml
