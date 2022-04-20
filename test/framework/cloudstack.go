@@ -82,7 +82,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 		},
 	}
 
-	c.cidr = os.Getenv(cidrVar)
+	c.cidr = os.Getenv(cloudStackCidrVar)
 	c.podCidr = os.Getenv(podCidrVar)
 	c.serviceCidr = os.Getenv(serviceCidrVar)
 
