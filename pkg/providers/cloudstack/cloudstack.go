@@ -255,18 +255,18 @@ func (p *cloudstackProvider) MachineResourceType() string {
 
 func (p *cloudstackProvider) setupSSHAuthKeysForCreateOrUpgrade() error {
 	var generatedKey string
-	generatedKey, err := p.processUsers(p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+	generatedKey, err := p.processSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
 	if err != nil {
 		return err
 	}
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		generatedKey, err = p.processUsers(p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+		generatedKey, err = p.processSshKeysForUsers(p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
 		if err != nil {
 			return err
 		}
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		_, err = p.processUsers(p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+		_, err = p.processSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
 		if err != nil {
 			return err
 		}
@@ -274,7 +274,7 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreateOrUpgrade() error {
 	return nil
 }
 
-func (p *cloudstackProvider) processUsers(users []v1alpha1.UserConfiguration, generatedKey string) (string, error) {
+func (p *cloudstackProvider) processSshKeysForUsers(users []v1alpha1.UserConfiguration, generatedKey string) (string, error) {
 	var err error
 	for _, user := range users {
 		for i, key := range user.SshAuthorizedKeys {
