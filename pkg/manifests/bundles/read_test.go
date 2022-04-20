@@ -1,45 +1,45 @@
-package eksd_test
+package bundles_test
 
 import (
 	"errors"
 	"testing"
 
-	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test/mocks"
-	"github.com/aws/eks-anywhere/pkg/eksd"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func TestReadManifest(t *testing.T) {
+func TestRead(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	reader := mocks.NewMockReader(ctrl)
 	url := "url"
 
-	manifest := `apiVersion: distro.eks.amazonaws.com/v1alpha1
-kind: Release
+	manifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
 metadata:
-  name: kubernetes-1-19-eks-4`
+  name: bundles-1`
 
-	wantRelease := &eksdv1.Release{
+	wantBundles := &releasev1.Bundles{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "distro.eks.amazonaws.com/v1alpha1",
-			Kind:       "Release",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+			Kind:       "Bundles",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kubernetes-1-19-eks-4",
+			Name: "bundles-1",
 		},
 	}
 
 	reader.EXPECT().ReadFile(url).Return([]byte(manifest), nil)
 
-	g.Expect(eksd.ReadManifest(reader, url)).To(Equal(wantRelease))
+	g.Expect(bundles.Read(reader, url)).To(Equal(wantBundles))
 }
 
-func TestReadManifestErrorReading(t *testing.T) {
+func TestReadErrorReading(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	reader := mocks.NewMockReader(ctrl)
@@ -47,23 +47,23 @@ func TestReadManifestErrorReading(t *testing.T) {
 
 	reader.EXPECT().ReadFile(url).Return(nil, errors.New("error reading"))
 
-	_, err := eksd.ReadManifest(reader, url)
+	_, err := bundles.Read(reader, url)
 	g.Expect(err).To(MatchError(ContainSubstring("error reading")))
 }
 
-func TestReadManifestErrorUnmarshaling(t *testing.T) {
+func TestReadErrorUnmarshaling(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	reader := mocks.NewMockReader(ctrl)
 	url := "url"
 
-	manifest := `apiVersion: distro.eks.amazonaws.com/v1alpha1
-kind: Release
+	manifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
 metadata:
   name: {}`
 
 	reader.EXPECT().ReadFile(url).Return([]byte(manifest), nil)
 
-	_, err := eksd.ReadManifest(reader, url)
-	g.Expect(err).To(MatchError(ContainSubstring("failed to unmarshal eksd manifest: error unmarshaling JSON:")))
+	_, err := bundles.Read(reader, url)
+	g.Expect(err).To(MatchError(ContainSubstring("failed to unmarshal bundles manifest from [url]:")))
 }

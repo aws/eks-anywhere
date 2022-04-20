@@ -20,7 +20,7 @@ import (
 func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, currentSpec *cluster.Spec, newSpec *cluster.Spec) error {
 	logger.V(1).Info("Checking for Flux repo file structure...")
 
-	if newSpec.GitOpsConfig == nil {
+	if newSpec.FluxConfig == nil {
 		logger.V(1).Info("Skipping Flux repo file structure update, GitOps not enabled")
 		return nil
 	}
