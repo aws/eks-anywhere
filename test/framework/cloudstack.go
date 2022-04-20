@@ -1,11 +1,11 @@
 package framework
 
 import (
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 const (
@@ -49,16 +49,12 @@ type CloudStack struct {
 	t              *testing.T
 	fillers        []api.CloudStackFiller
 	clusterFillers []api.ClusterFiller
-	cidr        string
+	cidr           string
 	podCidr        string
 	serviceCidr    string
 }
 
 type CloudStackOpt func(*CloudStack)
-
-func UpdateRedhatTemplate120Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines)
-}
 
 func UpdateRedhatTemplate121Var() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines)
