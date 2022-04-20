@@ -208,7 +208,6 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clu
 		return nil, err
 	}
 
-	fmt.Printf("template applied bytes: %s", string(bytes))
 	return bytes, nil
 }
 
@@ -223,7 +222,6 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("template applied bytes: %s", string(bytes))
 		workerSpecs = append(workerSpecs, bytes)
 	}
 
@@ -276,7 +274,6 @@ func (p *nutanixProvider) GenerateMHC() ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Printf("template applied bytes: %s", string(mhc))
 	return mhc, nil
 }
 
