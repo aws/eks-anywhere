@@ -10,7 +10,16 @@ The main goal of EKS Anywhere curated packages is to make it easy to install, co
 
 {{% alert title="Important" color="warning" %}}
 
-To install the EKS Anywhere binaries, create a EKS Anywhere cluster and see system requirements, please follow the [getting-started guide.]({{< relref "../../getting-started" >}})
+* To install the EKS Anywhere binaries, create a EKS Anywhere cluster and see system requirements, please follow the [getting-started guide.]({{< relref "../../getting-started" >}})
+
+* Check the existence of `packagecontroller` with the following commands:
+    ```bash
+    kubectl get packagecontroller -n eksa-packages
+    ```
+* Check if the version of `eksctl anywhere` is above `v0.9.0` with the following commands:
+    ```bash
+    eksctl anywhere version
+    ```
 
 {{% /alert %}}
 
@@ -18,9 +27,7 @@ To install the EKS Anywhere binaries, create a EKS Anywhere cluster and see syst
 
 1. Install package controller
     ```bash
-    PACKAGE_REGISTRY=oci://public.ecr.aws/l0g8r8j6/eks-anywhere-packages
-    PACKAGE_VERSION=0.1.6-eks-a-v0.0.0-dev-build.2150
-    helm install eks-anywhere-packages ${PACKAGE_REGISTRY} --version ${PACKAGE_VERSION}
+    eksctl anywhere install packagecontroller
     ```
 
 1. Check the package controller

@@ -22,15 +22,10 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation.
-   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   ```bash
-   KUBE_VERSION=1.21
-   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
-   ```
-   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   Example shows how to install two packages `flux` and `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package flux harbor -d .
    ```
@@ -38,7 +33,10 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 1. Create a cluster
 
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --install-packages ./curated-packages/
    ```
    Example command output
    ```
@@ -95,4 +93,4 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 ## Next steps:
 * See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
 
-* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on curated packages installation.
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on post-creation curated packages installation.

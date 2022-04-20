@@ -27,10 +27,10 @@ To install package controller, please follow the [installation guide.]({{< relre
 
    {{% alert title="Important" color="warning" %}}
    * All configuration options are listed in dot notations (e.g., `expose.tls.enabled`) in the doc, but they have to be transformed to **hierachical structures** when specified in the `config` section in the yaml spec.
-   * Harbor web portal is exposed through `NodePort` by default and its default port number is `30003`
-   * TLS is enabled by default for connections to Harbor web portal, and a secret resource named `tls-secret` is required for that purpose. It can be created with the following command:
+   * Harbor web portal is exposed through `NodePort` by default, and its default port number is `30003` with TLS enabled and `30002` with TLS disabled.
+   * TLS is enabled by default for connections to Harbor web portal, and a secret resource named `tls-secret` is required for that purpose. It can be provisioned through cert-manager or manually with the following command using self-signed certificate:
       ```bash
-      kubectl create secret tls tls-secret --cert=[path to your certificate file] --key=[path to your key file] -n eksa-packages
+      kubectl create secret tls tls-secret --cert=[path to certificate file] --key=[path to key file] -n eksa-packages
       ```
    * The `UpdateStrategy` for deployments with persistent volumes (jobservice, registry and chartmuseum) has to be set to `Recreate` when `ReadWriteMany` for volumes isn't supported in the cluster. 
 
@@ -38,34 +38,38 @@ To install package controller, please follow the [installation guide.]({{< relre
 
    {{% /alert %}}
 
+   TLS example with auto certificate generation
    ```yaml
    apiVersion: packages.eks.amazonaws.com/v1alpha1
    kind: Package
    metadata:
-      ...
       name: my-harbor
       namespace: eksa-packages
-      ...
    spec:
       packageName: Harbor
-      targetNamespace: eksa-packages
       config: |-
          externalURL: https://harbor.eksa.demo:30003
          expose:
-            type: nodePort
             tls:
-               enabled: true
-               secret:
-                  secretName: "tls-secret"
-         UpdateStrategy:
-            type: Recreate
-         persistence:
-            persistentVolumeClaim:
-               jobservice:
-                  accessMode: ReadWriteOnce
-               registry:
-                  accessMode: ReadWriteOnce
-         ...
+               certSource: auto
+               auto:
+                  commonName: "harbor.eksa.demo"
+   ```
+
+   Non-TLS example
+   ```yaml
+   apiVersion: packages.eks.amazonaws.com/v1alpha1
+   kind: Package
+   metadata:
+      name: my-harbor
+      namespace: eksa-packages
+   spec:
+      packageName: Harbor
+      config: |-
+         externalURL: http://harbor.eksa.demo:30002
+         expose:
+            tls:
+               enabled: false
    ```
 
 1. Install Harbor
@@ -91,31 +95,7 @@ To install package controller, please follow the [installation guide.]({{< relre
    ![Harbor web portal](/images/harbor-portal.png)
 
 ## Upgrade
-1. Generate a new package bundle
-   ```bash
-   kubectl apply -f - <<EOF
-   apiVersion: packages.eks.amazonaws.com/v1alpha1
-   kind: PackageBundle
-   metadata:
-      name: v1.21-1001
-      namespace: eksa-packages
-   annotations:
-      eksa.aws.com/excludes: LnNwZWMucGFja2FnZXNbXS5zb3VyY2UucmVnaXN0cnkKLnNwZWMucGFja2FnZXNbXS5zb3VyY2UucmVwb3NpdG9yeQo=
-      eksa.aws.com/signature: MEUCIQD/PkoLGRI12jO8B8Y/m7spwNojs6AWXMLiLreoutpWvgIgBYYLYkiXKHfMWuICEKj6ERZceM6Lin3VgPeyYLvv3BI=
-   spec:
-      packages:
-         - name: harbor
-            source:
-               registry: public.ecr.aws
-               repository: harbor/harbor-helm
-               versions:
-                  - name: v2.4.2
-                    digest: sha256:53f0c5dcd47c27072c027fd4d94a6658208378a233cb5a528a9454ad6a5e4eb8
-      kubeVersion: "1.21"
-   EOF
-   ```
-
-1. Check the new bundle
+1. Verify a new bundle is available
    ```bash
    eksctl anywhere get packagebundle
    ```

@@ -77,15 +77,10 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation.
-   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   ```bash
-   KUBE_VERSION=1.21
-   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
-   ```
-   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   Example shows how to install two packages `flux` and `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package flux harbor -d .
    ```
@@ -94,7 +89,10 @@ Make sure you use single quotes around the values so that your shell does not in
 
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster:
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages ./curated-packages/
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
@@ -160,15 +158,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation.
-   Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * Package controller needs to be installed separately in this case for package management. Instructions can be found [here.]({{< relref "../../tasks/packages" >}})
+   * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   ```bash
-   KUBE_VERSION=1.21
-   eksctl anywhere list packages --source registry --kubeversion $KUBE_VERSION
-   ```
-   Example shows how to install two packages `flux` and `harbor` from the curated package list.
+   Example shows how to install two packages `flux` and `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package flux harbor -d .
    ```
@@ -180,11 +173,16 @@ Follow these steps if you want to use your initial cluster to create and manage 
    * The workload cluster yaml file
    * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
 
-
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster \
+       -f eksa-w01-cluster.yaml  \
+       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
+       --install-packages ./curated-packages/
    ```
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
@@ -209,4 +207,4 @@ Follow these steps if you want to use your initial cluster to create and manage 
 ## Next steps:
 * See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
 
-* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on curated packages installation.
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on post-creation curated packages installation.
