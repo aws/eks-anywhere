@@ -10,8 +10,16 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
+)
+
+const (
+	eksaGitPasswordTokenEnv   = "EKSA_GIT_PASSWORD"
+	eksaGitPrivateKeyTokenEnv = "EKSA_GIT_PRIVATE_KEY"
+	emptyVar                  = ""
+	testEnvVar                = "test"
 )
 
 var eksaGitOpsResourceType = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -131,6 +139,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 				s.GitOpsConfig = defaultGitOps
 				s.Cluster.SetManagedBy("management-cluster")
 			})
+			cliConfig := &config.CliConfig{}
 			k, ctx, cluster, e := validations.NewKubectl(t)
 			cluster.Name = "management-cluster"
 
@@ -154,7 +163,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 				}).Return(*bytes.NewBufferString(mgmtGitOpsContent), nil)
 
-			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec, cliConfig)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -198,8 +207,8 @@ func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 		}
 		s.GitOpsConfig = defaultGitOps
 		s.Cluster.SetManagedBy("management-cluster")
-		// s.OIDCConfig = defaultOIDC
 	})
+	cliConfig := &config.CliConfig{}
 	k, ctx, cluster, e := validations.NewKubectl(t)
 	cluster.Name = testclustername
 	for _, tc := range tests {
@@ -212,7 +221,7 @@ func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 					"--field-selector=metadata.name=gitopstest",
 				}).Return(*bytes.NewBufferString(fileContent), nil)
 
-			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec, cliConfig)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -222,14 +231,12 @@ func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 
 func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 	tests := []struct {
-		name               string
-		wantErr            error
-		getClusterResponse string
+		name    string
+		wantErr error
 	}{
 		{
-			name:               "SuccessNoGitops",
-			wantErr:            nil,
-			getClusterResponse: "testdata/empty_get_gitops_response.json",
+			name:    "SuccessNoGitops",
+			wantErr: nil,
 		},
 	}
 
@@ -239,6 +246,7 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 
 		s.GitOpsConfig = nil
 	})
+	cliConfig := &config.CliConfig{}
 
 	k, ctx, cluster, e := validations.NewKubectl(t)
 	cluster.Name = testclustername
@@ -251,7 +259,7 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 
-			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec, cliConfig)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -297,6 +305,7 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 
 		s.Cluster.SetSelfManaged()
 	})
+	cliConfig := &config.CliConfig{}
 	k, ctx, cluster, e := validations.NewKubectl(t)
 	cluster.Name = testclustername
 	for _, tc := range tests {
@@ -308,7 +317,111 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 
-			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec, cliConfig)
+			if !reflect.DeepEqual(err, tc.wantErr) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
+	tests := []struct {
+		name      string
+		wantErr   error
+		git       *v1alpha1.GitProviderConfig
+		cliConfig *config.CliConfig
+	}{
+		{
+			name:    "Empty password and private key",
+			wantErr: fmt.Errorf("for git provider in the Flux config either set a password using %s env var or path to private key file using %s", eksaGitPasswordTokenEnv, eksaGitPrivateKeyTokenEnv),
+			git: &v1alpha1.GitProviderConfig{
+				Username:      "testUser",
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: emptyVar,
+				GitPassword:       emptyVar,
+			},
+		},
+		{
+			name:      "Empty git config",
+			wantErr:   nil,
+			git:       nil,
+			cliConfig: nil,
+		},
+		{
+			name:    "Empty password",
+			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", testEnvVar),
+			git: &v1alpha1.GitProviderConfig{
+				Username:      "testUser",
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: testEnvVar,
+				GitPassword:       emptyVar,
+			},
+		},
+		{
+			name:    "Empty private key file",
+			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", "testdata/emptyprivatekey"),
+			git: &v1alpha1.GitProviderConfig{
+				Username:      "testUser",
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: "testdata/emptyprivatekey",
+				GitPassword:       emptyVar,
+			},
+		},
+		{
+			name:    "Empty private key",
+			wantErr: nil,
+			git: &v1alpha1.GitProviderConfig{
+				Username:      "testUser",
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: emptyVar,
+				GitPassword:       testEnvVar,
+			},
+		},
+		{
+			name:    "Password and private key populated",
+			wantErr: nil,
+			git: &v1alpha1.GitProviderConfig{
+				Username:      "testUser",
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: "testdata/nonemptyprivatekey",
+				GitPassword:       testEnvVar,
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			defaultFlux := &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					Git: tc.git,
+				},
+			}
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = testclustername
+				s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
+					Kind: v1alpha1.GitOpsConfigKind,
+					Name: "gitopstest",
+				}
+				s.FluxConfig = defaultFlux
+				s.Cluster.SetManagedBy("management-cluster")
+			})
+
+			cliConfig := tc.cliConfig
+			k, ctx, cluster, _ := validations.NewKubectl(t)
+			cluster.Name = "management-cluster"
+
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec, cliConfig)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
