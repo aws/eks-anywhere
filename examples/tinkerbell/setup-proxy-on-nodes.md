@@ -22,7 +22,7 @@ spec:
             Environment:"HTTP_PROXY=<HTTP-PROXY-IP:PORT>"
             Environment:"HTTPS_PROXY=<HTTPS-PROXY-IP:PORT>"
             Environment:"NO_PROXY=<Comma-separated-list-of-no-proxies>"
-          DEST_DISK: /dev/sda2
+          DEST_DISK: <block device path> # E.g. /dev/sda2
           DEST_PATH: /etc/systemd/system/containerd.service.d/http-proxy.conf
           DIRMODE: "0700"
           FS_TYPE: ext4
