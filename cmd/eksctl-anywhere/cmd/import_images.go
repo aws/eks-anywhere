@@ -19,7 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
-	"github.com/aws/eks-anywhere/pkg/tar"
 )
 
 // imagesCmd represents the images command
@@ -84,7 +83,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		Bundles:            bundle,
 		InputFile:          c.InputFile,
 		TmpArtifactsFolder: artifactsFolder,
-		UnPackager:         tar.NewPackager(),
+		UnPackager:         packagerForFile(c.InputFile),
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, toolsImageFile),
 			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
