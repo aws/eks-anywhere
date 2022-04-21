@@ -61,6 +61,11 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
+	username, password, err := readRegistryCredentials()
+	if err != nil {
+		return err
+	}
+
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
@@ -104,11 +109,6 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 	defer deps.Close(ctx)
-
-	username, password, err := readRegistryCredentials()
-	if err != nil {
-		return err
-	}
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
