@@ -36,7 +36,7 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 	if err := f.flux.DeleteFluxSystemSecret(ctx, managementCluster, newSpec.FluxConfig.Spec.SystemNamespace); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux when deleting old flux-system secret: %v", err)
 	}
-	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, newSpec.FluxConfig); err != nil {
+	if err := f.flux.BootstrapToolkitsComponentsGithub(ctx, managementCluster, newSpec.FluxConfig); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux components: %v", err)
 	}
 	if err := f.flux.Reconcile(ctx, managementCluster, newSpec.FluxConfig); err != nil {

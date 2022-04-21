@@ -105,8 +105,8 @@ func NewFluxAddonClient(flux Flux, gitOpts *GitOptions) *FluxAddonClient {
 
 // Flux is an interface that abstracts the basic commands of flux executable.
 type Flux interface {
-	// BootstrapToolkitsComponents bootstraps toolkit components in a GitHub repository.
-	BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
+	// BootstrapToolkitsComponentsGithub bootstraps toolkit components in a GitHub repository.
+	BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// UninstallToolkitsComponents UninstallFluxComponents removes the Flux components and the toolkit.fluxcd.io resources from the cluster.
 	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -166,7 +166,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 
 	if !cluster.ExistingManagement {
 		err := f.retrier.Retry(func() error {
-			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+			return fc.flux.BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 		})
 		if err != nil {
 			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
