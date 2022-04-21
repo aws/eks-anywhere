@@ -15,7 +15,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"
-	mockGoGit "github.com/aws/eks-anywhere/pkg/git/gitclient/mocks"
+	mockGitClient "github.com/aws/eks-anywhere/pkg/git/gitclient/mocks"
 )
 
 func TestGoGitClone(t *testing.T) {
@@ -291,13 +291,13 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	}
 }
 
-func newGoGit(t *testing.T) (context.Context, *mockGoGit.MockGoGitClient, gitclient.Options) {
+func newGoGit(t *testing.T) (context.Context, *mockGitClient.MockGoGit, gitclient.Options) {
 	opts := gitclient.Options{
 		RepositoryDirectory: "testrepo",
 	}
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
-	client := mockGoGit.NewMockGoGitClient(ctrl)
+	client := mockGitClient.NewMockGoGit(ctrl)
 
 	return ctx, client, opts
 }
