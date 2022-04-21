@@ -16,7 +16,7 @@ func runDownloadArtifactsFlow(test *framework.ClusterE2ETest) {
 	test.DownloadArtifacts()
 }
 
-func TestDownloadArtifacts(t *testing.T) {
+func TestVSphereDownloadArtifacts(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu122(), framework.WithPrivateNetwork()),
