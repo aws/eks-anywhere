@@ -50,6 +50,9 @@ metadata:
 spec:
   computeOffering:
     id: "m4-large-id"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:

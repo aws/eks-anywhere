@@ -525,6 +525,9 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
 		return true
 	}
+	if !oldCsmc.Spec.DiskOffering.Equal(&newCsmc.Spec.DiskOffering) {
+		return true
+	}
 	if len(oldCsmc.Spec.UserCustomDetails) != len(newCsmc.Spec.UserCustomDetails) {
 		return true
 	}
@@ -628,6 +631,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDomain":                           datacenterConfigSpec.Domain,
 		"cloudstackZones":                            datacenterConfigSpec.Zones,
 		"cloudstackAccount":                          datacenterConfigSpec.Account,
+		"cloudstackControlPlaneDiskOfferingProvided": len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
+		"cloudstackControlPlaneDiskOfferingId":       controlPlaneMachineSpec.DiskOffering.Id,
+		"cloudstackControlPlaneDiskOfferingName":     controlPlaneMachineSpec.DiskOffering.Name,
+		"cloudstackControlPlaneDiskOfferingPath":     controlPlaneMachineSpec.DiskOffering.MountPath,
 		"cloudstackControlPlaneComputeOfferingId":    controlPlaneMachineSpec.ComputeOffering.Id,
 		"cloudstackControlPlaneComputeOfferingName":  controlPlaneMachineSpec.ComputeOffering.Name,
 		"cloudstackControlPlaneTemplateOfferingId":   controlPlaneMachineSpec.Template.Id,
@@ -635,6 +642,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
 		"cloudstackControlPlaneAffinity":             controlPlaneMachineSpec.Affinity,
 		"cloudstackControlPlaneAffinityGroupIds":     controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackEtcdDiskOfferingProvided":         len(etcdMachineSpec.DiskOffering.Id) > 0 || len(etcdMachineSpec.DiskOffering.Name) > 0,
+		"cloudstackEtcdDiskOfferingId":               etcdMachineSpec.DiskOffering.Id,
+		"cloudstackEtcdDiskOfferingName":             etcdMachineSpec.DiskOffering.Name,
+		"cloudstackEtcdDiskOfferingPath":             etcdMachineSpec.DiskOffering.MountPath,
 		"cloudstackEtcdComputeOfferingId":            etcdMachineSpec.ComputeOffering.Id,
 		"cloudstackEtcdComputeOfferingName":          etcdMachineSpec.ComputeOffering.Name,
 		"cloudstackEtcdTemplateOfferingId":           etcdMachineSpec.Template.Id,
@@ -721,6 +732,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
 		"cloudstackOfferingName":           workerNodeGroupMachineSpec.ComputeOffering.Name,
+		"cloudstackDiskOfferingProvided":   len(workerNodeGroupMachineSpec.DiskOffering.Id) > 0 ||  len(workerNodeGroupMachineSpec.DiskOffering.Name) > 0,
+		"cloudstackDiskOfferingId":         workerNodeGroupMachineSpec.DiskOffering.Id,
+		"cloudstackDiskOfferingName":       workerNodeGroupMachineSpec.DiskOffering.Name,
+		"cloudstackDiskOfferingPath":       workerNodeGroupMachineSpec.DiskOffering.MountPath,
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,

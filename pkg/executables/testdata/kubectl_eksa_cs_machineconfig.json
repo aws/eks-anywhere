@@ -8,6 +8,10 @@
     "computeOffering": {
       "name": "testOffering"
     },
+    "diskOffering": {
+      "name": "testOffering",
+      "mountPath": "/data"
+    },
     "users": [
       {
         "name": "maxdrib",

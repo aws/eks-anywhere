@@ -15,6 +15,12 @@ var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
 	ComputeOffering: CloudStackResourceIdentifier{
 		Name: "offering1",
 	},
+	DiskOffering: CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier{
+			Name: "diskOffering1",
+		},
+		"/data",
+	},
 	Users: []UserConfiguration{
 		{
 			Name:              "zone1",
@@ -93,6 +99,12 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						},
 						ComputeOffering: CloudStackResourceIdentifier{
 							Id: "m4-large-id",
+						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier{
+								Name: "Small",
+							},
+							"/data-small",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -178,6 +190,12 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: CloudStackResourceIdentifier{
 							Name: "m4-large",
 						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier{
+								Name: "Small",
+							},
+							"/data-small",
+						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -198,6 +216,12 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						},
 						ComputeOffering: CloudStackResourceIdentifier{
 							Name: "m5-xlarge",
+						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier{
+								Name: "Medium",
+							},
+							"/data-medium",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -260,6 +284,27 @@ func TestCloudStackMachineNotEqualComputeOfferingId(t *testing.T) {
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Name = "newDiskOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Id = "newDiskOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingMountPath(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.MountPath = "newDiskOfferingPath"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering path comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualAffinity(t *testing.T) {

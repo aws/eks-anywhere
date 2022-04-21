@@ -39,6 +39,7 @@ func NewValidator(cmk ProviderCmkClient) *Validator {
 type ProviderCmkClient interface {
 	ValidateCloudStackConnection(ctx context.Context) error
 	ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
+	ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
 	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
 	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZone) ([]anywherev1.CloudStackResourceIdentifier, error)
@@ -246,6 +247,14 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 		if err = v.cmk.ValidateServiceOfferingPresent(ctx, zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
+		}
+		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
+			if !machineConfig.Spec.DiskOffering.ValidatePath() {
+				return fmt.Errorf("mountPath: %s invalid, must be non-empty and starts with /", machineConfig.Spec.DiskOffering.MountPath)
+			}
+			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {
+				return fmt.Errorf("validating service offering: %v", err)
+			}
 		}
 	}
 

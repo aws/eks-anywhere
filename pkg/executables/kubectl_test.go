@@ -712,6 +712,12 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 					ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
 						Name: "testOffering",
 					},
+					DiskOffering: v1alpha1.CloudStackResourceDiskOffering{
+						v1alpha1.CloudStackResourceIdentifier{
+							Name: "testOffering",
+						},
+						"/data",
+					},
 					Users: []v1alpha1.UserConfiguration{
 						{
 							Name:              "maxdrib",

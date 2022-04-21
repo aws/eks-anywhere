@@ -73,6 +73,13 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackDiskOfferingProvided }}
+      - mountPath={{ .cloudstackDiskOfferingPath }}
+      - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
+      - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
+      - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
+      - if [ $devfstype == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mkdir -p ${mountPath} && echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount ${mountPath} ; else echo "data disk dev not found"; fi
+{{- end }}
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
@@ -130,6 +137,16 @@ spec:
 {{- end}}
 {{- if .cloudstackTemplateName }}
         name: {{.cloudstackTemplateName}}
+{{- end}}
+{{- if .cloudstackDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackDiskOfferingId }}
+        id: {{.cloudstackDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackDiskOfferingName }}
+        name: {{.cloudstackDiskOfferingName}}
+{{- end}}
+        mountPath: {{.cloudstackDiskOfferingPath}}
 {{- end}}
 {{- if .cloudstackCustomDetails }}
       details:

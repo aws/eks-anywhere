@@ -75,6 +75,16 @@ spec:
 {{- if .cloudstackControlPlaneTemplateOfferingName}}
         name: {{.cloudstackControlPlaneTemplateOfferingName}}
 {{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackControlPlaneDiskOfferingId}}
+        id: {{.cloudstackControlPlaneDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingName}}
+        name: {{.cloudstackControlPlaneDiskOfferingName}}
+{{- end}}
+        mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
+{{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
@@ -357,6 +367,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackControlPlaneDiskOfferingProvided }}
+    - mountPath={{ .cloudstackControlPlaneDiskOfferingPath }}
+    - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
+    - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
+    - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
+    - if [ $devfstype == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mkdir -p ${mountPath} && echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount ${mountPath} ; else echo "data disk dev not found"; fi
+{{- end }}
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
@@ -388,6 +405,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackEtcdDiskOfferingProvided }}
+    - mountPath={{ .cloudstackEtcdDiskOfferingPath }}
+    - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
+    - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
+    - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
+    - if [ $devfstype == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mkdir -p ${mountPath} && echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount ${mountPath} ; else echo "data disk dev not found"; fi
+{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -438,6 +462,16 @@ spec:
 {{- end}}
 {{- if .cloudstackEtcdTemplateOfferingName}}
         name: {{.cloudstackEtcdTemplateOfferingName}}
+{{- end}}
+{{- if .cloudstacKEtcdDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackEtcdDiskOfferingId}}
+        id: {{.cloudstackEtcdDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackEtcdDiskOfferingName}}
+        name: {{.cloudstackEtcdDiskOfferingName}}
+{{- end}}
+        mountPath: {{.cloudstackEtcdDiskOfferingPath}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:

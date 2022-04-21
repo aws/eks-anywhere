@@ -120,6 +120,38 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 	return nil
 }
 
+func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering v1alpha1.CloudStackResourceDiskOffering) error {
+	command := newCmkCommand("list diskofferings")
+	if len(diskOffering.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(diskOffering.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(diskOffering.Name))
+	}
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("getting disk offerings info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("disk offering %s not found", diskOffering)
+	}
+
+	response := struct {
+		CmkDiskOfferings []cmkDiskOffering `json:"diskoffering"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	offerings := response.CmkDiskOfferings
+	if len(offerings) > 1 {
+		return fmt.Errorf("duplicate disk offering %s found", diskOffering)
+	} else if len(offerings) == 0 {
+		return fmt.Errorf("disk offering %s not found", diskOffering)
+	}
+
+	return nil
+}
+
 func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		command := newCmkCommand("list affinitygroups")
@@ -414,6 +446,11 @@ type cmkServiceOffering struct {
 	CpuNumber int    `json:"cpunumber"`
 	CpuSpeed  int    `json:"cpuspeed"`
 	Memory    int    `json:"memory"`
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+}
+
+type cmkDiskOffering struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 }

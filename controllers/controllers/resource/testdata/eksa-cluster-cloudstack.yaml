@@ -58,4 +58,7 @@ spec:
         - "ssh-rsa ssh-key-value"
   template:
     name: "rhel-8-kube-v1.21.5"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
 ---

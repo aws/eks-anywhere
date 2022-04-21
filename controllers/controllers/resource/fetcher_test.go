@@ -332,6 +332,12 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 							Spec: cloudstackv1.CloudStackMachineSpec{
 								Offering:         cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
 								Template:         cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								DiskOffering:     cloudstackv1.CloudStackResourceDiskOffering{
+									CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
+										Name: "Small",
+									},
+									MountPath: "/data",
+								},
 								Affinity:         "anti",
 								AffinityGroupIDs: []string{"c", "d"},
 								Details:          map[string]string{"foo": "bar"},
@@ -344,6 +350,12 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:          anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering:   anywherev1.CloudStackResourceIdentifier{Name: "large"},
+					DiskOffering:      anywherev1.CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
+							Name: "Small",
+						},
+						MountPath: "/data",
+					},
 					Affinity:          "anti",
 					AffinityGroupIds:  []string{"c", "d"},
 					UserCustomDetails: map[string]string{"foo": "bar"},

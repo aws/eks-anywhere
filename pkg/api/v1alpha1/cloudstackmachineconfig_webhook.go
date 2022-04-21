@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -37,6 +38,10 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackMachineConfig resource creation")
 	}
 
+	if !r.Spec.DiskOffering.ValidatePath() {
+		return apierrors.NewBadRequest("disk offering mountPath invalid, preventing CloudStackMachineConfig resource creation")
+	}
+
 	return nil
 }
 
@@ -61,11 +66,21 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
-	if len(allErrs) == 0 {
-		return nil
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+	if len(r.Spec.DiskOffering.Id) > 0 || len(r.Spec.DiskOffering.Name) > 0 {
+		if len(r.Spec.DiskOffering.MountPath) < 2 || !strings.HasPrefix(r.Spec.DiskOffering.MountPath, "/") {
+			allErrs = append(
+				allErrs,
+				field.Invalid(field.NewPath("spec", "diskOffering", "mountPath"), r.Spec.DiskOffering.MountPath, "field is invalid"),
+			)
+			return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+		}
+	}
+
+	return nil
 }
 
 func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineConfig) field.ErrorList {

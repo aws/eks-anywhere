@@ -16,6 +16,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"strings"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -30,6 +31,8 @@ type CloudStackMachineConfigSpec struct {
 	Template CloudStackResourceIdentifier `json:"template"`
 	// ComputeOffering refers to a compute offering which has been previously registered in CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU speed. It can either be specified as a UUID or name
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
+	// DiskOffering refers to a disk offering which has been previously registered in CloudStack. It represents a disk offering with pre-defined size or custom specified disk size. It can either be specified as a UUID or name
+	DiskOffering CloudStackResourceDiskOffering `json:"diskOffering,omitempty"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
@@ -38,6 +41,38 @@ type CloudStackMachineConfigSpec struct {
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
 	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
+}
+
+type CloudStackResourceDiskOffering struct {
+	CloudStackResourceIdentifier `json:",inline"`
+	// path the storage will use to mount in VM
+	MountPath string `json:"mountPath"`
+}
+
+func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id {
+		return false
+	}
+
+	if r.MountPath != o.MountPath {
+		return false
+	}
+	return r.Id == "" && o.Id == "" && r.Name == o.Name
+}
+
+func (r *CloudStackResourceDiskOffering) ValidatePath() bool {
+	if len(r.Id) > 0 || len(r.Name) > 0 {
+		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
@@ -125,7 +160,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	if !c.Template.Equal(&o.Template) ||
-		!c.ComputeOffering.Equal(&o.ComputeOffering) {
+		!c.ComputeOffering.Equal(&o.ComputeOffering) ||
+		!c.DiskOffering.Equal(&o.DiskOffering) {
 		return false
 	}
 	if c.Affinity != o.Affinity {

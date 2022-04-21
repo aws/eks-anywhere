@@ -38,6 +38,9 @@ spec:
     name: large
   template:
     name: rhel8-1.20
+  diskOffering:
+    name: Small
+    mountPath: /data-small
   userCustomDetails:
     - foo: bar
   users:
