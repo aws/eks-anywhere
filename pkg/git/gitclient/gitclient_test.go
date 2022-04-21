@@ -1,4 +1,4 @@
-package gogit_test
+package gitclient_test
 
 import (
 	"context"
@@ -14,8 +14,8 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/pkg/git"
-	"github.com/aws/eks-anywhere/pkg/git/gogit"
-	mockGoGit "github.com/aws/eks-anywhere/pkg/git/gogit/mocks"
+	"github.com/aws/eks-anywhere/pkg/git/gitclient"
+	mockGoGit "github.com/aws/eks-anywhere/pkg/git/gitclient/mocks"
 )
 
 func TestGoGitClone(t *testing.T) {
@@ -43,7 +43,7 @@ func TestGoGitClone(t *testing.T) {
 			ctx, client, opts := newGoGit(t)
 			repoUrl := "testurl"
 
-			g := &gogit.GoGit{
+			g := &gitclient.GitClient{
 				Opts:   opts,
 				Client: client,
 			}
@@ -72,7 +72,7 @@ func TestGoGitAdd(t *testing.T) {
 	client.EXPECT().OpenWorktree(gomock.Any()).Do(func(arg0 *goGit.Repository) {}).Return(&goGit.Worktree{}, nil)
 	client.EXPECT().AddGlob(gomock.Any(), gomock.Any()).Do(func(arg0 string, arg1 *goGit.Worktree) {}).Return(nil)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -92,7 +92,7 @@ func TestGoGitRemove(t *testing.T) {
 	client.EXPECT().OpenWorktree(gomock.Any()).Do(func(arg0 *goGit.Repository) {}).Return(&goGit.Worktree{}, nil)
 	client.EXPECT().Remove(gomock.Any(), gomock.Any()).Do(func(arg0 string, arg1 *goGit.Worktree) {}).Return(plumbing.Hash{}, nil)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -113,7 +113,7 @@ func TestGoGitCommit(t *testing.T) {
 	client.EXPECT().Commit(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(arg0 string, arg1 *object.Signature, arg2 *goGit.Worktree) {}).Return(plumbing.Hash{}, nil)
 	client.EXPECT().CommitObject(gomock.Any(), gomock.Any()).Do(func(arg0 *goGit.Repository, arg1 plumbing.Hash) {}).Return(&object.Commit{}, nil)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -128,7 +128,7 @@ func TestGoGitCommit(t *testing.T) {
 func TestGoGitPush(t *testing.T) {
 	ctx, client, opts := newGoGit(t)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -166,7 +166,7 @@ func TestGoGitPull(t *testing.T) {
 			ctx, client, opts := newGoGit(t)
 			branch := "testbranch"
 
-			g := &gogit.GoGit{
+			g := &gitclient.GitClient{
 				Opts:   opts,
 				Client: client,
 			}
@@ -201,7 +201,7 @@ func TestGoGitInit(t *testing.T) {
 	client.EXPECT().Init(opts.RepositoryDirectory).Return(&goGit.Repository{}, nil)
 	client.EXPECT().Create(gomock.Any(), url).Do(func(arg0 *goGit.Repository, arg1 string) {}).Return(&goGit.Remote{}, nil)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -237,7 +237,7 @@ func TestGoGitBranch(t *testing.T) {
 	client.EXPECT().Checkout(worktree, cOpts).Return(nil)
 	client.EXPECT().ListRemotes(repo, gomock.Any()).Return(nil, nil)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -279,7 +279,7 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	client.EXPECT().ListRemotes(repo, gomock.Any()).Return(returnReferences, nil)
 	client.EXPECT().PullWithContext(gomock.Any(), worktree, gomock.Any(), localBranchRef)
 
-	g := &gogit.GoGit{
+	g := &gitclient.GitClient{
 		Opts:   opts,
 		Client: client,
 	}
@@ -291,8 +291,8 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	}
 }
 
-func newGoGit(t *testing.T) (context.Context, *mockGoGit.MockGoGitClient, gogit.Options) {
-	opts := gogit.Options{
+func newGoGit(t *testing.T) (context.Context, *mockGoGit.MockGoGitClient, gitclient.Options) {
+	opts := gitclient.Options{
 		RepositoryDirectory: "testrepo",
 	}
 	ctx := context.Background()
