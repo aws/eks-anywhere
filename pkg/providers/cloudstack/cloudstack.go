@@ -70,7 +70,7 @@ func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *typ
 	return nil
 }
 
-func (p *cloudstackProvider) PreCapiInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *cloudstackProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 

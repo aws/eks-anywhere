@@ -1108,7 +1108,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *vsphereProvider) PreCapiInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 

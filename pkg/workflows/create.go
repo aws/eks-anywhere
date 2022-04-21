@@ -102,7 +102,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	commandContext.BootstrapCluster = bootstrapCluster
 
 	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
-	if err = commandContext.Provider.PreCapiInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}
 	}

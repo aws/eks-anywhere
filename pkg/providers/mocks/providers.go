@@ -312,18 +312,18 @@ func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClusterDeleteValidate", reflect.TypeOf((*MockProvider)(nil).PostClusterDeleteValidate), arg0, arg1)
 }
 
-// PreCapiInstallOnBootstrap mocks base method.
-func (m *MockProvider) PreCapiInstallOnBootstrap(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+// PreCAPIInstallOnBootstrap mocks base method.
+func (m *MockProvider) PreCAPIInstallOnBootstrap(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PreCapiInstallOnBootstrap", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "PreCAPIInstallOnBootstrap", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PreCapiInstallOnBootstrap indicates an expected call of PreCapiInstallOnBootstrap.
-func (mr *MockProviderMockRecorder) PreCapiInstallOnBootstrap(arg0, arg1, arg2 interface{}) *gomock.Call {
+// PreCAPIInstallOnBootstrap indicates an expected call of PreCAPIInstallOnBootstrap.
+func (mr *MockProviderMockRecorder) PreCAPIInstallOnBootstrap(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreCapiInstallOnBootstrap", reflect.TypeOf((*MockProvider)(nil).PreCapiInstallOnBootstrap), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreCAPIInstallOnBootstrap", reflect.TypeOf((*MockProvider)(nil).PreCAPIInstallOnBootstrap), arg0, arg1, arg2)
 }
 
 // RunPostControlPlaneUpgrade mocks base method.
