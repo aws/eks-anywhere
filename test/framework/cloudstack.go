@@ -192,7 +192,7 @@ func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGro
 		// Using the ClusterConfigB instead of file in disk since it might have already been updated but not written to disk
 		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
 		if err != nil {
-			e.T.Fatalf("Error filling cluster config: %v", err)
+			e.T.Fatalf("filling cluster config: %v", err)
 		}
 	}
 }
