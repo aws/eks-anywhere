@@ -101,6 +101,12 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
 	if err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
 		commandContext.SetError(err)
@@ -198,7 +204,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	logger.Info("Installing storage class on workload cluster")
 	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
@@ -345,12 +350,4 @@ func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
-}
-
-func getManagementCluster(commandContext *task.CommandContext) *types.Cluster {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
-	return target
 }

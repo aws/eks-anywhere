@@ -10,32 +10,32 @@ import (
 )
 
 type gitProviderFactory struct {
-	GithubGitClient github.GitProviderClient
+	GitClient github.GitClient
 }
 
 type Options struct {
-	GithubGitClient github.GitProviderClient
+	GithubGitClient github.GitClient
 }
 
 func New(opts Options) *gitProviderFactory {
-	return &gitProviderFactory{GithubGitClient: opts.GithubGitClient}
+	return &gitProviderFactory{GitClient: opts.GithubGitClient}
 }
 
 // BuildProvider will configure and return the proper Github based on the given GitOps configuration.
-func (g *gitProviderFactory) BuildProvider(ctx context.Context, gitOpsConfig *v1alpha1.GitOpsConfigSpec) (git.Provider, error) {
+func (g *gitProviderFactory) BuildProvider(ctx context.Context, fluxConfig *v1alpha1.FluxConfigSpec) (git.Provider, error) {
 	token, err := github.GetGithubAccessTokenFromEnv()
 	if err != nil {
 		return nil, err
 	}
-	auth := git.TokenAuth{Token: token, Username: gitOpsConfig.Flux.Github.Owner}
+	auth := git.TokenAuth{Token: token, Username: fluxConfig.Github.Owner}
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
 	githubProviderOpts := github.Options{
-		Repository: gitOpsConfig.Flux.Github.Repository,
-		Owner:      gitOpsConfig.Flux.Github.Owner,
-		Personal:   gitOpsConfig.Flux.Github.Personal,
+		Repository: fluxConfig.Github.Repository,
+		Owner:      fluxConfig.Github.Owner,
+		Personal:   fluxConfig.Github.Personal,
 	}
-	provider, err := github.New(g.GithubGitClient, githubProviderClient, githubProviderOpts, auth)
+	provider, err := github.New(g.GitClient, githubProviderClient, githubProviderOpts, auth)
 	if err != nil {
 		return nil, err
 	}

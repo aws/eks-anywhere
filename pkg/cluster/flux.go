@@ -15,13 +15,12 @@ func fluxEntry() *ConfigManagerEntry {
 		},
 		Processors: []ParsedProcessor{processFlux},
 		Defaulters: []Defaulter{
-			func(c *Config) error {
-				if c.FluxConfig != nil {
-					c.FluxConfig.SetDefaults()
-				}
-				return nil
-			},
+			setFluxDefaults,
 			SetDefaultFluxConfigPath,
+		},
+		Validations: []Validation{
+			validateFlux,
+			validateFluxNamespace,
 		},
 	}
 }
@@ -39,6 +38,29 @@ func processFlux(c *Config, objects ObjectLookup) {
 
 		c.FluxConfig = flux.(*anywherev1.FluxConfig)
 	}
+}
+
+func validateFlux(c *Config) error {
+	if c.FluxConfig != nil {
+		return c.FluxConfig.Validate()
+	}
+	return nil
+}
+
+func validateFluxNamespace(c *Config) error {
+	if c.FluxConfig != nil {
+		if err := validateSameNamespace(c, c.FluxConfig); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setFluxDefaults(c *Config) error {
+	if c.FluxConfig != nil {
+		c.FluxConfig.SetDefaults()
+	}
+	return nil
 }
 
 func SetDefaultFluxConfigPath(c *Config) error {

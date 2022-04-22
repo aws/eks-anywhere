@@ -31,6 +31,11 @@ func LoadManagement(kubeconfig string) (*types.Cluster, error) {
 	if err != nil {
 		return nil, fmt.Errorf("parsing kubeconfig file: %v", err)
 	}
+
+	if len(kc.Clusters) < 1 || len(kc.Clusters[0].Name) == 0 {
+		return nil, fmt.Errorf("invalid kubeconfig file: %v", kubeconfig)
+	}
+
 	return &types.Cluster{
 		Name:               kc.Clusters[0].Name,
 		KubeconfigFile:     kubeconfig,

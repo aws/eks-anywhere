@@ -1,7 +1,6 @@
 package framework
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -20,8 +19,11 @@ const (
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
+	cloudStackCidrVar                  = "T_CLOUDSTACK_CIDR"
 	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
 	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
+	cloudstackFeatureGateEnvVar        = "CLOUDSTACK_PROVIDER"
+	cloudstackB64EncodedSecretEnvVar   = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 )
 
 var requiredCloudStackEnvVars = []string{
@@ -35,13 +37,17 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
+	cloudStackCidrVar,
 	podCidrVar,
 	serviceCidrVar,
+	cloudstackFeatureGateEnvVar,
+	cloudstackB64EncodedSecretEnvVar,
 }
 
 type CloudStack struct {
 	t           *testing.T
 	fillers     []api.CloudStackFiller
+	cidr        string
 	podCidr     string
 	serviceCidr string
 }
@@ -62,7 +68,7 @@ func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	checkRequiredEnvVars(t, requiredCloudStackEnvVars)
-	v := &CloudStack{
+	c := &CloudStack{
 		t: t,
 		fillers: []api.CloudStackFiller{
 			api.WithCloudStackStringFromEnvVar(cloudstackDomainVar, api.WithCloudStackDomain),
@@ -76,84 +82,91 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 		},
 	}
 
-	v.podCidr = os.Getenv(podCidrVar)
-	v.serviceCidr = os.Getenv(serviceCidrVar)
+	c.cidr = os.Getenv(cloudStackCidrVar)
+	c.podCidr = os.Getenv(podCidrVar)
+	c.serviceCidr = os.Getenv(serviceCidrVar)
 
 	for _, opt := range opts {
-		opt(v)
+		opt(c)
 	}
 
-	return v
+	return c
 }
 
 func WithRedhat121() CloudStackOpt {
-	return func(v *CloudStack) {
-		v.fillers = append(v.fillers,
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate),
 		)
 	}
 }
 
 func WithRedhat120() CloudStackOpt {
-	return func(v *CloudStack) {
-		v.fillers = append(v.fillers,
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate),
 		)
 	}
 }
 
 func WithCloudStackFillers(fillers ...api.CloudStackFiller) CloudStackOpt {
-	return func(v *CloudStack) {
-		v.fillers = append(v.fillers, fillers...)
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers, fillers...)
 	}
 }
 
-func (v *CloudStack) Name() string {
+func (c *CloudStack) Name() string {
 	return "cloudstack"
 }
 
-func (v *CloudStack) Setup() {}
+func (c *CloudStack) Setup() {}
 
-func (v *CloudStack) CustomizeProviderConfig(file string) []byte {
-	return v.customizeProviderConfig(file, v.fillers...)
+func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
+	return c.customizeProviderConfig(file, c.fillers...)
 }
 
-func (v *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
+func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
 	providerOutput, err := api.AutoFillCloudStackProvider(file, fillers...)
 	if err != nil {
-		v.t.Fatalf("Error customizing provider config from file: %v", err)
+		c.t.Fatalf("Error customizing provider config from file: %v", err)
 	}
 	return providerOutput
 }
 
-func (v *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
+func (c *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+		e.ProviderConfigB = c.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
 	}
 }
 
-func (v *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
+func (c *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ProviderConfigB = v.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+		e.ProviderConfigB = c.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
 	}
 }
 
-func (v *CloudStack) getControlPlaneIP() (string, error) {
+func (c *CloudStack) getControlPlaneIP() (string, error) {
 	value, ok := os.LookupEnv(cloudStackClusterIPPoolEnvVar)
+	var clusterIP string
+	var err error
 	if ok && value != "" {
-		clusterIP, err := PopIPFromEnv(cloudStackClusterIPPoolEnvVar)
+		clusterIP, err = PopIPFromEnv(cloudStackClusterIPPoolEnvVar)
 		if err != nil {
-			v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+			c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
 		}
-		return clusterIP, err
+	} else {
+		clusterIP, err = GenerateUniqueIp(c.cidr)
+		if err != nil {
+			c.t.Fatalf("failed to generate ip for cloudstack %s: %v", c.cidr, err)
+		}
 	}
-	return "", fmt.Errorf("failed to generate ip for cloudstack from IP pool %s", value)
+	return clusterIP, nil
 }
 
-func (v *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
-	controlPlaneIP, err := v.getControlPlaneIP()
+func (c *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
+	controlPlaneIP, err := c.getControlPlaneIP()
 	if err != nil {
-		v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
 	}
 	return []api.ClusterFiller{
 		api.WithPodCidr(os.Getenv(podCidrVar)),

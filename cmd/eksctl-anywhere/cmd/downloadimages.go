@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -80,8 +81,21 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		Version:          version.Get(),
 		TmpDowloadFolder: downloadFolder,
 		DstFile:          c.outputFile,
-		Packager:         tar.NewPackager(),
+		Packager:         packagerForFile(c.outputFile),
 	}
 
 	return downloadArtifacts.Run(ctx)
+}
+
+type packager interface {
+	UnPackage(orgFile, dstFolder string) error
+	Package(sourceFolder, dstFile string) error
+}
+
+func packagerForFile(file string) packager {
+	if strings.HasSuffix(file, ".tar.gz") {
+		return tar.NewGzipPackager()
+	} else {
+		return tar.NewPackager()
+	}
 }

@@ -42,7 +42,7 @@ spec:
     name: Small
     mountPath: /data-small
   userCustomDetails:
-    - foo: bar
+    foo: bar
   users:
     - name: capc
       sshAuthorizedKeys:

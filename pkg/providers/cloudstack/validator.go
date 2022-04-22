@@ -158,9 +158,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 			cloudStackClusterSpec.Cluster.Namespace,
 		)
 	}
-	if len(cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) > 1 {
-		return fmt.Errorf("multiple worker node groups are not yet supported by the Cloudstack provider")
-	}
 
 	for _, workerNodeGroupConfiguration := range cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGroupConfiguration.MachineGroupRef == nil {

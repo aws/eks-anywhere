@@ -24,8 +24,8 @@ const (
 )
 
 type githubProvider struct {
-	gitProviderClient    GitProviderClient
-	githubProviderClient GithubProviderClient
+	gitProviderClient    GitClient
+	githubProviderClient GithubClient
 	options              Options
 	auth                 git.TokenAuth
 }
@@ -36,9 +36,9 @@ type Options struct {
 	Personal   bool
 }
 
-// GitProviderClient represents the attributes that the GitHub provider requires of a low-level git implementation (e.g. gogit) in order to function.
+// GitClient represents the attributes that the GitHub provider requires of a low-level git implementation (e.g. gogit) in order to function.
 // Any basic git implementation (gogit, an executable wrapper, etc) which supports these methods can be used by the GitHub specific provider.
-type GitProviderClient interface {
+type GitClient interface {
 	Add(filename string) error
 	Remove(filename string) error
 	Clone(ctx context.Context, repourl string) error
@@ -50,8 +50,8 @@ type GitProviderClient interface {
 	SetTokenAuth(token string, username string)
 }
 
-// GithubProviderClient represents the attributes that the Github provider requires of a library to directly connect to and interact with the Github API.
-type GithubProviderClient interface {
+// GithubClient represents the attributes that the Github provider requires of a library to directly connect to and interact with the Github API.
+type GithubClient interface {
 	GetRepo(ctx context.Context, opts git.GetRepoOpts) (repo *git.Repository, err error)
 	CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (repo *git.Repository, err error)
 	AuthenticatedUser(ctx context.Context) (*goGithub.User, error)
@@ -62,7 +62,7 @@ type GithubProviderClient interface {
 	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
 
-func New(gitProviderClient GitProviderClient, githubProviderClient GithubProviderClient, opts Options, auth git.TokenAuth) (git.Provider, error) {
+func New(gitProviderClient GitClient, githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (git.Provider, error) {
 	gitProviderClient.SetTokenAuth(auth.Token, auth.Username)
 	return &githubProvider{
 		gitProviderClient:    gitProviderClient,

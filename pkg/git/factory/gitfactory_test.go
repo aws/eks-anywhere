@@ -35,16 +35,25 @@ func TestGitFactoryHappyPath(t *testing.T) {
 			defer tctx.RestoreContext()
 
 			mockCtrl := gomock.NewController(t)
-			gitProviderConfig := v1alpha1.Github{Owner: "Jeff"}
-			fluxConfig := v1alpha1.Flux{Github: gitProviderConfig}
-			gitopsConfig := &v1alpha1.GitOpsConfigSpec{Flux: fluxConfig}
 
-			githubProviderClient := githubMocks.NewMockGitProviderClient(mockCtrl)
-			githubProviderClient.EXPECT().SetTokenAuth(gomock.Any(), fluxConfig.Github.Owner)
+			gitProviderConfig := v1alpha1.GithubProviderConfig{
+				Owner:      "Jeff",
+				Repository: "testRepo",
+				Personal:   true,
+			}
+
+			fluxConfig := v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					Github: &gitProviderConfig,
+				},
+			}
+
+			githubProviderClient := githubMocks.NewMockGitClient(mockCtrl)
+			githubProviderClient.EXPECT().SetTokenAuth(gomock.Any(), fluxConfig.Spec.Github.Owner)
 			opts := gitFactory.Options{GithubGitClient: githubProviderClient}
 			factory := gitFactory.New(opts)
 
-			_, err := factory.BuildProvider(context.Background(), gitopsConfig)
+			_, err := factory.BuildProvider(context.Background(), &fluxConfig.Spec)
 			if err != nil {
 				t.Errorf("gitfactory.BuldProvider returned err, wanted nil. err: %v", err)
 			}

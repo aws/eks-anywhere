@@ -209,7 +209,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c411e0faea4501d2f63137f867e9a60bd8b4bb0
+      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
       kindNode:
         arch:
         - amd64
@@ -310,9 +310,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.0-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -711,7 +711,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c411e0faea4501d2f63137f867e9a60bd8b4bb0
+      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
       kindNode:
         arch:
         - amd64
@@ -812,9 +812,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.0-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1213,7 +1213,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c411e0faea4501d2f63137f867e9a60bd8b4bb0
+      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
       kindNode:
         arch:
         - amd64
@@ -1314,9 +1314,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.0-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.0/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64

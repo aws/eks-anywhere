@@ -14,12 +14,11 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/bundles"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
-	"github.com/aws/eks-anywhere/pkg/tar"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 )
 
 // imagesCmd represents the images command
@@ -61,6 +60,11 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
+	username, password, err := readRegistryCredentials()
+	if err != nil {
+		return err
+	}
+
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
@@ -84,7 +88,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		Bundles:            bundle,
 		InputFile:          c.InputFile,
 		TmpArtifactsFolder: artifactsFolder,
-		UnPackager:         tar.NewPackager(),
+		UnPackager:         packagerForFile(c.InputFile),
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, toolsImageFile),
 			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
@@ -104,11 +108,6 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 	defer deps.Close(ctx)
-
-	username, password, err := readRegistryCredentials()
-	if err != nil {
-		return err
-	}
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{

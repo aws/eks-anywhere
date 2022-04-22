@@ -54,7 +54,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
-		fluxConfig   v1alpha1.Flux
+		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
 	}{
 		{
@@ -62,11 +62,13 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 			cluster: &types.Cluster{
 				KubeconfigFile: "f.kubeconfig",
 			},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					Owner:             owner,
-					Repository:        repo,
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
 					ClusterConfigPath: path,
+					Github: &v1alpha1.GithubProviderConfig{
+						Owner:      owner,
+						Repository: repo,
+					},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -76,12 +78,14 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 		{
 			testName: "with personal",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					Owner:             owner,
-					Repository:        repo,
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
 					ClusterConfigPath: path,
-					Personal:          true,
+					Github: &v1alpha1.GithubProviderConfig{
+						Owner:      owner,
+						Repository: repo,
+						Personal:   true,
+					},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -91,14 +95,17 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 		{
 			testName: "with branch",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					Owner:             owner,
-					Repository:        repo,
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
 					ClusterConfigPath: path,
 					Branch:            "main",
+					Github: &v1alpha1.GithubProviderConfig{
+						Owner:      owner,
+						Repository: repo,
+					},
 				},
 			},
+
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", path, "--ssh-key-algorithm", "ecdsa", "--branch", "main",
 			},
@@ -106,12 +113,14 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 		{
 			testName: "with namespace",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					Owner:               owner,
-					Repository:          repo,
-					ClusterConfigPath:   path,
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					ClusterConfigPath: path,
+					SystemNamespace:   "flux-system",
+					Github: &v1alpha1.GithubProviderConfig{
+						Owner:      owner,
+						Repository: repo,
+					},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -121,8 +130,10 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 		{
 			testName: "minimum args",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{},
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					Github: &v1alpha1.GithubProviderConfig{},
+				},
 			},
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--repository", "", "--owner", "", "--path", "", "--ssh-key-algorithm", "ecdsa",
@@ -135,12 +146,6 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			env := map[string]string{githubToken: validPATValue}
-			gitOpsConfig := v1alpha1.GitOpsConfig{
-				Spec: v1alpha1.GitOpsConfigSpec{
-					Flux: tt.fluxConfig,
-				},
-			}
-
 			executable.EXPECT().ExecuteWithEnv(
 				ctx,
 				env,
@@ -148,7 +153,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.BootstrapToolkitsComponents(ctx, tt.cluster, &gitOpsConfig); err != nil {
+			if err := f.BootstrapToolkitsComponentsGithub(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.BootstrapToolkitsComponents() error = %v, want nil", err)
 			}
 		})
@@ -165,12 +170,13 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
-		fluxConfig   v1alpha1.Flux
+		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
 	}{
 		{
-			testName: "minimum args",
-			cluster:  &types.Cluster{},
+			testName:   "minimum args",
+			cluster:    &types.Cluster{},
+			fluxConfig: &v1alpha1.FluxConfig{},
 			wantExecArgs: []interface{}{
 				"uninstall", "--silent",
 			},
@@ -180,6 +186,7 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 			cluster: &types.Cluster{
 				KubeconfigFile: "f.kubeconfig",
 			},
+			fluxConfig: &v1alpha1.FluxConfig{},
 			wantExecArgs: []interface{}{
 				"uninstall", "--silent", "--kubeconfig", "f.kubeconfig",
 			},
@@ -187,9 +194,10 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 		{
 			testName: "with namespace",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "flux-system",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -202,18 +210,13 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			gitOpsConfig := v1alpha1.GitOpsConfig{
-				Spec: v1alpha1.GitOpsConfigSpec{
-					Flux: tt.fluxConfig,
-				},
-			}
 			executable.EXPECT().Execute(
 				ctx,
 				tt.wantExecArgs...,
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.UninstallToolkitsComponents(ctx, tt.cluster, &gitOpsConfig); err != nil {
+			if err := f.UninstallToolkitsComponents(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.UninstallToolkitsComponents() error = %v, want nil", err)
 			}
 		})
@@ -230,15 +233,16 @@ func TestFluxPauseKustomization(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
-		fluxConfig   v1alpha1.Flux
+		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
 	}{
 		{
 			testName: "minimum args",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "flux-system",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -250,9 +254,10 @@ func TestFluxPauseKustomization(t *testing.T) {
 			cluster: &types.Cluster{
 				KubeconfigFile: "f.kubeconfig",
 			},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "flux-system",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -262,9 +267,10 @@ func TestFluxPauseKustomization(t *testing.T) {
 		{
 			testName: "with namespace",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "custom-ns",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "custom-ns",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -277,19 +283,13 @@ func TestFluxPauseKustomization(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			gitOpsConfig := v1alpha1.GitOpsConfig{
-				Spec: v1alpha1.GitOpsConfigSpec{
-					Flux: tt.fluxConfig,
-				},
-			}
-
 			executable.EXPECT().Execute(
 				ctx,
 				tt.wantExecArgs...,
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.PauseKustomization(ctx, tt.cluster, &gitOpsConfig); err != nil {
+			if err := f.PauseKustomization(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.PauseKustomization() error = %v, want nil", err)
 			}
 		})
@@ -306,15 +306,16 @@ func TestFluxResumeKustomization(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
-		fluxConfig   v1alpha1.Flux
+		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
 	}{
 		{
 			testName: "minimum args",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "flux-system",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -326,9 +327,10 @@ func TestFluxResumeKustomization(t *testing.T) {
 			cluster: &types.Cluster{
 				KubeconfigFile: "f.kubeconfig",
 			},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "flux-system",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "flux-system",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -338,9 +340,10 @@ func TestFluxResumeKustomization(t *testing.T) {
 		{
 			testName: "with namespace",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "custom-ns",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "custom-ns",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -353,11 +356,6 @@ func TestFluxResumeKustomization(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			gitOpsConfig := v1alpha1.GitOpsConfig{
-				Spec: v1alpha1.GitOpsConfigSpec{
-					Flux: tt.fluxConfig,
-				},
-			}
 
 			executable.EXPECT().Execute(
 				ctx,
@@ -365,7 +363,7 @@ func TestFluxResumeKustomization(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.ResumeKustomization(ctx, tt.cluster, &gitOpsConfig); err != nil {
+			if err := f.ResumeKustomization(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.ResumeKustomization() error = %v, want nil", err)
 			}
 		})
@@ -382,13 +380,13 @@ func TestFluxReconcile(t *testing.T) {
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
-		fluxConfig   v1alpha1.Flux
+		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
 	}{
 		{
 			testName:   "minimum args",
 			cluster:    &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{},
+			fluxConfig: &v1alpha1.FluxConfig{},
 			wantExecArgs: []interface{}{
 				"reconcile", "source", "git", "flux-system",
 			},
@@ -398,7 +396,7 @@ func TestFluxReconcile(t *testing.T) {
 			cluster: &types.Cluster{
 				KubeconfigFile: "f.kubeconfig",
 			},
-			fluxConfig: v1alpha1.Flux{},
+			fluxConfig: &v1alpha1.FluxConfig{},
 			wantExecArgs: []interface{}{
 				"reconcile", "source", "git", "flux-system", "--kubeconfig", "f.kubeconfig",
 			},
@@ -406,9 +404,10 @@ func TestFluxReconcile(t *testing.T) {
 		{
 			testName: "with custom namespace",
 			cluster:  &types.Cluster{},
-			fluxConfig: v1alpha1.Flux{
-				Github: v1alpha1.Github{
-					FluxSystemNamespace: "custom-ns",
+			fluxConfig: &v1alpha1.FluxConfig{
+				Spec: v1alpha1.FluxConfigSpec{
+					SystemNamespace: "custom-ns",
+					Github:          &v1alpha1.GithubProviderConfig{},
 				},
 			},
 			wantExecArgs: []interface{}{
@@ -421,11 +420,6 @@ func TestFluxReconcile(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			gitOpsConfig := v1alpha1.GitOpsConfig{
-				Spec: v1alpha1.GitOpsConfigSpec{
-					Flux: tt.fluxConfig,
-				},
-			}
 
 			executable.EXPECT().Execute(
 				ctx,
@@ -433,7 +427,7 @@ func TestFluxReconcile(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.Reconcile(ctx, tt.cluster, &gitOpsConfig); err != nil {
+			if err := f.Reconcile(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.Reconcile() error = %v, want nil", err)
 			}
 		})

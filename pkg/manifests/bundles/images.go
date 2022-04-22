@@ -3,7 +3,7 @@ package bundles
 import (
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/eksd"
+	"github.com/aws/eks-anywhere/pkg/manifests/eksd"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
