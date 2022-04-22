@@ -463,7 +463,7 @@ spec:
 {{- if .cloudstackEtcdTemplateOfferingName}}
         name: {{.cloudstackEtcdTemplateOfferingName}}
 {{- end}}
-{{- if .cloudstacKEtcdDiskOfferingProvided}}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
       diskOffering:
 {{- if .cloudstackEtcdDiskOfferingId}}
         id: {{.cloudstackEtcdDiskOfferingId}}

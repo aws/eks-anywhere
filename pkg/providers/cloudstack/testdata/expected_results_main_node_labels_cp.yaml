@@ -416,5 +416,8 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
+      diskOffering:
+        name: Small
+        mountPath: /data-small
       affinitygroupids:
       - etcd-affinity
