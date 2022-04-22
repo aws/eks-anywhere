@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
-	"github.com/aws/eks-anywhere/pkg/git/gogit"
+	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 )
 
 type GitOptions struct {
@@ -33,10 +33,10 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 		localGitWriterPath = repoPath
 	}
 
-	gogitOptions := gogit.Options{
+	gogitOptions := gitclient.Options{
 		RepositoryDirectory: localGitRepoPath,
 	}
-	goGit := gogit.New(gogitOptions)
+	goGit := gitclient.New(gogitOptions)
 
 	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: goGit}
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
