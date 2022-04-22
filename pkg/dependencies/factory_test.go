@@ -79,7 +79,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.Bootstrapper).NotTo(BeNil())
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
-	tt.Expect(deps.FluxAddonClient).NotTo(BeNil())
+	tt.Expect(deps.FluxAddonClient).To(BeNil())
 	tt.Expect(deps.Writer).NotTo(BeNil())
 	tt.Expect(deps.AnalyzerFactory).NotTo(BeNil())
 	tt.Expect(deps.CollectorFactory).NotTo(BeNil())
