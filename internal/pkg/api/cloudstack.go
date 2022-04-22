@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -19,28 +20,23 @@ type CloudStackConfig struct {
 type CloudStackFiller func(config CloudStackConfig)
 
 func AutoFillCloudStackProvider(filename string, fillers ...CloudStackFiller) ([]byte, error) {
-	cloudstackDatacenterConfig, err := anywherev1.GetCloudStackDatacenterConfig(filename)
+	config, err := cluster.ParseConfigFromFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get cloudstack datacenter config from file: %v", err)
+		return nil, err
 	}
 
-	cloudstackMachineConfigs, err := anywherev1.GetCloudStackMachineConfigs(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get cloudstack machine config from file: %v", err)
-	}
-
-	config := CloudStackConfig{
-		datacenterConfig: cloudstackDatacenterConfig,
-		machineConfigs:   cloudstackMachineConfigs,
+	cloudStackConfig := CloudStackConfig{
+		datacenterConfig: config.CloudStackDatacenter,
+		machineConfigs:   config.CloudStackMachineConfigs,
 	}
 
 	for _, f := range fillers {
-		f(config)
+		f(cloudStackConfig)
 	}
 
-	resources := make([]interface{}, 0, len(config.machineConfigs)+1)
-	resources = append(resources, config.datacenterConfig)
-	for _, m := range config.machineConfigs {
+	resources := make([]interface{}, 0, len(cloudStackConfig.machineConfigs)+1)
+	resources = append(resources, cloudStackConfig.datacenterConfig)
+	for _, m := range cloudStackConfig.machineConfigs {
 		resources = append(resources, m)
 	}
 

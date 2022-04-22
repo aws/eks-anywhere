@@ -51,14 +51,14 @@ func TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 	)
 }
 
-func TestCloudStackKubernetes121RedhatAndAndRemoveWorkerNodeGroups(t *testing.T) {
+func TestCloudStackKubernetes121RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewCloudStack(t,
 		framework.WithCloudStackWorkerNodeGroup(
 			"worker-1",
 			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
 		),
 		framework.WithCloudStackWorkerNodeGroup(
-			"worker-1",
+			"worker-2",
 			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
 		),
 		framework.WithCloudStackRedhat121(),

@@ -134,7 +134,7 @@ func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
 func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
 	providerOutput, err := api.AutoFillCloudStackProvider(file, fillers...)
 	if err != nil {
-		c.t.Fatalf("Error customizing provider config from file: %v", err)
+		c.t.Fatalf("customizing provider config from file: %v", err)
 	}
 	return providerOutput
 }
@@ -198,7 +198,7 @@ func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGro
 }
 
 func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfigFiller) api.CloudStackFiller {
-	f := make([]api.CloudStackMachineConfigFiller, 0, len(fillers)+1)
+	f := make([]api.CloudStackMachineConfigFiller, 0, len(fillers)+2)
 	// Need to add these because at this point the default fillers that assign these
 	// values to all machines have already ran
 	f = append(f,
