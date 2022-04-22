@@ -48,6 +48,10 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 			Name: "image 2",
 			URI:  "image2:1",
 		},
+		{
+			Name: "tools",
+			URI:  "tools:v1.0.0",
+		},
 	}
 
 	charts := []releasev1.Image{

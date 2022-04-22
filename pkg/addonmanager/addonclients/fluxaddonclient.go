@@ -15,7 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
-	"github.com/aws/eks-anywhere/pkg/git/gogit"
+	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -68,12 +68,11 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 		return nil, nil
 	}
 	localGitRepoPath := filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
-	gogitOptions := gogit.Options{
+	gitClientOptions := gitclient.Options{
 		RepositoryDirectory: localGitRepoPath,
 	}
-	goGit := gogit.New(gogitOptions)
-
-	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: goGit}
+	gitClient := gitclient.New(gitClientOptions)
+	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: gitClient}
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
 	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &fluxConfig.Spec)
 	if err != nil {
@@ -105,8 +104,8 @@ func NewFluxAddonClient(flux Flux, gitOpts *GitOptions) *FluxAddonClient {
 
 // Flux is an interface that abstracts the basic commands of flux executable.
 type Flux interface {
-	// BootstrapToolkitsComponents bootstraps toolkit components in a GitHub repository.
-	BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
+	// BootstrapToolkitsComponentsGithub bootstraps toolkit components in a GitHub repository.
+	BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// UninstallToolkitsComponents UninstallFluxComponents removes the Flux components and the toolkit.fluxcd.io resources from the cluster.
 	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -166,7 +165,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 
 	if !cluster.ExistingManagement {
 		err := f.retrier.Retry(func() error {
-			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+			return fc.flux.BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 		})
 		if err != nil {
 			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)

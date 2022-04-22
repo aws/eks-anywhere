@@ -36,18 +36,18 @@ func (m *MockFlux) EXPECT() *MockFluxMockRecorder {
 	return m.recorder
 }
 
-// BootstrapToolkitsComponents mocks base method.
-func (m *MockFlux) BootstrapToolkitsComponents(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
+// BootstrapToolkitsComponentsGithub mocks base method.
+func (m *MockFlux) BootstrapToolkitsComponentsGithub(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BootstrapToolkitsComponents", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "BootstrapToolkitsComponentsGithub", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// BootstrapToolkitsComponents indicates an expected call of BootstrapToolkitsComponents.
-func (mr *MockFluxMockRecorder) BootstrapToolkitsComponents(arg0, arg1, arg2 interface{}) *gomock.Call {
+// BootstrapToolkitsComponentsGithub indicates an expected call of BootstrapToolkitsComponentsGithub.
+func (mr *MockFluxMockRecorder) BootstrapToolkitsComponentsGithub(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapToolkitsComponents", reflect.TypeOf((*MockFlux)(nil).BootstrapToolkitsComponents), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapToolkitsComponentsGithub", reflect.TypeOf((*MockFlux)(nil).BootstrapToolkitsComponentsGithub), arg0, arg1, arg2)
 }
 
 // DeleteFluxSystemSecret mocks base method.

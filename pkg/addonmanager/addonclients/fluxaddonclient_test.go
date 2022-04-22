@@ -88,7 +88,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+			m.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 			m.git.EXPECT().Clone(ctx).Return(nil)
@@ -129,7 +129,7 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	f, m, g := newAddonClient(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
-	m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
@@ -214,7 +214,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+			m.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			n := clusterSpec.FluxConfig.Spec.Github.Repository
 			o := clusterSpec.FluxConfig.Spec.Github.Owner
@@ -297,7 +297,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.FluxConfig)
+			m.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			m.git.EXPECT().GetRepo(ctx).MaxTimes(2).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 			m.git.EXPECT().Clone(ctx).MaxTimes(2).Return(&git.RepositoryIsEmptyError{Repository: "testRepo"})

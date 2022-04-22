@@ -48,7 +48,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 				},
 			}
 
-			githubProviderClient := githubMocks.NewMockGitProviderClient(mockCtrl)
+			githubProviderClient := githubMocks.NewMockGitClient(mockCtrl)
 			githubProviderClient.EXPECT().SetTokenAuth(gomock.Any(), fluxConfig.Spec.Github.Owner)
 			opts := gitFactory.Options{GithubGitClient: githubProviderClient}
 			factory := gitFactory.New(opts)

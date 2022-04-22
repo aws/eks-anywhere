@@ -10,11 +10,11 @@ import (
 )
 
 type gitProviderFactory struct {
-	GitClient github.GitProviderClient
+	GitClient github.GitClient
 }
 
 type Options struct {
-	GithubGitClient github.GitProviderClient
+	GithubGitClient github.GitClient
 }
 
 func New(opts Options) *gitProviderFactory {
