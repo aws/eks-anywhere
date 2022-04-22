@@ -1085,9 +1085,10 @@ func TestGovcNetworkExistsTrue(t *testing.T) {
 	g, executable, env := setup(t)
 	network := "/Networks/network_1"
 	networkName := "network_1"
+	networkResponse := "[\"network_1\"]"
 	networkDir := "/Networks"
 
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(network), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", "-json=true", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(networkResponse), nil)
 
 	exists, err := g.NetworkExists(ctx, network)
 	if err != nil {
@@ -1106,7 +1107,27 @@ func TestGovcNetworkExistsFalse(t *testing.T) {
 	networkName := "network_1"
 	networkDir := "/Networks"
 
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", "-json=true", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString("null"), nil)
+
+	exists, err := g.NetworkExists(ctx, network)
+	if err != nil {
+		t.Fatalf("Govc.NetworkExistsNetworkExists() err = %v, want err nil", err)
+	}
+
+	if exists {
+		t.Fatalf("Govc.NetworkExists() = true, want false")
+	}
+}
+
+func TestGovcMultiNetworkExists(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	network := "/Networks/network_1"
+	networkName := "network_1"
+	networkResponse := "[\"network_1\",\"network_1\"]"
+	networkDir := "/Networks"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", "-json=true", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(networkResponse), nil)
 
 	exists, err := g.NetworkExists(ctx, network)
 	if err != nil {
