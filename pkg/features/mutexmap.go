@@ -25,3 +25,9 @@ func (m *mutexMap) store(key string, value bool) {
 	m.internal[key] = value
 	m.Unlock()
 }
+
+func (m *mutexMap) clear() {
+	m.Lock()
+	m.internal = make(map[string]bool)
+	m.Unlock()
+}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -758,9 +757,8 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 }
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	os.Unsetenv(features.CloudStackProviderEnvVar)
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
@@ -905,12 +903,7 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Unsetenv(features.CloudStackProviderEnvVar)
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-	if err != nil {
-		return
-	}
+	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
@@ -922,6 +915,27 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
 		}
 	}
+	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerInstallCustomComponentsSuccessWithFullLifecycleAPI(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
+
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
+
+	for namespace, deployments := range internal.EksaDeployments {
+		for _, deployment := range deployments {
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+		}
+	}
+	tt.mocks.client.EXPECT().SetEksaControllerEnvVar(tt.ctx, features.FullLifecycleAPIEnvVar, "true", tt.cluster.KubeconfigFile)
 	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
 	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
