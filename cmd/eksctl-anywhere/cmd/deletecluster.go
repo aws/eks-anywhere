@@ -104,7 +104,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
@@ -134,5 +134,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	cleanup(deps, &err)
 	return err
 }

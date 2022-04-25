@@ -140,7 +140,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
 		return fmt.Errorf("provider tinkerbell is not supported in this release")
@@ -188,5 +188,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	cleanup(deps, &err)
+	return err
 }
