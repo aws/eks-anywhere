@@ -358,6 +358,23 @@ func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate121Var()),
+	)
+}
+
 func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewClusterE2ETest(
