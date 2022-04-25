@@ -140,10 +140,6 @@ func GetGithubAccessTokenFromEnv() (string, error) {
 	return env[GithubTokenEnv], nil
 }
 
-func (g *githubProvider) RepoUrl() string {
-	return fmt.Sprintf(githubUrlTemplate, g.options.Owner, g.options.Repository)
-}
-
 func (g *githubProvider) PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error) {
 	return g.githubProviderClient.PathExists(ctx, owner, repo, branch, path)
 }
@@ -158,4 +154,8 @@ type GitProviderNotFoundError struct {
 
 func (e *GitProviderNotFoundError) Error() string {
 	return fmt.Sprintf("git provider %s not found", e.Provider)
+}
+
+func RepoUrl(owner string, repo string) string {
+	return fmt.Sprintf(githubUrlTemplate, owner, repo)
 }
