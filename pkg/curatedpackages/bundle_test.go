@@ -140,6 +140,38 @@ func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error reading bundle")))
 }
 
+func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
+	tt := newBundleTest(t)
+	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return("", errors.New("registry doesn't exist"))
+	tt.Command = curatedpackages.NewBundleReader(
+		tt.kubeConfig,
+		tt.kubeVersion,
+		curatedpackages.Registry,
+		tt.kubectl,
+		tt.bundleManager,
+		tt.cliVersion,
+		tt.registry,
+	)
+	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	tt.Expect(err).To(MatchError(ContainSubstring("registry doesn't exist")))
+}
+
+func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
+	tt := newBundleTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error fetching controller"))
+	tt.Command = curatedpackages.NewBundleReader(
+		tt.kubeConfig,
+		tt.kubeVersion,
+		curatedpackages.Cluster,
+		tt.kubectl,
+		tt.bundleManager,
+		tt.cliVersion,
+		tt.registry,
+	)
+	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	tt.Expect(err).To(MatchError(ContainSubstring("error fetching controller")))
+}
+
 func convertJsonToBytes(obj interface{}) bytes.Buffer {
 	b, _ := json.Marshal(obj)
 	return *bytes.NewBuffer(b)

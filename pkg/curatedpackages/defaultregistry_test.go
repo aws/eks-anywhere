@@ -2,6 +2,7 @@ package curatedpackages_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -71,4 +72,16 @@ func TestDefaultRegistryUnknownKubeVersionFails(t *testing.T) {
 	)
 	_, err := tt.Command.GetRegistryBaseRef(tt.ctx)
 	tt.Expect(err).To(MatchError(ContainSubstring("is not supported by bundles manifest")))
+}
+
+func TestDefaultRegistryUnknownGitVersion(t *testing.T) {
+	tt := newDefaultRegistryTest(t)
+	tt.releaseManifest.EXPECT().ReadBundlesForVersion("v1.0.0").Return(nil, errors.New("unknown git version"))
+	tt.Command = curatedpackages.NewDefaultRegistry(
+		tt.releaseManifest,
+		"1.21",
+		version.Info{GitVersion: "v1.0.0"},
+	)
+	_, err := tt.Command.GetRegistryBaseRef(tt.ctx)
+	tt.Expect(err).To(MatchError(ContainSubstring("unable to parse the release manifest")))
 }
