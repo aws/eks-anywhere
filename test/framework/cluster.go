@@ -61,7 +61,8 @@ type ClusterE2ETest struct {
 	ProviderConfigB        []byte
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
-	GitProvider            git.Provider
+	GitProvider            git.ProviderClient
+	GitClient              git.Client
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig

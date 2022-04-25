@@ -10,12 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
-	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 )
 
 type GitOptions struct {
-	Git    git.Provider
-	Writer filewriter.FileWriter
+	GitProvider git.ProviderClient
+	GitClient   git.Client
+	Writer      filewriter.FileWriter
 }
 
 func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, repoPath string) (*GitOptions, error) {
@@ -23,24 +23,15 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 		return nil, nil
 	}
 
-	var localGitRepoPath string
 	var localGitWriterPath string
 	if repoPath == "" {
-		localGitRepoPath = filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
 		localGitWriterPath = filepath.Join("git", fluxConfig.Spec.Github.Repository)
 	} else {
-		localGitRepoPath = repoPath
 		localGitWriterPath = repoPath
 	}
 
-	gogitOptions := gitclient.Options{
-		RepositoryDirectory: localGitRepoPath,
-	}
-	goGit := gitclient.New(gogitOptions)
-
-	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: goGit}
-	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
-	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &fluxConfig.Spec)
+	gitProviderFactory := gitFactory.NewFactory()
+	gitProvider, gitClient, err := gitProviderFactory.Build(ctx, cluster, fluxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
@@ -54,7 +45,8 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
-		Git:    gitProvider,
-		Writer: gitwriter,
+		GitProvider: gitProvider,
+		GitClient:   gitClient,
+		Writer:      gitwriter,
 	}, nil
 }

@@ -133,7 +133,7 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitProvider = g.GitProvider
 	e.GitWriter = g.Writer
 }
 
@@ -157,7 +157,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitProvider = g.GitProvider
 	e.GitWriter = g.Writer
 
 	if err = e.validateInitialFluxState(ctx); err != nil {
@@ -197,7 +197,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
-	repo, err := gitOptions.Git.GetRepo(ctx)
+	repo, err := gitOptions.GitProvider.GetRepo(ctx)
 	if err != nil {
 		e.T.Errorf("error getting Github repo %s: %v", repoName, err)
 	}
@@ -205,7 +205,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Logf("Skipped repo deletion: remote repo %s does not exist", repoName)
 		return
 	}
-	err = gitOptions.Git.DeleteRepo(ctx, opts)
+	err = gitOptions.GitProvider.DeleteRepo(ctx, opts)
 	if err != nil {
 		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
 	}
@@ -291,13 +291,13 @@ func (e *ClusterE2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 	gitFilePath := e.clusterConfigGitPath()
 	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
 	ctx := context.Background()
-	g := gitOptions.Git
-	err := g.Clone(ctx)
+	gc := gitOptions.GitClient
+	err := gc.Clone(ctx)
 	if err != nil {
 		e.T.Errorf("Error cloning github repo: %v", err)
 	}
 	branch := e.gitBranch()
-	err = g.Branch(branch)
+	err = gc.Branch(branch)
 	if err != nil {
 		e.T.Errorf("Error checking out branch: %v", err)
 	}
@@ -659,7 +659,7 @@ func (e *ClusterE2ETest) updateEKSASpecInGit(s *cluster.Spec, providersConfig pr
 
 func (e *ClusterE2ETest) pushConfigChanges() error {
 	p := e.clusterConfGitPath()
-	g := e.GitProvider
+	g := e.GitClient
 	if err := g.Add(p); err != nil {
 		return err
 	}
