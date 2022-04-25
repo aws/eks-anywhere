@@ -15,7 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
-	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -93,18 +92,12 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 	if fluxConfig == nil {
 		return nil, nil
 	}
-	localGitRepoPath := filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
-	gitClientOptions := gitclient.Options{
-		RepositoryDirectory: localGitRepoPath,
-	}
-	gitClient := gitclient.New(gitClientOptions)
-	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: gitClient}
-	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
-	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &fluxConfig.Spec)
+	gitProviderFactory := gitFactory.New()
+	provider, client, err := gitProviderFactory.Build(ctx, cluster, fluxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
-	err = gitProvider.Validate(ctx)
+	err = provider.Validate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +108,8 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
+		GitProvider: provider,
+		GitClient:   client,
 		Writer:      gitwriter,
 	}, nil
 }

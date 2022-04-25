@@ -12,19 +12,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
-type gitProviderFactory struct {
-	GitClient *git.Client
-}
+type gitProviderFactory struct{}
 
-type Options struct {
-	GithubGitClient git.Client
-}
-
-func New(opts Options) *gitProviderFactory {
-	return &gitProviderFactory{GitClient: &opts.GithubGitClient}
-}
-
-func NewFactory() *gitProviderFactory {
+func New() *gitProviderFactory {
 	return &gitProviderFactory{}
 }
 

@@ -30,7 +30,7 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 		localGitWriterPath = repoPath
 	}
 
-	gitProviderFactory := gitFactory.NewFactory()
+	gitProviderFactory := gitFactory.New()
 	gitProvider, gitClient, err := gitProviderFactory.Build(ctx, cluster, fluxConfig)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)

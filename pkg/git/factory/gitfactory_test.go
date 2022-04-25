@@ -51,7 +51,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 				},
 			}
 
-			factory := gitFactory.NewFactory()
+			factory := gitFactory.New()
 
 			_, _, err := factory.Build(context.Background(), cluster, fluxConfig)
 			if err != nil {
