@@ -73,12 +73,13 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.
+   * It is *optional* to install curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   Example shows how to install two packages `flux` and `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   The example shows how to install package `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
-   eksctl anywhere generate package flux harbor -d .
+   eksctl anywhere generate package harbor -d .
    ```
 
 1. Create a cluster
@@ -142,6 +143,6 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
 
 ## Next steps:
-* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
 
-* See the [Package management]({{< relref "../../tasks/packages" >}}) section with more information on post-creation curated packages installation.
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section for more information on post-creation curated packages installation.

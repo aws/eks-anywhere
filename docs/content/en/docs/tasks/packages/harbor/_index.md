@@ -9,7 +9,7 @@ description: >
 
 {{% alert title="Important" color="warning" %}}
 
-To install package controller, please follow the [installation guide.]({{< relref ".." >}})
+If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you may need to [install the package controller.]({{< relref ".." >}})
 
 {{% /alert %}}
 
@@ -18,7 +18,7 @@ To install package controller, please follow the [installation guide.]({{< relre
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package Harbor --source cluster -d .
+   eksctl anywhere generate package harbor --source cluster -d .
    ```
 
 1. Add the desired configuration to `curated-packages/my-harbor.yaml` 

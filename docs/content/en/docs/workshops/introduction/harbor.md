@@ -12,12 +12,12 @@ To install Harbor package, please follow the [installation guide.]({{< relref ".
 
 {{% /alert %}}
 
-## Proxy a public ECR repository
+## Proxy a public Amazon Elastic Container Registry (ECR) repository
 This use case is to use Harbor to proxy and cache images from a public ECR repository, which helps limit the amount of requests made to a public ECR repository, avoiding consuming too much bandwidth or being throttled by the registry server.
 
 1. Login
 
-    Log in Harbor web portal with the default credential as shown below
+    Log in to the Harbor web portal with the default credential as shown below
     ```bash
     admin
     Harbor12345
@@ -40,19 +40,19 @@ This use case is to use Harbor to proxy and cache images from a public ECR repos
 1. Pull images
    {{% alert title="Note" color="primary" %}}
 
-   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package yaml file.
+   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}}
     ```bash
     docker pull harbor.eksa.demo:30003/proxy-project/cloudwatch-agent/cloudwatch-agent:latest
     ```
 
-## Proxy a private ECR repository
+## Proxy a private Amazon Elastic Container Registry (ECR) repository
 This use case is to use Harbor to proxy and cache images from a private ECR repository, which helps limit the amount of requests made to a private ECR repository, avoiding consuming too much bandwidth or being throttled by the registry server.
 
 1. Login
 
-    Log in Harbor web portal with the default credential as shown below
+    Log in to the Harbor web portal with the default credential as shown below
     ```bash
     admin
     Harbor12345
@@ -111,19 +111,19 @@ This use case is to use Harbor to proxy and cache images from a private ECR repo
 
    {{% alert title="Note" color="primary" %}}
 
-   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package yaml file.
+   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}}
     ```bash
     docker pull harbor.eksa.demo:30003/proxy-private-project/alpine:latest
     ```
 
-## Repository replication from Harbor to a private ECR repository
-This use case is to use Harbor to replicate local images and charts to a private ECR repository in a push mode. When a replication rule is set, all resources that match the defined filter patterns are replicated to the destination registry when the triggering condition is met.
+## Repository replication from Harbor to a private Amazon Elastic Container Registry (ECR) repository
+This use case is to use Harbor to replicate local images and charts to a private ECR repository in push mode. When a replication rule is set, all resources that match the defined filter patterns are replicated to the destination registry when the triggering condition is met.
 
 1. Login
 
-    Log in Harbor web portal with the default credential as shown below
+    Log in to the Harbor web portal with the default credential as shown below
     ```bash
     admin
     Harbor12345
@@ -170,7 +170,7 @@ This use case is to use Harbor to replicate local images and charts to a private
 1. Prepare an image
    {{% alert title="Note" color="primary" %}}
 
-   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package yaml file.
+   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}}
     ```bash
@@ -185,7 +185,7 @@ This use case is to use Harbor to replicate local images and charts to a private
     ```
    {{% alert title="Note" color="primary" %}}
 
-   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package yaml file.
+   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}} 
     ```bash
@@ -202,7 +202,7 @@ This use case is to use Harbor to replicate local images and charts to a private
 
    {{% alert title="Note" color="primary" %}}
 
-   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package yaml file.
+   * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}} 
         ```bash
