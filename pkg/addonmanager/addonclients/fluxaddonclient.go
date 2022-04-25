@@ -84,8 +84,9 @@ type FluxAddonClient struct {
 }
 
 type GitOptions struct {
-	Git    git.Provider
-	Writer filewriter.FileWriter
+	GitProvider git.ProviderClient
+	GitClient   git.Client
+	Writer      filewriter.FileWriter
 }
 
 func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitOptions, error) {
@@ -114,8 +115,9 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
-		Git:    gitProvider,
-		Writer: gitwriter,
+		GitProvider: gitProvider,
+		GitClient:   gitClient,
+		Writer:      gitwriter,
 	}, nil
 }
 
@@ -125,8 +127,8 @@ func NewFluxAddonClient(flux Flux, gitOpts *GitOptions) *FluxAddonClient {
 	}
 	return &FluxAddonClient{
 		flux:              flux,
-		gitProviderClient: gitOpts.Git,
-		gitClient:         gitOpts.Git,
+		gitProviderClient: gitOpts.GitProvider,
+		gitClient:         gitOpts.GitClient,
 		writer:            gitOpts.Writer,
 		retrier:           retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
