@@ -359,6 +359,11 @@ unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path 
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
+.PHONY: coverage-unit-test
+coverage-unit-test: COVER_PROFILE?=coverage.html 
+coverage-unit-test:
+	$(MAKE) unit-test GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
+
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
 	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS) $(GO_TEST_FLAGS)
