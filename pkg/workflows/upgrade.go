@@ -210,11 +210,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	target := commandContext.ManagementCluster
-	if commandContext.ManagementCluster.ExistingManagement {
-		target = commandContext.WorkloadCluster
-	}
-	changeDiff, err = commandContext.Eksd.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.Eksd.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

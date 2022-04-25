@@ -7,7 +7,9 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	filereader "github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/manifests/eksd"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -24,24 +26,26 @@ type EksdInstallerClient interface {
 type Installer struct {
 	client  EksdInstallerClient
 	retrier *retrier.Retrier
+	reader  *filereader.Reader
 }
 
 func NewEksdInstaller(client EksdInstallerClient) *Installer {
 	return &Installer{
 		client:  client,
 		retrier: retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		reader:  filereader.NewReader(),
 	}
 }
 
-func (e *Installer) InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	eksdComponents, err := clusterSpec.ReadEksdManifests(clusterSpec.VersionsBundle.EksD)
+func (i *Installer) InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	eksdCRDs, err := eksd.ReadManifestContent(i.reader, clusterSpec.VersionsBundle.EksD.Components)
 	if err != nil {
 		return fmt.Errorf("loading manifest for eksd components: %v", err)
 	}
 
-	if err = e.retrier.Retry(
+	if err = i.retrier.Retry(
 		func() error {
-			return e.client.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseCrdContent, constants.EksaSystemNamespace)
+			return i.client.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdCRDs, constants.EksaSystemNamespace)
 		},
 	); err != nil {
 		return fmt.Errorf("applying eksd release crd: %v", err)
@@ -50,16 +54,16 @@ func (e *Installer) InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Sp
 	return nil
 }
 
-func (e *Installer) InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	eksdComponents, err := clusterSpec.ReadEksdManifests(clusterSpec.VersionsBundle.EksD)
+func (i *Installer) InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	eksdReleaseManifest, err := eksd.ReadManifestContent(i.reader, clusterSpec.VersionsBundle.EksD.EksDReleaseUrl)
 	if err != nil {
 		return fmt.Errorf("loading manifest for eksd components: %v", err)
 	}
 
 	logger.V(4).Info("Applying eksd manifest to cluster")
-	if err = e.retrier.Retry(
+	if err = i.retrier.Retry(
 		func() error {
-			return e.client.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseManifestContent, constants.EksaSystemNamespace)
+			return i.client.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdReleaseManifest, constants.EksaSystemNamespace)
 		},
 	); err != nil {
 		return fmt.Errorf("applying eksd release manifest: %v", err)

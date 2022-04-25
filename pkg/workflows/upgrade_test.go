@@ -163,7 +163,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
-		c.eksd.EXPECT().Upgrade(c.ctx, workloadCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
+		c.eksd.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
 }
 

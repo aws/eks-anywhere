@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func (e *Installer) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (i *Installer) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for EKS-D components upgrade")
 	changeDiff := EksdChangeDiff(currentSpec, newSpec)
 	if changeDiff == nil {
@@ -17,7 +17,7 @@ func (e *Installer) Upgrade(ctx context.Context, cluster *types.Cluster, current
 		return nil, nil
 	}
 	logger.V(1).Info("Starting EKS-D components upgrade")
-	if err := e.InstallEksdCRDs(ctx, newSpec, cluster); err != nil {
+	if err := i.InstallEksdCRDs(ctx, newSpec, cluster); err != nil {
 		return nil, fmt.Errorf("upgrading EKS-D components from version %s to version %s: %v", changeDiff.ComponentReports[0].OldVersion, changeDiff.ComponentReports[0].NewVersion, err)
 	}
 	return changeDiff, nil
