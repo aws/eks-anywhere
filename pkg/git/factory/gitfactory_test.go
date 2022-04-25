@@ -5,12 +5,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/golang/mock/gomock"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
-	githubMocks "github.com/aws/eks-anywhere/pkg/git/providers/github/mocks"
 )
 
 const (
@@ -34,26 +33,27 @@ func TestGitFactoryHappyPath(t *testing.T) {
 			tctx.SaveContext(validPATValue)
 			defer tctx.RestoreContext()
 
-			mockCtrl := gomock.NewController(t)
-
 			gitProviderConfig := v1alpha1.GithubProviderConfig{
 				Owner:      "Jeff",
 				Repository: "testRepo",
 				Personal:   true,
 			}
 
-			fluxConfig := v1alpha1.FluxConfig{
+			cluster := &v1alpha1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "testCluster",
+				},
+			}
+
+			fluxConfig := &v1alpha1.FluxConfig{
 				Spec: v1alpha1.FluxConfigSpec{
 					Github: &gitProviderConfig,
 				},
 			}
 
-			githubProviderClient := githubMocks.NewMockGitClient(mockCtrl)
-			githubProviderClient.EXPECT().SetTokenAuth(gomock.Any(), fluxConfig.Spec.Github.Owner)
-			opts := gitFactory.Options{GithubGitClient: githubProviderClient}
-			factory := gitFactory.New(opts)
+			factory := gitFactory.NewFactory()
 
-			_, err := factory.BuildProvider(context.Background(), &fluxConfig.Spec)
+			_, _, err := factory.Build(context.Background(), cluster, fluxConfig)
 			if err != nil {
 				t.Errorf("gitfactory.BuldProvider returned err, wanted nil. err: %v", err)
 			}
