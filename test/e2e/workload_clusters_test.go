@@ -143,7 +143,7 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121WorkloadCluster(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat121())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(

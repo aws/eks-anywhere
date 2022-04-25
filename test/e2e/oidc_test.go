@@ -101,7 +101,7 @@ func TestCloudStackKubernetes121OIDC(t *testing.T) {
 	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
