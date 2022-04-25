@@ -24,7 +24,6 @@ const (
 )
 
 type githubProvider struct {
-	gitProviderClient    GitClient
 	githubProviderClient GithubClient
 	options              Options
 	auth                 git.TokenAuth
@@ -34,20 +33,6 @@ type Options struct {
 	Repository string
 	Owner      string
 	Personal   bool
-}
-
-// GitClient represents the attributes that the GitHub provider requires of a low-level git implementation (e.g. gogit) in order to function.
-// Any basic git implementation (gogit, an executable wrapper, etc) which supports these methods can be used by the GitHub specific provider.
-type GitClient interface {
-	Add(filename string) error
-	Remove(filename string) error
-	Clone(ctx context.Context, repourl string) error
-	Commit(message string) error
-	Push(ctx context.Context) error
-	Pull(ctx context.Context, branch string) error
-	Init(url string) error
-	Branch(name string) error
-	SetTokenAuth(token string, username string)
 }
 
 // GithubClient represents the attributes that the Github provider requires of a library to directly connect to and interact with the Github API.
@@ -62,48 +47,12 @@ type GithubClient interface {
 	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
 
-func New(gitProviderClient GitClient, githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (git.Provider, error) {
-	gitProviderClient.SetTokenAuth(auth.Token, auth.Username)
+func New(githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (git.ProviderClient, error) {
 	return &githubProvider{
-		gitProviderClient:    gitProviderClient,
 		githubProviderClient: githubProviderClient,
 		options:              opts,
 		auth:                 auth,
 	}, nil
-}
-
-func (g *githubProvider) Add(filename string) error {
-	return g.gitProviderClient.Add(filename)
-}
-
-func (g *githubProvider) Remove(filename string) error {
-	return g.gitProviderClient.Remove(filename)
-}
-
-func (g *githubProvider) Clone(ctx context.Context) error {
-	return g.gitProviderClient.Clone(ctx, g.RepoUrl())
-}
-
-func (g *githubProvider) Commit(message string) error {
-	return g.gitProviderClient.Commit(message)
-}
-
-func (g *githubProvider) Push(ctx context.Context) error {
-	err := g.gitProviderClient.Push(ctx)
-	return err
-}
-
-func (g *githubProvider) Pull(ctx context.Context, branch string) error {
-	err := g.gitProviderClient.Pull(ctx, branch)
-	return err
-}
-
-func (g *githubProvider) Init() error {
-	return g.gitProviderClient.Init(g.RepoUrl())
-}
-
-func (g *githubProvider) Branch(name string) error {
-	return g.gitProviderClient.Branch(name)
 }
 
 // CreateRepo creates an empty Github Repository. The repository must be initialized locally or
