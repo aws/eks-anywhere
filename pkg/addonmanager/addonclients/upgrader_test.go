@@ -106,12 +106,12 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
-	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.git.EXPECT().Push(tt.ctx).Return(nil)
+	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
+	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
@@ -131,12 +131,12 @@ func TestFluxUpgradeError(t *testing.T) {
 		t.Errorf("setting up files: %v", err)
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
-	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.git.EXPECT().Push(tt.ctx).Return(nil)
+	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
+	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
