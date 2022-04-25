@@ -53,7 +53,7 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 		return err
 	}
 
-	if err := nfc.git.Add(nfc.path()); err != nil {
+	if err := nfc.gitClient.Add(nfc.path()); err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", nfc.path(), err)}
 	}
 
@@ -97,7 +97,7 @@ func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 	}
 
 	if oldEksaPath != nfc.eksaSystemDir() {
-		err = nfc.git.Remove(oldEksaPath)
+		err = nfc.gitClient.Remove(oldEksaPath)
 		if err != nil {
 			return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", oldEksaPath, err)}
 		}

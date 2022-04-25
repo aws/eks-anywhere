@@ -102,7 +102,7 @@ func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error
 		return err
 	}
 
-	if err := fc.git.Add(fc.path()); err != nil {
+	if err := fc.gitClient.Add(fc.path()); err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", fc.path(), err)}
 	}
 
