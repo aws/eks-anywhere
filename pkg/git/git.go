@@ -24,6 +24,25 @@ type Provider interface {
 	PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error)
 }
 
+type Client interface {
+	Add(filename string) error
+	Remove(filename string) error
+	Clone(ctx context.Context) error
+	Commit(message string) error
+	Push(ctx context.Context) error
+	Pull(ctx context.Context, branch string) error
+	Init() error
+	Branch(name string) error
+}
+
+type ProviderClient interface {
+	GetRepo(ctx context.Context) (repo *Repository, err error)
+	CreateRepo(ctx context.Context, opts CreateRepoOpts) (repo *Repository, err error)
+	DeleteRepo(ctx context.Context, opts DeleteRepoOpts) error
+	Validate(ctx context.Context) error
+	PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error)
+}
+
 type CreateRepoOpts struct {
 	Name        string
 	Owner       string
