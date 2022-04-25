@@ -12,14 +12,15 @@ The main goal of EKS Anywhere curated packages is to make it easy to install, co
 
 * To install EKS Anywhere, create an EKS Anywhere cluster, or review the EKS Anywhere system requirements, see the [getting-started guide.]({{< relref "../../getting-started" >}})
 
-* Check the existence of `packagecontroller` with the following commands:
+* Make sure `packagecontroller` is not installed with the following commands:
     ```bash
-    kubectl get packagecontroller -n eksa-packages
+    kubectl get pods -n eksa-packages | grep "eks-anywhere-packages"
     ```
 * Check if the version of `eksctl anywhere` is above `v0.9.0` with the following commands:
     ```bash
     eksctl anywhere version
     ```
+* Make sure cert-manager is up and running in the cluster.
 
 {{% /alert %}}
 

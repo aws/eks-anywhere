@@ -9,7 +9,7 @@ description: >
 
 {{% alert title="Important" color="warning" %}}
 
-If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you may need to [install the package controller.]({{< relref ".." >}})
+If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you may need to [install the package controller.]({{< relref ".." >}})
 
 {{% /alert %}}
 
@@ -26,16 +26,13 @@ If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you m
    Please see [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all configuration options and their default values.
 
    {{% alert title="Important" color="warning" %}}
-   * All configuration options are listed in dot notations (e.g., `expose.tls.enabled`) in the doc, but they have to be transformed to **hierachical structures** when specified in the `config` section in the yaml spec.
+   * All configuration options are listed in dot notations (e.g., `expose.tls.enabled`) in the doc, but they have to be transformed to **hierachical structures** when specified in the `config` section in the YAML spec.
    * Harbor web portal is exposed through `NodePort` by default, and its default port number is `30003` with TLS enabled and `30002` with TLS disabled.
-   * TLS is enabled by default for connections to Harbor web portal, and a secret resource named `tls-secret` is required for that purpose. It can be provisioned through cert-manager or manually with the following command using self-signed certificate:
+   * TLS is enabled by default for connections to Harbor web portal, and a secret resource named `harbor-tls-secret` is required for that purpose. It can be provisioned through cert-manager or manually with the following command using self-signed certificate:
       ```bash
-      kubectl create secret tls tls-secret --cert=[path to certificate file] --key=[path to key file] -n eksa-packages
+      kubectl create secret tls harbor-tls-secret --cert=[path to certificate file] --key=[path to key file] -n eksa-packages
       ```
-   * The `UpdateStrategy` for deployments with persistent volumes (jobservice, registry and chartmuseum) has to be set to `Recreate` when `ReadWriteMany` for volumes isn't supported in the cluster. 
-
-      `RollingUpdate` strategy works with `ReadWriteMany` volumes only.
-
+   * `secretKey` has to be set as a string of 16 chars for encryption.
    {{% /alert %}}
 
    TLS example with auto certificate generation
@@ -48,6 +45,7 @@ If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you m
    spec:
       packageName: Harbor
       config: |-
+         secretKey: "use-a-secret-key"
          externalURL: https://harbor.eksa.demo:30003
          expose:
             tls:
@@ -66,6 +64,7 @@ If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you m
    spec:
       packageName: Harbor
       config: |-
+         secretKey: "use-a-secret-key"
          externalURL: http://harbor.eksa.demo:30002
          expose:
             tls:
@@ -129,7 +128,7 @@ If your cluster was created with a release of EKS Anywhere prior to 0.9.0, you m
 
    {{% alert title="Important" color="warning" %}}
 
-   * By default, PVCs created for jobservice, registry and chartmuseum are not removed during a package delete operation, which can be changed by leaving `persistence.resourcePolicy` empty. 
+   * By default, PVCs created for jobservice and registry are not removed during a package delete operation, which can be changed by leaving `persistence.resourcePolicy` empty. 
 
    {{% /alert %}}
    ```bash

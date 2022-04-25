@@ -77,12 +77,13 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation and `eksctl anywhere` version should be `v0.9.0` or later.
+   * It is *optional* to install the curated packages as part of the cluster creation
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   Example shows how to install two packages `flux` and `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   The example shows how to install package `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
-   eksctl anywhere generate package flux harbor -d .
+   eksctl anywhere generate package harbor -d .
    ```
 
 1. Create the initial cluster
@@ -171,7 +172,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    To create a new workload cluster from your management cluster run this command, identifying:
 
-   * The workload cluster yaml file
+   * The workload cluster YAML file
    * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
 
    ```bash
