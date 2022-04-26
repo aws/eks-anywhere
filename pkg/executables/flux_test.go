@@ -153,7 +153,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.BootstrapToolkitsComponents(ctx, tt.cluster, tt.fluxConfig); err != nil {
+			if err := f.BootstrapToolkitsComponentsGithub(ctx, tt.cluster, tt.fluxConfig); err != nil {
 				t.Errorf("flux.BootstrapToolkitsComponents() error = %v, want nil", err)
 			}
 		})

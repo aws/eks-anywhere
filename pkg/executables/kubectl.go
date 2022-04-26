@@ -2,6 +2,7 @@ package executables
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -772,14 +773,6 @@ func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
 }
 
-func WithOutput(output string) KubectlOpt {
-	return appendOpt("-o", output)
-}
-
-func WithArgs(args []string) KubectlOpt {
-	return appendOpt(args...)
-}
-
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -1411,15 +1404,6 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
-	params := []string{
-		"get", resourceType,
-	}
-	applyOpts(&params, opts...)
-	stdOut, err := k.Execute(ctx, params...)
-	return stdOut.String(), err
-}
-
 // GetHardwareWithLabel gets the hardwares with given label.
 func (k *Kubectl) GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
 	params := []string{
@@ -1452,4 +1436,8 @@ func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kube
 	}
 
 	return strings.Fields(buffer.String()), nil
+}
+
+func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
+	return k.Execute(ctx, opts...)
 }
