@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -57,6 +58,7 @@ type Dependencies struct {
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
 	Helm                      *executables.Helm
+	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
@@ -895,6 +897,25 @@ func (f *Factory) WithManifestReader() *Factory {
 		}
 
 		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithUnAuthKubeClient() *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.UnAuthKubeClient != nil {
+			return nil
+		}
+
+		f.dependencies.UnAuthKubeClient = kubernetes.NewUnAuthClient(f.dependencies.Kubectl)
+		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
+			return fmt.Errorf("building unauth kube client: %v", err)
+		}
+
 		return nil
 	})
 
