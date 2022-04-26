@@ -232,6 +232,10 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
+func (p *tinkerbellProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()

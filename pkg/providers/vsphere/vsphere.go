@@ -1108,6 +1108,10 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
+func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
@@ -1226,14 +1230,6 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 
 	if nSpec.Network != oSpec.Network {
 		return fmt.Errorf("spec.network is immutable. Previous value %s, new value %s", oSpec.Network, nSpec.Network)
-	}
-
-	if nSpec.Insecure != oSpec.Insecure {
-		return fmt.Errorf("spec.insecure is immutable. Previous value %t, new value %t", oSpec.Insecure, nSpec.Insecure)
-	}
-
-	if nSpec.Thumbprint != oSpec.Thumbprint {
-		return fmt.Errorf("spec.thumbprint is immutable. Previous value %s, new value %s", oSpec.Thumbprint, nSpec.Thumbprint)
 	}
 
 	secretChanged, err := p.secretContentsChanged(ctx, cluster)

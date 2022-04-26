@@ -58,7 +58,7 @@ func (d Download) Run(ctx context.Context) error {
 		return fmt.Errorf("downloading images: %v", err)
 	}
 
-	if err = d.BundlesImagesDownloader.Move(ctx, artifactNames(images)...); err != nil {
+	if err = d.BundlesImagesDownloader.Move(ctx, removeFromSlice(artifactNames(images), toolsImage)...); err != nil {
 		return err
 	}
 
@@ -87,4 +87,15 @@ func artifactNames(artifacts []releasev1.Image) []string {
 	}
 
 	return taggedArtifacts
+}
+
+func removeFromSlice(s []string, toRemove string) []string {
+	index := 0
+	for _, i := range s {
+		if i != toRemove {
+			s[index] = i
+			index++
+		}
+	}
+	return s[:index]
 }

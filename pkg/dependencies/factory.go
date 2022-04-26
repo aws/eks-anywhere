@@ -3,6 +3,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -25,11 +26,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -91,7 +94,6 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 
 type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
-	providerFactory          *factory.ProviderFactory
 	executablesImage         string
 	registryMirror           string
 	executablesMountDirs     []string
@@ -194,25 +196,6 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 }
 
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
-	f.WithProviderFactory(clusterConfigFile, clusterConfig)
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Provider != nil {
-			return nil
-		}
-
-		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile, skipPowerActions, setupTinkerbell, force)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v1alpha1.Cluster) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -221,29 +204,112 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
+		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile).WithWriter()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithKubectl().WithSnowConfigManager()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.providerFactory != nil {
+		if f.dependencies.Provider != nil {
 			return nil
 		}
 
-		f.providerFactory = &factory.ProviderFactory{
-			DockerClient:              f.dependencies.DockerClient,
-			DockerKubectlClient:       f.dependencies.Kubectl,
-			CloudStackCmkClient:       f.dependencies.Cmk,
-			CloudStackKubectlClient:   f.dependencies.Kubectl,
-			VSphereGovcClient:         f.dependencies.Govc,
-			VSphereKubectlClient:      f.dependencies.Kubectl,
-			SnowKubectlClient:         f.dependencies.Kubectl,
-			SnowConfigManager:         f.dependencies.SnowConfigManager,
-			TinkerbellKubectlClient:   f.dependencies.Kubectl,
-			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
-			Writer:                    f.dependencies.Writer,
-			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
+		switch clusterConfig.Spec.DatacenterRef.Kind {
+		case v1alpha1.VSphereDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = vsphere.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Govc,
+				f.dependencies.Kubectl,
+				f.dependencies.Writer,
+				time.Now,
+				skipIpCheck,
+				f.dependencies.ResourceSetManager,
+			)
+
+		case v1alpha1.CloudStackDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = cloudstack.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Kubectl,
+				f.dependencies.Cmk,
+				f.dependencies.Writer,
+				time.Now,
+				skipIpCheck,
+			)
+
+		case v1alpha1.SnowDatacenterKind:
+			f.dependencies.Provider = snow.NewProvider(
+				f.dependencies.Kubectl,
+				f.dependencies.SnowConfigManager,
+				time.Now,
+			)
+
+		case v1alpha1.TinkerbellDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = tinkerbell.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Writer,
+				f.dependencies.Kubectl,
+				tinkerbell.TinkerbellClients{
+					ProviderTinkClient: f.dependencies.Tink,
+					ProviderPbnjClient: f.dependencies.Pbnj,
+				},
+				time.Now,
+				skipIpCheck,
+				hardwareConfigFile,
+				skipPowerActions,
+				setupTinkerbell,
+				force,
+			)
+
+		case v1alpha1.DockerDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = docker.NewProvider(
+				datacenterConfig,
+				f.dependencies.DockerClient,
+				f.dependencies.Kubectl,
+				time.Now,
+			)
+		default:
+			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
 
 		return nil

@@ -26,10 +26,10 @@ func NewFlux(executable Executable) *Flux {
 	}
 }
 
-// BootstrapToolkitsComponents creates the GitHub repository if it doesn’t exist, and commits the toolkit
+// BootstrapToolkitsComponentsGithub creates the GitHub repository if it doesn’t exist, and commits the toolkit
 // components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
 // If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
@@ -67,6 +67,13 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 	}
 
 	return err
+}
+
+// BootstrapToolkitsComponentsGit creates the Git repository if it does not exist, and commits the toolkit
+// components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
+// If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
+func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	return nil
 }
 
 func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {

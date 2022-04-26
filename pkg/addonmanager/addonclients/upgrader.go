@@ -36,7 +36,7 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 	if err := f.flux.DeleteFluxSystemSecret(ctx, managementCluster, newSpec.FluxConfig.Spec.SystemNamespace); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux when deleting old flux-system secret: %v", err)
 	}
-	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, newSpec.FluxConfig); err != nil {
+	if err := f.flux.BootstrapToolkitsComponentsGithub(ctx, managementCluster, newSpec.FluxConfig); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux components: %v", err)
 	}
 	if err := f.flux.Reconcile(ctx, managementCluster, newSpec.FluxConfig); err != nil {
@@ -102,7 +102,7 @@ func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error
 		return err
 	}
 
-	if err := fc.gitOpts.Git.Add(fc.path()); err != nil {
+	if err := fc.gitClient.Add(fc.path()); err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", fc.path(), err)}
 	}
 
@@ -130,7 +130,7 @@ func (fc *fluxForCluster) writeFluxUpgradeFiles() error {
 }
 
 func (fc *fluxForCluster) writeEksaUpgradeFiles() error {
-	eksaSpec, err := fc.generateUpdatedEksaConfig(filepath.Join(fc.gitOpts.Writer.Dir(), fc.eksaSystemDir(), clusterConfigFileName))
+	eksaSpec, err := fc.generateUpdatedEksaConfig(filepath.Join(fc.writer.Dir(), fc.eksaSystemDir(), clusterConfigFileName))
 	if err != nil {
 		return err
 	}

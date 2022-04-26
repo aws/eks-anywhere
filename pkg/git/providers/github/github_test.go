@@ -68,11 +68,11 @@ func TestValidate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			gitproviderclient := mocks.NewMockGitProviderClient(mockCtrl)
+			gitproviderclient := mocks.NewMockGitClient(mockCtrl)
 			gitproviderclient.EXPECT().SetTokenAuth(validPATValue, tt.owner)
 
 			ctx := context.Background()
-			githubproviderclient := mocks.NewMockGithubProviderClient(mockCtrl)
+			githubproviderclient := mocks.NewMockGithubClient(mockCtrl)
 			authenticatedUser := &goGithub.User{Login: &tt.authenticatedUser}
 			githubproviderclient.EXPECT().AuthenticatedUser(ctx).Return(authenticatedUser, nil)
 			githubproviderclient.EXPECT().GetAccessTokenPermissions(validPATValue).Return(tt.allPATPermissions, nil)
@@ -174,10 +174,10 @@ func TestGetRepoSucceeds(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 
-			gitproviderclient := mocks.NewMockGitProviderClient(mockCtrl)
+			gitproviderclient := mocks.NewMockGitClient(mockCtrl)
 			gitproviderclient.EXPECT().SetTokenAuth(validPATValue, tt.owner)
 
-			githubproviderclient := mocks.NewMockGithubProviderClient(mockCtrl)
+			githubproviderclient := mocks.NewMockGithubClient(mockCtrl)
 			getRepoOpts := git.GetRepoOpts{Owner: tt.owner, Repository: tt.repository}
 			testRepo := &git.Repository{Name: tt.repository, Owner: tt.owner, Organization: "", CloneUrl: "https://github.com/user/repo"}
 			githubproviderclient.EXPECT().GetRepo(context.Background(), getRepoOpts).Return(testRepo, nil)
@@ -231,10 +231,10 @@ func TestGetNonExistantRepoSucceeds(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
-			gitproviderclient := mocks.NewMockGitProviderClient(mockCtrl)
+			gitproviderclient := mocks.NewMockGitClient(mockCtrl)
 			gitproviderclient.EXPECT().SetTokenAuth(validPATValue, tt.owner)
 
-			githubproviderclient := mocks.NewMockGithubProviderClient(mockCtrl)
+			githubproviderclient := mocks.NewMockGithubClient(mockCtrl)
 			getRepoOpts := git.GetRepoOpts{Owner: tt.owner, Repository: tt.repository}
 			githubproviderclient.EXPECT().GetRepo(context.Background(), getRepoOpts).Return(nil, &git.RepositoryDoesNotExistError{})
 

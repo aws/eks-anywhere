@@ -19,7 +19,7 @@ func NewRegistryDestination(client ImageTaggerPusher, registryEndpoint string) *
 	return &ImageRegistryDestination{
 		client:    client,
 		endpoint:  registryEndpoint,
-		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0) / 2),
+		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
 	}
 }
 
@@ -55,7 +55,7 @@ type ImageOriginalRegistrySource struct {
 func NewOriginalRegistrySource(client ImagePuller) *ImageOriginalRegistrySource {
 	return &ImageOriginalRegistrySource{
 		client:    client,
-		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0) / 2),
+		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
 	}
 }
 
