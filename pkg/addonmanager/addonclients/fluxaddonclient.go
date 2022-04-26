@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -93,20 +92,16 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 		return nil, nil
 	}
 	gitProviderFactory := gitFactory.New()
-	provider, client, err := gitProviderFactory.Build(ctx, cluster, fluxConfig)
+	provider, client, gitwriter, err := gitProviderFactory.Build(ctx, cluster, fluxConfig, writer)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
+
 	err = provider.Validate(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("validating provider: %v", err)
 	}
-	localGitWriterPath := filepath.Join("git", fluxConfig.Spec.Github.Repository)
-	gitwriter, err := writer.WithDir(localGitWriterPath)
-	if err != nil {
-		return nil, fmt.Errorf("creating file writer: %v", err)
-	}
-	gitwriter.CleanUpTemp()
+
 	return &GitOptions{
 		GitProvider: provider,
 		GitClient:   client,

@@ -7,6 +7,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
@@ -51,9 +52,11 @@ func TestGitFactoryHappyPath(t *testing.T) {
 				},
 			}
 
+			_, w := test.NewWriter(t)
+
 			factory := gitFactory.New()
 
-			_, _, err := factory.Build(context.Background(), cluster, fluxConfig)
+			_, _, _, err := factory.Build(context.Background(), cluster, fluxConfig, w)
 			if err != nil {
 				t.Errorf("gitfactory.BuldProvider returned err, wanted nil. err: %v", err)
 			}

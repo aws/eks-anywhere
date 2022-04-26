@@ -47,7 +47,7 @@ type GithubClient interface {
 	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
 
-func New(githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (git.ProviderClient, error) {
+func New(githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (*githubProvider, error) {
 	return &githubProvider{
 		githubProviderClient: githubProviderClient,
 		options:              opts,
