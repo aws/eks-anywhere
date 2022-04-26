@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -24,4 +27,14 @@ func getKubeconfigPath(clusterName, override string) string {
 		return kubeconfig.FromClusterName(clusterName)
 	}
 	return override
+}
+
+func newDependenciesForPackages(ctx context.Context, paths ...string) (*dependencies.Dependencies, error) {
+	return dependencies.NewFactory().
+		WithExecutableMountDirs(paths...).
+		WithExecutableBuilder().
+		WithManifestReader().
+		WithKubectl().
+		WithHelm().
+		Build(ctx)
 }
