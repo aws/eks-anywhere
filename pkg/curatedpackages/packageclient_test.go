@@ -2,11 +2,12 @@ package curatedpackages_test
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	. "github.com/onsi/gomega"
 	"testing"
 
+	. "github.com/onsi/gomega"
+
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 )
 
 type packageTest struct {
