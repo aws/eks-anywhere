@@ -404,28 +404,6 @@ func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
 }
 
-type EksdManifests struct {
-	ReleaseManifestContent []byte
-	ReleaseCrdContent      []byte
-}
-
-func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
-	releaseCrdContent, err := s.reader.ReadFile(release.Components)
-	if err != nil {
-		return nil, err
-	}
-
-	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	return &EksdManifests{
-		ReleaseManifestContent: releaseManifestContent,
-		ReleaseCrdContent:      releaseCrdContent,
-	}, nil
-}
-
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
 	var images []v1alpha1.Image
 	images = append(images, vb.KubeDistro.EtcdImage)

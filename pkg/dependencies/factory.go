@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
+	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -60,6 +61,7 @@ type Dependencies struct {
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
+	EksdInstaller             *eksd.Installer
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
@@ -677,6 +679,30 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+		)
+		return nil
+	})
+
+	return f
+}
+
+type eksdInstallerClient struct {
+	*executables.Kubectl
+}
+
+func (f *Factory) WithEksdInstaller() *Factory {
+	f.WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksdInstaller != nil {
+			return nil
+		}
+
+		f.dependencies.EksdInstaller = eksd.NewEksdInstaller(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
+			},
+			f.dependencies.FileReader,
 		)
 		return nil
 	})

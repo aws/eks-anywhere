@@ -832,10 +832,6 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
-func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installEksdComponents(ctx, clusterSpec, cluster)
-}
-
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
 ) error {
@@ -853,9 +849,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	logger.V(4).Info("Applying eksa yaml resources to cluster")
 	logger.V(6).Info(string(resourcesSpec))
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
-		return err
-	}
-	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)

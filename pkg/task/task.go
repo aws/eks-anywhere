@@ -26,6 +26,7 @@ type CommandContext struct {
 	AddonManager       interfaces.AddonManager
 	Validations        interfaces.Validator
 	Writer             filewriter.FileWriter
+	Eksd               interfaces.Eksd
 	CAPIManager        interfaces.CAPIManager
 	ClusterSpec        *cluster.Spec
 	CurrentClusterSpec *cluster.Spec

@@ -80,6 +80,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
 		WithWriter().
 		WithCAPIManager().
+		WithEksdInstaller().
 		WithKubectl().
 		Build(ctx)
 	if err != nil {
@@ -98,6 +99,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
+		deps.EksdInstaller,
 	)
 
 	workloadCluster := &types.Cluster{

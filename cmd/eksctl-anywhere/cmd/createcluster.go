@@ -135,6 +135,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
 		WithWriter().
+		WithEksdInstaller().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -159,6 +160,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
+		deps.EksdInstaller,
 	)
 
 	var cluster *types.Cluster
