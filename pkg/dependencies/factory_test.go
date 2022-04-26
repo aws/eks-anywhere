@@ -68,6 +68,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig).
 		WithWriter().
 		WithEksdInstaller().
+		WithEksdUpgrader().
 		WithDiagnosticCollectorImage("public.ecr.aws/collector").
 		WithAnalyzerFactory().
 		WithCollectorFactory().
@@ -83,6 +84,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.FluxAddonClient).To(BeNil())
 	tt.Expect(deps.Writer).NotTo(BeNil())
 	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
+	tt.Expect(deps.EksdUpgrader).NotTo(BeNil())
 	tt.Expect(deps.AnalyzerFactory).NotTo(BeNil())
 	tt.Expect(deps.CollectorFactory).NotTo(BeNil())
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())

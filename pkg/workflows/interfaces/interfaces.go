@@ -60,8 +60,11 @@ type CAPIManager interface {
 	EnsureEtcdProvidersInstallation(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currSpec *cluster.Spec) error
 }
 
-type Eksd interface {
+type EksdInstaller interface {
 	InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	InstallEksdManifest(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+}
+
+type EksdUpgrader interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
