@@ -15,6 +15,8 @@ CONFIG_FOLDER = PROJECT_ROOT + 'config'
 KUSTOMIZE_TILT_FOLDER = CONFIG_FOLDER + '/tilt'
 KUSTOMIZE_BIN = os.path.abspath(PROJECT_ROOT + 'hack/tools/bin/kustomize')
 watch_settings(ignore=[KUSTOMIZE_TILT_FOLDER]) #ignore kustomize tilt folder to avoid infinite loop
+FULL_LIFECYCLE_API_KEY = "FULL_LIFECYCLE_API"
+FULL_LIFECYCLE_API_VALUE = os.getenv(FULL_LIFECYCLE_API_KEY, "false")
 
 def yaml():
     local('cd ' + KUSTOMIZE_TILT_FOLDER + ' && ' + KUSTOMIZE_BIN + ' edit set image controller=' + IMG)
@@ -29,8 +31,15 @@ local_resource(
   deps=[CONTROLLERS_FOLDER, API_FOLDER],
   ignore=[CONTROLLERS_BIN_FOLDER, API_FOLDER + '/*/zz_generated.deepcopy.go'])
 
+FULL_LIFECYCLE_API_ENV = FULL_LIFECYCLE_API_KEY + "=" + FULL_LIFECYCLE_API_VALUE
+
 DOCKERFILE = '''FROM golang:alpine
 WORKDIR /
+ENV ''' + FULL_LIFECYCLE_API_ENV + '''
+RUN apk --no-cache add curl
+RUN curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | tar -C /usr/local/bin -xvzf - govc
+RUN curl -L -o - "https://get.helm.sh/helm-v3.8.1-linux-amd64.tar.gz" | tar -C /usr/local/bin -xvzf - linux-amd64/helm
+RUN mv /usr/local/bin/linux-amd64/helm /usr/local/bin/
 COPY ./bin/manager /
 CMD ["/manager"]
 '''
