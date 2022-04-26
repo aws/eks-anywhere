@@ -122,6 +122,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
+
 func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()

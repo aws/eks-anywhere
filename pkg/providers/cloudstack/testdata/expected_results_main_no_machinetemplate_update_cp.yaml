@@ -352,10 +352,13 @@ spec:
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     - mountPath=/data-small
+    - mountPathTemp=$(mktemp -d ${mountPath}-XXXXX)
     - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
     - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
     - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
-    - if [ $devfstype == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mkdir -p ${mountPath} && echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount ${mountPath} ; else echo "data disk dev not found"; fi
+    - if [ "${devfstype}" == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mount /dev/${devname}1 ${mountPathTemp} && tempMounted=true ; else echo "data disk dev not found"; fi
+    - if [ "${tempMounted}" == "true" ] && [ -d ${mountPath} ]; then cp -rp ${mountPath}/* ${mountPathTemp} && umount ${mountPathTemp} && copied=true ; else echo "no need to copy"; fi
+    - if [ "${copied}" == "true" ]; then echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount /dev/${devname}1 ${mountPath} && rm -rf ${mountPathTemp} ; else echo "mount failed"; fi
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -387,10 +390,13 @@ spec:
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     - mountPath=/data-small
+    - mountPathTemp=$(mktemp -d ${mountPath}-XXXXX)
     - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
     - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
     - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
-    - if [ $devfstype == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mkdir -p ${mountPath} && echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount ${mountPath} ; else echo "data disk dev not found"; fi
+    - if [ "${devfstype}" == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mount /dev/${devname}1 ${mountPathTemp} && tempMounted=true ; else echo "data disk dev not found"; fi
+    - if [ "${tempMounted}" == "true" ] && [ -d ${mountPath} ]; then cp -rp ${mountPath}/* ${mountPathTemp} && umount ${mountPathTemp} && copied=true ; else echo "no need to copy"; fi
+    - if [ "${copied}" == "true" ]; then echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount /dev/${devname}1 ${mountPath} && rm -rf ${mountPathTemp} ; else echo "mount failed"; fi
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername

@@ -735,7 +735,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
 		"cloudstackOfferingName":           workerNodeGroupMachineSpec.ComputeOffering.Name,
-		"cloudstackDiskOfferingProvided":   len(workerNodeGroupMachineSpec.DiskOffering.Id) > 0 ||  len(workerNodeGroupMachineSpec.DiskOffering.Name) > 0,
+		"cloudstackDiskOfferingProvided":   len(workerNodeGroupMachineSpec.DiskOffering.Id) > 0 || len(workerNodeGroupMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackDiskOfferingId":         workerNodeGroupMachineSpec.DiskOffering.Id,
 		"cloudstackDiskOfferingName":       workerNodeGroupMachineSpec.DiskOffering.Name,
 		"cloudstackDiskOfferingPath":       workerNodeGroupMachineSpec.DiskOffering.MountPath,

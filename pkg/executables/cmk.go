@@ -451,8 +451,8 @@ type cmkServiceOffering struct {
 }
 
 type cmkDiskOffering struct {
-	Id        string `json:"id"`
-	Name      string `json:"name"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type cmkAffinityGroup struct {

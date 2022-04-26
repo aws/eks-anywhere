@@ -54,17 +54,17 @@ var resourceId = v1alpha1.CloudStackResourceIdentifier{
 }
 
 var diskOfferingResourceName = v1alpha1.CloudStackResourceDiskOffering{
-	v1alpha1.CloudStackResourceIdentifier{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 		Name: "TEST_RESOURCE",
 	},
-	"/TEST_RESOURCE",
+	MountPath: "/TEST_RESOURCE",
 }
 
 var diskOfferingResourceID = v1alpha1.CloudStackResourceDiskOffering{
-	v1alpha1.CloudStackResourceIdentifier{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 		Id: "TEST_RESOURCE",
 	},
-	"/TEST_RESOURCE",
+	MountPath: "/TEST_RESOURCE",
 }
 
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
