@@ -3,16 +3,16 @@ package curatedpackages
 import (
 	"fmt"
 	"os"
-	"strings"
-
 	"path/filepath"
-	"sigs.k8s.io/yaml"
+	"strings"
 	"text/tabwriter"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
