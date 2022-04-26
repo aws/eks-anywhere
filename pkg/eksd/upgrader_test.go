@@ -2,12 +2,14 @@ package eksd_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	m "github.com/aws/eks-anywhere/internal/test/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/eksd"
@@ -19,6 +21,7 @@ type upgraderTest struct {
 	*WithT
 	ctx         context.Context
 	client      *mocks.MockEksdInstallerClient
+	reader      *m.MockReader
 	currentSpec *cluster.Spec
 	newSpec     *cluster.Spec
 	eksd        *eksd.Installer
@@ -28,6 +31,7 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockEksdInstallerClient(ctrl)
+	reader := m.NewMockReader(ctrl)
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.EksD.Name = "eks-d-1"
 	})
@@ -36,7 +40,8 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 		WithT:       NewWithT(t),
 		ctx:         context.Background(),
 		client:      client,
-		eksd:        eksd.NewEksdInstaller(client),
+		reader:      reader,
+		eksd:        eksd.NewEksdInstaller(client, reader),
 		currentSpec: currentSpec,
 		newSpec:     currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
@@ -64,7 +69,6 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
 	tt.newSpec.VersionsBundle.EksD.Components = "testdata/testdata.yaml"
-	tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/testdata.yaml"
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
@@ -76,6 +80,7 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 		},
 	}
 
+	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.Components).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
 	tt.Expect(tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
@@ -85,6 +90,7 @@ func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
 
+	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())

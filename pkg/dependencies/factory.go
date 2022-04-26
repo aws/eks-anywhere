@@ -625,7 +625,7 @@ type eksdInstallerClient struct {
 }
 
 func (f *Factory) WithEksdInstaller() *Factory {
-	f.WithKubectl()
+	f.WithKubectl().WithFileReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.EksdInstaller != nil {
@@ -636,6 +636,7 @@ func (f *Factory) WithEksdInstaller() *Factory {
 			&eksdInstallerClient{
 				f.dependencies.Kubectl,
 			},
+			f.dependencies.FileReader,
 		)
 		return nil
 	})

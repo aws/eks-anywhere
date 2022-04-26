@@ -12,7 +12,7 @@ type Reader interface {
 }
 
 func ReadManifest(reader Reader, url string) (*eksdv1.Release, error) {
-	content, err := ReadManifestContent(reader, url)
+	content, err := reader.ReadFile(url)
 	if err != nil {
 		return nil, err
 	}
@@ -23,8 +23,4 @@ func ReadManifest(reader Reader, url string) (*eksdv1.Release, error) {
 	}
 
 	return eksd, nil
-}
-
-func ReadManifestContent(reader Reader, url string) ([]byte, error) {
-	return reader.ReadFile(url)
 }
