@@ -37,6 +37,7 @@ env:
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_AUTHORIZED_KEY: "github-eks-anywhere-flux-bot:github-ssh-key"
     T_HTTP_PROXY: "proxy-config-data:httpProxy"
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
     T_NO_PROXY: "proxy-config-data:noProxy"
