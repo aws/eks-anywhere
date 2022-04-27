@@ -12,13 +12,13 @@ import (
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 )
 
-type GitOptions struct {
+type GitTools struct {
 	GitProvider git.ProviderClient
 	GitClient   git.Client
 	Writer      filewriter.FileWriter
 }
 
-func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, repoPath string) (*GitOptions, error) {
+func (e *ClusterE2ETest) NewGitTools(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, repoPath string) (*gitFactory.GitTools, error) {
 	if fluxConfig == nil {
 		return nil, nil
 	}
@@ -43,9 +43,6 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 		return nil, fmt.Errorf("creating file writer: %v", err)
 	}
 	gitwriter.CleanUpTemp()
-	return &GitOptions{
-		GitProvider: tools.Provider,
-		GitClient:   tools.Client,
-		Writer:      gitwriter,
-	}, nil
+	tools.Writer = gitwriter
+	return tools, nil
 }
