@@ -117,9 +117,9 @@ func WithOIDCIdentityProviderRef(name string) ClusterFiller {
 	}
 }
 
-func WithGitOpsRef(name string) ClusterFiller {
+func WithGitOpsRef(name, kind string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: anywherev1.GitOpsConfigKind}
+		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: kind}
 	}
 }
 

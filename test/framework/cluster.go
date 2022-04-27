@@ -65,6 +65,7 @@ type ClusterE2ETest struct {
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig
+	FluxConfig             *v1alpha1.FluxConfig
 	ProxyConfig            *v1alpha1.ProxyConfiguration
 	AWSIamConfig           *v1alpha1.AWSIamConfig
 	eksaBinaryLocation     string
