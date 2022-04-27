@@ -6,7 +6,9 @@ import (
 	"net/url"
 )
 
-const FluxConfigKind = "FluxConfig"
+const (
+	FluxConfigKind = "FluxConfig"
+)
 
 func GetAndValidateFluxConfig(fileName string, refName string, clusterConfig *Cluster) (*FluxConfig, error) {
 	config, err := getFluxConfig(fileName)
@@ -71,8 +73,8 @@ func validateGitProviderConfig(config GitProviderConfig) error {
 	if len(config.RepositoryUrl) <= 0 {
 		return errors.New("'repositoryUrl' is not set or empty in gitProviderConfig; repositoryUrl is a required field")
 	}
-	err := validateRepositoryUrl(config.RepositoryUrl)
-	return err
+
+	return validateRepositoryUrl(config.RepositoryUrl)
 }
 
 func validateGithubProviderConfig(config GithubProviderConfig) error {
