@@ -11,11 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -153,7 +153,7 @@ func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
-func setupTestFiles(t *testing.T, g *addonclients.GitTools) error {
+func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
 	w, err := g.Writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
 	if err != nil {
 		return fmt.Errorf("failed to create test eksa-system directory: %v", err)

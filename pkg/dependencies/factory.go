@@ -62,7 +62,7 @@ type Dependencies struct {
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
-	Git                       *addonclients.GitTools
+	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
 	AnalyzerFactory           diagnostics.AnalyzerFactory

@@ -19,6 +19,7 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/git"
+	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -412,7 +413,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	if _, err := w.WithDir(".git"); err != nil {
 		t.Errorf("failed to add .git dir: %v", err)
 	}
-	fGitOptions := &addonclients.GitTools{
+	fGitOptions := &gitFactory.GitTools{
 		Provider: gitProvider,
 		Client:   gitClient,
 		Writer:   w,
@@ -597,7 +598,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	if _, err := w.WithDir(expectedClusterPath); err != nil {
 		t.Errorf("failed to add %s dir: %v", expectedClusterPath, err)
 	}
-	fGitOptions := &addonclients.GitTools{
+	fGitOptions := &gitFactory.GitTools{
 		Provider: gitProvider,
 		Client:   gitClient,
 		Writer:   w,
@@ -632,7 +633,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 	if _, err := w.WithDir(expectedClusterPath); err != nil {
 		t.Errorf("failed to add %s dir: %v", expectedClusterPath, err)
 	}
-	fGitOptions := &addonclients.GitTools{
+	fGitOptions := &gitFactory.GitTools{
 		Provider: gitProvider,
 		Client:   gitClient,
 		Writer:   w,
@@ -710,7 +711,7 @@ type fluxTest struct {
 	gitClient   *addonClientMocks.MockGitClient
 	gitProvider *addonClientMocks.MockGitProviderClient
 	clusterSpec *c.Spec
-	gitOptions  *addonclients.GitTools
+	gitOptions  *gitFactory.GitTools
 	ctx         context.Context
 }
 
@@ -720,7 +721,7 @@ func newTest(t *testing.T) *fluxTest {
 	gitClient := addonClientMocks.NewMockGitClient(ctrl)
 	flux := addonClientMocks.NewMockFlux(ctrl)
 	_, w := test.NewWriter(t)
-	gitOptions := &addonclients.GitTools{
+	gitOptions := &gitFactory.GitTools{
 		Provider: gitProvider,
 		Client:   gitClient,
 		Writer:   w,
@@ -854,7 +855,7 @@ type mocks struct {
 	gitClient   *addonClientMocks.MockGitClient
 }
 
-func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *addonclients.GitTools) {
+func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *gitFactory.GitTools) {
 	mockCtrl := gomock.NewController(t)
 	m := &mocks{
 		flux:        addonClientMocks.NewMockFlux(mockCtrl),
@@ -862,7 +863,7 @@ func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *addon
 		gitClient:   addonClientMocks.NewMockGitClient(mockCtrl),
 	}
 	_, w := test.NewWriter(t)
-	gitTools := &addonclients.GitTools{
+	gitTools := &gitFactory.GitTools{
 		Provider: m.gitProvider,
 		Client:   m.gitClient,
 		Writer:   w,

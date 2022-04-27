@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -74,7 +75,7 @@ type GitProviderClient interface {
 
 type FluxAddonClient struct {
 	flux     Flux
-	gitTools *GitTools
+	gitTools *gitFactory.GitTools
 	retrier  *retrier.Retrier
 }
 
@@ -84,7 +85,7 @@ type GitTools struct {
 	Writer   filewriter.FileWriter
 }
 
-func NewFluxAddonClient(flux Flux, gitTools *GitTools) *FluxAddonClient {
+func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools) *FluxAddonClient {
 	return &FluxAddonClient{
 		flux:     flux,
 		gitTools: gitTools,
