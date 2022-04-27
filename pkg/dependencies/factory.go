@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -718,11 +719,22 @@ func (f *Factory) WithGit(ctx context.Context, clusterConfig *v1alpha1.Cluster, 
 		if f.dependencies.Git != nil {
 			return nil
 		}
-		gitOpts, err := addonclients.NewGitTools(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
-		if err != nil {
-			return err
+
+		if fluxConfig == nil {
+			return nil
 		}
-		f.dependencies.Git = gitOpts
+
+		tools, err := gitfactory.Build(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
+		if err != nil {
+			return fmt.Errorf("creating Git provider: %v", err)
+		}
+
+		err = tools.Provider.Validate(ctx)
+		if err != nil {
+			return fmt.Errorf("validating provider: %v", err)
+		}
+
+		f.dependencies.Git = tools
 		return nil
 	})
 	return f
