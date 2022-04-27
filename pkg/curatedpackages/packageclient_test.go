@@ -12,10 +12,9 @@ import (
 
 type packageTest struct {
 	*WithT
-	ctx        context.Context
-	bundle     *packagesv1.PackageBundle
-	command    *curatedpackages.PackageClient
-	customName string
+	ctx     context.Context
+	bundle  *packagesv1.PackageBundle
+	command *curatedpackages.PackageClient
 }
 
 func newPackageTest(t *testing.T) *packageTest {
@@ -34,7 +33,6 @@ func newPackageTest(t *testing.T) *packageTest {
 				},
 			},
 		},
-		customName: "my-",
 	}
 }
 
@@ -45,7 +43,7 @@ func TestGeneratePackagesSucceed(t *testing.T) {
 
 	result, err := tt.command.GeneratePackages()
 	tt.Expect(err).To(BeNil())
-	tt.Expect(result[0].Name).To(BeEquivalentTo(tt.customName + packages[0]))
+	tt.Expect(result[0].Name).To(BeEquivalentTo(curatedpackages.CustomName + packages[0]))
 }
 
 func TestGeneratePackagesFail(t *testing.T) {

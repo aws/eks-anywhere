@@ -20,20 +20,20 @@ type generatePackageOptions struct {
 	registry    string
 }
 
-var gepo = &generatePackageOptions{}
+var gpOptions = &generatePackageOptions{}
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
-	generatePackageCommand.Flags().StringVarP(&gepo.directory, "directory", "d", "", "Directory to save generated packages")
-	generatePackageCommand.Flags().Var(&gepo.source, "source", "Location to find curated packages: (cluster, registry)")
+	generatePackageCommand.Flags().StringVarP(&gpOptions.directory, "directory", "d", "", "Directory to save generated packages")
+	generatePackageCommand.Flags().Var(&gpOptions.source, "source", "Location to find curated packages: (cluster, registry)")
 	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	generatePackageCommand.Flags().StringVar(&gepo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	if err := generatePackageCommand.MarkFlagRequired("directory"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	generatePackageCommand.Flags().StringVar(&gepo.registry, "registry", "", "Used to specify an alternative registry for package generation")
+	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 }
 
 var generatePackageCommand = &cobra.Command{
@@ -48,11 +48,11 @@ var generatePackageCommand = &cobra.Command{
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if err := curatedpackages.ValidateKubeVersion(gepo.kubeVersion, gepo.source); err != nil {
+		if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, gpOptions.source); err != nil {
 			return err
 		}
-		if !validations.FileExists(gepo.directory) {
-			return fmt.Errorf("directory %s does not exist", gepo.directory)
+		if !validations.FileExists(gpOptions.directory) {
+			return fmt.Errorf("directory %s does not exist", gpOptions.directory)
 		}
 		return generatePackages(cmd.Context(), args)
 	}
@@ -64,16 +64,16 @@ func generatePackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	bm := curatedpackages.CreateBundleManager(gepo.kubeVersion)
-	registry, err := curatedpackages.NewRegistry(ctx, deps, gepo.registry, gepo.kubeVersion)
+	bm := curatedpackages.CreateBundleManager(gpOptions.kubeVersion)
+	registry, err := curatedpackages.NewRegistry(ctx, deps, gpOptions.registry, gpOptions.kubeVersion)
 	if err != nil {
 		return err
 	}
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
-		gepo.kubeVersion,
-		gepo.source,
+		gpOptions.kubeVersion,
+		gpOptions.source,
 		deps.Kubectl,
 		bm,
 		version.Get(),
@@ -93,7 +93,7 @@ func generatePackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	if err = packageClient.WritePackagesToFile(packages, gepo.directory); err != nil {
+	if err = packageClient.WritePackagesToFile(packages, gpOptions.directory); err != nil {
 		return err
 	}
 	return nil

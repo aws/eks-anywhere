@@ -6,9 +6,7 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -60,7 +58,7 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	username, password, err := readRegistryCredentials()
+	username, password, err := helm.ReadRegistryCredentials()
 	if err != nil {
 		return err
 	}
@@ -127,18 +125,4 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	}
 
 	return importArtifacts.Run(ctx)
-}
-
-func readRegistryCredentials() (username, password string, err error) {
-	username, ok := os.LookupEnv("REGISTRY_USERNAME")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_USERNAME env var")
-	}
-
-	password, ok = os.LookupEnv("REGISTRY_PASSWORD")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_PASSWORD env var")
-	}
-
-	return username, password, nil
 }

@@ -21,7 +21,7 @@ const (
 	padding         = 0
 	padChar         = '\t'
 	flags           = 0
-	customName      = "my-"
+	CustomName      = "my-"
 	kind            = "Package"
 	filePermission  = 0o644
 	dirPermission   = 0o755
@@ -40,13 +40,13 @@ func NewPackageClient(bundle *packagesv1.PackageBundle, packages ...string) *Pac
 	}
 }
 
-func (p *PackageClient) DisplayPackages() {
+func (pc *PackageClient) DisplayPackages() {
 	w := new(tabwriter.Writer)
 	defer w.Flush()
 	w.Init(os.Stdout, minWidth, tabWidth, padding, padChar, flags)
 	fmt.Fprintf(w, "%s\t%s\t \n", "Package", "Version(s)")
 	fmt.Fprintf(w, "%s\t%s\t \n", "-------", "----------")
-	for _, pkg := range p.bundle.Spec.Packages {
+	for _, pkg := range pc.bundle.Spec.Packages {
 		versions := convertBundleVersionToPackageVersion(pkg.Source.Versions)
 		fmt.Fprintf(w, "%s\t%s\t \n", pkg.Name, strings.Join(versions, ","))
 	}
@@ -60,22 +60,22 @@ func convertBundleVersionToPackageVersion(bundleVersions []packagesv1.SourceVers
 	return versions
 }
 
-func (p *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
-	packageNameToPackage := p.getPackageNameToPackage()
+func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
+	packageMap := pc.getPackageNameToPackage()
 	var packages []packagesv1.Package
-	for _, v := range p.packages {
-		bundlePackage := packageNameToPackage[strings.ToLower(v)]
+	for _, p := range pc.packages {
+		bundlePackage := packageMap[strings.ToLower(p)]
 		if bundlePackage.Name == "" {
-			fmt.Println(fmt.Errorf("unknown package %s", v).Error())
+			fmt.Println(fmt.Errorf("unknown package %s", p).Error())
 			continue
 		}
-		name := customName + strings.ToLower(bundlePackage.Name)
-		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, p.bundle.APIVersion))
+		name := CustomName + strings.ToLower(bundlePackage.Name)
+		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion))
 	}
 	return packages, nil
 }
 
-func (p *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d string) error {
+func (pc *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d string) error {
 	directory := filepath.Join(d, packageLocation)
 	if !validations.FileExists(directory) {
 		if err := os.Mkdir(directory, dirPermission); err != nil {
@@ -106,12 +106,12 @@ func writeToFile(dir string, packageName string, content []byte) error {
 	return nil
 }
 
-func (p *PackageClient) getPackageNameToPackage() map[string]packagesv1.BundlePackage {
-	pntop := make(map[string]packagesv1.BundlePackage)
-	for _, p := range p.bundle.Spec.Packages {
-		pntop[strings.ToLower(p.Name)] = p
+func (pc *PackageClient) getPackageNameToPackage() map[string]packagesv1.BundlePackage {
+	pMap := make(map[string]packagesv1.BundlePackage)
+	for _, p := range pc.bundle.Spec.Packages {
+		pMap[strings.ToLower(p.Name)] = p
 	}
-	return pntop
+	return pMap
 }
 
 func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, apiVersion string) packagesv1.Package {

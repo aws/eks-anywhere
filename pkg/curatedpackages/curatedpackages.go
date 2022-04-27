@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -11,23 +10,23 @@ import (
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 func NewRegistry(ctx context.Context, deps *dependencies.Dependencies, registry, kubeVersion string) (BundleRegistry, error) {
 	if registry != "" {
-		registryUsername := os.Getenv("REGISTRY_USERNAME")
-		registryPassword := os.Getenv("REGISTRY_PASSWORD")
-		if registryUsername == "" || registryPassword == "" {
-			return nil, fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD when using custom registry")
+		username, password, err := helm.ReadRegistryCredentials()
+		if err != nil {
+			return nil, err
 		}
 		registry := NewCustomRegistry(
 			deps.Helm,
 			registry,
-			registryUsername,
-			registryPassword,
+			username,
+			password,
 		)
-		err := registry.Login(ctx)
+		err = registry.Login(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -42,13 +41,21 @@ func NewRegistry(ctx context.Context, deps *dependencies.Dependencies, registry,
 }
 
 func CreateBundleManager(kubeVersion string) bundle.Manager {
-	versionSplit := strings.Split(kubeVersion, ".")
-	if len(versionSplit) != 2 {
+	major, minor, err := parseKubeVersion(kubeVersion)
+	if err != nil {
 		return nil
 	}
-	major, minor := versionSplit[0], versionSplit[1]
 	log := logr.Discard()
 	discovery := NewDiscovery(major, minor)
 	puller := artifacts.NewRegistryPuller()
 	return bundle.NewBundleManager(log, discovery, puller)
+}
+
+func parseKubeVersion(kubeVersion string) (string, string, error) {
+	versionSplit := strings.Split(kubeVersion, ".")
+	if len(versionSplit) != 2 {
+		return "", "", fmt.Errorf("invalid kubeversion")
+	}
+	major, minor := versionSplit[0], versionSplit[1]
+	return major, minor, nil
 }
