@@ -73,11 +73,9 @@ type GitProviderClient interface {
 }
 
 type FluxAddonClient struct {
-	flux              Flux
-	writer            filewriter.FileWriter
-	gitClient         GitClient
-	gitProviderClient GitProviderClient
-	retrier           *retrier.Retrier
+	flux     Flux
+	gitTools *GitTools
+	retrier  *retrier.Retrier
 }
 
 type GitTools struct {
@@ -87,15 +85,10 @@ type GitTools struct {
 }
 
 func NewFluxAddonClient(flux Flux, gitTools *GitTools) *FluxAddonClient {
-	if gitTools == nil {
-		return nil
-	}
 	return &FluxAddonClient{
-		flux:              flux,
-		gitProviderClient: gitTools.Provider,
-		gitClient:         gitTools.Client,
-		writer:            gitTools.Writer,
-		retrier:           retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		flux:     flux,
+		gitTools: gitTools,
+		retrier:  retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
@@ -177,7 +170,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 		"remote", defaultRemote, "branch", fc.branch())
 
 	err := f.retrier.Retry(func() error {
-		return f.gitClient.Pull(ctx, fc.branch())
+		return f.gitTools.Client.Pull(ctx, fc.branch())
 	})
 	if err != nil {
 		logger.Error(err, "error when pulling from remote repository after Flux Bootstrap; ensure local repository is up-to-date with remote (git pull)",
@@ -254,7 +247,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 	}
 
 	path := fc.eksaSystemDir()
-	err := f.gitClient.Add(path)
+	err := f.gitTools.Client.Add(path)
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", path, err)}
 	}
@@ -311,12 +304,12 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		p = fc.path()
 	}
 
-	if !validations.FileExists(path.Join(f.writer.Dir(), p)) {
+	if !validations.FileExists(path.Join(f.gitTools.Writer.Dir(), p)) {
 		logger.V(3).Info("cluster dir does not exist in git, skip clean up")
 		return nil
 	}
 
-	err := f.gitClient.Remove(p)
+	err := f.gitTools.Client.Remove(p)
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", p, err)}
 	}
@@ -331,13 +324,13 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 }
 
 func (f *FluxAddonClient) pushToRemoteRepo(ctx context.Context, path, msg string) error {
-	err := f.gitClient.Commit(msg)
+	err := f.gitTools.Client.Commit(msg)
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("committing %s to git:  %v", path, err)}
 	}
 
 	err = f.retrier.Retry(func() error {
-		return f.gitClient.Push(ctx)
+		return f.gitTools.Client.Push(ctx)
 	})
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("pushing %s to git: %v", path, err)}
@@ -387,7 +380,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		logger.V(3).Info("Skipping flux custom manifest files")
 	}
 	p := path.Dir(config.Spec.ClusterConfigPath)
-	err = fc.gitClient.Add(p)
+	err = fc.gitTools.Client.Add(p)
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", p, err)}
 	}
@@ -403,7 +396,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 
 func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 	f := fc.FluxAddonClient
-	if !validations.FileExists(path.Join(f.writer.Dir(), ".git")) {
+	if !validations.FileExists(path.Join(f.gitTools.Writer.Dir(), ".git")) {
 		r, err := fc.clone(ctx)
 		if err != nil {
 			return fmt.Errorf("failed cloning git repo: %v", err)
@@ -413,7 +406,7 @@ func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 		}
 	} else {
 		// Make sure the local git repo is on the branch specified in config and up-to-date with the remote
-		if err := fc.gitClient.Branch(fc.branch()); err != nil {
+		if err := fc.gitTools.Client.Branch(fc.branch()); err != nil {
 			return fmt.Errorf("failed to switch to git branch %s: %v", fc.branch(), err)
 		}
 	}
@@ -422,7 +415,7 @@ func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 
 func (fc *fluxForCluster) initEksaWriter() (filewriter.FileWriter, error) {
 	eksaSystemDir := fc.eksaSystemDir()
-	w, err := fc.writer.WithDir(eksaSystemDir)
+	w, err := fc.gitTools.Writer.WithDir(eksaSystemDir)
 	if err != nil {
 		err = fmt.Errorf("creating %s directory: %v", eksaSystemDir, err)
 	}
@@ -469,7 +462,7 @@ func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) err
 }
 
 func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
-	w, err := fc.writer.WithDir(fc.fluxSystemDir())
+	w, err := fc.gitTools.Writer.WithDir(fc.fluxSystemDir())
 	if err != nil {
 		err = fmt.Errorf("creating %s directory: %v", fc.fluxSystemDir(), err)
 	}
@@ -572,7 +565,7 @@ func (fc *fluxForCluster) clone(ctx context.Context) (*git.Repository, error) {
 	var r *git.Repository
 	var err error
 	err = fc.FluxAddonClient.retrier.Retry(func() error {
-		r, err = fc.gitProviderClient.GetRepo(ctx)
+		r, err = fc.gitTools.Provider.GetRepo(ctx)
 		return err
 	})
 	if err != nil {
@@ -581,14 +574,14 @@ func (fc *fluxForCluster) clone(ctx context.Context) (*git.Repository, error) {
 	if r != nil {
 		logger.V(3).Info("Cloning remote repository", "repo", r.Name)
 		err = fc.FluxAddonClient.retrier.Retry(func() error {
-			return fc.gitClient.Clone(ctx)
+			return fc.gitTools.Client.Clone(ctx)
 		})
 		if err != nil {
 			return nil, err
 		}
 
 		logger.V(3).Info("Creating a new branch")
-		err = fc.gitClient.Branch(fc.branch())
+		err = fc.gitTools.Client.Branch(fc.branch())
 		if err != nil {
 			return nil, err
 		}
@@ -608,7 +601,7 @@ func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 	opts := git.CreateRepoOpts{Name: n, Owner: o, Description: d, Personal: p, Privacy: true}
 	logger.V(3).Info("Creating remote Github repo", "options", opts)
 	err := fc.FluxAddonClient.retrier.Retry(func() error {
-		_, err := fc.gitProviderClient.CreateRepo(ctx, opts)
+		_, err := fc.gitTools.Provider.CreateRepo(ctx, opts)
 		return err
 	})
 	if err != nil {
@@ -620,17 +613,17 @@ func (fc *fluxForCluster) createRemoteRepository(ctx context.Context) error {
 // initializeLocalRepository will git init the local repository directory, initialize a git repository.
 // it will then change branches to the branch specified in the GitOps configuration
 func (fc *fluxForCluster) initializeLocalRepository() error {
-	err := fc.gitClient.Init()
+	err := fc.gitTools.Client.Init()
 	if err != nil {
 		return fmt.Errorf("could not initialize repo: %w", err)
 	}
 
 	// git requires at least one commit in the repo to branch from
-	if err = fc.gitClient.Commit("initializing repository"); err != nil {
+	if err = fc.gitTools.Client.Commit("initializing repository"); err != nil {
 		return fmt.Errorf("initializing repository: %v", err)
 	}
 
-	if err = fc.gitClient.Branch(fc.branch()); err != nil {
+	if err = fc.gitTools.Client.Branch(fc.branch()); err != nil {
 		return fmt.Errorf("creating branch: %v", err)
 	}
 	return nil
@@ -640,7 +633,7 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 // This is done so that we avoid clobbering existing cluster configurations in the user-provided git repository.
 func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
 	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		p := path.Join(fc.writer.Dir(), fc.path())
+		p := path.Join(fc.gitTools.Writer.Dir(), fc.path())
 		if validations.FileExists(p) {
 			return fmt.Errorf("a cluster configuration file already exists at path %s", p)
 		}
@@ -650,7 +643,7 @@ func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
 
 func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Context) error {
 	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		if exists, err := fc.gitProviderClient.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
+		if exists, err := fc.gitTools.Provider.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
 			return fmt.Errorf("failed validating remote flux config path: %v", err)
 		} else if exists {
 			return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
@@ -700,5 +693,5 @@ func (fc *fluxForCluster) fluxSystemDir() string {
 }
 
 func (f *FluxAddonClient) shouldSkipFlux() bool {
-	return f == nil
+	return f.gitTools == nil
 }

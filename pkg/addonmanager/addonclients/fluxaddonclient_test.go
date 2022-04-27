@@ -862,13 +862,13 @@ func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *addon
 		gitClient:   addonClientMocks.NewMockGitClient(mockCtrl),
 	}
 	_, w := test.NewWriter(t)
-	gitOpts := &addonclients.GitTools{
+	gitTools := &addonclients.GitTools{
 		Provider: m.gitProvider,
 		Client:   m.gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(m.flux, gitOpts)
+	f := addonclients.NewFluxAddonClient(m.flux, gitTools)
 	retrier := retrier.NewWithMaxRetries(2, 1)
 	f.SetRetier(retrier)
-	return f, m, gitOpts
+	return f, m, gitTools
 }
