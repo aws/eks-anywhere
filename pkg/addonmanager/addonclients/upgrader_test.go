@@ -153,7 +153,7 @@ func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
-func setupTestFiles(t *testing.T, g *addonclients.GitOptions) error {
+func setupTestFiles(t *testing.T, g *addonclients.GitTools) error {
 	w, err := g.Writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
 	if err != nil {
 		return fmt.Errorf("failed to create test eksa-system directory: %v", err)

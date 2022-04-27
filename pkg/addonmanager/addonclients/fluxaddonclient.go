@@ -81,13 +81,13 @@ type FluxAddonClient struct {
 	retrier           *retrier.Retrier
 }
 
-type GitOptions struct {
+type GitTools struct {
 	GitProvider git.ProviderClient
 	GitClient   git.Client
 	Writer      filewriter.FileWriter
 }
 
-func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitOptions, error) {
+func NewGitTools(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
 	if fluxConfig == nil {
 		return nil, nil
 	}
@@ -101,22 +101,22 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 		return nil, fmt.Errorf("validating provider: %v", err)
 	}
 
-	return &GitOptions{
+	return &GitTools{
 		GitProvider: tools.Provider,
 		GitClient:   tools.Client,
 		Writer:      tools.Writer,
 	}, nil
 }
 
-func NewFluxAddonClient(flux Flux, gitOpts *GitOptions) *FluxAddonClient {
-	if gitOpts == nil {
+func NewFluxAddonClient(flux Flux, gitTools *GitTools) *FluxAddonClient {
+	if gitTools == nil {
 		return nil
 	}
 	return &FluxAddonClient{
 		flux:              flux,
-		gitProviderClient: gitOpts.GitProvider,
-		gitClient:         gitOpts.GitClient,
-		writer:            gitOpts.Writer,
+		gitProviderClient: gitTools.GitProvider,
+		gitClient:         gitTools.GitClient,
+		writer:            gitTools.Writer,
 		retrier:           retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
