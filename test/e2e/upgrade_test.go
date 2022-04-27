@@ -109,11 +109,11 @@ func TestVSphereKubernetes121UbuntuTo122MultipleFieldsUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes121UbuntuTo122WithFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes121UbuntuTo122WithFluxLegacyUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewClusterE2ETest(t,
 		provider,
-		framework.WithFlux(),
+		framework.WithFluxLegacy(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -127,11 +127,11 @@ func TestVSphereKubernetes121UbuntuTo122WithFluxUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes121UbuntuTo122DifferentNamespaceWithFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes121UbuntuTo122DifferentNamespaceWithFluxLegacyUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
-		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
+		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
@@ -220,11 +220,11 @@ func TestVSphereKubernetes121BottlerocketTo122MultipleFieldsUpgrade(t *testing.T
 	)
 }
 
-func TestVSphereKubernetes121BottlerocketTo122WithFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes121BottlerocketTo122WithFluxLegacyUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := framework.NewClusterE2ETest(t,
 		provider,
-		framework.WithFlux(),
+		framework.WithFluxLegacy(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -238,11 +238,11 @@ func TestVSphereKubernetes121BottlerocketTo122WithFluxUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes121BottlerocketTo122DifferentNamespaceWithFluxUpgrade(t *testing.T) {
+func TestVSphereKubernetes121BottlerocketTo122DifferentNamespaceWithFluxLegacyUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithBottleRocket121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
-		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
+		framework.WithFluxLegacy(api.WithGitOpsNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
