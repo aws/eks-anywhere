@@ -87,7 +87,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if deps.Provider.Name() == "tinkerbell" {
 		return fmt.Errorf("Error: upgrade operation is not supported for provider tinkerbell")
@@ -126,6 +126,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
 	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	cleanup(deps, &err)
 	return err
 }
 

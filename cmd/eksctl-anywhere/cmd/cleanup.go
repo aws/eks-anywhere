@@ -9,9 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func cleanup(ctx context.Context, deps *dependencies.Dependencies, commandErr *error) {
-	close(ctx, deps)
-
+func cleanup(deps *dependencies.Dependencies, commandErr *error) {
 	if *commandErr == nil {
 		deps.Writer.CleanUpTemp()
 	}
