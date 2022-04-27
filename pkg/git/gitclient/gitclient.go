@@ -36,14 +36,13 @@ type GitClient struct {
 }
 
 func New(auth git.TokenAuth, repoDirectory string, repoUrl string) *GitClient {
-	c := &GitClient{
+	return &GitClient{
 		Auth:          &http.BasicAuth{Password: auth.Token, Username: auth.Username},
 		Client:        &goGit{},
 		RepoUrl:       repoUrl,
 		RepoDirectory: repoDirectory,
 		Retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
-	return c
 }
 
 func (g *GitClient) Clone(ctx context.Context) error {
