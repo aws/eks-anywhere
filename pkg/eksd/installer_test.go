@@ -21,12 +21,12 @@ import (
 
 type installerTest struct {
 	*WithT
-	ctx         context.Context
-	client      *mocks.MockEksdInstallerClient
-	reader      *m.MockReader
-	clusterSpec *cluster.Spec
-	eksd        *eksd.Installer
-	cluster     *types.Cluster
+	ctx           context.Context
+	client        *mocks.MockEksdInstallerClient
+	reader        *m.MockReader
+	clusterSpec   *cluster.Spec
+	eksdInstaller *eksd.Installer
+	cluster       *types.Cluster
 }
 
 func newInstallerTest(t *testing.T) *installerTest {
@@ -38,12 +38,12 @@ func newInstallerTest(t *testing.T) *installerTest {
 	})
 
 	return &installerTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		client:      client,
-		reader:      reader,
-		eksd:        eksd.NewEksdInstaller(client, reader),
-		clusterSpec: clusterSpec,
+		WithT:         NewWithT(t),
+		ctx:           context.Background(),
+		client:        client,
+		reader:        reader,
+		eksdInstaller: eksd.NewEksdInstaller(client, reader),
+		clusterSpec:   clusterSpec,
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "k.kubeconfig",
@@ -64,7 +64,7 @@ func TestInstallEksdCRDsSuccess(t *testing.T) {
 
 	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.Components).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
-	if err := tt.eksd.InstallEksdCRDs(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
+	if err := tt.eksdInstaller.InstallEksdCRDs(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("Eksd.InstallEksdCRDs() error = %v, wantErr nil", err)
 	}
 }
@@ -82,7 +82,7 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 
 	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
-	if err := tt.eksd.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
+	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("Eksd.InstallEksdManifest() error = %v, wantErr nil", err)
 	}
 }
@@ -92,7 +92,7 @@ func TestInstallEksdManifestErrorReadingManifest(t *testing.T) {
 	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "fake.yaml"
 
 	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
-	if err := tt.eksd.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
+	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
 		t.Error("Eksd.InstallEksdManifest() error = nil, wantErr not nil")
 	}
 }

@@ -64,6 +64,7 @@ type Dependencies struct {
 	FluxAddonClient           *addonclients.FluxAddonClient
 	Git                       *addonclients.GitTools
 	EksdInstaller             *eksd.Installer
+	EksdUpgrader              *eksd.Upgrader
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
@@ -712,9 +713,28 @@ func (f *Factory) WithEksdInstaller() *Factory {
 	return f
 }
 
+func (f *Factory) WithEksdUpgrader() *Factory {
+	f.WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksdUpgrader != nil {
+			return nil
+		}
+
+		f.dependencies.EksdUpgrader = eksd.NewUpgrader(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
+			},
+			f.dependencies.FileReader,
+		)
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithGit(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
 	f.WithWriter()
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Git != nil {
 			return nil

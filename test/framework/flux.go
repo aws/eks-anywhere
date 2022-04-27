@@ -39,7 +39,7 @@ var fluxRequiredEnvVars = []string{
 	githubTokenVar,
 }
 
-func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
+func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
 		gitOpsConfigName := gitOpsConfigName()
@@ -71,7 +71,7 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
 
-		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFlux()
+		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFluxLegacy()
 		// instead of marshalling from the actual file in git repo.
 		// By default it does not include the namespace field. But Flux requires namespace always
 		// exist for all the objects managed by its kustomization controller.

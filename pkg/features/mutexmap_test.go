@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestMutextMapLoadAndStore(t *testing.T) {
+func TestMutexMapLoadAndStore(t *testing.T) {
 	g := NewWithT(t)
 	m := newMutexMap()
 
@@ -20,4 +20,21 @@ func TestMutextMapLoadAndStore(t *testing.T) {
 	v, ok = m.load(key)
 	g.Expect(ok).To(BeTrue())
 	g.Expect(v).To(Equal(value))
+}
+
+func TestMutexMapClear(t *testing.T) {
+	g := NewWithT(t)
+	m := newMutexMap()
+
+	key := "key"
+	value := true
+	m.store(key, value)
+	v, ok := m.load(key)
+	g.Expect(ok).To(BeTrue())
+	g.Expect(v).To(Equal(value))
+
+	m.clear()
+	v, ok = m.load(key)
+	g.Expect(ok).To(BeFalse())
+	g.Expect(v).To(BeFalse())
 }
