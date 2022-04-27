@@ -61,6 +61,7 @@ type Dependencies struct {
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
+	Git                       *addonclients.GitTools
 	EksdInstaller             *eksd.Installer
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
@@ -710,17 +711,29 @@ func (f *Factory) WithEksdInstaller() *Factory {
 	return f
 }
 
+func (f *Factory) WithGit(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+	f.WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Git != nil {
+			return nil
+		}
+		gitOpts, err := addonclients.NewGitTools(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
+		if err != nil {
+			return err
+		}
+		f.dependencies.Git = gitOpts
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
-	f.WithWriter().WithFlux().WithKubectl()
+	f.WithWriter().WithFlux().WithKubectl().WithGit(ctx, clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.FluxAddonClient != nil {
 			return nil
-		}
-
-		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
-		if err != nil {
-			return err
 		}
 
 		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
@@ -728,7 +741,7 @@ func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alph
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,
 			},
-			gitOpts,
+			f.dependencies.Git,
 		)
 
 		return nil
