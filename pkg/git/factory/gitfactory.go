@@ -15,9 +15,10 @@ import (
 )
 
 func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*addonclients.GitTools, error) {
-	var clientOptions []gitclient.Opt
 	var provider git.ProviderClient
 	var repo string
+	var repoUrl string
+	var tokenAuth git.TokenAuth
 	var err error
 
 	switch {
@@ -28,12 +29,9 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		}
 
 		repo = fluxConfig.Spec.Github.Repository
-		clientOptions = append(clientOptions, gitclient.WithRepositoryUrl(github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)))
-
-		clientAuth := git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
-		clientOptions = append(clientOptions, gitclient.WithTokenAuth(clientAuth))
-
-		provider, err = buildGithubProvider(ctx, clientAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
+		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
+		tokenAuth = git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
+		provider, err = buildGithubProvider(ctx, tokenAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
@@ -42,8 +40,10 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	}
 
 	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
-	clientOptions = append(clientOptions, gitclient.WithRepositoryDirectory(localGitRepoPath))
-	client := gitclient.New(clientOptions...)
+	client := gitclient.New(
+		gitclient.WithRepositoryDirectory(localGitRepoPath),
+		gitclient.WithRepositoryUrl(repoUrl),
+		gitclient.WithTokenAuth(tokenAuth))
 
 	repoWriter, err := newRepositoryWriter(writer, repo)
 	if err != nil {
@@ -51,8 +51,8 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	}
 
 	return &addonclients.GitTools{
-		Writer: repoWriter,
-		Client: client,
+		Writer:   repoWriter,
+		Client:   client,
 		Provider: provider,
 	}, nil
 }
