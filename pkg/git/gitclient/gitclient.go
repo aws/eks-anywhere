@@ -49,19 +49,19 @@ func New(opts ...Opt) *GitClient {
 }
 
 func WithTokenAuth(auth git.TokenAuth) Opt {
-	return func (c *GitClient) {
+	return func(c *GitClient) {
 		c.Auth = &http.BasicAuth{Password: auth.Token, Username: auth.Username}
 	}
 }
 
 func WithRepositoryUrl(repoUrl string) Opt {
-	return func (c *GitClient) {
+	return func(c *GitClient) {
 		c.RepoUrl = repoUrl
 	}
 }
 
 func WithRepositoryDirectory(repoDir string) Opt {
-	return func (c *GitClient) {
+	return func(c *GitClient) {
 		c.RepoDirectory = repoDir
 	}
 }

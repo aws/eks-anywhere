@@ -30,12 +30,11 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 		localGitWriterPath = repoPath
 	}
 
-	gitProviderFactory := gitFactory.New()
-	gitProvider, gitClient, _, err := gitProviderFactory.Build(ctx, cluster, fluxConfig, writer)
+	tools, err := gitFactory.Build(ctx, cluster, fluxConfig, writer)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
-	err = gitProvider.Validate(ctx)
+	err = tools.Provider.Validate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +44,8 @@ func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cl
 	}
 	gitwriter.CleanUpTemp()
 	return &GitOptions{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
+		GitProvider: tools.Provider,
+		GitClient:   tools.Client,
 		Writer:      gitwriter,
 	}, nil
 }

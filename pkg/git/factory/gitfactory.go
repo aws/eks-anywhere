@@ -60,7 +60,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return tools, nil
 }
 
-func buildGithubProvider(ctx context.Context, auth git.TokenAuth, owner string, repo string, personal bool, ) (git.ProviderClient, error) {
+func buildGithubProvider(ctx context.Context, auth git.TokenAuth, owner string, repo string, personal bool) (git.ProviderClient, error) {
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
 	githubProviderOpts := github.Options{

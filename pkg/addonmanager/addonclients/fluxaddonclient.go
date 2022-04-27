@@ -91,21 +91,20 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v
 	if fluxConfig == nil {
 		return nil, nil
 	}
-	gitProviderFactory := gitFactory.New()
-	provider, client, gitwriter, err := gitProviderFactory.Build(ctx, cluster, fluxConfig, writer)
+	tools, err := gitFactory.Build(ctx, cluster, fluxConfig, writer)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
 
-	err = provider.Validate(ctx)
+	err = tools.Provider.Validate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("validating provider: %v", err)
 	}
 
 	return &GitOptions{
-		GitProvider: provider,
-		GitClient:   client,
-		Writer:      gitwriter,
+		GitProvider: tools.Provider,
+		GitClient:   tools.Client,
+		Writer:      tools.Writer,
 	}, nil
 }
 
