@@ -23,7 +23,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	var provider git.ProviderClient
 	var repo string
 	var repoUrl string
-	var tokenAuth git.TokenAuth
+	var tokenAuth *git.TokenAuth
 	var err error
 
 	switch {
@@ -35,8 +35,8 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 
 		repo = fluxConfig.Spec.Github.Repository
 		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
-		tokenAuth = git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
-		provider, err = buildGithubProvider(ctx, tokenAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
+		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
+		provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
@@ -45,10 +45,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	}
 
 	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
-	client := gitclient.New(
-		gitclient.WithRepositoryDirectory(localGitRepoPath),
-		gitclient.WithRepositoryUrl(repoUrl),
-		gitclient.WithTokenAuth(tokenAuth))
+	client := buildGitClient(ctx, tokenAuth, repoUrl, localGitRepoPath)
 
 	repoWriter, err := newRepositoryWriter(writer, repo)
 	if err != nil {
@@ -60,6 +57,19 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		Client:   client,
 		Provider: provider,
 	}, nil
+}
+
+func buildGitClient(ctx context.Context, tokenAuth *git.TokenAuth, repoUrl string, repo string) *gitclient.GitClient {
+	opts := []gitclient.Opt{
+		gitclient.WithRepositoryUrl(repoUrl),
+		gitclient.WithRepositoryDirectory(repo),
+	}
+	// right now, we only support token auth
+	// however, the generic git provider will support both token auth and SSH auth
+	if tokenAuth != nil {
+		opts = append(opts, gitclient.WithTokenAuth(*tokenAuth))
+	}
+	return gitclient.New(opts...)
 }
 
 func buildGithubProvider(ctx context.Context, auth git.TokenAuth, owner string, repo string, personal bool) (git.ProviderClient, error) {
