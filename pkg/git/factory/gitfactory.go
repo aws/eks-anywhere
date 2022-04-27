@@ -16,10 +16,9 @@ import (
 
 func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*addonclients.GitTools, error) {
 	var clientOptions []gitclient.Opt
+	var provider git.ProviderClient
 	var repo string
 	var err error
-
-	tools := &addonclients.GitTools{}
 
 	switch {
 	case fluxConfig.Spec.Github != nil:
@@ -34,9 +33,9 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		clientAuth := git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
 		clientOptions = append(clientOptions, gitclient.WithTokenAuth(clientAuth))
 
-		tools.Provider, err = buildGithubProvider(ctx, clientAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
+		provider, err = buildGithubProvider(ctx, clientAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
 		if err != nil {
-			return tools, fmt.Errorf("building github provider: %v", err)
+			return nil, fmt.Errorf("building github provider: %v", err)
 		}
 	default:
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
@@ -44,15 +43,18 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 
 	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
 	clientOptions = append(clientOptions, gitclient.WithRepositoryDirectory(localGitRepoPath))
-	tools.Client = gitclient.New(clientOptions...)
+	client := gitclient.New(clientOptions...)
 
 	repoWriter, err := newRepositoryWriter(writer, repo)
 	if err != nil {
 		return nil, err
 	}
-	tools.Writer = repoWriter
 
-	return tools, nil
+	return &addonclients.GitTools{
+		Writer: repoWriter,
+		Client: client,
+		Provider: provider,
+	}, nil
 }
 
 func buildGithubProvider(ctx context.Context, auth git.TokenAuth, owner string, repo string, personal bool) (git.ProviderClient, error) {
