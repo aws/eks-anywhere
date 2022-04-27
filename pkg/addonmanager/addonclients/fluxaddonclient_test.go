@@ -413,9 +413,9 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 		t.Errorf("failed to add .git dir: %v", err)
 	}
 	fGitOptions := &addonclients.GitTools{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
-		Writer:      w,
+		Provider: gitProvider,
+		Client:   gitClient,
+		Writer:   w,
 	}
 	f := addonclients.NewFluxAddonClient(flux, fGitOptions)
 
@@ -598,9 +598,9 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 		t.Errorf("failed to add %s dir: %v", expectedClusterPath, err)
 	}
 	fGitOptions := &addonclients.GitTools{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
-		Writer:      w,
+		Provider: gitProvider,
+		Client:   gitClient,
+		Writer:   w,
 	}
 	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
 
@@ -633,9 +633,9 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 		t.Errorf("failed to add %s dir: %v", expectedClusterPath, err)
 	}
 	fGitOptions := &addonclients.GitTools{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
-		Writer:      w,
+		Provider: gitProvider,
+		Client:   gitClient,
+		Writer:   w,
 	}
 	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
 
@@ -721,9 +721,9 @@ func newTest(t *testing.T) *fluxTest {
 	flux := addonClientMocks.NewMockFlux(ctrl)
 	_, w := test.NewWriter(t)
 	gitOptions := &addonclients.GitTools{
-		GitProvider: gitProvider,
-		GitClient:   gitClient,
-		Writer:      w,
+		Provider: gitProvider,
+		Client:   gitClient,
+		Writer:   w,
 	}
 	f := addonclients.NewFluxAddonClient(flux, gitOptions)
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
@@ -863,9 +863,9 @@ func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *addon
 	}
 	_, w := test.NewWriter(t)
 	gitOpts := &addonclients.GitTools{
-		GitProvider: m.gitProvider,
-		GitClient:   m.gitClient,
-		Writer:      w,
+		Provider: m.gitProvider,
+		Client:   m.gitClient,
+		Writer:   w,
 	}
 	f := addonclients.NewFluxAddonClient(m.flux, gitOpts)
 	retrier := retrier.NewWithMaxRetries(2, 1)

@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
-	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -82,30 +81,9 @@ type FluxAddonClient struct {
 }
 
 type GitTools struct {
-	GitProvider git.ProviderClient
-	GitClient   git.Client
-	Writer      filewriter.FileWriter
-}
-
-func NewGitTools(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
-	if fluxConfig == nil {
-		return nil, nil
-	}
-	tools, err := gitFactory.Build(ctx, cluster, fluxConfig, writer)
-	if err != nil {
-		return nil, fmt.Errorf("creating Git provider: %v", err)
-	}
-
-	err = tools.Provider.Validate(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("validating provider: %v", err)
-	}
-
-	return &GitTools{
-		GitProvider: tools.Provider,
-		GitClient:   tools.Client,
-		Writer:      tools.Writer,
-	}, nil
+	Provider git.ProviderClient
+	Client   git.Client
+	Writer   filewriter.FileWriter
 }
 
 func NewFluxAddonClient(flux Flux, gitTools *GitTools) *FluxAddonClient {
@@ -114,8 +92,8 @@ func NewFluxAddonClient(flux Flux, gitTools *GitTools) *FluxAddonClient {
 	}
 	return &FluxAddonClient{
 		flux:              flux,
-		gitProviderClient: gitTools.GitProvider,
-		gitClient:         gitTools.GitClient,
+		gitProviderClient: gitTools.Provider,
+		gitClient:         gitTools.Client,
 		writer:            gitTools.Writer,
 		retrier:           retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
