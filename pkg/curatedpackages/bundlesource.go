@@ -21,10 +21,10 @@ func (b BundleSource) String() string {
 }
 
 func (b *BundleSource) Set(s string) error {
-	lower := strings.ToLower(s)
-	switch lower {
+	src := BundleSource(strings.ToLower(strings.TrimSpace(s)))
+	switch src {
 	case Cluster, Registry:
-		*b = BundleSource(lower)
+		*b = src
 	default:
 		return fmt.Errorf("unknown source: %q", s)
 	}
