@@ -36,7 +36,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			validations.ValidationResult{
 				Name:        "validate gitops",
 				Remediation: "",
-				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec, u.Opts.CliConfig),
 			},
 			validations.ValidationResult{
 				Name:        "validate identityproviders name",

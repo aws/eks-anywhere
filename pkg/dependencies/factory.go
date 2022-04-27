@@ -167,6 +167,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
+
 	return f
 }
 
