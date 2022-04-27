@@ -11,7 +11,7 @@ import (
 // emitting templates for a user to modify.
 type DisplayablePackage struct {
 	*api.Package
-	Status *interface{} `json:"status,omitempty"`
+	Status interface{} `json:"-"`
 }
 
 func NewDisplayablePackage(p api.Package) DisplayablePackage {

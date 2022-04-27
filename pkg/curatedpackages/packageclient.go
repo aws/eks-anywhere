@@ -23,8 +23,8 @@ const (
 	flags           = 0
 	CustomName      = "my-"
 	kind            = "Package"
-	filePermission  = 0o644
-	dirPermission   = 0o755
+	filePermission  = 0o600
+	dirPermission   = 0o700
 	packageLocation = "curated-packages"
 )
 
@@ -64,9 +64,9 @@ func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 	packageMap := pc.getPackageNameToPackage()
 	var packages []packagesv1.Package
 	for _, p := range pc.packages {
-		bundlePackage := packageMap[strings.ToLower(p)]
-		if bundlePackage.Name == "" {
-			fmt.Println(fmt.Errorf("unknown package %s", p).Error())
+		bundlePackage, found := packageMap[strings.ToLower(p)]
+		if !found {
+			fmt.Fprintf(os.Stderr, "unknown package %q\n", p)
 			continue
 		}
 		name := CustomName + strings.ToLower(bundlePackage.Name)
@@ -78,8 +78,8 @@ func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 func (pc *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d string) error {
 	directory := filepath.Join(d, packageLocation)
 	if !validations.FileExists(directory) {
-		if err := os.Mkdir(directory, dirPermission); err != nil {
-			return fmt.Errorf("unable to create directory %s", directory)
+		if err := os.MkdirAll(directory, dirPermission); err != nil {
+			return fmt.Errorf("unable to create directory %q: %w", directory, err)
 		}
 	}
 
@@ -92,7 +92,8 @@ func (pc *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d st
 		}
 		err = writeToFile(directory, p.Name, content)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Fprintln(os.Stderr, err.Error())
+			continue // or return an error to abort.
 		}
 	}
 	return nil
