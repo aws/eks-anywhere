@@ -84,10 +84,10 @@ func (pc *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d st
 	}
 
 	for _, p := range packages {
-		displayPackage := NewDisplayablePackage(p)
+		displayPackage := NewDisplayablePackage(&p)
 		content, err := yaml.Marshal(displayPackage)
 		if err != nil {
-			fmt.Println(fmt.Errorf("unable to parse package %s %v", p.Name, err).Error())
+			fmt.Fprintf(os.Stderr, "unable to parse package %s %v", p.Name, err)
 			continue
 		}
 		err = writeToFile(directory, p.Name, content)

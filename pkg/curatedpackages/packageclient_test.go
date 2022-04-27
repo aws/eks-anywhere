@@ -53,5 +53,5 @@ func TestGeneratePackagesFail(t *testing.T) {
 
 	result, err := tt.command.GeneratePackages()
 	tt.Expect(err).To(BeNil())
-	tt.Expect(len(result)).To(BeEquivalentTo(0))
+	tt.Expect(len(result)).To(Equal(0))
 }

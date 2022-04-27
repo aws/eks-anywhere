@@ -10,19 +10,19 @@ import (
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/helm"
+	"github.com/aws/eks-anywhere/pkg/registry"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
-func NewRegistry(ctx context.Context, deps *dependencies.Dependencies, registry, kubeVersion string) (BundleRegistry, error) {
-	if registry != "" {
-		username, password, err := helm.ReadRegistryCredentials()
+func NewRegistry(ctx context.Context, deps *dependencies.Dependencies, registryName, kubeVersion string) (BundleRegistry, error) {
+	if registryName != "" {
+		username, password, err := registry.ReadCredentials()
 		if err != nil {
 			return nil, err
 		}
 		registry := NewCustomRegistry(
 			deps.Helm,
-			registry,
+			registryName,
 			username,
 			password,
 		)

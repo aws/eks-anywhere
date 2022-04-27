@@ -1,11 +1,11 @@
-package helm
+package registry
 
 import (
 	"errors"
 	"os"
 )
 
-func ReadRegistryCredentials() (username, password string, err error) {
+func ReadCredentials() (username, password string, err error) {
 	username, ok := os.LookupEnv("REGISTRY_USERNAME")
 	if !ok {
 		return "", "", errors.New("please set REGISTRY_USERNAME env var")

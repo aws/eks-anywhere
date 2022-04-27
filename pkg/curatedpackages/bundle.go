@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	RepositoryName = "eks-anywhere-packages-bundles"
+	ImageRepositoryName = "eks-anywhere-packages-bundles"
 )
 
 type Reader interface {

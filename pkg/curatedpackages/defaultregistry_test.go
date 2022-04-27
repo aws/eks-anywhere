@@ -59,7 +59,7 @@ func TestDefaultRegistrySucceeds(t *testing.T) {
 	)
 	result, err := tt.Command.GetRegistryBaseRef(tt.ctx)
 	tt.Expect(err).To(BeNil())
-	tt.Expect(result).To(BeEquivalentTo("test_host/test_env/" + curatedpackages.RepositoryName))
+	tt.Expect(result).To(BeEquivalentTo("test_host/test_env/" + curatedpackages.ImageRepositoryName))
 }
 
 func TestDefaultRegistryUnknownKubeVersionFails(t *testing.T) {
