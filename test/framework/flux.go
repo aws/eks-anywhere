@@ -31,12 +31,42 @@ const (
 	gitRepositoryVar    = "T_GIT_REPOSITORY"
 	githubUserVar       = "T_GITHUB_USER"
 	githubTokenVar      = "EKSA_GITHUB_TOKEN"
+	gitSshKey           = "T_GIT_SSH_AUTHORIZED_KEY"
 )
 
 var fluxRequiredEnvVars = []string{
 	gitRepositoryVar,
 	githubUserVar,
 	githubTokenVar,
+}
+
+func WithFlux(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
+		gitOpsConfigName := gitOpsConfigName()
+		e.FluxConfig = api.NewFluxConfig(gitOpsConfigName,
+			api.WithPersonalGithubRepository(true),
+			api.WithStringFromEnvVarFluxConfig(gitRepositoryVar, api.WithGithubRepository),
+			api.WithStringFromEnvVarFluxConfig(githubUserVar, api.WithGithubOwner),
+			api.WithStringFromEnvVarFluxConfig(gitSshKey, api.WithGitRepositoryUrl),
+			api.WithSystemNamespace("default"),
+			api.WithClusterConfigPath("path2"),
+			api.WithBranch("main"),
+		)
+		e.clusterFillers = append(e.clusterFillers,
+			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.FluxConfigKind),
+		)
+		// apply the rest of the opts passed into the function
+		for _, opt := range opts {
+			opt(e.FluxConfig)
+		}
+		// Adding Job ID suffix to repo name
+		// e2e test jobs have Job Id with a ":", replacing with "-"
+		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
+		withFluxRepositorySuffix(jobId)(e.FluxConfig)
+		// Setting GitRepo cleanup since GitOps configured
+		e.T.Cleanup(e.CleanUpGithubRepo)
+	}
 }
 
 func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
@@ -52,7 +82,7 @@ func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 			api.WithFluxBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(gitOpsConfigName),
+			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.GitOpsConfigKind),
 		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
@@ -61,7 +91,7 @@ func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 		// Adding Job ID suffix to repo name
 		// e2e test jobs have Job Id with a ":", replacing with "-"
 		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxRepositorySuffix(jobId)(e.GitOpsConfig)
+		withFluxLegacyRepositorySuffix(jobId)(e.GitOpsConfig)
 		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGithubRepo)
 	}
@@ -83,10 +113,17 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
-func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
+func withFluxLegacyRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	return func(c *v1alpha1.GitOpsConfig) {
 		repository := c.Spec.Flux.Github.Repository
 		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
+	}
+}
+
+func withFluxRepositorySuffix(suffix string) api.FluxConfigOpt {
+	return func(c *v1alpha1.FluxConfig) {
+		repository := c.Spec.Github.Repository
+		c.Spec.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 
