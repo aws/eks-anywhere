@@ -25,7 +25,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	case fluxConfig.Spec.Github != nil:
 		githubToken, err := github.GetGithubAccessTokenFromEnv()
 		if err != nil {
-			return tools, err
+			return nil, err
 		}
 
 		repo = fluxConfig.Spec.Github.Repository
@@ -39,7 +39,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return tools, fmt.Errorf("building github provider: %v", err)
 		}
 	default:
-		return tools, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
+		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
 	}
 
 	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
@@ -48,7 +48,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 
 	repoWriter, err := newRepositoryWriter(writer, repo)
 	if err != nil {
-		return tools, err
+		return nil, err
 	}
 	tools.Writer = repoWriter
 
