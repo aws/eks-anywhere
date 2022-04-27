@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
@@ -13,18 +14,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
-type GitTools struct {
-	Provider git.ProviderClient
-	Client   git.Client
-	Writer   filewriter.FileWriter
-}
-
-func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
+func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*addonclients.GitTools, error) {
 	var clientOptions []gitclient.Opt
 	var repo string
 	var err error
 
-	tools := &GitTools{}
+	tools := &addonclients.GitTools{}
 
 	switch {
 	case fluxConfig.Spec.Github != nil:
