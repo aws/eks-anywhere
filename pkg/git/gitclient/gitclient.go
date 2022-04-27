@@ -301,7 +301,7 @@ type GoGit interface {
 
 type goGit struct{}
 
-func (ggc *goGit) Clone(ctx context.Context, dir string, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
+func (gg *goGit) Clone(ctx context.Context, dir string, repourl string, auth transport.AuthMethod) (*gogit.Repository, error) {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
@@ -312,29 +312,29 @@ func (ggc *goGit) Clone(ctx context.Context, dir string, repourl string, auth tr
 	})
 }
 
-func (ggc *goGit) OpenDir(dir string) (*gogit.Repository, error) {
+func (gg *goGit) OpenDir(dir string) (*gogit.Repository, error) {
 	return gogit.PlainOpen(dir)
 }
 
-func (ggc *goGit) OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error) {
+func (gg *goGit) OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error) {
 	return r.Worktree()
 }
 
-func (ggc *goGit) AddGlob(f string, w *gogit.Worktree) error {
+func (gg *goGit) AddGlob(f string, w *gogit.Worktree) error {
 	return w.AddGlob(f)
 }
 
-func (ggc *goGit) Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error) {
+func (gg *goGit) Commit(m string, sig *object.Signature, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Commit(m, &gogit.CommitOptions{
 		Author: sig,
 	})
 }
 
-func (ggc *goGit) CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error) {
+func (gg *goGit) CommitObject(r *gogit.Repository, h plumbing.Hash) (*object.Commit, error) {
 	return r.CommitObject(h)
 }
 
-func (ggc *goGit) PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error {
+func (gg *goGit) PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
@@ -343,37 +343,37 @@ func (ggc *goGit) PushWithContext(ctx context.Context, r *gogit.Repository, auth
 	})
 }
 
-func (ggc *goGit) PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error {
+func (gg *goGit) PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error {
 	ctx, cancel := context.WithTimeout(ctx, gitTimeout)
 	defer cancel()
 
 	return w.PullContext(ctx, &gogit.PullOptions{RemoteName: gogit.DefaultRemoteName, Auth: auth, ReferenceName: ref})
 }
 
-func (ggc *goGit) Head(r *gogit.Repository) (*plumbing.Reference, error) {
+func (gg *goGit) Head(r *gogit.Repository) (*plumbing.Reference, error) {
 	return r.Head()
 }
 
-func (ggc *goGit) Init(dir string) (*gogit.Repository, error) {
+func (gg *goGit) Init(dir string) (*gogit.Repository, error) {
 	return gogit.PlainInit(dir, false)
 }
 
-func (ggc *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
+func (gg *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
 	return worktree.Checkout(opts)
 }
 
-func (ggc *goGit) Create(r *gogit.Repository, url string) (*gogit.Remote, error) {
+func (gg *goGit) Create(r *gogit.Repository, url string) (*gogit.Remote, error) {
 	return r.CreateRemote(&config.RemoteConfig{
 		Name: gogit.DefaultRemoteName,
 		URLs: []string{url},
 	})
 }
 
-func (ggc *goGit) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
+func (gg *goGit) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
 	return repo.CreateBranch(config)
 }
 
-func (ggc *goGit) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
+func (gg *goGit) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
 	remote, err := r.Remote(gogit.DefaultRemoteName)
 	if err != nil {
 		if errors.As(err, &gogit.ErrRemoteNotFound) {
@@ -388,10 +388,10 @@ func (ggc *goGit) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([
 	return refList, nil
 }
 
-func (ggc *goGit) Remove(f string, w *gogit.Worktree) (plumbing.Hash, error) {
+func (gg *goGit) Remove(f string, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Remove(f)
 }
 
-func (ggc *goGit) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
+func (gg *goGit) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
 	return r.Storer.SetReference(p)
 }
