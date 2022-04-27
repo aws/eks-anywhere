@@ -26,7 +26,7 @@ type createTestSetup struct {
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
-	eksd             *mocks.MockEksd
+	eksd             *mocks.MockEksdInstaller
 	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
@@ -44,7 +44,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	addonManager := mocks.NewMockAddonManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
-	eksd := mocks.NewMockEksd(mockCtrl)
+	eksd := mocks.NewMockEksdInstaller(mockCtrl)
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer, eksd)

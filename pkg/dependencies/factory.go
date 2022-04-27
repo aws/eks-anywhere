@@ -62,6 +62,7 @@ type Dependencies struct {
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
 	EksdInstaller             *eksd.Installer
+	EksdUpgrader              *eksd.Upgrader
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
@@ -699,6 +700,26 @@ func (f *Factory) WithEksdInstaller() *Factory {
 		}
 
 		f.dependencies.EksdInstaller = eksd.NewEksdInstaller(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
+			},
+			f.dependencies.FileReader,
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithEksdUpgrader() *Factory {
+	f.WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksdUpgrader != nil {
+			return nil
+		}
+
+		f.dependencies.EksdUpgrader = eksd.NewUpgrader(
 			&eksdInstallerClient{
 				f.dependencies.Kubectl,
 			},
