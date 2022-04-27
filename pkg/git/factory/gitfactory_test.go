@@ -54,9 +54,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 
 			_, w := test.NewWriter(t)
 
-			factory := gitFactory.New()
-
-			_, _, _, err := factory.Build(context.Background(), cluster, fluxConfig, w)
+			_, err := gitFactory.Build(context.Background(), cluster, fluxConfig, w)
 			if err != nil {
 				t.Errorf("gitfactory.BuldProvider returned err, wanted nil. err: %v", err)
 			}

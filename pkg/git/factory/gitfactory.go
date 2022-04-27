@@ -13,36 +13,54 @@ import (
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
-type gitProviderFactory struct{}
-
-func New() *gitProviderFactory {
-	return &gitProviderFactory{}
+type GitTools struct {
+	Provider git.ProviderClient
+	Client   git.Client
+	Writer   filewriter.FileWriter
 }
 
-func (g *gitProviderFactory) Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (git.ProviderClient, git.Client, filewriter.FileWriter, error) {
-	var providerClient git.ProviderClient
-	var gitClient git.Client
-	var repoWriter filewriter.FileWriter
+func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
+	var clientOptions []gitclient.Opt
+	var repo string
 	var err error
+
+	tools := &GitTools{}
 
 	switch {
 	case fluxConfig.Spec.Github != nil:
-		providerClient, gitClient, repoWriter, err = g.buildGithubProvider(ctx, cluster.Name, fluxConfig.Spec.Github.Owner, fluxConfig.Spec.Github.Repository, fluxConfig.Spec.Github.Personal, writer)
+		githubToken, err := github.GetGithubAccessTokenFromEnv()
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("building github provider: %v", err)
+			return tools, err
+		}
+
+		repo = fluxConfig.Spec.Github.Repository
+		clientOptions = append(clientOptions, gitclient.WithRepositoryUrl(github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)))
+
+		clientAuth := git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
+		clientOptions = append(clientOptions, gitclient.WithTokenAuth(clientAuth))
+
+		tools.Provider, err = buildGithubProvider(ctx, clientAuth, fluxConfig.Spec.Github.Owner, repo, fluxConfig.Spec.Github.Personal)
+		if err != nil {
+			return tools, fmt.Errorf("building github provider: %v", err)
 		}
 	default:
-		return nil, nil, nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
+		return tools, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
 	}
-	return providerClient, gitClient, repoWriter, nil
+
+	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
+	clientOptions = append(clientOptions, gitclient.WithRepositoryDirectory(localGitRepoPath))
+	tools.Client = gitclient.New(clientOptions...)
+
+	repoWriter, err := newRepositoryWriter(writer, repo)
+	if err != nil {
+		return tools, err
+	}
+	tools.Writer = repoWriter
+
+	return tools, nil
 }
 
-func (g *gitProviderFactory) buildGithubProvider(ctx context.Context, clusterName string, owner string, repo string, personal bool, writer filewriter.FileWriter) (git.ProviderClient, git.Client, filewriter.FileWriter, error) {
-	token, err := github.GetGithubAccessTokenFromEnv()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	auth := git.TokenAuth{Token: token, Username: owner}
+func buildGithubProvider(ctx context.Context, auth git.TokenAuth, owner string, repo string, personal bool, ) (git.ProviderClient, error) {
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
 	githubProviderOpts := github.Options{
@@ -52,18 +70,10 @@ func (g *gitProviderFactory) buildGithubProvider(ctx context.Context, clusterNam
 	}
 	provider, err := github.New(githubProviderClient, githubProviderOpts, auth)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, err
 	}
 
-	localGitRepoPath := filepath.Join(clusterName, "git", repo)
-	client := gitclient.New(auth, localGitRepoPath, github.RepoUrl(owner, repo))
-
-	w, err := newRepositoryWriter(writer, repo)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	return provider, client, w, nil
+	return provider, nil
 }
 
 func newRepositoryWriter(writer filewriter.FileWriter, repository string) (filewriter.FileWriter, error) {
