@@ -22,10 +22,6 @@ REPO="homebrew-tap"
 ORIGIN_ORG="eks-anywhere-brew-pr-bot"
 UPSTREAM_ORG="aws"
 
-PR_TITLE="Update eks-anywhere formula for ${LATEST_VERSION}"
-COMMIT_MESSAGE="[PR BOT] Update eks-anywhere brew formula for ${LATEST_VERSION}"
-PR_BRANCH="eks-anywhere-formula-update"
-
 PR_BODY=$(cat <<EOF
 Issue #, if available:
 
@@ -39,18 +35,16 @@ EOF
 cd ${SCRIPT_ROOT}/
 cd ../../
 gh auth login --with-token < /secrets/github-secrets/token
-gh repo clone ${ORIGIN_ORG}/${REPO}
 
 cd ${SCRIPT_ROOT}
 BREW_UPDATE_SCRIPT="brew_formula_update.sh"
 if [ ! -f "$BREW_UPDATE_SCRIPT" ]
 then
-  echo "The script to update the brew formula does not exists in this folder, exiting.."
+  echo "The script to update the brew formula does not exist in this folder, exiting.."
   exit 1
 fi
 
-chmod +x $BREW_UPDATE_SCRIPT
-./$BREW_UPDATE_SCRIPT
+LATEST_VERSION=$(echo $(./$BREW_UPDATE_SCRIPT))
 
 cd ../../${REPO}
 git config --global push.default current
@@ -60,6 +54,10 @@ git remote -v
 
 git remote set-url origin git@github.com:${ORIGIN_ORG}/${REPO}.git
 git remote set-url upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
+
+PR_TITLE="Update eks-anywhere formula for ${LATEST_VERSION}"
+COMMIT_MESSAGE="[PR BOT] Update eks-anywhere brew formula for ${LATEST_VERSION}"
+PR_BRANCH="eks-anywhere-formula-update"
 
 git checkout -b $PR_BRANCH
 
@@ -79,6 +77,6 @@ echo "Added ssh private key\n"
 
 PR_EXISTS=$(gh pr list | grep -c "${PR_BRANCH}" || true)
 if [ $PR_EXISTS -eq 0 ]; then
-  gh pr create --title "$PR_TITLE" --body "$PR_BODY"
+  gh pr create --title "$PR_TITLE" --body "$PR_BODY" --repo "${UPSTREAM_ORG}/${REPO}"
 fi
 

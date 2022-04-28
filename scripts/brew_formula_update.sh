@@ -55,7 +55,7 @@ envsubst '$VERSION:$darwin_url:$darwin_sha256:$linux_url:$linux_sha256' \
  < "${EKSA_TEMPLATE}" \
  > "${EKSA_FORMULA}"
 
-echo "Brew file at ${EKSA_FORMULA} updated successfully."
+echo "v${VERSION}"
 
 rm release.yaml
 rm latest_release.yaml
