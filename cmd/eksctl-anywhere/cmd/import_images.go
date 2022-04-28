@@ -6,13 +6,13 @@ package cmd
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"log"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"

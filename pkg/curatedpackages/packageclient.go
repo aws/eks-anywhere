@@ -2,7 +2,6 @@ package curatedpackages
 
 import (
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -12,19 +11,17 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 const (
-	minWidth        = 16
-	tabWidth        = 8
-	padding         = 0
-	padChar         = '\t'
-	flags           = 0
-	CustomName      = "my-"
-	kind            = "Package"
-	filePermission  = 0o600
-	dirPermission   = 0o700
-	packageLocation = "curated-packages"
+	minWidth   = 16
+	tabWidth   = 8
+	padding    = 0
+	padChar    = '\t'
+	flags      = 0
+	CustomName = "my-"
+	kind       = "Package"
 )
 
 type PackageClient struct {
