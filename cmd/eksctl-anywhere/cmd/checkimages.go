@@ -13,8 +13,9 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
+	imagesUtil "github.com/aws/eks-anywhere/release/pkg/images"
 )
 
 type checkImagesOptions struct {
@@ -51,7 +52,6 @@ var checkImagesCommand = &cobra.Command{
 }
 
 func checkImages(context context.Context, spec string) error {
-	docker := executables.BuildDockerExecutable()
 	images, err := getImages(spec)
 	if err != nil {
 		return err
@@ -75,16 +75,14 @@ func checkImages(context context.Context, spec string) error {
 		}
 	}
 
+	authHeader := ""
 	for _, image := range images {
 		myImageUri := strings.ReplaceAll(image.URI, constants.DefaultRegistry, myRegistry)
-		if image.ImageDigest != "" {
-			fmt.Printf("%s@%s\n", myImageUri, image.ImageDigest)
+		if authHeader, err = imagesUtil.PollForExistenceV2(myImageUri, authHeader); err != nil {
+			fmt.Println(err.Error())
+			logger.MarkFail(myImageUri)
 		} else {
-			fmt.Printf("%s\n", myImageUri)
-		}
-
-		if err := docker.PullImage(context, myImageUri); err != nil {
-			return fmt.Errorf("failed to pull image from %v", myImageUri)
+			logger.MarkPass(myImageUri)
 		}
 	}
 
