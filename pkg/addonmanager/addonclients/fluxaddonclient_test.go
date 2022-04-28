@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	gitMocks "github.com/aws/eks-anywhere/pkg/git/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -401,9 +402,9 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	flux := addonClientMocks.NewMockFlux(mockCtrl)
 
-	gitProvider := addonClientMocks.NewMockGitProviderClient(mockCtrl)
+	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
 
-	gitClient := addonClientMocks.NewMockGitClient(mockCtrl)
+	gitClient := gitMocks.NewMockClient(mockCtrl)
 	gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	gitClient.EXPECT().Add(eksaSystemDirPath).Return(nil)
 	gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
@@ -584,10 +585,10 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	expectedClusterPath := "clusters/management-cluster"
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
-	gitProvider := addonClientMocks.NewMockGitProviderClient(mockCtrl)
+	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
 	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
-	gitClient := addonClientMocks.NewMockGitClient(mockCtrl)
+	gitClient := gitMocks.NewMockClient(mockCtrl)
 	gitClient.EXPECT().Clone(ctx).Return(nil)
 	gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	gitClient.EXPECT().Remove(expectedClusterPath).Return(nil)
@@ -619,10 +620,10 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 	expectedClusterPath := "clusters/management-cluster/workload-cluster/" + constants.EksaSystemNamespace
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
-	gitProvider := addonClientMocks.NewMockGitProviderClient(mockCtrl)
+	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
 	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
-	gitClient := addonClientMocks.NewMockGitClient(mockCtrl)
+	gitClient := gitMocks.NewMockClient(mockCtrl)
 	gitClient.EXPECT().Clone(ctx).Return(nil)
 	gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	gitClient.EXPECT().Remove(expectedClusterPath).Return(nil)
@@ -708,8 +709,8 @@ type fluxTest struct {
 	*testing.T
 	f           *addonclients.FluxAddonClient
 	flux        *addonClientMocks.MockFlux
-	gitClient   *addonClientMocks.MockGitClient
-	gitProvider *addonClientMocks.MockGitProviderClient
+	gitClient   *gitMocks.MockClient
+	gitProvider *gitMocks.MockProviderClient
 	clusterSpec *c.Spec
 	gitOptions  *gitFactory.GitTools
 	ctx         context.Context
@@ -717,8 +718,8 @@ type fluxTest struct {
 
 func newTest(t *testing.T) *fluxTest {
 	ctrl := gomock.NewController(t)
-	gitProvider := addonClientMocks.NewMockGitProviderClient(ctrl)
-	gitClient := addonClientMocks.NewMockGitClient(ctrl)
+	gitProvider := gitMocks.NewMockProviderClient(ctrl)
+	gitClient := gitMocks.NewMockClient(ctrl)
 	flux := addonClientMocks.NewMockFlux(ctrl)
 	_, w := test.NewWriter(t)
 	gitOptions := &gitFactory.GitTools{
@@ -851,16 +852,16 @@ func fluxBundle() releasev1alpha1.FluxBundle {
 
 type mocks struct {
 	flux        *addonClientMocks.MockFlux
-	gitProvider *addonClientMocks.MockGitProviderClient
-	gitClient   *addonClientMocks.MockGitClient
+	gitProvider *gitMocks.MockProviderClient
+	gitClient   *gitMocks.MockClient
 }
 
 func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *gitFactory.GitTools) {
 	mockCtrl := gomock.NewController(t)
 	m := &mocks{
 		flux:        addonClientMocks.NewMockFlux(mockCtrl),
-		gitProvider: addonClientMocks.NewMockGitProviderClient(mockCtrl),
-		gitClient:   addonClientMocks.NewMockGitClient(mockCtrl),
+		gitProvider: gitMocks.NewMockProviderClient(mockCtrl),
+		gitClient:   gitMocks.NewMockClient(mockCtrl),
 	}
 	_, w := test.NewWriter(t)
 	gitTools := &gitFactory.GitTools{
