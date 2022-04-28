@@ -300,6 +300,43 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	}
 }
 
+func TestGoGitValidate(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantErr    bool
+		throwError error
+	}{
+		{
+			name:    "validate success",
+			wantErr: false,
+		},
+		{
+			name:       "invalid repository error",
+			wantErr:    true,
+			throwError: fmt.Errorf("remote repository does not exist"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, client := newGoGit(t)
+
+			g := &gitclient.GitClient{
+				RepoUrl: "testurl",
+				Client:  client,
+			}
+			remote := &goGit.Remote{}
+
+			client.EXPECT().NewRemote(g.RepoUrl, goGit.DefaultRemoteName).Return(remote)
+			client.EXPECT().ListWithContext(ctx, remote, g.Auth).Return([]*plumbing.Reference{}, tt.throwError)
+
+			err := g.Validate(ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Clone() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func newGoGit(t *testing.T) (context.Context, *mockGitClient.MockGoGit) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
