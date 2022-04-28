@@ -456,13 +456,13 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 	f, m, _ := newAddonClient(t)
 
 	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
-	m.gitClient.EXPECT().Clone(ctx).MaxTimes(2).Return(errors.New("failed to clone repo"))
+	m.gitClient.EXPECT().Clone(ctx).MaxTimes(2).Return(errors.New("failed to cloneIfExists repo"))
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 	err := f.UpdateGitEksaSpec(ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})
 	if err == nil {
-		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = nil, want failed to clone repo")
+		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = nil, want failed to cloneIfExists repo")
 	}
 }
 
