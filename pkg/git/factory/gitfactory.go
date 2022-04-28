@@ -3,9 +3,12 @@ package gitfactory
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"
@@ -35,7 +38,6 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		if err != nil {
 			return nil, err
 		}
-
 		repo = fluxConfig.Spec.Github.Repository
 		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
 		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
@@ -43,6 +45,11 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
+	case fluxConfig.Spec.Git != nil:
+		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
+		repo = strings.TrimSuffix(repoUrl, filepath.Ext(repoUrl))
+		token := os.Getenv(config.EksaGitPasswordTokenEnv)
+		tokenAuth = &git.TokenAuth{Token: token, Username: fluxConfig.Spec.Git.Username}
 	default:
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
 	}
