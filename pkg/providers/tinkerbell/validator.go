@@ -181,17 +181,6 @@ func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.Hard
 	return nil
 }
 
-func (v *Validator) ValidateAndPopulateTemplateForUpgrade(ctx context.Context, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, templateConfig *v1alpha1.TinkerbellTemplateConfig, imgUrl string, k8sVersion string) error {
-	// @TODO: Add any additional template validations here
-
-	err := v.ValidateAndPopulateTemplate(ctx, datacenterConfig, templateConfig)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (v *Validator) ValidateAndPopulateTemplate(ctx context.Context, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, templateConfig *v1alpha1.TinkerbellTemplateConfig) error {
 	for _, task := range templateConfig.Spec.Template.Tasks {
 		for _, action := range task.Actions {
@@ -230,14 +219,14 @@ func (v *Validator) ValidateAndPopulateTemplate(ctx context.Context, datacenterC
 	return nil
 }
 
-// ValidateMinHardwareAvailableForCreate ensures there is sufficient hardware registered relative to the
+// ValidateMinimumRequiredTinkerbellHardwareAvailable ensures there is sufficient hardware registered relative to the
 // sum of requested control plane, etcd and worker node counts.
 // The system requires hardware >= to requested provisioning.
-// ValidateMinHardwareAvailableForCreate requires v.ValidateHardwareConfig() to be called first.
-func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterSpec) error {
-	// ValidateMinHardwareAvailableForCreate relies on v.hardwareConfig being valid. A call to
+// ValidateMinimumRequiredTinkerbellHardwareAvailable requires v.ValidateHardwareConfig() to be called first.
+func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1alpha1.ClusterSpec) error {
+	// ValidateMinimumRequiredTinkerbellHardwareAvailable relies on v.hardwareConfig being valid. A call to
 	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
-	// prior to calling ValidateMinHardwareAvailableForCreate. We should decouple validation including
+	// prior to calling ValidateMinimumRequiredTinkerbellHardwareAvailable. We should decouple validation including
 	// isolation of io in the parsing of hardware config.
 
 	requestedNodesCount := spec.ControlPlaneConfiguration.Count +
@@ -255,38 +244,6 @@ func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterS
 			requestedNodesCount,
 		)
 	}
-
-	return nil
-}
-
-// ValidateMinHardwareAvailableForUpgrade ensures there is sufficient hardware registered relative to the
-// sum of requested control plane, etcd and worker node counts.
-// The system requires hardware >= to requested provisioning.
-// ValidateMinHardwareAvailableForUpgrade requires v.ValidateHardwareConfig() to be called first.
-func (v *Validator) ValidateMinHardwareAvailableForUpgrade(spec v1alpha1.ClusterSpec, maxSurge int) error {
-
-	// @TODO: Add # of available hardware validation here
- 
-	// ValidateMinHardwareAvailableForUpgrade relies on v.hardwareConfig being valid. A call to
-	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
-	// prior to calling ValidateMinTinkerbellHardwareAvailableForUpgrade. We should decouple validation including
-	// isolation of io in the parsing of hardware config.
-
-	/* requestedNodesCount := spec.ControlPlaneConfiguration.Count + maxSurge +
-		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations) + maxSurge
-
-	// Optional external etcd configuration.
-	if spec.ExternalEtcdConfiguration != nil {
-		requestedNodesCount += spec.ExternalEtcdConfiguration.Count + maxSurge
-	}
-
-	if len(v.hardwareConfig.Hardwares) < requestedNodesCount {
-		return fmt.Errorf(
-			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			len(v.hardwareConfig.Hardwares),
-			requestedNodesCount,
-		)
-	} */
 
 	return nil
 }
