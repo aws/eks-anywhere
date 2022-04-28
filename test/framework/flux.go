@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -166,11 +167,11 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 }
 
@@ -190,11 +191,11 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 
 	if err = e.validateInitialFluxState(ctx); err != nil {
@@ -213,11 +214,11 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.validateGitopsRepoContent(gitOptions)
+	e.validateGitopsRepoContent(gitTools)
 }
 
 func (e *ClusterE2ETest) CleanUpGithubRepo() {
@@ -229,12 +230,12 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitOptions, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
-	repo, err := gitOptions.Git.GetRepo(ctx)
+	repo, err := gitOptions.Provider.GetRepo(ctx)
 	if err != nil {
 		e.T.Errorf("error getting Github repo %s: %v", repoName, err)
 	}
@@ -242,7 +243,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Logf("Skipped repo deletion: remote repo %s does not exist", repoName)
 		return
 	}
-	err = gitOptions.Git.DeleteRepo(ctx, opts)
+	err = gitOptions.Provider.DeleteRepo(ctx, opts)
 	if err != nil {
 		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
 	}
@@ -323,18 +324,18 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 	}
 }
 
-func (e *ClusterE2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
+func (e *ClusterE2ETest) validateGitopsRepoContent(gitTools *gitfactory.GitTools) {
 	repoName := e.gitRepoName()
 	gitFilePath := e.clusterConfigGitPath()
 	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
 	ctx := context.Background()
-	g := gitOptions.Git
-	err := g.Clone(ctx)
+	gc := gitTools.Client
+	err := gc.Clone(ctx)
 	if err != nil {
 		e.T.Errorf("Error cloning github repo: %v", err)
 	}
 	branch := e.gitBranch()
-	err = g.Branch(branch)
+	err = gc.Branch(branch)
 	if err != nil {
 		e.T.Errorf("Error checking out branch: %v", err)
 	}
@@ -696,7 +697,7 @@ func (e *ClusterE2ETest) updateEKSASpecInGit(s *cluster.Spec, providersConfig pr
 
 func (e *ClusterE2ETest) pushConfigChanges() error {
 	p := e.clusterConfGitPath()
-	g := e.GitProvider
+	g := e.GitClient
 	if err := g.Add(p); err != nil {
 		return err
 	}

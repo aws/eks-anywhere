@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -61,6 +62,7 @@ type Dependencies struct {
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
+	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
 	AnalyzerFactory           diagnostics.AnalyzerFactory
@@ -732,17 +734,39 @@ func (f *Factory) WithEksdUpgrader() *Factory {
 	return f
 }
 
+func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+	f.WithWriter()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Git != nil {
+			return nil
+		}
+
+		if fluxConfig == nil {
+			return nil
+		}
+
+		tools, err := gitfactory.Build(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
+		if err != nil {
+			return fmt.Errorf("creating Git provider: %v", err)
+		}
+
+		err = tools.Provider.Validate(ctx)
+		if err != nil {
+			return fmt.Errorf("validating provider: %v", err)
+		}
+
+		f.dependencies.Git = tools
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
-	f.WithWriter().WithFlux().WithKubectl()
+	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.FluxAddonClient != nil {
 			return nil
-		}
-
-		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
-		if err != nil {
-			return err
 		}
 
 		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
@@ -750,7 +774,7 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,
 			},
-			gitOpts,
+			f.dependencies.Git,
 		)
 
 		return nil
