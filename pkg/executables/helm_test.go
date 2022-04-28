@@ -99,3 +99,43 @@ func TestHelmSaveChartSuccess(t *testing.T) {
 
 	tt.Expect(tt.h.SaveChart(tt.ctx, url, version, destinationFolder)).To(Succeed())
 }
+
+func TestHelmInstallChartSuccess(t *testing.T) {
+	tt := newHelmTest(t)
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	values := []string{"key1=value1"}
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--insecure-skip-tls-verify", "--set", "key1=value1", "--kubeconfig", kubeconfig,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, values)).To(Succeed())
+}
+
+func TestHelmGetValueArgs(t *testing.T) {
+	tests := []struct {
+		testName       string
+		values         []string
+		wantValuesArgs []string
+	}{
+		{
+			testName:       "single Helm value override",
+			values:         []string{"key1=value1"},
+			wantValuesArgs: []string{"--set", "key1=value1"},
+		},
+		{
+			testName:       "multiple Helm value overrides",
+			values:         []string{"key1=value1", "key2=value2", "key3=value3"},
+			wantValuesArgs: []string{"--set", "key1=value1", "--set", "key2=value2", "--set", "key3=value3"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if gotValuesArgs := executables.GetHelmValueArgs(tt.values); !sliceEqual(gotValuesArgs, tt.wantValuesArgs) {
+				t.Errorf("GetHelmValueArgs() = %v, want %v", gotValuesArgs, tt.wantValuesArgs)
+			}
+		})
+	}
+}

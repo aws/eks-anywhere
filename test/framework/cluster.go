@@ -63,6 +63,7 @@ type ClusterE2ETest struct {
 	KubectlClient          *executables.Kubectl
 	GitProvider            git.ProviderClient
 	GitClient              git.Client
+	HelmInstallConfig      *HelmInstallConfig
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig
@@ -657,4 +658,14 @@ func setEksctlVersionEnvVar() error {
 		}
 	}
 	return nil
+}
+
+func (e *ClusterE2ETest) InstallHelmChart() {
+	kubeconfig := e.kubeconfigFilePath()
+	ctx := context.Background()
+
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, e.HelmInstallConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
+	}
 }
