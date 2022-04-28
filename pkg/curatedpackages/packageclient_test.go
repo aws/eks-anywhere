@@ -52,6 +52,6 @@ func TestGeneratePackagesFail(t *testing.T) {
 	tt.command = curatedpackages.NewPackageClient(tt.bundle, packages...)
 
 	result, err := tt.command.GeneratePackages()
-	tt.Expect(err).To(BeNil())
-	tt.Expect(len(result)).To(Equal(0))
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(result).To(BeNil())
 }

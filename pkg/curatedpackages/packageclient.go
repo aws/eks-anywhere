@@ -2,8 +2,8 @@ package curatedpackages
 
 import (
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/tabwriter"
 
@@ -12,7 +12,6 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 const (
@@ -66,8 +65,7 @@ func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 	for _, p := range pc.packages {
 		bundlePackage, found := packageMap[strings.ToLower(p)]
 		if !found {
-			fmt.Fprintf(os.Stderr, "unknown package %q\n", p)
-			continue
+			return nil, fmt.Errorf("unknown package %q", p)
 		}
 		name := CustomName + strings.ToLower(bundlePackage.Name)
 		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion))
@@ -75,35 +73,17 @@ func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 	return packages, nil
 }
 
-func (pc *PackageClient) WritePackagesToFile(packages []packagesv1.Package, d string) error {
-	directory := filepath.Join(d, packageLocation)
-	if !validations.FileExists(directory) {
-		if err := os.MkdirAll(directory, dirPermission); err != nil {
-			return fmt.Errorf("unable to create directory %q: %w", directory, err)
-		}
-	}
-
+func (pc *PackageClient) WritePackagesToStdOut(packages []packagesv1.Package) error {
+	var output [][]byte
 	for _, p := range packages {
 		displayPackage := NewDisplayablePackage(&p)
 		content, err := yaml.Marshal(displayPackage)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "unable to parse package %s %v", p.Name, err)
-			continue
+			return fmt.Errorf("unable to parse package %s %v", p.Name, err)
 		}
-		err = writeToFile(directory, p.Name, content)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err.Error())
-			continue // or return an error to abort.
-		}
+		output = append(output, content)
 	}
-	return nil
-}
-
-func writeToFile(dir string, packageName string, content []byte) error {
-	file := filepath.Join(dir, packageName) + ".yaml"
-	if err := os.WriteFile(file, content, filePermission); err != nil {
-		return fmt.Errorf("unable to write to the file: %s %v", file, err)
-	}
+	fmt.Println(string(templater.AppendYamlResources(output...)))
 	return nil
 }
 

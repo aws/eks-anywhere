@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"log"
 	"path/filepath"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
-	"github.com/aws/eks-anywhere/pkg/registry"
 )
 
 // imagesCmd represents the images command
@@ -59,7 +59,7 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	username, password, err := registry.ReadCredentials()
+	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
 	}
