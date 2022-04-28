@@ -3,6 +3,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"time"
 
 	"github.com/google/uuid"
@@ -772,7 +773,7 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
