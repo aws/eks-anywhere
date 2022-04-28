@@ -196,6 +196,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
+	e.GitClient = g.Client
 	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 
