@@ -75,6 +75,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithTroubleshoot().
 		WithCAPIManager().
 		WithManifestReader().
+		WithUnAuthKubeClient().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -90,6 +91,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())
 	tt.Expect(deps.CAPIManager).NotTo(BeNil())
 	tt.Expect(deps.ManifestReader).NotTo(BeNil())
+	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {
