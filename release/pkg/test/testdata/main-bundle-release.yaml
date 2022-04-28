@@ -225,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: d9252270695974dedf39519f482ac10c2de1b473
+      gitCommit: 0d85782d365b6139ad6b36e5c27bb960a0bee4e4
       kindNode:
         arch:
         - amd64
@@ -390,7 +390,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.15.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -398,7 +398,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.19.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -406,7 +406,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -414,8 +414,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
-      version: v0.25.1+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
+      version: v0.29.4+abcdef1
     haproxy:
       image:
         arch:
@@ -617,7 +617,15 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-cli
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+      tinkController:
+        arch:
+        - amd64
+        description: Container image for tink-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: tink-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkServer:
         arch:
         - amd64
@@ -625,7 +633,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-server
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkWorker:
         arch:
         - amd64
@@ -633,7 +641,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-worker
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -909,7 +917,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: d9252270695974dedf39519f482ac10c2de1b473
+      gitCommit: 0d85782d365b6139ad6b36e5c27bb960a0bee4e4
       kindNode:
         arch:
         - amd64
@@ -1074,7 +1082,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.15.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1082,7 +1090,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.19.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1090,7 +1098,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1098,8 +1106,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
-      version: v0.25.1+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
+      version: v0.29.4+abcdef1
     haproxy:
       image:
         arch:
@@ -1301,7 +1309,15 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-cli
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+      tinkController:
+        arch:
+        - amd64
+        description: Container image for tink-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: tink-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkServer:
         arch:
         - amd64
@@ -1309,7 +1325,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-server
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkWorker:
         arch:
         - amd64
@@ -1317,7 +1333,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-worker
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -1593,7 +1609,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: d9252270695974dedf39519f482ac10c2de1b473
+      gitCommit: 0d85782d365b6139ad6b36e5c27bb960a0bee4e4
       kindNode:
         arch:
         - amd64
@@ -1758,7 +1774,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.15.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
@@ -1766,7 +1782,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.19.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
@@ -1774,7 +1790,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
@@ -1782,8 +1798,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
-      version: v0.25.1+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
+      version: v0.29.4+abcdef1
     haproxy:
       image:
         arch:
@@ -1985,7 +2001,15 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-cli
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+      tinkController:
+        arch:
+        - amd64
+        description: Container image for tink-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: tink-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkServer:
         arch:
         - amd64
@@ -1993,7 +2017,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-server
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       tinkWorker:
         arch:
         - amd64
@@ -2001,7 +2025,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: tink-worker
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:v0.6.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:

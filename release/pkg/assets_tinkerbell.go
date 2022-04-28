@@ -110,6 +110,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
+		TinkController:       bundleImageArtifacts["tink-controller"],
 		TinkServer:           bundleImageArtifacts["tink-server"],
 		TinkWorker:           bundleImageArtifacts["tink-worker"],
 		TinkCli:              bundleImageArtifacts["tink-cli"],

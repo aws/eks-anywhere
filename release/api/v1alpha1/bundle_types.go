@@ -266,6 +266,7 @@ type TinkerbellBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
 	KubeVip              Image    `json:"kubeVip"`
+	TinkController       Image    `json:"tinkController"`
 	TinkServer           Image    `json:"tinkServer"`
 	TinkWorker           Image    `json:"tinkWorker"`
 	TinkCli              Image    `json:"tinkCli"`

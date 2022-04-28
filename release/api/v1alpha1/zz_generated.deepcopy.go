@@ -749,6 +749,7 @@ func (in *TinkerbellBundle) DeepCopyInto(out *TinkerbellBundle) {
 	*out = *in
 	in.ClusterAPIController.DeepCopyInto(&out.ClusterAPIController)
 	in.KubeVip.DeepCopyInto(&out.KubeVip)
+	in.TinkController.DeepCopyInto(&out.TinkController)
 	in.TinkServer.DeepCopyInto(&out.TinkServer)
 	in.TinkWorker.DeepCopyInto(&out.TinkWorker)
 	in.TinkCli.DeepCopyInto(&out.TinkCli)

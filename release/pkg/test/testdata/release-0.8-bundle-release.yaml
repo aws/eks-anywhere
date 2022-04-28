@@ -450,6 +450,7 @@ spec:
       metadata: {}
       pbnj: {}
       tinkCli: {}
+      tinkController: {}
       tinkServer: {}
       tinkWorker: {}
       version: ""
@@ -952,6 +953,7 @@ spec:
       metadata: {}
       pbnj: {}
       tinkCli: {}
+      tinkController: {}
       tinkServer: {}
       tinkWorker: {}
       version: ""
@@ -1454,6 +1456,7 @@ spec:
       metadata: {}
       pbnj: {}
       tinkCli: {}
+      tinkController: {}
       tinkServer: {}
       tinkWorker: {}
       version: ""
