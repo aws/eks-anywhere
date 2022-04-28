@@ -40,6 +40,6 @@ func (dr *DefaultRegistry) GetRegistryBaseRef(ctx context.Context) (string, erro
 	if len(controllerImage) < 2 {
 		return "", fmt.Errorf("unable to locate registry location for: %s", packageController.Controller.Image())
 	}
-	registryBaseRef := fmt.Sprintf("%s/%s/%s", controllerImage[0], controllerImage[1], RepositoryName)
+	registryBaseRef := fmt.Sprintf("%s/%s/%s", controllerImage[0], controllerImage[1], ImageRepositoryName)
 	return registryBaseRef, nil
 }
