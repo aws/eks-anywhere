@@ -10,6 +10,7 @@ import (
 
 	goGithub "github.com/google/go-github/v35/github"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -25,7 +26,7 @@ const (
 
 type githubProvider struct {
 	githubProviderClient GithubClient
-	options              Options
+	config               *v1alpha1.GithubProviderConfig
 	auth                 git.TokenAuth
 }
 
@@ -47,10 +48,10 @@ type GithubClient interface {
 	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
 
-func New(githubProviderClient GithubClient, opts Options, auth git.TokenAuth) (*githubProvider, error) {
+func New(githubProviderClient GithubClient, config *v1alpha1.GithubProviderConfig, auth git.TokenAuth) (*githubProvider, error) {
 	return &githubProvider{
 		githubProviderClient: githubProviderClient,
-		options:              opts,
+		config:               config,
 		auth:                 auth,
 	}, nil
 }
@@ -64,8 +65,8 @@ func (g *githubProvider) CreateRepo(ctx context.Context, opts git.CreateRepoOpts
 // GetRepo describes a remote repository, return the repo name if it exists.
 // If the repo does not exist, a nil repo is returned.
 func (g *githubProvider) GetRepo(ctx context.Context) (*git.Repository, error) {
-	r := g.options.Repository
-	o := g.options.Owner
+	r := g.config.Repository
+	o := g.config.Owner
 	logger.V(3).Info("Describing Github repository", "name", r, "owner", o)
 	opts := git.GetRepoOpts{Owner: o, Repository: r}
 	repo, err := g.githubProviderClient.GetRepo(ctx, opts)
@@ -95,18 +96,18 @@ func (g *githubProvider) Validate(ctx context.Context) error {
 		return err
 	}
 	logger.MarkPass("Github personal access token has the required repo permissions")
-	if g.options.Personal {
-		if !strings.EqualFold(g.options.Owner, *user.Login) {
-			return fmt.Errorf("the authenticated Github.com user and owner %s specified in the EKS-A gitops spec don't match; confirm access token owner is %s", g.options.Owner, g.options.Owner)
+	if g.config.Personal {
+		if !strings.EqualFold(g.config.Owner, *user.Login) {
+			return fmt.Errorf("the authenticated Github.com user and owner %s specified in the EKS-A gitops spec don't match; confirm access token owner is %s", g.config.Owner, g.config.Owner)
 		}
 		return nil
 	}
-	org, err := g.githubProviderClient.Organization(ctx, g.options.Owner)
+	org, err := g.githubProviderClient.Organization(ctx, g.config.Owner)
 	if err != nil {
-		return fmt.Errorf("the authenticated github user doesn't have proper access to github organization %s, %v", g.options.Owner, err)
+		return fmt.Errorf("the authenticated github user doesn't have proper access to github organization %s, %v", g.config.Owner, err)
 	}
 	if org == nil { // for now only checks if user belongs to the org
-		return fmt.Errorf("the authenticated github user doesn't have proper access to github organization %s", g.options.Owner)
+		return fmt.Errorf("the authenticated github user doesn't have proper access to github organization %s", g.config.Owner)
 	}
 	return nil
 }

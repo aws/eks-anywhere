@@ -36,12 +36,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		repo = fluxConfig.Spec.Github.Repository
 		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
 		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
-		githubProviderOpts := github.Options{
-			Repository: repo,
-			Owner:      fluxConfig.Spec.Github.Owner,
-			Personal:   fluxConfig.Spec.Github.Personal,
-		}
-		provider, err = buildGithubProvider(ctx, *tokenAuth, githubProviderOpts)
+		provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github)
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
@@ -77,10 +72,10 @@ func buildGitClient(ctx context.Context, tokenAuth *git.TokenAuth, repoUrl strin
 	return gitclient.New(opts...)
 }
 
-func buildGithubProvider(ctx context.Context, auth git.TokenAuth, options github.Options) (git.ProviderClient, error) {
+func buildGithubProvider(ctx context.Context, auth git.TokenAuth, config *v1alpha1.GithubProviderConfig) (git.ProviderClient, error) {
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
-	provider, err := github.New(githubProviderClient, options, auth)
+	provider, err := github.New(githubProviderClient, config, auth)
 	if err != nil {
 		return nil, err
 	}

@@ -11,6 +11,7 @@ import (
 	goGithub "github.com/google/go-github/v35/github"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github/mocks"
@@ -77,12 +78,14 @@ func TestValidate(t *testing.T) {
 			githubproviderclient.EXPECT().CheckAccessTokenPermissions("repo", tt.allPATPermissions).Return(nil)
 
 			auth := git.TokenAuth{Token: validPATValue, Username: tt.owner}
-			opts := github.Options{
-				Repository: tt.repository,
+
+			config := &v1alpha1.GithubProviderConfig{
 				Owner:      tt.owner,
+				Repository: tt.repository,
 				Personal:   tt.personal,
 			}
-			githubProvider, err := github.New(githubproviderclient, opts, auth)
+
+			githubProvider, err := github.New(githubproviderclient, config, auth)
 			if err != nil {
 				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
@@ -177,14 +180,14 @@ func TestGetRepoSucceeds(t *testing.T) {
 			testRepo := &git.Repository{Name: tt.repository, Owner: tt.owner, Organization: "", CloneUrl: "https://github.com/user/repo"}
 			githubproviderclient.EXPECT().GetRepo(context.Background(), getRepoOpts).Return(testRepo, nil)
 
-			githubProviderOpts := github.Options{
-				Repository: tt.repository,
+			config := &v1alpha1.GithubProviderConfig{
 				Owner:      tt.owner,
+				Repository: tt.repository,
 				Personal:   tt.personal,
 			}
 
 			auth := git.TokenAuth{Token: validPATValue, Username: tt.owner}
-			githubProvider, err := github.New(githubproviderclient, githubProviderOpts, auth)
+			githubProvider, err := github.New(githubproviderclient, config, auth)
 			if err != nil {
 				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
@@ -231,14 +234,14 @@ func TestGetNonExistantRepoSucceeds(t *testing.T) {
 			getRepoOpts := git.GetRepoOpts{Owner: tt.owner, Repository: tt.repository}
 			githubproviderclient.EXPECT().GetRepo(context.Background(), getRepoOpts).Return(nil, &git.RepositoryDoesNotExistError{})
 
-			githubProviderOpts := github.Options{
-				Repository: tt.repository,
+			config := &v1alpha1.GithubProviderConfig{
 				Owner:      tt.owner,
+				Repository: tt.repository,
 				Personal:   tt.personal,
 			}
 
 			auth := git.TokenAuth{Token: validPATValue, Username: tt.owner}
-			githubProvider, err := github.New(githubproviderclient, githubProviderOpts, auth)
+			githubProvider, err := github.New(githubproviderclient, config, auth)
 			if err != nil {
 				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
