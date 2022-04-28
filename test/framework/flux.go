@@ -173,6 +173,7 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 	}
 	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
+	e.GitClient = g.Client
 }
 
 func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
@@ -230,12 +231,12 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
-	repo, err := gitOptions.Provider.GetRepo(ctx)
+	repo, err := gitTools.Provider.GetRepo(ctx)
 	if err != nil {
 		e.T.Errorf("error getting Github repo %s: %v", repoName, err)
 	}
@@ -243,7 +244,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Logf("Skipped repo deletion: remote repo %s does not exist", repoName)
 		return
 	}
-	err = gitOptions.Provider.DeleteRepo(ctx, opts)
+	err = gitTools.Provider.DeleteRepo(ctx, opts)
 	if err != nil {
 		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
 	}
