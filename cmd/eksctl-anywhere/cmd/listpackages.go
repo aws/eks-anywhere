@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -56,7 +57,11 @@ func listPackages(ctx context.Context) error {
 	}
 
 	bm := curatedpackages.CreateBundleManager(lpo.kubeVersion)
-	registry, err := curatedpackages.NewRegistry(ctx, deps, lpo.registry, lpo.kubeVersion)
+	username, password, err := config.ReadCredentials()
+	if err != nil && gpOptions.registry != "" {
+		return err
+	}
+	registry, err := curatedpackages.NewRegistry(deps, lpo.registry, lpo.kubeVersion, username, password)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -54,7 +55,11 @@ func generatePackages(ctx context.Context, args []string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	bm := curatedpackages.CreateBundleManager(gpOptions.kubeVersion)
-	registry, err := curatedpackages.NewRegistry(ctx, deps, gpOptions.registry, gpOptions.kubeVersion)
+	username, password, err := config.ReadCredentials()
+	if err != nil && gpOptions.registry != "" {
+		return err
+	}
+	registry, err := curatedpackages.NewRegistry(deps, gpOptions.registry, gpOptions.kubeVersion, username, password)
 	if err != nil {
 		return err
 	}

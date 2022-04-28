@@ -1,7 +1,6 @@
 package curatedpackages
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -9,27 +8,18 @@ import (
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
-func NewRegistry(ctx context.Context, deps *dependencies.Dependencies, registryName, kubeVersion string) (BundleRegistry, error) {
+func NewRegistry(deps *dependencies.Dependencies, registryName, kubeVersion, username, password string) (BundleRegistry, error) {
 	if registryName != "" {
-		username, password, err := config.ReadCredentials()
-		if err != nil {
-			return nil, err
-		}
 		registry := NewCustomRegistry(
 			deps.Helm,
 			registryName,
 			username,
 			password,
 		)
-		err = registry.Login(ctx)
-		if err != nil {
-			return nil, err
-		}
 		return registry, nil
 	}
 	defaultRegistry := NewDefaultRegistry(
