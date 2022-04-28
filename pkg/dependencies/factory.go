@@ -752,11 +752,6 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return fmt.Errorf("creating Git provider: %v", err)
 		}
 
-		err = tools.Provider.Validate(ctx)
-		if err != nil {
-			return fmt.Errorf("validating provider: %v", err)
-		}
-
 		f.dependencies.Git = tools
 		return nil
 	})
