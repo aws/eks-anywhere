@@ -300,7 +300,7 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	}
 }
 
-func TestGoGitValidate(t *testing.T) {
+func TestGoGitValidateRemoteExists(t *testing.T) {
 	tests := []struct {
 		name       string
 		wantErr    bool
@@ -329,7 +329,7 @@ func TestGoGitValidate(t *testing.T) {
 			client.EXPECT().NewRemote(g.RepoUrl, goGit.DefaultRemoteName).Return(remote)
 			client.EXPECT().ListWithContext(ctx, remote, g.Auth).Return([]*plumbing.Reference{}, tt.throwError)
 
-			err := g.Validate(ctx)
+			err := g.ValidateRemoteExists(ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Clone() error = %v, wantErr = %v", err, tt.wantErr)
 			}

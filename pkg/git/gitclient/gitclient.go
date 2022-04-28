@@ -266,7 +266,7 @@ func (g *GitClient) Branch(name string) error {
 	return nil
 }
 
-func (g *GitClient) Validate(ctx context.Context) error {
+func (g *GitClient) ValidateRemoteExists(ctx context.Context) error {
 	logger.V(3).Info("Validating git setup", "repoUrl", g.RepoUrl)
 	remote := g.Client.NewRemote(g.RepoUrl, gogit.DefaultRemoteName)
 	// Check if we are able to make a connection to the remote by attempting to list refs
