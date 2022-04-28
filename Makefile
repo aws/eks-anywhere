@@ -330,6 +330,10 @@ update-attribution-files: generate-attribution
 generate-checksums:
 	scripts/generate_checksum.sh
 
+.PHONY: update-brew-formula
+update-brew-formula:
+	scripts/brew_formula_pr.sh
+
 .PHONY: clean
 clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
