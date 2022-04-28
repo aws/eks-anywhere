@@ -19,7 +19,7 @@ const (
 
 var eksAnywherePackagesHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
 
-func TestKubernetes122PackagesInstallSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes122BottleRocketPackagesInstallSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
