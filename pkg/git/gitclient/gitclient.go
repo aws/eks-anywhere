@@ -399,8 +399,7 @@ func (ggc *goGit) NewRemote(url, remoteName string) *gogit.Remote {
 	})
 }
 
-func (gg *goGit) Checkout(worktree *gogit.Worktree,
-	opts *gogit.CheckoutOptions) error {
+func (gg *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
 	return worktree.Checkout(opts)
 }
 
@@ -411,8 +410,7 @@ func (gg *goGit) Create(r *gogit.Repository, url string) (*gogit.Remote, error) 
 	})
 }
 
-func (gg *goGit) CreateBranch(repo *gogit.Repository,
-	config *config.Branch) error {
+func (gg *goGit) CreateBranch(repo *gogit.Repository, config *config.Branch) error {
 	return repo.CreateBranch(config)
 }
 
@@ -443,7 +441,6 @@ func (ggc *goGit) ListWithContext(ctx context.Context, r *gogit.Remote, auth tra
 	return refList, nil
 }
 
-func (gg *goGit) SetRepositoryReference(r *gogit.Repository,
-	p *plumbing.Reference) error {
+func (gg *goGit) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
 	return r.Storer.SetReference(p)
 }
