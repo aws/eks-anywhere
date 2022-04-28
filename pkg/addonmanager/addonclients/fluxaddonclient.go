@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"os"
 	"path"
 	"time"
 
@@ -178,9 +179,16 @@ func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *
 		return err
 	}
 
+	password := os.Getenv(config.EksaGitPasswordTokenEnv)
+	pkPath := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+	cliConfig := config.CliConfig{
+		GitPassword:       password,
+		GitPrivateKeyFile: pkPath,
+	}
+
 	if !cluster.ExistingManagement {
 		err := f.retrier.Retry(func() error {
-			return fc.flux.BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+			return fc.flux.BootstrapToolkitsComponentsGit(ctx, cluster, clusterSpec.FluxConfig, cliConfig)
 		})
 		if err != nil {
 			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
