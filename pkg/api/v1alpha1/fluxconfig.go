@@ -67,9 +67,6 @@ func validateFluxConfig(config *FluxConfig) error {
 }
 
 func validateGitProviderConfig(config GitProviderConfig) error {
-	if len(config.Username) <= 0 {
-		return errors.New("'username' is not set or empty in gitProviderConfig; username is a required field")
-	}
 	if len(config.RepositoryUrl) <= 0 {
 		return errors.New("'repositoryUrl' is not set or empty in gitProviderConfig; repositoryUrl is a required field")
 	}
