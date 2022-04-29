@@ -445,7 +445,7 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 	path := "clusters/cluster-name"
 	privateKeyFilePath := validPrivateKeyfilePath
 	password := validPassword
-	envmap := map[string]string{"SSH_KNOWN_HOSTS": "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"}
+	envmap := map[string]string{"SSH_KNOWN_HOSTS": ""}
 
 	tests := []struct {
 		testName     string

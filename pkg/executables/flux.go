@@ -84,7 +84,7 @@ func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *type
 	}
 
 	env := make(map[string]string)
-	env["SSH_KNOWN_HOSTS"] = "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"
+	env["SSH_KNOWN_HOSTS"] = cliConfig.GitKnownHostsFile
 	_, err := f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
 		return fmt.Errorf("executing flux bootstrap git: %v", err)
