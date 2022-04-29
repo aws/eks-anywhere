@@ -209,6 +209,7 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 
 	if cliConfig.GitPrivateKeyFile != "" {
 		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
+		dirs = append(dirs, "~/.ssh/known_hosts")
 	}
 
 	return dirs
