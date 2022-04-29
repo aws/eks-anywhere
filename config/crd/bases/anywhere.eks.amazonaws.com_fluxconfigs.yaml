@@ -54,13 +54,8 @@ spec:
                     description: Repository URL for the repository to be used with
                       flux. Can be either an SSH or HTTPS url.
                     type: string
-                  username:
-                    description: Username is the user to authenticate to the git repository
-                      with.
-                    type: string
                 required:
                 - repositoryUrl
-                - username
                 type: object
               github:
                 description: Used to specify Github provider to host the Git repo
