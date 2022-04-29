@@ -16,13 +16,14 @@ import (
 )
 
 const (
-	githubToken             = "GITHUB_TOKEN"
-	eksaGithubTokenEnv      = "EKSA_GITHUB_TOKEN"
-	validPATValue           = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	githubProvider          = "github"
-	gitProvider             = "git"
-	validPassword           = "testPassword"
-	validPrivateKeyfilePath = "testdata/nonemptyprivatekey"
+	githubToken                = "GITHUB_TOKEN"
+	eksaGithubTokenEnv         = "EKSA_GITHUB_TOKEN"
+	validPATValue              = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	githubProvider             = "github"
+	gitProvider                = "git"
+	validPassword              = "testPassword"
+	validPrivateKeyfilePath    = "testdata/nonemptyprivatekey"
+	validGitKnownHostsFilePath = "testdata/known_hosts"
 )
 
 type testFluxContext struct {
@@ -445,14 +446,14 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 	path := "clusters/cluster-name"
 	privateKeyFilePath := validPrivateKeyfilePath
 	password := validPassword
-	envmap := map[string]string{"SSH_KNOWN_HOSTS": ""}
+	envmap := map[string]string{"SSH_KNOWN_HOSTS": validGitKnownHostsFilePath}
 
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
 		fluxConfig   *v1alpha1.FluxConfig
 		wantExecArgs []interface{}
-		cliConfig    config.CliConfig
+		cliConfig    *config.CliConfig
 	}{
 		{
 			testName: "with kubeconfig",
@@ -470,9 +471,10 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--url", repoUrl, "--path", path, "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--kubeconfig", "f.kubeconfig", "--password", password,
 			},
-			cliConfig: config.CliConfig{
+			cliConfig: &config.CliConfig{
 				GitPassword:       validPassword,
 				GitPrivateKeyFile: validPrivateKeyfilePath,
+				GitKnownHostsFile: validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -491,9 +493,10 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--url", repoUrl, "--path", path, "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--branch", "main",
 			},
-			cliConfig: config.CliConfig{
+			cliConfig: &config.CliConfig{
 				GitPassword:       "",
 				GitPrivateKeyFile: validPrivateKeyfilePath,
+				GitKnownHostsFile: validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -512,9 +515,10 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 				"bootstrap", gitProvider, "--url", repoUrl, "--path", path, "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--namespace", "flux-system",
 				"--password", password,
 			},
-			cliConfig: config.CliConfig{
+			cliConfig: &config.CliConfig{
 				GitPassword:       validPassword,
 				GitPrivateKeyFile: validPrivateKeyfilePath,
+				GitKnownHostsFile: validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -525,9 +529,10 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 					Git: &v1alpha1.GitProviderConfig{},
 				},
 			},
-			cliConfig: config.CliConfig{
+			cliConfig: &config.CliConfig{
 				GitPassword:       validPassword,
 				GitPrivateKeyFile: validPrivateKeyfilePath,
+				GitKnownHostsFile: validGitKnownHostsFilePath,
 			},
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--url", "", "--path", "", "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--password", password,
