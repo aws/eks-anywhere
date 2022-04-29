@@ -419,7 +419,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, fGitOptions)
+	f := addonclients.NewFluxAddonClient(flux, fGitOptions, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -553,7 +553,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecSkip(t *testing.T) {
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	f := addonclients.NewFluxAddonClient(nil, nil)
+	f := addonclients.NewFluxAddonClient(nil, nil, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -604,7 +604,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
+	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -639,7 +639,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
+	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -666,7 +666,7 @@ func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 func TestFluxAddonClientValidationsSkipFLux(t *testing.T) {
 	tt := newTest(t)
 	tt.gitOptions = nil
-	tt.f = addonclients.NewFluxAddonClient(tt.flux, tt.gitOptions)
+	tt.f = addonclients.NewFluxAddonClient(tt.flux, tt.gitOptions, nil)
 
 	tt.Expect(tt.f.Validations(tt.ctx, tt.clusterSpec)).To(BeEmpty())
 }
@@ -727,7 +727,7 @@ func newTest(t *testing.T) *fluxTest {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, gitOptions)
+	f := addonclients.NewFluxAddonClient(flux, gitOptions, nil)
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
 		s.Cluster = clusterConfig
@@ -869,7 +869,7 @@ func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *gitFa
 		Client:   m.gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(m.flux, gitTools)
+	f := addonclients.NewFluxAddonClient(m.flux, gitTools, nil)
 	retrier := retrier.NewWithMaxRetries(2, 1)
 	f.SetRetier(retrier)
 	return f, m, gitTools
