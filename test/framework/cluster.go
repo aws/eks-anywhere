@@ -61,10 +61,13 @@ type ClusterE2ETest struct {
 	ProviderConfigB        []byte
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
-	GitProvider            git.Provider
+	GitProvider            git.ProviderClient
+	GitClient              git.Client
+	HelmInstallConfig      *HelmInstallConfig
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig
+	FluxConfig             *v1alpha1.FluxConfig
 	ProxyConfig            *v1alpha1.ProxyConfiguration
 	AWSIamConfig           *v1alpha1.AWSIamConfig
 	eksaBinaryLocation     string
@@ -655,4 +658,14 @@ func setEksctlVersionEnvVar() error {
 		}
 	}
 	return nil
+}
+
+func (e *ClusterE2ETest) InstallHelmChart() {
+	kubeconfig := e.kubeconfigFilePath()
+	ctx := context.Background()
+
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, e.HelmInstallConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
+	}
 }

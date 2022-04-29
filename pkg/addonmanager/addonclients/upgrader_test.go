@@ -11,11 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -106,12 +106,12 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
-	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.git.EXPECT().Push(tt.ctx).Return(nil)
+	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
+	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
@@ -131,12 +131,12 @@ func TestFluxUpgradeError(t *testing.T) {
 		t.Errorf("setting up files: %v", err)
 	}
 
-	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
-	m.git.EXPECT().Clone(tt.ctx).Return(nil)
-	m.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.git.EXPECT().Push(tt.ctx).Return(nil)
+	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
+	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
@@ -153,7 +153,7 @@ func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
-func setupTestFiles(t *testing.T, g *addonclients.GitOptions) error {
+func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
 	w, err := g.Writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
 	if err != nil {
 		return fmt.Errorf("failed to create test eksa-system directory: %v", err)

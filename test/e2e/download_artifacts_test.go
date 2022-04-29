@@ -24,7 +24,6 @@ func TestVSphereDownloadArtifacts(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithRegistryMirrorEndpointAndCert(),
 	)
 	runDownloadArtifactsFlow(test)
 }

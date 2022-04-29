@@ -28,6 +28,8 @@ type upgradeTestSetup struct {
 	provider           *providermocks.MockProvider
 	writer             *writermocks.MockFileWriter
 	validator          *mocks.MockValidator
+	eksdInstaller      *mocks.MockEksdInstaller
+	eksdUpgrader       *mocks.MockEksdUpgrader
 	capiManager        *mocks.MockCAPIManager
 	datacenterConfig   providers.DatacenterConfig
 	machineConfigs     []providers.MachineConfig
@@ -50,10 +52,12 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
+	eksdInstaller := mocks.NewMockEksdInstaller(mockCtrl)
+	eksdUpgrader := mocks.NewMockEksdUpgrader(mockCtrl)
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
+	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer, eksdUpgrader, eksdInstaller)
 
 	for _, e := range featureEnvVars {
 		if err := os.Setenv(e, "true"); err != nil {
@@ -77,6 +81,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
+		eksdInstaller:    eksdInstaller,
+		eksdUpgrader:     eksdUpgrader,
 		capiManager:      capiUpgrader,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
@@ -149,12 +155,18 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 		OldVersion:    "v0.0.1",
 		NewVersion:    "v0.0.2",
 	})
+	eksdChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "eks-d",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, workloadCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
+		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
 }
 
@@ -287,6 +299,14 @@ func (c *upgradeTestSetup) expectCreateEKSAResources(expectedCluster *types.Clus
 	)
 }
 
+func (c *upgradeTestSetup) expectInstallEksdManifest(expectedCLuster *types.Cluster) {
+	gomock.InOrder(
+		c.eksdInstaller.EXPECT().InstallEksdManifest(
+			c.ctx, c.newClusterSpec, expectedCLuster,
+		),
+	)
+}
+
 func (c *upgradeTestSetup) expectUpdateGitEksaSpec() {
 	gomock.InOrder(
 		c.addonManager.EXPECT().UpdateGitEksaSpec(
@@ -399,6 +419,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateEKSAResources(test.workloadCluster)
+	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
@@ -429,6 +450,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateEKSAResources(test.workloadCluster)
+	test.expectInstallEksdManifest(test.workloadCluster)
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
@@ -482,6 +504,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateEKSAResources(test.managementCluster)
+	test.expectInstallEksdManifest(test.managementCluster)
 	test.expectResumeEKSAControllerReconcile(test.managementCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.managementCluster)

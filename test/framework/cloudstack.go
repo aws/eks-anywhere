@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 const (
@@ -45,25 +46,22 @@ var requiredCloudStackEnvVars = []string{
 }
 
 type CloudStack struct {
-	t           *testing.T
-	fillers     []api.CloudStackFiller
-	cidr        string
-	podCidr     string
-	serviceCidr string
+	t              *testing.T
+	fillers        []api.CloudStackFiller
+	clusterFillers []api.ClusterFiller
+	cidr           string
+	podCidr        string
+	serviceCidr    string
 }
 
 type CloudStackOpt func(*CloudStack)
 
-func UpdateRedhatTemplate120Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate)
-}
-
 func UpdateRedhatTemplate121Var() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate)
+	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines)
 }
 
 func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
-	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOffering)
+	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
 }
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
@@ -77,8 +75,8 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 			api.WithCloudStackStringFromEnvVar(cloudstackNetworkVar, api.WithCloudStackNetwork),
 			api.WithCloudStackStringFromEnvVar(cloudstackAccountVar, api.WithCloudStackAccount),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate),
-			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOffering),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
+			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
 		},
 	}
 
@@ -93,10 +91,18 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	return c
 }
 
-func WithRedhat121() CloudStackOpt {
+func WithCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) CloudStackOpt {
+	return func(c *CloudStack) {
+		c.fillers = append(c.fillers, cloudStackMachineConfig(name, fillers...))
+
+		c.clusterFillers = append(c.clusterFillers, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+	}
+}
+
+func WithCloudStackRedhat121() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
@@ -104,7 +110,7 @@ func WithRedhat121() CloudStackOpt {
 func WithRedhat120() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
-			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplate),
+			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
 		)
 	}
 }
@@ -128,7 +134,7 @@ func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
 func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {
 	providerOutput, err := api.AutoFillCloudStackProvider(file, fillers...)
 	if err != nil {
-		c.t.Fatalf("Error customizing provider config from file: %v", err)
+		c.t.Fatalf("customizing provider config from file: %v", err)
 	}
 	return providerOutput
 }
@@ -168,13 +174,45 @@ func (c *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
 	if err != nil {
 		c.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
 	}
-	return []api.ClusterFiller{
+	c.clusterFillers = append(c.clusterFillers,
 		api.WithPodCidr(os.Getenv(podCidrVar)),
 		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
-		api.WithControlPlaneEndpointIP(controlPlaneIP),
-	}
+		api.WithControlPlaneEndpointIP(controlPlaneIP))
+	return c.clusterFillers
 }
 
 func RequiredCloudstackEnvVars() []string {
 	return requiredCloudStackEnvVars
+}
+
+func (c *CloudStack) WithNewCloudStackWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.CloudStackMachineConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = c.customizeProviderConfig(e.ClusterConfigLocation, cloudStackMachineConfig(name, fillers...))
+		var err error
+		// Using the ClusterConfigB instead of file in disk since it might have already been updated but not written to disk
+		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildCloudStackWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+		if err != nil {
+			e.T.Fatalf("filling cluster config: %v", err)
+		}
+	}
+}
+
+func cloudStackMachineConfig(name string, fillers ...api.CloudStackMachineConfigFiller) api.CloudStackFiller {
+	f := make([]api.CloudStackMachineConfigFiller, 0, len(fillers)+2)
+	// Need to add these because at this point the default fillers that assign these
+	// values to all machines have already ran
+	f = append(f,
+		api.WithCloudStackComputeOffering(os.Getenv(cloudstackComputeOfferingLargeVar)),
+		api.WithCloudStackSSHKey(os.Getenv(cloudstackSshAuthorizedKeyVar)),
+	)
+	f = append(f, fillers...)
+
+	return api.WithCloudStackMachineConfig(name, f...)
+}
+
+func buildCloudStackWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
+	// Set worker node group ref to cloudstack machine config
+	workerNodeGroup.MachineConfigKind = anywherev1.CloudStackMachineConfigKind
+	workerNodeGroup.MachineConfigName = machineConfigName
+	return workerNodeGroup.ClusterFiller()
 }

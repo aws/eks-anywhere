@@ -21,10 +21,11 @@ type Create struct {
 	clusterManager interfaces.ClusterManager
 	addonManager   interfaces.AddonManager
 	writer         filewriter.FileWriter
+	eksdInstaller  interfaces.EksdInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 ) *Create {
 	return &Create{
 		bootstrapper:   bootstrapper,
@@ -32,6 +33,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		clusterManager: clusterManager,
 		addonManager:   addonManager,
 		writer:         writer,
+		eksdInstaller:  eksdInstaller,
 	}
 }
 
@@ -51,6 +53,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		ClusterSpec:    clusterSpec,
 		Writer:         c.writer,
 		Validations:    validator,
+		EksdInstaller:  c.eksdInstaller,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
@@ -270,6 +273,12 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
+		logger.Info("Installing EKS-D components on workload cluster")
+		err = commandContext.EksdInstaller.InstallEksdCRDs(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	logger.Info("Creating EKS-A CRDs instances on workload cluster")
@@ -285,6 +294,11 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		targetCluster = commandContext.BootstrapCluster
 	}
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

@@ -2,43 +2,93 @@ package gitfactory
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/git/gitclient"
 	"github.com/aws/eks-anywhere/pkg/git/gogithub"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 )
 
-type gitProviderFactory struct {
-	GitClient github.GitClient
+type GitTools struct {
+	Provider git.ProviderClient
+	Client   git.Client
+	Writer   filewriter.FileWriter
 }
 
-type Options struct {
-	GithubGitClient github.GitClient
-}
+func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
+	var provider git.ProviderClient
+	var repo string
+	var repoUrl string
+	var tokenAuth *git.TokenAuth
+	var err error
 
-func New(opts Options) *gitProviderFactory {
-	return &gitProviderFactory{GitClient: opts.GithubGitClient}
-}
+	switch {
+	case fluxConfig.Spec.Github != nil:
+		githubToken, err := github.GetGithubAccessTokenFromEnv()
+		if err != nil {
+			return nil, err
+		}
 
-// BuildProvider will configure and return the proper Github based on the given GitOps configuration.
-func (g *gitProviderFactory) BuildProvider(ctx context.Context, fluxConfig *v1alpha1.FluxConfigSpec) (git.Provider, error) {
-	token, err := github.GetGithubAccessTokenFromEnv()
+		repo = fluxConfig.Spec.Github.Repository
+		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
+		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
+		provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github)
+		if err != nil {
+			return nil, fmt.Errorf("building github provider: %v", err)
+		}
+	default:
+		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
+	}
+
+	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
+	client := buildGitClient(ctx, tokenAuth, repoUrl, localGitRepoPath)
+
+	repoWriter, err := newRepositoryWriter(writer, repo)
 	if err != nil {
 		return nil, err
 	}
-	auth := git.TokenAuth{Token: token, Username: fluxConfig.Github.Owner}
+
+	return &GitTools{
+		Writer:   repoWriter,
+		Client:   client,
+		Provider: provider,
+	}, nil
+}
+
+func buildGitClient(ctx context.Context, tokenAuth *git.TokenAuth, repoUrl string, repo string) *gitclient.GitClient {
+	opts := []gitclient.Opt{
+		gitclient.WithRepositoryUrl(repoUrl),
+		gitclient.WithRepositoryDirectory(repo),
+	}
+	// right now, we only support token auth
+	// however, the generic git provider will support both token auth and SSH auth
+	if tokenAuth != nil {
+		opts = append(opts, gitclient.WithTokenAuth(*tokenAuth))
+	}
+	return gitclient.New(opts...)
+}
+
+func buildGithubProvider(ctx context.Context, auth git.TokenAuth, config *v1alpha1.GithubProviderConfig) (git.ProviderClient, error) {
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
-	githubProviderOpts := github.Options{
-		Repository: fluxConfig.Github.Repository,
-		Owner:      fluxConfig.Github.Owner,
-		Personal:   fluxConfig.Github.Personal,
-	}
-	provider, err := github.New(g.GitClient, githubProviderClient, githubProviderOpts, auth)
+	provider, err := github.New(githubProviderClient, config, auth)
 	if err != nil {
 		return nil, err
 	}
 
 	return provider, nil
+}
+
+func newRepositoryWriter(writer filewriter.FileWriter, repository string) (filewriter.FileWriter, error) {
+	localGitWriterPath := filepath.Join("git", repository)
+	gitwriter, err := writer.WithDir(localGitWriterPath)
+	if err != nil {
+		return nil, fmt.Errorf("creating file writer: %v", err)
+	}
+	gitwriter.CleanUpTemp()
+	return gitwriter, nil
 }
