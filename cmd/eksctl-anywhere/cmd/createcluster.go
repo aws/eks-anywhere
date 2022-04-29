@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -10,6 +11,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -129,17 +132,21 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig).
 		WithWriter().
+		WithEksdInstaller().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
 		return fmt.Errorf("provider tinkerbell is not supported in this release")
@@ -159,6 +166,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
+		deps.EksdInstaller,
 	)
 
 	var cluster *types.Cluster
@@ -183,8 +191,35 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		},
 		ManagementCluster: cluster,
 		Provider:          deps.Provider,
+		CliConfig:         cliConfig,
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	cleanup(deps, &err)
+	return err
+}
+
+func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
+	dirs := cc.mountDirs()
+	fluxConfig := clusterSpec.FluxConfig
+	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
+		return dirs
+	}
+
+	if cliConfig.GitPrivateKeyFile != "" {
+		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
+	}
+
+	return dirs
+}
+
+func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
+	cliConfig := &config.CliConfig{}
+	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
+		cliConfig.GitPassword = os.Getenv(config.EksaGitPasswordTokenEnv)
+		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+	}
+
+	return cliConfig
 }

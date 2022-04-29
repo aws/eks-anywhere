@@ -35,6 +35,8 @@ func TestAwsCredentialsFile(t *testing.T) {
 
 func TestAwsCredentialsFileEnvNotSet(t *testing.T) {
 	tt := newAwsTest(t)
+	setupContext(t, aws.EksaAwsCredentialsFileKey, credentialsFile)
+	os.Unsetenv(aws.EksaAwsCredentialsFileKey)
 	_, err := aws.AwsCredentialsFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("env 'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty"))))
 }
@@ -55,6 +57,8 @@ func TestAwsCABundlesFile(t *testing.T) {
 
 func TestAwsCABundlesFileEnvNotSet(t *testing.T) {
 	tt := newAwsTest(t)
+	setupContext(t, aws.EksaAwsCABundlesFileKey, "testdata/valid_certificates")
+	os.Unsetenv(aws.EksaAwsCABundlesFileKey)
 	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("env 'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty"))))
 }

@@ -119,7 +119,8 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 					},
 					APIServer: bootstrapv1.APIServer{
 						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+							ExtraArgs:    map[string]string{},
+							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
