@@ -147,6 +147,20 @@ func (mr *MockClientMockRecorder) Remove(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Remove", reflect.TypeOf((*MockClient)(nil).Remove), arg0)
 }
 
+// ValidateRemoteExists mocks base method.
+func (m *MockClient) ValidateRemoteExists(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateRemoteExists", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateRemoteExists indicates an expected call of ValidateRemoteExists.
+func (mr *MockClientMockRecorder) ValidateRemoteExists(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateRemoteExists", reflect.TypeOf((*MockClient)(nil).ValidateRemoteExists), arg0)
+}
+
 // MockProviderClient is a mock of ProviderClient interface.
 type MockProviderClient struct {
 	ctrl     *gomock.Controller
