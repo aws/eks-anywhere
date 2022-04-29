@@ -72,15 +72,13 @@ func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *type
 		"bootstrap",
 		gitProvider,
 		"--url", c.Git.RepositoryUrl,
-		"--username", c.Git.Username,
 		"--path", c.ClusterConfigPath,
+		"--private-key-file", cliConfig.GitPrivateKeyFile,
 		"--ssh-key-algorithm", privateKeyAlgorithm,
+		"--silent",
 	}
 
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
-	if cliConfig.GitPrivateKeyFile != "" {
-		params = append(params, "--private-key-file", cliConfig.GitPrivateKeyFile)
-	}
 	if cliConfig.GitPassword != "" {
 		params = append(params, "--password", cliConfig.GitPassword)
 	}
