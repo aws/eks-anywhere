@@ -14,17 +14,20 @@ import (
 )
 
 type GitTools struct {
-	Provider git.ProviderClient
-	Client   git.Client
-	Writer   filewriter.FileWriter
+	Provider            git.ProviderClient
+	Client              git.Client
+	Writer              filewriter.FileWriter
+	RepositoryDirectory string
 }
 
-func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitTools, error) {
-	var provider git.ProviderClient
+type GitToolsOpt func(opts *GitTools)
+
+func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, opts ...GitToolsOpt) (*GitTools, error) {
 	var repo string
 	var repoUrl string
 	var tokenAuth *git.TokenAuth
 	var err error
+	var tools GitTools
 
 	switch {
 	case fluxConfig.Spec.Github != nil:
@@ -36,7 +39,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		repo = fluxConfig.Spec.Github.Repository
 		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
 		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
-		provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github)
+		tools.Provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github)
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
@@ -44,19 +47,20 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
 	}
 
-	localGitRepoPath := filepath.Join(cluster.Name, "git", repo)
-	client := buildGitClient(ctx, tokenAuth, repoUrl, localGitRepoPath)
+	tools.RepositoryDirectory = filepath.Join(cluster.Name, "git", repo)
+	for _, opt := range opts {
+		if opt != nil {
+			opt(&tools)
+		}
+	}
+	tools.Client = buildGitClient(ctx, tokenAuth, repoUrl, tools.RepositoryDirectory)
 
-	repoWriter, err := newRepositoryWriter(writer, repo)
+	tools.Writer, err = newRepositoryWriter(writer, repo)
 	if err != nil {
 		return nil, err
 	}
 
-	return &GitTools{
-		Writer:   repoWriter,
-		Client:   client,
-		Provider: provider,
-	}, nil
+	return &tools, nil
 }
 
 func buildGitClient(ctx context.Context, tokenAuth *git.TokenAuth, repoUrl string, repo string) *gitclient.GitClient {
@@ -91,4 +95,10 @@ func newRepositoryWriter(writer filewriter.FileWriter, repository string) (filew
 	}
 	gitwriter.CleanUpTemp()
 	return gitwriter, nil
+}
+
+func WithRepositoryDirectory(repoDir string) GitToolsOpt {
+	return func(opts *GitTools) {
+		opts.RepositoryDirectory = repoDir
+	}
 }
