@@ -228,8 +228,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 	if err != nil {
 		return err
 	}
-	logger.V(3).Info("Finished pushing updated cluster config file to git",
-		"repository", fc.repository())
+	logger.V(3).Info("Finished pushing updated cluster config file to git", "repository", fc.repository())
 	return nil
 }
 
@@ -629,11 +628,20 @@ func (fc *fluxForCluster) namespace() string {
 }
 
 func (fc *fluxForCluster) repository() string {
-	return fc.clusterSpec.FluxConfig.Spec.Github.Repository
+	if fc.clusterSpec.FluxConfig.Spec.Github != nil {
+		return fc.clusterSpec.FluxConfig.Spec.Github.Repository
+	}
+	if fc.clusterSpec.FluxConfig.Spec.Git != nil {
+		return fc.clusterSpec.FluxConfig.Spec.Git.RepositoryUrl
+	}
+	return ""
 }
 
 func (fc *fluxForCluster) owner() string {
-	return fc.clusterSpec.FluxConfig.Spec.Github.Owner
+	if fc.clusterSpec.FluxConfig.Spec.Github != nil {
+		return fc.clusterSpec.FluxConfig.Spec.Github.Owner
+	}
+	return ""
 }
 
 func (fc *fluxForCluster) branch() string {
@@ -641,7 +649,10 @@ func (fc *fluxForCluster) branch() string {
 }
 
 func (fc *fluxForCluster) personal() bool {
-	return fc.clusterSpec.FluxConfig.Spec.Github.Personal
+	if fc.clusterSpec.FluxConfig.Spec.Github != nil {
+		return fc.clusterSpec.FluxConfig.Spec.Github.Personal
+	}
+	return false
 }
 
 func (fc *fluxForCluster) path() string {
