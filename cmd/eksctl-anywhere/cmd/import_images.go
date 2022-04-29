@@ -6,14 +6,13 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"log"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -60,7 +59,7 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	username, password, err := readRegistryCredentials()
+	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
 	}
@@ -127,18 +126,4 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	}
 
 	return importArtifacts.Run(ctx)
-}
-
-func readRegistryCredentials() (username, password string, err error) {
-	username, ok := os.LookupEnv("REGISTRY_USERNAME")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_USERNAME env var")
-	}
-
-	password, ok = os.LookupEnv("REGISTRY_PASSWORD")
-	if !ok {
-		return "", "", errors.New("please set REGISTRY_PASSWORD env var")
-	}
-
-	return username, password, nil
 }

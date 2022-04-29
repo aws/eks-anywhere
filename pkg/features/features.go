@@ -25,6 +25,11 @@ func IsActive(feature Feature) bool {
 	return feature.IsActive()
 }
 
+// ClearCache is mainly used for unit tests as of now
+func ClearCache() {
+	globalFeatures.clearCache()
+}
+
 func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",

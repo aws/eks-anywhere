@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -12,7 +13,8 @@ import (
 const (
 	fluxPath            = "flux"
 	githubTokenEnv      = "GITHUB_TOKEN"
-	gitProvider         = "github"
+	githubProvider      = "github"
+	gitProvider         = "git"
 	privateKeyAlgorithm = "ecdsa"
 )
 
@@ -33,24 +35,16 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
-		gitProvider,
+		githubProvider,
 		"--repository", c.Github.Repository,
 		"--owner", c.Github.Owner,
 		"--path", c.ClusterConfigPath,
 		"--ssh-key-algorithm", privateKeyAlgorithm,
 	}
+	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
 
-	if cluster.KubeconfigFile != "" {
-		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
-	}
 	if c.Github.Personal {
 		params = append(params, "--personal")
-	}
-	if c.Branch != "" {
-		params = append(params, "--branch", c.Branch)
-	}
-	if c.SystemNamespace != "" {
-		params = append(params, "--namespace", c.SystemNamespace)
 	}
 
 	token, err := github.GetGithubAccessTokenFromEnv()
@@ -63,17 +57,53 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 
 	_, err = f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
-		return fmt.Errorf("executing flux bootstrap: %v", err)
+		return fmt.Errorf("executing flux bootstrap github: %v", err)
 	}
 
 	return err
 }
 
-// BootstrapToolkitsComponentsGit creates the Git repository if it does not exist, and commits the toolkit
-// components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
-// If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
-	return nil
+// BootstrapToolkitsComponentsGit commits the toolkit components manifests to the branch of a Git repository.
+// It then configures the target cluster to synchronize with the repository. If the toolkit components are present on the cluster, the
+// bootstrap command will perform an upgrade if needed.
+func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig config.CliConfig) error {
+	c := fluxConfig.Spec
+	params := []string{
+		"bootstrap",
+		gitProvider,
+		"--url", c.Git.RepositoryUrl,
+		"--username", c.Git.Username,
+		"--path", c.ClusterConfigPath,
+		"--ssh-key-algorithm", privateKeyAlgorithm,
+	}
+
+	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
+	if cliConfig.GitPrivateKeyFile != "" {
+		params = append(params, "--private-key-file", cliConfig.GitPrivateKeyFile)
+	}
+	if cliConfig.GitPassword != "" {
+		params = append(params, "--password", cliConfig.GitPassword)
+	}
+
+	_, err := f.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("executing flux bootstrap git: %v", err)
+	}
+	return err
+}
+
+func setUpCommonParamsBootstrap(cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, params []string) []string {
+	c := fluxConfig.Spec
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	if c.Branch != "" {
+		params = append(params, "--branch", c.Branch)
+	}
+	if c.SystemNamespace != "" {
+		params = append(params, "--namespace", c.SystemNamespace)
+	}
+	return params
 }
 
 func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {

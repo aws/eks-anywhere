@@ -19,13 +19,13 @@ import (
 
 type upgraderTest struct {
 	*WithT
-	ctx         context.Context
-	client      *mocks.MockEksdInstallerClient
-	reader      *m.MockReader
-	currentSpec *cluster.Spec
-	newSpec     *cluster.Spec
-	eksd        *eksd.Installer
-	cluster     *types.Cluster
+	ctx          context.Context
+	client       *mocks.MockEksdInstallerClient
+	reader       *m.MockReader
+	currentSpec  *cluster.Spec
+	newSpec      *cluster.Spec
+	eksdUpgrader *eksd.Upgrader
+	cluster      *types.Cluster
 }
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
@@ -37,13 +37,13 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	})
 
 	return &upgraderTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		client:      client,
-		reader:      reader,
-		eksd:        eksd.NewEksdInstaller(client, reader),
-		currentSpec: currentSpec,
-		newSpec:     currentSpec.DeepCopy(),
+		WithT:        NewWithT(t),
+		ctx:          context.Background(),
+		client:       client,
+		reader:       reader,
+		eksdUpgrader: eksd.NewUpgrader(client, reader),
+		currentSpec:  currentSpec,
+		newSpec:      currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "k.kubeconfig",
@@ -55,13 +55,13 @@ func TestEksdUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestEksdUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 
-	tt.Expect(tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestEksdUpgradeSuccess(t *testing.T) {
@@ -82,7 +82,7 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 
 	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.Components).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
-	tt.Expect(tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
@@ -92,6 +92,6 @@ func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 
 	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
-	_, err := tt.eksd.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }

@@ -20,6 +20,13 @@ func init() {
 	}
 }
 
+func runHelmInstallSimpleFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.InstallHelmChart()
+	test.DeleteCluster()
+}
+
 func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()

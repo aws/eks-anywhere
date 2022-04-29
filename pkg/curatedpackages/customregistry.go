@@ -32,5 +32,5 @@ func (cm *CustomRegistry) Login(ctx context.Context) error {
 }
 
 func (cm *CustomRegistry) GetRegistryBaseRef(ctx context.Context) (string, error) {
-	return fmt.Sprintf("%s/%s", cm.registry, RepositoryName), nil
+	return fmt.Sprintf("%s/%s", cm.registry, ImageRepositoryName), nil
 }

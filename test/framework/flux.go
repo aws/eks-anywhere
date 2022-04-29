@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -31,6 +32,7 @@ const (
 	gitRepositoryVar    = "T_GIT_REPOSITORY"
 	githubUserVar       = "T_GITHUB_USER"
 	githubTokenVar      = "EKSA_GITHUB_TOKEN"
+	gitSshKey           = "T_GIT_SSH_AUTHORIZED_KEY"
 )
 
 var fluxRequiredEnvVars = []string{
@@ -39,7 +41,36 @@ var fluxRequiredEnvVars = []string{
 	githubTokenVar,
 }
 
-func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
+func WithFlux(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
+		gitOpsConfigName := gitOpsConfigName()
+		e.FluxConfig = api.NewFluxConfig(gitOpsConfigName,
+			api.WithPersonalGithubRepository(true),
+			api.WithStringFromEnvVarFluxConfig(gitRepositoryVar, api.WithGithubRepository),
+			api.WithStringFromEnvVarFluxConfig(githubUserVar, api.WithGithubOwner),
+			api.WithStringFromEnvVarFluxConfig(gitSshKey, api.WithGitRepositoryUrl),
+			api.WithSystemNamespace("default"),
+			api.WithClusterConfigPath("path2"),
+			api.WithBranch("main"),
+		)
+		e.clusterFillers = append(e.clusterFillers,
+			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.FluxConfigKind),
+		)
+		// apply the rest of the opts passed into the function
+		for _, opt := range opts {
+			opt(e.FluxConfig)
+		}
+		// Adding Job ID suffix to repo name
+		// e2e test jobs have Job Id with a ":", replacing with "-"
+		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
+		withFluxRepositorySuffix(jobId)(e.FluxConfig)
+		// Setting GitRepo cleanup since GitOps configured
+		e.T.Cleanup(e.CleanUpGithubRepo)
+	}
+}
+
+func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
 		gitOpsConfigName := gitOpsConfigName()
@@ -52,7 +83,7 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 			api.WithFluxBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(gitOpsConfigName),
+			api.WithGitOpsRef(gitOpsConfigName, v1alpha1.GitOpsConfigKind),
 		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
@@ -61,7 +92,7 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 		// Adding Job ID suffix to repo name
 		// e2e test jobs have Job Id with a ":", replacing with "-"
 		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxRepositorySuffix(jobId)(e.GitOpsConfig)
+		withFluxLegacyRepositorySuffix(jobId)(e.GitOpsConfig)
 		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGithubRepo)
 	}
@@ -71,7 +102,7 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
 
-		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFlux()
+		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFluxLegacy()
 		// instead of marshalling from the actual file in git repo.
 		// By default it does not include the namespace field. But Flux requires namespace always
 		// exist for all the objects managed by its kustomization controller.
@@ -83,10 +114,17 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
-func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
+func withFluxLegacyRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	return func(c *v1alpha1.GitOpsConfig) {
 		repository := c.Spec.Flux.Github.Repository
 		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
+	}
+}
+
+func withFluxRepositorySuffix(suffix string) api.FluxConfigOpt {
+	return func(c *v1alpha1.FluxConfig) {
+		repository := c.Spec.Github.Repository
+		c.Spec.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 
@@ -129,12 +167,13 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
+	e.GitClient = g.Client
 }
 
 func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
@@ -153,11 +192,12 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.GitProvider = g.Git
+	e.GitClient = g.Client
+	e.GitProvider = g.Provider
 	e.GitWriter = g.Writer
 
 	if err = e.validateInitialFluxState(ctx); err != nil {
@@ -176,11 +216,11 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
-	e.validateGitopsRepoContent(gitOptions)
+	e.validateGitopsRepoContent(gitTools)
 }
 
 func (e *ClusterE2ETest) CleanUpGithubRepo() {
@@ -192,12 +232,12 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
 	repoName := e.gitRepoName()
-	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
-	repo, err := gitOptions.Git.GetRepo(ctx)
+	repo, err := gitTools.Provider.GetRepo(ctx)
 	if err != nil {
 		e.T.Errorf("error getting Github repo %s: %v", repoName, err)
 	}
@@ -205,7 +245,7 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Logf("Skipped repo deletion: remote repo %s does not exist", repoName)
 		return
 	}
-	err = gitOptions.Git.DeleteRepo(ctx, opts)
+	err = gitTools.Provider.DeleteRepo(ctx, opts)
 	if err != nil {
 		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
 	}
@@ -286,18 +326,18 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 	}
 }
 
-func (e *ClusterE2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
+func (e *ClusterE2ETest) validateGitopsRepoContent(gitTools *gitfactory.GitTools) {
 	repoName := e.gitRepoName()
 	gitFilePath := e.clusterConfigGitPath()
 	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
 	ctx := context.Background()
-	g := gitOptions.Git
-	err := g.Clone(ctx)
+	gc := gitTools.Client
+	err := gc.Clone(ctx)
 	if err != nil {
 		e.T.Errorf("Error cloning github repo: %v", err)
 	}
 	branch := e.gitBranch()
-	err = g.Branch(branch)
+	err = gc.Branch(branch)
 	if err != nil {
 		e.T.Errorf("Error checking out branch: %v", err)
 	}
@@ -659,7 +699,7 @@ func (e *ClusterE2ETest) updateEKSASpecInGit(s *cluster.Spec, providersConfig pr
 
 func (e *ClusterE2ETest) pushConfigChanges() error {
 	p := e.clusterConfGitPath()
-	g := e.GitProvider
+	g := e.GitClient
 	if err := g.Add(p); err != nil {
 		return err
 	}

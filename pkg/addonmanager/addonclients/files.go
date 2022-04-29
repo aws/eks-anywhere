@@ -53,7 +53,7 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 		return err
 	}
 
-	if err := nfc.gitClient.Add(nfc.path()); err != nil {
+	if err := nfc.gitTools.Client.Add(nfc.path()); err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("adding %s to git: %v", nfc.path(), err)}
 	}
 
@@ -67,8 +67,8 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 }
 
 func (fc *fluxForCluster) filesUpdateNeeded(oldPath string) (bool, error) {
-	fluxSystemPath := filepath.Join(fc.writer.Dir(), fc.fluxSystemDir())
-	eksaSystemPath := filepath.Join(fc.writer.Dir(), fc.eksaSystemDir())
+	fluxSystemPath := filepath.Join(fc.gitTools.Writer.Dir(), fc.fluxSystemDir())
+	eksaSystemPath := filepath.Join(fc.gitTools.Writer.Dir(), fc.eksaSystemDir())
 	if !validations.FileExists(fluxSystemPath) {
 		return false, fmt.Errorf("unrecognized file structure, missing flux-system path at %s", fluxSystemPath)
 	}
@@ -78,7 +78,7 @@ func (fc *fluxForCluster) filesUpdateNeeded(oldPath string) (bool, error) {
 func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 	// in older version (<= 0.5.0), flux-system and eksa-system folders are under the same parent directory
 	oldEksaPath := filepath.Join(ofc.path(), eksaSystemDirName)
-	eksaSpec, err := nfc.updateGitOpsConfig(filepath.Join(nfc.writer.Dir(), oldEksaPath, clusterConfigFileName))
+	eksaSpec, err := nfc.updateGitOpsConfig(filepath.Join(nfc.gitTools.Writer.Dir(), oldEksaPath, clusterConfigFileName))
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 	}
 
 	if oldEksaPath != nfc.eksaSystemDir() {
-		err = nfc.gitClient.Remove(oldEksaPath)
+		err = nfc.gitTools.Client.Remove(oldEksaPath)
 		if err != nil {
 			return &ConfigVersionControlFailedError{Err: fmt.Errorf("removing %s in git: %v", oldEksaPath, err)}
 		}

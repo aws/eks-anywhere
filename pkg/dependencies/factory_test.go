@@ -65,29 +65,33 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false, false).
-		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig).
+		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig).
 		WithWriter().
 		WithEksdInstaller().
+		WithEksdUpgrader().
 		WithDiagnosticCollectorImage("public.ecr.aws/collector").
 		WithAnalyzerFactory().
 		WithCollectorFactory().
 		WithTroubleshoot().
 		WithCAPIManager().
 		WithManifestReader().
+		WithUnAuthKubeClient().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Bootstrapper).NotTo(BeNil())
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
-	tt.Expect(deps.FluxAddonClient).To(BeNil())
+	tt.Expect(deps.FluxAddonClient).NotTo(BeNil())
 	tt.Expect(deps.Writer).NotTo(BeNil())
 	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
+	tt.Expect(deps.EksdUpgrader).NotTo(BeNil())
 	tt.Expect(deps.AnalyzerFactory).NotTo(BeNil())
 	tt.Expect(deps.CollectorFactory).NotTo(BeNil())
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())
 	tt.Expect(deps.CAPIManager).NotTo(BeNil())
 	tt.Expect(deps.ManifestReader).NotTo(BeNil())
+	tt.Expect(deps.UnAuthKubeClient).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {

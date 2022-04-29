@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -828,6 +830,13 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
 	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
+	}
+	fullLifecycleAPI := features.IsActive(features.FullLifecycleAPI())
+	if fullLifecycleAPI {
+		err := c.clusterClient.SetEksaControllerEnvVar(ctx, features.FullLifecycleAPIEnvVar, strconv.FormatBool(fullLifecycleAPI), cluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
 	}
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }

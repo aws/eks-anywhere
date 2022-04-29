@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
@@ -22,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -56,12 +58,15 @@ type Dependencies struct {
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
 	Helm                      *executables.Helm
+	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
+	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
+	EksdUpgrader              *eksd.Upgrader
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
@@ -164,6 +169,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
+
 	return f
 }
 
@@ -710,17 +716,59 @@ func (f *Factory) WithEksdInstaller() *Factory {
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
-	f.WithWriter().WithFlux().WithKubectl()
+func (f *Factory) WithEksdUpgrader() *Factory {
+	f.WithKubectl().WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.EksdUpgrader != nil {
+			return nil
+		}
+
+		f.dependencies.EksdUpgrader = eksd.NewUpgrader(
+			&eksdInstallerClient{
+				f.dependencies.Kubectl,
+			},
+			f.dependencies.FileReader,
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+	f.WithWriter()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Git != nil {
+			return nil
+		}
+
+		if fluxConfig == nil {
+			return nil
+		}
+
+		tools, err := gitfactory.Build(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
+		if err != nil {
+			return fmt.Errorf("creating Git provider: %v", err)
+		}
+
+		err = tools.Provider.Validate(ctx)
+		if err != nil {
+			return fmt.Errorf("validating provider: %v", err)
+		}
+
+		f.dependencies.Git = tools
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.FluxAddonClient != nil {
 			return nil
-		}
-
-		gitOpts, err := addonclients.NewGitOptions(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
-		if err != nil {
-			return err
 		}
 
 		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
@@ -728,7 +776,7 @@ func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alph
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,
 			},
-			gitOpts,
+			f.dependencies.Git,
 		)
 
 		return nil
@@ -849,6 +897,25 @@ func (f *Factory) WithManifestReader() *Factory {
 		}
 
 		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithUnAuthKubeClient() *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.UnAuthKubeClient != nil {
+			return nil
+		}
+
+		f.dependencies.UnAuthKubeClient = kubernetes.NewUnAuthClient(f.dependencies.Kubectl)
+		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
+			return fmt.Errorf("building unauth kube client: %v", err)
+		}
+
 		return nil
 	})
 
