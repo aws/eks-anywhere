@@ -281,17 +281,10 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoH
 github.com/aws/aws-sdk-go-v2/service/sts v1.6.0/go.mod h1:q7o0j7d7HrJk/vr9uUt3BVRASvcU7gYZB9PUgPiByXg=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-<<<<<<< HEAD
-github.com/aws/cluster-api-provider-cloudstack v0.4.3-0.20220428202125-b81d30e9a1a4 h1:XRdhndqsbCdjA/4tj+lmV6af2NMpMrWiyggF5z3P4RI=
-github.com/aws/cluster-api-provider-cloudstack v0.4.3-0.20220428202125-b81d30e9a1a4/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
 github.com/aws/cluster-api-provider-cloudstack v0.4.3-0.20220429021755-3187412c5ec7 h1:J1ZOVIE00mrTfY33P0ekHjPuqhTFRWofI0DBRQn5i4c=
 github.com/aws/cluster-api-provider-cloudstack v0.4.3-0.20220429021755-3187412c5ec7/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
-=======
-github.com/aws/cluster-api-provider-cloudstack v0.4.2 h1:/qK/A9kM1la+eVEyR497/pdR8eG2dtTYJgoFK9LhS0w=
-github.com/aws/cluster-api-provider-cloudstack v0.4.2/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
 github.com/aws/eks-anywhere-packages v0.1.1 h1:miuYyEPS0MAzC/1+v99XPzBILYjs+Jl5CoqC95IAIg8=
 github.com/aws/eks-anywhere-packages v0.1.1/go.mod h1:0rPTMF03bX8YuoaHsGzDANxrwjnL3XcyPg8g6I920Ys=
->>>>>>> public/main
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/smithy-go v1.6.0/go.mod h1:SObp3lf9smib00L/v3U2eAKG8FyQ7iLrJnQiAmR5n+E=
