@@ -69,12 +69,6 @@ func WithPersonalGithubRepository(personal bool) FluxConfigOpt {
 	}
 }
 
-func WithGitUsername(username string) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Git.Username = username
-	}
-}
-
 func WithGitRepositoryUrl(url string) FluxConfigOpt {
 	return func(c *v1alpha1.FluxConfig) {
 		c.Spec.Git.RepositoryUrl = url

@@ -75,7 +75,6 @@ func TestGetAndValidateFluxConfig(t *testing.T) {
 				Spec: FluxConfigSpec{
 					Git: &GitProviderConfig{
 						RepositoryUrl: "https://git.com/test/test.git",
-						Username:      "user",
 					},
 				},
 			},
