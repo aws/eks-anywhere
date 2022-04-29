@@ -207,11 +207,8 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
 		return dirs
 	}
-
-	if cliConfig.GitPrivateKeyFile != "" {
-		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-		dirs = append(dirs, filepath.Dir("/home/ubuntu/.ssh/known_hosts"))
-	}
+	dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+	dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 
 	return dirs
 }
@@ -221,6 +218,7 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitPassword = os.Getenv(config.EksaGitPasswordTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
 	}
 
 	return cliConfig
