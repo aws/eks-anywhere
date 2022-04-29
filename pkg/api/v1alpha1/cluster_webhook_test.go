@@ -1242,6 +1242,7 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
 	os.Setenv(features.CloudStackProviderEnvVar, "true")
+	os.Setenv("FULL_LIFECYCLE_API", "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"},
 		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test2"})
 	cluster := &v1alpha1.Cluster{
@@ -1252,15 +1253,18 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
 			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			ClusterNetwork:            v1alpha1.ClusterNetwork{CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}},
 			DatacenterRef: v1alpha1.Ref{
 				Kind: v1alpha1.CloudStackDatacenterKind,
 			},
 		},
 	}
+	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
 	g := NewWithT(t)
-	g.Expect(cluster.ValidateCreate()).NotTo(Succeed())
+	g.Expect(cluster.ValidateCreate()).To(Succeed())
 	os.Unsetenv(features.CloudStackProviderEnvVar)
+	os.Unsetenv("FULL_LIFECYCLE_API")
 }
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {
