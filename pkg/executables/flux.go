@@ -66,7 +66,7 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 // BootstrapToolkitsComponentsGit commits the toolkit components manifests to the branch of a Git repository.
 // It then configures the target cluster to synchronize with the repository. If the toolkit components are present on the cluster, the
 // bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig config.CliConfig) error {
+func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
