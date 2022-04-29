@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git/factory"
@@ -751,6 +752,19 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		tools, err := gitfactory.Build(ctx, clusterConfig, fluxConfig, f.dependencies.Writer)
 		if err != nil {
 			return fmt.Errorf("creating Git provider: %v", err)
+		}
+
+		// Need this until we build out a generic git provider
+		if features.IsActive(features.GenericGitProviderSupport()) {
+			err = tools.Client.ValidateRemoteExists(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = tools.Provider.Validate(ctx)
+		if err != nil {
+			return fmt.Errorf("validating provider: %v", err)
 		}
 
 		f.dependencies.Git = tools

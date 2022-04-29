@@ -14,6 +14,7 @@ type Client interface {
 	Pull(ctx context.Context, branch string) error
 	Init() error
 	Branch(name string) error
+	ValidateRemoteExists(ctx context.Context) error
 }
 
 type ProviderClient interface {

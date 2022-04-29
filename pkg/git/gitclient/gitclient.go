@@ -13,6 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -264,6 +265,17 @@ func (g *GitClient) Branch(name string) error {
 	return nil
 }
 
+func (g *GitClient) ValidateRemoteExists(ctx context.Context) error {
+	logger.V(3).Info("Validating git setup", "repoUrl", g.RepoUrl)
+	remote := g.Client.NewRemote(g.RepoUrl, gogit.DefaultRemoteName)
+	// Check if we are able to make a connection to the remote by attempting to list refs
+	_, err := g.Client.ListWithContext(ctx, remote, g.Auth)
+	if err != nil {
+		return fmt.Errorf("connecting with remote %v for repository: %v", gogit.DefaultRemoteName, err)
+	}
+	return nil
+}
+
 func (g *GitClient) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, branchName string, localBranchRef plumbing.ReferenceName) error {
 	err := g.Retrier.Retry(func() error {
 		remoteExists, err := g.remoteBranchExists(r, localBranchRef)
@@ -308,12 +320,14 @@ type GoGit interface {
 	Create(r *gogit.Repository, url string) (*gogit.Remote, error)
 	CreateBranch(r *gogit.Repository, config *config.Branch) error
 	Head(r *gogit.Repository) (*plumbing.Reference, error)
+	NewRemote(url, remoteName string) *gogit.Remote
 	Init(dir string) (*gogit.Repository, error)
 	OpenDir(dir string) (*gogit.Repository, error)
 	OpenWorktree(r *gogit.Repository) (*gogit.Worktree, error)
 	PushWithContext(ctx context.Context, r *gogit.Repository, auth transport.AuthMethod) error
 	PullWithContext(ctx context.Context, w *gogit.Worktree, auth transport.AuthMethod, ref plumbing.ReferenceName) error
 	ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]*plumbing.Reference, error)
+	ListWithContext(ctx context.Context, r *gogit.Remote, auth transport.AuthMethod) ([]*plumbing.Reference, error)
 	Remove(f string, w *gogit.Worktree) (plumbing.Hash, error)
 	SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error
 }
@@ -377,6 +391,13 @@ func (gg *goGit) Init(dir string) (*gogit.Repository, error) {
 	return gogit.PlainInit(dir, false)
 }
 
+func (ggc *goGit) NewRemote(url, remoteName string) *gogit.Remote {
+	return gogit.NewRemote(memory.NewStorage(), &config.RemoteConfig{
+		Name: remoteName,
+		URLs: []string{url},
+	})
+}
+
 func (gg *goGit) Checkout(worktree *gogit.Worktree, opts *gogit.CheckoutOptions) error {
 	return worktree.Checkout(opts)
 }
@@ -409,6 +430,14 @@ func (gg *goGit) ListRemotes(r *gogit.Repository, auth transport.AuthMethod) ([]
 
 func (gg *goGit) Remove(f string, w *gogit.Worktree) (plumbing.Hash, error) {
 	return w.Remove(f)
+}
+
+func (ggc *goGit) ListWithContext(ctx context.Context, r *gogit.Remote, auth transport.AuthMethod) ([]*plumbing.Reference, error) {
+	refList, err := r.ListContext(ctx, &gogit.ListOptions{Auth: auth})
+	if err != nil {
+		return nil, err
+	}
+	return refList, nil
 }
 
 func (gg *goGit) SetRepositoryReference(r *gogit.Repository, p *plumbing.Reference) error {
