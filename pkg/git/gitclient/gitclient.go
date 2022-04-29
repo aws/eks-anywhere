@@ -14,8 +14,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/go-git/go-git/v5/storage/memory"
-	gogitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
-	"golang.org/x/crypto/ssh"
 
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -48,15 +46,6 @@ func New(opts ...Opt) *GitClient {
 		opt(c)
 	}
 	return c
-}
-
-func WithSshAuth(user string, key ssh.Signer) Opt {
-	return func(c *GitClient) {
-		c.Auth = &gogitssh.PublicKeys{
-			User:   user,
-			Signer: key,
-		}
-	}
 }
 
 func WithAuth(auth transport.AuthMethod) Opt {

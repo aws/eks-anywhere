@@ -445,6 +445,7 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 	path := "clusters/cluster-name"
 	privateKeyFilePath := validPrivateKeyfilePath
 	password := validPassword
+	envmap := map[string]string{"SSH_KNOWN_HOSTS": "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl"}
 
 	tests := []struct {
 		testName     string
@@ -538,8 +539,9 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			executable.EXPECT().Execute(
+			executable.EXPECT().ExecuteWithEnv(
 				ctx,
+				envmap,
 				tt.wantExecArgs...,
 			).Return(bytes.Buffer{}, nil)
 
