@@ -45,10 +45,11 @@ func validateAuthenticationGitProvider(clusterSpec *cluster.Spec, cliConfig *con
 	if fluxConfig.Spec.Git == nil {
 		return nil
 	}
-	if cliConfig.GitPassword == "" && cliConfig.GitPrivateKeyFile == "" {
-		return fmt.Errorf("for git provider in the Flux config either set a password using %s env var or path to private key"+
-			" file using %s", config.EksaGitPasswordTokenEnv, config.EksaGitPrivateKeyTokenEnv)
+	if cliConfig.GitPrivateKeyFile == "" {
+		return fmt.Errorf("provide a path to a private key file via the EKSA_GIT_PRIVATE_KEY " +
+			"in order to use the generic git Flux provider")
 	}
+
 	if cliConfig.GitPrivateKeyFile != "" {
 		if !validations.FileExistsAndIsNotEmpty(cliConfig.GitPrivateKeyFile) {
 			return fmt.Errorf("private key file does not exist at %s or is empty", cliConfig.GitPrivateKeyFile)
