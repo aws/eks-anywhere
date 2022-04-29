@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -208,8 +209,8 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	}
 
 	if cliConfig.GitPrivateKeyFile != "" {
-		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
-		dirs = append(dirs, "~/.ssh/known_hosts")
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir("/home/ubuntu/.ssh/known_hosts"))
 	}
 
 	return dirs
