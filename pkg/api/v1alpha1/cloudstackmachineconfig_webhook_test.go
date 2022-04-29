@@ -72,18 +72,24 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
-		v1alpha1.CloudStackResourceIdentifier{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
-		"/data",
+		MountPath:  "/data",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
 	}
 	c := vOld.DeepCopy()
 
 	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
-		v1alpha1.CloudStackResourceIdentifier{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
-		"/data",
+		MountPath:  "/data",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
@@ -106,18 +112,21 @@ func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testi
 func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
-		v1alpha1.CloudStackResourceIdentifier{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
-		"/data",
+		MountPath: "/data",
 	}
 	c := vOld.DeepCopy()
 
 	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
-		v1alpha1.CloudStackResourceIdentifier{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
-		"/data-new",
+		MountPath:  "/data-new",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())

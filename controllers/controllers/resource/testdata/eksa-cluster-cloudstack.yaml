@@ -61,4 +61,7 @@ spec:
   diskOffering:
     name: "Small"
     mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem: "ext4"
+    label: "data_disk"
 ---

@@ -68,6 +68,9 @@ spec:
   diskOffering:
     name: "Small"
     mountPath: "/data-small"
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
   affinityGroupIds:
   - control-plane-anti-affinity
 ---
@@ -88,6 +91,9 @@ spec:
   diskOffering:
     name: "Small"
     mountPath: "/data-small"
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
   affinityGroupIds:
   - worker-affinity
   userCustomDetails:
@@ -110,6 +116,9 @@ spec:
   diskOffering:
     name: "Small"
     mountPath: "/data-small"
+    device: /dev/vdb
+    filesystem: ext4
+    label: data_disk
   affinityGroupIds:
   - etcd-affinity
 

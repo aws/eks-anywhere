@@ -76,9 +76,18 @@ spec:
                   with pre-defined size or custom specified disk size. It can either
                   be specified as a UUID or name
                 properties:
+                  device:
+                    description: device name
+                    type: string
+                  filesystem:
+                    description: filesystem
+                    type: string
                   id:
                     description: Id of a resource in the CloudStack environment. Mutually
                       exclusive with Name
+                    type: string
+                  label:
+                    description: disk label
                     type: string
                   mountPath:
                     description: path the storage will use to mount in VM
@@ -88,6 +97,9 @@ spec:
                       Mutually exclusive with Id
                     type: string
                 required:
+                - device
+                - filesystem
+                - label
                 - mountPath
                 type: object
               template:

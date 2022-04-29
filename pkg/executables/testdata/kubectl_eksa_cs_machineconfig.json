@@ -10,7 +10,10 @@
     },
     "diskOffering": {
       "name": "testOffering",
-      "mountPath": "/data"
+      "mountPath": "/data",
+      "device": "/dev/vdb",
+      "filesystem": "ext4",
+      "label": "data_disk"
     },
     "users": [
       {

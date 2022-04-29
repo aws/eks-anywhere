@@ -66,9 +66,6 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
-	if len(allErrs) > 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
-	}
 
 	if len(r.Spec.DiskOffering.Id) > 0 || len(r.Spec.DiskOffering.Name) > 0 {
 		if len(r.Spec.DiskOffering.MountPath) < 2 || !strings.HasPrefix(r.Spec.DiskOffering.MountPath, "/") {
@@ -76,8 +73,28 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 				allErrs,
 				field.Invalid(field.NewPath("spec", "diskOffering", "mountPath"), r.Spec.DiskOffering.MountPath, "field is invalid"),
 			)
-			return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 		}
+		if len(r.Spec.DiskOffering.Device) == 0 {
+			allErrs = append(
+				allErrs,
+				field.Invalid(field.NewPath("spec", "diskOffering", "device"), r.Spec.DiskOffering.Device, "field is invalid"),
+			)
+		}
+		if len(r.Spec.DiskOffering.Filesystem) == 0 {
+			allErrs = append(
+				allErrs,
+				field.Invalid(field.NewPath("spec", "diskOffering", "filesystem"), r.Spec.DiskOffering.Filesystem, "field is invalid"),
+			)
+		}
+		if len(r.Spec.DiskOffering.Label) == 0 {
+			allErrs = append(
+				allErrs,
+				field.Invalid(field.NewPath("spec", "diskOffering", "label"), r.Spec.DiskOffering.Label, "field is invalid"),
+			)
+		}
+	}
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	return nil

@@ -249,6 +249,15 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 			if !machineConfig.Spec.DiskOffering.ValidatePath() {
 				return fmt.Errorf("mountPath: %s invalid, must be non-empty and starts with /", machineConfig.Spec.DiskOffering.MountPath)
 			}
+			if len(machineConfig.Spec.DiskOffering.Device) == 0 {
+				return fmt.Errorf("device: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Device)
+			}
+			if len(machineConfig.Spec.DiskOffering.Filesystem) == 0 {
+				return fmt.Errorf("filesystem: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Filesystem)
+			}
+			if len(machineConfig.Spec.DiskOffering.Label) == 0 {
+				return fmt.Errorf("label: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Label)
+			}
 			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {
 				return fmt.Errorf("validating service offering: %v", err)
 			}

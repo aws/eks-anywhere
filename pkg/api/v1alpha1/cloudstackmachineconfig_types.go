@@ -48,6 +48,12 @@ type CloudStackResourceDiskOffering struct {
 	CloudStackResourceIdentifier `json:",inline"`
 	// path the storage will use to mount in VM
 	MountPath string `json:"mountPath"`
+	// device name
+	Device string `json:"device"`
+	// filesystem
+	Filesystem string `json:"filesystem"`
+	// disk label
+	Label string `json:"label"`
 }
 
 func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
@@ -61,7 +67,7 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 		return false
 	}
 
-	if r.MountPath != o.MountPath {
+	if r.MountPath != o.MountPath || r.Filesystem != o.Filesystem || r.Label != o.Label || r.Device != o.Device {
 		return false
 	}
 	return r.Id == "" && o.Id == "" && r.Name == o.Name

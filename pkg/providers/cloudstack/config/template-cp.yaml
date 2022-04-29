@@ -84,6 +84,9 @@ spec:
         name: {{.cloudstackControlPlaneDiskOfferingName}}
 {{- end}}
         mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
+        device: {{.cloudstackControlPlaneDiskOfferingDevice}}
+        filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+        label: {{.cloudstackControlPlaneDiskOfferingLabel}}
 {{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
@@ -368,14 +371,23 @@ spec:
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
 {{- if .cloudstackControlPlaneDiskOfferingProvided }}
-    - mountPath={{ .cloudstackControlPlaneDiskOfferingPath }}
-    - mountPathTemp=$(mktemp -d ${mountPath}-XXXXX)
-    - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
-    - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
-    - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
-    - if [ "${devfstype}" == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mount /dev/${devname}1 ${mountPathTemp} && tempMounted=true ; else echo "data disk dev not found"; fi
-    - if [ "${tempMounted}" == "true" ] && [ -d ${mountPath} ]; then cp -rp ${mountPath}/* ${mountPathTemp} && umount ${mountPathTemp} && copied=true ; else echo "no need to copy"; fi
-    - if [ "${copied}" == "true" ]; then echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount /dev/${devname}1 ${mountPath} && rm -rf ${mountPathTemp} ; else echo "mount failed"; fi
+    diskSetup:
+      filesystems:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}1
+          overwrite: false
+          extraOpts:
+            - -E
+            - lazy_itable_init=1,lazy_journal_init=1
+          filesystem: {{ .cloudstackControlPlaneDiskOfferingFilesystem }}
+          label: data_disk
+      partitions:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}
+          layout: true
+          overwrite: false
+          tableType: gpt
+    mounts:
+      - - LABEL={{ .cloudstackControlPlaneDiskOfferingLabel }}
+        - {{ .cloudstackControlPlaneDiskOfferingPath }}
 {{- end }}
     useExperimentalRetryJoin: true
     users:
@@ -409,14 +421,23 @@ spec:
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
 {{- if .cloudstackEtcdDiskOfferingProvided }}
-    - mountPath={{ .cloudstackEtcdDiskOfferingPath }}
-    - mountPathTemp=$(mktemp -d ${mountPath}-XXXXX)
-    - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
-    - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
-    - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
-    - if [ "${devfstype}" == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mount /dev/${devname}1 ${mountPathTemp} && tempMounted=true ; else echo "data disk dev not found"; fi
-    - if [ "${tempMounted}" == "true" ] && [ -d ${mountPath} ]; then cp -rp ${mountPath}/* ${mountPathTemp} && umount ${mountPathTemp} && copied=true ; else echo "no need to copy"; fi
-    - if [ "${copied}" == "true" ]; then echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount /dev/${devname}1 ${mountPath} && rm -rf ${mountPathTemp} ; else echo "mount failed"; fi
+    diskSetup:
+      filesystems:
+        - device: {{ .cloudstackEtcdDiskOfferingDevice }}1
+          overwrite: false
+          extraOpts:
+            - -E
+            - lazy_itable_init=1,lazy_journal_init=1
+          filesystem: {{ .cloudstackEtcdDiskOfferingFilesystem }}
+          label: data_disk
+      partitions:
+        - device: {{ .cloudstackEtcdDiskOfferingDevice }}
+          layout: true
+          overwrite: false
+          tableType: gpt
+    mounts:
+      - - LABEL={{ .cloudstackEtcdDiskOfferingLabel }}
+        - {{ .cloudstackEtcdDiskOfferingPath }}
 {{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
@@ -478,6 +499,9 @@ spec:
         name: {{.cloudstackEtcdDiskOfferingName}}
 {{- end}}
         mountPath: {{.cloudstackEtcdDiskOfferingPath}}
+        device: {{.cloudstackEtcdDiskOfferingDevice}}
+        filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
+        label: {{.cloudstackEtcdDiskOfferingLabel}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:

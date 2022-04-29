@@ -16,10 +16,13 @@ var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
 		Name: "offering1",
 	},
 	DiskOffering: CloudStackResourceDiskOffering{
-		CloudStackResourceIdentifier{
+		CloudStackResourceIdentifier: CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
-		"/data",
+		MountPath:  "/data",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
 	},
 	Users: []UserConfiguration{
 		{
@@ -101,10 +104,13 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Id: "m4-large-id",
 						},
 						DiskOffering: CloudStackResourceDiskOffering{
-							CloudStackResourceIdentifier{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
 								Name: "Small",
 							},
-							"/data-small",
+							MountPath:  "/data-small",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -191,10 +197,13 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name: "m4-large",
 						},
 						DiskOffering: CloudStackResourceDiskOffering{
-							CloudStackResourceIdentifier{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
 								Name: "Small",
 							},
-							"/data-small",
+							MountPath:  "/data-small",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -218,10 +227,13 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name: "m5-xlarge",
 						},
 						DiskOffering: CloudStackResourceDiskOffering{
-							CloudStackResourceIdentifier{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
 								Name: "Medium",
 							},
-							"/data-medium",
+							MountPath:  "/data-medium",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -305,6 +317,27 @@ func TestCloudStackMachineNotEqualDiskOfferingMountPath(t *testing.T) {
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.DiskOffering.MountPath = "newDiskOfferingPath"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering path comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingDevice(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Device = "/dev/sdb"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering device comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingLabel(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Label = "data_disk_new"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering label comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingFilesystem(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Filesystem = "ext3"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering filesystem comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualAffinity(t *testing.T) {
