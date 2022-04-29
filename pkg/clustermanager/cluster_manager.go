@@ -66,6 +66,7 @@ type ClusterClient interface {
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
 	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
@@ -975,7 +976,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -993,6 +994,12 @@ func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.Eksd
 func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
 		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
+func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
+		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 
