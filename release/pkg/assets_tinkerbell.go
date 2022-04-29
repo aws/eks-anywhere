@@ -110,35 +110,49 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
-		TinkController:       bundleImageArtifacts["tink-controller"],
-		TinkServer:           bundleImageArtifacts["tink-server"],
-		TinkWorker:           bundleImageArtifacts["tink-worker"],
-		TinkCli:              bundleImageArtifacts["tink-cli"],
-		Hegel:                bundleImageArtifacts["hegel"],
-		Cfssl:                bundleImageArtifacts["cfssl"],
-		Pbnj:                 bundleImageArtifacts["pbnj"],
-		Boots:                bundleImageArtifacts["boots"],
-		Actions: anywherev1alpha1.Actions{
-			Cexec:       bundleImageArtifacts["cexec"],
-			Kexec:       bundleImageArtifacts["kexec"],
-			ImageToDisk: bundleImageArtifacts["image2disk"],
-			OciToDisk:   bundleImageArtifacts["oci2disk"],
-			WriteFile:   bundleImageArtifacts["writefile"],
-		},
-		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
-		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
-		Metadata:        bundleManifestArtifacts["metadata.yaml"],
-		Hook: anywherev1alpha1.Hook{
-			Bootkit: bundleImageArtifacts["hook-bootkit"],
-			Docker:  bundleImageArtifacts["hook-docker"],
-			Kernel:  bundleImageArtifacts["hook-kernel"],
-			Initramfs: anywherev1alpha1.HookArch{
-				Arm: bundleArchiveArtifacts["initramfs-aarch64"],
-				Amd: bundleArchiveArtifacts["initramfs-x86_64"],
+		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
+		Metadata:             bundleManifestArtifacts["metadata.yaml"],
+		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
+		TinkerbellStack: anywherev1alpha1.TinkerbellStackBundle{
+			Actions: anywherev1alpha1.ActionsBundle{
+				Cexec:       bundleImageArtifacts["cexec"],
+				Kexec:       bundleImageArtifacts["kexec"],
+				ImageToDisk: bundleImageArtifacts["image2disk"],
+				OciToDisk:   bundleImageArtifacts["oci2disk"],
+				WriteFile:   bundleImageArtifacts["writefile"],
 			},
-			Vmlinuz: anywherev1alpha1.HookArch{
-				Arm: bundleArchiveArtifacts["vmlinuz-aarch64"],
-				Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
+			Boots: anywherev1alpha1.TinkerbellServiceBundle{
+				Image:    bundleImageArtifacts["boots"],
+				Manifest: bundleManifestArtifacts["boots.yaml"],
+			},
+			Cfssl: bundleImageArtifacts["cfssl"],
+			Hegel: anywherev1alpha1.TinkerbellServiceBundle{
+				Image:    bundleImageArtifacts["hegel"],
+				Manifest: bundleManifestArtifacts["hegel.yaml"],
+			},
+			Hook: anywherev1alpha1.HookBundle{
+				Bootkit: bundleImageArtifacts["hook-bootkit"],
+				Docker:  bundleImageArtifacts["hook-docker"],
+				Kernel:  bundleImageArtifacts["hook-kernel"],
+				Initramfs: anywherev1alpha1.HookArch{
+					Arm: bundleArchiveArtifacts["initramfs-aarch64"],
+					Amd: bundleArchiveArtifacts["initramfs-x86_64"],
+				},
+				Vmlinuz: anywherev1alpha1.HookArch{
+					Arm: bundleArchiveArtifacts["vmlinuz-aarch64"],
+					Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
+				},
+			},
+			Pbnj: anywherev1alpha1.TinkerbellServiceBundle{
+				Image:    bundleImageArtifacts["pbnj"],
+				Manifest: bundleManifestArtifacts["pbnj.yaml"],
+			},
+			Tink: anywherev1alpha1.TinkBundle{
+				TinkCli:        bundleImageArtifacts["tink-cli"],
+				TinkController: bundleImageArtifacts["tink-controller"],
+				TinkServer:     bundleImageArtifacts["tink-server"],
+				TinkWorker:     bundleImageArtifacts["tink-worker"],
+				Manifest:       bundleManifestArtifacts["tink.yaml"],
 			},
 		},
 	}
