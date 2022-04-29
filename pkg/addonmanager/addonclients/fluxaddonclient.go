@@ -181,9 +181,11 @@ func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *
 
 	password := os.Getenv(config.EksaGitPasswordTokenEnv)
 	pkPath := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+	knownHostsPath := os.Getenv(config.EksaGitKnownHostsFileEnv)
 	cliConfig := config.CliConfig{
 		GitPassword:       password,
 		GitPrivateKeyFile: pkPath,
+		GitKnownHostsFile: knownHostsPath,
 	}
 
 	if !cluster.ExistingManagement {
