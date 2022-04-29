@@ -130,6 +130,7 @@ func getSshAuthFromPrivateKey(privateKeyFile string, passphrase string) (gogitss
 	}
 	return &gogitssh.PublicKeys{
 		Signer: signer,
+		User:   "git",
 	}, nil
 }
 
