@@ -38,7 +38,7 @@ func (m *MockFlux) EXPECT() *MockFluxMockRecorder {
 }
 
 // BootstrapToolkitsComponentsGit mocks base method.
-func (m *MockFlux) BootstrapToolkitsComponentsGit(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig, arg3 config.CliConfig) error {
+func (m *MockFlux) BootstrapToolkitsComponentsGit(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig, arg3 *config.CliConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BootstrapToolkitsComponentsGit", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)

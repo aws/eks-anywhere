@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 	"path"
 	"time"
 
@@ -53,16 +52,18 @@ const (
 )
 
 type FluxAddonClient struct {
-	flux     Flux
-	gitTools *gitFactory.GitTools
-	retrier  *retrier.Retrier
+	flux      Flux
+	gitTools  *gitFactory.GitTools
+	cliConfig *config.CliConfig
+	retrier   *retrier.Retrier
 }
 
-func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools) *FluxAddonClient {
+func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools, cliConfig *config.CliConfig) *FluxAddonClient {
 	return &FluxAddonClient{
-		flux:     flux,
-		gitTools: gitTools,
-		retrier:  retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		flux:      flux,
+		gitTools:  gitTools,
+		cliConfig: cliConfig,
+		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
@@ -72,7 +73,7 @@ type Flux interface {
 	BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 
 	// BootstrapToolkitsComponentsGit bootstraps toolkit componets in a generic Git repository
-	BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig config.CliConfig) error
+	BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error
 
 	// UninstallToolkitsComponents UninstallFluxComponents removes the Flux components and the toolkit.fluxcd.io resources from the cluster.
 	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -127,32 +128,16 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 	}
 
 	if clusterSpec.FluxConfig.Spec.Github != nil {
-		if err := fc.setupRepository(ctx); err != nil {
-			return err
-		}
-
-		if err := fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
-			return err
-		}
-
-		if !cluster.ExistingManagement {
-			err := f.retrier.Retry(func() error {
-				return fc.flux.BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
-			})
-			if err != nil {
-				uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
-				if uninstallErr != nil {
-					logger.Info("Could not uninstall flux components", "error", uninstallErr)
-				}
-				return err
-			}
+		err := f.installGitOpsGithub(ctx, cluster, fc, clusterSpec)
+		if err != nil {
+			return fmt.Errorf("installing GitHub gitops: %v", err)
 		}
 	}
 
 	if clusterSpec.FluxConfig.Spec.Git != nil {
 		err := f.installGitOpsGenericGit(ctx, cluster, fc, clusterSpec)
 		if err != nil {
-			return err
+			return fmt.Errorf("installing generic git gitops: %v", err)
 		}
 	}
 
@@ -169,9 +154,8 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
-	err := fc.clone(ctx)
-	if err != nil {
+func (f *FluxAddonClient) installGitOpsGithub(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
+	if err := fc.setupRepository(ctx); err != nil {
 		return err
 	}
 
@@ -179,18 +163,34 @@ func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *
 		return err
 	}
 
-	password := os.Getenv(config.EksaGitPasswordTokenEnv)
-	pkPath := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
-	knownHostsPath := os.Getenv(config.EksaGitKnownHostsFileEnv)
-	cliConfig := config.CliConfig{
-		GitPassword:       password,
-		GitPrivateKeyFile: pkPath,
-		GitKnownHostsFile: knownHostsPath,
+	if !cluster.ExistingManagement {
+		err := f.retrier.Retry(func() error {
+			return fc.flux.BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+		})
+		if err != nil {
+			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
+			if uninstallErr != nil {
+				logger.Info("Could not uninstall flux components", "error", uninstallErr)
+			}
+			return err
+		}
+	}
+	return nil
+}
+
+func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
+	err := fc.clone(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
+		return err
 	}
 
 	if !cluster.ExistingManagement {
-		err := f.retrier.Retry(func() error {
-			return fc.flux.BootstrapToolkitsComponentsGit(ctx, cluster, clusterSpec.FluxConfig, cliConfig)
+		err = f.retrier.Retry(func() error {
+			return fc.flux.BootstrapToolkitsComponentsGit(ctx, cluster, clusterSpec.FluxConfig, f.cliConfig)
 		})
 		if err != nil {
 			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
