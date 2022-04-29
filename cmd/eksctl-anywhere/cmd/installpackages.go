@@ -3,14 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"log"
 
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type installPackageOptions struct {
@@ -48,7 +48,7 @@ var installPackageCommand = &cobra.Command{
 func runInstallPackages() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 
-		if err := validateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
+		if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
 			return err
 		}
 
