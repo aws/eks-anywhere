@@ -77,7 +77,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, uc.forceClean).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithCAPIManager().
 		WithEksdUpgrader().
