@@ -98,7 +98,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, nil).
 		WithWriter().
 		Build(ctx)
 	if err != nil {
