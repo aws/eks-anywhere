@@ -1079,13 +1079,13 @@ func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName string
 	params := []string{"get", eksaFluxConfigResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("getting eksa GitOpsConfig: %v", err)
+		return nil, fmt.Errorf("getting eksa FluxConfig: %v", err)
 	}
 
 	response := &v1alpha1.FluxConfig{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
-		return nil, fmt.Errorf("parsing GitOpsConfig response: %v", err)
+		return nil, fmt.Errorf("parsing FluxConfig response: %v", err)
 	}
 
 	return response, nil
