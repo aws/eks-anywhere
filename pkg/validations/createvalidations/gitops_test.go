@@ -339,6 +339,7 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 			cliConfig: &config.CliConfig{
 				GitPrivateKeyFile: emptyVar,
 				GitPassword:       emptyVar,
+				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -356,17 +357,19 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 			cliConfig: &config.CliConfig{
 				GitPrivateKeyFile: testEnvVar,
 				GitPassword:       emptyVar,
+				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
 			name:    "Empty private key file",
-			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", "testdata/emptyprivatekey"),
+			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", "testdata/git_empty_file"),
 			git: &v1alpha1.GitProviderConfig{
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/emptyprivatekey",
+				GitPrivateKeyFile: "testdata/git_empty_file",
 				GitPassword:       emptyVar,
+				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -378,6 +381,7 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 			cliConfig: &config.CliConfig{
 				GitPrivateKeyFile: emptyVar,
 				GitPassword:       testEnvVar,
+				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -387,8 +391,33 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/nonemptyprivatekey",
+				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
 				GitPassword:       testEnvVar,
+				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+			},
+		},
+		{
+			name:    "Empty known hosts",
+			wantErr: fmt.Errorf("SSH known hosts file does not exist at testdata/git_empty_file or is empty"),
+			git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
+				GitPassword:       testEnvVar,
+				GitKnownHostsFile: "testdata/git_empty_file",
+			},
+		},
+		{
+			name:    "No known hosts",
+			wantErr: fmt.Errorf("SSH known hosts file does not exist at testdata/git_empty_file or is empty"),
+			git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
+				GitPassword:       testEnvVar,
+				GitKnownHostsFile: "testdata/git_empty_file",
 			},
 		},
 	}
