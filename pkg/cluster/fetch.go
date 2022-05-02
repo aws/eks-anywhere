@@ -72,7 +72,7 @@ func GetFluxConfigForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fet
 	}
 	fluxConfig, err := fetch(ctx, cluster.Spec.GitOpsRef.Name, cluster.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed fetching FluxCOnfig for cluster: %v", err)
+		return nil, fmt.Errorf("fetching FluxCOnfig for cluster: %v", err)
 	}
 
 	return fluxConfig, nil
