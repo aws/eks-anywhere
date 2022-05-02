@@ -157,7 +157,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 }
 
 func (f *FluxAddonClient) installGitOpsGithub(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
-	if err := fc.setupRepository(ctx); err != nil {
+	if err := fc.setupProviderRepository(ctx); err != nil {
 		return err
 	}
 
@@ -544,12 +544,23 @@ func (fc *fluxForCluster) generateFluxPatchFile(t *templater.Templater) error {
 	return nil
 }
 
-// setupRepository will set up the repository which will house the GitOps configuration for the cluster.
+// setupProviderRepository will set up the repository which will house the GitOps configuration for the cluster.
 // if the repository exists and is not empty, it will be cloned.
 // if the repository exists but is empty, it will be initialized locally, as a bare repository cannot be cloned.
 // if the repository does not exist, it will be created and then initialized locally.
-func (fc *fluxForCluster) setupRepository(ctx context.Context) error {
-	r, err := fc.cloneIfExists(ctx)
+func (fc *fluxForCluster) setupProviderRepository(ctx context.Context) error {
+	var r *git.Repository
+	var err error
+	err = fc.FluxAddonClient.retrier.Retry(func() error {
+		r, err = fc.gitTools.Provider.GetRepo(ctx)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to describe repo: %w", err)
+	}
+	if r != nil {
+		err = fc.clone(ctx)
+	}
 	if err != nil {
 		var repoEmptyErr *git.RepositoryIsEmptyError
 		if errors.As(err, &repoEmptyErr) {
@@ -590,37 +601,6 @@ func (fc *fluxForCluster) clone(ctx context.Context) error {
 		return err
 	}
 	return nil
-}
-
-// cloneIfExists attempts to describe the provided remote repository via the Git Provider.
-// if the repo exists, it will cloneIfExists it.
-func (fc *fluxForCluster) cloneIfExists(ctx context.Context) (*git.Repository, error) {
-	var r *git.Repository
-	var err error
-	err = fc.FluxAddonClient.retrier.Retry(func() error {
-		r, err = fc.gitTools.Provider.GetRepo(ctx)
-		return err
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to describe repo: %w", err)
-	}
-	if r != nil {
-		logger.V(3).Info("Cloning remote repository", "repo", r.Name)
-		err = fc.FluxAddonClient.retrier.Retry(func() error {
-			return fc.gitTools.Client.Clone(ctx)
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		logger.V(3).Info("Creating a new branch")
-		err = fc.gitTools.Client.Branch(fc.branch())
-		if err != nil {
-			return nil, err
-		}
-		return r, nil
-	}
-	return nil, nil
 }
 
 // createRemoteRepository will create a repository in the remote git provider with the user-provided configuration
