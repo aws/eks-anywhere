@@ -8,15 +8,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 )
-
-type GitTools struct {
-	GitProvider git.ProviderClient
-	GitClient   git.Client
-	Writer      filewriter.FileWriter
-}
 
 func (e *ClusterE2ETest) NewGitTools(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, repoPath string) (*gitFactory.GitTools, error) {
 	if fluxConfig == nil {
@@ -24,13 +17,16 @@ func (e *ClusterE2ETest) NewGitTools(ctx context.Context, cluster *v1alpha1.Clus
 	}
 
 	var localGitWriterPath string
+	var localGitRepoPath string
 	if repoPath == "" {
 		localGitWriterPath = filepath.Join("git", fluxConfig.Spec.Github.Repository)
+		localGitRepoPath = filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
 	} else {
 		localGitWriterPath = repoPath
+		localGitRepoPath = repoPath
 	}
 
-	tools, err := gitFactory.Build(ctx, cluster, fluxConfig, writer)
+	tools, err := gitFactory.Build(ctx, cluster, fluxConfig, writer, gitFactory.WithRepositoryDirectory(localGitRepoPath))
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
