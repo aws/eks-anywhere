@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -694,7 +696,8 @@ func (fc *fluxForCluster) repository() string {
 		return fc.clusterSpec.FluxConfig.Spec.Github.Repository
 	}
 	if fc.clusterSpec.FluxConfig.Spec.Git != nil {
-		return fc.clusterSpec.FluxConfig.Spec.Git.RepositoryUrl
+		r := fc.clusterSpec.FluxConfig.Spec.Git.RepositoryUrl
+		return path.Base(strings.TrimSuffix(r, filepath.Ext(r)))
 	}
 	return ""
 }
