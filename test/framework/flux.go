@@ -34,7 +34,6 @@ const (
 	gitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
 	githubUserVar       = "T_GITHUB_USER"
 	githubTokenVar      = "EKSA_GITHUB_TOKEN"
-	gitSshKey           = "T_GIT_SSH_AUTHORIZED_KEY"
 	gitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
 	gitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
 )
@@ -68,10 +67,6 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		for _, opt := range opts {
 			opt(e.FluxConfig)
 		}
-		// Adding Job ID suffix to repo name
-		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxRepositorySuffix(jobId)(e.FluxConfig)
 		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGitRepo)
 	}
@@ -82,9 +77,11 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
-			api.WithPersonalGithubRepository(true),
-			api.WithStringFromEnvVarFluxConfig(gitRepositoryVar, api.WithGithubRepository),
-			api.WithStringFromEnvVarFluxConfig(gitSshKey, api.WithGitRepositoryUrl),
+			api.WithGithubProvider(
+				api.WithPersonalGithubRepository(true),
+				api.WithStringFromEnvVarGithubProviderConfig(gitRepositoryVar, api.WithGithubRepository),
+				api.WithStringFromEnvVarGithubProviderConfig(githubUserVar, api.WithGithubOwner),
+			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath("path2"),
 			api.WithBranch("main"),
