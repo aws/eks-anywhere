@@ -45,7 +45,7 @@ func TestGoGitClone(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, client := newGoGit(t)
+			ctx, client := newGoGitMock(t)
 			repoUrl := "testurl"
 			auth := &http.BasicAuth{}
 
@@ -73,7 +73,7 @@ func TestGoGitClone(t *testing.T) {
 }
 
 func TestGoGitAdd(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 	filename := "testfile"
 
 	client.EXPECT().OpenDir(repoDir).Return(&goGit.Repository{}, nil)
@@ -93,7 +93,7 @@ func TestGoGitAdd(t *testing.T) {
 }
 
 func TestGoGitRemove(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 	filename := "testfile"
 
 	client.EXPECT().OpenDir(repoDir).Return(&goGit.Repository{}, nil)
@@ -113,7 +113,7 @@ func TestGoGitRemove(t *testing.T) {
 }
 
 func TestGoGitCommit(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 	message := "message"
 
 	client.EXPECT().OpenDir(repoDir).Return(&goGit.Repository{}, nil)
@@ -134,7 +134,7 @@ func TestGoGitCommit(t *testing.T) {
 }
 
 func TestGoGitPush(t *testing.T) {
-	ctx, client := newGoGit(t)
+	ctx, client := newGoGitMock(t)
 
 	g := &gitclient.GitClient{
 		RepoDirectory: repoDir,
@@ -171,7 +171,7 @@ func TestGoGitPull(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, client := newGoGit(t)
+			ctx, client := newGoGitMock(t)
 			branch := "testbranch"
 
 			g := &gitclient.GitClient{
@@ -203,7 +203,7 @@ func TestGoGitPull(t *testing.T) {
 }
 
 func TestGoGitInit(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 	url := "testurl"
 
 	client.EXPECT().Init(repoDir).Return(&goGit.Repository{}, nil)
@@ -223,7 +223,7 @@ func TestGoGitInit(t *testing.T) {
 }
 
 func TestGoGitBranch(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 
 	repo := &goGit.Repository{}
 	headRef := &plumbing.Reference{}
@@ -259,7 +259,7 @@ func TestGoGitBranch(t *testing.T) {
 }
 
 func TestGoGitBranchRemoteExists(t *testing.T) {
-	_, client := newGoGit(t)
+	_, client := newGoGitMock(t)
 
 	repo := &goGit.Repository{}
 	headRef := &plumbing.Reference{}
@@ -300,7 +300,44 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 	}
 }
 
-func newGoGit(t *testing.T) (context.Context, *mockGitClient.MockGoGit) {
+func TestGoGitValidateRemoteExists(t *testing.T) {
+	tests := []struct {
+		name       string
+		wantErr    bool
+		throwError error
+	}{
+		{
+			name:    "validate success",
+			wantErr: false,
+		},
+		{
+			name:       "invalid repository error",
+			wantErr:    true,
+			throwError: fmt.Errorf("remote repository does not exist"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx, client := newGoGitMock(t)
+
+			g := &gitclient.GitClient{
+				RepoUrl: "testurl",
+				Client:  client,
+			}
+			remote := &goGit.Remote{}
+
+			client.EXPECT().NewRemote(g.RepoUrl, goGit.DefaultRemoteName).Return(remote)
+			client.EXPECT().ListWithContext(ctx, remote, g.Auth).Return([]*plumbing.Reference{}, tt.throwError)
+
+			err := g.ValidateRemoteExists(ctx)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Clone() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func newGoGitMock(t *testing.T) (context.Context, *mockGitClient.MockGoGit) {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	client := mockGitClient.NewMockGoGit(ctrl)

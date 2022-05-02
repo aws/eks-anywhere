@@ -216,7 +216,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, e.validateGitopsRepoContentPath(repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -326,10 +326,14 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 	}
 }
 
+func (e *ClusterE2ETest) validateGitopsRepoContentPath(repoName string) string {
+	return filepath.Join(e.ClusterName, "e2e-validate", repoName)
+}
+
 func (e *ClusterE2ETest) validateGitopsRepoContent(gitTools *gitfactory.GitTools) {
 	repoName := e.gitRepoName()
 	gitFilePath := e.clusterConfigGitPath()
-	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
+	localFilePath := filepath.Join(e.validateGitopsRepoContentPath(repoName), e.clusterConfGitPath())
 	ctx := context.Background()
 	gc := gitTools.Client
 	err := gc.Clone(ctx)

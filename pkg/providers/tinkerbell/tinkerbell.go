@@ -193,7 +193,7 @@ func NewProviderCustomDep(
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
-			workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
@@ -650,7 +650,7 @@ func (p *tinkerbellProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 type TinkerbellTemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
 	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
-	workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
+	WorkerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
 	now                         types.NowFunc
 }
@@ -659,34 +659,14 @@ func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterC
 	return &TinkerbellTemplateBuilder{
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		datacenterSpec:              datacenterSpec,
-		workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
 		now:                         now,
 	}
 }
 
-func (vs *TinkerbellTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
-}
-
-func (vs *TinkerbellTemplateBuilder) CPMachineTemplateName(clusterName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
-}
-
-func (vs *TinkerbellTemplateBuilder) EtcdMachineTemplateName(clusterName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
-}
-
-func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
-}
-
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.controlPlaneMachineSpec.TemplateRef.Name]
+func (tb *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.controlPlaneMachineSpec.TemplateRef.Name]
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Control Plane TinkerbellTemplateConfig: %v", err)
@@ -695,14 +675,14 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	var etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec
 	var etcdTemplateString string
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineSpec = *vs.etcdMachineSpec
-		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.etcdMachineSpec.TemplateRef.Name]
+		etcdMachineSpec = *tb.etcdMachineSpec
+		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
 		}
 	}
-	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString)
+	values := buildTemplateMapCP(clusterSpec, *tb.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -714,23 +694,19 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
+func (tb *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
+		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
 		}
 
-		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
-		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		if workloadTemplateNames != nil && ok {
-			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		} else {
-			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
-		}
-		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
+		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workerSshAuthorizedKey"] = tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
@@ -759,13 +735,20 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 		}
-		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil, nil)
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
