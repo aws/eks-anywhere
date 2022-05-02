@@ -116,7 +116,7 @@ func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace 
 }
 
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
