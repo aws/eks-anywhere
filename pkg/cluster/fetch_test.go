@@ -72,36 +72,10 @@ func TestGetFluxConfigForCluster(t *testing.T) {
 		},
 	}
 	wantFlux := &v1alpha1.FluxConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "",
-			APIVersion: "",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:                       "",
-			GenerateName:               "",
-			Namespace:                  "",
-			SelfLink:                   "",
-			UID:                        "",
-			ResourceVersion:            "",
-			Generation:                 0,
-			CreationTimestamp:          metav1.Time{},
-			DeletionTimestamp:          nil,
-			DeletionGracePeriodSeconds: nil,
-			Labels:                     nil,
-			Annotations:                nil,
-			OwnerReferences:            nil,
-			Finalizers:                 nil,
-			ClusterName:                "",
-			ManagedFields:              nil,
-		},
-		Spec: v1alpha1.FluxConfigSpec{
-			SystemNamespace:   "",
-			ClusterConfigPath: "",
-			Branch:            "",
-			Github:            nil,
-			Git:               nil,
-		},
-		Status: v1alpha1.FluxConfigStatus{},
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec:       v1alpha1.FluxConfigSpec{},
+		Status:     v1alpha1.FluxConfigStatus{},
 	}
 	mockFetch := func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
 		g.Expect(name).To(Equal(c.Name))
