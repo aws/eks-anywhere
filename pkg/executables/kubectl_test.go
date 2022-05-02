@@ -1795,3 +1795,45 @@ func TestKubectlGetObjectNotFound(t *testing.T) {
 		})
 	}
 }
+
+func TestKubectlGetEksaFluxConfig(t *testing.T) {
+	kubeconfig := "/my/kubeconfig"
+	namespace := "eksa-system"
+	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
+
+	returnConfig := &v1alpha1.FluxConfig{}
+	returnConfigBytes, err := json.Marshal(returnConfig)
+	if err != nil {
+		t.Errorf("failed to create output object for test")
+	}
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"get", eksaFluxConfigResourceType, "testFluxConfig", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*bytes.NewBuffer(returnConfigBytes), nil)
+	_, err = k.GetEksaFluxConfig(ctx, "testFluxConfig", kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetEksaFluxConfig() error = %v, want error = nil", err)
+	}
+}
+
+func TestKubectlDeleteFluxConfig(t *testing.T) {
+	namespace := "eksa-system"
+	kubeconfig := "/my/kubeconfig"
+	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
+
+	returnConfig := &v1alpha1.FluxConfig{}
+	returnConfigBytes, err := json.Marshal(returnConfig)
+	if err != nil {
+		t.Errorf("failed to create output object for test")
+	}
+
+	mgmtCluster := &types.Cluster{KubeconfigFile: kubeconfig}
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", eksaFluxConfigResourceType, "testFluxConfig", "--kubeconfig", mgmtCluster.KubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*bytes.NewBuffer(returnConfigBytes), nil)
+	err = k.DeleteFluxConfig(ctx, mgmtCluster, "testFluxConfig", namespace)
+	if err != nil {
+		t.Errorf("Kubectl.DeleteFluxConfig() error = %v, want error = nil", err)
+	}
+}
