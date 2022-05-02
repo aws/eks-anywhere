@@ -1,0 +1,53 @@
+2022-05-02T01:58:44.553Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups
+2022-05-02T01:58:44.553Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:52.952Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456724553903965", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:57.747Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:58.718Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456737747080268", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:59.037Z	V0	e2e	removing	{"name": "workers-2"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-06178008b153dfe4b -p vsphere > cluster.yaml ]
+2022-05-02T01:59:02.989Z	V0	e2e	Adding worker node group	{"name": "workers-1"}
+2022-05-02T01:59:02.989Z	V0	e2e	Adding worker node group	{"name": "workers-2"}
+    cluster.go:374: Creating cluster main-i-06178008b153dfe4b
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-06178008b153dfe4b-config/cluster.yaml -v 4 ]
+2022-05-02T01:59:03.056Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:59:03.057Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T01:59:03.218Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:03.266Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:59:03.363Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:09.303Z	V3	Initializing long running container	{"name": "eksa_1651456743363661948", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:12.464Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:59:12.464Z	V0	Performing setup and validations
+2022-05-02T01:59:12.464Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:12.492Z	V0	✅ Connected to server
+2022-05-02T01:59:12.822Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:59:13.240Z	V0	✅ Datacenter validated
+2022-05-02T01:59:13.561Z	V0	✅ Network validated
+2022-05-02T01:59:14.220Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-1", "user": "ec2-user"}
+2022-05-02T01:59:15.809Z	V0	✅ Datastore validated
+2022-05-02T01:59:16.108Z	V0	✅ Folder validated
+2022-05-02T01:59:16.418Z	V0	✅ Resource pool validated
+2022-05-02T01:59:16.733Z	V0	✅ Datastore validated
+2022-05-02T01:59:17.025Z	V0	✅ Folder validated
+2022-05-02T01:59:17.347Z	V0	✅ Resource pool validated
+2022-05-02T01:59:17.659Z	V0	✅ Datastore validated
+2022-05-02T01:59:17.966Z	V0	✅ Folder validated
+2022-05-02T01:59:18.278Z	V0	✅ Resource pool validated
+2022-05-02T01:59:18.974Z	V1	Control plane template validation failed.
+2022-05-02T01:59:18.974Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:59:18.974Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:59:18.974Z	V0	✅ Create preflight validations pass
+2022-05-02T01:59:18.974Z	V4	Task finished	{"task_name": "setup-validate", "duration": "6.509874342s"}
+2022-05-02T01:59:18.974Z	V4	----------------------------------
+2022-05-02T01:59:18.974Z	V4	Tasks completed	{"duration": "6.509922473s"}
+2022-05-02T01:59:18.974Z	V3	Logging out from current govc session
+2022-05-02T01:59:19.564Z	V3	Cleaning up long running container	{"name": "eksa_1651456743363661948"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-06178008b153dfe4b-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:59:19.694Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456737747080268"}
+2022-05-02T01:59:19.807Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:59:20.364Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456724553903965"}
+--- FAIL: TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups (35.90s)
+FAIL
+
+DONE 1 tests, 1 failure in 36.019s

@@ -1,0 +1,51 @@
+2022-05-02T01:58:21.709Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottleRocketPackagesInstallSimpleFlow
+2022-05-02T01:58:21.709Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:30.475Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456701709689424", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:34.714Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:35.697Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456714714319391", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:36.117Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:37.087Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456716117200300", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0c90c19753d639a18 -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-0c90c19753d639a18
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0c90c19753d639a18-config/cluster.yaml -v 4 ]
+2022-05-02T01:58:41.529Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:58:41.653Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:58:41.710Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:58:41.801Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:58:47.890Z	V3	Initializing long running container	{"name": "eksa_1651456721801152635", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:58:51.037Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:58:51.037Z	V0	Performing setup and validations
+2022-05-02T01:58:51.037Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:58:51.066Z	V0	✅ Connected to server
+2022-05-02T01:58:51.469Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:58:51.867Z	V0	✅ Datacenter validated
+2022-05-02T01:58:52.222Z	V0	✅ Network validated
+2022-05-02T01:58:54.611Z	V0	✅ Datastore validated
+2022-05-02T01:58:54.937Z	V0	✅ Folder validated
+2022-05-02T01:58:55.280Z	V0	✅ Resource pool validated
+2022-05-02T01:58:55.602Z	V0	✅ Datastore validated
+2022-05-02T01:58:56.061Z	V0	✅ Folder validated
+2022-05-02T01:58:56.381Z	V0	✅ Resource pool validated
+2022-05-02T01:58:56.710Z	V0	✅ Datastore validated
+2022-05-02T01:58:57.051Z	V0	✅ Folder validated
+2022-05-02T01:58:57.422Z	V0	✅ Resource pool validated
+2022-05-02T01:58:58.175Z	V1	Control plane template validation failed.
+2022-05-02T01:58:58.175Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:58:58.175Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:58:58.175Z	V0	✅ Create preflight validations pass
+2022-05-02T01:58:58.175Z	V4	Task finished	{"task_name": "setup-validate", "duration": "7.138517775s"}
+2022-05-02T01:58:58.175Z	V4	----------------------------------
+2022-05-02T01:58:58.175Z	V4	Tasks completed	{"duration": "7.13856342s"}
+2022-05-02T01:58:58.175Z	V3	Logging out from current govc session
+2022-05-02T01:58:58.774Z	V3	Cleaning up long running container	{"name": "eksa_1651456721801152635"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-0c90c19753d639a18-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:58:58.907Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456716117200300"}
+2022-05-02T01:58:58.997Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456714714319391"}
+2022-05-02T01:58:59.087Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:58:59.688Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456701709689424"}
+--- FAIL: TestVSphereKubernetes122BottleRocketPackagesInstallSimpleFlow (38.08s)
+FAIL
+
+DONE 1 tests, 1 failure in 38.204s

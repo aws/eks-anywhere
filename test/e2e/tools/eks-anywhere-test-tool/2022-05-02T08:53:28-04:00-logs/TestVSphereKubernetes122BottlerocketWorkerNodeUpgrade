@@ -1,0 +1,48 @@
+2022-05-02T01:56:29.971Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottlerocketWorkerNodeUpgrade
+2022-05-02T01:56:29.971Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:37.130Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456589971467625", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:41.623Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:42.617Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456601623665012", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0a8957e69678d84ad -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-0a8957e69678d84ad
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0a8957e69678d84ad-config/cluster.yaml -v 4 ]
+2022-05-02T01:56:44.805Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:56:44.943Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:56:44.989Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:56:45.085Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:56:51.623Z	V3	Initializing long running container	{"name": "eksa_1651456605085089461", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:56:59.557Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:56:59.557Z	V0	Performing setup and validations
+2022-05-02T01:56:59.557Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:56:59.586Z	V0	✅ Connected to server
+2022-05-02T01:56:59.955Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:57:00.378Z	V0	✅ Datacenter validated
+2022-05-02T01:57:00.738Z	V0	✅ Network validated
+2022-05-02T01:57:03.288Z	V0	✅ Datastore validated
+2022-05-02T01:57:03.686Z	V0	✅ Folder validated
+2022-05-02T01:57:04.033Z	V0	✅ Resource pool validated
+2022-05-02T01:57:04.389Z	V0	✅ Datastore validated
+2022-05-02T01:57:04.766Z	V0	✅ Folder validated
+2022-05-02T01:57:05.091Z	V0	✅ Resource pool validated
+2022-05-02T01:57:05.438Z	V0	✅ Datastore validated
+2022-05-02T01:57:05.777Z	V0	✅ Folder validated
+2022-05-02T01:57:06.112Z	V0	✅ Resource pool validated
+2022-05-02T01:57:06.841Z	V1	Control plane template validation failed.
+2022-05-02T01:57:06.841Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:57:06.841Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:57:06.841Z	V0	✅ Create preflight validations pass
+2022-05-02T01:57:06.841Z	V4	Task finished	{"task_name": "setup-validate", "duration": "7.283188244s"}
+2022-05-02T01:57:06.841Z	V4	----------------------------------
+2022-05-02T01:57:06.841Z	V4	Tasks completed	{"duration": "7.28324688s"}
+2022-05-02T01:57:06.841Z	V3	Logging out from current govc session
+2022-05-02T01:57:07.473Z	V3	Cleaning up long running container	{"name": "eksa_1651456605085089461"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-0a8957e69678d84ad-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:57:07.597Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456601623665012"}
+2022-05-02T01:57:07.689Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:57:08.350Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456589971467625"}
+--- FAIL: TestVSphereKubernetes122BottlerocketWorkerNodeUpgrade (38.48s)
+FAIL
+
+DONE 1 tests, 1 failure in 38.562s

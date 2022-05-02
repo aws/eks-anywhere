@@ -1,0 +1,48 @@
+2022-05-02T01:58:43.956Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottleRocketSimpleFlow
+2022-05-02T01:58:43.961Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:52.656Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456723961701119", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:56.762Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:57.747Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456736762791137", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-092a25f203b096663 -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-092a25f203b096663
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-092a25f203b096663-config/cluster.yaml -v 4 ]
+2022-05-02T01:59:02.081Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:59:02.241Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:02.291Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:59:02.385Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:08.739Z	V3	Initializing long running container	{"name": "eksa_1651456742385776088", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:11.864Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:59:11.864Z	V0	Performing setup and validations
+2022-05-02T01:59:11.864Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:11.892Z	V0	✅ Connected to server
+2022-05-02T01:59:12.217Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:59:12.625Z	V0	✅ Datacenter validated
+2022-05-02T01:59:13.013Z	V0	✅ Network validated
+2022-05-02T01:59:15.367Z	V0	✅ Datastore validated
+2022-05-02T01:59:15.694Z	V0	✅ Folder validated
+2022-05-02T01:59:16.028Z	V0	✅ Resource pool validated
+2022-05-02T01:59:16.347Z	V0	✅ Datastore validated
+2022-05-02T01:59:16.680Z	V0	✅ Folder validated
+2022-05-02T01:59:17.028Z	V0	✅ Resource pool validated
+2022-05-02T01:59:17.427Z	V0	✅ Datastore validated
+2022-05-02T01:59:17.750Z	V0	✅ Folder validated
+2022-05-02T01:59:18.074Z	V0	✅ Resource pool validated
+2022-05-02T01:59:18.901Z	V1	Control plane template validation failed.
+2022-05-02T01:59:18.901Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:59:18.901Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:59:18.901Z	V0	✅ Create preflight validations pass
+2022-05-02T01:59:18.901Z	V4	Task finished	{"task_name": "setup-validate", "duration": "7.037448265s"}
+2022-05-02T01:59:18.901Z	V4	----------------------------------
+2022-05-02T01:59:18.901Z	V4	Tasks completed	{"duration": "7.037492668s"}
+2022-05-02T01:59:18.901Z	V3	Logging out from current govc session
+2022-05-02T01:59:19.537Z	V3	Cleaning up long running container	{"name": "eksa_1651456742385776088"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-092a25f203b096663-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:59:19.666Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456736762791137"}
+2022-05-02T01:59:19.762Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:59:20.371Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456723961701119"}
+--- FAIL: TestVSphereKubernetes122BottleRocketSimpleFlow (36.51s)
+FAIL
+
+DONE 1 tests, 1 failure in 36.639s

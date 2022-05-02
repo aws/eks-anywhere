@@ -1,0 +1,252 @@
+2022-05-02T01:58:35.219Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes121BottlerocketTo122DifferentNamespaceWithFluxLegacyUpgrade
+2022-05-02T01:58:35.219Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:53.013Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456715219889703", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:57.086Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:58:58.053Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456737086892042", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0cc685c17f4fc7f01 -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-0cc685c17f4fc7f01
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0cc685c17f4fc7f01-config/cluster.yaml -v 4 ]
+2022-05-02T01:59:02.339Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:59:02.340Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T01:59:02.514Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:02.561Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:59:02.672Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:08.954Z	V3	Initializing long running container	{"name": "eksa_1651456742672445797", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:59:12.133Z	V4	Checking validity of Github Access Token environment variable	{"env var": "EKSA_GITHUB_TOKEN"}
+2022-05-02T01:59:12.412Z	V0	Checking Github Access Token permissions
+2022-05-02T01:59:12.412Z	V0	✅ Github personal access token has the required repo permissions
+2022-05-02T01:59:12.412Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:59:12.413Z	V0	Performing setup and validations
+2022-05-02T01:59:12.413Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:59:12.445Z	V0	✅ Connected to server
+2022-05-02T01:59:12.791Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:59:13.206Z	V0	✅ Datacenter validated
+2022-05-02T01:59:13.592Z	V0	✅ Network validated
+2022-05-02T01:59:16.221Z	V0	✅ Datastore validated
+2022-05-02T01:59:16.572Z	V0	✅ Folder validated
+2022-05-02T01:59:16.901Z	V0	✅ Resource pool validated
+2022-05-02T01:59:17.256Z	V0	✅ Datastore validated
+2022-05-02T01:59:17.630Z	V0	✅ Folder validated
+2022-05-02T01:59:17.962Z	V0	✅ Resource pool validated
+2022-05-02T01:59:18.291Z	V0	✅ Datastore validated
+2022-05-02T01:59:18.633Z	V0	✅ Folder validated
+2022-05-02T01:59:18.982Z	V0	✅ Resource pool validated
+2022-05-02T01:59:19.793Z	V0	✅ Control plane and Workload templates validated
+2022-05-02T01:59:23.348Z	V0	✅ Vsphere Provider setup is valid
+2022-05-02T01:59:23.451Z	V0	✅ Flux path
+2022-05-02T01:59:23.451Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:59:23.451Z	V0	✅ Create preflight validations pass
+2022-05-02T01:59:23.451Z	V4	Task finished	{"task_name": "setup-validate", "duration": "11.038327992s"}
+2022-05-02T01:59:23.451Z	V4	----------------------------------
+2022-05-02T01:59:23.451Z	V4	Task start	{"task_name": "bootstrap-cluster-init"}
+2022-05-02T01:59:23.451Z	V0	Creating new bootstrap cluster
+2022-05-02T01:59:23.451Z	V4	Creating kind cluster	{"name": "main-i-0cc685c17f4fc7f01-eks-a-cluster", "kubeconfig": "main-i-0cc685c17f4fc7f01/generated/main-i-0cc685c17f4fc7f01.kind.kubeconfig"}
+2022-05-02T02:00:29.652Z	V0	Provider specific pre-capi-install-setup on bootstrap cluster
+2022-05-02T02:00:29.652Z	V0	Installing cluster-api providers on bootstrap cluster
+2022-05-02T02:01:38.821Z	V0	Provider specific post-setup
+2022-05-02T02:01:38.821Z	V4	Task finished	{"task_name": "bootstrap-cluster-init", "duration": "2m15.370139761s"}
+2022-05-02T02:01:38.821Z	V4	----------------------------------
+2022-05-02T02:01:38.821Z	V4	Task start	{"task_name": "workload-cluster-init"}
+2022-05-02T02:01:38.821Z	V0	Creating new workload cluster
+2022-05-02T02:01:41.379Z	V3	Waiting for external etcd to be ready	{"cluster": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:04:13.328Z	V3	External etcd is ready
+2022-05-02T02:04:13.328Z	V3	Waiting for control plane to be ready
+2022-05-02T02:06:28.978Z	V3	Waiting for workload kubeconfig generation	{"cluster": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:29.421Z	V3	Waiting for controlplane and worker machines to be ready
+2022-05-02T02:06:29.814Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:30.162Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:32.546Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:34.914Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:37.349Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:39.784Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:42.232Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:44.600Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:46.954Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:49.423Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:51.772Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:54.133Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:56.521Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:06:58.930Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:01.288Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:03.663Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:06.041Z	V4	Nodes are not ready yet	{"total": 2, "ready": 0, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:08.452Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:09.774Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:11.115Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:12.491Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:13.828Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:15.184Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:16.529Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:17.875Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:19.278Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:20.643Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:22.008Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:23.357Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:24.722Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:26.050Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:27.423Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:28.764Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:30.114Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:31.491Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:32.849Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:34.212Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:35.567Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:36.894Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:38.312Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:39.709Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:41.075Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:42.434Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:43.781Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:45.152Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:46.549Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:47.957Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:49.339Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:50.714Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:52.046Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:53.389Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:54.732Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:56.098Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:57.483Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:07:58.855Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:08:00.194Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:08:01.643Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:08:03.119Z	V4	Nodes are not ready yet	{"total": 2, "ready": 1, "cluster name": "main-i-0cc685c17f4fc7f01"}
+2022-05-02T02:08:04.452Z	V4	Nodes ready	{"total": 2}
+2022-05-02T02:08:04.452Z	V0	Installing networking on workload cluster
+2022-05-02T02:08:08.811Z	V0	Installing storage class on cluster
+2022-05-02T02:08:09.397Z	V0	Installing cluster-api providers on workload cluster
+2022-05-02T02:10:18.670Z	V0	Installing EKS-A secrets on workload cluster
+2022-05-02T02:10:22.314Z	V4	Installing machine health checks on bootstrap cluster
+2022-05-02T02:10:23.071Z	V4	Task finished	{"task_name": "workload-cluster-init", "duration": "8m44.249738466s"}
+2022-05-02T02:10:23.071Z	V4	----------------------------------
+2022-05-02T02:10:23.071Z	V4	Task start	{"task_name": "capi-management-move"}
+2022-05-02T02:10:23.071Z	V0	Moving cluster management from bootstrap to workload cluster
+2022-05-02T02:10:23.071Z	V3	Waiting for management machines to be ready before move
+2022-05-02T02:10:23.404Z	V4	Nodes ready	{"total": 2}
+2022-05-02T02:10:32.001Z	V3	Waiting for control planes to be ready after move
+2022-05-02T02:10:36.828Z	V3	Waiting for workload cluster control plane replicas to be ready after move
+2022-05-02T02:10:37.501Z	V3	Waiting for workload cluster machine deployment replicas to be ready after move
+2022-05-02T02:10:38.151Z	V3	Waiting for machines to be ready after move
+2022-05-02T02:10:38.557Z	V4	Nodes ready	{"total": 2}
+2022-05-02T02:10:38.557Z	V4	Task finished	{"task_name": "capi-management-move", "duration": "15.486161615s"}
+2022-05-02T02:10:38.557Z	V4	----------------------------------
+2022-05-02T02:10:38.557Z	V4	Task start	{"task_name": "eksa-components-install"}
+2022-05-02T02:10:38.557Z	V0	Installing EKS-A custom components (CRD and controller) on workload cluster
+2022-05-02T02:11:00.322Z	V0	Installing EKS-D components on workload cluster
+2022-05-02T02:11:03.380Z	V0	Creating EKS-A CRDs instances on workload cluster
+2022-05-02T02:11:04.180Z	V4	Applying eksa yaml resources to cluster
+2022-05-02T02:11:05.619Z	V1	Applying Bundles to cluster
+2022-05-02T02:11:06.425Z	V4	Applying eksd manifest to cluster
+2022-05-02T02:11:12.575Z	V4	Task finished	{"task_name": "eksa-components-install", "duration": "34.017949899s"}
+2022-05-02T02:11:12.575Z	V4	----------------------------------
+2022-05-02T02:11:12.575Z	V4	Task start	{"task_name": "addon-manager-install"}
+2022-05-02T02:11:12.575Z	V0	Installing AddonManager and GitOps Toolkit on workload cluster
+2022-05-02T02:11:12.575Z	V0	Adding cluster configuration files to Git
+2022-05-02T02:11:12.575Z	V3	Describing Github repository	{"name": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:11:12.575Z	V3	Describing Github repository	{"name": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:11:12.709Z	V3	Remote Github repo does not exist; will create and initialize	{"repo": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:11:12.709Z	V3	Creating remote Github repo	{"options": {"Name":"spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79","Owner":"that-jetpack-guy","Description":"EKS-A cluster configuration repository","Personal":true,"Privacy":true}}
+2022-05-02T02:11:12.710Z	V3	Attempting to create new Github repo	{"repo": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:11:13.542Z	V3	Successfully created new Github repo	{"repo": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:11:13.542Z	V3	Opening directory	{"directory": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:13.543Z	V3	Opening working tree
+2022-05-02T02:11:13.543Z	V3	Generating Commit object...
+2022-05-02T02:11:13.544Z	V3	Committing Object to local repo	{"repo": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:13.544Z	V0	Finalized commit and committed to local repository	{"hash": "e7ae07c6e4f25f8503e2acee44a62055e434c922"}
+2022-05-02T02:11:13.545Z	V3	Branch does not exist locally	{"branch": "main"}
+2022-05-02T02:11:13.699Z	V3	Generating eks-a cluster manifest files...
+2022-05-02T02:11:13.699Z	V3	Generating eks-a cluster config file...
+2022-05-02T02:11:13.702Z	V3	Generating eks-a kustomization file...
+2022-05-02T02:11:13.702Z	V3	Generating flux custom manifest files...
+2022-05-02T02:11:13.702Z	V3	Generating flux-system kustomization file...
+2022-05-02T02:11:13.702Z	V3	Generating flux-system sync file...
+2022-05-02T02:11:13.702Z	V3	Generating flux-system patch file...
+2022-05-02T02:11:13.702Z	V3	Opening directory	{"directory": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:13.702Z	V3	Opening working tree
+2022-05-02T02:11:13.702Z	V3	Tracking specified files	{"file": "."}
+2022-05-02T02:11:13.707Z	V3	Opening directory	{"directory": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:13.707Z	V3	Opening working tree
+2022-05-02T02:11:13.707Z	V3	Generating Commit object...
+2022-05-02T02:11:13.712Z	V3	Committing Object to local repo	{"repo": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:13.712Z	V0	Finalized commit and committed to local repository	{"hash": "c1e155755314749b401e283040600263d98d5dc7"}
+2022-05-02T02:11:13.712Z	V3	Pushing to remote	{"repo": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:14.251Z	V3	Finished pushing cluster config and flux custom manifest files to git	{"repository": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79"}
+2022-05-02T02:11:14.251Z	V4	Checking validity of Github Access Token environment variable	{"env var": "EKSA_GITHUB_TOKEN"}
+2022-05-02T02:11:40.549Z	V3	pulling from remote after Flux Bootstrap to ensure configuration files in local git repository are in sync	{"remote": "origin", "branch": "main"}
+2022-05-02T02:11:40.549Z	V3	Pulling from remote	{"repo": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "remote": "origin"}
+2022-05-02T02:11:40.834Z	V3	Successfully pulled from remote	{"repo": "main-i-0cc685c17f4fc7f01/git/spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "remote": "origin", "latest commit": "f104ed56e4d51db6b7f8fe8b5ab30c424e503761"}
+2022-05-02T02:11:40.834Z	V4	Task finished	{"task_name": "addon-manager-install", "duration": "28.259041368s"}
+2022-05-02T02:11:40.834Z	V4	----------------------------------
+2022-05-02T02:11:40.834Z	V4	Task start	{"task_name": "write-cluster-config"}
+2022-05-02T02:11:40.834Z	V0	Writing cluster config file
+2022-05-02T02:11:40.838Z	V4	Task finished	{"task_name": "write-cluster-config", "duration": "3.888713ms"}
+2022-05-02T02:11:40.838Z	V4	----------------------------------
+2022-05-02T02:11:40.838Z	V4	Task start	{"task_name": "delete-kind-cluster"}
+2022-05-02T02:11:40.838Z	V0	Deleting bootstrap cluster
+2022-05-02T02:11:42.095Z	V4	Deleting kind cluster	{"name": "main-i-0cc685c17f4fc7f01-eks-a-cluster"}
+2022-05-02T02:11:43.776Z	V0	🎉 Cluster created!
+2022-05-02T02:11:43.776Z	V4	Task finished	{"task_name": "delete-kind-cluster", "duration": "2.937541215s"}
+2022-05-02T02:11:43.776Z	V4	----------------------------------
+2022-05-02T02:11:43.776Z	V4	Tasks completed	{"duration": "12m31.363102626s"}
+2022-05-02T02:11:43.777Z	V3	Logging out from current govc session
+2022-05-02T02:11:44.416Z	V3	Cleaning up long running container	{"name": "eksa_1651456742672445797"}
+    cluster.go:499: Running shell command [ eksctl anywhere upgrade cluster -f main-i-0cc685c17f4fc7f01-config/cluster.yaml -v 4 ]
+2022-05-02T02:11:44.615Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T02:11:44.711Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T02:11:44.713Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:11:44.765Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T02:11:44.855Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:11:45.817Z	V3	Initializing long running container	{"name": "eksa_1651457504855802241", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:11:46.151Z	V4	Checking validity of Github Access Token environment variable	{"env var": "EKSA_GITHUB_TOKEN"}
+2022-05-02T02:11:46.420Z	V0	Checking Github Access Token permissions
+2022-05-02T02:11:46.420Z	V0	✅ Github personal access token has the required repo permissions
+2022-05-02T02:11:46.420Z	V4	Task start	{"task_name": "setup-and-validate"}
+2022-05-02T02:11:46.420Z	V0	Performing setup and validations
+2022-05-02T02:11:46.420Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:11:46.462Z	V0	✅ Connected to server
+2022-05-02T02:11:46.817Z	V0	✅ Authenticated to vSphere
+2022-05-02T02:11:47.310Z	V0	✅ Datacenter validated
+2022-05-02T02:11:47.731Z	V0	✅ Network validated
+2022-05-02T02:11:50.697Z	V0	✅ Datastore validated
+2022-05-02T02:11:51.158Z	V0	✅ Folder validated
+2022-05-02T02:11:51.565Z	V0	✅ Resource pool validated
+2022-05-02T02:11:52.017Z	V0	✅ Datastore validated
+2022-05-02T02:11:52.437Z	V0	✅ Folder validated
+2022-05-02T02:11:52.805Z	V0	✅ Resource pool validated
+2022-05-02T02:11:53.208Z	V0	✅ Datastore validated
+2022-05-02T02:11:53.589Z	V0	✅ Folder validated
+2022-05-02T02:11:53.955Z	V0	✅ Resource pool validated
+2022-05-02T02:11:54.807Z	V1	Control plane template validation failed.
+2022-05-02T02:11:54.807Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T02:11:58.698Z	V3	calculating version differences	{"inputVersion": "1.22", "clusterVersion": "1.21.9-eks-bbc8a0c"}
+2022-05-02T02:11:58.698Z	V3	calculated version differences	{"majorVersionDifference": 0, "minorVersionDifference": 1}
+2022-05-02T02:12:03.138Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T02:12:03.138Z	V0	✅ Control plane ready
+2022-05-02T02:12:03.138Z	V0	✅ Worker nodes ready
+2022-05-02T02:12:03.138Z	V0	✅ Nodes ready
+2022-05-02T02:12:03.138Z	V0	✅ Cluster CRDs ready
+2022-05-02T02:12:03.138Z	V0	✅ Cluster object present on workload cluster
+2022-05-02T02:12:03.138Z	V0	✅ Upgrade cluster kubernetes version increment
+2022-05-02T02:12:03.138Z	V0	✅ Validate immutable fields
+2022-05-02T02:12:03.138Z	V0	✅ Upgrade preflight validations pass
+2022-05-02T02:12:03.138Z	V4	Task finished	{"task_name": "setup-and-validate", "duration": "16.7176962s"}
+2022-05-02T02:12:03.138Z	V4	----------------------------------
+2022-05-02T02:12:03.138Z	V4	Tasks completed	{"duration": "16.717738911s"}
+2022-05-02T02:12:03.138Z	V3	Logging out from current govc session
+2022-05-02T02:12:03.813Z	V3	Cleaning up long running container	{"name": "eksa_1651457504855802241"}
+Error: failed to upgrade cluster: validations failed
+    cluster.go:532: Command eksctl anywhere [upgrade cluster -f main-i-0cc685c17f4fc7f01-config/cluster.yaml -v 4] failed with error: exit status 255: Error: failed to upgrade cluster: validations failed
+2022-05-02T02:12:03.970Z	V4	e2e	Checking validity of Github Access Token environment variable	{"env var": "EKSA_GITHUB_TOKEN"}
+2022-05-02T02:12:04.254Z	V0	e2e	Checking Github Access Token permissions
+2022-05-02T02:12:04.254Z	V0	e2e	✅ Github personal access token has the required repo permissions
+2022-05-02T02:12:04.254Z	V3	e2e	Describing Github repository	{"name": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:12:04.254Z	V3	e2e	Describing Github repository	{"name": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:12:04.422Z	V3	e2e	Deleting Github repository	{"name": "spacecraft-aws-eks-anywhere-test-0bed5a33-d5ad-4e31-9136-7417857631a0-79", "owner": "that-jetpack-guy"}
+2022-05-02T02:12:04.744Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456737086892042"}
+2022-05-02T02:12:04.850Z	V3	e2e	Logging out from current govc session
+2022-05-02T02:12:05.547Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456715219889703"}
+--- FAIL: TestVSphereKubernetes121BottlerocketTo122DifferentNamespaceWithFluxLegacyUpgrade (810.44s)
+FAIL
+
+DONE 1 tests, 1 failure in 810.594s

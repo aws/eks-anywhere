@@ -1,0 +1,498 @@
+2022-05-02T01:55:51.544Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122Labels
+2022-05-02T01:55:51.544Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:00.949Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456551544610289", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:05.397Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:06.364Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456565397747933", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0ae73b186b31a0453 -p vsphere > cluster.yaml ]
+2022-05-02T01:56:08.302Z	V0	e2e	Adding worker node group	{"name": "worker-0"}
+2022-05-02T01:56:08.302Z	V0	e2e	Adding worker node group	{"name": "worker-1"}
+2022-05-02T01:56:08.302Z	V0	e2e	Adding worker node group	{"name": "worker-2"}
+    cluster.go:374: Creating cluster main-i-0ae73b186b31a0453
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0ae73b186b31a0453-config/cluster.yaml -v 4 ]
+2022-05-02T01:56:08.394Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:56:08.397Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T01:56:08.540Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:56:08.599Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:56:08.714Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:56:17.993Z	V3	Initializing long running container	{"name": "eksa_1651456568714695308", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:56:21.282Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:56:21.282Z	V0	Performing setup and validations
+2022-05-02T01:56:21.282Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:56:21.312Z	V0	✅ Connected to server
+2022-05-02T01:56:21.650Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:56:22.079Z	V0	✅ Datacenter validated
+2022-05-02T01:56:22.438Z	V0	✅ Network validated
+2022-05-02T01:56:22.438Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-2", "user": "capv"}
+2022-05-02T01:56:24.702Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-0", "user": "capv"}
+2022-05-02T01:56:25.416Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-1", "user": "capv"}
+2022-05-02T01:56:26.554Z	V0	✅ Datastore validated
+2022-05-02T01:56:26.897Z	V0	✅ Folder validated
+2022-05-02T01:56:27.294Z	V0	✅ Resource pool validated
+2022-05-02T01:56:27.648Z	V0	✅ Datastore validated
+2022-05-02T01:56:28.037Z	V0	✅ Folder validated
+2022-05-02T01:56:28.424Z	V0	✅ Resource pool validated
+2022-05-02T01:56:28.753Z	V0	✅ Datastore validated
+2022-05-02T01:56:29.112Z	V0	✅ Folder validated
+2022-05-02T01:56:29.496Z	V0	✅ Resource pool validated
+2022-05-02T01:56:29.995Z	V0	✅ Datastore validated
+2022-05-02T01:56:30.372Z	V0	✅ Folder validated
+2022-05-02T01:56:30.733Z	V0	✅ Resource pool validated
+2022-05-02T01:56:31.093Z	V0	✅ Datastore validated
+2022-05-02T01:56:31.438Z	V0	✅ Folder validated
+2022-05-02T01:56:31.805Z	V0	✅ Resource pool validated
+2022-05-02T01:56:32.554Z	V0	✅ Control plane and Workload templates validated
+2022-05-02T01:56:36.910Z	V0	✅ Vsphere Provider setup is valid
+2022-05-02T01:56:36.910Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:56:36.910Z	V0	✅ Create preflight validations pass
+2022-05-02T01:56:36.910Z	V4	Task finished	{"task_name": "setup-validate", "duration": "15.628208404s"}
+2022-05-02T01:56:36.910Z	V4	----------------------------------
+2022-05-02T01:56:36.910Z	V4	Task start	{"task_name": "bootstrap-cluster-init"}
+2022-05-02T01:56:36.910Z	V0	Creating new bootstrap cluster
+2022-05-02T01:56:36.911Z	V4	Creating kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster", "kubeconfig": "main-i-0ae73b186b31a0453/generated/main-i-0ae73b186b31a0453.kind.kubeconfig"}
+2022-05-02T01:57:34.843Z	V0	Provider specific pre-capi-install-setup on bootstrap cluster
+2022-05-02T01:57:34.843Z	V0	Installing cluster-api providers on bootstrap cluster
+2022-05-02T01:58:43.119Z	V0	Provider specific post-setup
+2022-05-02T01:58:43.119Z	V4	Task finished	{"task_name": "bootstrap-cluster-init", "duration": "2m6.208979591s"}
+2022-05-02T01:58:43.119Z	V4	----------------------------------
+2022-05-02T01:58:43.119Z	V4	Task start	{"task_name": "workload-cluster-init"}
+2022-05-02T01:58:43.119Z	V0	Creating new workload cluster
+2022-05-02T01:58:45.935Z	V3	Waiting for external etcd to be ready	{"cluster": "main-i-0ae73b186b31a0453"}
+2022-05-02T01:59:58.570Z	V3	External etcd is ready
+2022-05-02T01:59:58.572Z	V3	Waiting for control plane to be ready
+2022-05-02T02:00:59.156Z	V3	Waiting for workload kubeconfig generation	{"cluster": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:00:59.681Z	V3	Waiting for controlplane and worker machines to be ready
+2022-05-02T02:01:00.091Z	V4	Nodes are not ready yet	{"total": 5, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:00.432Z	V4	Nodes are not ready yet	{"total": 5, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:05.996Z	V4	Nodes are not ready yet	{"total": 5, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:11.436Z	V4	Nodes are not ready yet	{"total": 5, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:17.137Z	V4	Nodes are not ready yet	{"total": 5, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:22.614Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:26.992Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:31.393Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:35.812Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:40.242Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:44.626Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:49.112Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:53.462Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:01:57.865Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:02.273Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:06.697Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:11.102Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:15.611Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:19.981Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:24.369Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:28.802Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:33.231Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:37.642Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:42.034Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:46.492Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:51.009Z	V4	Nodes are not ready yet	{"total": 5, "ready": 1, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:55.465Z	V4	Nodes are not ready yet	{"total": 5, "ready": 2, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:02:58.852Z	V4	Nodes are not ready yet	{"total": 5, "ready": 2, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:02.327Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:04.747Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:07.152Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:09.619Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:12.035Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:14.487Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:16.854Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:19.261Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:21.670Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:24.071Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:26.484Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:28.893Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:31.268Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:33.672Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:36.054Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:38.526Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:40.919Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:43.345Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:45.813Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:48.198Z	V4	Nodes are not ready yet	{"total": 5, "ready": 3, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:50.667Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:52.079Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:53.578Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:55.020Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:56.492Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:57.872Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:03:59.291Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:00.663Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:02.074Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:03.490Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:04.853Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:06.287Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:07.644Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:09.064Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:10.457Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:11.852Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:13.290Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:14.757Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:16.216Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:17.553Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:18.958Z	V4	Nodes are not ready yet	{"total": 5, "ready": 4, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:04:20.340Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:04:20.340Z	V0	Installing networking on workload cluster
+2022-05-02T02:04:23.079Z	V0	Installing storage class on cluster
+2022-05-02T02:04:23.565Z	V0	Installing cluster-api providers on workload cluster
+2022-05-02T02:05:46.558Z	V0	Installing EKS-A secrets on workload cluster
+2022-05-02T02:05:50.142Z	V4	Installing machine health checks on bootstrap cluster
+2022-05-02T02:05:50.949Z	V4	Task finished	{"task_name": "workload-cluster-init", "duration": "7m7.829813595s"}
+2022-05-02T02:05:50.949Z	V4	----------------------------------
+2022-05-02T02:05:50.949Z	V4	Task start	{"task_name": "capi-management-move"}
+2022-05-02T02:05:50.949Z	V0	Moving cluster management from bootstrap to workload cluster
+2022-05-02T02:05:50.949Z	V3	Waiting for management machines to be ready before move
+2022-05-02T02:05:51.364Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:06:01.397Z	V3	Waiting for control planes to be ready after move
+2022-05-02T02:06:05.144Z	V3	Waiting for workload cluster control plane replicas to be ready after move
+2022-05-02T02:06:05.828Z	V3	Waiting for workload cluster machine deployment replicas to be ready after move
+2022-05-02T02:06:06.409Z	V3	Waiting for machines to be ready after move
+2022-05-02T02:06:06.832Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:06:06.835Z	V4	Task finished	{"task_name": "capi-management-move", "duration": "15.885468883s"}
+2022-05-02T02:06:06.835Z	V4	----------------------------------
+2022-05-02T02:06:06.835Z	V4	Task start	{"task_name": "eksa-components-install"}
+2022-05-02T02:06:06.835Z	V0	Installing EKS-A custom components (CRD and controller) on workload cluster
+2022-05-02T02:06:26.910Z	V0	Installing EKS-D components on workload cluster
+2022-05-02T02:06:29.615Z	V0	Creating EKS-A CRDs instances on workload cluster
+2022-05-02T02:06:29.619Z	V4	Applying eksa yaml resources to cluster
+2022-05-02T02:06:30.763Z	V1	Applying Bundles to cluster
+2022-05-02T02:06:31.507Z	V4	Applying eksd manifest to cluster
+2022-05-02T02:06:36.548Z	V4	Task finished	{"task_name": "eksa-components-install", "duration": "29.713629745s"}
+2022-05-02T02:06:36.548Z	V4	----------------------------------
+2022-05-02T02:06:36.548Z	V4	Task start	{"task_name": "addon-manager-install"}
+2022-05-02T02:06:36.548Z	V0	Installing AddonManager and GitOps Toolkit on workload cluster
+2022-05-02T02:06:36.548Z	V0	GitOps field not specified, bootstrap flux skipped
+2022-05-02T02:06:36.548Z	V4	Task finished	{"task_name": "addon-manager-install", "duration": "13.704µs"}
+2022-05-02T02:06:36.548Z	V4	----------------------------------
+2022-05-02T02:06:36.548Z	V4	Task start	{"task_name": "write-cluster-config"}
+2022-05-02T02:06:36.548Z	V0	Writing cluster config file
+2022-05-02T02:06:36.552Z	V4	Task finished	{"task_name": "write-cluster-config", "duration": "3.786279ms"}
+2022-05-02T02:06:36.552Z	V4	----------------------------------
+2022-05-02T02:06:36.552Z	V4	Task start	{"task_name": "delete-kind-cluster"}
+2022-05-02T02:06:36.552Z	V0	Deleting bootstrap cluster
+2022-05-02T02:06:37.911Z	V4	Deleting kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster"}
+2022-05-02T02:06:39.379Z	V0	🎉 Cluster created!
+2022-05-02T02:06:39.379Z	V4	Task finished	{"task_name": "delete-kind-cluster", "duration": "2.826742105s"}
+2022-05-02T02:06:39.379Z	V4	----------------------------------
+2022-05-02T02:06:39.379Z	V4	Tasks completed	{"duration": "10m18.096966357s"}
+2022-05-02T02:06:39.380Z	V3	Logging out from current govc session
+2022-05-02T02:06:40.107Z	V3	Cleaning up long running container	{"name": "eksa_1651456568714695308"}
+2022-05-02T02:06:41.723Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-0"}
+2022-05-02T02:06:41.723Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-0-6994c59bc5-dmtds", "node labels": "{\"eksa.e2e/key1\":\"val2\"}", "configuration labels": "{\"eksa.e2e/key1\":\"val2\"}"}
+2022-05-02T02:06:41.723Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-0"}
+2022-05-02T02:06:41.723Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-0-6994c59bc5-lxzjr", "node labels": "{\"eksa.e2e/key1\":\"val2\"}", "configuration labels": "{\"eksa.e2e/key1\":\"val2\"}"}
+2022-05-02T02:06:42.599Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-1"}
+2022-05-02T02:06:42.599Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-1-7d747cf756-x6hsf", "node labels": "{}", "configuration labels": "null"}
+2022-05-02T02:06:43.497Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-2"}
+2022-05-02T02:06:43.497Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-2-658cf9f677-86h7j", "node labels": "{\"eksa.e2e/key2\":\"val2\"}", "configuration labels": "{\"eksa.e2e/key2\":\"val2\"}"}
+2022-05-02T02:06:43.877Z	V4	e2e	Validating control plane labels
+2022-05-02T02:06:43.877Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-vt4wd", "node labels": "{}", "configuration labels": "null"}
+2022-05-02T02:06:43.878Z	V0	e2e	Updating worker node group	{"name": "worker-0"}
+2022-05-02T02:06:43.878Z	V0	e2e	Updating worker node group	{"name": "worker-1"}
+2022-05-02T02:06:43.878Z	V0	e2e	Updating worker node group	{"name": "worker-2"}
+    cluster.go:499: Running shell command [ eksctl anywhere upgrade cluster -f main-i-0ae73b186b31a0453-config/cluster.yaml -v 4 ]
+2022-05-02T02:06:43.952Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T02:06:44.073Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T02:06:44.084Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:06:44.130Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T02:06:44.210Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:06:45.188Z	V3	Initializing long running container	{"name": "eksa_1651457204210924446", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:06:45.569Z	V4	Task start	{"task_name": "setup-and-validate"}
+2022-05-02T02:06:45.569Z	V0	Performing setup and validations
+2022-05-02T02:06:45.569Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:06:45.638Z	V0	✅ Connected to server
+2022-05-02T02:06:46.019Z	V0	✅ Authenticated to vSphere
+2022-05-02T02:06:46.655Z	V0	✅ Datacenter validated
+2022-05-02T02:06:47.229Z	V0	✅ Network validated
+2022-05-02T02:06:48.314Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-0", "user": "capv"}
+2022-05-02T02:06:49.403Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-1", "user": "capv"}
+2022-05-02T02:06:50.355Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-2", "user": "capv"}
+2022-05-02T02:06:52.779Z	V0	✅ Datastore validated
+2022-05-02T02:06:53.226Z	V0	✅ Folder validated
+2022-05-02T02:06:53.654Z	V0	✅ Resource pool validated
+2022-05-02T02:06:54.108Z	V0	✅ Datastore validated
+2022-05-02T02:06:54.539Z	V0	✅ Folder validated
+2022-05-02T02:06:55.014Z	V0	✅ Resource pool validated
+2022-05-02T02:06:55.518Z	V0	✅ Datastore validated
+2022-05-02T02:06:55.943Z	V0	✅ Folder validated
+2022-05-02T02:06:56.483Z	V0	✅ Resource pool validated
+2022-05-02T02:06:56.931Z	V0	✅ Datastore validated
+2022-05-02T02:06:57.381Z	V0	✅ Folder validated
+2022-05-02T02:06:57.775Z	V0	✅ Resource pool validated
+2022-05-02T02:06:58.190Z	V0	✅ Datastore validated
+2022-05-02T02:06:58.616Z	V0	✅ Folder validated
+2022-05-02T02:06:59.021Z	V0	✅ Resource pool validated
+2022-05-02T02:07:00.007Z	V0	✅ Control plane and Workload templates validated
+2022-05-02T02:07:02.895Z	V0	✅ Vsphere Provider setup is valid
+2022-05-02T02:07:07.724Z	V3	calculating version differences	{"inputVersion": "1.22", "clusterVersion": "1.22.6-eks-bb942e6"}
+2022-05-02T02:07:07.724Z	V3	calculated version differences	{"majorVersionDifference": 0, "minorVersionDifference": 0}
+2022-05-02T02:07:12.824Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T02:07:12.824Z	V0	✅ Control plane ready
+2022-05-02T02:07:12.824Z	V0	✅ Worker nodes ready
+2022-05-02T02:07:12.824Z	V0	✅ Nodes ready
+2022-05-02T02:07:12.824Z	V0	✅ Cluster CRDs ready
+2022-05-02T02:07:12.824Z	V0	✅ Cluster object present on workload cluster
+2022-05-02T02:07:12.824Z	V0	✅ Upgrade cluster kubernetes version increment
+2022-05-02T02:07:12.824Z	V0	✅ Validate immutable fields
+2022-05-02T02:07:12.824Z	V0	✅ Upgrade preflight validations pass
+2022-05-02T02:07:12.824Z	V4	Task finished	{"task_name": "setup-and-validate", "duration": "27.254838903s"}
+2022-05-02T02:07:12.824Z	V4	----------------------------------
+2022-05-02T02:07:12.824Z	V4	Task start	{"task_name": "update-secrets"}
+2022-05-02T02:07:16.757Z	V4	Task finished	{"task_name": "update-secrets", "duration": "3.933130159s"}
+2022-05-02T02:07:16.757Z	V4	----------------------------------
+2022-05-02T02:07:16.757Z	V4	Task start	{"task_name": "ensure-etcd-capi-components-exist"}
+2022-05-02T02:07:16.757Z	V0	Ensuring etcd CAPI providers exist on management cluster before upgrade
+2022-05-02T02:07:20.303Z	V4	Task finished	{"task_name": "ensure-etcd-capi-components-exist", "duration": "3.545630465s"}
+2022-05-02T02:07:20.303Z	V4	----------------------------------
+2022-05-02T02:07:20.303Z	V4	Task start	{"task_name": "upgrade-core-components"}
+2022-05-02T02:07:20.303Z	V0	Upgrading core components
+2022-05-02T02:07:20.303Z	V1	Nothing to upgrade for Cilium, skipping
+2022-05-02T02:07:20.303Z	V1	Checking for CAPI upgrades
+2022-05-02T02:07:20.303Z	V1	Nothing to upgrade for CAPI
+2022-05-02T02:07:20.303Z	V1	Checking for Flux repo file structure...
+2022-05-02T02:07:20.303Z	V1	Skipping Flux repo file structure update, GitOps not enabled
+2022-05-02T02:07:20.303Z	V1	Checking for Flux upgrades
+2022-05-02T02:07:20.303Z	V1	Skipping Flux upgrades, GitOps not enabled
+2022-05-02T02:07:20.303Z	V1	Nothing to upgrade for Flux
+2022-05-02T02:07:20.303Z	V1	Checking for EKS-A components upgrade
+2022-05-02T02:07:20.303Z	V1	Starting EKS-A components upgrade
+2022-05-02T02:07:22.538Z	V1	Checking for EKS-D components upgrade
+2022-05-02T02:07:22.538Z	V1	Nothing to upgrade for EKS-D components
+2022-05-02T02:07:22.538Z	V4	Task finished	{"task_name": "upgrade-core-components", "duration": "2.234924224s"}
+2022-05-02T02:07:22.538Z	V4	----------------------------------
+2022-05-02T02:07:22.538Z	V4	Task start	{"task_name": "upgrade-needed"}
+2022-05-02T02:07:26.592Z	V3	Existing cluster and new cluster spec differ
+2022-05-02T02:07:26.592Z	V4	Task finished	{"task_name": "upgrade-needed", "duration": "4.053794458s"}
+2022-05-02T02:07:26.592Z	V4	----------------------------------
+2022-05-02T02:07:26.592Z	V4	Task start	{"task_name": "pause-controllers-reconcile"}
+2022-05-02T02:07:26.592Z	V0	Pausing EKS-A cluster controller reconcile
+2022-05-02T02:07:31.131Z	V0	Pausing Flux kustomization
+2022-05-02T02:07:31.131Z	V0	GitOps field not specified, pause flux kustomization skipped
+2022-05-02T02:07:31.131Z	V4	Task finished	{"task_name": "pause-controllers-reconcile", "duration": "4.539223207s"}
+2022-05-02T02:07:31.131Z	V4	----------------------------------
+2022-05-02T02:07:31.131Z	V4	Task start	{"task_name": "bootstrap-cluster-init"}
+2022-05-02T02:07:31.131Z	V0	Creating bootstrap cluster
+2022-05-02T02:07:31.131Z	V4	Creating kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster", "kubeconfig": "main-i-0ae73b186b31a0453/generated/main-i-0ae73b186b31a0453.kind.kubeconfig"}
+2022-05-02T02:08:05.645Z	V4	Task finished	{"task_name": "bootstrap-cluster-init", "duration": "34.51433771s"}
+2022-05-02T02:08:05.645Z	V4	----------------------------------
+2022-05-02T02:08:05.645Z	V4	Task start	{"task_name": "install-capi"}
+2022-05-02T02:08:05.645Z	V0	Installing cluster-api providers on bootstrap cluster
+2022-05-02T02:09:09.609Z	V4	Task finished	{"task_name": "install-capi", "duration": "1m3.963760957s"}
+2022-05-02T02:09:09.609Z	V4	----------------------------------
+2022-05-02T02:09:09.609Z	V4	Task start	{"task_name": "capi-management-move-to-bootstrap"}
+2022-05-02T02:09:09.609Z	V0	Moving cluster management from workload to bootstrap cluster
+2022-05-02T02:09:09.609Z	V3	Waiting for management machines to be ready before move
+2022-05-02T02:09:10.013Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:09:33.289Z	V3	Waiting for control planes to be ready after move
+2022-05-02T02:09:35.516Z	V3	Waiting for workload cluster control plane replicas to be ready after move
+2022-05-02T02:09:36.149Z	V3	Waiting for workload cluster machine deployment replicas to be ready after move
+2022-05-02T02:09:36.685Z	V3	Waiting for machines to be ready after move
+2022-05-02T02:09:37.020Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:09:37.020Z	V4	Task finished	{"task_name": "capi-management-move-to-bootstrap", "duration": "27.410795074s"}
+2022-05-02T02:09:37.020Z	V4	----------------------------------
+2022-05-02T02:09:37.020Z	V4	Task start	{"task_name": "upgrade-workload-cluster"}
+2022-05-02T02:09:37.020Z	V0	Upgrading workload cluster
+2022-05-02T02:09:46.893Z	V3	Waiting for external etcd to be ready after upgrade
+2022-05-02T02:09:47.397Z	V3	External etcd is ready
+2022-05-02T02:09:47.397Z	V3	Waiting for control plane upgrade to be in progress
+2022-05-02T02:09:47.955Z	V3	Run post control plane upgrade operations
+2022-05-02T02:09:47.955Z	V3	Reconciling ClusterResourceSet	{"name": "main-i-0ae73b186b31a0453-crs-0"}
+2022-05-02T02:09:48.424Z	V3	Reconciling CRS managed resource	{"name": "vsphere-csi-controller"}
+2022-05-02T02:09:48.424Z	V4	Getting objects from CRS managed secret	{"name": "vsphere-csi-controller"}
+2022-05-02T02:09:49.349Z	V3	Reconciling CRS managed resource	{"name": "vsphere-csi-controller-role"}
+2022-05-02T02:09:49.349Z	V4	Getting objects from CRS managed configmap	{"name": "vsphere-csi-controller-role"}
+2022-05-02T02:09:50.496Z	V3	Reconciling CRS managed resource	{"name": "vsphere-csi-controller-binding"}
+2022-05-02T02:09:50.496Z	V4	Getting objects from CRS managed configmap	{"name": "vsphere-csi-controller-binding"}
+2022-05-02T02:09:51.456Z	V3	Reconciling CRS managed resource	{"name": "csi-vsphere-config"}
+2022-05-02T02:09:51.456Z	V4	Getting objects from CRS managed secret	{"name": "csi-vsphere-config"}
+2022-05-02T02:09:52.529Z	V3	Reconciling CRS managed resource	{"name": "csi.vsphere.vmware.com"}
+2022-05-02T02:09:52.530Z	V4	Getting objects from CRS managed configmap	{"name": "csi.vsphere.vmware.com"}
+2022-05-02T02:09:53.558Z	V3	Reconciling CRS managed resource	{"name": "vsphere-csi-node"}
+2022-05-02T02:09:53.558Z	V4	Getting objects from CRS managed configmap	{"name": "vsphere-csi-node"}
+2022-05-02T02:09:54.539Z	V3	Reconciling CRS managed resource	{"name": "vsphere-csi-controller"}
+2022-05-02T02:09:54.539Z	V4	Getting objects from CRS managed configmap	{"name": "vsphere-csi-controller"}
+2022-05-02T02:09:55.553Z	V3	Reconciling CRS managed resource	{"name": "cloud-controller-manager"}
+2022-05-02T02:09:55.554Z	V4	Getting objects from CRS managed secret	{"name": "cloud-controller-manager"}
+2022-05-02T02:09:56.586Z	V3	Reconciling CRS managed resource	{"name": "cloud-provider-vsphere-credentials"}
+2022-05-02T02:09:56.586Z	V4	Getting objects from CRS managed secret	{"name": "cloud-provider-vsphere-credentials"}
+2022-05-02T02:09:57.648Z	V3	Reconciling CRS managed resource	{"name": "cpi-manifests"}
+2022-05-02T02:09:57.648Z	V4	Getting objects from CRS managed configmap	{"name": "cpi-manifests"}
+2022-05-02T02:09:58.873Z	V3	Waiting for control plane to be ready
+2022-05-02T02:12:29.085Z	V3	Waiting for control plane machines to be ready
+2022-05-02T02:12:29.481Z	V4	Nodes are not ready yet	{"total": 1, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:12:29.937Z	V4	Nodes are not ready yet	{"total": 1, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:12:31.318Z	V4	Nodes are not ready yet	{"total": 1, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:12:32.703Z	V4	Nodes are not ready yet	{"total": 1, "ready": 0, "cluster name": "main-i-0ae73b186b31a0453"}
+2022-05-02T02:12:34.153Z	V4	Nodes ready	{"total": 1}
+2022-05-02T02:12:34.153Z	V3	Waiting for control plane to be ready after upgrade
+2022-05-02T02:12:34.710Z	V3	Waiting for workload cluster control plane replicas to be ready after upgrade
+2022-05-02T02:12:35.920Z	V3	Waiting for workload cluster machine deployment replicas to be ready after upgrade
+2022-05-02T02:16:27.105Z	V3	Waiting for machine deployment machines to be ready
+2022-05-02T02:16:27.446Z	V4	Nodes ready	{"total": 4}
+2022-05-02T02:16:27.446Z	V3	Waiting for workload cluster capi components to be ready after upgrade
+2022-05-02T02:16:31.008Z	V1	Applying Bundles to cluster
+2022-05-02T02:16:33.818Z	V4	Task finished	{"task_name": "upgrade-workload-cluster", "duration": "6m56.798368155s"}
+2022-05-02T02:16:33.818Z	V4	----------------------------------
+2022-05-02T02:16:33.818Z	V4	Task start	{"task_name": "capi-management-move-to-workload"}
+2022-05-02T02:16:33.818Z	V0	Moving cluster management from bootstrap to workload cluster
+2022-05-02T02:16:33.818Z	V3	Waiting for management machines to be ready before move
+2022-05-02T02:16:34.180Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:16:43.632Z	V3	Waiting for control planes to be ready after move
+2022-05-02T02:16:47.045Z	V3	Waiting for workload cluster control plane replicas to be ready after move
+2022-05-02T02:16:47.678Z	V3	Waiting for workload cluster machine deployment replicas to be ready after move
+2022-05-02T02:16:48.236Z	V3	Waiting for machines to be ready after move
+2022-05-02T02:16:48.677Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:16:48.677Z	V4	Task finished	{"task_name": "capi-management-move-to-workload", "duration": "14.858768605s"}
+2022-05-02T02:16:48.677Z	V4	----------------------------------
+2022-05-02T02:16:48.677Z	V4	Task start	{"task_name": "update-resources"}
+2022-05-02T02:16:48.677Z	V0	Applying new EKS-A cluster resource; resuming reconcile
+2022-05-02T02:16:48.681Z	V4	Applying eksa yaml resources to cluster
+2022-05-02T02:16:49.392Z	V1	Applying Bundles to cluster
+2022-05-02T02:16:50.265Z	V4	Applying eksd manifest to cluster
+2022-05-02T02:16:50.901Z	V0	Resuming EKS-A controller reconciliation
+2022-05-02T02:16:55.584Z	V0	Updating Git Repo with new EKS-A cluster spec
+2022-05-02T02:16:55.584Z	V0	GitOps field not specified, update git repo skipped
+2022-05-02T02:16:55.584Z	V4	Task finished	{"task_name": "update-resources", "duration": "6.906988274s"}
+2022-05-02T02:16:55.584Z	V4	----------------------------------
+2022-05-02T02:16:55.584Z	V4	Task start	{"task_name": "resume-flux-kustomization"}
+2022-05-02T02:16:55.584Z	V0	Forcing reconcile Git repo with latest commit
+2022-05-02T02:16:55.584Z	V0	GitOps not configured, force reconcile flux git repo skipped
+2022-05-02T02:16:55.584Z	V0	Resuming Flux kustomization
+2022-05-02T02:16:55.584Z	V0	GitOps field not specified, resume flux kustomization skipped
+2022-05-02T02:16:55.584Z	V4	Task finished	{"task_name": "resume-flux-kustomization", "duration": "15.591µs"}
+2022-05-02T02:16:55.584Z	V4	----------------------------------
+2022-05-02T02:16:55.584Z	V4	Task start	{"task_name": "write-cluster-config"}
+2022-05-02T02:16:55.584Z	V0	Writing cluster config file
+2022-05-02T02:16:55.588Z	V4	Task finished	{"task_name": "write-cluster-config", "duration": "3.976009ms"}
+2022-05-02T02:16:55.588Z	V4	----------------------------------
+2022-05-02T02:16:55.588Z	V4	Task start	{"task_name": "delete-kind-cluster"}
+2022-05-02T02:16:56.951Z	V4	Deleting kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster"}
+2022-05-02T02:16:58.564Z	V0	🎉 Cluster upgraded!
+2022-05-02T02:16:58.564Z	V4	Task finished	{"task_name": "delete-kind-cluster", "duration": "2.975764759s"}
+2022-05-02T02:16:58.564Z	V4	----------------------------------
+2022-05-02T02:16:58.564Z	V4	Tasks completed	{"duration": "10m12.994991504s"}
+2022-05-02T02:16:58.566Z	V3	Logging out from current govc session
+2022-05-02T02:16:59.229Z	V3	Cleaning up long running container	{"name": "eksa_1651457204210924446"}
+    cluster.go:392: Validating cluster node status
+    cluster.go:404: Validating cluster node version
+2022-05-02T02:17:04.108Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-0"}
+2022-05-02T02:17:04.108Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-0-c7db489ff-pwxl6", "node labels": "{\"eksa.e2e/key1\":\"val1\"}", "configuration labels": "{\"eksa.e2e/key1\":\"val1\"}"}
+2022-05-02T02:17:04.108Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-0"}
+2022-05-02T02:17:04.108Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-0-c7db489ff-vp9sc", "node labels": "{\"eksa.e2e/key1\":\"val1\"}", "configuration labels": "{\"eksa.e2e/key1\":\"val1\"}"}
+2022-05-02T02:17:05.083Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-1"}
+2022-05-02T02:17:05.083Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-1-54fb45d4fd-xhc27", "node labels": "{\"eksa.e2e/key2\":\"val2\"}", "configuration labels": "{\"eksa.e2e/key2\":\"val2\"}"}
+2022-05-02T02:17:06.114Z	V4	e2e	Validating worker node labels	{"worker node group": "worker-2"}
+2022-05-02T02:17:06.114Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-worker-2-58b6779d7-p5758", "node labels": "{\"eksa.e2e/key2\":\"val2\"}", "configuration labels": "{\"eksa.e2e/key2\":\"val2\"}"}
+2022-05-02T02:17:06.548Z	V4	e2e	Validating control plane labels
+2022-05-02T02:17:06.548Z	V4	e2e	expected labels from cluster spec configuration are present on the corresponding node	{"node": "main-i-0ae73b186b31a0453-cddl4", "node labels": "{\"eksa.e2e/cp-key1\":\"cp-val1\"}", "configuration labels": "{\"eksa.e2e/cp-key1\":\"cp-val1\"}"}
+    cluster.go:499: Running shell command [ eksctl anywhere delete cluster main-i-0ae73b186b31a0453 -v 4 ]
+2022-05-02T02:17:06.620Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T02:17:06.729Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T02:17:06.733Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:17:06.786Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T02:17:06.872Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:17:07.825Z	V3	Initializing long running container	{"name": "eksa_1651457826872950464", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:17:08.246Z	V4	Task start	{"task_name": "setup-and-validate"}
+2022-05-02T02:17:08.247Z	V0	Performing provider setup and validations
+2022-05-02T02:17:08.247Z	V4	Task finished	{"task_name": "setup-and-validate", "duration": "43.846µs"}
+2022-05-02T02:17:08.247Z	V4	----------------------------------
+2022-05-02T02:17:08.247Z	V4	Task start	{"task_name": "management-cluster-init"}
+2022-05-02T02:17:08.247Z	V0	Creating management cluster
+2022-05-02T02:17:08.247Z	V4	Creating kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster", "kubeconfig": "main-i-0ae73b186b31a0453/generated/main-i-0ae73b186b31a0453.kind.kubeconfig"}
+2022-05-02T02:17:43.049Z	V4	Task finished	{"task_name": "management-cluster-init", "duration": "34.802825084s"}
+2022-05-02T02:17:43.050Z	V4	----------------------------------
+2022-05-02T02:17:43.050Z	V4	Task start	{"task_name": "install-capi"}
+2022-05-02T02:17:43.050Z	V0	Installing cluster-api providers on management cluster
+2022-05-02T02:18:51.499Z	V4	Task finished	{"task_name": "install-capi", "duration": "1m8.449825291s"}
+2022-05-02T02:18:51.499Z	V4	----------------------------------
+2022-05-02T02:18:51.499Z	V4	Task start	{"task_name": "cluster-management-move"}
+2022-05-02T02:18:51.499Z	V0	Moving cluster management from workload cluster
+2022-05-02T02:18:51.499Z	V3	Waiting for management machines to be ready before move
+2022-05-02T02:18:52.123Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:19:05.332Z	V3	Waiting for control planes to be ready after move
+2022-05-02T02:19:07.507Z	V3	Waiting for workload cluster control plane replicas to be ready after move
+2022-05-02T02:19:07.981Z	V3	Waiting for workload cluster machine deployment replicas to be ready after move
+2022-05-02T02:19:08.477Z	V3	Waiting for machines to be ready after move
+2022-05-02T02:19:08.862Z	V4	Nodes ready	{"total": 5}
+2022-05-02T02:19:08.862Z	V4	Task finished	{"task_name": "cluster-management-move", "duration": "17.362903548s"}
+2022-05-02T02:19:08.862Z	V4	----------------------------------
+2022-05-02T02:19:08.862Z	V4	Task start	{"task_name": "delete-workload-cluster"}
+2022-05-02T02:19:08.862Z	V0	Deleting workload cluster
+2022-05-02T02:19:20.587Z	V4	Task finished	{"task_name": "delete-workload-cluster", "duration": "11.725017759s"}
+2022-05-02T02:19:20.587Z	V4	----------------------------------
+2022-05-02T02:19:20.587Z	V4	Task start	{"task_name": "clean-up-git-repo"}
+2022-05-02T02:19:20.587Z	V0	Clean up Git Repo
+2022-05-02T02:19:20.587Z	V0	GitOps field not specified, clean up git repo skipped
+2022-05-02T02:19:20.587Z	V4	Task finished	{"task_name": "clean-up-git-repo", "duration": "14.098µs"}
+2022-05-02T02:19:20.587Z	V4	----------------------------------
+2022-05-02T02:19:20.587Z	V4	Task start	{"task_name": "kind-cluster-delete"}
+2022-05-02T02:19:21.921Z	V4	Deleting kind cluster	{"name": "main-i-0ae73b186b31a0453-eks-a-cluster"}
+2022-05-02T02:19:23.269Z	V4	Task finished	{"task_name": "kind-cluster-delete", "duration": "2.681923529s"}
+2022-05-02T02:19:23.269Z	V4	----------------------------------
+2022-05-02T02:19:23.269Z	V4	Tasks completed	{"duration": "2m15.022910732s"}
+2022-05-02T02:19:23.271Z	V3	Logging out from current govc session
+2022-05-02T02:19:23.883Z	V3	Cleaning up long running container	{"name": "eksa_1651457826872950464"}
+2022-05-02T02:19:24.022Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456565397747933"}
+2022-05-02T02:19:24.134Z	V3	e2e	Logging out from current govc session
+2022-05-02T02:19:24.807Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456551544610289"}
+--- PASS: TestVSphereKubernetes122Labels (1413.36s)
+=== RUN   TestVSphereKubernetes122LabelsBottlerocket
+2022-05-02T02:19:24.904Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T02:19:25.933Z	V3	e2e	Initializing long running container	{"name": "eksa_1651457964904939315", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T02:19:26.340Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T02:19:27.345Z	V3	e2e	Initializing long running container	{"name": "eksa_1651457966340404504", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0ae73b186b31a0453 -p vsphere > cluster.yaml ]
+2022-05-02T02:19:30.318Z	V0	e2e	Adding worker node group	{"name": "worker-0"}
+2022-05-02T02:19:30.318Z	V0	e2e	Adding worker node group	{"name": "worker-1"}
+2022-05-02T02:19:30.318Z	V0	e2e	Adding worker node group	{"name": "worker-2"}
+    cluster.go:374: Creating cluster main-i-0ae73b186b31a0453
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0ae73b186b31a0453-config/cluster.yaml -v 4 ]
+2022-05-02T02:19:30.413Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T02:19:30.415Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T02:19:30.555Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:19:30.609Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T02:19:30.699Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:19:31.697Z	V3	Initializing long running container	{"name": "eksa_1651457970699604500", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T02:19:32.165Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T02:19:32.165Z	V0	Performing setup and validations
+2022-05-02T02:19:32.165Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T02:19:32.199Z	V0	✅ Connected to server
+2022-05-02T02:19:32.574Z	V0	✅ Authenticated to vSphere
+2022-05-02T02:19:33.099Z	V0	✅ Datacenter validated
+2022-05-02T02:19:33.545Z	V0	✅ Network validated
+2022-05-02T02:19:34.314Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-0", "user": "ec2-user"}
+2022-05-02T02:19:35.206Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-1", "user": "ec2-user"}
+2022-05-02T02:19:35.994Z	V1	SSHUsername is not set or is empty for VSphereMachineConfig, using default	{"machineConfig": "worker-2", "user": "ec2-user"}
+2022-05-02T02:19:37.993Z	V0	✅ Datastore validated
+2022-05-02T02:19:38.401Z	V0	✅ Folder validated
+2022-05-02T02:19:38.785Z	V0	✅ Resource pool validated
+2022-05-02T02:19:39.130Z	V0	✅ Datastore validated
+2022-05-02T02:19:39.480Z	V0	✅ Folder validated
+2022-05-02T02:19:39.876Z	V0	✅ Resource pool validated
+2022-05-02T02:19:40.218Z	V0	✅ Datastore validated
+2022-05-02T02:19:40.577Z	V0	✅ Folder validated
+2022-05-02T02:19:40.970Z	V0	✅ Resource pool validated
+2022-05-02T02:19:41.339Z	V0	✅ Datastore validated
+2022-05-02T02:19:41.799Z	V0	✅ Folder validated
+2022-05-02T02:19:42.146Z	V0	✅ Resource pool validated
+2022-05-02T02:19:42.518Z	V0	✅ Datastore validated
+2022-05-02T02:19:42.880Z	V0	✅ Folder validated
+2022-05-02T02:19:43.302Z	V0	✅ Resource pool validated
+2022-05-02T02:19:44.126Z	V1	Control plane template validation failed.
+2022-05-02T02:19:44.126Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T02:19:44.126Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T02:19:44.126Z	V0	✅ Create preflight validations pass
+2022-05-02T02:19:44.126Z	V4	Task finished	{"task_name": "setup-validate", "duration": "11.961397309s"}
+2022-05-02T02:19:44.126Z	V4	----------------------------------
+2022-05-02T02:19:44.126Z	V4	Tasks completed	{"duration": "11.961451956s"}
+2022-05-02T02:19:44.126Z	V3	Logging out from current govc session
+2022-05-02T02:19:44.829Z	V3	Cleaning up long running container	{"name": "eksa_1651457970699604500"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-0ae73b186b31a0453-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T02:19:44.962Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651457966340404504"}
+2022-05-02T02:19:45.067Z	V3	e2e	Logging out from current govc session
+2022-05-02T02:19:45.802Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651457964904939315"}
+--- FAIL: TestVSphereKubernetes122LabelsBottlerocket (21.00s)
+FAIL
+
+DONE 2 tests, 1 failure in 1434.437s

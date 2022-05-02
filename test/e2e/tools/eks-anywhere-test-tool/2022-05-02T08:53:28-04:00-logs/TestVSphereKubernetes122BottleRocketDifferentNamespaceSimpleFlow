@@ -1,0 +1,48 @@
+2022-05-02T01:56:39.900Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottleRocketDifferentNamespaceSimpleFlow
+2022-05-02T01:56:39.901Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:47.857Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456599901183862", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:52.480Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:56:53.465Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456612480499453", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-039ff4a6ca02ef7a4 -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-039ff4a6ca02ef7a4
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-039ff4a6ca02ef7a4-config/cluster.yaml -v 4 ]
+2022-05-02T01:56:55.699Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:56:55.857Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:56:55.911Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:56:56.012Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:57:03.883Z	V3	Initializing long running container	{"name": "eksa_1651456616012981017", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:57:07.069Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:57:07.069Z	V0	Performing setup and validations
+2022-05-02T01:57:07.069Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:57:07.100Z	V0	✅ Connected to server
+2022-05-02T01:57:07.600Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:57:08.072Z	V0	✅ Datacenter validated
+2022-05-02T01:57:08.478Z	V0	✅ Network validated
+2022-05-02T01:57:11.270Z	V0	✅ Datastore validated
+2022-05-02T01:57:11.628Z	V0	✅ Folder validated
+2022-05-02T01:57:12.004Z	V0	✅ Resource pool validated
+2022-05-02T01:57:12.403Z	V0	✅ Datastore validated
+2022-05-02T01:57:12.780Z	V0	✅ Folder validated
+2022-05-02T01:57:13.159Z	V0	✅ Resource pool validated
+2022-05-02T01:57:13.529Z	V0	✅ Datastore validated
+2022-05-02T01:57:13.955Z	V0	✅ Folder validated
+2022-05-02T01:57:14.399Z	V0	✅ Resource pool validated
+2022-05-02T01:57:15.227Z	V1	Control plane template validation failed.
+2022-05-02T01:57:15.227Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:57:15.227Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:57:15.227Z	V0	✅ Create preflight validations pass
+2022-05-02T01:57:15.227Z	V4	Task finished	{"task_name": "setup-validate", "duration": "8.157809555s"}
+2022-05-02T01:57:15.227Z	V4	----------------------------------
+2022-05-02T01:57:15.227Z	V4	Tasks completed	{"duration": "8.157877614s"}
+2022-05-02T01:57:15.227Z	V3	Logging out from current govc session
+2022-05-02T01:57:15.967Z	V3	Cleaning up long running container	{"name": "eksa_1651456616012981017"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-039ff4a6ca02ef7a4-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:57:16.129Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456612480499453"}
+2022-05-02T01:57:16.255Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:57:17.005Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456599901183862"}
+--- FAIL: TestVSphereKubernetes122BottleRocketDifferentNamespaceSimpleFlow (37.22s)
+FAIL
+
+DONE 1 tests, 1 failure in 37.306s

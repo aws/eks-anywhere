@@ -1,0 +1,51 @@
+2022-05-02T01:57:40.862Z	V4	e2e	Logger init completed	{"vlevel": 4}
+=== RUN   TestVSphereKubernetes122BottlerocketProxyConfig
+2022-05-02T01:57:40.862Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:57:49.468Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456660862859299", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:57:54.207Z	V2	e2e	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+2022-05-02T01:57:55.193Z	V3	e2e	Initializing long running container	{"name": "eksa_1651456674207813093", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"}
+    cluster.go:499: Running shell command [ eksctl anywhere generate clusterconfig main-i-0dbda043952e938dc -p vsphere > cluster.yaml ]
+    cluster.go:374: Creating cluster main-i-0dbda043952e938dc
+    cluster.go:499: Running shell command [ eksctl anywhere create cluster -f main-i-0dbda043952e938dc-config/cluster.yaml -v 4 ]
+2022-05-02T01:57:59.591Z	V4	Logger init completed	{"vlevel": 4}
+2022-05-02T01:57:59.592Z	V0	Warning: The recommended size of an external etcd cluster is 3 or 5
+2022-05-02T01:57:59.712Z	V4	Relative network path specified, using path /SDDC-Datacenter/network/sddc-cgw-network-2
+2022-05-02T01:57:59.712Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:57:59.757Z	V4	Reading bundles manifest	{"url": "https://dev-release-prod-pdx.s3.amazonaws.com/bundle-release.yaml"}
+2022-05-02T01:57:59.846Z	V2	Pulling docker image	{"image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:58:06.244Z	V3	Initializing long running container	{"name": "eksa_1651456679846820285", "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1872"}
+2022-05-02T01:58:09.437Z	V4	Task start	{"task_name": "setup-validate"}
+2022-05-02T01:58:09.437Z	V0	Performing setup and validations
+2022-05-02T01:58:09.437Z	V4	Relative network path specified, using path /SDDC-Datacenter/network/sddc-cgw-network-2
+2022-05-02T01:58:09.437Z	V0	Warning: VSphereDatacenterConfig configured in insecure mode
+2022-05-02T01:58:09.468Z	V0	✅ Connected to server
+2022-05-02T01:58:09.828Z	V0	✅ Authenticated to vSphere
+2022-05-02T01:58:10.240Z	V0	✅ Datacenter validated
+2022-05-02T01:58:10.571Z	V0	✅ Network validated
+2022-05-02T01:58:12.973Z	V0	✅ Datastore validated
+2022-05-02T01:58:13.297Z	V0	✅ Folder validated
+2022-05-02T01:58:13.661Z	V0	✅ Resource pool validated
+2022-05-02T01:58:14.009Z	V0	✅ Datastore validated
+2022-05-02T01:58:14.383Z	V0	✅ Folder validated
+2022-05-02T01:58:14.713Z	V0	✅ Resource pool validated
+2022-05-02T01:58:15.028Z	V0	✅ Datastore validated
+2022-05-02T01:58:15.367Z	V0	✅ Folder validated
+2022-05-02T01:58:15.682Z	V0	✅ Resource pool validated
+2022-05-02T01:58:16.416Z	V1	Control plane template validation failed.
+2022-05-02T01:58:16.416Z	V0	❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "template /SDDC-Datacenter/vm/Templates/bottlerocket-kube-v1-22 is missing tag eksdRelease:kubernetes-1-22-eks-6", "remediation": ""}
+2022-05-02T01:58:16.416Z	V0	✅ Validate certificate for registry mirror
+2022-05-02T01:58:16.416Z	V0	✅ Create preflight validations pass
+2022-05-02T01:58:16.416Z	V4	Task finished	{"task_name": "setup-validate", "duration": "6.979162937s"}
+2022-05-02T01:58:16.416Z	V4	----------------------------------
+2022-05-02T01:58:16.416Z	V4	Tasks completed	{"duration": "6.979210147s"}
+2022-05-02T01:58:16.416Z	V3	Logging out from current govc session
+2022-05-02T01:58:17.015Z	V3	Cleaning up long running container	{"name": "eksa_1651456679846820285"}
+Error: validations failed
+    cluster.go:532: Command eksctl anywhere [create cluster -f main-i-0dbda043952e938dc-config/cluster.yaml -v 4] failed with error: exit status 255: Error: validations failed
+2022-05-02T01:58:17.133Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456674207813093"}
+2022-05-02T01:58:17.230Z	V3	e2e	Logging out from current govc session
+2022-05-02T01:58:17.895Z	V3	e2e	Cleaning up long running container	{"name": "eksa_1651456660862859299"}
+--- FAIL: TestVSphereKubernetes122BottlerocketProxyConfig (37.14s)
+FAIL
+
+DONE 1 tests, 1 failure in 37.267s
