@@ -415,12 +415,9 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 	f := fc.FluxAddonClient
 	if !validations.FileExists(path.Join(f.gitTools.Writer.Dir(), ".git")) {
-		r, err := fc.cloneIfExists(ctx)
+		err := fc.clone(ctx)
 		if err != nil {
 			return fmt.Errorf("failed cloning git repo: %v", err)
-		}
-		if r == nil {
-			return fmt.Errorf("failed to find remote git repo: %s", fc.repository())
 		}
 	} else {
 		// Make sure the local git repo is on the branch specified in config and up-to-date with the remote
