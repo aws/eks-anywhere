@@ -45,6 +45,7 @@ func validateAuthenticationGitProvider(clusterSpec *cluster.Spec, cliConfig *con
 	if fluxConfig.Spec.Git == nil {
 		return nil
 	}
+
 	if cliConfig.GitPrivateKeyFile == "" {
 		return fmt.Errorf("provide a path to a private key file via the EKSA_GIT_PRIVATE_KEY " +
 			"in order to use the generic git Flux provider")
@@ -55,6 +56,17 @@ func validateAuthenticationGitProvider(clusterSpec *cluster.Spec, cliConfig *con
 			return fmt.Errorf("private key file does not exist at %s or is empty", cliConfig.GitPrivateKeyFile)
 		}
 	}
+
+	if cliConfig.GitKnownHostsFile == "" {
+		return fmt.Errorf("provide a path to an SSH Known Hosts file which contains a valid entry associate with the given private key via the EKSA_GIT_SSH_KNOWN_HOSTS environment variable")
+	}
+
+	if cliConfig.GitKnownHostsFile != "" {
+		if !validations.FileExistsAndIsNotEmpty(cliConfig.GitKnownHostsFile) {
+			return fmt.Errorf("SSH known hosts file does not exist at %v or is empty", cliConfig.GitKnownHostsFile)
+		}
+	}
+
 	return nil
 }
 
