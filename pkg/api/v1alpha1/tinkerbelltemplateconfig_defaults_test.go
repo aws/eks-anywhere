@@ -101,15 +101,17 @@ func givenVersionBundle() v1alpha1.VersionsBundle {
 			},
 		},
 		Tinkerbell: v1alpha1.TinkerbellBundle{
-			Actions: v1alpha1.Actions{
-				ImageToDisk: v1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/image2disk:latest",
-				},
-				WriteFile: v1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/writefile:latest",
-				},
-				Kexec: v1alpha1.Image{
-					URI: "public.ecr.aws/eks-anywhere/kexec:latest",
+			TinkerbellStack: v1alpha1.TinkerbellStackBundle{
+				Actions: v1alpha1.ActionsBundle{
+					ImageToDisk: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/image2disk:latest",
+					},
+					WriteFile: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/writefile:latest",
+					},
+					Kexec: v1alpha1.Image{
+						URI: "public.ecr.aws/eks-anywhere/kexec:latest",
+					},
 				},
 			},
 		},
