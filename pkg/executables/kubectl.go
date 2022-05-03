@@ -1151,7 +1151,7 @@ func (k *Kubectl) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerb
 	response := &v1alpha1.TinkerbellDatacenterConfig{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing get eksa tinkerbell datacenter config response: %v", err)
+		return nil, fmt.Errorf("parsing get eksa TinkerbellDatacenterConfig response: %v", err)
 	}
 
 	return response, nil
