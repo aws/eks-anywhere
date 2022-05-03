@@ -27,12 +27,11 @@ func TestValidateMinimumRequiredTinkerbellHardwareAvailable_SufficientHardware(t
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			hardwareConfig := newHardwareConfigWithHardware(tt.AvailableHardware)
+			catalogue := newCatalogueWithHardware(tt.AvailableHardware)
 
 			var validator tinkerbell.Validator
-			tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-			assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tt.ClusterSpec))
+			assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tt.ClusterSpec, catalogue))
 		})
 	}
 }
@@ -40,24 +39,22 @@ func TestValidateMinimumRequiredTinkerbellHardwareAvailable_SufficientHardware(t
 func TestValidateMinimumRequiredTinkerbellHardwareAvailable_InsufficientHardware(t *testing.T) {
 	clusterSpec := newValidClusterSpec(1, 1, 1)
 
-	hardwareConfig := newHardwareConfigWithHardware(2)
+	catalogue := newCatalogueWithHardware(2)
 
 	var validator tinkerbell.Validator
-	tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-	assert.Error(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
+	assert.Error(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec, catalogue))
 }
 
 func TestValidateMinimumRequiredTinkerbellHardware_EtcdUnspecified(t *testing.T) {
 	clusterSpec := newValidClusterSpec(1, 0, 1)
 	clusterSpec.ExternalEtcdConfiguration = nil
 
-	hardwareConfig := newHardwareConfigWithHardware(3)
+	catalogue := newCatalogueWithHardware(3)
 
 	var validator tinkerbell.Validator
-	tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-	assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
+	assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec, catalogue))
 }
 
 func TestValidateTinkerbellConfig_ValidAuthorities(t *testing.T) {
@@ -66,10 +63,9 @@ func TestValidateTinkerbellConfig_ValidAuthorities(t *testing.T) {
 	tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 	net := networkutilsmocks.NewMockNetClient(ctrl)
 
-	var hardware hardware.HardwareConfig
 	datacenter := newValidTinkerbellDatacenterConfig()
 
-	validator := tinkerbell.NewValidator(tink, net, hardware, pbnj)
+	validator := tinkerbell.NewValidator(tink, net, pbnj)
 	err := validator.ValidateTinkerbellConfig(context.Background(), datacenter)
 
 	assert.NoError(t, err)
@@ -90,11 +86,10 @@ func TestValidateTinkerbellConfig_InvalidGrpcAuthority(t *testing.T) {
 			tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 			net := networkutilsmocks.NewMockNetClient(ctrl)
 
-			var hardware hardware.HardwareConfig
 			datacenter := newValidTinkerbellDatacenterConfig()
 			datacenter.Spec.TinkerbellGRPCAuth = address
 
-			validator := tinkerbell.NewValidator(tink, net, hardware, pbnj)
+			validator := tinkerbell.NewValidator(tink, net, pbnj)
 			err := validator.ValidateTinkerbellConfig(context.Background(), datacenter)
 
 			assert.Error(t, err)
@@ -117,11 +112,10 @@ func TestValidateTinkerbellConfig_InvalidPbnjAuthority(t *testing.T) {
 			tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 			net := networkutilsmocks.NewMockNetClient(ctrl)
 
-			var hardware hardware.HardwareConfig
 			datacenter := newValidTinkerbellDatacenterConfig()
 			datacenter.Spec.TinkerbellPBnJGRPCAuth = address
 
-			validator := tinkerbell.NewValidator(tink, net, hardware, pbnj)
+			validator := tinkerbell.NewValidator(tink, net, pbnj)
 			err := validator.ValidateTinkerbellConfig(context.Background(), datacenter)
 
 			assert.Error(t, err)
@@ -143,9 +137,9 @@ func newValidClusterSpec(cp, etcd, worker int) v1alpha1.ClusterSpec {
 	}
 }
 
-func newHardwareConfigWithHardware(hardwareCount int) hardware.HardwareConfig {
-	return hardware.HardwareConfig{
-		Hardwares: make([]tinkv1alpha1.Hardware, hardwareCount),
+func newCatalogueWithHardware(hardwareCount int) hardware.Catalogue {
+	return hardware.Catalogue{
+		Hardware: make([]tinkv1alpha1.Hardware, hardwareCount),
 	}
 }
 
