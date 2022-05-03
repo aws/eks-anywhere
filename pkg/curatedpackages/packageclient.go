@@ -93,7 +93,6 @@ func (pc *PackageClient) GetPackageFromBundle(packageName string) (*packagesv1.B
 	if !ok {
 		return nil, fmt.Errorf("package %s not found", packageName)
 	}
-	
 	return &p, nil
 }
 
