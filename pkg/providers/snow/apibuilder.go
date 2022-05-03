@@ -120,11 +120,11 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 	return cluster
 }
 
-func SnowMachineTemplates(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) map[string]*snowv1.AWSSnowMachineTemplate {
+func SnowMachineTemplates(clusterSpec *cluster.Spec) map[string]*snowv1.AWSSnowMachineTemplate {
 	m := map[string]*snowv1.AWSSnowMachineTemplate{}
 
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		smt := SnowMachineTemplate(machineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
+		smt := SnowMachineTemplate(clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
 		m[workerNodeGroupConfig.MachineGroupRef.Name] = smt
 	}
 	return m
@@ -138,7 +138,7 @@ func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSS
 			Kind:       SnowMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      machineConfig.GetName(), // TODO: capinamegenerator
+			Name:      clusterapi.DefaultObjectName(machineConfig.GetName()),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: snowv1.AWSSnowMachineTemplateSpec{

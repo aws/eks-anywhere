@@ -30,15 +30,8 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-func TestCAPICluster(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	snowCluster := snow.SnowCluster(tt.clusterSpec)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
-	tt.Expect(err).To(Succeed())
-
-	got := snow.CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
-	want := &clusterv1.Cluster{
+func wantCAPICluster() *clusterv1.Cluster {
+	return &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "Cluster",
@@ -75,7 +68,17 @@ func TestCAPICluster(t *testing.T) {
 			},
 		},
 	}
-	tt.Expect(got).To(Equal(want))
+}
+
+func TestCAPICluster(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	snowCluster := snow.SnowCluster(tt.clusterSpec)
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
+	got := snow.CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
+	tt.Expect(got).To(Equal(wantCAPICluster()))
 }
 
 func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
@@ -94,7 +97,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					Kind:       "AWSSnowMachineTemplate",
-					Name:       "test-cp",
+					Name:       "test-cp-1",
 				},
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
@@ -236,52 +239,104 @@ func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
 	}
 }
 
+func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
+	return &bootstrapv1.KubeadmConfigTemplate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+			Kind:       "KubeadmConfigTemplate",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "md-0",
+			Namespace: "eksa-system",
+		},
+		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
+			Template: bootstrapv1.KubeadmConfigTemplateResource{
+				Spec: bootstrapv1.KubeadmConfigSpec{
+					ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+						ControllerManager: bootstrapv1.ControlPlaneComponent{
+							ExtraArgs: map[string]string{},
+						},
+						APIServer: bootstrapv1.APIServer{
+							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs: map[string]string{},
+							},
+						},
+					},
+					JoinConfiguration: &bootstrapv1.JoinConfiguration{
+						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+							KubeletExtraArgs: map[string]string{
+								"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							},
+						},
+					},
+					PreKubeadmCommands: []string{
+						"/etc/eks/bootstrap.sh",
+					},
+					PostKubeadmCommands: []string{},
+					Files:               []bootstrapv1.File{},
+				},
+			},
+		},
+	}
+}
+
 func TestKubeadmConfigTemplates(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 
 	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-		"md-0": {
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-				Kind:       "KubeadmConfigTemplate",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "md-0",
-				Namespace: "eksa-system",
-			},
-			Spec: bootstrapv1.KubeadmConfigTemplateSpec{
-				Template: bootstrapv1.KubeadmConfigTemplateResource{
-					Spec: bootstrapv1.KubeadmConfigSpec{
-						ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
-							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
-							},
-							APIServer: bootstrapv1.APIServer{
-								ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-									ExtraArgs: map[string]string{},
-								},
-							},
-						},
-						JoinConfiguration: &bootstrapv1.JoinConfiguration{
-							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{
-									"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-								},
-							},
-						},
-						PreKubeadmCommands: []string{
-							"/etc/eks/bootstrap.sh",
-						},
-						PostKubeadmCommands: []string{},
-						Files:               []bootstrapv1.File{},
-					},
-				},
-			},
-		},
+		"md-0": wantKubeadmConfigTemplate(),
 	}
 	tt.Expect(got).To(Equal(want))
+}
+
+func wantMachineDeployment() *clusterv1.MachineDeployment {
+	wantVersion := "v1.21.5-eks-1-21-9"
+	wantReplicas := int32(3)
+	return &clusterv1.MachineDeployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "MachineDeployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "md-0",
+			Namespace: "eksa-system",
+			Labels: map[string]string{
+				"cluster.x-k8s.io/cluster-name": "snow-test",
+			},
+		},
+		Spec: clusterv1.MachineDeploymentSpec{
+			ClusterName: "snow-test",
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{},
+			},
+			Template: clusterv1.MachineTemplateSpec{
+				ObjectMeta: clusterv1.ObjectMeta{
+					Labels: map[string]string{
+						"cluster.x-k8s.io/cluster-name": "snow-test",
+					},
+				},
+				Spec: clusterv1.MachineSpec{
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
+							Kind:       "KubeadmConfigTemplate",
+							Name:       "md-0",
+						},
+					},
+					ClusterName: "snow-test",
+					InfrastructureRef: v1.ObjectReference{
+						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+						Kind:       "AWSSnowMachineTemplate",
+						Name:       "test-wn-1",
+					},
+					Version: &wantVersion,
+				},
+			},
+			Replicas: &wantReplicas,
+		},
+	}
 }
 
 func TestMachineDeployments(t *testing.T) {
@@ -289,62 +344,17 @@ func TestMachineDeployments(t *testing.T) {
 	kubeadmConfigTemplates, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 
-	workerMachineTemplates := snow.SnowMachineTemplates(tt.clusterSpec, tt.machineConfigs)
+	workerMachineTemplates := snow.SnowMachineTemplates(tt.clusterSpec)
 	got := snow.MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-	wantVersion := "v1.21.5-eks-1-21-9"
-	wantReplicas := int32(3)
+
 	want := map[string]*clusterv1.MachineDeployment{
-		"md-0": {
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.x-k8s.io/v1beta1",
-				Kind:       "MachineDeployment",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "md-0",
-				Namespace: "eksa-system",
-				Labels: map[string]string{
-					"cluster.x-k8s.io/cluster-name": "snow-test",
-				},
-			},
-			Spec: clusterv1.MachineDeploymentSpec{
-				ClusterName: "snow-test",
-				Selector: metav1.LabelSelector{
-					MatchLabels: map[string]string{},
-				},
-				Template: clusterv1.MachineTemplateSpec{
-					ObjectMeta: clusterv1.ObjectMeta{
-						Labels: map[string]string{
-							"cluster.x-k8s.io/cluster-name": "snow-test",
-						},
-					},
-					Spec: clusterv1.MachineSpec{
-						Bootstrap: clusterv1.Bootstrap{
-							ConfigRef: &v1.ObjectReference{
-								APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-								Kind:       "KubeadmConfigTemplate",
-								Name:       "md-0",
-							},
-						},
-						ClusterName: "snow-test",
-						InfrastructureRef: v1.ObjectReference{
-							APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-							Kind:       "AWSSnowMachineTemplate",
-							Name:       "test-wn",
-						},
-						Version: &wantVersion,
-					},
-				},
-				Replicas: &wantReplicas,
-			},
-		},
+		"md-0": wantMachineDeployment(),
 	}
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestSnowCluster(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got := snow.SnowCluster(tt.clusterSpec)
-	want := &snowv1.AWSSnowCluster{
+func wantSnowCluster() *snowv1.AWSSnowCluster {
+	return &snowv1.AWSSnowCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "AWSSnowCluster",
 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -361,22 +371,25 @@ func TestSnowCluster(t *testing.T) {
 			},
 		},
 	}
-	tt.Expect(got).To(Equal(want))
 }
 
-func TestSnowMachineTemplate(t *testing.T) {
+func TestSnowCluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplate(tt.machineConfigs["test-wn"])
+	got := snow.SnowCluster(tt.clusterSpec)
+	tt.Expect(got).To(Equal(wantSnowCluster()))
+}
+
+func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 	wantAMIID := "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea"
 	wantSSHKey := "default"
 	wantPhysicalNetworkConnector := "SFP_PLUS"
-	want := &snowv1.AWSSnowMachineTemplate{
+	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 			Kind:       "AWSSnowMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-wn",
+			Name:      "test-wn-1",
 			Namespace: "eksa-system",
 		},
 		Spec: snowv1.AWSSnowMachineTemplateSpec{
@@ -396,42 +409,20 @@ func TestSnowMachineTemplate(t *testing.T) {
 			},
 		},
 	}
+}
+
+func TestSnowMachineTemplate(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	got := snow.SnowMachineTemplate(tt.machineConfigs["test-wn"])
+	want := wantSnowMachineTemplate()
 	tt.Expect(got).To(Equal(want))
 }
 
 func TestSnowMachineTemplates(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplates(tt.clusterSpec, tt.machineConfigs)
-	wantAMIID := "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea"
-	wantSSHKey := "default"
-	wantPhysicalNetworkConnector := "SFP_PLUS"
+	got := snow.SnowMachineTemplates(tt.clusterSpec)
 	want := map[string]*snowv1.AWSSnowMachineTemplate{
-		"test-wn": {
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-				Kind:       "AWSSnowMachineTemplate",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-wn",
-				Namespace: "eksa-system",
-			},
-			Spec: snowv1.AWSSnowMachineTemplateSpec{
-				Template: snowv1.AWSSnowMachineTemplateResource{
-					Spec: snowv1.AWSSnowMachineSpec{
-						IAMInstanceProfile: "control-plane.cluster-api-provider-aws.sigs.k8s.io",
-						InstanceType:       "sbe-c.xlarge",
-						SSHKeyName:         &wantSSHKey,
-						AMI: snowv1.AWSResourceReference{
-							ID: &wantAMIID,
-						},
-						CloudInit: snowv1.CloudInit{
-							InsecureSkipSecretsManager: true,
-						},
-						PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
-					},
-				},
-			},
-		},
+		"test-wn": wantSnowMachineTemplate(),
 	}
 	tt.Expect(got).To(Equal(want))
 }
