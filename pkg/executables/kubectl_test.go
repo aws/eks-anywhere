@@ -1955,3 +1955,15 @@ func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
 	_, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
 	tt.Expect(err).NotTo(BeNil())
 }
+
+func TestKubectlDelete(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-cluster"
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", resourceType, name, "--namespace", tt.namespace, "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, name, tt.namespace, tt.kubeconfig)).To(Succeed())
+}

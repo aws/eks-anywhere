@@ -11,6 +11,7 @@ import (
 
 type KubectlGetter interface {
 	GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error
+	Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error
 }
 
 // UnAuthClient is a generic kubernetes API client that takes a kubeconfig
@@ -37,18 +38,36 @@ func (c *UnAuthClient) Init() error {
 // Get performs a GET call to the kube API server authenticating with a kubeconfig file
 // and unmarshalls the response into the provdied Object
 func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
-	groupVersionKind, err := apiutil.GVKForObject(obj, c.scheme)
+	resourceType, err := c.resourceTypeForObj(obj)
 	if err != nil {
 		return fmt.Errorf("getting kubernetes resource: %v", err)
 	}
 
-	resourceType := groupVersionToKubectlResourceType(groupVersionKind)
 	return c.kubectl.GetObject(ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
 // KubeconfigClient returns an equivalent authenticated client
-func (c *UnAuthClient) KubeconfigClient(kubeconfig string) *KubeconfigClient {
+func (c *UnAuthClient) KubeconfigClient(kubeconfig string) Client {
 	return NewKubeconfigClient(c, kubeconfig)
+}
+
+// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file
+func (c *UnAuthClient) Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
+	resourceType, err := c.resourceTypeForObj(obj)
+	if err != nil {
+		return fmt.Errorf("deleting kubernetes resource: %v", err)
+	}
+
+	return c.kubectl.Delete(ctx, resourceType, name, namespace, kubeconfig)
+}
+
+func (c *UnAuthClient) resourceTypeForObj(obj runtime.Object) (string, error) {
+	groupVersionKind, err := apiutil.GVKForObject(obj, c.scheme)
+	if err != nil {
+		return "", err
+	}
+
+	return groupVersionToKubectlResourceType(groupVersionKind), nil
 }
 
 func groupVersionToKubectlResourceType(g schema.GroupVersionKind) string {

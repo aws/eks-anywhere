@@ -1515,3 +1515,11 @@ func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kube
 func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
 	return k.Execute(ctx, opts...)
 }
+
+// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file
+func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
+	if _, err := k.Execute(ctx, "delete", resourceType, name, "--namespace", namespace, "--kubeconfig", kubeconfig); err != nil {
+		return fmt.Errorf("deleting %s %s in namespace %s: %v", name, resourceType, namespace, err)
+	}
+	return nil
+}
