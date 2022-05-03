@@ -4,7 +4,6 @@
 package e2e
 
 import (
-	"github.com/aws/eks-anywhere/pkg/features"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
