@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterapiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -33,6 +34,12 @@ func TestUnAuthClientGetSuccess(t *testing.T) {
 			namespace:        "eksa-system",
 			obj:              &clusterapiv1.Cluster{},
 			wantResourceType: "Cluster.v1beta1.cluster.x-k8s.io",
+		},
+		{
+			name:             "capi kubeadm controlplane",
+			namespace:        "eksa-system",
+			obj:              &controlplanev1.KubeadmControlPlane{},
+			wantResourceType: "KubeadmControlPlane.v1beta1.controlplane.cluster.x-k8s.io",
 		},
 	}
 	for _, tt := range tests {

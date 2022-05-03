@@ -47,7 +47,7 @@ func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig stri
 }
 
 // KubeconfigClient returns an equivalent authenticated client
-func (c *UnAuthClient) KubeconfigClient(kubeconfig string) *KubeconfigClient {
+func (c *UnAuthClient) KubeconfigClient(kubeconfig string) Client {
 	return NewKubeconfigClient(c, kubeconfig)
 }
 
