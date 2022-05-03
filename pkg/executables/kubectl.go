@@ -1177,7 +1177,7 @@ func (k *Kubectl) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbell
 	params := []string{"get", eksaTinkerbellMachineResourceType, tinkerbellMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting eksa tinkerbell machine config %v", err)
+		return nil, fmt.Errorf("getting eksa TinkerbellMachineConfig %v", err)
 	}
 
 	response := &v1alpha1.TinkerbellMachineConfig{}
