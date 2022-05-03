@@ -11,7 +11,7 @@ func ValidateKubeVersion(kubeVersion string, source BundleSource) error {
 	}
 	versionSplit := strings.Split(kubeVersion, ".")
 	if len(versionSplit) != 2 {
-		return fmt.Errorf("please specify kubeversion as <major>.<minor>")
+		return fmt.Errorf("please specify kube-version as <major>.<minor>")
 	}
 	return nil
 }
