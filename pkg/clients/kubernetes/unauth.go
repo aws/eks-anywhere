@@ -46,8 +46,12 @@ func (c *UnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig stri
 	return c.kubectl.GetObject(ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
+func (c *UnAuthClient) Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
+	return nil
+}
+
 // KubeconfigClient returns an equivalent authenticated client
-func (c *UnAuthClient) KubeconfigClient(kubeconfig string) *KubeconfigClient {
+func (c *UnAuthClient) KubeconfigClient(kubeconfig string) Client {
 	return NewKubeconfigClient(c, kubeconfig)
 }
 

@@ -1,4 +1,4 @@
-package snow
+package snow_test
 
 import (
 	"context"
@@ -7,11 +7,20 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -27,30 +36,33 @@ const (
 
 type snowTest struct {
 	*WithT
-	ctx         context.Context
-	kubectl     *mocks.MockProviderKubectlClient
-	aws         *mocks.MockAwsClient
-	provider    *snowProvider
-	cluster     *types.Cluster
-	clusterSpec *cluster.Spec
+	ctx              context.Context
+	kubeUnAuthClient *mocks.MockKubeUnAuthClient
+	kubeconfigClient *kubemock.MockClient
+	aws              *mocks.MockAwsClient
+	provider         *snow.SnowProvider
+	cluster          *types.Cluster
+	clusterSpec      *cluster.Spec
 }
 
 func newSnowTest(t *testing.T) snowTest {
 	ctrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	mockKubeUnAuthClient := mocks.NewMockKubeUnAuthClient(ctrl)
+	mockKubeconfigClient := kubemock.NewMockClient(ctrl)
 	mockaws := mocks.NewMockAwsClient(ctrl)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(t, kubectl, mockaws)
+	provider := newProvider(t, mockKubeUnAuthClient, mockaws)
 	return snowTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		kubectl:     kubectl,
-		aws:         mockaws,
-		provider:    provider,
-		cluster:     cluster,
-		clusterSpec: givenClusterSpec(),
+		WithT:            NewWithT(t),
+		ctx:              context.Background(),
+		kubeUnAuthClient: mockKubeUnAuthClient,
+		kubeconfigClient: mockKubeconfigClient,
+		aws:              mockaws,
+		provider:         provider,
+		cluster:          cluster,
+		clusterSpec:      givenClusterSpec(),
 	}
 }
 
@@ -184,7 +196,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 	}
 }
 
-func givenProvider(t *testing.T) *snowProvider {
+func givenProvider(t *testing.T) *snow.SnowProvider {
 	return newProvider(t, nil, nil)
 }
 
@@ -194,18 +206,17 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(t *testing.T, kubectl ProviderKubectlClient, mockaws *mocks.MockAwsClient) *snowProvider {
-	awsClients := AwsClientMap{
+func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient) *snow.SnowProvider {
+	awsClients := snow.AwsClientMap{
 		"device-1": mockaws,
 		"device-2": mockaws,
 	}
-	validator := NewValidatorFromAwsClientMap(awsClients)
-	defaulters := NewDefaultersFromAwsClientMap(awsClients, nil, nil)
-	configManager := NewConfigManager(defaulters, validator)
-	return NewProvider(
-		kubectl,
+	validator := snow.NewValidatorFromAwsClientMap(awsClients)
+	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, nil, nil)
+	configManager := snow.NewConfigManager(defaulters, validator)
+	return snow.NewProvider(
+		kubeUnAuthClient,
 		configManager,
-		test.FakeNow,
 	)
 }
 
@@ -287,10 +298,86 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
 func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.clusterSpec.ManagementCluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"md-0",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+
 	cp, md, err := tt.provider.GenerateCAPISpecForCreate(tt.ctx, tt.cluster, tt.clusterSpec)
+
 	tt.Expect(err).To(Succeed())
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestGenerateCAPISpecForUpgrade(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.clusterSpec.ManagementCluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			wantSnowMachineTemplate().DeepCopyInto(obj)
+			obj.SetName("test-cp-1")
+			obj.Spec.Template.Spec.InstanceType = "sbe-c.large"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.MachineDeploymentName(tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-wn-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			wantSnowMachineTemplate().DeepCopyInto(obj)
+			obj.SetName("test-wn-1")
+			return nil
+		})
+
+	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, nil, nil, nil, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp.yaml")
+	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md.yaml")
 }
 
 func TestVersion(t *testing.T) {
@@ -341,16 +428,16 @@ func TestMachineConfigs(t *testing.T) {
 
 func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
-	tt.kubectl.EXPECT().DeleteEksaDatacenterConfig(
+	tt.kubeUnAuthClient.EXPECT().Delete(
 		tt.ctx,
-		"snowdatacenterconfigs.anywhere.eks.amazonaws.com",
 		tt.clusterSpec.SnowDatacenter.Name,
-		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		tt.clusterSpec.SnowDatacenter.Namespace,
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+		tt.clusterSpec.SnowDatacenter,
 	).Return(nil)
-	tt.kubectl.EXPECT().DeleteEksaMachineConfig(
+	tt.kubeUnAuthClient.EXPECT().Delete(
 		tt.ctx,
-		"snowmachineconfigs.anywhere.eks.amazonaws.com",
+		gomock.Any(),
 		gomock.Any(),
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		gomock.Any(),
