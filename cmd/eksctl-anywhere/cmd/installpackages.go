@@ -16,7 +16,7 @@ import (
 type installPackageOptions struct {
 	source      curatedpackages.BundleSource
 	kubeVersion string
-	name        string
+	packageName string
 	registry    string
 }
 
@@ -29,8 +29,8 @@ func init() {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 	installPackageCommand.Flags().StringVar(&ipo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
-	installPackageCommand.Flags().StringVar(&ipo.name, "name", "", "Custom name of the curated package to install")
-	if err := installPackageCommand.MarkFlagRequired("name"); err != nil {
+	installPackageCommand.Flags().StringVarP(&ipo.packageName, "packagename", "p", "", "Custom name of the curated package to install")
+	if err := installPackageCommand.MarkFlagRequired("packagename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 }
@@ -94,7 +94,7 @@ func installPackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = packages.InstallPackage(ctx, p, ipo.name, kubeConfig)
+	err = packages.InstallPackage(ctx, p, ipo.packageName, kubeConfig)
 	if err != nil {
 		return err
 	}
