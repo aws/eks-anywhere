@@ -1837,3 +1837,15 @@ func TestKubectlDeleteFluxConfig(t *testing.T) {
 		t.Errorf("Kubectl.DeleteFluxConfig() error = %v, want error = nil", err)
 	}
 }
+
+func TestKubectlDelete(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-cluster"
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", resourceType, name, "--namespace", tt.namespace, "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, name, tt.namespace, tt.kubeconfig)).To(Succeed())
+}
