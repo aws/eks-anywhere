@@ -73,10 +73,13 @@ type tinkerbellProvider struct {
 	providerTinkClient    ProviderTinkClient
 	pbnj                  ProviderPbnjClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	hardwareConfigFile    string
 	validator             *Validator
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
+
+	hardwareManifestPath string
+	// catalogue is a cache initialized during SetupAndValidateCreateCluster() from hardwareManifestPath.
+	catalogue hardware.Catalogue
 
 	skipIpCheck      bool
 	skipPowerActions bool
@@ -128,7 +131,7 @@ func NewProvider(
 	providerTinkbellClient TinkerbellClients,
 	now types.NowFunc,
 	skipIpCheck bool,
-	hardwareConfigFile string,
+	hardwareManifestPath string,
 	skipPowerActions bool,
 	setupTinkerbell bool,
 	force bool,
@@ -144,7 +147,7 @@ func NewProvider(
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
-		hardwareConfigFile,
+		hardwareManifestPath,
 		skipPowerActions,
 		setupTinkerbell,
 		force,
@@ -162,7 +165,7 @@ func NewProviderCustomDep(
 	netClient networkutils.NetClient,
 	now types.NowFunc,
 	skipIpCheck bool,
-	hardwareConfigFile string,
+	hardwareManifestPath string,
 	skipPowerActions bool,
 	setupTinkerbell bool,
 	force bool,
@@ -197,9 +200,9 @@ func NewProviderCustomDep(
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
-		writer:             writer,
+		hardwareManifestPath: hardwareManifestPath,
+		validator:            NewValidator(providerTinkClient, netClient, pbnjClient),
+		writer:               writer,
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
@@ -238,7 +241,7 @@ func (p *tinkerbellProvider) PreCAPIInstallOnBootstrap(ctx context.Context, clus
 
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
-	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()
+	hardwareSpec, err := p.catalogue.HardwareSpecMarshallable()
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
 	}
@@ -366,7 +369,7 @@ func (p *tinkerbellProvider) configureSshKeys() error {
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	hardware, err := p.providerTinkClient.GetHardware(ctx)
+	tinkHardware, err := p.providerTinkClient.GetHardware(ctx)
 	if err != nil {
 		return fmt.Errorf("retrieving tinkerbell hardware: %v", err)
 	}
@@ -382,10 +385,14 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	if err := hardware.ParseYAMLCatalogueFromFile(&p.catalogue, p.hardwareManifestPath); err != nil {
+		return err
+	}
+
+	// ValidateHardwareCatalogue performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions, p.force); err != nil {
+	if err := p.validator.ValidateHardwareCatalogue(ctx, p.catalogue, tinkHardware, p.skipPowerActions, p.force); err != nil {
 		return err
 	}
 
@@ -400,11 +407,11 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 			}
 		}
 
-		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
+		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.catalogue.Hardware, tinkHardware); err != nil {
 			return err
 		}
 	} else if !p.skipPowerActions {
-		if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
+		if err := p.validator.ValidateMachinesPoweredOff(ctx, p.catalogue); err != nil {
 			return fmt.Errorf("validating machines are powered off: %w", err)
 		}
 	}
@@ -425,7 +432,7 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
-	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Cluster.Spec); err != nil {
+	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Cluster.Spec, p.catalogue); err != nil {
 		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
@@ -441,7 +448,7 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) error {
-	for _, hardware := range p.validator.hardwareConfig.Hardwares {
+	for _, hardware := range p.catalogue.Hardware {
 		tinkHardware, err := p.providerTinkClient.GetHardwareByUuid(ctx, hardware.Spec.ID)
 		if err != nil {
 			return fmt.Errorf("getting hardware with UUID '%s': %v", hardware.Spec.ID, err)
@@ -465,20 +472,16 @@ func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) 
 	return nil
 }
 
-// setMachinesToPXEBoot iterates over all p.validator.hardwareConfig.Bmcs and instructs them to turn off
-// and boot from PXE and turn on.
+// setMachinesToPXEBoot iterates over all catalogue.BMCs and instructs them to turn off, one-time
+// PXE boot, then turn on.
 func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
-	// We're reaching into an unexported member of p.validator because of the lazy loading we're doing with
-	// hardware configuration. This effectively defines a concrete tight coupling between the validator and the
-	// Tinkerbell construct that desperately needs teething apart.
-
-	secrets := make(map[string]corev1.Secret, len(p.validator.hardwareConfig.Secrets))
-	for _, secret := range p.validator.hardwareConfig.Secrets {
+	secrets := make(map[string]corev1.Secret, len(p.catalogue.Secrets))
+	for _, secret := range p.catalogue.Secrets {
 		secrets[secret.Name] = secret
 	}
 
 	var errs []error
-	for _, bmc := range p.validator.hardwareConfig.Bmcs {
+	for _, bmc := range p.catalogue.BMCs {
 		secret, found := secrets[bmc.Spec.AuthSecretRef.Name]
 		if !found {
 			errs = append(errs, fmt.Errorf("could not find bmc secret for '%v'", bmc.Name))

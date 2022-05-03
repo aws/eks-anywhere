@@ -1,10 +1,12 @@
 package hardware
 
 import (
+	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io/ioutil"
-	"strings"
+	"io"
+	"os"
 
 	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
@@ -14,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
+	yamlutil "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,69 +28,22 @@ import (
 
 const Provisioning = "provisioning"
 
-type HardwareConfig struct {
-	Hardwares []tinkv1alpha1.Hardware
-	Bmcs      []pbnjv1alpha1.BMC
-	Secrets   []corev1.Secret
+type Catalogue struct {
+	Hardware []tinkv1alpha1.Hardware
+	BMCs     []pbnjv1alpha1.BMC
+	Secrets  []corev1.Secret
 }
 
-func (hc *HardwareConfig) ParseHardwareConfig(hardwareFileName string) error {
-	err := hc.setHardwareConfigFromFile(hardwareFileName)
-	if err != nil {
-		return fmt.Errorf("unable to parse hardware file %s: %v", hardwareFileName, err)
-	}
-	return nil
-}
-
-func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) error {
-	content, err := ioutil.ReadFile(hardwareFileName)
-	if err != nil {
-		return fmt.Errorf("unable to read file due to: %v", err)
-	}
-
-	for _, c := range strings.Split(string(content), v1alpha1.YamlSeparator) {
-		var resource unstructured.Unstructured
-		if err = yaml.Unmarshal([]byte(c), &resource); err != nil {
-			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", hardwareFileName, c, err)
-		}
-		switch resource.GetKind() {
-		case "Hardware":
-			var hardware tinkv1alpha1.Hardware
-			err = yaml.UnmarshalStrict([]byte(c), &hardware)
-			if err != nil {
-				return fmt.Errorf("unable to parse hardware CRD\n%s \n%v", c, err)
-			}
-			hc.Hardwares = append(hc.Hardwares, hardware)
-		case "BMC":
-			var bmc pbnjv1alpha1.BMC
-			err = yaml.UnmarshalStrict([]byte(c), &bmc)
-			if err != nil {
-				return fmt.Errorf("unable to parse bmc CRD\n%s \n%v", c, err)
-			}
-			hc.Bmcs = append(hc.Bmcs, bmc)
-		case "Secret":
-			var secret corev1.Secret
-			err = yaml.UnmarshalStrict([]byte(c), &secret)
-			if err != nil {
-				return fmt.Errorf("unable to parse k8s secret\n%s \n%v", c, err)
-			}
-			hc.Secrets = append(hc.Secrets, secret)
-		}
-	}
-
-	return nil
-}
-
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
+func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
-		bmcRefMap = hc.initBmcRefMap()
+		bmcRefMap = c.initBmcRefMap()
 	}
 
 	// A database of observed hardware IDs so we can check for uniqueness.
-	hardwareIdsDb := make(map[string]struct{}, len(hc.Hardwares))
+	hardwareIdsDb := make(map[string]struct{}, len(c.Hardware))
 
-	for _, hw := range hc.Hardwares {
+	for _, hw := range c.Hardware {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
 		}
@@ -160,10 +116,10 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions, force bool, tinkHar
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateBMC() error {
-	secretRefMap := hc.initSecretRefMap()
-	bmcIpMap := make(map[string]struct{}, len(hc.Bmcs))
-	for _, bmc := range hc.Bmcs {
+func (c *Catalogue) ValidateBMC() error {
+	secretRefMap := c.initSecretRefMap()
+	bmcIpMap := make(map[string]struct{}, len(c.BMCs))
+	for _, bmc := range c.BMCs {
 		if bmc.Name == "" {
 			return fmt.Errorf("bmc name is required")
 		}
@@ -198,8 +154,8 @@ func (hc *HardwareConfig) ValidateBMC() error {
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
-	for _, s := range hc.Secrets {
+func (c *Catalogue) ValidateBmcSecretRefs() error {
+	for _, s := range c.Secrets {
 		if s.Name == "" {
 			return fmt.Errorf("secret name is required")
 		}
@@ -228,34 +184,34 @@ func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
 	return nil
 }
 
-func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
-	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.Bmcs))
-	for _, bmc := range hc.Bmcs {
+func (c *Catalogue) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
+	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(c.BMCs))
+	for _, bmc := range c.BMCs {
 		bmcRefMap[bmc.Name] = nil
 	}
 
 	return bmcRefMap
 }
 
-func (hc *HardwareConfig) initSecretRefMap() map[string]struct{} {
-	secretRefMap := make(map[string]struct{}, len(hc.Secrets))
-	for _, s := range hc.Secrets {
+func (c *Catalogue) initSecretRefMap() map[string]struct{} {
+	secretRefMap := make(map[string]struct{}, len(c.Secrets))
+	for _, s := range c.Secrets {
 		secretRefMap[s.Name] = struct{}{}
 	}
 
 	return secretRefMap
 }
 
-func (hc *HardwareConfig) HardwareSpecMarshallable() ([]byte, error) {
+func (c *Catalogue) HardwareSpecMarshallable() ([]byte, error) {
 	var marshallables []v1alpha1.Marshallable
 
-	for _, hw := range hc.Hardwares {
+	for _, hw := range c.Hardware {
 		marshallables = append(marshallables, hardwareMarshallable(hw))
 	}
-	for _, bmc := range hc.Bmcs {
+	for _, bmc := range c.BMCs {
 		marshallables = append(marshallables, bmcMarshallable(bmc))
 	}
-	for _, secret := range hc.Secrets {
+	for _, secret := range c.Secrets {
 		marshallables = append(marshallables, secretsMarshallable(secret))
 	}
 
@@ -313,4 +269,58 @@ func secretsMarshallable(secret corev1.Secret) *corev1.Secret {
 	}
 
 	return config
+}
+
+// ParseYAMLCatalogueFromFile parses filename, a YAML document, using ParseYamlCatalogue.
+func ParseYAMLCatalogueFromFile(config *Catalogue, filename string) error {
+	fh, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	return ParseYAMLCatalogue(config, fh)
+}
+
+// ParseCatalogue parses a YAML document, r, that represents a set of Kubernetes manifests.
+// Manifests parsed include CAPT Hardware, PBnJ BMCs and associated Core API Secret.
+func ParseYAMLCatalogue(catalogue *Catalogue, r io.Reader) error {
+	document := yamlutil.NewYAMLReader(bufio.NewReader(r))
+	for {
+		manifest, err := document.Read()
+		if errors.Is(err, io.EOF) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		var resource unstructured.Unstructured
+		if err = yaml.Unmarshal(manifest, &resource); err != nil {
+			return err
+		}
+
+		switch resource.GetKind() {
+		case "Hardware":
+			var hardware tinkv1alpha1.Hardware
+			err = yaml.UnmarshalStrict(manifest, &hardware)
+			if err != nil {
+				return fmt.Errorf("unable to parse hardware manifest: %v", err)
+			}
+			catalogue.Hardware = append(catalogue.Hardware, hardware)
+		case "BMC":
+			var bmc pbnjv1alpha1.BMC
+			err = yaml.UnmarshalStrict(manifest, &bmc)
+			if err != nil {
+				return fmt.Errorf("unable to parse bmc manifest: %v", err)
+			}
+			catalogue.BMCs = append(catalogue.BMCs, bmc)
+		case "Secret":
+			var secret corev1.Secret
+			err = yaml.UnmarshalStrict(manifest, &secret)
+			if err != nil {
+				return fmt.Errorf("unable to parse secret manifest: %v", err)
+			}
+			catalogue.Secrets = append(catalogue.Secrets, secret)
+		}
+	}
 }
