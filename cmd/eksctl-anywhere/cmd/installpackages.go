@@ -36,7 +36,7 @@ func init() {
 }
 
 var installPackageCommand = &cobra.Command{
-	Use:          "packages [flags]",
+	Use:          "package [package-name] [flags]",
 	Aliases:      []string{"package"},
 	Short:        "Install package(s)",
 	Long:         "This command is used to Install a curated package. Use list to discover curated packages",
