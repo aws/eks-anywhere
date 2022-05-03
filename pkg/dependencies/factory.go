@@ -25,7 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git/factory"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -214,7 +214,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile).WithWriter()
 	case v1alpha1.SnowDatacenterKind:
-		f.WithKubectl().WithSnowConfigManager()
+		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -270,9 +270,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
-				f.dependencies.Kubectl,
+				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
-				time.Now,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:

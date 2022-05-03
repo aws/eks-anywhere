@@ -27,12 +27,12 @@ import (
 const hexAlphabet = "0123456789abcdef"
 
 func ExecCommand(cmd *exec.Cmd) (string, error) {
-	stdout, err := cmd.Output()
-	stdoutStr := strings.TrimSpace(string(stdout))
+	commandOutput, err := cmd.CombinedOutput()
+	commandOutputStr := strings.TrimSpace(string(commandOutput))
 	if err != nil {
-		return stdoutStr, errors.Cause(err)
+		return commandOutputStr, errors.Cause(err)
 	}
-	return stdoutStr, nil
+	return commandOutputStr, nil
 }
 
 func SliceContains(s []string, str string) bool {
