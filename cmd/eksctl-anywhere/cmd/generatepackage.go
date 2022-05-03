@@ -81,6 +81,7 @@ func generatePackages(ctx context.Context, args []string) error {
 
 	packageClient := curatedpackages.NewPackageClient(
 		bundle,
+		deps.Kubectl,
 		args...,
 	)
 	packages, err := packageClient.GeneratePackages()

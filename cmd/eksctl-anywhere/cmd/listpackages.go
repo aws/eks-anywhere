@@ -82,6 +82,7 @@ func listPackages(ctx context.Context) error {
 	}
 	packages := curatedpackages.NewPackageClient(
 		bundle,
+		deps.Kubectl,
 	)
 	packages.DisplayPackages()
 	return nil

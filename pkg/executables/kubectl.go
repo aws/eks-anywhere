@@ -1523,3 +1523,7 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kub
 	}
 	return nil
 }
+
+func (k *Kubectl) ExecuteCommandFromBytes(ctx context.Context, data []byte, opts ...string) (bytes.Buffer, error) {
+	return k.ExecuteWithStdin(ctx, data, opts...)
+}
