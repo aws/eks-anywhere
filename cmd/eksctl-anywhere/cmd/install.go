@@ -5,7 +5,7 @@ import "github.com/spf13/cobra"
 var installCmd = &cobra.Command{
 	Use:   "install",
 	Short: "Install resources to the cluster",
-	Long:  "Use eksctl anywhere install to install artifacts into a cluster",
+	Long:  "Use eksctl anywhere install to install resources into a cluster",
 }
 
 func init() {

@@ -89,11 +89,12 @@ func (pc *PackageClient) WritePackagesToStdOut(packages []packagesv1.Package) er
 
 func (pc *PackageClient) GetPackageFromBundle(packageName string) (*packagesv1.BundlePackage, error) {
 	packageMap := pc.packageMap()
-	p := packageMap[strings.ToLower(packageName)]
-	if p.Name != "" {
-		return &p, nil
+	p, ok := packageMap[strings.ToLower(packageName)]
+	if !ok {
+		return nil, fmt.Errorf("package %s not found", packageName)
 	}
-	return nil, fmt.Errorf("package %s not found", packageName)
+	
+	return &p, nil
 }
 
 func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
