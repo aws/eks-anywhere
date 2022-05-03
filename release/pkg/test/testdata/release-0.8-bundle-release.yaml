@@ -209,7 +209,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: ca6d21db63ba0b653af2f76e0ac92a53b375fde9
       kindNode:
         arch:
         - amd64
@@ -424,34 +424,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -711,7 +721,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: ca6d21db63ba0b653af2f76e0ac92a53b375fde9
       kindNode:
         arch:
         - amd64
@@ -926,34 +936,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -1213,7 +1233,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: ca6d21db63ba0b653af2f76e0ac92a53b375fde9
       kindNode:
         arch:
         - amd64
@@ -1428,34 +1448,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:

@@ -30,6 +30,7 @@ func (r *ReleaseConfig) GetTinkAssets() ([]Artifact, error) {
 	}
 
 	tinkImages := []string{
+		"tink-controller",
 		"tink-server",
 		"tink-worker",
 		"tink-cli",
