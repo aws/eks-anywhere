@@ -36,7 +36,8 @@ func CreateBundleManager(kubeVersion string) bundle.Manager {
 		return nil
 	}
 	log := logr.Discard()
-	discovery := NewDiscovery(major, minor)
+	k := NewKubeVersion(major, minor)
+	discovery := NewDiscovery(k)
 	puller := artifacts.NewRegistryPuller()
 	return bundle.NewBundleManager(log, discovery, puller)
 }

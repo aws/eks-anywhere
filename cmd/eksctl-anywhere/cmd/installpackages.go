@@ -42,20 +42,18 @@ var installPackageCommand = &cobra.Command{
 	Long:         "This command is used to Install a curated package. Use list to discover curated packages",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
-	RunE:         runInstallPackages(),
+	RunE:         runInstallPackages,
 }
 
-func runInstallPackages() func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
-			return err
-		}
-
-		return installPackages(cmd.Context(), ipo, args)
+func runInstallPackages(cmd *cobra.Command, args []string) error {
+	if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
+		return err
 	}
+
+	return installPackages(cmd.Context(), args)
 }
 
-func installPackages(ctx context.Context, ipo *installPackageOptions, args []string) error {
+func installPackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 	deps, err := newDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
