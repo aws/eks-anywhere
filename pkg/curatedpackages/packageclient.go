@@ -112,11 +112,11 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	if err != nil {
 		return err
 	}
-	stdOut, err := pc.kubectl.ExecuteCommandFromBytes(ctx, packageYaml, params...)
+	stdOut, err := pc.kubectl.CreateFromYaml(ctx, packageYaml, params...)
 	if err != nil {
 		return err
 	}
-	fmt.Print(&stdOut)
+	fmt.Println(&stdOut)
 	return nil
 }
 

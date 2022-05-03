@@ -35,6 +35,26 @@ func (m *MockKubectlRunner) EXPECT() *MockKubectlRunnerMockRecorder {
 	return m.recorder
 }
 
+// CreateFromYaml mocks base method.
+func (m *MockKubectlRunner) CreateFromYaml(ctx context.Context, data []byte, opts ...string) (bytes.Buffer, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, data}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CreateFromYaml", varargs...)
+	ret0, _ := ret[0].(bytes.Buffer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFromYaml indicates an expected call of CreateFromYaml.
+func (mr *MockKubectlRunnerMockRecorder) CreateFromYaml(ctx, data interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, data}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFromYaml", reflect.TypeOf((*MockKubectlRunner)(nil).CreateFromYaml), varargs...)
+}
+
 // ExecuteCommand mocks base method.
 func (m *MockKubectlRunner) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
 	m.ctrl.T.Helper()
@@ -53,24 +73,4 @@ func (mr *MockKubectlRunnerMockRecorder) ExecuteCommand(ctx interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteCommand", reflect.TypeOf((*MockKubectlRunner)(nil).ExecuteCommand), varargs...)
-}
-
-// ExecuteCommandFromBytes mocks base method.
-func (m *MockKubectlRunner) ExecuteCommandFromBytes(ctx context.Context, data []byte, opts ...string) (bytes.Buffer, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, data}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "ExecuteCommandFromBytes", varargs...)
-	ret0, _ := ret[0].(bytes.Buffer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExecuteCommandFromBytes indicates an expected call of ExecuteCommandFromBytes.
-func (mr *MockKubectlRunnerMockRecorder) ExecuteCommandFromBytes(ctx, data interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, data}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteCommandFromBytes", reflect.TypeOf((*MockKubectlRunner)(nil).ExecuteCommandFromBytes), varargs...)
 }
