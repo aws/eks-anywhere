@@ -137,7 +137,6 @@ func WithFluxConfig(fluxConfig *eksav1alpha1.FluxConfig) SpecOpt {
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
-		s.FluxConfig = gitOpsConfig.ConvertToFluxConfig()
 	}
 }
 
