@@ -83,42 +83,8 @@ func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
-	snowCluster := SnowCluster(clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
-	if err != nil {
-		return nil, err
-	}
-	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
-
-	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}, nil
-}
-
-func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
-	kubeadmConfigTemplates, err := KubeadmConfigTemplates(clusterSpec)
-	if err != nil {
-		return nil, err
-	}
-	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
-	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-
-	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
-	for _, item := range machineDeployments {
-		workersObjs = append(workersObjs, item)
-	}
-	for _, item := range kubeadmConfigTemplates {
-		workersObjs = append(workersObjs, item)
-	}
-	for _, item := range workerMachineTemplates {
-		workersObjs = append(workersObjs, item)
-	}
-
-	return workersObjs, nil
-}
-
-func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneObjs, err := ControlPlaneObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneObjs, err := ControlPlaneObjects(ctx, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -128,7 +94,7 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.C
 		return nil, nil, err
 	}
 
-	workersObjs, err := WorkersObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+	workersObjs, err := WorkersObjects(ctx, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -141,8 +107,17 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.C
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, nil
+func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	kubeconfigClient := p.kubeUnAuthClient.KubeconfigClient(cluster.KubeconfigFile)
+	return CAPIObjects(ctx, clusterSpec, kubeconfigClient)
+}
+
+func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	return p.generateCAPISpec(ctx, cluster, clusterSpec)
+}
+
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, managementCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	return p.generateCAPISpec(ctx, managementCluster, clusterSpec)
 }
 
 func (p *SnowProvider) GenerateStorageClass() []byte {

@@ -7,13 +7,20 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -291,10 +298,86 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
 func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"md-0",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+
 	cp, md, err := tt.provider.GenerateCAPISpecForCreate(tt.ctx, tt.cluster, tt.clusterSpec)
+
 	tt.Expect(err).To(Succeed())
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestGenerateCAPISpecForUpgrade(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			constants.EksaSystemNamespace,
+			&controlplanev1.KubeadmControlPlane{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-cp-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			wantSnowMachineTemplate().DeepCopyInto(obj)
+			obj.SetName("test-cp-1")
+			obj.Spec.Template.Spec.InstanceType = "sbe-c.large"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			clusterapi.MachineDeploymentName(tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn-1"
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"test-wn-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			wantSnowMachineTemplate().DeepCopyInto(obj)
+			obj.SetName("test-wn-1")
+			return nil
+		})
+
+	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, tt.cluster, nil, nil, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp.yaml")
+	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md.yaml")
 }
 
 func TestVersion(t *testing.T) {
