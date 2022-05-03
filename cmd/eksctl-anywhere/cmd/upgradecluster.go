@@ -73,11 +73,14 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, uc.forceClean).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, nil).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
 		WithEksdUpgrader().
