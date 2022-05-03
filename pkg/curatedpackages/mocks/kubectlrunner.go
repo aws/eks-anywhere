@@ -36,9 +36,9 @@ func (m *MockKubectlRunner) EXPECT() *MockKubectlRunnerMockRecorder {
 }
 
 // CreateFromYaml mocks base method.
-func (m *MockKubectlRunner) CreateFromYaml(ctx context.Context, data []byte, opts ...string) (bytes.Buffer, error) {
+func (m *MockKubectlRunner) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, data}
+	varargs := []interface{}{ctx, yaml}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -49,9 +49,9 @@ func (m *MockKubectlRunner) CreateFromYaml(ctx context.Context, data []byte, opt
 }
 
 // CreateFromYaml indicates an expected call of CreateFromYaml.
-func (mr *MockKubectlRunnerMockRecorder) CreateFromYaml(ctx, data interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockKubectlRunnerMockRecorder) CreateFromYaml(ctx, yaml interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, data}, opts...)
+	varargs := append([]interface{}{ctx, yaml}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFromYaml", reflect.TypeOf((*MockKubectlRunner)(nil).CreateFromYaml), varargs...)
 }
 
