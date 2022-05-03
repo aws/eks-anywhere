@@ -49,9 +49,6 @@ type GithubProviderConfig struct {
 }
 
 type GitProviderConfig struct {
-	// Username is the user to authenticate to the git repository with.
-	Username string `json:"username"`
-
 	// Repository URL for the repository to be used with flux. Can be either an SSH or HTTPS url.
 	RepositoryUrl string `json:"repositoryUrl"`
 }

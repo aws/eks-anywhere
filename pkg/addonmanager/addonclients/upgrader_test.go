@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -106,7 +105,6 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
@@ -131,7 +129,6 @@ func TestFluxUpgradeError(t *testing.T) {
 		t.Errorf("setting up files: %v", err)
 	}
 
-	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)

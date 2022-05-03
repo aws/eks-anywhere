@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git"
 )
 
 type filesTest struct {
@@ -75,7 +74,6 @@ func TestUpdateLegacyFileStructureNoChanges(t *testing.T) {
 		t.Errorf("failed to create test eksa-system directory: %v", err)
 	}
 
-	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 
@@ -110,7 +108,6 @@ func TestUpdateLegacyFileStructureSuccess(t *testing.T) {
 		t.Fatalf("failed to write kustomization.yaml in test: %v", err)
 	}
 
-	m.gitProvider.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)

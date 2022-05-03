@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
@@ -752,17 +753,20 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return fmt.Errorf("creating Git provider: %v", err)
 		}
 
-		// Need this until we build out a generic git provider
 		if features.IsActive(features.GenericGitProviderSupport()) {
-			err = tools.Client.ValidateRemoteExists(ctx)
-			if err != nil {
-				return err
+			if fluxConfig.Spec.Git != nil {
+				err = tools.Client.ValidateRemoteExists(ctx)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
-		err = tools.Provider.Validate(ctx)
-		if err != nil {
-			return fmt.Errorf("validating provider: %v", err)
+		if tools.Provider != nil {
+			err = tools.Provider.Validate(ctx)
+			if err != nil {
+				return fmt.Errorf("validating provider: %v", err)
+			}
 		}
 
 		f.dependencies.Git = tools
@@ -771,7 +775,7 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -785,6 +789,7 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 				Kubectl: f.dependencies.Kubectl,
 			},
 			f.dependencies.Git,
+			cliConfig,
 		)
 
 		return nil

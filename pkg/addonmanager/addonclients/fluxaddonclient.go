@@ -6,11 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
@@ -51,16 +54,18 @@ const (
 )
 
 type FluxAddonClient struct {
-	flux     Flux
-	gitTools *gitFactory.GitTools
-	retrier  *retrier.Retrier
+	flux      Flux
+	gitTools  *gitFactory.GitTools
+	cliConfig *config.CliConfig
+	retrier   *retrier.Retrier
 }
 
-func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools) *FluxAddonClient {
+func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools, cliConfig *config.CliConfig) *FluxAddonClient {
 	return &FluxAddonClient{
-		flux:     flux,
-		gitTools: gitTools,
-		retrier:  retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		flux:      flux,
+		gitTools:  gitTools,
+		cliConfig: cliConfig,
+		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
@@ -68,6 +73,9 @@ func NewFluxAddonClient(flux Flux, gitTools *gitFactory.GitTools) *FluxAddonClie
 type Flux interface {
 	// BootstrapToolkitsComponentsGithub bootstraps toolkit components in a GitHub repository.
 	BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
+
+	// BootstrapToolkitsComponentsGit bootstraps toolkit componets in a generic Git repository
+	BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error
 
 	// UninstallToolkitsComponents UninstallFluxComponents removes the Flux components and the toolkit.fluxcd.io resources from the cluster.
 	UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -121,6 +129,38 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 		machineConfigs:   machineConfigs,
 	}
 
+	if clusterSpec.FluxConfig.Spec.Github != nil {
+		err := f.installGitOpsGithub(ctx, cluster, fc, clusterSpec)
+		if err != nil {
+			return fmt.Errorf("installing GitHub gitops: %v", err)
+		}
+	}
+
+	if clusterSpec.FluxConfig.Spec.Git != nil {
+		err := f.installGitOpsGenericGit(ctx, cluster, fc, clusterSpec)
+		if err != nil {
+			return fmt.Errorf("installing generic git gitops: %v", err)
+		}
+	}
+
+	logger.V(3).Info("pulling from remote after Flux Bootstrap to ensure configuration files in local git repository are in sync",
+		"remote", defaultRemote, "branch", fc.branch())
+
+	err := f.retrier.Retry(func() error {
+		return f.gitTools.Client.Pull(ctx, fc.branch())
+	})
+	if err != nil {
+		logger.Error(err, "error when pulling from remote repository after Flux Bootstrap; ensure local repository is up-to-date with remote (git pull)",
+			"remote", defaultRemote, "branch", fc.branch(), "error", err)
+	}
+	return nil
+}
+
+func (f *FluxAddonClient) installGitOpsGithub(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
+	if err := fc.setupProviderRepository(ctx); err != nil {
+		return err
+	}
+
 	if err := fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
 		return err
 	}
@@ -137,16 +177,30 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 			return err
 		}
 	}
+	return nil
+}
 
-	logger.V(3).Info("pulling from remote after Flux Bootstrap to ensure configuration files in local git repository are in sync",
-		"remote", defaultRemote, "branch", fc.branch())
-
-	err := f.retrier.Retry(func() error {
-		return f.gitTools.Client.Pull(ctx, fc.branch())
-	})
+func (f *FluxAddonClient) installGitOpsGenericGit(ctx context.Context, cluster *types.Cluster, fc *fluxForCluster, clusterSpec *cluster.Spec) error {
+	err := fc.clone(ctx)
 	if err != nil {
-		logger.Error(err, "error when pulling from remote repository after Flux Bootstrap; ensure local repository is up-to-date with remote (git pull)",
-			"remote", defaultRemote, "branch", fc.branch(), "error", err)
+		return err
+	}
+
+	if err = fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
+		return err
+	}
+
+	if !cluster.ExistingManagement {
+		err = f.retrier.Retry(func() error {
+			return fc.flux.BootstrapToolkitsComponentsGit(ctx, cluster, clusterSpec.FluxConfig, f.cliConfig)
+		})
+		if err != nil {
+			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
+			if uninstallErr != nil {
+				logger.Info("Could not uninstall flux components", "error", uninstallErr)
+			}
+			return err
+		}
 	}
 	return nil
 }
@@ -323,11 +377,6 @@ type fluxForCluster struct {
 func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) error {
 	logger.Info("Adding cluster configuration files to Git")
 	config := fc.clusterSpec.FluxConfig
-	repository := config.Spec.Github.Repository
-
-	if err := fc.setupRepository(ctx); err != nil {
-		return err
-	}
 
 	err := fc.validateLocalConfigPathDoesNotExist()
 	if err != nil {
@@ -360,20 +409,16 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	if err != nil {
 		return err
 	}
-	logger.V(3).Info("Finished pushing cluster config and flux custom manifest files to git",
-		"repository", repository)
+	logger.V(3).Info("Finished pushing cluster config and flux custom manifest files to git")
 	return nil
 }
 
 func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 	f := fc.FluxAddonClient
 	if !validations.FileExists(path.Join(f.gitTools.Writer.Dir(), ".git")) {
-		r, err := fc.clone(ctx)
+		err := fc.clone(ctx)
 		if err != nil {
 			return fmt.Errorf("failed cloning git repo: %v", err)
-		}
-		if r == nil {
-			return fmt.Errorf("failed to find remote git repo: %s", fc.repository())
 		}
 	} else {
 		// Make sure the local git repo is on the branch specified in config and up-to-date with the remote
@@ -499,12 +544,23 @@ func (fc *fluxForCluster) generateFluxPatchFile(t *templater.Templater) error {
 	return nil
 }
 
-// setupRepository will set up the repository which will house the GitOps configuration for the cluster.
+// setupProviderRepository will set up the repository which will house the GitOps configuration for the cluster.
 // if the repository exists and is not empty, it will be cloned.
 // if the repository exists but is empty, it will be initialized locally, as a bare repository cannot be cloned.
 // if the repository does not exist, it will be created and then initialized locally.
-func (fc *fluxForCluster) setupRepository(ctx context.Context) error {
-	r, err := fc.clone(ctx)
+func (fc *fluxForCluster) setupProviderRepository(ctx context.Context) error {
+	var r *git.Repository
+	var err error
+	err = fc.FluxAddonClient.retrier.Retry(func() error {
+		r, err = fc.gitTools.Provider.GetRepo(ctx)
+		return err
+	})
+	if err != nil {
+		return fmt.Errorf("failed to describe repo: %w", err)
+	}
+	if r != nil {
+		err = fc.clone(ctx)
+	}
 	if err != nil {
 		var repoEmptyErr *git.RepositoryIsEmptyError
 		if errors.As(err, &repoEmptyErr) {
@@ -530,35 +586,21 @@ func (fc *fluxForCluster) setupRepository(ctx context.Context) error {
 	return nil
 }
 
-// clone attempts to describe the provided remote repository.
-// if the repo exists, it will clone it.
-func (fc *fluxForCluster) clone(ctx context.Context) (*git.Repository, error) {
-	var r *git.Repository
-	var err error
-	err = fc.FluxAddonClient.retrier.Retry(func() error {
-		r, err = fc.gitTools.Provider.GetRepo(ctx)
-		return err
+func (fc *fluxForCluster) clone(ctx context.Context) error {
+	logger.V(3).Info("Cloning remote repository")
+	err := fc.FluxAddonClient.retrier.Retry(func() error {
+		return fc.gitTools.Client.Clone(ctx)
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to describe repo: %w", err)
+		return err
 	}
-	if r != nil {
-		logger.V(3).Info("Cloning remote repository", "repo", r.Name)
-		err = fc.FluxAddonClient.retrier.Retry(func() error {
-			return fc.gitTools.Client.Clone(ctx)
-		})
-		if err != nil {
-			return nil, err
-		}
 
-		logger.V(3).Info("Creating a new branch")
-		err = fc.gitTools.Client.Branch(fc.branch())
-		if err != nil {
-			return nil, err
-		}
-		return r, nil
+	logger.V(3).Info("Creating a new branch")
+	err = fc.gitTools.Client.Branch(fc.branch())
+	if err != nil {
+		return err
 	}
-	return nil, nil
+	return nil
 }
 
 // createRemoteRepository will create a repository in the remote git provider with the user-provided configuration
@@ -614,10 +656,12 @@ func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
 
 func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Context) error {
 	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		if exists, err := fc.gitTools.Provider.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
-			return fmt.Errorf("failed validating remote flux config path: %v", err)
-		} else if exists {
-			return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
+		if fc.gitTools.Provider != nil {
+			if exists, err := fc.gitTools.Provider.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
+				return fmt.Errorf("failed validating remote flux config path: %v", err)
+			} else if exists {
+				return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
+			}
 		}
 	}
 	return nil
@@ -632,7 +676,8 @@ func (fc *fluxForCluster) repository() string {
 		return fc.clusterSpec.FluxConfig.Spec.Github.Repository
 	}
 	if fc.clusterSpec.FluxConfig.Spec.Git != nil {
-		return fc.clusterSpec.FluxConfig.Spec.Git.RepositoryUrl
+		r := fc.clusterSpec.FluxConfig.Spec.Git.RepositoryUrl
+		return path.Base(strings.TrimSuffix(r, filepath.Ext(r)))
 	}
 	return ""
 }

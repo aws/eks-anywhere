@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -139,7 +140,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
 		Build(ctx)
@@ -206,10 +207,8 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
 		return dirs
 	}
-
-	if cliConfig.GitPrivateKeyFile != "" {
-		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
-	}
+	dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+	dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 
 	return dirs
 }
@@ -219,6 +218,7 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitPassword = os.Getenv(config.EksaGitPasswordTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
 	}
 
 	return cliConfig
