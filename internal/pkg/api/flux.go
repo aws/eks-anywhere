@@ -51,16 +51,29 @@ func WithSystemNamespace(namespace string) FluxConfigOpt {
 	}
 }
 
-func WithGitRepositoryUrl(url string) FluxConfigOpt {
+func WithStringFromEnvVarFluxConfig(envVar string, opt func(string) FluxConfigOpt) FluxConfigOpt {
+	return opt(os.Getenv(envVar))
+}
+
+type GitProviderOpt func(o *v1alpha1.GitProviderConfig)
+
+func WithGenericGitProvider(opts ...GitProviderOpt) FluxConfigOpt {
 	return func(c *v1alpha1.FluxConfig) {
-		if c.Spec.Git == nil {
-			c.Spec.Git = &v1alpha1.GitProviderConfig{}
+		g := &v1alpha1.GitProviderConfig{}
+		for _, opt := range opts {
+			opt(g)
 		}
-		c.Spec.Git.RepositoryUrl = url
+		c.Spec.Git = g
 	}
 }
 
-func WithStringFromEnvVarFluxConfig(envVar string, opt func(string) FluxConfigOpt) FluxConfigOpt {
+func WithGitRepositoryUrl(url string) GitProviderOpt {
+	return func(c *v1alpha1.GitProviderConfig) {
+		c.RepositoryUrl = url
+	}
+}
+
+func WithStringFromEnvVarGenericGitProviderConfig(envVar string, opt func(string) GitProviderOpt) GitProviderOpt {
 	return opt(os.Getenv(envVar))
 }
 

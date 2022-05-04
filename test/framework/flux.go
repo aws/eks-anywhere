@@ -55,7 +55,9 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
-			api.WithStringFromEnvVarFluxConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
+			api.WithGenericGitProvider(
+				api.WithStringFromEnvVarGenericGitProviderConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
+			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath("path2"),
 			api.WithBranch("main"),
