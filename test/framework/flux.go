@@ -824,7 +824,14 @@ func (e *ClusterE2ETest) writeEKSASpec(s *cluster.Spec, datacenterConfig provide
 }
 
 func (e *ClusterE2ETest) gitRepoName() string {
-	return e.FluxConfig.Spec.Github.Repository
+	if e.FluxConfig.Spec.Github != nil {
+		return e.FluxConfig.Spec.Github.Repository
+	}
+	if e.FluxConfig.Spec.Git != nil {
+		r := e.FluxConfig.Spec.Git.RepositoryUrl
+		return strings.TrimSuffix(path.Base(r), filepath.Ext(r))
+	}
+	return ""
 }
 
 func (e *ClusterE2ETest) gitBranch() string {
