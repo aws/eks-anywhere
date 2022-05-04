@@ -10,4 +10,4 @@ description: >
 
 | Name                       | Description                | Versions                  | GitHub                      |
 |----------------------------|----------------------------|---------------------------|-----------------------------|
-| [Harbor]({{< relref "./harbor" >}}) | Harbor is an open source trusted cloud native registry project that stores, signs, and scans content. | [v2.4.1]({{< relref "./harbor/v2.4.1.md" >}}) | https://github.com/goharbor/harbor<br>https://github.com/goharbor/harbor-helm |
+| [Harbor]({{< relref "./harbor" >}}) | Harbor is an open source trusted cloud native registry project that stores, signs, and scans content. | [v2.5.0]({{< relref "./harbor/v2.5.0.md" >}}) | https://github.com/goharbor/harbor<br>https://github.com/goharbor/harbor-helm |
