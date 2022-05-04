@@ -16,7 +16,7 @@ These principles provide a guide for designing software. At times they may seem 
 
 > "Leave code better than you found it"
 
-Generally, you want to fix problems as they're identified. This includes micro refactors to accommodate new code that causes existing abstractions to, possibly, no longer make sense. Resist bolting on new code that is uncomplimentary to existing code.
+Generally, you want to fix problems as they're identified. This includes micro refactors to accommodate new code that causes existing abstractions to, possibly, no longer make sense. Resist bolting on new code that is uncomplimentary to existing code. Refactoring efforts generally belong on their own PR thereby following the SRP guideline for PRs.
 
 Finally, we have delivery commitments. Larger more intentional refactors may be required to fix a problem you've identified and attempting to tackle it may delay your deliverable. In such a case, write down your ideas and start a conversation with the wider team. 
 
