@@ -19,7 +19,7 @@ var apo = &applyPackageOptions{}
 
 func init() {
 	applyCmd.AddCommand(applyPackagesCommand)
-	applyPackagesCommand.Flags().StringVarP(&apo.fileName, "filename", "f", "", "File with curated packages to apply")
+	applyPackagesCommand.Flags().StringVarP(&apo.fileName, "filename", "f", "", "Filename that contains curated packages custom resources to apply")
 	err := applyPackagesCommand.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -27,8 +27,10 @@ func init() {
 }
 
 var applyPackagesCommand = &cobra.Command{
-	Use:          "packages",
+	Use:          "package(s) [flags]",
 	Short:        "Apply curated packages",
+	Long:         "Apply Curated Packages Custom Resources to the cluster",
+	Aliases:      []string{"package", "packages"},
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {

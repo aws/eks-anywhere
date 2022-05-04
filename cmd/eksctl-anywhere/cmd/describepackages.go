@@ -15,8 +15,9 @@ func init() {
 }
 
 var describePackagesCommand = &cobra.Command{
-	Use:          "packages",
-	Short:        "Describe curated packages",
+	Use:          "package(s) [flags]",
+	Short:        "Describe curated packages in the cluster",
+	Aliases:      []string{"package", "packages"},
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {

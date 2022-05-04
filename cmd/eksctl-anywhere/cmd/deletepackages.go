@@ -18,7 +18,7 @@ var deletePackageCommand = &cobra.Command{
 	Use:          "package(s) [flags]",
 	Aliases:      []string{"package", "packages"},
 	Short:        "Delete package(s)",
-	Long:         "This command is used to delete the curated packages installed in the cluster",
+	Long:         "This command is used to delete the curated packages custom resources installed in the cluster",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
