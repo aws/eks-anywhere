@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -102,4 +103,91 @@ func TestInstallPackagesFails(t *testing.T) {
 
 	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
 	tt.Expect(err).To(MatchError(ContainSubstring("error installing package. Package exists")))
+}
+
+func TestApplyPackagesPass(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
+	packages := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.ApplyPackages(tt.ctx, "test_file.yaml", "")
+	tt.Expect(err).To(BeNil())
+}
+
+func TestApplyPackagesFail(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("file doesn't exist"))
+	packages := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.ApplyPackages(tt.ctx, "test_file.yaml", "")
+	tt.Expect(err).To(MatchError(ContainSubstring("file doesn't exist")))
+}
+
+func TestCreatePackagesPass(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
+	packages := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.CreatePackages(tt.ctx, "test_file.yaml", "")
+	fmt.Println()
+	tt.Expect(err).To(BeNil())
+}
+
+func TestCreatePackagesFail(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("file doesn't exist"))
+	packages := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.CreatePackages(tt.ctx, "test_file.yaml", "")
+	tt.Expect(err).To(MatchError(ContainSubstring("file doesn't exist")))
+}
+
+func TestDeletePackagesPass(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
+	packages := []string{"harbor-test"}
+	args := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.DeletePackages(tt.ctx, args, "")
+	fmt.Println()
+	tt.Expect(err).To(BeNil())
+}
+
+func TestDeletePackagesFail(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("package doesn't exist"))
+	packages := []string{"harbor-test"}
+	args := []string{"non-working-package"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.DeletePackages(tt.ctx, args, "")
+	tt.Expect(err).To(MatchError(ContainSubstring("package doesn't exist")))
+}
+
+func TestDescribePackagesPass(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
+	packages := []string{"harbor-test"}
+	args := []string{"harbor-test"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.DescribePackages(tt.ctx, args, "")
+	fmt.Println()
+	tt.Expect(err).To(BeNil())
+}
+
+func TestDescribePackagesFail(t *testing.T) {
+	tt := newPackageTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("package doesn't exist"))
+	packages := []string{"harbor-test"}
+	args := []string{"non-working-package"}
+	tt.command = curatedpackages.NewPackageClient(tt.bundle, tt.kubectl, packages...)
+
+	err := tt.command.DescribePackages(tt.ctx, args, "")
+	tt.Expect(err).To(MatchError(ContainSubstring("package doesn't exist")))
 }

@@ -117,7 +117,7 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	if err != nil {
 		return err
 	}
-	fmt.Println(&stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }
 
@@ -166,7 +166,7 @@ func (pc *PackageClient) DescribePackages(ctx context.Context, args []string, ku
 	if len(stdOut.Bytes()) == 0 {
 		return errors.New("no resources found")
 	}
-	fmt.Println(&stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }
 
