@@ -143,6 +143,14 @@ func givenClusterSpec() *cluster.Spec {
 						Description: "Container image for kube-vip image",
 						Arch:        []string{"amd64"},
 					},
+					Manager: releasev1alpha1.Image{
+						Name:        "cluster-api-snow-controller",
+						OS:          "linux",
+						URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+						ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+						Description: "Container image for cluster-api-snow-controller image",
+						Arch:        []string{"amd64"},
+					},
 				},
 			},
 		}
@@ -269,6 +277,31 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
+}
+
+func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+}
+
+func TestSetupAndValidateUpgradeClusterNoCredsEnv(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	os.Unsetenv(credsFileEnvVar)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
+}
+
+func TestSetupAndValidateUpgradeClusterNoCertsEnv(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	os.Unsetenv(certsFileEnvVar)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
@@ -452,4 +485,227 @@ func TestDeleteResources(t *testing.T) {
 
 	err := tt.provider.DeleteResources(tt.ctx, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
+}
+
+func TestUpgradeNeededFalse(t *testing.T) {
+	tt := newSnowTest(t)
+	got, err := tt.provider.UpgradeNeeded(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.cluster)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(got).To(Equal(false))
+}
+
+func TestUpgradeNeededBundle(t *testing.T) {
+	tests := []struct {
+		name   string
+		bundle releasev1alpha1.SnowBundle
+		want   bool
+	}{
+		{
+			name: "non compared fields diff",
+			bundle: releasev1alpha1.SnowBundle{
+				Version: "v1.0.2-diff",
+				KubeVip: releasev1alpha1.Image{
+					Name:        "kube-vip-diff",
+					OS:          "linux-diff",
+					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
+					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+					Description: "Container image for kube-vip image-diff",
+					Arch:        []string{"amd64-diff"},
+				},
+				Manager: releasev1alpha1.Image{
+					Name:        "cluster-api-snow-controller-diff",
+					OS:          "linux-diff",
+					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216-diff",
+					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+					Description: "Container image for cluster-api-snow-controller image-diff",
+					Arch:        []string{"amd64-diff"},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "kube-vip image digest diff",
+			bundle: releasev1alpha1.SnowBundle{
+				Version: "v1.0.2",
+				KubeVip: releasev1alpha1.Image{
+					Name:        "kube-vip",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					ImageDigest: "sha256:diff",
+					Description: "Container image for kube-vip image",
+					Arch:        []string{"amd64"},
+				},
+				Manager: releasev1alpha1.Image{
+					Name:        "cluster-api-snow-controller",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+					ImageDigest: "sha256:59da9c726c4816c29d119e77956c6391e2dff451daf36aeb60e5d6425eb88018",
+					Description: "Container image for cluster-api-snow-controller image",
+					Arch:        []string{"amd64"},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "manager image digest diff",
+			bundle: releasev1alpha1.SnowBundle{
+				Version: "v1.0.2",
+				KubeVip: releasev1alpha1.Image{
+					Name:        "kube-vip",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
+					Description: "Container image for kube-vip image",
+					Arch:        []string{"amd64"},
+				},
+				Manager: releasev1alpha1.Image{
+					Name:        "cluster-api-snow-controller",
+					OS:          "linux",
+					URI:         "public.ecr.aws/l0g8r8j6/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.2216",
+					ImageDigest: "sha256:diff",
+					Description: "Container image for cluster-api-snow-controller image",
+					Arch:        []string{"amd64"},
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newSnowTest(t)
+			new := g.clusterSpec.DeepCopy()
+			new.VersionsBundle.Snow = tt.bundle
+			new.SnowMachineConfigs = givenMachineConfigs()
+			got, err := g.provider.UpgradeNeeded(g.ctx, new, g.clusterSpec, g.cluster)
+			g.Expect(err).To(Succeed())
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestUpgradeNeededMachineConfigs(t *testing.T) {
+	tests := []struct {
+		name           string
+		machineConfigs map[string]*v1alpha1.SnowMachineConfig
+		want           bool
+	}{
+		{
+			name: "non compared fields diff",
+			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
+				"test-cp": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cp-diff",
+						Namespace: "test-namespace",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+						InstanceType:             "sbe-c.large",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+				"test-wn": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-wn",
+						Namespace: "test-namespace-diff",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+						InstanceType:             "sbe-c.xlarge",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "spec diff",
+			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
+				"test-cp": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cp",
+						Namespace: "test-namespace",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-0",
+						InstanceType:             "sbe-c.large",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+				"test-wn": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-wn",
+						Namespace: "test-namespace",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-1",
+						InstanceType:             "sbe-c.xlarge",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "length diff",
+			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
+				"test-cp": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cp-diff",
+						Namespace: "test-namespace",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+						InstanceType:             "sbe-c.large",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "key diff",
+			machineConfigs: map[string]*v1alpha1.SnowMachineConfig{
+				"test-cp-diff": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-cp-diff",
+						Namespace: "test-namespace",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+						InstanceType:             "sbe-c.large",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+				"test-wn": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "test-wn",
+						Namespace: "test-namespace-diff",
+					},
+					Spec: v1alpha1.SnowMachineConfigSpec{
+						AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+						InstanceType:             "sbe-c.xlarge",
+						SshKeyName:               "default",
+						PhysicalNetworkConnector: "SFP_PLUS",
+					},
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newSnowTest(t)
+			new := g.clusterSpec.DeepCopy()
+			new.SnowMachineConfigs = tt.machineConfigs
+			got, err := g.provider.UpgradeNeeded(g.ctx, new, g.clusterSpec, g.cluster)
+			g.Expect(err).To(Succeed())
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
 }
