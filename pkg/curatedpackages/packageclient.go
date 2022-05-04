@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -116,7 +117,56 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	if err != nil {
 		return err
 	}
-	fmt.Println(&stdOut)
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
+	params := []string{"apply", "-f", fileName, "--kubeconfig", kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, kubeConfig string) error {
+	params := []string{"create", "-f", fileName, "--kubeconfig", kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, kubeConfig string) error {
+	params := []string{"delete", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	params = append(params, packages...)
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string, kubeConfig string) error {
+	params := []string{"describe", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	params = append(params, packages...)
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return fmt.Errorf("kubectl execution failure: \n%v", err)
+	}
+	if len(stdOut.Bytes()) == 0 {
+		return errors.New("no resources found")
+	}
+	fmt.Print(&stdOut)
 	return nil
 }
 
