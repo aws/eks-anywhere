@@ -205,9 +205,9 @@ This use case is to use Harbor to replicate local images and charts to a private
    * `harbor.eksa.demo:30003` should be replaced with whatever `externalURL` is set to in the Harbor package YAML file.
 
    {{% /alert %}} 
-        ```bash
-        docker push harbor.eksa.demo:30003/nonproxy-project/alpine:latest
-        ```
+    ```bash
+    docker push harbor.eksa.demo:30003/nonproxy-project/alpine:latest
+    ```
 
     The image should appear in the target ECR repository shortly.
 
