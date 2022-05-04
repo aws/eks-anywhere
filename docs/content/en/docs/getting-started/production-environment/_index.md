@@ -157,17 +157,6 @@ Follow these steps if you want to use your initial cluster to create and manage 
    Refer to the initial config described earlier for the required and optional settings.
    The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
 
-1. Generate a curated-packages config
-   {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be `v0.9.0` or later.
-   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   {{% /alert %}}
-   The example shows how to install package `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
-   ```bash
-   eksctl anywhere generate package harbor -d .
-   ```
-
 1. Create a workload cluster
 
    To create a new workload cluster from your management cluster run this command, identifying:
@@ -180,11 +169,6 @@ Follow these steps if you want to use your initial cluster to create and manage 
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
-   # Create a cluster with curated packages installation
-   eksctl anywhere create cluster \
-       -f eksa-w01-cluster.yaml  \
-       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig \
-       --install-packages ./curated-packages/
    ```
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.

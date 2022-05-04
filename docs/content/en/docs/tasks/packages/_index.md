@@ -8,14 +8,16 @@ description: >
 
 The main goal of EKS Anywhere curated packages is to make it easy to install, configure and maintain operational components in an EKS Anywhere cluster. EKS Anywhere curated packages offers to run secure and tested operational components on EKS Anywhere clusters. Please check out [package controller]({{< relref "../../concepts" >}}) for more details.
 
+### Check the existence of package controller
+```bash
+kubectl get pods -n eksa-packages | grep "eks-anywhere-packages"
+```
+Skip the following installation steps if the returned result is not empty.
+
 {{% alert title="Important" color="warning" %}}
 
 * To install EKS Anywhere, create an EKS Anywhere cluster or review the EKS Anywhere system requirements. See the [Getting started]({{< relref "../../getting-started" >}}) guide for details.
 
-* Make sure `packagecontroller` is not installed with the following commands:
-    ```bash
-    kubectl get pods -n eksa-packages | grep "eks-anywhere-packages"
-    ```
 * Check if the version of `eksctl anywhere` is above `v0.9.0` with the following commands:
     ```bash
     eksctl anywhere version
