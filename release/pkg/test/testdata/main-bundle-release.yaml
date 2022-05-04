@@ -225,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 76bee84aeb63dee2507413dae39fea7c7c4ffef3
+      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
       kindNode:
         arch:
         - amd64
@@ -362,7 +362,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -370,7 +370,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -380,8 +380,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
@@ -926,7 +926,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 76bee84aeb63dee2507413dae39fea7c7c4ffef3
+      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
       kindNode:
         arch:
         - amd64
@@ -1063,7 +1063,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1071,7 +1071,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1081,8 +1081,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
@@ -1627,7 +1627,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 76bee84aeb63dee2507413dae39fea7c7c4ffef3
+      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
       kindNode:
         arch:
         - amd64
@@ -1764,7 +1764,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1772,7 +1772,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1782,8 +1782,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
