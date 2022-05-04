@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -69,12 +70,18 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 }
 
 func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := p.setupBootstrapCreds(); err != nil {
+		return fmt.Errorf("setting up credentials: %v", err)
+	}
+	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
+		return fmt.Errorf("setting defaults and validate snow config: %v", err)
+	}
 	return nil
 }
 
 func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("failed setting up credentials: %v", err)
+		return fmt.Errorf("setting up credentials: %v", err)
 	}
 	return nil
 }
@@ -210,8 +217,28 @@ func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldCluste
 	return nil
 }
 
-func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	return false, nil
+func bundleImagesEqual(new, old releasev1alpha1.SnowBundle) bool {
+	return new.Manager.ImageDigest == old.Manager.ImageDigest && new.KubeVip.ImageDigest == old.KubeVip.ImageDigest
+}
+
+func machineConfigsEqual(new, old map[string]*v1alpha1.SnowMachineConfig) bool {
+	if len(new) != len(old) {
+		return false
+	}
+
+	for name, newConfig := range new {
+		oldConfig, ok := old[name]
+		if !ok || !equality.Semantic.DeepDerivative(newConfig.Spec, oldConfig.Spec) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (p *SnowProvider) UpgradeNeeded(ctx context.Context, newSpec, oldSpec *cluster.Spec, _ *types.Cluster) (bool, error) {
+	return !bundleImagesEqual(newSpec.VersionsBundle.Snow, oldSpec.VersionsBundle.Snow) ||
+		!machineConfigsEqual(newSpec.SnowMachineConfigs, oldSpec.SnowMachineConfigs), nil
 }
 
 func (p *SnowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
