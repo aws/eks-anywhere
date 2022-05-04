@@ -854,6 +854,10 @@ func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
 	return s, nil
 }
 
-func RequiredFluxEnvVars() []string {
+func RequiredFluxGithubEnvVars() []string {
 	return fluxGithubRequiredEnvVars
+}
+
+func RequiredFluxGitEnvVars() []string {
+	return fluxGitRequiredEnvVars
 }

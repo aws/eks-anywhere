@@ -118,6 +118,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupFluxGitEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupProxyEnv(regex)
 	if err != nil {
 		return err
@@ -208,6 +213,17 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 		return fmt.Errorf("creating test name file in instance: %v", err)
 	}
 	logger.V(1).Info("Successfully created test name file")
+
+	return nil
+}
+
+func (e *E2ESession) createFluxGitKnownHostsFile(knownHostsContent string, knownHostsFile string) error {
+	command := fmt.Sprintf("echo \"%s\" > %s", knownHostsContent, knownHostsFile)
+
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+		return fmt.Errorf("creating known hosts file for Flux Git tests")
+	}
+	logger.V(1).Info("Successfully created SSH known hosts file")
 
 	return nil
 }
