@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -44,11 +45,12 @@ func TestDockerKubernetes120FluxLegacy(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestDockerKubernetes120Flux(t *testing.T) {
+func TestDockerKubernetes120GithubFlux(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFluxGithub(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }

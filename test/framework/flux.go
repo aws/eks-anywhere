@@ -34,7 +34,6 @@ const (
 	gitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
 	githubUserVar       = "T_GITHUB_USER"
 	githubTokenVar      = "EKSA_GITHUB_TOKEN"
-	gitSshKey           = "T_GIT_SSH_AUTHORIZED_KEY"
 	gitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
 	gitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
 )
@@ -56,7 +55,9 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
-			api.WithStringFromEnvVarFluxConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
+			api.WithGenericGitProvider(
+				api.WithStringFromEnvVarGenericGitProviderConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
+			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath("path2"),
 			api.WithBranch("main"),
@@ -68,10 +69,6 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		for _, opt := range opts {
 			opt(e.FluxConfig)
 		}
-		// Adding Job ID suffix to repo name
-		// e2e test jobs have Job Id with a ":", replacing with "-"
-		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		withFluxRepositorySuffix(jobId)(e.FluxConfig)
 		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGitRepo)
 	}
@@ -82,9 +79,11 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		checkRequiredEnvVars(e.T, fluxGithubRequiredEnvVars)
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
-			api.WithPersonalGithubRepository(true),
-			api.WithStringFromEnvVarFluxConfig(gitRepositoryVar, api.WithGithubRepository),
-			api.WithStringFromEnvVarFluxConfig(gitSshKey, api.WithGitRepositoryUrl),
+			api.WithGithubProvider(
+				api.WithPersonalGithubRepository(true),
+				api.WithStringFromEnvVarGithubProviderConfig(gitRepositoryVar, api.WithGithubRepository),
+				api.WithStringFromEnvVarGithubProviderConfig(githubUserVar, api.WithGithubOwner),
+			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath("path2"),
 			api.WithBranch("main"),
@@ -137,14 +136,18 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
 
+		if e.GitOpsConfig != nil {
+			e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
+		}
+
 		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFluxLegacy()
 		// instead of marshalling from the actual file in git repo.
 		// By default it does not include the namespace field. But Flux requires namespace always
 		// exist for all the objects managed by its kustomization controller.
 		// Need to refactor this to read gitopsconfig directly from file in git repo
 		// which always has the namespace field.
-		if e.GitOpsConfig.GetNamespace() == "" {
-			e.GitOpsConfig.SetNamespace("default")
+		if e.FluxConfig.GetNamespace() == "" {
+			e.FluxConfig.SetNamespace("default")
 		}
 	}
 }
@@ -202,7 +205,11 @@ func (e *ClusterE2ETest) initGit(ctx context.Context) {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 
-	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	if e.GitOpsConfig != nil {
+		e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
+	}
+
+	g, err := e.NewGitTools(ctx, c, e.FluxConfig, writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -227,7 +234,10 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	g, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, "")
+	if e.GitOpsConfig != nil {
+		e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
+	}
+	g, err := e.NewGitTools(ctx, c, e.FluxConfig, writer, "")
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -251,7 +261,7 @@ func (e *ClusterE2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	repoName := e.gitRepoName()
-	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, e.validateGitopsRepoContentPath(repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.FluxConfig, writer, e.validateGitopsRepoContentPath(repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -308,9 +318,13 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
 	ctx := context.Background()
-	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
+
+	if e.GitOpsConfig != nil {
+		e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
+	}
+	owner := e.FluxConfig.Spec.Github.Owner
 	repoName := e.gitRepoName()
-	gitTools, err := e.NewGitTools(ctx, c, e.GitOpsConfig.ConvertToFluxConfig(), writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	gitTools, err := e.NewGitTools(ctx, c, e.FluxConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
@@ -808,15 +822,15 @@ func (e *ClusterE2ETest) writeEKSASpec(s *cluster.Spec, datacenterConfig provide
 }
 
 func (e *ClusterE2ETest) gitRepoName() string {
-	return e.GitOpsConfig.Spec.Flux.Github.Repository
+	return e.FluxConfig.Spec.Github.Repository
 }
 
 func (e *ClusterE2ETest) gitBranch() string {
-	return e.GitOpsConfig.Spec.Flux.Github.Branch
+	return e.FluxConfig.Spec.Branch
 }
 
 func (e *ClusterE2ETest) clusterConfGitPath() string {
-	p := e.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
+	p := e.FluxConfig.Spec.ClusterConfigPath
 	if len(p) == 0 {
 		p = path.Join("clusters", e.ClusterName)
 	}
