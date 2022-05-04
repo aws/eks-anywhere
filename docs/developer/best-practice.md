@@ -36,13 +36,13 @@ In avoiding package level state we avoid [hidden dependencies and unintended sid
 
 ##### Packages
 
-Package names help form the first impression of what a package provides and is used to reference the public API of the package. A good package name brings about clarity and purpose for consumers. Package names should be concise and represent the behavior the package provides not the types it contains. 
+Package names help form the first impression of what a package provides and is used to reference the public API of the package. A good package name brings about clarity and purpose for consumers. Package names should be concise and represent the behavior provided by the package, not the types it contains. 
 
-Avoid stutter in struct and interface names by treating the package name as a namespace and considering how the types are consumed. For example, `drink.DrinkDecorator` should be `drink.Decorator`. You may find you have a type named after the package, soemtimes it's appropriate.
+Avoid stutter in struct and interface names by treating the package name as a namespace and considering how the types are consumed. For example, `drink.DrinkDecorator` should be `drink.Decorator`. You may find you have a type named after the package, sometimes it's appropriate and you should lean on the reviewer process to make a judgement call.
 
-If you find yourself using an appropriate package name that's commonly used as a variable, consider pluralising the package name.
+Prefer using the singular form of nouns for packgae names. If you find yourself using an appropriate package name that's commonly used as a variable, consider pluralising the package name. For example, `string` is a type that could be shadowed hence the stdlib has a `strings` package.
 
-Avoid [relentlessly] `types`, `interfaces`, `common`, `util` or `base` packages. These names offer no indication on what the package provides beyond 'a bundle of stuff'. With time, these types of package turn into dumping grounds containing unrelated logic that can be the root cause for cyclic dependencies.  If a utility style package is required, make it specific. For example a `/utils/cmdutil` package may provide command utility functions.
+Avoid [relentlessly] `types`, `interfaces`, `common`, `util` or `base` packages. These names offer no indication on what the package provides beyond 'a bundle of stuff'. With time, these types of package turn into dumping grounds containing unrelated logic that can be the root cause for cyclic dependencies.  If a utility style package is required, make it specific. For example a `/cmdutil` package may provide command utility functions.
 
 ##### Function & method
 
@@ -54,7 +54,7 @@ Variable names should be concise and descriptive. Prefer single word names. The 
 
 ### <a name="dependencies"></a> Dependencies
 
-Functions should explicitly declare their dependencies as parameters. In doing so, they honor the [dependency inversion principle](https://www.digitalocean.com/community/conceptual_articles/s-o-l-i-d-the-first-five-principles-of-object-oriented-design#dependency-inversion-principle) and provide the necessary flexibility to write loosely coupled programs.
+Functions should explicitly declare their dependencies as parameters. In doing so they make clear to consumers what is required and increase their flexibility and configurability.
 
 ```go
 func FastenPlanks(tools Toolbox, surface Surface, planks Planks) error {
@@ -72,7 +72,7 @@ Avoid constructing dependencies in-line. If you do construct a dependency in-lin
 
 The Go community talks of the "accept interfaces, return structs" addage. The meaning of this idiom can be hard to pin down, herein lies some clarity.
 
-"Accept interfaces" speaks to the Dependency Inversion Principle (D in 'SOLID'). When a function declares dependent behavior as an interface parameter it gives control of _how_ that behavior is satisfied to the consuming logic. This is the foundation of flexible code.
+"Accept interfaces" promotes flexible and loosely coupled code. When a function declares dependent behavior as an interface parameter it gives control of _how_ that behavior is satisfied to the consuming logic.
 
 "return structs" is less obvious. It, generally, speaks to initializing constructors where authors should return the struct being constructed as opposed to interface it satisifes. This is largely due to duck typing (["If it walks like a duck and it quacks like a duck, then it must be a duck"](https://en.wikipedia.org/wiki/Duck_typing)).
 
