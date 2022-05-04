@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	fluxPath            = "flux"
-	githubTokenEnv      = "GITHUB_TOKEN"
-	githubProvider      = "github"
-	gitProvider         = "git"
-	privateKeyAlgorithm = "ecdsa"
+	fluxPath                   = "flux"
+	githubTokenEnv             = "GITHUB_TOKEN"
+	githubProvider             = "github"
+	gitProvider                = "git"
+	defaultPrivateKeyAlgorithm = "ecdsa"
 )
 
 type Flux struct {
@@ -39,7 +39,7 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 		"--repository", c.Github.Repository,
 		"--owner", c.Github.Owner,
 		"--path", c.ClusterConfigPath,
-		"--ssh-key-algorithm", privateKeyAlgorithm,
+		"--ssh-key-algorithm", defaultPrivateKeyAlgorithm,
 	}
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
 
@@ -74,11 +74,16 @@ func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *type
 		"--url", c.Git.RepositoryUrl,
 		"--path", c.ClusterConfigPath,
 		"--private-key-file", cliConfig.GitPrivateKeyFile,
-		"--ssh-key-algorithm", privateKeyAlgorithm,
 		"--silent",
 	}
 
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
+	if fluxConfig.Spec.Git.SshKeyAlgorithm != "" {
+		params = append(params, "--ssh-key-algorithm", fluxConfig.Spec.Git.SshKeyAlgorithm)
+	} else {
+		params = append(params, "--ssh-key-algorithm", defaultPrivateKeyAlgorithm)
+	}
+
 	if cliConfig.GitSshKeyPassphrase != "" {
 		params = append(params, "--password", cliConfig.GitSshKeyPassphrase)
 	}

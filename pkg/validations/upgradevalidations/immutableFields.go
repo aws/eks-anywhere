@@ -75,6 +75,9 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 				if prevGitOps.Spec.Git.RepositoryUrl != spec.FluxConfig.Spec.Git.RepositoryUrl {
 					return fmt.Errorf("fluxConfig spec.fluxConfig.spec.git.repositoryUrl is immutable")
 				}
+				if prevGitOps.Spec.Git.SshKeyAlgorithm != spec.FluxConfig.Spec.Git.SshKeyAlgorithm {
+					return fmt.Errorf("fluxConfig spec.fluxConfig.spec.git.sshKeyAlgorithm is immutable")
+				}
 			}
 
 			if prevGitOps.Spec.Github != nil {

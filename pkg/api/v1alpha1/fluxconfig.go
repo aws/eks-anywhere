@@ -4,10 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
-	FluxConfigKind = "FluxConfig"
+	FluxConfigKind   = "FluxConfig"
+	RsaAlgorithm     = "rsa"
+	EcdsaAlgorithm   = "ecdsa"
+	Ed25519Algorithm = "ed25519"
 )
 
 func GetAndValidateFluxConfig(fileName string, refName string, clusterConfig *Cluster) (*FluxConfig, error) {
@@ -70,6 +75,13 @@ func validateGitProviderConfig(config GitProviderConfig) error {
 	if len(config.RepositoryUrl) <= 0 {
 		return errors.New("'repositoryUrl' is not set or empty in gitProviderConfig; repositoryUrl is a required field")
 	}
+	if len(config.SshKeyAlgorithm) > 0 {
+		if err := validateSshKeyAlgorithm(config.SshKeyAlgorithm); err != nil {
+			return err
+		}
+	} else {
+		logger.Info("Warning: 'sshKeyAlgorithm' is not set, defaulting to 'ecdsa'")
+	}
 
 	return validateRepositoryUrl(config.RepositoryUrl)
 }
@@ -93,8 +105,15 @@ func validateRepositoryUrl(repositoryUrl string) error {
 	if err != nil {
 		return fmt.Errorf("unable to parse repository url: %v", err)
 	}
-	if url.Scheme != "https" && url.Scheme != "ssh" {
-		return fmt.Errorf("invalid repository url scheme: %v", err)
+	if url.Scheme != "ssh" {
+		return fmt.Errorf("invalid repository url scheme: %v", url.Scheme)
+	}
+	return nil
+}
+
+func validateSshKeyAlgorithm(sshKeyAlgorithm string) error {
+	if sshKeyAlgorithm != RsaAlgorithm && sshKeyAlgorithm != EcdsaAlgorithm && sshKeyAlgorithm != Ed25519Algorithm {
+		return fmt.Errorf("'sshKeyAlgorithm' does not have a valid value in gitProviderConfig; sshKeyAlgorithm must be amongst %s, %s, %s", RsaAlgorithm, EcdsaAlgorithm, Ed25519Algorithm)
 	}
 	return nil
 }

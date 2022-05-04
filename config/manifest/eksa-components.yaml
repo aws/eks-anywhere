@@ -3898,6 +3898,10 @@ spec:
                     description: Repository URL for the repository to be used with
                       flux. Can be either an SSH or HTTPS url.
                     type: string
+                  sshKeyAlgorithm:
+                    description: SSH public key algorithm for the private key specified
+                      (rsa, ecdsa, ed25519) (default ecdsa)
+                    type: string
                 required:
                 - repositoryUrl
                 type: object

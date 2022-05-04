@@ -30,7 +30,7 @@ spec:
         - 10.96.0.0/12
   gitOpsRef:
     kind: FluxConfig
-    name: test-flux-github
+    name: test-flux-git
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
@@ -65,8 +65,9 @@ spec:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: FluxConfig
 metadata:
-  name: test-flux-github
+  name: test-flux-git
   namespace: default
 spec:
   git:
-    repositoryUrl: "http://test.git/test"
+    repositoryUrl: ssh://git@github.com/username/repo.git
+    sshKeyAlgorithm: "rsa"
