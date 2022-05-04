@@ -163,9 +163,7 @@ func (vb *VersionsBundle) Images() []Image {
 
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
-		"cilium": &vb.Cilium.HelmChart,
-		// Temporarily disabling this chart until we fix the error
-		// when pushing it to harbor
-		//"eks-anywhere-packages": &vb.PackageController.HelmChart,
+		"cilium":                &vb.Cilium.HelmChart,
+		"eks-anywhere-packages": &vb.PackageController.HelmChart,
 	}
 }
