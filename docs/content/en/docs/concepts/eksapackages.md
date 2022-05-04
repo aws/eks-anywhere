@@ -7,9 +7,8 @@ description: >
   Explanation of the process of managing curated packages in an EKS Anywhere cluster
 ---
 
-EKS Anywhere Curated Packages is a management system for installation, configuration and maintenance of additional components for your Kubernetes applications. Examples of these components may include Container Registry, Ingress, and LoadBalancer, etc.
+EKS Anywhere Curated Packages is a management system for installation, configuration and maintenance of additional components for your Kubernetes cluster. Examples of these components may include Container Registry, Ingress, and LoadBalancer, etc.
 
-## Overview
 The major components of EKS Anywhere Curated Packages are the package controller, the package build artifacts and the command line interface. The package controller will run in a pod in an EKS Anywhere cluster. The package controller will manage the lifecycle of packages tested and maintained by EKS Anywhere.
 
 ## Package controller
@@ -21,3 +20,5 @@ Any changes to a package custom resource will trigger and install, upgrade, conf
 
 ## Package build artifacts
 There are three types of build artifacts for packages: the container images, the helm charts and the package bundle manifests. The container images, helm charts and bundle manifests for all of the packages will be built and stored in EKS Anywhere public ECR repository. Each package may have multiple versions specified in the packages bundle. The bundle will reference the helm chart tag in the ECR repository. The helm chart will reference the container images for the package.
+
+## The command line interface
