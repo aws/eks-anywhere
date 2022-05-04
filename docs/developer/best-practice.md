@@ -48,9 +48,15 @@ Avoid [relentlessly] `types`, `interfaces`, `common`, `util` or `base` packages.
 
 Functions and methods (functions with a receiver parameter) should adequetly describe their behavior. Generally, they should follow a verb-noun form. The types of parameters should help inform the function name.
 
-##### Variable
+Capitalize acronyms in functions. When creating an unexported function starting with an acronym, lower-case the whole acronym.
+
+##### Fields & variables
 
 Variable names should be concise and descriptive. Prefer single word names. The further away from the site of declaration a variable is used, the more descriptive it needs to be. For example, a variable named `n` used 30 lines after declaration makes it unnecessarily difficult to reason what it represents at the site of use.
+
+Avoid acronyms that aren't well known. For example, `kcp` should be `kubeadmControlPlane`. If in doubt, prefer clarity over brevity.
+
+Capitalize acronyms in fields. When creating an unexported field starting with an acronym, lower-case the whole acronym.
 
 ### <a name="dependencies"></a> Dependencies
 
@@ -247,7 +253,7 @@ When declaring and not initializing, prefer `var`. For example, `var vehicle Veh
 
 When delcaring and initializing, use `:=`. For example, `vehicle := NewVehicle()`
 
-Make intent clear for complicated variable initializations (contradictory to the 2 above rules). For example `var p uint32 = 0x80` instead of `p := uint32(0x80)`.
+Make intent clear for complicated variable initializations (contradictory to the 2 above rules). For example `var p uint32 = 0x80` makes a statement about the type as opposed to `p := uint32(0x80)` that focus' on the value, prefer the former.
 
 ### Line length
 
