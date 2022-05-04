@@ -31,9 +31,11 @@ func (e *ClusterE2ETest) NewGitTools(ctx context.Context, cluster *v1alpha1.Clus
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
-	err = tools.Provider.Validate(ctx)
-	if err != nil {
-		return nil, err
+	if tools.Provider != nil {
+		err = tools.Provider.Validate(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	gitwriter, err := writer.WithDir(localGitWriterPath)
 	if err != nil {
