@@ -55,6 +55,16 @@ func TestDockerKubernetes120GithubFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
+func TestDockerKubernetes120GitFlux(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithFluxGit(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
+	)
+	runFluxFlow(test)
+}
+
 func TestDockerKubernetes121FluxLegacy(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
