@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -582,9 +584,17 @@ func validateGitOps(clusterConfig *Cluster) error {
 	gitOpsRefKind := gitOpsRef.Kind
 	fluxConfigActive := features.IsActive(features.GenericGitProviderSupport())
 
-	if gitOpsRefKind == FluxConfigKind && !fluxConfigActive {
-		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
-			"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
+	if gitOpsRefKind == FluxConfigKind {
+		if !fluxConfigActive {
+			return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
+				"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
+		}
+		if privateKeyFile, ok := os.LookupEnv(config.EksaGitPrivateKeyTokenEnv); !ok || len(privateKeyFile) <= 0 {
+			return fmt.Errorf("%s is not set or is empty: %t", config.EksaGitPrivateKeyTokenEnv, ok)
+		}
+		if gitKnownHosts, ok := os.LookupEnv(config.EksaGitKnownHostsFileEnv); !ok || len(gitKnownHosts) <= 0 {
+			return fmt.Errorf("%s is not set or is empty: %t", config.EksaGitKnownHostsFileEnv, ok)
+		}
 	}
 
 	if gitOpsRefKind != GitOpsConfigKind && !fluxConfigActive {

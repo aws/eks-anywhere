@@ -216,7 +216,7 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	cliConfig := &config.CliConfig{}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
-		cliConfig.GitPassword = os.Getenv(config.EksaGitPasswordTokenEnv)
+		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
 		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
 	}

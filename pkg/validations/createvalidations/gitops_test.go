@@ -337,9 +337,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: emptyVar,
-				GitPassword:       emptyVar,
-				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+				GitPrivateKeyFile:   emptyVar,
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -355,9 +355,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: testEnvVar,
-				GitPassword:       emptyVar,
-				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+				GitPrivateKeyFile:   testEnvVar,
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -367,9 +367,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/git_empty_file",
-				GitPassword:       emptyVar,
-				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+				GitPrivateKeyFile:   "testdata/git_empty_file",
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -379,9 +379,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: emptyVar,
-				GitPassword:       testEnvVar,
-				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+				GitPrivateKeyFile:   emptyVar,
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -391,9 +391,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
-				GitPassword:       testEnvVar,
-				GitKnownHostsFile: "testdata/git_nonempty_ssh_known_hosts",
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -403,9 +403,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
-				GitPassword:       testEnvVar,
-				GitKnownHostsFile: "testdata/git_empty_file",
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_empty_file",
 			},
 		},
 		{
@@ -415,9 +415,9 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/git_nonempty_private_key",
-				GitPassword:       testEnvVar,
-				GitKnownHostsFile: "testdata/git_empty_file",
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_empty_file",
 			},
 		},
 	}
