@@ -294,12 +294,14 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		if entry.IsDir() {
 			err = os.RemoveAll(entry.Name())
 			if err != nil {
+				e.T.Log("couldn't remove directory", "dir", entry.Name(), "err", err)
 				continue
 			}
 		}
 		if !entry.IsDir() {
 			err = os.Remove(entry.Name())
 			if err != nil {
+				e.T.Log("couldn't remove file", "file", entry.Name(), "err", err)
 				continue
 			}
 		}
