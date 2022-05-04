@@ -136,16 +136,20 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
 
-		if e.GitOpsConfig != nil {
-			e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
-		}
-
 		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFluxLegacy()
 		// instead of marshalling from the actual file in git repo.
 		// By default it does not include the namespace field. But Flux requires namespace always
 		// exist for all the objects managed by its kustomization controller.
 		// Need to refactor this to read gitopsconfig directly from file in git repo
 		// which always has the namespace field.
+
+		if e.GitOpsConfig != nil {
+			if e.GitOpsConfig.GetNamespace() == "" {
+				e.GitOpsConfig.SetNamespace("default")
+			}
+			e.FluxConfig = e.GitOpsConfig.ConvertToFluxConfig()
+		}
+
 		if e.FluxConfig.GetNamespace() == "" {
 			e.FluxConfig.SetNamespace("default")
 		}
