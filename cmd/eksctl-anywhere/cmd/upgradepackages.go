@@ -29,7 +29,7 @@ func init() {
 
 var upgradePackagesCommand = &cobra.Command{
 	Use:          "packages",
-	Short:        "Upgrade curated packages to the latest version",
+	Short:        "Upgrade all curated packages to the latest version",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
