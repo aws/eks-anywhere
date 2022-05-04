@@ -104,7 +104,9 @@ Logger's are not special dependencies, inject them like any other dependency. If
 
 ### Testing
 
-Software development is costly and hazardous. Tests provide example usage, guard rails, and assurances. Without tests, you cannot have high quality code. For this reason, all code we spend time designing and writing is worth testing. Tests should:
+Software development is costly and hazardous. Tests provide example usage, guard rails, and assurances. Without tests, you cannot have high quality code. For this reason, all code we spend time designing and writing is worth testing. Similarly, if it can be unit tested, it should be unit tested. Unit tests are the first line of defense and can be complimented with additional integration or end-to-end tests.
+
+Unit tests should:
 
 - focus on the public API of a packge.
 - use the `_test` idiom for testing files.
