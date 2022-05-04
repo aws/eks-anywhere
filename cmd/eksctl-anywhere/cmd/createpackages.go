@@ -50,7 +50,7 @@ func createPackages(ctx context.Context) error {
 		deps.Kubectl,
 	)
 
-	err = packages.CreatePackages(ctx, apo.fileName, kubeConfig)
+	err = packages.CreatePackages(ctx, cpo.fileName, kubeConfig)
 	if err != nil {
 		return err
 	}

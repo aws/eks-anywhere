@@ -19,8 +19,8 @@ var upo = &upgradePackageOptions{}
 
 func init() {
 	upgradeCmd.AddCommand(upgradePackagesCommand)
-	upgradePackagesCommand.Flags().StringVar(&upo.bundleVersion, "bundleversion", "", "Bundle version to use")
-	err := upgradePackagesCommand.MarkFlagRequired("bundleversion")
+	upgradePackagesCommand.Flags().StringVar(&upo.bundleVersion, "bundle-version", "", "Bundle version to use")
+	err := upgradePackagesCommand.MarkFlagRequired("bundle-version")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
