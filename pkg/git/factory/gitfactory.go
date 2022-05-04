@@ -57,6 +57,10 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	case fluxConfig.Spec.Git != nil:
 		privateKeyFile := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
 		privateKeyPassword := os.Getenv(config.EksaGitPasswordTokenEnv)
+		gitKnownHosts := os.Getenv(config.EksaGitKnownHostsFileEnv)
+		if err = os.Setenv(config.SshKnownHostsEnv, gitKnownHosts); err != nil {
+			return nil, fmt.Errorf("unable to set %s: %v", config.SshKnownHostsEnv, err)
+		}
 		gitAuth, err = getSshAuthFromPrivateKey(privateKeyFile, privateKeyPassword)
 		if err != nil {
 			return nil, err
