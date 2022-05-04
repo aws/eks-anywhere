@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"github.com/aws/eks-anywhere/pkg/features"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -50,6 +51,7 @@ func TestDockerKubernetes120GithubFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGithub(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
