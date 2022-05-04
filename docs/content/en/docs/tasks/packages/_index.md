@@ -28,7 +28,7 @@ The main goal of EKS Anywhere curated packages is to make it easy to install, co
 
 1. Install package controller
     ```bash
-    eksctl anywhere install packagecontroller
+    eksctl anywhere install packagecontroller —-kube-version 1.21
     ```
 
 1. Check the package controller
