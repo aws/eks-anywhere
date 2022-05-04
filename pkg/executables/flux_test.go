@@ -472,9 +472,9 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 				"bootstrap", gitProvider, "--url", repoUrl, "--path", path, "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--kubeconfig", "f.kubeconfig", "--password", password,
 			},
 			cliConfig: &config.CliConfig{
-				GitPassword:       validPassword,
-				GitPrivateKeyFile: validPrivateKeyfilePath,
-				GitKnownHostsFile: validGitKnownHostsFilePath,
+				GitSshKeyPassphrase: validPassword,
+				GitPrivateKeyFile:   validPrivateKeyfilePath,
+				GitKnownHostsFile:   validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -494,9 +494,9 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 				"bootstrap", gitProvider, "--url", repoUrl, "--path", path, "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--branch", "main",
 			},
 			cliConfig: &config.CliConfig{
-				GitPassword:       "",
-				GitPrivateKeyFile: validPrivateKeyfilePath,
-				GitKnownHostsFile: validGitKnownHostsFilePath,
+				GitSshKeyPassphrase: "",
+				GitPrivateKeyFile:   validPrivateKeyfilePath,
+				GitKnownHostsFile:   validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -516,9 +516,9 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 				"--password", password,
 			},
 			cliConfig: &config.CliConfig{
-				GitPassword:       validPassword,
-				GitPrivateKeyFile: validPrivateKeyfilePath,
-				GitKnownHostsFile: validGitKnownHostsFilePath,
+				GitSshKeyPassphrase: validPassword,
+				GitPrivateKeyFile:   validPrivateKeyfilePath,
+				GitKnownHostsFile:   validGitKnownHostsFilePath,
 			},
 		},
 		{
@@ -530,9 +530,9 @@ func TestFluxBootstrapToolkitsComponentsGitSuccess(t *testing.T) {
 				},
 			},
 			cliConfig: &config.CliConfig{
-				GitPassword:       validPassword,
-				GitPrivateKeyFile: validPrivateKeyfilePath,
-				GitKnownHostsFile: validGitKnownHostsFilePath,
+				GitSshKeyPassphrase: validPassword,
+				GitPrivateKeyFile:   validPrivateKeyfilePath,
+				GitKnownHostsFile:   validGitKnownHostsFilePath,
 			},
 			wantExecArgs: []interface{}{
 				"bootstrap", gitProvider, "--url", "", "--path", "", "--private-key-file", privateKeyFilePath, "--ssh-key-algorithm", "ecdsa", "--silent", "--password", password,

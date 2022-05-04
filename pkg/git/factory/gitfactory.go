@@ -56,12 +56,12 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
 	case fluxConfig.Spec.Git != nil:
 		privateKeyFile := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
-		privateKeyPassword := os.Getenv(config.EksaGitPasswordTokenEnv)
+		privateKeyPassphrase := os.Getenv(config.EksaGitPassphraseTokenEnv)
 		gitKnownHosts := os.Getenv(config.EksaGitKnownHostsFileEnv)
 		if err = os.Setenv(config.SshKnownHostsEnv, gitKnownHosts); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", config.SshKnownHostsEnv, err)
 		}
-		gitAuth, err = getSshAuthFromPrivateKey(privateKeyFile, privateKeyPassword)
+		gitAuth, err = getSshAuthFromPrivateKey(privateKeyFile, privateKeyPassphrase)
 		if err != nil {
 			return nil, err
 		}
@@ -148,6 +148,9 @@ func getSignerFromPrivateKeyFile(privateKeyFile string, passphrase string) (ssh.
 	if passphrase == "" {
 		signer, err = ssh.ParsePrivateKey(sshKey)
 		if err != nil {
+			if _, ok := err.(*ssh.PassphraseMissingError); ok {
+				return nil, fmt.Errorf("%s, please set the EKSA_GIT_SSH_KEY_PASSPHRASE environment variable", err)
+			}
 			return nil, err
 		}
 		return signer, nil

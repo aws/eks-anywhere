@@ -79,8 +79,8 @@ func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *type
 	}
 
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
-	if cliConfig.GitPassword != "" {
-		params = append(params, "--password", cliConfig.GitPassword)
+	if cliConfig.GitSshKeyPassphrase != "" {
+		params = append(params, "--password", cliConfig.GitSshKeyPassphrase)
 	}
 
 	env := make(map[string]string)
