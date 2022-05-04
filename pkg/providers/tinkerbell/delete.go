@@ -14,7 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
+func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
 	// TODO: validations?
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -48,7 +48,7 @@ func filterHardwareForCluster(hardwares []tinkv1alpha1.Hardware, clusterName str
 	return filteredHardwareList, nil
 }
 
-func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+func (p *Provider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
 	for _, mc := range p.machineConfigs {
 		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaTinkerbellDatacenterResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
 			return err
@@ -57,7 +57,7 @@ func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *c
 	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaTinkerbellMachineResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
-func (p *tinkerbellProvider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
+func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
 	// We want to validate cluster nodes are powered off.
 	// We wait on BMC status.powerState to check for power off.
 	bmcRefs := make([]string, 0, len(p.hardwares))
