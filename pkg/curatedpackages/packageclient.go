@@ -143,9 +143,9 @@ func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, ku
 	return nil
 }
 
-func (pc *PackageClient) DeletePackages(ctx context.Context, args []string, kubeConfig string) error {
+func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, kubeConfig string) error {
 	params := []string{"delete", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
-	params = append(params, args...)
+	params = append(params, packages...)
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
 		fmt.Print(&stdOut)
@@ -155,9 +155,9 @@ func (pc *PackageClient) DeletePackages(ctx context.Context, args []string, kube
 	return nil
 }
 
-func (pc *PackageClient) DescribePackages(ctx context.Context, args []string, kubeConfig string) error {
+func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string, kubeConfig string) error {
 	params := []string{"describe", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
-	params = append(params, args...)
+	params = append(params, packages...)
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
 		fmt.Print(&stdOut)
