@@ -606,6 +606,7 @@ func TestPreflightValidations(t *testing.T) {
 			},
 		},
 	}
+
 	defaultOIDC := &v1alpha1.OIDCConfig{
 		Spec: v1alpha1.OIDCConfigSpec{
 			ClientId:     "client-id",
@@ -757,3 +758,216 @@ var explodingClusterError = composeError(
 	"couldn't find CAPI cluster object for cluster with name testcluster",
 	"WARNING: version difference between upgrade version (1.20) and server version (1.18) do not meet the supported version increment of +1",
 )
+
+func TestPreFlightValidationsGit(t *testing.T) {
+	tests := []struct {
+		name               string
+		clusterVersion     string
+		upgradeVersion     string
+		getClusterResponse []types.CAPICluster
+		cpResponse         error
+		workerResponse     error
+		nodeResponse       error
+		crdResponse        error
+		wantErr            error
+		modifyFunc         func(s *cluster.Spec)
+	}{
+		{
+			name:               "ValidationFluxSshKeyAlgoImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("fluxConfig spec.fluxConfig.spec.git.sshKeyAlgorithm is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.FluxConfig.Spec.Git.SshKeyAlgorithm = "rsa2"
+			},
+		},
+		{
+			name:               "ValidationFluxRepoUrlImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("fluxConfig spec.fluxConfig.spec.git.repositoryUrl is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.FluxConfig.Spec.Git.RepositoryUrl = "test2"
+			},
+		},
+	}
+	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
+		Count: 1,
+		Endpoint: &v1alpha1.Endpoint{
+			Host: "1.1.1.1",
+		},
+		MachineGroupRef: &v1alpha1.Ref{
+			Name: "test",
+			Kind: "VSphereMachineConfig",
+		},
+	}
+
+	defaultETCD := &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+	}
+
+	defaultDatacenterSpec := v1alpha1.VSphereDatacenterConfig{
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Datacenter: "datacenter!!!",
+			Network:    "network",
+			Server:     "server",
+			Thumbprint: "thumbprint",
+			Insecure:   false,
+		},
+		Status: v1alpha1.VSphereDatacenterConfigStatus{},
+	}
+
+	defaultFlux := &v1alpha1.FluxConfig{
+		Spec: v1alpha1.FluxConfigSpec{
+			Git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl:   "test",
+				SshKeyAlgorithm: "rsa",
+			},
+		},
+	}
+	defaultOIDC := &v1alpha1.OIDCConfig{
+		Spec: v1alpha1.OIDCConfigSpec{
+			ClientId:     "client-id",
+			GroupsClaim:  "groups-claim",
+			GroupsPrefix: "groups-prefix",
+			IssuerUrl:    "issuer-url",
+			RequiredClaims: []v1alpha1.OIDCConfigRequiredClaim{{
+				Claim: "claim",
+				Value: "value",
+			}},
+			UsernameClaim:  "username-claim",
+			UsernamePrefix: "username-prefix",
+		},
+	}
+
+	defaultAWSIAM := &v1alpha1.AWSIamConfig{
+		Spec: v1alpha1.AWSIamConfigSpec{
+			AWSRegion: "us-east-1",
+			MapRoles: []v1alpha1.MapRoles{{
+				RoleARN:  "roleARN",
+				Username: "username",
+				Groups:   []string{"group1", "group2"},
+			}},
+			MapUsers: []v1alpha1.MapUsers{{
+				UserARN:  "userARN",
+				Username: "username",
+				Groups:   []string{"group1", "group2"},
+			}},
+			Partition: "partition",
+		},
+	}
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
+		s.Cluster.Spec.ExternalEtcdConfiguration = defaultETCD
+		s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
+			Kind: v1alpha1.VSphereDatacenterKind,
+			Name: "vsphere test",
+		}
+		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+			{
+				Kind: v1alpha1.OIDCConfigKind,
+				Name: "oidc",
+			},
+			{
+				Kind: v1alpha1.AWSIamConfigKind,
+				Name: "aws-iam",
+			},
+		}
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
+			Kind: v1alpha1.FluxConfigKind,
+			Name: "flux test",
+		}
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+			Pods: v1alpha1.Pods{
+				CidrBlocks: []string{
+					"1.2.3.4/5",
+				},
+			},
+			Services: v1alpha1.Services{
+				CidrBlocks: []string{
+					"1.2.3.4/6",
+				},
+			},
+			DNS: v1alpha1.DNS{
+				ResolvConf: &v1alpha1.ResolvConf{Path: "file.conf"},
+			},
+		}
+		s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+			HttpProxy:  "httpproxy",
+			HttpsProxy: "httpsproxy",
+			NoProxy: []string{
+				"noproxy1",
+				"noproxy2",
+			},
+		}
+
+		s.OIDCConfig = defaultOIDC
+		s.AWSIamConfig = defaultAWSIAM
+		s.FluxConfig = defaultFlux
+	})
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
+			workloadCluster.KubeconfigFile = kubeconfigFilePath
+			workloadCluster.Name = testclustername
+
+			mockCtrl := gomock.NewController(t)
+			k := mocks.NewMockKubectlClient(mockCtrl)
+			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
+
+			provider := mockproviders.NewMockProvider(mockCtrl)
+			opts := &validations.Opts{
+				Kubectl:           k,
+				Spec:              clusterSpec,
+				WorkloadCluster:   workloadCluster,
+				ManagementCluster: workloadCluster,
+				Provider:          provider,
+				TlsValidator:      tlsValidator,
+			}
+
+			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
+			existingClusterSpec := clusterSpec.DeepCopy()
+			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
+			if tc.modifyFunc != nil {
+				tc.modifyFunc(existingClusterSpec)
+			}
+			versionResponse := &executables.VersionResponse{
+				ServerVersion: version.Info{
+					GitVersion: tc.clusterVersion,
+				},
+			}
+
+			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
+			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
+			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
+			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
+			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
+			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
+			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
+			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaFluxConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.FluxConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
+			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
+			upgradeValidations := upgradevalidations.New(opts)
+			err := upgradeValidations.PreflightValidations(ctx)
+			if !reflect.DeepEqual(err, tc.wantErr) {
+				t.Errorf("%s want err=%v\n got err=%v\n", tc.name, tc.wantErr, err)
+			}
+		})
+	}
+}

@@ -51,6 +51,9 @@ type GithubProviderConfig struct {
 type GitProviderConfig struct {
 	// Repository URL for the repository to be used with flux. Can be either an SSH or HTTPS url.
 	RepositoryUrl string `json:"repositoryUrl"`
+
+	// SSH public key algorithm for the private key specified (rsa, ecdsa, ed25519) (default ecdsa)
+	SshKeyAlgorithm string `json:"sshKeyAlgorithm,omitempty"`
 }
 
 // FluxConfigStatus defines the observed state of FluxConfig
