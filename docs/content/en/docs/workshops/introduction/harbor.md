@@ -27,13 +27,13 @@ This use case is to use Harbor to proxy and cache images from a public ECR repos
 
 1. Create a registry proxy
 
-    Navigate to `Registries` on the left panel, and then click on `NEW ENDPOINT` button. Choose `Docker Registry` as Provider, and enter `public-ecr` as Name, `https://public.ecr.aws/` as Endpoint URL. Save it by click on OK.
+    Navigate to `Registries` on the left panel, and then click on `NEW ENDPOINT` button. Choose `Docker Registry` as the Provider, and enter `public-ecr` as the Name, and enter `https://public.ecr.aws/` as the Endpoint URL. Save it by clicking on OK.
 
     ![Harbor public ecr proxy](/images/harbor-public_ecr_proxy.png)
 
 1. Create a proxy project
 
-    Navigate to `Projects` on the left panel and click on `NEW PROJECT` button. Enter `proxy-project` as Project Name, check `Public access level`, and turn on Proxy Cache and choose `public-ecr` from the pull-down list. Save the configuration by clicking on OK.
+    Navigate to `Projects` on the left panel and click on the `NEW PROJECT` button. Enter `proxy-project` as the Project Name, check `Public access level`, and turn on Proxy Cache and choose `public-ecr` from the pull-down list. Save the configuration by clicking on OK.
 
     ![Harbor public proxy project](/images/harbor-public_proxy_project.png)
 
@@ -66,7 +66,7 @@ This use case is to use Harbor to proxy and cache images from a private ECR repo
 
     1. Policy
 
-        This is where you specify all necessary permissions and please refer to [private repository policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html), [IAM permissions for pushing an image](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push.html) and [ECR policy examples](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security_iam_id-based-policy-examples.html) to figure out the minimal set of required permissions.
+        This is where you specify all necessary permissions. Please refer to [private repository policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html), [IAM permissions for pushing an image](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push.html) and [ECR policy examples](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security_iam_id-based-policy-examples.html) to figure out the minimal set of required permissions.
 
         For simplicity, the build-in policy AdministratorAccess is used here.
 
@@ -141,7 +141,7 @@ This use case is to use Harbor to replicate local images and charts to a private
 
     1. Policy
 
-        This is where you specify all necessary permissions and please refer to [private repository policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html), [IAM permissions for pushing an image](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push.html) and [ECR policy examples](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security_iam_id-based-policy-examples.html) to figure out the minimal set of required permissions.
+        This is where you specify all necessary permissions. Please refer to [private repository policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-policies.html), [IAM permissions for pushing an image](https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-push.html) and [ECR policy examples](https://docs.aws.amazon.com/AmazonECR/latest/userguide/security_iam_id-based-policy-examples.html) to figure out the minimal set of required permissions.
 
         For simplicity, the build-in policy AdministratorAccess is used here.
 
@@ -159,7 +159,7 @@ This use case is to use Harbor to replicate local images and charts to a private
 
         ![Harbor private ecr user](/images/harbor-private_ecr_user.png)
 
-    Navigate to `Registries` on the left panel, and then click on `NEW ENDPOINT` button. Choose `Aws ECR` as Provider, and enter `private-ecr` as Name, `https://[ACCOUNT NUMBER].dkr.ecr.us-west-2.amazonaws.com/` as Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by click on OK.
+    Navigate to `Registries` on the left panel, and then click on the `NEW ENDPOINT` button. Choose `Aws ECR` as the Provider, and enter `private-ecr` as the Name, `https://[ACCOUNT NUMBER].dkr.ecr.us-west-2.amazonaws.com/` as the Endpoint URL, use the access key ID part of the generated access key as Access ID, and use the secret access key part of the generated access key as Access Secret. Save it by clicking on OK.
 
     ![Harbor private ecr proxy](/images/harbor-private_ecr_proxy.png)
 

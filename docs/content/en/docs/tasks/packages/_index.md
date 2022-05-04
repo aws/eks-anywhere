@@ -10,7 +10,7 @@ The main goal of EKS Anywhere curated packages is to make it easy to install, co
 
 {{% alert title="Important" color="warning" %}}
 
-* To install EKS Anywhere, create an EKS Anywhere cluster, or review the EKS Anywhere system requirements, see the [getting-started guide.]({{< relref "../../getting-started" >}})
+* To install EKS Anywhere, create an EKS Anywhere cluster or review the EKS Anywhere system requirements. See the [Getting started]({{< relref "../../getting-started" >}}) guide for details.
 
 * Make sure `packagecontroller` is not installed with the following commands:
     ```bash

@@ -77,7 +77,7 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    * `eksctl anywhere version` version should be `v0.9.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   The example shows how to install package `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package harbor -d .
    ```

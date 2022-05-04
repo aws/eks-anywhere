@@ -32,7 +32,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
       ```bash
       kubectl create secret tls harbor-tls-secret --cert=[path to certificate file] --key=[path to key file] -n eksa-packages
       ```
-   * `secretKey` has to be set as a string of 16 chars for encryption.
+   * `secretKey` has to be set as a string of 16 characters for encryption.
    {{% /alert %}}
 
    TLS example with auto certificate generation

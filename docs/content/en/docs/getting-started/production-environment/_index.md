@@ -77,11 +77,11 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Generate a curated-packages config
    {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation
+   * It is *optional* to install the curated packages as part of the cluster creation.
    * `eksctl anywhere version` version should be `v0.9.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
-   The example shows how to install package `harbor` from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package harbor -d .
    ```
