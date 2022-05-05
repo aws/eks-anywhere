@@ -493,6 +493,20 @@ func (mr *MockAnalyzerFactoryMockRecorder) ManagementClusterAnalyzers() *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManagementClusterAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).ManagementClusterAnalyzers))
 }
 
+// PackageAnalyzers mocks base method.
+func (m *MockAnalyzerFactory) PackageAnalyzers() []*diagnostics.Analyze {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PackageAnalyzers")
+	ret0, _ := ret[0].([]*diagnostics.Analyze)
+	return ret0
+}
+
+// PackageAnalyzers indicates an expected call of PackageAnalyzers.
+func (mr *MockAnalyzerFactoryMockRecorder) PackageAnalyzers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PackageAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).PackageAnalyzers))
+}
+
 // MockCollectorFactory is a mock of CollectorFactory interface.
 type MockCollectorFactory struct {
 	ctrl     *gomock.Controller
@@ -570,4 +584,18 @@ func (m *MockCollectorFactory) ManagementClusterCollectors() []*diagnostics.Coll
 func (mr *MockCollectorFactoryMockRecorder) ManagementClusterCollectors() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManagementClusterCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).ManagementClusterCollectors))
+}
+
+// PackagesCollectors mocks base method.
+func (m *MockCollectorFactory) PackagesCollectors() []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PackagesCollectors")
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// PackagesCollectors indicates an expected call of PackagesCollectors.
+func (mr *MockCollectorFactoryMockRecorder) PackagesCollectors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PackagesCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).PackagesCollectors))
 }
