@@ -2,12 +2,13 @@ package curatedpackages_test
 
 import (
 	"errors"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
-	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/golang/mock/gomock"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 func TestCreateBundleManagerWhenValidKubeVersion(t *testing.T) {

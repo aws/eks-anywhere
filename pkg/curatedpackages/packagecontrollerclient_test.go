@@ -3,13 +3,13 @@ package curatedpackages_test
 import (
 	"bytes"
 	"context"
-	"github.com/aws/eks-anywhere-packages/pkg/bundle"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere-packages/pkg/bundle"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 )
@@ -50,9 +50,12 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 func TestInstallControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.chartInstaller.EXPECT().InstallChartFromName(tt.ctx, "oci://"+tt.ociUri, tt.kubeConfig, tt.chartName, tt.chartVersion)
+	tt.chartInstaller.EXPECT().InstallChartFromName(tt.ctx, "oci://"+tt.ociUri, tt.kubeConfig, tt.chartName, tt.chartVersion).Return(nil)
 
-	tt.command.InstallController(tt.ctx)
+	err := tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when installation passes")
+	}
 }
 
 func TestGetActiveControllerSuccess(t *testing.T) {
@@ -61,5 +64,8 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 	params := []string{"get", "packageBundleController", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 
-	tt.command.GetActiveController(tt.ctx)
+	err := tt.command.GetActiveController(tt.ctx)
+	if err != nil {
+		t.Errorf("Get Active Controller should succeed when controller exists")
+	}
 }
