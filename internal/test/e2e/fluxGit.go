@@ -18,12 +18,10 @@ github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAA
 # github.com:22 SSH-2.0-babeld-e301d840
 github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl`
 
-
-
 func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*GitFlux.*$`)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running Flux Generic Git Provider tests, skipping Hosts File setup")
+		logger.V(2).Info("Not running Flux Generic Git Provider tests, skipping environment setup")
 		return nil
 	}
 
