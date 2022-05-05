@@ -169,7 +169,7 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 	}
 }
 
-func (vb *VersionsBundle) PackagesControllerImage() []Image {
+func (vb *VersionsBundle) PackageControllerImage() []Image {
 	return []Image{
 		vb.PackageController.Controller,
 	}

@@ -121,7 +121,7 @@ func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1
 	return nil
 }
 
-func GetPackageBundle(vb releasev1.VersionsBundle) string {
+func GetPackageBundleRef(vb releasev1.VersionsBundle) string {
 	packageController := vb.PackageController
 	// Use package controller registry to fetch packageBundles.
 	// Format of controller image is: <uri>/<env_type>/<repository_name>

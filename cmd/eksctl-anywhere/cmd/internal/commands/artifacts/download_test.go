@@ -26,7 +26,7 @@ type downloadArtifactsTest struct {
 	command         *artifacts.Download
 	images, charts  []releasev1.Image
 	bundles         *releasev1.Bundles
-	bundlePuller    *mocks.MockBundleDownloader
+	bundlePuller    *mocks.MockManifestDownloader
 }
 
 func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
@@ -40,7 +40,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 	toolsDownloader := mocks.NewMockImageMover(ctrl)
 	downloader := mocks.NewMockChartDownloader(ctrl)
 	packager := mocks.NewMockPackager(ctrl)
-	bundlePuller := mocks.NewMockBundleDownloader(ctrl)
+	bundlePuller := mocks.NewMockManifestDownloader(ctrl)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -114,6 +114,7 @@ func TestDownloadRun(t *testing.T) {
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 	tt.packager.EXPECT().Package("tmp-folder", "artifacts.tar")
+	tt.bundlePuller.EXPECT().SaveManifests(tt.ctx, tt.bundles)
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(Succeed())
 }

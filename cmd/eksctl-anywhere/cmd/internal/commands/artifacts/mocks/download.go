@@ -163,39 +163,39 @@ func (mr *MockChartDownloaderMockRecorder) Download(ctx interface{}, artifacts .
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockChartDownloader)(nil).Download), varargs...)
 }
 
-// MockBundleDownloader is a mock of BundleDownloader interface.
-type MockBundleDownloader struct {
+// MockManifestDownloader is a mock of ManifestDownloader interface.
+type MockManifestDownloader struct {
 	ctrl     *gomock.Controller
-	recorder *MockBundleDownloaderMockRecorder
+	recorder *MockManifestDownloaderMockRecorder
 }
 
-// MockBundleDownloaderMockRecorder is the mock recorder for MockBundleDownloader.
-type MockBundleDownloaderMockRecorder struct {
-	mock *MockBundleDownloader
+// MockManifestDownloaderMockRecorder is the mock recorder for MockManifestDownloader.
+type MockManifestDownloaderMockRecorder struct {
+	mock *MockManifestDownloader
 }
 
-// NewMockBundleDownloader creates a new mock instance.
-func NewMockBundleDownloader(ctrl *gomock.Controller) *MockBundleDownloader {
-	mock := &MockBundleDownloader{ctrl: ctrl}
-	mock.recorder = &MockBundleDownloaderMockRecorder{mock}
+// NewMockManifestDownloader creates a new mock instance.
+func NewMockManifestDownloader(ctrl *gomock.Controller) *MockManifestDownloader {
+	mock := &MockManifestDownloader{ctrl: ctrl}
+	mock.recorder = &MockManifestDownloaderMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBundleDownloader) EXPECT() *MockBundleDownloaderMockRecorder {
+func (m *MockManifestDownloader) EXPECT() *MockManifestDownloaderMockRecorder {
 	return m.recorder
 }
 
 // SaveManifests mocks base method.
-func (m *MockBundleDownloader) SaveManifests(ctx context.Context, bundles *v1alpha1.Bundles) {
+func (m *MockManifestDownloader) SaveManifests(ctx context.Context, bundles *v1alpha1.Bundles) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SaveManifests", ctx, bundles)
 }
 
 // SaveManifests indicates an expected call of SaveManifests.
-func (mr *MockBundleDownloaderMockRecorder) SaveManifests(ctx, bundles interface{}) *gomock.Call {
+func (mr *MockManifestDownloaderMockRecorder) SaveManifests(ctx, bundles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveManifests", reflect.TypeOf((*MockBundleDownloader)(nil).SaveManifests), ctx, bundles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveManifests", reflect.TypeOf((*MockManifestDownloader)(nil).SaveManifests), ctx, bundles)
 }
 
 // MockPackager is a mock of Packager interface.

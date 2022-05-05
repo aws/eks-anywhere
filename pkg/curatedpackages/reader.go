@@ -12,51 +12,49 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	"oras.land/oras-go/pkg/content"
-	"oras.land/oras-go/pkg/oras"
 )
 
-type PackagesReader struct {
+type PackageReader struct {
 	ManifestReader *manifests.Reader
 }
 
-func NewPackageReader(mr *manifests.Reader) *PackagesReader {
-	return &PackagesReader{
+func NewPackageReader(mr *manifests.Reader) *PackageReader {
+	return &PackageReader{
 		ManifestReader: mr,
 	}
 }
 
-func (r *PackagesReader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
+func (r *PackageReader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
 	return r.ManifestReader.ReadBundlesForVersion(version)
 }
 
-func (r *PackagesReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Release, error) {
+func (r *PackageReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Release, error) {
 	return r.ManifestReader.ReadEKSD(eksaVersion, kubeVersion)
 }
 
-func (r *PackagesReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
+func (r *PackageReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
 	images, err := r.ManifestReader.ReadImages(eksaVersion)
 	return images, err
 }
 
-func (r *PackagesReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
+func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
 	images, err := r.ManifestReader.ReadImagesFromBundles(b)
 	for _, v := range b.Spec.VersionsBundles {
-		images = append(images, v.PackagesControllerImage()...)
+		images = append(images, v.PackageControllerImage()...)
 	}
 	return images, err
 }
 
-func (r *PackagesReader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
+func (r *PackageReader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
 	images, err := r.ManifestReader.ReadCharts(eksaVersion)
 	return images, err
 }
 
-func (r *PackagesReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
+func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
 	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
 	for _, vb := range b.Spec.VersionsBundles {
-		art := GetPackageBundle(vb)
-		packages, err := FetchPackages(vb, ctx, art)
+		artifact := GetPackageBundleRef(vb)
+		packages, err := FetchPackages(vb, ctx, artifact)
 		if err != nil {
 			fmt.Sprintf("error finding packages: %v", err)
 			continue
@@ -84,7 +82,7 @@ func FetchPackages(versionsBundle releasev1.VersionsBundle, ctx context.Context,
 			Description: p.Name,
 			OS:          ctrl.OS,
 			OSName:      ctrl.OSName,
-			URI:         p.Source.Registry + "/" + p.Source.Repository + ":" + p.Source.Versions[0].Name,
+			URI:         fmt.Sprintf("%s/%s:%s", p.Source.Registry, p.Source.Repository, p.Source.Versions[0].Name),
 		}
 		images = append(images, pI)
 	}
@@ -104,22 +102,4 @@ func Pull(ctx context.Context, art string) ([]byte, error) {
 	}
 
 	return data, nil
-}
-
-func Push(ctx context.Context, art, ref, fileName string, fileContent []byte) error {
-	registry, err := content.NewRegistry(content.RegistryOptions{})
-	if err != nil {
-		return fmt.Errorf("creating registry: %w", err)
-	}
-	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add(fileName, "", fileContent)
-
-	manifest, manifestDesc, config, configDesc, err := content.GenerateManifestAndConfig(nil, nil, desc)
-	memoryStore.Set(configDesc, config)
-	err = memoryStore.StoreManifest(ref, manifestDesc, manifest)
-
-	fmt.Printf("Pushing %s to %s...\n", fileName, ref)
-	desc, err = oras.Copy(ctx, memoryStore, ref, registry, "")
-	fmt.Printf("Pushed to %s with digest %s\n", ref, desc.Digest)
-	return nil
 }
