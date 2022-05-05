@@ -61,7 +61,7 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 	return false
 }
 
-func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
 	hardware, err := p.providerTinkClient.GetHardware(ctx)
@@ -111,7 +111,7 @@ func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	return nil
 }
 
-func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	// @TODO: do we need this for bare metal upgrade?
 
 	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
@@ -131,7 +131,7 @@ func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
+func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
 }

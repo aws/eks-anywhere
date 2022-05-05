@@ -3,7 +3,6 @@ package clustermanager
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
@@ -40,13 +39,7 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 
 	// inject proxy env vars the eksa-controller-manager deployment if proxy is configured
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		noProxyList := append(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		envMap := map[string]string{
-			"HTTP_PROXY":  clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy,
-			"HTTPS_PROXY": clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy,
-			"NO_PROXY":    strings.Join(noProxyList[:], ","),
-		}
+		envMap := clusterSpec.Cluster.ProxyConfiguration()
 		err = c.Retrier.Retry(
 			func() error {
 				return c.UpdateEnvironmentVariablesInNamespace(ctx, "deployment", "eksa-controller-manager", envMap, cluster, "eksa-system")

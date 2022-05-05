@@ -107,7 +107,7 @@ func (tb *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func (p *tinkerbellProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := newClusterSpec.Cluster.Name
 	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -230,7 +230,7 @@ func (p *tinkerbellProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
@@ -238,15 +238,16 @@ func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, boo
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -276,12 +277,12 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) GenerateStorageClass() []byte {
+func (p *Provider) GenerateStorageClass() []byte {
 	// TODO: determine if we need something else here
 	return nil
 }
 
-func (p *tinkerbellProvider) GenerateMHC() ([]byte, error) {
+func (p *Provider) GenerateMHC() ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
@@ -293,7 +294,7 @@ func (p *tinkerbellProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *tinkerbellProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		workerTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
@@ -306,7 +307,7 @@ func (p *tinkerbellProvider) needsNewMachineTemplate(ctx context.Context, worklo
 	return true, nil
 }
 
-func (p *tinkerbellProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
 		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil

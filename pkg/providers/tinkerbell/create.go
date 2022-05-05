@@ -22,7 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
 	// Adding proxy environment vars to the bootstrap cluster
 	if p.clusterConfig.Spec.ProxyConfiguration != nil {
@@ -40,11 +40,11 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
-func (p *tinkerbellProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
-func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	hardwareSpec, err := p.catalogue.HardwareSpecMarshallable()
 	if err != nil {
@@ -57,7 +57,7 @@ func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
-func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
 	tinkHardware, err := p.providerTinkClient.GetHardware(ctx)
@@ -138,7 +138,7 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	return nil
 }
 
-func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) error {
+func (p *Provider) setHardwareStateToProvisining(ctx context.Context) error {
 	for _, hardware := range p.catalogue.Hardware {
 		tinkHardware, err := p.providerTinkClient.GetHardwareByUuid(ctx, hardware.Spec.ID)
 		if err != nil {
@@ -165,7 +165,7 @@ func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) 
 
 // setMachinesToPXEBoot iterates over all catalogue.BMCs and instructs them to turn off, one-time
 // PXE boot, then turn on.
-func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
+func (p *Provider) setMachinesToPXEBoot(ctx context.Context) error {
 	secrets := make(map[string]corev1.Secret, len(p.catalogue.Secrets))
 	for _, secret := range p.catalogue.Secrets {
 		secrets[secret.Name] = secret
@@ -204,7 +204,7 @@ func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
 // scrubWorkflowsFromTinkerbell removes all workflows in the Tinkerbell stack that feature in hardware by retrieving
 // hardware MAC addresses using tinkerbellHardware. tinkerbellHardware is necessary because MAC addresses aren't
 // available on the Hardware object type.
-func (p *tinkerbellProvider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
+func (p *Provider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
 	workflows, err := p.providerTinkClient.GetWorkflow(ctx)
 	if err != nil {
 		return fmt.Errorf("retrieving workflows: %w", err)

@@ -49,7 +49,7 @@ func stripCommentsFromSshKeys(machines map[string]*v1alpha1.TinkerbellMachineCon
 	return nil
 }
 
-func (p *tinkerbellProvider) configureSshKeys() error {
+func (p *Provider) configureSshKeys() error {
 	ensureMachineConfigsHaveAtLeast1User(p.machineConfigs)
 
 	users := extractUserConfigurationsWithoutSshKeys(p.machineConfigs)
