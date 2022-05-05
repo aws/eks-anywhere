@@ -215,7 +215,7 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 			api.WithWorkerNodeCount(3),
 		),
 		provider.WithProviderUpgradeGit(
-			framework.UpdateUbuntuTemplate121Var(),
+			framework.UpdateUbuntuTemplate122Var(),
 		),
 	)
 }
