@@ -18,6 +18,8 @@ github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAA
 # github.com:22 SSH-2.0-babeld-e301d840
 github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl`
 
+
+
 func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*GitFlux.*$`)
 	if !re.MatchString(testRegex) {
@@ -32,9 +34,16 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		}
 	}
 
-	err := e.createFluxGitKnownHostsFile(knownHostsContent, e.testEnvVars[config.EksaGitKnownHostsFileEnv])
+	err := e.writeStringToFile(knownHostsContent, e.testEnvVars[config.EksaGitKnownHostsFileEnv])
 	if err != nil {
 		return fmt.Errorf("creating Flux Git known hosts file: %v", err)
 	}
+
+	k := os.Getenv(e2etests.GitPrivateKeyContent)
+	err = e.writeStringToFile(k, e.testEnvVars[config.EksaGitPrivateKeyTokenEnv])
+	if err != nil {
+		return fmt.Errorf("creating Flux Git private key file: %v", err)
+	}
+
 	return nil
 }

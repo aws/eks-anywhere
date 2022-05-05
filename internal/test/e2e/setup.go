@@ -217,13 +217,13 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 	return nil
 }
 
-func (e *E2ESession) createFluxGitKnownHostsFile(knownHostsContent string, knownHostsFile string) error {
-	command := fmt.Sprintf("echo \"%s\" > %s", knownHostsContent, knownHostsFile)
+func (e *E2ESession) writeStringToFile(content string, outputFilePath string) error {
+	command := fmt.Sprintf("echo \"%s\" > %s", content, outputFilePath)
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
-		return fmt.Errorf("creating known hosts file for Flux Git tests")
+		return fmt.Errorf("creating file %s: %v", outputFilePath, err)
 	}
-	logger.V(1).Info("Successfully created SSH known hosts file")
+	logger.V(1).Info("Successfully created file", "file", outputFilePath)
 
 	return nil
 }
