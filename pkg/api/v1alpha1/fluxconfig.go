@@ -6,6 +6,9 @@ import (
 	"net/url"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"os"
+
+	"github.com/aws/eks-anywhere/pkg/config"
 )
 
 const (
@@ -71,19 +74,25 @@ func validateFluxConfig(config *FluxConfig) error {
 	return nil
 }
 
-func validateGitProviderConfig(config GitProviderConfig) error {
-	if len(config.RepositoryUrl) <= 0 {
+func validateGitProviderConfig(gitProviderConfig GitProviderConfig) error {
+	if len(gitProviderConfig.RepositoryUrl) <= 0 {
 		return errors.New("'repositoryUrl' is not set or empty in gitProviderConfig; repositoryUrl is a required field")
 	}
-	if len(config.SshKeyAlgorithm) > 0 {
-		if err := validateSshKeyAlgorithm(config.SshKeyAlgorithm); err != nil {
+	if len(gitProviderConfig.SshKeyAlgorithm) > 0 {
+		if err := validateSshKeyAlgorithm(gitProviderConfig.SshKeyAlgorithm); err != nil {
 			return err
 		}
 	} else {
 		logger.Info("Warning: 'sshKeyAlgorithm' is not set, defaulting to 'ecdsa'")
 	}
+	if privateKeyFile, ok := os.LookupEnv(config.EksaGitPrivateKeyTokenEnv); !ok || len(privateKeyFile) <= 0 {
+		return fmt.Errorf("%s is not set or is empty", config.EksaGitPrivateKeyTokenEnv)
+	}
+	if gitKnownHosts, ok := os.LookupEnv(config.EksaGitKnownHostsFileEnv); !ok || len(gitKnownHosts) <= 0 {
+		return fmt.Errorf("%s is not set or is empty", config.EksaGitKnownHostsFileEnv)
+	}
 
-	return validateRepositoryUrl(config.RepositoryUrl)
+	return validateRepositoryUrl(gitProviderConfig.RepositoryUrl)
 }
 
 func validateGithubProviderConfig(config GithubProviderConfig) error {
