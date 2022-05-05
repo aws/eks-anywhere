@@ -29,7 +29,7 @@ func init() {
 var installPackageControllerCommand = &cobra.Command{
 	Use:          "packagecontroller",
 	Aliases:      []string{"pc"},
-	Short:        "Install packagecontroller to the cluster",
+	Short:        "Install packagecontroller on the cluster",
 	Long:         "This command is used to Install the packagecontroller on to an existing cluster",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
