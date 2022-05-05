@@ -134,7 +134,7 @@ func TestGetAndValidateFluxConfig(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			error:   nil,
+			error:       nil,
 			wantErr:     false,
 			gitProvider: true,
 		},

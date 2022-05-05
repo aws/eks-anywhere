@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"os"
 
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
