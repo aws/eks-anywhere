@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 
+	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 )
 
 type PackageReader struct {
@@ -56,7 +56,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 		artifact := GetPackageBundleRef(vb)
 		packages, err := FetchPackages(vb, ctx, artifact)
 		if err != nil {
-			fmt.Sprintf("error finding packages: %v", err)
+			fmt.Printf("error finding packages: %v", err)
 			continue
 		}
 		images = append(images, packages...)
@@ -95,7 +95,6 @@ func Pull(ctx context.Context, art string) ([]byte, error) {
 	data, err := puller.Pull(ctx, art)
 	if err != nil {
 		return nil, fmt.Errorf("unable to pull artifacts %v", err)
-
 	}
 	if len(bytes.TrimSpace(data)) == 0 {
 		return nil, fmt.Errorf("latest package bundle artifact is empty")
