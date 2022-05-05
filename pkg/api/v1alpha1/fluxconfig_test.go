@@ -1,11 +1,52 @@
 package v1alpha1
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const (
+	EksaGitPrivateKeyTokenEnv = "EKSA_GIT_PRIVATE_KEY"
+	EksaGitKnownHostsFileEnv  = "EKSA_GIT_KNOWN_HOSTS"
+)
+
+type testContext struct {
+	privateKeyFile         string
+	isprivateKeyFileSet    bool
+	gitKnownHostsFile      string
+	isGitKnownHostsFileSet bool
+}
+
+func (tctx *testContext) SaveContext() {
+	tctx.privateKeyFile, tctx.isprivateKeyFileSet = os.LookupEnv(EksaGitPrivateKeyTokenEnv)
+	tctx.gitKnownHostsFile, tctx.isGitKnownHostsFileSet = os.LookupEnv(EksaGitKnownHostsFileEnv)
+	os.Setenv(EksaGitPrivateKeyTokenEnv, "my/private/key")
+	os.Setenv(EksaGitKnownHostsFileEnv, "my/known/hosts")
+}
+
+func (tctx *testContext) RestoreContext() {
+	if tctx.isprivateKeyFileSet {
+		os.Setenv(EksaGitPrivateKeyTokenEnv, tctx.privateKeyFile)
+	} else {
+		os.Unsetenv(EksaGitPrivateKeyTokenEnv)
+	}
+	if tctx.isGitKnownHostsFileSet {
+		os.Setenv(EksaGitKnownHostsFileEnv, tctx.gitKnownHostsFile)
+	} else {
+		os.Unsetenv(EksaGitKnownHostsFileEnv)
+	}
+}
+
+func setupContext(t *testing.T) {
+	var tctx testContext
+	tctx.SaveContext()
+	t.Cleanup(func() {
+		tctx.RestoreContext()
+	})
+}
 
 func TestGetAndValidateFluxConfig(t *testing.T) {
 	tests := []struct {
@@ -15,6 +56,7 @@ func TestGetAndValidateFluxConfig(t *testing.T) {
 		wantFluxConfig *FluxConfig
 		clusterConfig  *Cluster
 		wantErr        bool
+		gitProvider    bool
 	}{
 		{
 			testName:       "file doesn't exist",
@@ -87,7 +129,8 @@ func TestGetAndValidateFluxConfig(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			wantErr: false,
+			wantErr:     false,
+			gitProvider: true,
 		},
 		{
 			testName: "refName doesn't match",
@@ -129,6 +172,9 @@ func TestGetAndValidateFluxConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
+			if tt.gitProvider {
+				setupContext(t)
+			}
 			got, err := GetAndValidateFluxConfig(tt.fileName, tt.refName, tt.clusterConfig)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GetAndValidateFluxConfig() error = %v, wantErr %v", err, tt.wantErr)
