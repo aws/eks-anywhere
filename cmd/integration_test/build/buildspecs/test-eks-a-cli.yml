@@ -10,7 +10,7 @@ env:
     SKIPPED_TESTS: "TestVSphereKubernetes122BottlerocketAutoimport,TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestCloudStackKubernetes121WorkloadCluster,TestCloudStackKubernetes120SimpleFlow,TestCloudStackKubernetes121SimpleFlow,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFlux,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes120RedhatTo121Upgrade,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120GitopsOptionsFlux,TestCloudStackKubernetes121DifferentNamespaceSimpleFlow,TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade,TestCloudStackKubernetes121RedhatAndRemoveWorkerNodeGroups,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy,TestCloudStackKubernetes120GitopsOptionsFluxLegacy"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
-    EKSA_GIT_PRIVATE_KEY: "/tmp/git_pk"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -39,7 +39,6 @@ env:
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
-    T_GIT_SSH_PRIVATE_KEY: "github-eks-anywhere-flux-bot:github-ssh-key"
     T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
     T_HTTP_PROXY: "proxy-config-data:httpProxy"
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
