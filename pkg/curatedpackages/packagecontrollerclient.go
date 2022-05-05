@@ -37,19 +37,8 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return pc.chartInstaller.InstallChartFromName(ctx, uri, pc.kubeConfig, pc.chartName, pc.chartVersion)
 }
 
-func (pc *PackageControllerClient) ControllerExists(ctx context.Context) bool {
-	err := pc.GetActiveController(ctx)
-	if err != nil {
-		return false
-	}
-	return true
-}
-
 func (pc *PackageControllerClient) GetActiveController(ctx context.Context) error {
 	params := []string{"get", "packageBundleController", "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	_, err := pc.kubectl.ExecuteCommand(ctx, params...)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

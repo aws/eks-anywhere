@@ -3,12 +3,12 @@ package workflows
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
