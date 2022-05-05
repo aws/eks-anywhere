@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -118,4 +119,18 @@ func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1
 		return err
 	}
 	return nil
+}
+
+func GetPackageBundle(vb releasev1.VersionsBundle) string {
+	packageController := vb.PackageController
+	// Use package controller registry to fetch packageBundles.
+	// Format of controller image is: <uri>/<env_type>/<repository_name>
+	controllerImage := strings.Split(packageController.Controller.Image(), "/")
+	major, minor, err := parseKubeVersion(vb.KubeVersion)
+	if err != nil {
+		return ""
+	}
+	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
+	registryBaseRef := fmt.Sprintf("%s/%s/%s:%s", controllerImage[0], controllerImage[1], "eks-anywhere-packages-bundles", latestBundle)
+	return registryBaseRef
 }

@@ -86,7 +86,7 @@ func TestImportRun(t *testing.T) {
 	tt := newImportArtifactsTest(t)
 	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
-	tt.reader.EXPECT().ReadChartsFromBundles(tt.bundles).Return(tt.charts)
+	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.importer.EXPECT().Import(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(Succeed())

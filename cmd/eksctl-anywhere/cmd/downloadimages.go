@@ -13,10 +13,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
+	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/oras"
 	"github.com/aws/eks-anywhere/pkg/tar"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -43,12 +46,15 @@ func init() {
 	if err := downloadImagesCmd.MarkFlagRequired("output"); err != nil {
 		log.Fatalf("Cannot mark 'output' flag as required: %s", err)
 	}
+
+	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in downloaded images")
 }
 
 var downloadImagesRunner = downloadImagesCommand{}
 
 type downloadImagesCommand struct {
-	outputFile string
+	outputFile      string
+	includePackages bool
 }
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
@@ -68,7 +74,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: deps.ManifestReader,
+		Reader: fetchReader(deps.ManifestReader, c.includePackages),
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -82,6 +88,8 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		TmpDowloadFolder: downloadFolder,
 		DstFile:          c.outputFile,
 		Packager:         packagerForFile(c.outputFile),
+		BundlePuller:     oras.NewBundleDownloader(downloadFolder),
+		IncludePackages:  c.includePackages,
 	}
 
 	return downloadArtifacts.Run(ctx)
@@ -98,4 +106,11 @@ func packagerForFile(file string) packager {
 	} else {
 		return tar.NewPackager()
 	}
+}
+
+func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reader {
+	if includePackages {
+		return curatedpackages.NewPackageReader(reader)
+	}
+	return reader
 }

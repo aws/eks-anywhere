@@ -51,17 +51,17 @@ func (mr *MockReaderMockRecorder) ReadBundlesForVersion(eksaVersion interface{})
 }
 
 // ReadChartsFromBundles mocks base method.
-func (m *MockReader) ReadChartsFromBundles(bundles *v1alpha1.Bundles) []v1alpha1.Image {
+func (m *MockReader) ReadChartsFromBundles(ctx context.Context, bundles *v1alpha1.Bundles) []v1alpha1.Image {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadChartsFromBundles", bundles)
+	ret := m.ctrl.Call(m, "ReadChartsFromBundles", ctx, bundles)
 	ret0, _ := ret[0].([]v1alpha1.Image)
 	return ret0
 }
 
 // ReadChartsFromBundles indicates an expected call of ReadChartsFromBundles.
-func (mr *MockReaderMockRecorder) ReadChartsFromBundles(bundles interface{}) *gomock.Call {
+func (mr *MockReaderMockRecorder) ReadChartsFromBundles(ctx, bundles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadChartsFromBundles", reflect.TypeOf((*MockReader)(nil).ReadChartsFromBundles), bundles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadChartsFromBundles", reflect.TypeOf((*MockReader)(nil).ReadChartsFromBundles), ctx, bundles)
 }
 
 // ReadImagesFromBundles mocks base method.
@@ -161,6 +161,41 @@ func (mr *MockChartDownloaderMockRecorder) Download(ctx interface{}, artifacts .
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, artifacts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Download", reflect.TypeOf((*MockChartDownloader)(nil).Download), varargs...)
+}
+
+// MockBundleDownloader is a mock of BundleDownloader interface.
+type MockBundleDownloader struct {
+	ctrl     *gomock.Controller
+	recorder *MockBundleDownloaderMockRecorder
+}
+
+// MockBundleDownloaderMockRecorder is the mock recorder for MockBundleDownloader.
+type MockBundleDownloaderMockRecorder struct {
+	mock *MockBundleDownloader
+}
+
+// NewMockBundleDownloader creates a new mock instance.
+func NewMockBundleDownloader(ctrl *gomock.Controller) *MockBundleDownloader {
+	mock := &MockBundleDownloader{ctrl: ctrl}
+	mock.recorder = &MockBundleDownloaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBundleDownloader) EXPECT() *MockBundleDownloaderMockRecorder {
+	return m.recorder
+}
+
+// SaveManifests mocks base method.
+func (m *MockBundleDownloader) SaveManifests(ctx context.Context, bundles *v1alpha1.Bundles) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SaveManifests", ctx, bundles)
+}
+
+// SaveManifests indicates an expected call of SaveManifests.
+func (mr *MockBundleDownloaderMockRecorder) SaveManifests(ctx, bundles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveManifests", reflect.TypeOf((*MockBundleDownloader)(nil).SaveManifests), ctx, bundles)
 }
 
 // MockPackager is a mock of Packager interface.

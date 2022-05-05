@@ -13,7 +13,7 @@ import (
 type Reader interface {
 	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
 	ReadImagesFromBundles(bundles *releasev1.Bundles) ([]releasev1.Image, error)
-	ReadChartsFromBundles(bundles *releasev1.Bundles) []releasev1.Image
+	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
 }
 
 type ImageMover interface {
@@ -22,6 +22,10 @@ type ImageMover interface {
 
 type ChartDownloader interface {
 	Download(ctx context.Context, artifacts ...string) error
+}
+
+type BundleDownloader interface {
+	SaveManifests(ctx context.Context, bundles *releasev1.Bundles)
 }
 
 type Packager interface {
@@ -37,6 +41,8 @@ type Download struct {
 	Packager                 Packager
 	TmpDowloadFolder         string
 	DstFile                  string
+	BundlePuller             BundleDownloader
+	IncludePackages          bool
 }
 
 func (d Download) Run(ctx context.Context) error {
@@ -62,7 +68,11 @@ func (d Download) Run(ctx context.Context) error {
 		return err
 	}
 
-	charts := d.Reader.ReadChartsFromBundles(b)
+	charts := d.Reader.ReadChartsFromBundles(ctx, b)
+
+	if d.IncludePackages {
+		d.BundlePuller.SaveManifests(ctx, b)
+	}
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err

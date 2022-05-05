@@ -26,6 +26,7 @@ type downloadArtifactsTest struct {
 	command         *artifacts.Download
 	images, charts  []releasev1.Image
 	bundles         *releasev1.Bundles
+	bundlePuller    *mocks.MockBundleDownloader
 }
 
 func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
@@ -39,6 +40,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 	toolsDownloader := mocks.NewMockImageMover(ctrl)
 	downloader := mocks.NewMockChartDownloader(ctrl)
 	packager := mocks.NewMockPackager(ctrl)
+	bundlePuller := mocks.NewMockBundleDownloader(ctrl)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -84,6 +86,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 			Version:                  version.Info{GitVersion: "v1.0.0"},
 			TmpDowloadFolder:         downloadFolder,
 			DstFile:                  "artifacts.tar",
+			BundlePuller:             bundlePuller,
 		},
 		bundles: &releasev1.Bundles{
 			Spec: releasev1.BundlesSpec{
@@ -98,6 +101,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 				},
 			},
 		},
+		bundlePuller: bundlePuller,
 	}
 }
 
@@ -107,7 +111,7 @@ func TestDownloadRun(t *testing.T) {
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
 	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
-	tt.reader.EXPECT().ReadChartsFromBundles(tt.bundles).Return(tt.charts)
+	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 	tt.packager.EXPECT().Package("tmp-folder", "artifacts.tar")
 
