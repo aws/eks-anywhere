@@ -60,6 +60,17 @@ func TestInstallControllerSuccess(t *testing.T) {
 	}
 }
 
+func TestInstallControllerFail(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	tt.chartInstaller.EXPECT().InstallChartFromName(tt.ctx, "oci://"+tt.ociUri, tt.kubeConfig, tt.chartName, tt.chartVersion).Return(errors.New("login failed"))
+
+	err := tt.command.InstallController(tt.ctx)
+	if err == nil {
+		t.Errorf("Install Controller Should fail when installation fails")
+	}
+}
+
 func TestGetActiveControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
