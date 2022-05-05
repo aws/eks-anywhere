@@ -238,15 +238,15 @@ func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, boo
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
