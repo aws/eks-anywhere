@@ -408,7 +408,7 @@ func installPackagesController(ctx context.Context, spec *cluster.Spec) error {
 
 func installPackages(ctx context.Context, clusterName, packagesLocation string) error {
 	kubeConfig := kubeconfig.FromClusterName(clusterName)
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig, packagesLocation)
 	if err != nil {
 		return err
 	}
