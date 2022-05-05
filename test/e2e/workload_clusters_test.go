@@ -151,7 +151,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithKubernetesVersion(v1alpha1.Kube121),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
@@ -161,7 +161,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 			provider,
 			framework.WithFluxGithub(),
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithKubernetesVersion(v1alpha1.Kube121),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
@@ -170,7 +170,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 	runWorkloadClusterFlowWithGitOps(
 		test,
 		framework.WithClusterUpgradeGit(
-			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithKubernetesVersion(v1alpha1.Kube122),
 			api.WithControlPlaneCount(2),
 			api.WithWorkerNodeCount(2),
 		),
