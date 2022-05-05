@@ -383,14 +383,14 @@ func (s *InstallPackageControllerTask) Run(ctx context.Context, commandContext *
 	kubeConfig := kubeconfig.FromClusterName(commandContext.ClusterSpec.Cluster.Name)
 	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install command", "error", err)
+		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return nil
 	}
 	chart := commandContext.ClusterSpec.VersionsBundle.VersionsBundle.PackageController.HelmChart
 	pc := curatedpackages.NewPackageControllerClient(deps.Helm, deps.Kubectl, kubeConfig, chart.Image(), chart.Name, chart.Tag())
 	err = pc.InstallController(ctx)
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages controller on workload cluster; please install through eksctl anywhere install command", "error", err)
+		logger.MarkFail("Error when installing curated packages controller on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return nil
 	}
 	return nil
@@ -404,7 +404,7 @@ func installCuratedPackages(ctx context.Context, clusterName string, packagesLoc
 	kubeConfig := kubeconfig.FromClusterName(clusterName)
 	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create command", "error", err)
+		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
 		return
 	}
 	packageClient := curatedpackages.NewPackageClient(
@@ -413,7 +413,7 @@ func installCuratedPackages(ctx context.Context, clusterName string, packagesLoc
 	)
 	err = packageClient.CreatePackages(ctx, packagesLocation, kubeConfig)
 	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create command", "error", err)
+		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
 		return
 	}
 }
