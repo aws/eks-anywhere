@@ -379,7 +379,7 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (s *InstallPackageControllerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Installing curated packages controller on workload  cluster")
+	logger.Info("Installing curated packages controller on workload cluster")
 	kubeConfig := kubeconfig.FromClusterName(commandContext.ClusterSpec.Cluster.Name)
 	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
