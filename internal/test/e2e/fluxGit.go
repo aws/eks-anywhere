@@ -54,7 +54,7 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 		{
 			key:        "git-flux/private-key",
 			dstPath:    envVars[config.EksaGitPrivateKeyTokenEnv],
-			permission: 644,
+			permission: 600,
 		},
 	}
 }
@@ -72,7 +72,7 @@ func (e *E2ESession) downloadFileInInstance(file s3Files) error {
 }
 
 func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
-	command := fmt.Sprintf("`eval ssh-agent` && ssh-add %s", privateKeyFile)
+	command := fmt.Sprintf("eval $(ssh-agent -s) ssh-add %s", privateKeyFile)
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("starting SSH agent on instance: %v", err)
