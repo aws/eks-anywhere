@@ -28,11 +28,14 @@ func (bd *BundleDownloader) SaveManifests(ctx context.Context, bundles *releasev
 	for _, a := range UniqueCharts(artifacts) {
 		data, err := curatedpackages.Pull(ctx, a)
 		if err != nil {
-			fmt.Sprintf("unable to download bundle %v", err)
+			fmt.Printf("unable to download bundle %v", err)
 			continue
 		}
 		bundleName := strings.Replace(filepath.Base(a), ":", "-", 1)
-		writeToFile(bd.dstFolder, bundleName, data)
+		err = writeToFile(bd.dstFolder, bundleName, data)
+		if err != nil {
+			fmt.Printf("unable to write to file %v", err)
+		}
 	}
 }
 
