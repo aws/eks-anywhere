@@ -66,3 +66,31 @@ func TestGetVersionBundleFail(t *testing.T) {
 		t.Errorf("GetVersionBundle should fail when no bundles exist")
 	}
 }
+
+func TestGetVersionBundleFailsWhenBundleNil(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	reader := mocks.NewMockReader(ctrl)
+	eksaVersion := "v1.0.0"
+	kubeVersion := "1.21"
+	bundles := &releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					PackageController: releasev1.PackageBundle{
+						Controller: releasev1.Image{
+							URI: "test_host/test_env/test_repository:test-version",
+						},
+					},
+					KubeVersion: "1.22",
+				},
+			},
+		},
+	}
+
+	reader.EXPECT().ReadBundlesForVersion(eksaVersion).Return(bundles, nil)
+
+	_, err := curatedpackages.GetVersionBundle(reader, eksaVersion, kubeVersion)
+	if err == nil {
+		t.Errorf("GetVersionBundle should fail when version bundle for kubeversion doesn't exist")
+	}
+}

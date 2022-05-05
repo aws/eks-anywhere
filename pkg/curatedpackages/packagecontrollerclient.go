@@ -40,10 +40,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 
 func (pc *PackageControllerClient) ValidateControllerExists(ctx context.Context) error {
 	params := []string{"get", "packageBundleController", "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
-	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
-	if err != nil {
-		return err
-	}
+	stdOut, _ := pc.kubectl.ExecuteCommand(ctx, params...)
 	if len(stdOut.Bytes()) != 0 {
 		return errors.New("curated Packages Controller Exists in the current Cluster")
 	}

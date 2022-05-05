@@ -100,14 +100,14 @@ func TestGetActiveControllerFail(t *testing.T) {
 	}
 }
 
-func TestGetActiveControllerFailWhenErr(t *testing.T) {
+func TestGetActiveControllerPassWhenErr(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	params := []string{"get", "packageBundleController", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("kubeconfig doesn't exist"))
 
 	err := tt.command.ValidateControllerExists(tt.ctx)
-	if err == nil {
-		t.Errorf("Get Active Controller should fail when controller exists")
+	if err != nil {
+		t.Errorf("Get Active Controller should succeed when err encountered")
 	}
 }
