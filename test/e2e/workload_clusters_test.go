@@ -181,7 +181,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 }
 
 func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
