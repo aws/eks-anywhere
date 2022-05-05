@@ -50,7 +50,7 @@ var (
 	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
 )
 
-type tinkerbellProvider struct {
+type Provider struct {
 	clusterConfig         *v1alpha1.Cluster
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
@@ -129,7 +129,7 @@ func NewProvider(
 	skipPowerActions bool,
 	setupTinkerbell bool,
 	force bool,
-) *tinkerbellProvider {
+) *Provider {
 	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
@@ -163,7 +163,7 @@ func NewProviderCustomDep(
 	skipPowerActions bool,
 	setupTinkerbell bool,
 	force bool,
-) *tinkerbellProvider {
+) *Provider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -181,7 +181,7 @@ func NewProviderCustomDep(
 		}
 	}
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
-	return &tinkerbellProvider{
+	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
@@ -213,33 +213,33 @@ func NewProviderCustomDep(
 	}
 }
 
-func (p *tinkerbellProvider) Name() string {
+func (p *Provider) Name() string {
 	return constants.TinkerbellProviderName
 }
 
-func (p *tinkerbellProvider) DatacenterResourceType() string {
+func (p *Provider) DatacenterResourceType() string {
 	return eksaTinkerbellDatacenterResourceType
 }
 
-func (p *tinkerbellProvider) MachineResourceType() string {
+func (p *Provider) MachineResourceType() string {
 	return eksaTinkerbellMachineResourceType
 }
 
-func (p *tinkerbellProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	// TODO: implement
 	return nil
 }
 
-func (p *tinkerbellProvider) UpdateKubeConfig(content *[]byte, clusterName string) error {
+func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	// TODO: Figure out if something is needed here
 	return nil
 }
 
-func (p *tinkerbellProvider) Version(clusterSpec *cluster.Spec) string {
+func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
-func (p *tinkerbellProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO: determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -252,13 +252,13 @@ func (p *tinkerbellProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) 
 	return envMap, nil
 }
 
-func (p *tinkerbellProvider) GetDeployments() map[string][]string {
+func (p *Provider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capt-system": {"capt-controller-manager"},
 	}
 }
 
-func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
+func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
 	bundle := clusterSpec.VersionsBundle
 	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", bundle.Tinkerbell.Version)
 
@@ -273,11 +273,11 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	return &infraBundle
 }
 
-func (p *tinkerbellProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
+func (p *Provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *tinkerbellProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
+func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	// TODO: Figure out if something is needed here
 	var configs []providers.MachineConfig
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
@@ -309,17 +309,17 @@ func (p *tinkerbellProvider) MachineConfigs(_ *cluster.Spec) []providers.Machine
 	return configs
 }
 
-func (p *tinkerbellProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	// TODO: Figure out if something is needed here
 	return nil
 }
 
-func (p *tinkerbellProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	// TODO: implement
 	return nil
 }
 
-func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
 	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
 	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
 	for _, nodeGroup := range nodeGroupsToDelete {
@@ -329,6 +329,6 @@ func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 	return machineDeployments
 }
 
-func (p *tinkerbellProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
