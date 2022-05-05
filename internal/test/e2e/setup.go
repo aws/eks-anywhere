@@ -217,17 +217,6 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 	return nil
 }
 
-func (e *E2ESession) writeStringToFile(content string, outputFilePath string) error {
-	command := fmt.Sprintf("echo \"%s\" > %s", content, outputFilePath)
-
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
-		return fmt.Errorf("creating file %s: %v", outputFilePath, err)
-	}
-	logger.V(1).Info("Successfully created file", "file", outputFilePath)
-
-	return nil
-}
-
 func clusterName(branch string, instanceId string) (clusterName string) {
 	if branch == "" {
 		return instanceId
