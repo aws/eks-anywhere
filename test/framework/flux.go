@@ -28,14 +28,14 @@ import (
 )
 
 const (
-	eksaConfigFileName   = "eksa-cluster.yaml"
-	fluxSystemNamespace  = "flux-system"
-	gitRepositoryVar     = "T_GIT_REPOSITORY"
-	gitRepoSshUrl        = "T_GIT_SSH_REPO_URL"
-	githubUserVar        = "T_GITHUB_USER"
-	githubTokenVar       = "EKSA_GITHUB_TOKEN"
-	gitKnownHosts        = "EKSA_GIT_KNOWN_HOSTS"
-	gitPrivateKeyFile    = "EKSA_GIT_PRIVATE_KEY"
+	eksaConfigFileName  = "eksa-cluster.yaml"
+	fluxSystemNamespace = "flux-system"
+	gitRepositoryVar    = "T_GIT_REPOSITORY"
+	gitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
+	githubUserVar       = "T_GITHUB_USER"
+	githubTokenVar      = "EKSA_GITHUB_TOKEN"
+	gitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
+	gitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
 )
 
 var fluxGithubRequiredEnvVars = []string{
