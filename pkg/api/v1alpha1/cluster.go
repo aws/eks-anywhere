@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -17,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -170,6 +168,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
+	validateGitOps,
 	validateEtcdReplicas,
 	validateIdentityProviderRefs,
 	validateProxyConfig,
@@ -195,23 +194,11 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 // GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
 func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 	clusterConfig := &Cluster{}
-	err := ParseConfigFromContent(content, clusterConfig)
+	err := ParseClusterConfigFromContent(content, clusterConfig)
 	if err != nil {
 		return clusterConfig, err
 	}
 	return clusterConfig, nil
-}
-
-// GetFluxConfig parses a Cluster object from a multiobject yaml file in disk
-// and sets defaults if necessary
-func GetFluxConfig(fileName string) (*FluxConfig, error) {
-	fluxConfig := &FluxConfig{}
-	err := ParseClusterConfig(fileName, fluxConfig)
-	if err != nil {
-		return fluxConfig, err
-	}
-
-	return fluxConfig, nil
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -224,19 +211,6 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	err = ValidateClusterConfigContent(clusterConfig)
 	if err != nil {
 		return nil, err
-	}
-
-	if clusterConfig.Spec.GitOpsRef != nil {
-		var fluxConfig *FluxConfig
-		if clusterConfig.Spec.GitOpsRef.Kind == FluxConfigKind {
-			if fluxConfig, err = GetFluxConfig(fileName); err != nil {
-				return nil, err
-			}
-		}
-		err = validateGitOps(clusterConfig, fluxConfig)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return clusterConfig, nil
@@ -266,7 +240,7 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
 
-	if err = ParseConfigFromContent(content, clusterConfig); err != nil {
+	if err = ParseClusterConfigFromContent(content, clusterConfig); err != nil {
 		return fmt.Errorf("unable to parse %s file: %v", fileName, err)
 	}
 
@@ -277,21 +251,21 @@ type kindObject struct {
 	Kind string `json:"kind,omitempty"`
 }
 
-// ParseConfigFromContent unmarshalls an API object implementing the KindAccessor interface
+// ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
-func ParseConfigFromContent(content []byte, config KindAccessor) error {
+func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
 		k := &kindObject{}
 		if err := yaml.Unmarshal([]byte(c), k); err != nil {
 			return err
 		}
 
-		if k.Kind == config.ExpectedKind() {
-			return yaml.UnmarshalStrict([]byte(c), config)
+		if k.Kind == clusterConfig.ExpectedKind() {
+			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
 
-	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", config.ExpectedKind())
+	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {
@@ -612,7 +586,7 @@ func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 	return nil
 }
 
-func validateGitOps(clusterConfig *Cluster, fluxConfig *FluxConfig) error {
+func validateGitOps(clusterConfig *Cluster) error {
 	gitOpsRef := clusterConfig.Spec.GitOpsRef
 	if gitOpsRef == nil {
 		return nil
@@ -621,22 +595,9 @@ func validateGitOps(clusterConfig *Cluster, fluxConfig *FluxConfig) error {
 	gitOpsRefKind := gitOpsRef.Kind
 	fluxConfigActive := features.IsActive(features.GenericGitProviderSupport())
 
-	if gitOpsRefKind == FluxConfigKind {
-		if !fluxConfigActive {
-			return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
-				"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
-		}
-		if fluxConfig.Spec.Git != nil {
-			if fluxConfig.Spec.Github != nil {
-				return errors.New("only one provider can be specified in FluxConfig. Please only specify either git or github")
-			}
-			if privateKeyFile, ok := os.LookupEnv(config.EksaGitPrivateKeyTokenEnv); !ok || len(privateKeyFile) <= 0 {
-				return fmt.Errorf("%s is not set or is empty", config.EksaGitPrivateKeyTokenEnv)
-			}
-			if gitKnownHosts, ok := os.LookupEnv(config.EksaGitKnownHostsFileEnv); !ok || len(gitKnownHosts) <= 0 {
-				return fmt.Errorf("%s is not set or is empty", config.EksaGitKnownHostsFileEnv)
-			}
-		}
+	if gitOpsRefKind == FluxConfigKind && !fluxConfigActive {
+		return fmt.Errorf("FluxConfig and the generic git provider are not currently supported; " +
+			"to use this experimental feature, please set the environment variable GENERIC_GIT_PROVIDER_SUPPORT to true")
 	}
 
 	if gitOpsRefKind != GitOpsConfigKind && !fluxConfigActive {
