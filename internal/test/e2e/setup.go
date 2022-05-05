@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -27,15 +26,15 @@ const (
 	testNameFile               = "e2e-test-name"
 	maxUserWatches             = 524288
 	maxUserInstances           = 512
+	key                        = "Integration-Test"
+	tag                        = "EKSA-E2E"
 )
 
 type E2ESession struct {
 	session             *session.Session
-	amiId               string
 	instanceProfileName string
 	storageBucket       string
 	jobId               string
-	subnetId            string
 	instanceId          string
 	ipPool              networkutils.IPPool
 	testEnvVars         map[string]string
@@ -45,19 +44,13 @@ type E2ESession struct {
 	branchName          string
 }
 
-func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
-	session, err := session.NewSession()
-	if err != nil {
-		return nil, fmt.Errorf("creating session: %v", err)
-	}
-
+func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
 	e := &E2ESession{
-		session:             session,
-		amiId:               conf.amiId,
+		session:             conf.session,
+		instanceId:          instanceId,
 		instanceProfileName: conf.instanceProfileName,
 		storageBucket:       conf.storageBucket,
 		jobId:               conf.jobId,
-		subnetId:            conf.subnetId,
 		ipPool:              conf.ipPool,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     conf.bundlesOverride,
@@ -75,19 +68,8 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
-	key := "Integration-Test"
-	tag := "EKSA-E2E"
-	name := fmt.Sprintf("eksa-e2e-%s", e.jobId)
-	logger.V(1).Info("Creating ec2 instance", "name", name)
-	instanceId, err := ec2.CreateInstance(e.session, e.amiId, key, tag, e.instanceProfileName, e.subnetId, name)
-	if err != nil {
-		return fmt.Errorf("creating instance for e2e tests: %v", err)
-	}
-	logger.V(1).Info("Instance created", "instance-id", instanceId)
-	e.instanceId = instanceId
-
 	logger.V(1).Info("Waiting until SSM is ready")
-	err = ssm.WaitForSSMReady(e.session, instanceId)
+	err = ssm.WaitForSSMReady(e.session, e.instanceId)
 	if err != nil {
 		return fmt.Errorf("waiting for ssm in new instance: %v", err)
 	}
@@ -112,6 +94,11 @@ func (e *E2ESession) setup(regex string) error {
 	}
 
 	err = e.setupVSphereEnv(regex)
+	if err != nil {
+		return err
+	}
+
+	err = e.setupTinkerbellEnv(regex)
 	if err != nil {
 		return err
 	}

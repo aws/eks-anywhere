@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -22,19 +23,18 @@ const (
 )
 
 type ParallelRunConf struct {
-	MaxInstances        int
-	MaxConcurrentTests  int
-	AmiId               string
-	InstanceProfileName string
-	StorageBucket       string
-	JobId               string
-	SubnetId            string
-	Regex               string
-	TestsToSkip         []string
-	BundlesOverride     bool
-	CleanupVms          bool
-	TestReportFolder    string
-	BranchName          string
+	TestInstanceConfigFile string
+	MaxInstances           int
+	MaxConcurrentTests     int
+	InstanceProfileName    string
+	StorageBucket          string
+	JobId                  string
+	Regex                  string
+	TestsToSkip            []string
+	BundlesOverride        bool
+	CleanupVms             bool
+	TestReportFolder       string
+	BranchName             string
 }
 
 type (
@@ -62,7 +62,11 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 	var wg sync.WaitGroup
 
-	instancesConf := splitTests(testsList, conf)
+	instancesConf, err := splitTests(testsList, conf)
+	if err != nil {
+		return fmt.Errorf("failed to split tests: %v", err)
+	}
+
 	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(instancesConf)
 	maxConcurrentTests := conf.MaxConcurrentTests
@@ -111,15 +115,24 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
-	testReportFolder, branchName                                                               string
-	ipPool                                                                                     networkutils.IPPool
-	bundlesOverride                                                                            bool
-	cleanupVms                                                                                 bool
+	session                                                                   *session.Session
+	instanceProfileName, storageBucket, jobId, parentJobId, regex, instanceId string
+	testReportFolder, branchName                                              string
+	ipPool                                                                    networkutils.IPPool
+	bundlesOverride                                                           bool
+	testRunnerType                                                            TestRunnerType
+	testRunnerConfig                                                          TestInfraConfig
+	cleanupVms                                                                bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
-	session, err := newSessionFromConf(conf)
+	testRunner := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
+	instanceId, err := testRunner.createInstance(conf)
+	if err != nil {
+		return "", nil, err
+	}
+
+	session, err := newE2ESession(instanceId, conf)
 	if err != nil {
 		return "", nil, err
 	}
@@ -200,13 +213,14 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 	return strings.Join(fullCommand, "; ")
 }
 
-func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
+func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, error) {
 	testPerInstance := len(testsList) / conf.MaxInstances
 	if testPerInstance == 0 {
 		testPerInstance = 1
 	}
 
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
+	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
@@ -232,27 +246,43 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 			}
 		}
 
+		awsSession, err := session.NewSession()
+		if err != nil {
+			return nil, fmt.Errorf("creating aws session for test: %s, %v", testName, err)
+		}
+
+		testRunnerConfig, err := NewTestRunnerConfigFromFile(conf.TestInstanceConfigFile)
+		if err != nil {
+			return nil, fmt.Errorf("creating test runner config for test: %s, %v", testName, err)
+		}
+
+		testRunnerType := Ec2TestRunnerType
+		if tinkerbellTestsRe.MatchString(testName) {
+			testRunnerType = VSphereTestRunnerType
+		}
+
 		if len(testsInCurrentInstance) == testPerInstance || (len(testsList)-1) == i {
 			runConfs = append(runConfs, instanceRunConf{
-				amiId:               conf.AmiId,
+				session:             awsSession,
 				instanceProfileName: conf.InstanceProfileName,
 				storageBucket:       conf.StorageBucket,
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
 				parentJobId:         conf.JobId,
-				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
 				cleanupVms:          conf.CleanupVms,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,
 				ipPool:              ips,
+				testRunnerType:      testRunnerType,
+				testRunnerConfig:    *testRunnerConfig,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)
 		}
 	}
 
-	return runConfs
+	return runConfs, nil
 }
 
 func logTestGroups(instancesConf []instanceRunConf) {

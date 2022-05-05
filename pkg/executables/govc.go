@@ -278,7 +278,8 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeBRDisk bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
-	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, datastore, network, resourcePool); err != nil {
+
+	if err := g.DeployTemplate(ctx, library, templateName, templateName, templateDir, datacenter, datastore, network, resourcePool, nil); err != nil {
 		return err
 	}
 
@@ -350,7 +351,7 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 	return nil
 }
 
-func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, datastore, network, resourcePool string) error {
+func (g *Govc) DeployTemplate(ctx context.Context, library, templateName, vmName, deployFolder, datacenter, datastore, network, resourcePool string, deployOptionsOverride []byte) error {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return fmt.Errorf("failed govc validations: %v", err)
@@ -366,7 +367,12 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		return err
 	}
 
+	if len(deployOptionsOverride) > 0 {
+		deployOpts = deployOptionsOverride
+	}
+
 	deployOptsPath, err := g.writer.Write(DeployOptsFile, deployOpts, filewriter.PersistentFile)
+
 	if err != nil {
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
@@ -407,7 +413,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,
-		templateInLibraryPath, templateName,
+		templateInLibraryPath, vmName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
 		return fmt.Errorf("deploying template: %v", err)
