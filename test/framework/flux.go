@@ -69,6 +69,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		for _, opt := range opts {
 			opt(e.FluxConfig)
 		}
+		e.T.Cleanup(e.CleanUpGitRepo)
 	}
 }
 
