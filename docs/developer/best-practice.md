@@ -8,7 +8,7 @@ These principles provide a guide for designing software. At times they may seem 
 
 > "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it." - _Brian W. Kernighan_
 
-- [SOLID](https://www.digitalocean.com/community/conceptual_articles/s-o-l-i-d-the-first-five-principles-of-object-oriented-design#single-responsibility-principle) - The Single-responsibility Principle, Open-closed Principle, Liskov Substitution Principle, Interface Segregation Principle and Depdendency Inversion Principle collectively define a guide for writing maintainable code. While often referenced in the context of an object-oriented language, they are applicable to all languages.
+- [SOLID](https://www.digitalocean.com/community/conceptual_articles/s-o-l-i-d-the-first-five-principles-of-object-oriented-design#single-responsibility-principle) - The Single-responsibility Principle, Open-closed Principle, Liskov Substitution Principle, Interface Segregation Principle and Dependency Inversion Principle collectively define a guide for writing maintainable code. While often referenced in the context of an object-oriented language, they are applicable to all languages.
 - [LoD](https://en.wikipedia.org/wiki/Law_of_Demeter) - The Law of Demeter tells us a construct should talk to their direct dependencies and _only_ their direct dependencies (don't talk to strangers). Reaching to transitive dependencies creates complex layers of interaction that drive toward [spaghetti code](https://en.wikipedia.org/wiki/Spaghetti_code).
 - [KISS](https://people.apache.org/~fhanik/kiss.html) - "Keep it simple, stupid" was coined by the US Navy. Systems should be designed as simply as possible.
 - [YAGNI](https://martinfowler.com/bliki/Yagni.html) - "You aren't gonna need it" if you don't have a concrete use-case, don't write it.
@@ -38,15 +38,15 @@ In avoiding package level state we avoid [hidden dependencies and unintended sid
 
 Package names help form the first impression of what a package provides and is used to reference the public API of the package. A good package name brings about clarity and purpose for consumers. Package names should be concise and represent the behavior provided by the package, not the types it contains. 
 
-Avoid stutter in struct and interface names by treating the package name as a namespace and considering how the types are consumed. For example, `drink.DrinkDecorator` should be `drink.Decorator`. You may find you have a type named after the package, sometimes it's appropriate and you should lean on the reviewer process to make a judgement call.
+Avoid stutter in struct and interface names by treating the package name as a namespace and considering how the types are consumed. For example, `drink.DrinkDecorator` should be `drink.Decorator`. You may find you have a type named after the package, sometimes it's appropriate and you should lean on the reviewer process to make a judgment call.
 
-Prefer using the singular form of nouns for packgae names. If you find yourself using an appropriate package name that's commonly used as a variable, consider pluralising the package name. For example, `string` is a type that could be shadowed hence the stdlib has a `strings` package.
+Prefer using the singular form of nouns for package names. If you find yourself using an appropriate package name that's commonly used as a variable, consider pluralizing the package name. For example, `string` is a type that could be shadowed hence the stdlib has a `strings` package.
 
 Avoid [relentlessly] `types`, `interfaces`, `common`, `util` or `base` packages. These names offer no indication on what the package provides beyond 'a bundle of stuff'. With time, these types of package turn into dumping grounds containing unrelated logic that can be the root cause for cyclic dependencies.  If a utility style package is required, make it specific. For example a `/cmdutil` package may provide command utility functions.
 
 ##### Function & method
 
-Functions and methods (functions with a receiver parameter) should adequetly describe their behavior. Generally, they should follow a verb-noun form. The types of parameters should help inform the function name.
+Functions and methods (functions with a receiver parameter) should adequately describe their behavior. Generally, they should follow a verb-noun form. The types of parameters should help inform the function name.
 
 Capitalize acronyms in functions. When creating an unexported function starting with an acronym, lower-case the whole acronym.
 
@@ -76,15 +76,15 @@ Avoid constructing dependencies in-line. If you do construct a dependency in-lin
 
 ##### "Accept interfaces, return structs"
 
-The Go community talks of the "accept interfaces, return structs" addage. The meaning of this idiom can be hard to pin down, herein lies some clarity.
+The Go community talks of the "accept interfaces, return structs" adage. The meaning of this idiom can be hard to pin down, herein lies some clarity.
 
 "Accept interfaces" promotes flexible and loosely coupled code. When a function declares dependent behavior as an interface parameter it gives control of _how_ that behavior is satisfied to the consuming logic.
 
-"return structs" is less obvious. It, generally, speaks to initializing constructors where authors should return the struct being constructed as opposed to interface it satisifes. This is largely due to duck typing (["If it walks like a duck and it quacks like a duck, then it must be a duck"](https://en.wikipedia.org/wiki/Duck_typing)).
+"return structs" is less obvious. It, generally, speaks to initializing constructors where authors should return the struct being constructed as opposed to interface it satisfies. This is largely due to duck typing (["If it walks like a duck and it quacks like a duck, then it must be a duck"](https://en.wikipedia.org/wiki/Duck_typing)).
 
 > Interfaces in Go provide a way to specify the behavior of an object: if something can do this, then it can be used here. - [Effective Go](https://go.dev/doc/effective_go#interfaces_and_types)
 
-Factory functions are not to be confused with intializing constructors. Factory functions typically return abstractions (an interface) satisfied by 1 of several implementations. A factory could be as simple as:
+Factory functions are not to be confused with initializing constructors. Factory functions typically return abstractions (an interface) satisfied by 1 of several implementations. A factory could be as simple as:
 
 ```go
 // Foo and Bar satisfy fmt.Stringer
@@ -104,7 +104,7 @@ Factories generally shouldn't contain complex construction logic. That's the job
 
 ##### Loggers
 
-Loggers are sometimes treated as a special depency by making entire projects depend on a package level logger. This _masks_ a crucial dependency that is hard to change without impacting the rest of the code base. To understand why this is bad, consider extracting a package into its own repository for reusability. Depending on a package level logger, or any other package level dependencies, makes the extraction process unnecessarily difficult.
+Loggers are sometimes treated as a special dependency by making entire projects depend on a package level logger. This _masks_ a crucial dependency that is hard to change without impacting the rest of the code base. To understand why this is bad, consider extracting a package into its own repository for reusability. Depending on a package level logger, or any other package level dependencies, makes the extraction process unnecessarily difficult.
 
 Logger's are not special dependencies, inject them like any other dependency. If you want to minimize the surface area of the default initializing constructor (`New...` funcs) you may construct noop loggers to satisfy the logger dependency and provide a means to override the logger with a setter.
 
@@ -114,7 +114,7 @@ Software development is costly and hazardous. Tests provide example usage, guard
 
 Unit tests should:
 
-- focus on the public API of a packge.
+- focus on the public API of a package.
 - use the `_test` idiom for testing files.
 - treat the package as a black box.
 - cover at least 80% of the public API.
@@ -122,7 +122,7 @@ Unit tests should:
 
 Testable code should:
 
-- isolate or provide overrides such as setter funcs for hard to test concerns like io, time and concurrency.
+- isolate or provide overrides such as setter functions for hard to test concerns like IO, time and concurrency.
 - expose a flexible public API.
 
 If you public API is hard to test consumers will find it hard to use - rethink your design.
@@ -147,11 +147,11 @@ package foo_test
 
 The compiler will build files that declare a package with the suffix "_test" as a separate package, then link and run with the main test binary. This ensures tests cases only have access to the public API of a package.
 
-##### Necessraily complex and unexported functions
+##### Necessarily complex and unexported functions
 
 If you have attempted to break a function down into singular responsibilities and found its best to maintain the necessary complexity as a single unexported function it may be appropriate to white box test.
 
-When testing a _necessraily complex_ function isolate the tests to a separate testing file. For example `necessarily_complex_func_wb_test.go` where `wb` stands for white box.
+When testing a _necessarily complex_ function isolate the tests to a separate testing file. For example `necessarily_complex_func_wb_test.go` where `wb` stands for white box.
 
 ### Errors
 
@@ -159,7 +159,7 @@ When generating an error, concisely describe the problem that occurred. Do not p
 
 When handling an error, don't log it only to pass it up the call stack. Logging and passing the received error up the call stack typically results in lots verbose and unhelpful logging about the same error.
 
-If appropriate, add context by wrapping the error using `fmt.Errorf` or equivilent. Only add context that is known by the scope of your function and do not _assume_ an error represents something unless you can make a positive assertion. This avoids embedding knowledge that makes re-use and refactors harder. For example:
+If appropriate, add context by wrapping the error using `fmt.Errorf` or equivalent. Only add context that is known by the scope of your function and do not _assume_ an error represents something unless you can make a positive assertion. This avoids embedding knowledge that makes re-use and refactors harder. For example:
 
 ```go
 // foo knows bar can return errZero so can perform an explicit check.
@@ -189,9 +189,9 @@ func bar(i int) error {
 
 ### Boolean parameters
 
-Boolean parameters are widely considered an antipattern. Context is hugely important when assessing a boolean parameter but in general they represent an on/off switch for behavior. The behavioral on/off switch creates hard to understand and maintain logic that often has poor re-use and is an indicator that a piece of code violates the SRP. 
+Boolean parameters are widely considered an anti-pattern. Context is hugely important when assessing a boolean parameter but in general they represent an on/off switch for behavior. The behavioral on/off switch creates hard to understand and maintain logic that often has poor re-use and is an indicator that a piece of code violates the SRP. 
 
-Instead, consider structuring your code to have dynamically constructable behavior logic. This allows you to isolate booleans to construction logic, a distinct concern, and construct the behavior you require for your context. 
+Instead, consider structuring your code to have dynamically constructible behavior logic. This allows you to isolate booleans to construction logic, a distinct concern, and construct the behavior you require for your context. 
 
 An example of code designed to be dynamically constructed may include the [decorator](https://refactoring.guru/design-patterns/decorator) pattern. It may use a [builder](https://refactoring.guru/design-patterns/builder) or an [abstract factory](https://refactoring.guru/design-patterns/abstract-factory) with a builder to construct the logic using boolean flag configuration read from CLI flags. There are many more combinations and, generally, you want to consider your problem space and design a piece of code that makes sense for your problem first.
 
@@ -235,7 +235,7 @@ func foo(bar string) error {
 
 In returning early, we also create clearer code that has lower [cyclomatic complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity) that can be the cause for bugs.
 
-Never use naked returns. Go allows return types to be specified with an identifier. The identifier is a scoped variable in the context of the function and its value can be set during program execution. Doing so, however, often creates unnecessraily difficult to rationalize logic.
+Never use naked returns. Go allows return types to be specified with an identifier. The identifier is a scoped variable in the context of the function and its value can be set during program execution. Doing so, however, often creates unnecessarily difficult to rationalize logic.
 
 Use named returns only if strictly necessary for disambiguation (for example, a function that returns the same type twice). If you don't specify names for your return values you can't accidentally use naked returns. 
 
@@ -251,9 +251,9 @@ Herein lies an exception. When code is aware it is executing under a `main` func
 
 When declaring and not initializing, prefer `var`. For example, `var vehicle Vehicle`.
 
-When delcaring and initializing, use `:=`. For example, `vehicle := NewVehicle()`
+When declaring and initializing, use `:=`. For example, `vehicle := NewVehicle()`
 
-Make intent clear for complicated variable initializations (contradictory to the 2 above rules). For example `var p uint32 = 0x80` makes a statement about the type as opposed to `p := uint32(0x80)` that focus' on the value, prefer the former.
+Make intent clear for complicated variable initialization (contradictory to the 2 above rules). For example `var p uint32 = 0x80` makes a statement about the type as opposed to `p := uint32(0x80)` that focus' on the value, prefer the former.
 
 ### Line length
 
@@ -263,10 +263,10 @@ In the present day we still see 80 chars line length feature in coding standards
 
 - laptops with less than 16" wide monitors are in abundance.
 - side-by-side comparison of files is useful.
-- horrizontal scrolling is annoying.
+- horizontal scrolling is annoying.
 - some developers _need_ larger font sizes.
 
-When developing code, we ask you to take these points into consideration and not to create obnoxiously long lines. Compliment exisiting code. Configure your IDE to plot margins so it may aid your decision. A good rule of thumb is the 100 characters mark give or take 20.
+When developing code, we ask you to take these points into consideration and not to create obnoxiously long lines. Compliment existing code. Configure your IDE to plot margins so it may aid your decision. A good rule of thumb is the 100 characters mark give or take 20.
 
 ### File naming
 
