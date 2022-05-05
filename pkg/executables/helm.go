@@ -15,13 +15,10 @@ const (
 	insecureSkipVerifyFlag = "--insecure-skip-tls-verify"
 )
 
-var helmTemplateEnvVars = map[string]string{
-	"HELM_EXPERIMENTAL_OCI": "1",
-}
-
 type Helm struct {
 	executable     Executable
 	registryMirror string
+	env            map[string]string
 }
 
 type HelmOpt func(*Helm)
@@ -32,9 +29,21 @@ func WithRegistryMirror(mirror string) HelmOpt {
 	}
 }
 
+// join the default and the provided maps together
+func WithEnv(env map[string]string) HelmOpt {
+	return func(h *Helm) {
+		for k, v := range env {
+			h.env[k] = v
+		}
+	}
+}
+
 func NewHelm(executable Executable, opts ...HelmOpt) *Helm {
 	h := &Helm{
 		executable: executable,
+		env: map[string]string{
+			"HELM_EXPERIMENTAL_OCI": "1",
+		},
 	}
 
 	for _, o := range opts {
@@ -52,7 +61,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 
 	result, err := h.executable.Command(
 		ctx, "template", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
-	).WithStdIn(valuesYaml).WithEnvVars(helmTemplateEnvVars).Run()
+	).WithStdIn(valuesYaml).WithEnvVars(h.env).Run()
 	if err != nil {
 		return nil, err
 	}
@@ -62,25 +71,26 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 
 func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
 	_, err := h.executable.Command(ctx, "pull", h.url(ociURI), "--version", version, insecureSkipVerifyFlag).
-		WithEnvVars(helmTemplateEnvVars).Run()
+		WithEnvVars(h.env).Run()
 	return err
 }
 
 func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
 	logger.Info("Pushing", "chart", chart)
-	_, err := h.executable.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(helmTemplateEnvVars).Run()
+	_, err := h.executable.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(h.env).Run()
 	return err
 }
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	logger.Info("Logging in to helm registry", "registry", registry)
-	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
+	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(h.env).Run()
 	return err
 }
 
 func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) error {
+	fmt.Println(h.env)
 	_, err := h.executable.Command(ctx, "pull", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--destination", folder).
-		WithEnvVars(helmTemplateEnvVars).Run()
+		WithEnvVars(h.env).Run()
 	return err
 }
 
@@ -91,7 +101,7 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	params = append(params, "--kubeconfig", kubeconfigFilePath)
 
 	logger.Info("Installing helm chart on cluster", "chart", chart, "version", version)
-	_, err := h.executable.Command(ctx, params...).WithEnvVars(helmTemplateEnvVars).Run()
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
 }
 

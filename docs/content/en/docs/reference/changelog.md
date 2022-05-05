@@ -20,6 +20,7 @@ menu:
 
 ### Fixed
 - Fix issue with downloading artifacts [#1753](https://github.com/aws/eks-anywhere/issues/1753)
+- Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)
 
 ## [v0.8.0](https://github.com/aws/eks-anywhere/releases/tag/v0.8.0)
 ### Added
