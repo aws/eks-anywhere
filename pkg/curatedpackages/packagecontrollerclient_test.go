@@ -3,11 +3,13 @@ package curatedpackages_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -64,8 +66,37 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 	params := []string{"get", "packageBundleController", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 
-	err := tt.command.GetActiveController(tt.ctx)
+	err := tt.command.ValidateControllerExists(tt.ctx)
 	if err != nil {
-		t.Errorf("Get Active Controller should succeed when controller exists")
+		t.Errorf("Get Active Controller should succeed when controller doesn't exist")
+	}
+}
+
+func TestGetActiveControllerFail(t *testing.T) {
+	tt := newPackageControllerTest(t)
+	bundleCtrl := packagesv1.PackageBundleController{
+		Spec: packagesv1.PackageBundleControllerSpec{
+			ActiveBundle: "v1-21-1000",
+		},
+	}
+
+	params := []string{"get", "packageBundleController", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(convertJsonToBytes(bundleCtrl), nil)
+
+	err := tt.command.ValidateControllerExists(tt.ctx)
+	if err == nil {
+		t.Errorf("Get Active Controller should fail when controller exists")
+	}
+}
+
+func TestGetActiveControllerFailWhenErr(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	params := []string{"get", "packageBundleController", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("kubeconfig doesn't exist"))
+
+	err := tt.command.ValidateControllerExists(tt.ctx)
+	if err == nil {
+		t.Errorf("Get Active Controller should fail when controller exists")
 	}
 }

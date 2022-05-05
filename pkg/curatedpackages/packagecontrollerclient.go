@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
@@ -37,8 +38,14 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return pc.chartInstaller.InstallChartFromName(ctx, uri, pc.kubeConfig, pc.chartName, pc.chartVersion)
 }
 
-func (pc *PackageControllerClient) GetActiveController(ctx context.Context) error {
+func (pc *PackageControllerClient) ValidateControllerExists(ctx context.Context) error {
 	params := []string{"get", "packageBundleController", "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
-	_, err := pc.kubectl.ExecuteCommand(ctx, params...)
-	return err
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		return err
+	}
+	if len(stdOut.Bytes()) != 0 {
+		return errors.New("curated Packages Controller Exists in the current Cluster")
+	}
+	return nil
 }

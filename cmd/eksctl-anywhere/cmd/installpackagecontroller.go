@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -67,8 +66,8 @@ func installPackageController(ctx context.Context) error {
 		helmChart.Tag(),
 	)
 
-	if err = ctrlClient.GetActiveController(ctx); err == nil {
-		return errors.New("curated Packages Controller Exists in the current Cluster")
+	if err = ctrlClient.ValidateControllerExists(ctx); err != nil {
+		return err
 	}
 
 	err = ctrlClient.InstallController(ctx)
