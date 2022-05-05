@@ -66,7 +66,7 @@ func installPackageController(ctx context.Context) error {
 		helmChart.Tag(),
 	)
 
-	if err = ctrlClient.ValidateControllerExists(ctx); err != nil {
+	if err = ctrlClient.ValidateControllerDoesNotExist(ctx); err != nil {
 		return err
 	}
 

@@ -11,7 +11,7 @@ import (
 
 type PackageControllerClient struct {
 	kubeConfig     string
-	ociUri         string
+	uri            string
 	chartName      string
 	chartVersion   string
 	chartInstaller ChartInstaller
@@ -22,10 +22,10 @@ type ChartInstaller interface {
 	InstallChartFromName(ctx context.Context, ociURI, kubeConfig, name, version string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, ociUri, chartName, chartVersion string) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string) *PackageControllerClient {
 	return &PackageControllerClient{
 		kubeConfig:     kubeConfig,
-		ociUri:         ociUri,
+		uri:            uri,
 		chartName:      chartName,
 		chartVersion:   chartVersion,
 		chartInstaller: chartInstaller,
@@ -34,15 +34,14 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 }
 
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
-	uri := fmt.Sprintf("%s%s", "oci://", pc.ociUri)
-	return pc.chartInstaller.InstallChartFromName(ctx, uri, pc.kubeConfig, pc.chartName, pc.chartVersion)
+	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
+	return pc.chartInstaller.InstallChartFromName(ctx, ociUri, pc.kubeConfig, pc.chartName, pc.chartVersion)
 }
 
-func (pc *PackageControllerClient) ValidateControllerExists(ctx context.Context) error {
-	params := []string{"get", "packageBundleController", "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
-	stdOut, _ := pc.kubectl.ExecuteCommand(ctx, params...)
-	if len(stdOut.Bytes()) != 0 {
-		return errors.New("curated Packages Controller Exists in the current Cluster")
+func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Context) error {
+	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", bundle.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
+	if found {
+		return errors.New("curated Packages controller exists in the current cluster")
 	}
 	return nil
 }
