@@ -178,6 +178,9 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	if err = SetConfigDefaults(clusterConfig); err != nil {
 		return nil, err
 	}
+	if err = ValidateConfig(clusterConfig); err != nil {
+		return nil, err
+	}
 
 	bundlesManifest, err := s.GetBundles(cliVersion)
 	if err != nil {

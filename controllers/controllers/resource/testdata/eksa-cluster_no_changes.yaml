@@ -1,25 +1,25 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: test_cluster
+  name: test-cluster
 spec:
   controlPlaneConfiguration:
     count: 1
     endpoint:
       host: "198.18.40.234"
     machineGroupRef:
-      name: test_cluster
+      name: test-cluster
       kind: VSphereMachineConfig
   kubernetesVersion: "1.19"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
-        name: test_cluster
+        name: test-cluster
         kind: VSphereMachineConfig
       name: md-0
   datacenterRef:
     kind: VSphereDatacenterConfig
-    name: test_cluster
+    name: test-cluster
   clusterNetwork:
     cni: "cilium"
     pods:
@@ -33,7 +33,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   diskGiB: 25
   datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
@@ -52,7 +52,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   datacenter: SDDC-Datacenter
   network: /SDDC-Datacenter/network/sddc-cgw-network-1
