@@ -123,7 +123,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareCatalogue(ctx context.Context, catalogue hardware.Catalogue, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
+func (v *Validator) ValidateHardwareCatalogue(ctx context.Context, catalogue *hardware.Catalogue, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
 	tinkHardwareMap := getHardwareMap(hardwares)
 
 	workflows, err := v.tink.GetWorkflow(ctx)
@@ -159,7 +159,7 @@ func (v *Validator) ValidateHardwareCatalogue(ctx context.Context, catalogue har
 	return nil
 }
 
-func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, catalogue hardware.Catalogue) error {
+func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, catalogue *hardware.Catalogue) error {
 	for index, bmc := range catalogue.BMCs {
 		bmcInfo := pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
@@ -227,13 +227,7 @@ func (v *Validator) ValidateAndPopulateTemplate(ctx context.Context, datacenterC
 // ValidateMinHardwareAvailableForCreate ensures there is sufficient hardware registered relative to the
 // sum of requested control plane, etcd and worker node counts.
 // The system requires hardware >= to requested provisioning.
-// ValidateMinHardwareAvailableForCreate requires v.ValidateHardwareConfig() to be called first.
-func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterSpec, catalogue hardware.Catalogue) error {
-	// ValidateMinHardwareAvailableForCreate relies on v.hardwareConfig being valid. A call to
-	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
-	// prior to calling ValidateMinHardwareAvailableForCreate. We should decouple validation including
-	// isolation of io in the parsing of hardware config.
-
+func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
 	requestedNodesCount := spec.ControlPlaneConfiguration.Count +
 		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations)
 
@@ -285,8 +279,8 @@ func (v *Validator) ValidateMinHardwareAvailableForUpgrade(spec v1alpha1.Cluster
 }
 
 // ValidateMachinesPoweredOff validates the hardware submitted for provisioning is powered off.
-func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context, catalogue hardware.Catalogue) error {
-	secrets := make(map[string]corev1.Secret)
+func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context, catalogue *hardware.Catalogue) error {
+	secrets := make(map[string]*corev1.Secret)
 	for _, s := range catalogue.Secrets {
 		secrets[s.Name] = s
 	}
