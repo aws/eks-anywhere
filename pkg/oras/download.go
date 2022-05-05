@@ -54,7 +54,7 @@ func writeToFile(dir string, packageName string, content []byte) error {
 func ReadFilesFromBundles(bundles *releasev1.Bundles) []string {
 	var files []string
 	for _, vb := range bundles.Spec.VersionsBundles {
-		files = append(files, curatedpackages.GetPackageBundle(vb))
+		files = append(files, curatedpackages.GetPackageBundleRef(vb))
 	}
 	return files
 }
