@@ -36,6 +36,11 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		}
 	}
 
+	err := e.setUpSshAgent(e.testEnvVars[config.EksaGitPrivateKeyTokenEnv])
+	if err != nil {
+		return fmt.Errorf("setting up ssh agent on remote instance: %v", err)
+	}
+
 	return nil
 }
 
@@ -62,6 +67,17 @@ func (e *E2ESession) downloadFileInInstance(file s3Files) error {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
 	logger.V(1).Info("Successfully downloaded file", "file", file.key)
+
+	return nil
+}
+
+func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
+	command := fmt.Sprintf("`eval ssh-agent` && ssh-add %s", privateKeyFile)
+
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+		return fmt.Errorf("starting SSH agent on instance: %v", err)
+	}
+	logger.V(1).Info("Successfully started SSH agent on instance")
 
 	return nil
 }
