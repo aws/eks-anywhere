@@ -2,7 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   diskGiB: 25
   datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
