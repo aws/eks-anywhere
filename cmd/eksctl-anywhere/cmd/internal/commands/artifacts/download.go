@@ -24,7 +24,7 @@ type ChartDownloader interface {
 	Download(ctx context.Context, artifacts ...string) error
 }
 
-type BundleDownloader interface {
+type ManifestDownloader interface {
 	SaveManifests(ctx context.Context, bundles *releasev1.Bundles)
 }
 
@@ -41,9 +41,12 @@ type Download struct {
 	Packager                 Packager
 	TmpDowloadFolder         string
 	DstFile                  string
-	BundlePuller             BundleDownloader
-	IncludePackages          bool
+	ManifestDownloader       ManifestDownloader
 }
+
+type Noop struct{}
+
+func (*Noop) SaveManifests(ctx context.Context, bundles *releasev1.Bundles) {}
 
 func (d Download) Run(ctx context.Context) error {
 	if err := os.MkdirAll(d.TmpDowloadFolder, os.ModePerm); err != nil {
@@ -70,9 +73,7 @@ func (d Download) Run(ctx context.Context) error {
 
 	charts := d.Reader.ReadChartsFromBundles(ctx, b)
 
-	if d.IncludePackages {
-		d.BundlePuller.SaveManifests(ctx, b)
-	}
+	d.ManifestDownloader.SaveManifests(ctx, b)
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err

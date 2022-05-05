@@ -86,7 +86,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 			Version:                  version.Info{GitVersion: "v1.0.0"},
 			TmpDowloadFolder:         downloadFolder,
 			DstFile:                  "artifacts.tar",
-			BundlePuller:             bundlePuller,
+			ManifestDownloader:       bundlePuller,
 		},
 		bundles: &releasev1.Bundles{
 			Spec: releasev1.BundlesSpec{

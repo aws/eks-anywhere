@@ -83,13 +83,12 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
-		ChartDownloader:  helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
-		Version:          version.Get(),
-		TmpDowloadFolder: downloadFolder,
-		DstFile:          c.outputFile,
-		Packager:         packagerForFile(c.outputFile),
-		BundlePuller:     oras.NewBundleDownloader(downloadFolder),
-		IncludePackages:  c.includePackages,
+		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
+		Version:            version.Get(),
+		TmpDowloadFolder:   downloadFolder,
+		DstFile:            c.outputFile,
+		Packager:           packagerForFile(c.outputFile),
+		ManifestDownloader: fetchManifestDownloader(downloadFolder, c.includePackages),
 	}
 
 	return downloadArtifacts.Run(ctx)
@@ -113,4 +112,11 @@ func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reade
 		return curatedpackages.NewPackageReader(reader)
 	}
 	return reader
+}
+
+func fetchManifestDownloader(downloadFolder string, includePackages bool) artifacts.ManifestDownloader {
+	if includePackages {
+		return oras.NewBundleDownloader(downloadFolder)
+	}
+	return &artifacts.Noop{}
 }
