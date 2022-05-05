@@ -44,12 +44,12 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 		{
 			key:        "git-flux/known_hosts",
 			dstPath:    envVars[config.EksaGitKnownHostsFileEnv],
-			permission: 600,
+			permission: 644,
 		},
 		{
 			key:        "git-flux/private-key",
 			dstPath:    envVars[config.EksaGitPrivateKeyTokenEnv],
-			permission: 600,
+			permission: 644,
 		},
 	}
 }
