@@ -1,24 +1,24 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: test_cluster
+  name: test-cluster
 spec:
   controlPlaneConfiguration:
     count: 1
     endpoint:
       host: "198.18.40.234"
     machineGroupRef:
-      name: test_cluster
+      name: test-cluster
       kind: CloudStackMachineConfig
   kubernetesVersion: "1.20"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
-        name: test_cluster
+        name: test-cluster
         kind: CloudStackMachineConfig
   datacenterRef:
     kind: CloudStackDatacenterConfig
-    name: test_cluster
+    name: test-cluster
   clusterNetwork:
     cni: "cilium"
     pods:
@@ -32,7 +32,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   computeoffering:
     name: large
@@ -49,7 +49,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackDatacenterConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   domain: domain1
   account: account1
