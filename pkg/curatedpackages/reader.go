@@ -34,7 +34,6 @@ func (r *PackageReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Relea
 
 func (r *PackageReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
 	return r.ManifestReader.ReadImages(eksaVersion)
-	return images, err
 }
 
 func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
@@ -46,8 +45,7 @@ func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1
 }
 
 func (r *PackageReader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
-	images, err := r.ManifestReader.ReadCharts(eksaVersion)
-	return images, err
+	return r.ManifestReader.ReadCharts(eksaVersion)
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
