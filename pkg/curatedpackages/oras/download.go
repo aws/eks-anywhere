@@ -21,7 +21,7 @@ func NewBundleDownloader(dstFolder string) *BundleDownloader {
 	}
 }
 
-func (bd *BundleDownloader) SaveManifests(ctx context.Context, bundles *releasev1.Bundles) {
+func (bd *BundleDownloader) Download(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
 		data, err := curatedpackages.Pull(ctx, a)

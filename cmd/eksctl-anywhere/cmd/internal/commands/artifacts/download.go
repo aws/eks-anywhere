@@ -44,10 +44,6 @@ type Download struct {
 	ManifestDownloader       ManifestDownloader
 }
 
-type Noop struct{}
-
-func (*Noop) SaveManifests(ctx context.Context, bundles *releasev1.Bundles) {}
-
 func (d Download) Run(ctx context.Context) error {
 	if err := os.MkdirAll(d.TmpDowloadFolder, os.ModePerm); err != nil {
 		return fmt.Errorf("creating tmp artifact download folder: %v", err)
@@ -73,7 +69,7 @@ func (d Download) Run(ctx context.Context) error {
 
 	charts := d.Reader.ReadChartsFromBundles(ctx, b)
 
-	d.ManifestDownloader.SaveManifests(ctx, b)
+	d.ManifestDownloader.Download(ctx, b)
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err

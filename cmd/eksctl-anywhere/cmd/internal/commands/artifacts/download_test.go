@@ -114,7 +114,7 @@ func TestDownloadRun(t *testing.T) {
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 	tt.packager.EXPECT().Package("tmp-folder", "artifacts.tar")
-	tt.manifestDownloader.EXPECT().SaveManifests(tt.ctx, tt.bundles)
+	tt.manifestDownloader.EXPECT().Download(tt.ctx, tt.bundles)
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(Succeed())
 }
