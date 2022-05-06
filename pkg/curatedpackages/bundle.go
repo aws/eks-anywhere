@@ -122,7 +122,7 @@ func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1
 	return nil
 }
 
-func GetPackageBundleRef(vb releasev1.VersionsBundle) string {
+func GetPackageBundleRef(vb releasev1.VersionsBundle) (string, error) {
 	packageController := vb.PackageController
 	// Use package controller registry to fetch packageBundles.
 	// Format of controller image is: <uri>/<env_type>/<repository_name>
@@ -130,9 +130,9 @@ func GetPackageBundleRef(vb releasev1.VersionsBundle) string {
 	major, minor, err := parseKubeVersion(vb.KubeVersion)
 	if err != nil {
 		logger.MarkFail("unable to parse kubeversion", "error", err)
-		return ""
+		return "", fmt.Errorf("unable to parse kubeversion %s %v", vb.KubeVersion, err)
 	}
 	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
 	registryBaseRef := fmt.Sprintf("%s/%s/%s:%s", controllerImage[0], controllerImage[1], "eks-anywhere-packages-bundles", latestBundle)
-	return registryBaseRef
+	return registryBaseRef, nil
 }

@@ -14,29 +14,29 @@ import (
 )
 
 type PackageReader struct {
-	ManifestReader *manifests.Reader
+	*manifests.Reader
 }
 
 func NewPackageReader(mr *manifests.Reader) *PackageReader {
 	return &PackageReader{
-		ManifestReader: mr,
+		Reader: mr,
 	}
 }
 
 func (r *PackageReader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
-	return r.ManifestReader.ReadBundlesForVersion(version)
+	return r.ReadBundlesForVersion(version)
 }
 
 func (r *PackageReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Release, error) {
-	return r.ManifestReader.ReadEKSD(eksaVersion, kubeVersion)
+	return r.ReadEKSD(eksaVersion, kubeVersion)
 }
 
 func (r *PackageReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
-	return r.ManifestReader.ReadImages(eksaVersion)
+	return r.ReadImages(eksaVersion)
 }
 
 func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.ManifestReader.ReadImagesFromBundles(b)
+	images, err := r.ReadImagesFromBundles(b)
 	for _, v := range b.Spec.VersionsBundles {
 		images = append(images, v.PackageControllerImage()...)
 	}
@@ -44,13 +44,17 @@ func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1
 }
 
 func (r *PackageReader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
-	return r.ManifestReader.ReadCharts(eksaVersion)
+	return r.ReadCharts(eksaVersion)
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
-	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
+	images := r.ReadChartsFromBundles(ctx, b)
 	for _, vb := range b.Spec.VersionsBundles {
-		artifact := GetPackageBundleRef(vb)
+		artifact, err := GetPackageBundleRef(vb)
+		if err != nil {
+			logger.MarkFail("error getting bundle ref", "error", err)
+			continue
+		}
 		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
 			logger.MarkFail("error finding packages for artifact", artifact, "error", err)

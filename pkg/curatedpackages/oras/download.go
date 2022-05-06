@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -64,7 +65,12 @@ func writeToFile(dir string, packageName string, content []byte) error {
 func ReadFilesFromBundles(bundles *releasev1.Bundles) []string {
 	var files []string
 	for _, vb := range bundles.Spec.VersionsBundles {
-		files = append(files, curatedpackages.GetPackageBundleRef(vb))
+		file, err := curatedpackages.GetPackageBundleRef(vb)
+		if err != nil {
+			logger.MarkFail("error parsing package bundle reference", "error", err)
+			continue
+		}
+		files = append(files, file)
 	}
 	return files
 }
