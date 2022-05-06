@@ -24,8 +24,7 @@ const (
 (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
 the AWS Service Terms are extended to provide customers access to these features free of charge.
 These features will be subject to a service charge and fee structure at ”General Availability“ of the features.`
-	width     = 112
-	mediaType = "application/vnd.oci.image.manifest.v1+json"
+	width = 112
 )
 
 func NewRegistry(deps *dependencies.Dependencies, registryName, kubeVersion, username, password string) (BundleRegistry, error) {
@@ -124,7 +123,7 @@ func Push(ctx context.Context, ref, fileName string, fileContent []byte) error {
 		return fmt.Errorf("creating registry: %w", err)
 	}
 	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add(fileName, mediaType, fileContent)
+	desc, err := memoryStore.Add(fileName, "", fileContent)
 	if err != nil {
 		return err
 	}
