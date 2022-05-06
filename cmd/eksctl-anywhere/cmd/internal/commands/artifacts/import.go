@@ -37,11 +37,11 @@ func (i Import) Run(ctx context.Context) error {
 
 	charts := i.Reader.ReadChartsFromBundles(ctx, i.Bundles)
 
-	i.FileImporter.Push(ctx, i.Bundles)
-
 	if err := i.ChartImporter.Import(ctx, artifactNames(charts)...); err != nil {
 		return err
 	}
+
+	i.FileImporter.Push(ctx, i.Bundles)
 
 	if err := os.RemoveAll(i.TmpArtifactsFolder); err != nil {
 		return fmt.Errorf("deleting tmp artifact import folder: %v", err)
