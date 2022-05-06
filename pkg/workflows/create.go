@@ -68,6 +68,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 	}
 
 	if packagesLocation != "" {
+		curatedpackages.PrintLicense()
 		err = installCuratedPackages(ctx, clusterSpec, packagesLocation)
 	}
 	return err

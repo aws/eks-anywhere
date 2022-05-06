@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
@@ -39,7 +40,7 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 func getResources(ctx context.Context, resourceType string, output string, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	deps, err := newDependenciesForPackages(ctx)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -56,9 +57,9 @@ func getResources(ctx context.Context, resourceType string, output string, args 
 		return fmt.Errorf("kubectl execution failure: \n%v", err)
 	}
 	if len(stdOut.Bytes()) == 0 {
-		fmt.Printf("No resources found in %v namespace", constants.EksaPackagesName)
+		fmt.Printf("No resources found in %v namespace\n", constants.EksaPackagesName)
 		return nil
 	}
-	fmt.Println(&stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }

@@ -47,7 +47,7 @@ func runInstallPackageController(cmd *cobra.Command, args []string) error {
 func installPackageController(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	deps, err := newDependenciesForPackages(ctx, kubeConfig)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
