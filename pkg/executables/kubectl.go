@@ -690,14 +690,14 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (k *Kubectl) RestartCiliumDaemonset(ctx context.Context, kubeconfig string) error {
+func (k *Kubectl) DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
 	params := []string{
-		"rollout", "restart", "ds", "cilium",
-		"--kubeconfig", kubeconfig, "--namespace", constants.KubeSystemNamespace,
+		"rollout", "restart", "ds", dsName,
+		"--kubeconfig", kubeconfig, "--namespace", dsNamespace,
 	}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("restarting cilium daemonset: %v", err)
+		return fmt.Errorf("restarting %s daemonset in namespace %s: %v", dsName, dsNamespace, err)
 	}
 	return nil
 }

@@ -99,6 +99,20 @@ func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
+// DaemonSetRolloutRestart mocks base method.
+func (m *MockClusterClient) DaemonSetRolloutRestart(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DaemonSetRolloutRestart", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DaemonSetRolloutRestart indicates an expected call of DaemonSetRolloutRestart.
+func (mr *MockClusterClientMockRecorder) DaemonSetRolloutRestart(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DaemonSetRolloutRestart", reflect.TypeOf((*MockClusterClient)(nil).DaemonSetRolloutRestart), arg0, arg1, arg2, arg3)
+}
+
 // DeleteAWSIamConfig mocks base method.
 func (m *MockClusterClient) DeleteAWSIamConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -497,20 +511,6 @@ func (m *MockClusterClient) RemoveAnnotationInNamespace(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) RemoveAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).RemoveAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
-}
-
-// RestartCiliumDaemonset mocks base method.
-func (m *MockClusterClient) RestartCiliumDaemonset(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RestartCiliumDaemonset", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RestartCiliumDaemonset indicates an expected call of RestartCiliumDaemonset.
-func (mr *MockClusterClientMockRecorder) RestartCiliumDaemonset(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartCiliumDaemonset", reflect.TypeOf((*MockClusterClient)(nil).RestartCiliumDaemonset), arg0, arg1)
 }
 
 // SaveLog mocks base method.
