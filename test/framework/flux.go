@@ -61,7 +61,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 				api.WithStringFromEnvVarGenericGitProviderConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
 			api.WithSystemNamespace("default"),
-			api.WithClusterConfigPath("path2"),
+			api.WithClusterConfigPath(e.ClusterName),
 			api.WithBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
