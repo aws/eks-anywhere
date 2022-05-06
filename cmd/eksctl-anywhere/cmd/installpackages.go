@@ -94,6 +94,8 @@ func installPackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	curatedpackages.PrintLicense()
 	err = packages.InstallPackage(ctx, p, ipo.packageName, kubeConfig)
 	if err != nil {
 		return err
