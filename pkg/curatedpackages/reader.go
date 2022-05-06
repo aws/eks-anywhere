@@ -35,12 +35,12 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
-			logger.MarkFail("error getting bundle ref", "error", err)
+			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
 		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
-			logger.MarkFail("error finding packages for artifact", artifact, "error", err)
+			logger.MarkFail("Warning: Failed extracting packages", "error", err)
 			continue
 		}
 		images = append(images, packages...)

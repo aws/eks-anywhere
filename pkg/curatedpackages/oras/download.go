@@ -67,7 +67,7 @@ func ReadFilesFromBundles(bundles *releasev1.Bundles) []string {
 	for _, vb := range bundles.Spec.VersionsBundles {
 		file, err := curatedpackages.GetPackageBundleRef(vb)
 		if err != nil {
-			logger.MarkFail("error parsing package bundle reference", "error", err)
+			logger.Info("Warning: Failed parsing package bundle reference", "error", err)
 			continue
 		}
 		files = append(files, file)
