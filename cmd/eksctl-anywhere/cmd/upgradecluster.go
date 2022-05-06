@@ -58,6 +58,8 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+	upgradeClusterCmd.Flags().StringSliceVar(&uc.hostPathsToMount, "host-paths-to-mount", []string{}, "Host paths to be mounted")
+
 	err := upgradeClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)

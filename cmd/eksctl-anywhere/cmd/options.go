@@ -12,10 +12,12 @@ type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string
 	managementKubeconfig string
+	hostPathsToMount     []string
 }
 
 func (c clusterOptions) mountDirs() []string {
 	var dirs []string
+	dirs = append(dirs, c.hostPathsToMount...)
 	if c.managementKubeconfig != "" {
 		dirs = append(dirs, filepath.Dir(c.managementKubeconfig))
 	}

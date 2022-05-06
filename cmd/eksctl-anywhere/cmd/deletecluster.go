@@ -61,6 +61,7 @@ func init() {
 	deleteClusterCmd.Flags().BoolVar(&dc.forceCleanup, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	deleteClusterCmd.Flags().StringVar(&dc.managementKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
 	deleteClusterCmd.Flags().StringVar(&dc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	deleteClusterCmd.Flags().StringSliceVar(&dc.hostPathsToMount, "host-paths-to-mount", []string{}, "Host paths to be mounted")
 }
 
 func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) error {
