@@ -25,8 +25,6 @@ type FileImporter interface {
 	Push(ctx context.Context, bundles *releasev1.Bundles)
 }
 
-func (*Noop) Push(ctx context.Context, bundles *releasev1.Bundles) {}
-
 func (i Import) Run(ctx context.Context) error {
 	images, err := i.Reader.ReadImagesFromBundles(i.Bundles)
 	if err != nil {
