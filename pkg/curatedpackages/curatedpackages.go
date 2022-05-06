@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"oras.land/oras-go/pkg/content"
+	"oras.land/oras-go/pkg/oras"
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
@@ -113,4 +115,34 @@ func Pull(ctx context.Context, art string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func Push(ctx context.Context, art, ref, fileName string, fileContent []byte) error {
+	registry, err := content.NewRegistry(content.RegistryOptions{})
+	if err != nil {
+		return fmt.Errorf("creating registry: %w", err)
+	}
+	memoryStore := content.NewMemory()
+	desc, err := memoryStore.Add(fileName, "", fileContent)
+	if err != nil {
+		return err
+	}
+
+	manifest, manifestDesc, config, configDesc, err := content.GenerateManifestAndConfig(nil, nil, desc)
+	if err != nil {
+		return err
+	}
+
+	memoryStore.Set(configDesc, config)
+	err = memoryStore.StoreManifest(ref, manifestDesc, manifest)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Pushing %s to %s...\n", fileName, ref)
+	desc, err = oras.Copy(ctx, memoryStore, ref, registry, "")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Pushed to %s with digest %s\n", ref, desc.Digest)
+	return nil
 }
