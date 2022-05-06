@@ -373,20 +373,6 @@ func (mr *MockProviderKubectlClientMockRecorder) LoadSecret(arg0, arg1, arg2, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).LoadSecret), arg0, arg1, arg2, arg3, arg4)
 }
 
-// RestartCiliumDaemonset mocks base method.
-func (m *MockProviderKubectlClient) RestartCiliumDaemonset(arg0 context.Context, arg1 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RestartCiliumDaemonset", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RestartCiliumDaemonset indicates an expected call of RestartCiliumDaemonset.
-func (mr *MockProviderKubectlClientMockRecorder) RestartCiliumDaemonset(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartCiliumDaemonset", reflect.TypeOf((*MockProviderKubectlClient)(nil).RestartCiliumDaemonset), arg0, arg1)
-}
-
 // SearchCloudStackDatacenterConfig mocks base method.
 func (m *MockProviderKubectlClient) SearchCloudStackDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
 	m.ctrl.T.Helper()

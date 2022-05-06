@@ -499,6 +499,20 @@ func (mr *MockClusterClientMockRecorder) RemoveAnnotationInNamespace(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).RemoveAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// RestartCiliumDaemonset mocks base method.
+func (m *MockClusterClient) RestartCiliumDaemonset(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RestartCiliumDaemonset", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RestartCiliumDaemonset indicates an expected call of RestartCiliumDaemonset.
+func (mr *MockClusterClientMockRecorder) RestartCiliumDaemonset(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RestartCiliumDaemonset", reflect.TypeOf((*MockClusterClient)(nil).RestartCiliumDaemonset), arg0, arg1)
+}
+
 // SaveLog mocks base method.
 func (m *MockClusterClient) SaveLog(arg0 context.Context, arg1 *types.Cluster, arg2 *types.Deployment, arg3 string, arg4 filewriter.FileWriter) error {
 	m.ctrl.T.Helper()
