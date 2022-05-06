@@ -17,16 +17,16 @@ import (
 
 type downloadArtifactsTest struct {
 	*WithT
-	ctx             context.Context
-	reader          *mocks.MockReader
-	mover           *mocks.MockImageMover
-	downloader      *mocks.MockChartDownloader
-	toolsDownloader *mocks.MockImageMover
-	packager        *mocks.MockPackager
-	command         *artifacts.Download
-	images, charts  []releasev1.Image
-	bundles         *releasev1.Bundles
-	bundlePuller    *mocks.MockManifestDownloader
+	ctx                context.Context
+	reader             *mocks.MockReader
+	mover              *mocks.MockImageMover
+	downloader         *mocks.MockChartDownloader
+	toolsDownloader    *mocks.MockImageMover
+	packager           *mocks.MockPackager
+	command            *artifacts.Download
+	images, charts     []releasev1.Image
+	bundles            *releasev1.Bundles
+	manifestDownloader *mocks.MockManifestDownloader
 }
 
 func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
@@ -101,7 +101,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 				},
 			},
 		},
-		bundlePuller: bundlePuller,
+		manifestDownloader: bundlePuller,
 	}
 }
 
@@ -114,7 +114,7 @@ func TestDownloadRun(t *testing.T) {
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 	tt.packager.EXPECT().Package("tmp-folder", "artifacts.tar")
-	tt.bundlePuller.EXPECT().SaveManifests(tt.ctx, tt.bundles)
+	tt.manifestDownloader.EXPECT().SaveManifests(tt.ctx, tt.bundles)
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(Succeed())
 }
