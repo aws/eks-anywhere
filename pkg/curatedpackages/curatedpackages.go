@@ -19,12 +19,13 @@ import (
 )
 
 const (
-	LICENSE = `The EKS Anywhere package controller and the EKS Anywhere Curated Packages
+	license = `The EKS Anywhere package controller and the EKS Anywhere Curated Packages
 (referred to as “features”) are provided as “preview features” subject to the AWS Service Terms,
 (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
 the AWS Service Terms are extended to provide customers access to these features free of charge.
 These features will be subject to a service charge and fee structure at ”General Availability“ of the features.`
-	WIDTH = 112
+	width     = 112
+	mediaType = "application/vnd.oci.image.manifest.v1+json"
 )
 
 func NewRegistry(deps *dependencies.Dependencies, registryName, kubeVersion, username, password string) (BundleRegistry, error) {
@@ -98,9 +99,9 @@ func PrintLicense() {
 	//the AWS Service Terms are extended to provide customers access to these features free of charge.
 	//These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
 	//----------------------------------------------------------------------------------------------------------------
-	fmt.Println(strings.Repeat("-", WIDTH))
-	fmt.Println(LICENSE)
-	fmt.Println(strings.Repeat("-", WIDTH))
+	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(license)
+	fmt.Println(strings.Repeat("-", width))
 }
 
 func Pull(ctx context.Context, art string) ([]byte, error) {
@@ -117,13 +118,13 @@ func Pull(ctx context.Context, art string) ([]byte, error) {
 	return data, nil
 }
 
-func Push(ctx context.Context, art, ref, fileName string, fileContent []byte) error {
+func Push(ctx context.Context, ref, fileName string, fileContent []byte) error {
 	registry, err := content.NewRegistry(content.RegistryOptions{})
 	if err != nil {
 		return fmt.Errorf("creating registry: %w", err)
 	}
 	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add(fileName, "", fileContent)
+	desc, err := memoryStore.Add(fileName, mediaType, fileContent)
 	if err != nil {
 		return err
 	}
