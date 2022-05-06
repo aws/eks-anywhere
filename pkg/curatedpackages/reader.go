@@ -8,6 +8,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -52,7 +53,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 		artifact := GetPackageBundleRef(vb)
 		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
-			fmt.Printf("error finding packages for artifact %s: %v \n", artifact, err)
+			logger.MarkFail("error finding packages for artifact", artifact, "error", err)
 			continue
 		}
 		images = append(images, packages...)
