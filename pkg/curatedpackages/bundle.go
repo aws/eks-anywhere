@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"strings"
 
 	"sigs.k8s.io/yaml"
