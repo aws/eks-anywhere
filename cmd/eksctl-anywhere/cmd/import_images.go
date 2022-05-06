@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/oras"
 	"log"
 	"path/filepath"
@@ -62,6 +64,10 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
+	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
+		return fmt.Errorf("curated packages installation is not supported in this release")
+	}
+
 	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
