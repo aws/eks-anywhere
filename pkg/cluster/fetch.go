@@ -16,19 +16,37 @@ type BundlesFetch func(ctx context.Context, name, namespace string) (*v1alpha1re
 
 type GitOpsFetch func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error)
 
+type FluxConfigFetch func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error)
+
 type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error)
 
 type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
 
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, oidcFetch OIDCFetch) (*Spec, error) {
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
 	}
-	gitOpsConfig, err := GetGitOpsForCluster(ctx, cluster, gitOpsFetch)
-	if err != nil {
-		return nil, err
+
+	var fluxConfig *v1alpha1.FluxConfig
+	var gitOpsConfig *v1alpha1.GitOpsConfig
+	if cluster.Spec.GitOpsRef != nil {
+		if cluster.Spec.GitOpsRef.Kind == v1alpha1.FluxConfigKind {
+			fluxConfig, err = GetFluxConfigForCluster(ctx, cluster, fluxConfigFetch)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if cluster.Spec.GitOpsRef.Kind == v1alpha1.GitOpsConfigKind {
+			gitOpsConfig, err = GetGitOpsForCluster(ctx, cluster, gitOpsFetch)
+			if err != nil {
+				return nil, err
+			}
+			fluxConfig = gitOpsConfig.ConvertToFluxConfig()
+		}
 	}
+
 	eksd, err := GetEksdReleaseForCluster(ctx, cluster, bundles, eksdReleaseFetch)
 	if err != nil {
 		return nil, err
@@ -37,7 +55,7 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
+	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithFluxConfig(fluxConfig), WithOIDCConfig(oidcConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -47,6 +65,18 @@ func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch 
 	}
 
 	return bundles, nil
+}
+
+func GetFluxConfigForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch FluxConfigFetch) (*v1alpha1.FluxConfig, error) {
+	if fetch == nil || cluster.Spec.GitOpsRef == nil {
+		return nil, nil
+	}
+	fluxConfig, err := fetch(ctx, cluster.Spec.GitOpsRef.Name, cluster.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("fetching FluxCOnfig for cluster: %v", err)
+	}
+
+	return fluxConfig, nil
 }
 
 func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch GitOpsFetch) (*v1alpha1.GitOpsConfig, error) {
@@ -62,9 +92,6 @@ func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch G
 }
 
 func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles *v1alpha1release.Bundles, fetch EksdReleaseFetch) (*eksdv1alpha1.Release, error) {
-	if !cluster.IsSelfManaged() { // We do not apply the EKS-D objects to the managed clusters, so the EKS-D release manifest will be retrieved from the URL in the bundle
-		return nil, nil
-	}
 	versionsBundle, err := GetVersionsBundle(cluster, bundles)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching versions bundle: %v", err)

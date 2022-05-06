@@ -217,7 +217,8 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 					},
 					APIServer: bootstrapv1.APIServer{
 						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+							ExtraArgs:    map[string]string{},
+							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
@@ -244,14 +245,6 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-func wantRegistryMirrorCommands() []string {
-	return []string{
-		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
-		"sudo systemctl daemon-reload",
-		"sudo systemctl restart containerd",
-	}
-}
-
 // TODO: add unstacked etcd test
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
@@ -259,82 +252,6 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 	want := wantKubeadmControlPlane()
 	tt.Expect(got).To(Equal(want))
-}
-
-var registryMirrorTests = []struct {
-	name                 string
-	registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
-	wantFiles            []bootstrapv1.File
-}{
-	{
-		name: "with ca cert",
-		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-			Endpoint:      "1.2.3.4",
-			Port:          "443",
-			CACertContent: "xyz",
-		},
-		wantFiles: []bootstrapv1.File{
-			{
-				Path:  "/etc/containerd/config_append.toml",
-				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
-			},
-			{
-				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
-				Owner:   "root:root",
-				Content: "xyz",
-			},
-		},
-	},
-	{
-		name: "with insecure skip",
-		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-			Endpoint:           "1.2.3.4",
-			Port:               "443",
-			InsecureSkipVerify: true,
-		},
-		wantFiles: []bootstrapv1.File{
-			{
-				Path:  "/etc/containerd/config_append.toml",
-				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    insecure_skip_verify = true`,
-			},
-		},
-	},
-	{
-		name: "with ca cert and insecure skip",
-		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-			Endpoint:           "1.2.3.4",
-			Port:               "443",
-			CACertContent:      "xyz",
-			InsecureSkipVerify: true,
-		},
-		wantFiles: []bootstrapv1.File{
-			{
-				Path:  "/etc/containerd/config_append.toml",
-				Owner: "root:root",
-				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
-    insecure_skip_verify = true`,
-			},
-			{
-				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
-				Owner:   "root:root",
-				Content: "xyz",
-			},
-		},
-	},
 }
 
 func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {

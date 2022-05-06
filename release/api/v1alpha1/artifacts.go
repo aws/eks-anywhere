@@ -48,6 +48,10 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
+		"packages": {
+			&vb.PackageController.HelmChart.URI,
+			&vb.PackageController.Controller.URI,
+		},
 		"kindnetd": {
 			&vb.Kindnetd.Manifest.URI,
 		},
@@ -136,6 +140,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.ExternalEtcdController.Controller,
 		vb.ExternalEtcdController.KubeProxy,
 		vb.Haproxy.Image,
+		vb.PackageController.Controller,
 	}
 }
 
@@ -163,9 +168,7 @@ func (vb *VersionsBundle) Images() []Image {
 
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
-		"cilium": &vb.Cilium.HelmChart,
-		// Temporarily disabling this chart until we fix the error
-		// when pushing it to harbor
-		//"eks-anywhere-packages": &vb.PackageController.HelmChart,
+		"cilium":                &vb.Cilium.HelmChart,
+		"eks-anywhere-packages": &vb.PackageController.HelmChart,
 	}
 }

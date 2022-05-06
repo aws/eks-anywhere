@@ -67,7 +67,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
 				sourceS3Key = fmt.Sprintf("%s.%s", osName, imageExtensions[imageFormat])
-				sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, imageFormat, latestPath)
+				sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, imageFormat, osName, latestPath)
 			} else {
 				sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.%s",
 					osName,

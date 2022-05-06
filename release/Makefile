@@ -112,6 +112,13 @@ bin/golangci-lint:
 unit-test: ## Run go test against code.
 	$(GO) test -count=1 ./...
 
+make update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
+	$(GO) test -count=1 ./pkg -update
+	$(eval DIFF_LINE_COUNT=$(shell git diff pkg/test/testdata | wc -l))
+	@if [[ $(DIFF_LINE_COUNT) != 0 ]]; then \
+		printf "\n\033[33mWarning:\033[0m Testdata files have been updated! Ensure that these changes were intentional.\n"; \
+	fi
+
 run: manifests generate fmt vet ## Run a controller from your host.
 	$(GO) run ./main.go
 

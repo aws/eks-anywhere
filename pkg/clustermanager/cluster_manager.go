@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -64,6 +66,7 @@ type ClusterClient interface {
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
 	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
@@ -204,7 +207,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("generating capi spec: %v", err)
 	}
@@ -829,11 +832,14 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
+	fullLifecycleAPI := features.IsActive(features.FullLifecycleAPI())
+	if fullLifecycleAPI {
+		err := c.clusterClient.SetEksaControllerEnvVar(ctx, features.FullLifecycleAPIEnvVar, strconv.FormatBool(fullLifecycleAPI), cluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+	}
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
-}
-
-func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installEksdComponents(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
@@ -853,9 +859,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	logger.V(4).Info("Applying eksa yaml resources to cluster")
 	logger.V(6).Info(string(resourcesSpec))
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
-		return err
-	}
-	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
@@ -973,7 +976,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -991,6 +994,12 @@ func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.Eksd
 func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
 		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
+func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
+		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 

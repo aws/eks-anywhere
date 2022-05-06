@@ -112,7 +112,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			Kind:       kubeadmControlPlaneKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterSpec.Cluster.GetName(),
+			Name:      KubeadmControlPlaneName(clusterSpec),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
@@ -135,7 +135,8 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 					Etcd: etcd,
 					APIServer: bootstrapv1.APIServer{
 						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+							ExtraArgs:    map[string]string{},
+							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
@@ -161,14 +162,12 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 	}
 
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
-		}
-		kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
-		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, containerdCommands...)
+	if err := SetRegistryMirrorInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+		return nil, err
 	}
+
+	SetIdentityAuthInKubeadmControlPlane(kcp, clusterSpec)
+
 	return kcp, nil
 }
 
@@ -207,14 +206,11 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			},
 		},
 	}
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
-		}
-		kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
-		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, containerdCommands...)
+
+	if err := SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+		return nil, err
 	}
+
 	return kct, nil
 }
 
@@ -229,7 +225,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workerNodeGroupConfig.Name,
+			Name:      MachineDeploymentName(workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    clusterLabels(clusterName),
 		},

@@ -61,10 +61,13 @@ type ClusterE2ETest struct {
 	ProviderConfigB        []byte
 	clusterFillers         []api.ClusterFiller
 	KubectlClient          *executables.Kubectl
-	GitProvider            git.Provider
+	GitProvider            git.ProviderClient
+	GitClient              git.Client
+	HelmInstallConfig      *HelmInstallConfig
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig
+	FluxConfig             *v1alpha1.FluxConfig
 	ProxyConfig            *v1alpha1.ProxyConfiguration
 	AWSIamConfig           *v1alpha1.AWSIamConfig
 	eksaBinaryLocation     string
@@ -440,23 +443,30 @@ func (e *ClusterE2ETest) generateClusterConfig() []byte {
 	if e.OIDCConfig != nil {
 		oidcConfigB, err := yaml.Marshal(e.OIDCConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling oidc config: %v", err)
+			e.T.Fatalf("marshalling oidc config: %v", err)
 		}
 		yamlB = append(yamlB, oidcConfigB)
 	}
 	if e.AWSIamConfig != nil {
 		awsIamConfigB, err := yaml.Marshal(e.AWSIamConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling aws iam config: %v", err)
+			e.T.Fatalf("marshalling aws iam config: %v", err)
 		}
 		yamlB = append(yamlB, awsIamConfigB)
 	}
 	if e.GitOpsConfig != nil {
 		gitOpsConfigB, err := yaml.Marshal(e.GitOpsConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling gitops config: %v", err)
+			e.T.Fatalf("marshalling gitops config: %v", err)
 		}
 		yamlB = append(yamlB, gitOpsConfigB)
+	}
+	if e.FluxConfig != nil {
+		fluxConfigB, err := yaml.Marshal(e.FluxConfig)
+		if err != nil {
+			e.T.Fatalf("marshalling gitops config: %v", err)
+		}
+		yamlB = append(yamlB, fluxConfigB)
 	}
 
 	return templater.AppendYamlResources(yamlB...)
@@ -655,4 +665,14 @@ func setEksctlVersionEnvVar() error {
 		}
 	}
 	return nil
+}
+
+func (e *ClusterE2ETest) InstallHelmChart() {
+	kubeconfig := e.kubeconfigFilePath()
+	ctx := context.Background()
+
+	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, e.HelmInstallConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
+	}
 }

@@ -1,0 +1,13 @@
+{
+    "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+    "kind": "TinkerbellMachineConfig",
+    "metadata": {
+        "name": "mycluster"
+    },
+    "spec": {
+        "osFamily": "ubuntu",
+        "templateRef": {
+            "kind": "TinkerbellTemplateConfig",
+            "name": "mycluster"
+    }
+}

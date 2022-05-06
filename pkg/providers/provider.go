@@ -15,9 +15,11 @@ type Provider interface {
 	SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error
 	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster) error
-	GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
+	GenerateCAPISpecForCreate(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateStorageClass() []byte
+	// PreCAPIInstallOnBootstrap is called after the bootstrap cluster is setup but before CAPI resources are installed on it. This allows us to do provider specific configuration on the bootstrap cluster.
+	PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error

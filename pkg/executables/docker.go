@@ -40,15 +40,6 @@ func (d *Docker) PullImage(ctx context.Context, image string) error {
 	}
 }
 
-func (d *Docker) SetUpCLITools(ctx context.Context, image string) error {
-	logger.V(1).Info("Setting up cli docker dependencies")
-	if err := d.PullImage(ctx, image); err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
 func (d *Docker) Version(ctx context.Context) (int, error) {
 	cmdOutput, err := d.Execute(ctx, "version", "--format", "{{.Client.Version}}")
 	if err != nil {

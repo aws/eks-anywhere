@@ -9,6 +9,7 @@ const (
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
+	GenericGitProviderEnvVar        = "GENERIC_GIT_PROVIDER_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -22,6 +23,11 @@ type Feature struct {
 
 func IsActive(feature Feature) bool {
 	return feature.IsActive()
+}
+
+// ClearCache is mainly used for unit tests as of now
+func ClearCache() {
+	globalFeatures.clearCache()
 }
 
 func FullLifecycleAPI() Feature {
@@ -70,5 +76,12 @@ func CuratedPackagesSupport() Feature {
 	return Feature{
 		Name:     "Curated Packages Support",
 		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+	}
+}
+
+func GenericGitProviderSupport() Feature {
+	return Feature{
+		Name:     "Generic Git Provider Support",
+		IsActive: globalFeatures.isActiveForEnvVar(GenericGitProviderEnvVar),
 	}
 }

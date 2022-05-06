@@ -85,6 +85,12 @@ export EKSA_VSPHERE_USERNAME='<vSphere-username>'
 export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
 ```
 
+### error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+```
+Error: loading config file "cluster.yaml": error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+```
+Use `eksctl anywhere create cluster -f cluster.yaml` instead of `eksctl create cluster -f cluster.yaml` to create an EKS Anywhere cluster.
+
 ### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
 ```
 Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed

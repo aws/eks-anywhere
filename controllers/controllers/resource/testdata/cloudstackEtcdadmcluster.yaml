@@ -1,7 +1,7 @@
 kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
-  name: test_cluster-etcd
+  name: test-cluster-etcd
   namespace: eksa-system
 spec:
   replicas: 1
@@ -25,4 +25,4 @@ users:
 infrastructureTemplate:
   apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
   kind: CloudStackMachineTemplate
-  name: test_cluster-etcd-template-v1.19.8-eks-1-19-4
+  name: test-cluster-etcd-template-v1.19.8-eks-1-19-4

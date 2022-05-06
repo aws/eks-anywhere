@@ -2699,60 +2699,6 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 	assert.Error(t, err, "StoragePolicyName should be immutable")
 }
 
-func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Insecure = !newProviderConfig.Spec.Insecure
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "Insecure should be immutable")
-}
-
-func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Thumbprint = "new-" + newProviderConfig.Spec.Thumbprint
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "Thumbprint should be immutable")
-}
-
 func TestGetMHCSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
