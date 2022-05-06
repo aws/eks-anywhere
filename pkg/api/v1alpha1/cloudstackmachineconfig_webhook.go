@@ -41,6 +41,9 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	if !r.Spec.DiskOffering.ValidatePath() {
 		return apierrors.NewBadRequest("disk offering mountPath invalid, preventing CloudStackMachineConfig resource creation")
 	}
+	if !r.Spec.DiskOffering.Validate() {
+		return apierrors.NewBadRequest("disk offering invalid (device, filesystem and label could not be empty), preventing CloudStackMachineConfig resource creation")
+	}
 
 	return nil
 }

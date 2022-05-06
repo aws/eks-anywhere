@@ -82,6 +82,13 @@ func (r *CloudStackResourceDiskOffering) ValidatePath() bool {
 	return true
 }
 
+func (r *CloudStackResourceDiskOffering) Validate() bool {
+	if len(r.Id) > 0 || len(r.Name) > 0 {
+		return r.ValidatePath() && len(r.Filesystem) > 0 && len(r.Device) > 0 && len(r.Label) > 0
+	}
+	return true
+}
+
 func (c *CloudStackMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }
