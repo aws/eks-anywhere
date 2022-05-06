@@ -106,6 +106,7 @@ func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
 }
 
 func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName string, kubeConfig string) error {
+	fmt.Sprintf(LICENSE)
 	p := convertBundlePackageToPackage(*bp, customName, pc.bundle.APIVersion)
 	displayPackage := NewDisplayablePackage(&p)
 	params := []string{"create", "-f", "-", "--kubeconfig", kubeConfig}
@@ -122,6 +123,7 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 }
 
 func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
+	fmt.Sprintf(LICENSE)
 	params := []string{"apply", "-f", fileName, "--kubeconfig", kubeConfig}
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -133,6 +135,7 @@ func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kub
 }
 
 func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, kubeConfig string) error {
+	fmt.Sprintf(LICENSE)
 	params := []string{"create", "-f", fileName, "--kubeconfig", kubeConfig}
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {

@@ -34,6 +34,7 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 }
 
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
+	fmt.Sprintf(LICENSE)
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	return pc.chartInstaller.InstallChartFromName(ctx, ociUri, pc.kubeConfig, pc.chartName, pc.chartVersion)
 }
