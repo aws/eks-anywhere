@@ -1,6 +1,7 @@
 package curatedpackages
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -98,4 +99,18 @@ func PrintLicense() {
 	fmt.Println(strings.Repeat("-", WIDTH))
 	fmt.Println(LICENSE)
 	fmt.Println(strings.Repeat("-", WIDTH))
+}
+
+func Pull(ctx context.Context, art string) ([]byte, error) {
+	puller := artifacts.NewRegistryPuller()
+
+	data, err := puller.Pull(ctx, art)
+	if err != nil {
+		return nil, fmt.Errorf("unable to pull artifacts %v", err)
+	}
+	if len(bytes.TrimSpace(data)) == 0 {
+		return nil, fmt.Errorf("latest package bundle artifact is empty")
+	}
+
+	return data, nil
 }

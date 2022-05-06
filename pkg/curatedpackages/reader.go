@@ -1,7 +1,6 @@
 package curatedpackages
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 
@@ -9,7 +8,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
-	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -54,7 +52,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 		artifact := GetPackageBundleRef(vb)
 		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
-			fmt.Printf("error finding packages: %v", err)
+			fmt.Printf("error finding packages for artifact %s: %v \n", artifact, err)
 			continue
 		}
 		images = append(images, packages...)
@@ -85,18 +83,4 @@ func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle,
 		images = append(images, pI)
 	}
 	return images, nil
-}
-
-func Pull(ctx context.Context, art string) ([]byte, error) {
-	puller := artifacts.NewRegistryPuller()
-
-	data, err := puller.Pull(ctx, art)
-	if err != nil {
-		return nil, fmt.Errorf("unable to pull artifacts %v", err)
-	}
-	if len(bytes.TrimSpace(data)) == 0 {
-		return nil, fmt.Errorf("latest package bundle artifact is empty")
-	}
-
-	return data, nil
 }

@@ -128,6 +128,7 @@ func GetPackageBundleRef(vb releasev1.VersionsBundle) string {
 	controllerImage := strings.Split(packageController.Controller.Image(), "/")
 	major, minor, err := parseKubeVersion(vb.KubeVersion)
 	if err != nil {
+		fmt.Printf("unable to parse kubeversion %s %v \n", vb.KubeVersion, err)
 		return ""
 	}
 	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
