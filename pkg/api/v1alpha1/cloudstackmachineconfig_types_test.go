@@ -1,10 +1,11 @@
 package v1alpha1_test
 
 import (
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
