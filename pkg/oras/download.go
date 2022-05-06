@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -40,10 +38,19 @@ func (bd *BundleDownloader) SaveManifests(ctx context.Context, bundles *releasev
 }
 
 func UniqueCharts(charts []string) []string {
-	c := types.SliceToLookup(charts).ToSlice()
-	// TODO: maybe optimize this, avoiding the sort and just following the same order as the original slice
-	sort.Strings(c)
-	return c
+	keys := make(map[string]bool)
+	var list []string
+
+	// If the key(values of the slice) is not equal
+	// to the already present value in new slice (list)
+	// then we append it. else we jump on another element.
+	for _, entry := range charts {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 func writeToFile(dir string, packageName string, content []byte) error {
