@@ -286,7 +286,7 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		e.T.Errorf("configuring git client for e2e test: %v", err)
 	}
 	dirEntries, err := os.ReadDir(gitTools.RepositoryDirectory)
-	if errors.Is(err, os.ErrNotExist){
+	if errors.Is(err, os.ErrNotExist) {
 		e.T.Logf("repository directory %s does not exist; skipping cleanup", gitTools.RepositoryDirectory)
 		return
 	}
