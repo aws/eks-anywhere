@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -284,8 +286,9 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		e.T.Errorf("configuring git client for e2e test: %v", err)
 	}
 	dirEntries, err := os.ReadDir(gitTools.RepositoryDirectory)
-	if err != nil {
-		e.T.Errorf("reading repository directories")
+	if errors.Is(err, os.ErrNotExist){
+		e.T.Logf("repository directory %s does not exist; skipping cleanup", gitTools.RepositoryDirectory)
+		return
 	}
 
 	for _, entry := range dirEntries {
@@ -296,7 +299,7 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 			err = os.RemoveAll(entry.Name())
 			e.T.Logf("cleaning up directory: %v", entry.Name())
 			if err != nil {
-				e.T.Log("couldn't remove directory", "dir", entry.Name(), "err", err)
+				e.T.Log("did not remove directory", "dir", entry.Name(), "err", err)
 				continue
 			}
 		}
@@ -304,17 +307,17 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 			err = os.Remove(entry.Name())
 			e.T.Logf("cleaning up file: %v", entry.Name())
 			if err != nil {
-				e.T.Log("couldn't remove file", "file", entry.Name(), "err", err)
+				e.T.Log("did not remove file", "file", entry.Name(), "err", err)
 				continue
 			}
 		}
 	}
 
 	if err = gitTools.Client.Add("*"); err != nil {
-		e.T.Logf("failed when adding files while cleaning up git repo: %v", err)
+		e.T.Logf("did not add files while cleaning up git repo: %v", err)
 	}
 	if err = gitTools.Client.Push(context.Background()); err != nil {
-		e.T.Logf("failed pushing to repo after cleanup: %v", err)
+		e.T.Logf("did not push to repo after cleanup: %v", err)
 	}
 }
 
