@@ -112,7 +112,7 @@ func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1
 	if err != nil {
 		return err
 	}
-	params := []string{"create", "-f", "-", "--kubeconfig", b.kubeConfig}
+	params := []string{"apply", "-f", "-", "--kubeconfig", b.kubeConfig}
 	_, err = b.kubectl.CreateFromYaml(ctx, controllerYaml, params...)
 	if err != nil {
 		return err
