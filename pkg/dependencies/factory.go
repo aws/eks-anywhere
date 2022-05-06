@@ -763,6 +763,13 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return fmt.Errorf("creating Git provider: %v", err)
 		}
 
+		if fluxConfig.Spec.Git != nil {
+			err = tools.Client.ValidateRemoteExists(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
 		if tools.Provider != nil {
 			err = tools.Provider.Validate(ctx)
 			if err != nil {
