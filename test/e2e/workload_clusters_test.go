@@ -4,12 +4,12 @@
 package e2e
 
 import (
-	"github.com/aws/eks-anywhere/pkg/features"
 	"testing"
 	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
