@@ -58,7 +58,7 @@ spec:
   branch: "main"
   git:
     repositoryUrl: myClusterGitopsRepo
-    username: myGitProviderUserName    
+    sshKeyAlgorithm: mySshKeyAlgorithm    
 ---
 ```
 
@@ -118,7 +118,7 @@ spec:
   branch: ""
   git:
     repositoryUrl: ""
-    username: ""
+    sshKeyAlgorithm: ""
   github:
     repository: ""
     personal: false

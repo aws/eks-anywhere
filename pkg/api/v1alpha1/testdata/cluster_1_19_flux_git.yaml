@@ -69,4 +69,4 @@ metadata:
   namespace: default
 spec:
   git:
-    repositoryUrl: https://git.com/test/test.git
+    repositoryUrl: ssh://git@github.com/username/repo.git
