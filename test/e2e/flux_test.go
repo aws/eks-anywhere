@@ -124,7 +124,6 @@ func TestVSphereKubernetes122GithubFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -137,7 +136,6 @@ func TestVSphereKubernetes122GitFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -174,7 +172,6 @@ func TestVSphereKubernetes121BottleRockeGithubtFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -187,7 +184,6 @@ func TestVSphereKubernetes121BottleRocketGitFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -285,7 +281,6 @@ func TestVSphereKubernetes121To122GitFluxUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
