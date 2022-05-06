@@ -48,7 +48,7 @@ func UniqueCharts(charts []string) []string {
 
 func writeToFile(dir string, packageName string, content []byte) error {
 	file := filepath.Join(dir, packageName) + ".yaml"
-	if err := os.WriteFile(file, content, 0o644); err != nil {
+	if err := os.WriteFile(file, content, 0o640); err != nil {
 		return fmt.Errorf("unable to write to the file: %s %v", file, err)
 	}
 	return nil
