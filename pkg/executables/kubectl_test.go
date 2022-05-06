@@ -1017,7 +1017,23 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 
 	err := k.SetEksaControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
 	if err != nil {
-		t.Fatalf("Kubectl.GetApiServerUrl() error = %v, want nil", err)
+		t.Fatalf("Kubectl.RestartCiliumDaemonset() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlRetartCiliumDaemonsetSuccess(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{
+			"rollout", "restart", "ds", "cilium",
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
+		},
+	).Return(bytes.Buffer{}, nil)
+
+	err := k.RestartCiliumDaemonset(ctx, cluster.KubeconfigFile)
+	if err != nil {
+		t.Fatalf("Kubectl.RestartCiliumDaemonset() error = %v, want nil", err)
 	}
 }
 
