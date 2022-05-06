@@ -34,13 +34,15 @@ func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bun
 		fileName := ChartFileName(a)
 		chartFilepath := filepath.Join(fr.srcFolder, fileName)
 		data, err := os.ReadFile(chartFilepath)
-
 		if err != nil {
 			logger.MarkFail("Error reading file", chartFilepath, "error", err)
 			continue
 		}
 		ref := fmt.Sprintf("%s/%s", fr.registry, chartName)
-		curatedpackages.Push(ctx, a, ref, fileName, data)
+		err = curatedpackages.Push(ctx, a, ref, fileName, data)
+		if err != nil {
+			logger.MarkFail("Failed  to push registry", ref, "error", err)
+		}
 	}
 }
 

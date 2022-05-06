@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
