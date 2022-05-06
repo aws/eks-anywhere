@@ -41,7 +41,7 @@ func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bun
 		ref := fmt.Sprintf("%s/%s", fr.registry, chartName)
 		err = curatedpackages.Push(ctx, a, ref, fileName, data)
 		if err != nil {
-			logger.MarkFail("Warning: Failed  to push to registry", "error", err)
+			logger.Info("Warning: Failed  to push to registry", "error", err)
 		}
 	}
 }
