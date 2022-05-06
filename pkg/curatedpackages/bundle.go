@@ -4,10 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -67,7 +71,7 @@ func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context) (*packag
 
 func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*packagesv1.PackageBundle, error) {
 	// Active BundleReader is set at the bundle Controller
-	bundleController, err := b.getActiveController(ctx)
+	bundleController, err := b.GetActiveController(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +95,7 @@ func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string
 	return obj, nil
 }
 
-func (b *BundleReader) getActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
+func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
 	params := []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -102,4 +106,33 @@ func (b *BundleReader) getActiveController(ctx context.Context) (*packagesv1.Pac
 		return nil, fmt.Errorf("unmarshaling active package bundle controller: %w", err)
 	}
 	return obj, nil
+}
+
+func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1.PackageBundleController, newBundle string) error {
+	controller.Spec.ActiveBundle = newBundle
+	controllerYaml, err := yaml.Marshal(controller)
+	if err != nil {
+		return err
+	}
+	params := []string{"apply", "-f", "-", "--kubeconfig", b.kubeConfig}
+	_, err = b.kubectl.CreateFromYaml(ctx, controllerYaml, params...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetPackageBundleRef(vb releasev1.VersionsBundle) (string, error) {
+	packageController := vb.PackageController
+	// Use package controller registry to fetch packageBundles.
+	// Format of controller image is: <uri>/<env_type>/<repository_name>
+	controllerImage := strings.Split(packageController.Controller.Image(), "/")
+	major, minor, err := parseKubeVersion(vb.KubeVersion)
+	if err != nil {
+		logger.MarkFail("unable to parse kubeversion", "error", err)
+		return "", fmt.Errorf("unable to parse kubeversion %s %v", vb.KubeVersion, err)
+	}
+	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
+	registryBaseRef := fmt.Sprintf("%s/%s/%s:%s", controllerImage[0], controllerImage[1], "eks-anywhere-packages-bundles", latestBundle)
+	return registryBaseRef, nil
 }

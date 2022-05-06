@@ -51,36 +51,62 @@ func WithSystemNamespace(namespace string) FluxConfigOpt {
 	}
 }
 
-func WithGithubOwner(owner string) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Github.Owner = owner
-	}
-}
-
-func WithGithubRepository(repository string) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Github.Repository = repository
-	}
-}
-
-func WithPersonalGithubRepository(personal bool) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Github.Personal = personal
-	}
-}
-
-func WithGitUsername(username string) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Git.Username = username
-	}
-}
-
-func WithGitRepositoryUrl(url string) FluxConfigOpt {
-	return func(c *v1alpha1.FluxConfig) {
-		c.Spec.Git.RepositoryUrl = url
-	}
-}
-
 func WithStringFromEnvVarFluxConfig(envVar string, opt func(string) FluxConfigOpt) FluxConfigOpt {
+	return opt(os.Getenv(envVar))
+}
+
+type GitProviderOpt func(o *v1alpha1.GitProviderConfig)
+
+func WithGenericGitProvider(opts ...GitProviderOpt) FluxConfigOpt {
+	return func(c *v1alpha1.FluxConfig) {
+		g := &v1alpha1.GitProviderConfig{}
+		for _, opt := range opts {
+			opt(g)
+		}
+		c.Spec.Git = g
+	}
+}
+
+func WithGitRepositoryUrl(url string) GitProviderOpt {
+	return func(c *v1alpha1.GitProviderConfig) {
+		c.RepositoryUrl = url
+	}
+}
+
+func WithStringFromEnvVarGenericGitProviderConfig(envVar string, opt func(string) GitProviderOpt) GitProviderOpt {
+	return opt(os.Getenv(envVar))
+}
+
+type GithubProviderOpt func(o *v1alpha1.GithubProviderConfig)
+
+func WithGithubProvider(opts ...GithubProviderOpt) FluxConfigOpt {
+	return func(c *v1alpha1.FluxConfig) {
+		g := &v1alpha1.GithubProviderConfig{}
+		for _, opt := range opts {
+			opt(g)
+		}
+		c.Spec.Github = g
+	}
+}
+
+func WithGithubOwner(owner string) GithubProviderOpt {
+	return func(c *v1alpha1.GithubProviderConfig) {
+		c.Owner = owner
+	}
+}
+
+func WithGithubRepository(repository string) GithubProviderOpt {
+	return func(c *v1alpha1.GithubProviderConfig) {
+		c.Repository = repository
+	}
+}
+
+func WithPersonalGithubRepository(personal bool) GithubProviderOpt {
+	return func(c *v1alpha1.GithubProviderConfig) {
+		c.Personal = personal
+	}
+}
+
+func WithStringFromEnvVarGithubProviderConfig(envVar string, opt func(string) GithubProviderOpt) GithubProviderOpt {
 	return opt(os.Getenv(envVar))
 }

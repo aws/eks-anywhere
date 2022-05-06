@@ -30,7 +30,7 @@ func (i Import) Run(ctx context.Context) error {
 		return err
 	}
 
-	charts := i.Reader.ReadChartsFromBundles(i.Bundles)
+	charts := i.Reader.ReadChartsFromBundles(ctx, i.Bundles)
 
 	if err := i.ChartImporter.Import(ctx, artifactNames(charts)...); err != nil {
 		return err

@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -139,6 +140,88 @@ func TestDockerUpgradeWorkloadClusterWithFluxLegacy(t *testing.T) {
 		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
 		// compared to when it was initially created without it.
 		provider.WithProviderUpgradeGit(),
+	)
+}
+
+func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
+		),
+	)
+	runWorkloadClusterFlowWithGitOps(
+		test,
+		framework.WithClusterUpgradeGit(
+			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithControlPlaneCount(2),
+			api.WithWorkerNodeCount(2),
+		),
+		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
+	)
+}
+
+func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFluxGithub(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
+		),
+	)
+	runWorkloadClusterFlowWithGitOps(
+		test,
+		framework.WithClusterUpgradeGit(
+			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(3),
+		),
+		provider.WithProviderUpgradeGit(
+			framework.UpdateUbuntuTemplate122Var(),
+		),
 	)
 }
 

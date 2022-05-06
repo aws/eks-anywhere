@@ -16,10 +16,8 @@ import (
 )
 
 const (
-	eksaGitPasswordTokenEnv   = "EKSA_GIT_PASSWORD"
-	eksaGitPrivateKeyTokenEnv = "EKSA_GIT_PRIVATE_KEY"
-	emptyVar                  = ""
-	testEnvVar                = "test"
+	emptyVar   = ""
+	testEnvVar = "test"
 )
 
 var eksaGitOpsResourceType = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -334,14 +332,14 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 	}{
 		{
 			name:    "Empty password and private key",
-			wantErr: fmt.Errorf("for git provider in the Flux config either set a password using %s env var or path to private key file using %s", eksaGitPasswordTokenEnv, eksaGitPrivateKeyTokenEnv),
+			wantErr: fmt.Errorf("provide a path to a private key file via the EKSA_GIT_PRIVATE_KEY in order to use the generic git Flux provider"),
 			git: &v1alpha1.GitProviderConfig{
-				Username:      "testUser",
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: emptyVar,
-				GitPassword:       emptyVar,
+				GitPrivateKeyFile:   emptyVar,
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
@@ -354,48 +352,72 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 			name:    "Empty password",
 			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", testEnvVar),
 			git: &v1alpha1.GitProviderConfig{
-				Username:      "testUser",
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: testEnvVar,
-				GitPassword:       emptyVar,
+				GitPrivateKeyFile:   testEnvVar,
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
 			name:    "Empty private key file",
-			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", "testdata/emptyprivatekey"),
+			wantErr: fmt.Errorf("private key file does not exist at %s or is empty", "testdata/git_empty_file"),
 			git: &v1alpha1.GitProviderConfig{
-				Username:      "testUser",
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/emptyprivatekey",
-				GitPassword:       emptyVar,
+				GitPrivateKeyFile:   "testdata/git_empty_file",
+				GitSshKeyPassphrase: emptyVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
 			name:    "Empty private key",
-			wantErr: nil,
+			wantErr: fmt.Errorf("provide a path to a private key file via the EKSA_GIT_PRIVATE_KEY in order to use the generic git Flux provider"),
 			git: &v1alpha1.GitProviderConfig{
-				Username:      "testUser",
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: emptyVar,
-				GitPassword:       testEnvVar,
+				GitPrivateKeyFile:   emptyVar,
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
 			},
 		},
 		{
 			name:    "Password and private key populated",
 			wantErr: nil,
 			git: &v1alpha1.GitProviderConfig{
-				Username:      "testUser",
 				RepositoryUrl: "testRepo",
 			},
 			cliConfig: &config.CliConfig{
-				GitPrivateKeyFile: "testdata/nonemptyprivatekey",
-				GitPassword:       testEnvVar,
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
+			},
+		},
+		{
+			name:    "Empty known hosts",
+			wantErr: fmt.Errorf("SSH known hosts file does not exist at testdata/git_empty_file or is empty"),
+			git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_empty_file",
+			},
+		},
+		{
+			name:    "No known hosts",
+			wantErr: fmt.Errorf("SSH known hosts file does not exist at testdata/git_empty_file or is empty"),
+			git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: &config.CliConfig{
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: testEnvVar,
+				GitKnownHostsFile:   "testdata/git_empty_file",
 			},
 		},
 	}

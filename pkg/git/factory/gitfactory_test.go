@@ -21,10 +21,16 @@ func TestGitFactoryHappyPath(t *testing.T) {
 	tests := []struct {
 		testName     string
 		authTokenEnv string
+		opt          gitFactory.GitToolsOpt
 	}{
 		{
 			testName:     "valid token var",
 			authTokenEnv: validPATValue,
+		},
+		{
+			testName:     "valid token var with opt",
+			authTokenEnv: validPATValue,
+			opt:          gitFactory.WithRepositoryDirectory("test"),
 		},
 	}
 
@@ -54,7 +60,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 
 			_, w := test.NewWriter(t)
 
-			_, err := gitFactory.Build(context.Background(), cluster, fluxConfig, w)
+			_, err := gitFactory.Build(context.Background(), cluster, fluxConfig, w, tt.opt)
 			if err != nil {
 				t.Errorf("gitfactory.BuldProvider returned err, wanted nil. err: %v", err)
 			}
