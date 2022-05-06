@@ -1037,6 +1037,22 @@ func TestKubectlRetartCiliumDaemonsetSuccess(t *testing.T) {
 	}
 }
 
+func TestKubectlRetartCiliumDaemonsetError(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{
+			"rollout", "restart", "ds", "cilium",
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
+		},
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+
+	err := k.RestartCiliumDaemonset(ctx, cluster.KubeconfigFile)
+	if err == nil {
+		t.Fatalf("Kubectl.RestartCiliumDaemonset() expected error, but was nil")
+	}
+}
+
 func TestKubectlGetGetApiServerUrlError(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
