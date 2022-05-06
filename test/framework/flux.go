@@ -69,7 +69,6 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		for _, opt := range opts {
 			opt(e.FluxConfig)
 		}
-		// Setting GitRepo cleanup since GitOps configured
 		e.T.Cleanup(e.CleanUpGitRepo)
 	}
 }
@@ -296,12 +295,14 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		if entry.IsDir() {
 			err = os.RemoveAll(entry.Name())
 			if err != nil {
+				e.T.Log("couldn't remove directory", "dir", entry.Name(), "err", err)
 				continue
 			}
 		}
 		if !entry.IsDir() {
 			err = os.Remove(entry.Name())
 			if err != nil {
+				e.T.Log("couldn't remove file", "file", entry.Name(), "err", err)
 				continue
 			}
 		}
@@ -826,7 +827,14 @@ func (e *ClusterE2ETest) writeEKSASpec(s *cluster.Spec, datacenterConfig provide
 }
 
 func (e *ClusterE2ETest) gitRepoName() string {
-	return e.FluxConfig.Spec.Github.Repository
+	if e.FluxConfig.Spec.Github != nil {
+		return e.FluxConfig.Spec.Github.Repository
+	}
+	if e.FluxConfig.Spec.Git != nil {
+		r := e.FluxConfig.Spec.Git.RepositoryUrl
+		return strings.TrimSuffix(path.Base(r), filepath.Ext(r))
+	}
+	return ""
 }
 
 func (e *ClusterE2ETest) gitBranch() string {
@@ -856,6 +864,10 @@ func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
 	return s, nil
 }
 
-func RequiredFluxEnvVars() []string {
+func RequiredFluxGithubEnvVars() []string {
 	return fluxGithubRequiredEnvVars
+}
+
+func RequiredFluxGitEnvVars() []string {
+	return fluxGitRequiredEnvVars
 }
