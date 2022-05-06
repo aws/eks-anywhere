@@ -27,7 +27,7 @@ func init() {
 	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 }
 
