@@ -136,7 +136,6 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.ExternalEtcdController.Controller,
 		vb.ExternalEtcdController.KubeProxy,
 		vb.Haproxy.Image,
-		vb.PackageController.Controller,
 	}
 }
 
