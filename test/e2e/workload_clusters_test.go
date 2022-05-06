@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"github.com/aws/eks-anywhere/pkg/features"
 	"testing"
 	"time"
 
@@ -155,6 +156,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 		),
 		framework.NewClusterE2ETest(
 			t,
@@ -165,6 +167,7 @@ func TestDockerUpgradeWorkloadClusterWithGithubFlux(t *testing.T) {
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 		),
 	)
 	runWorkloadClusterFlowWithGitOps(
@@ -194,6 +197,7 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 		),
 		framework.NewClusterE2ETest(
 			t,
@@ -205,6 +209,7 @@ func TestVSphereUpgradeMulticlusterWorkloadClusterWithGithubFlux(t *testing.T) {
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
 			),
+			framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 		),
 	)
 	runWorkloadClusterFlowWithGitOps(
