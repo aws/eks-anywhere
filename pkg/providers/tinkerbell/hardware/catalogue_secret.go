@@ -12,14 +12,14 @@ func (c *Catalogue) InsertSecret(secret *corev1.Secret) error {
 	if err := c.secretIndex.Insert(secret); err != nil {
 		return err
 	}
-	c.Secrets = append(c.Secrets, secret)
+	c.secrets = append(c.secrets, secret)
 	return nil
 }
 
 // AllSecrets retrieves a copy of the catalogued Secret instances.
 func (c *Catalogue) AllSecrets() []*corev1.Secret {
-	secrets := make([]*corev1.Secret, len(c.Secrets))
-	copy(secrets, c.Secrets)
+	secrets := make([]*corev1.Secret, len(c.secrets))
+	copy(secrets, c.secrets)
 	return secrets
 }
 
@@ -41,7 +41,7 @@ func (c *Catalogue) LookupSecret(index, key string) ([]*corev1.Secret, error) {
 
 // TotalSecrets returns the total Secrets registered in the catalogue.
 func (c *Catalogue) TotalSecrets() int {
-	return len(c.Secrets)
+	return len(c.secrets)
 }
 
 const SecretNameIndex = ".ObjectMeta.Name"

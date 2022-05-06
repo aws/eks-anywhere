@@ -30,13 +30,13 @@ type Indexer interface {
 // Catalogue represents a catalogue of Tinkerbell hardware manifests to be used with Tinkerbells
 // Kubefied back-end.
 type Catalogue struct {
-	Hardware      []*tinkv1alpha1.Hardware
+	hardware      []*tinkv1alpha1.Hardware
 	hardwareIndex Indexer
 
-	BMCs     []*pbnjv1alpha1.BMC
+	bmcs     []*pbnjv1alpha1.BMC
 	bmcIndex Indexer
 
-	Secrets     []*corev1.Secret
+	secrets     []*corev1.Secret
 	secretIndex Indexer
 }
 
