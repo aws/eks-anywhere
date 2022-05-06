@@ -33,7 +33,7 @@ func (r *PackageReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Relea
 }
 
 func (r *PackageReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
-	images, err := r.ManifestReader.ReadImages(eksaVersion)
+	return r.ManifestReader.ReadImages(eksaVersion)
 	return images, err
 }
 
