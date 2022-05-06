@@ -78,7 +78,7 @@ Example
 * ~~`Some code fixes for errors`~~
 * `Fix error in code`
 
-A good rule of thumb from Chris Beams on writing a subject is it should complete this sentence:
+A good rule from Chris Beams on writing a subject is it should complete this sentence:
 
 ```
 If applied, this commit will <your subject line here>
