@@ -58,7 +58,7 @@ func CreateBundleManager(kubeVersion string) bundle.Manager {
 func parseKubeVersion(kubeVersion string) (string, string, error) {
 	versionSplit := strings.Split(kubeVersion, ".")
 	if len(versionSplit) != 2 {
-		return "", "", fmt.Errorf("invalid kubeversion")
+		return "", "", fmt.Errorf("invalid kubeversion %s", kubeVersion)
 	}
 	major, minor := versionSplit[0], versionSplit[1]
 	return major, minor, nil

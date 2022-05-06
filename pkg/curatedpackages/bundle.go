@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"strings"
 
 	"sigs.k8s.io/yaml"
@@ -128,7 +129,7 @@ func GetPackageBundleRef(vb releasev1.VersionsBundle) string {
 	controllerImage := strings.Split(packageController.Controller.Image(), "/")
 	major, minor, err := parseKubeVersion(vb.KubeVersion)
 	if err != nil {
-		fmt.Printf("unable to parse kubeversion %s %v \n", vb.KubeVersion, err)
+		logger.MarkFail("unable to parse kubeversion", "error", err)
 		return ""
 	}
 	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
