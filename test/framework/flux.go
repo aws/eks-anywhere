@@ -294,6 +294,7 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		}
 		if entry.IsDir() {
 			err = os.RemoveAll(entry.Name())
+			e.T.Logf("cleaning up directory: %v", entry.Name())
 			if err != nil {
 				e.T.Log("couldn't remove directory", "dir", entry.Name(), "err", err)
 				continue
@@ -301,6 +302,7 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 		}
 		if !entry.IsDir() {
 			err = os.Remove(entry.Name())
+			e.T.Logf("cleaning up file: %v", entry.Name())
 			if err != nil {
 				e.T.Log("couldn't remove file", "file", entry.Name(), "err", err)
 				continue
@@ -309,10 +311,10 @@ func (e *ClusterE2ETest) CleanUpGitRepo() {
 	}
 
 	if err = gitTools.Client.Add("*"); err != nil {
-		e.T.Errorf("cleaning up git repo")
+		e.T.Logf("failed when adding files while cleaning up git repo: %v", err)
 	}
 	if err = gitTools.Client.Push(context.Background()); err != nil {
-		e.T.Errorf("pushing to repo after cleanup")
+		e.T.Logf("failed pushing to repo after cleanup: %v", err)
 	}
 }
 
