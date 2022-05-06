@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"strings"
 
 	"sigs.k8s.io/yaml"
@@ -12,6 +11,7 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
