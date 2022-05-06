@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -118,4 +120,19 @@ func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1
 		return err
 	}
 	return nil
+}
+
+func GetPackageBundleRef(vb releasev1.VersionsBundle) (string, error) {
+	packageController := vb.PackageController
+	// Use package controller registry to fetch packageBundles.
+	// Format of controller image is: <uri>/<env_type>/<repository_name>
+	controllerImage := strings.Split(packageController.Controller.Image(), "/")
+	major, minor, err := parseKubeVersion(vb.KubeVersion)
+	if err != nil {
+		logger.MarkFail("unable to parse kubeversion", "error", err)
+		return "", fmt.Errorf("unable to parse kubeversion %s %v", vb.KubeVersion, err)
+	}
+	latestBundle := fmt.Sprintf("v%s-%s-%s", major, minor, "latest")
+	registryBaseRef := fmt.Sprintf("%s/%s/%s:%s", controllerImage[0], controllerImage[1], "eks-anywhere-packages-bundles", latestBundle)
+	return registryBaseRef, nil
 }
