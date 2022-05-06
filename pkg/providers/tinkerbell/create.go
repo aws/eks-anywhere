@@ -37,10 +37,23 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 		env["NO_PROXY"] = noProxy
 	}
 
-	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
+	opts := []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}
+
+	if p.setupTinkerbell {
+		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
+	}
+
+	return opts, nil
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if p.setupTinkerbell {
+		logger.V(4).Info("Installing Tinkerbell stack on the bootstrap cluster")
+		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec); err != nil {
+			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
+		}
+	}
+
 	return nil
 }
 
