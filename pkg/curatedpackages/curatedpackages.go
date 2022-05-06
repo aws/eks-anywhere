@@ -87,6 +87,14 @@ func NewDependenciesForPackages(ctx context.Context, paths ...string) (*dependen
 
 func PrintLicense() {
 	// Currently, use the width of the longest line to repeat the dashes
+	// Sample Output
+	//----------------------------------------------------------------------------------------------------------------
+	//The EKS Anywhere package controller and the EKS Anywhere Curated Packages
+	//(referred to as “features”) are provided as “preview features” subject to the AWS Service Terms,
+	//(including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
+	//the AWS Service Terms are extended to provide customers access to these features free of charge.
+	//These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
+	//----------------------------------------------------------------------------------------------------------------
 	fmt.Println(strings.Repeat("-", WIDTH))
 	fmt.Println(LICENSE)
 	fmt.Println(strings.Repeat("-", WIDTH))
