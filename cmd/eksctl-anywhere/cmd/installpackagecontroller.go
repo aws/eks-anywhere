@@ -47,7 +47,7 @@ func runInstallPackageController(cmd *cobra.Command, args []string) error {
 func installPackageController(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	deps, err := newDependenciesForPackages(ctx, kubeConfig)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -65,6 +65,8 @@ func installPackageController(ctx context.Context) error {
 		helmChart.Name,
 		helmChart.Tag(),
 	)
+
+	fmt.Println("tag: " + helmChart.Tag() + " Image: " + helmChart.Image())
 
 	if err = ctrlClient.ValidateControllerDoesNotExist(ctx); err != nil {
 		return err

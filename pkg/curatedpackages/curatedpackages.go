@@ -15,6 +15,14 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	LICENSE = "The EKS Anywhere package controller and the EKS Anywhere Curated Packages \n" +
+		"(referred to as “features”) are provided as “preview features” subject to the AWS Service Terms, \n" +
+		"(including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview, \n" +
+		"the AWS Service Terms are extended to provide customers access to these features free of charge. " +
+		"These features will be subject to a service charge and fee structure at ”General Availability“ of the features."
+)
+
 func NewRegistry(deps *dependencies.Dependencies, registryName, kubeVersion, username, password string) (BundleRegistry, error) {
 	if registryName != "" {
 		registry := NewCustomRegistry(
