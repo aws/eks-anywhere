@@ -170,8 +170,8 @@ func (p *cloudstackProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 }
 
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	// Address Cilium upgrade issue: https://github.com/aws/eks-anywhere/issues/1888
-	return p.providerKubectlClient.RestartCiliumDaemonset(ctx, managementCluster.KubeconfigFile)
+	// Nothing to do
+	return nil
 }
 
 type ProviderKubectlClient interface {
@@ -191,7 +191,6 @@ type ProviderKubectlClient interface {
 	DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	RestartCiliumDaemonset(ctx context.Context, kubeconfig string) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {

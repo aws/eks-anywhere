@@ -1465,23 +1465,3 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 		t.Fatalf("unexpected failure %v", err)
 	}
 }
-
-func TestRunPostControlPlaneUpgrade(t *testing.T) {
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenEmptyClusterSpec()
-	cc := givenClusterConfig(t, testClusterConfigMainFilename)
-	fillClusterSpecWithClusterConfig(clusterSpec, cc)
-	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
-	managementCluster := types.Cluster{
-		KubeconfigFile:     "test",
-	}
-
-	kubectl.EXPECT().RestartCiliumDaemonset(ctx, managementCluster.KubeconfigFile).Return(nil)
-	if err := provider.RunPostControlPlaneUpgrade(ctx, nil, nil, nil, &managementCluster); err != nil {
-		t.Fatalf("unexpected failure %v", err)
-	}
-}
