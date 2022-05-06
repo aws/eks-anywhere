@@ -161,7 +161,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualLabel(t *testing.T) {
 	g.Expect(diskOffering1.Equal(diskOffering2)).To(BeFalse())
 }
 
-func TestCloudStackMachineConfigDiskOfferingMountValidPath(t *testing.T) {
+func TestCloudStackMachineConfigDiskOfferingValidMountPath(t *testing.T) {
 	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
@@ -173,6 +173,19 @@ func TestCloudStackMachineConfigDiskOfferingMountValidPath(t *testing.T) {
 	}
 	g := NewWithT(t)
 	g.Expect(diskOffering1.ValidatePath()).To(BeTrue())
+	g.Expect(diskOffering1.Validate()).To(BeTrue())
+}
+
+func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
+	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{},
+		MountPath:                    "/data",
+		Device:                       "/dev/vdb",
+		Filesystem:                   "ext4",
+		Label:                        "data_disk",
+	}
+	g := NewWithT(t)
+	g.Expect(diskOffering1.Validate()).To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
