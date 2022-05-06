@@ -54,7 +54,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact := GetPackageBundleRef(vb)
-		packages, err := FetchPackages(vb, ctx, artifact)
+		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
 			fmt.Printf("error finding packages: %v", err)
 			continue
@@ -64,12 +64,12 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	return images
 }
 
-func FetchPackages(versionsBundle releasev1.VersionsBundle, ctx context.Context, art string) ([]releasev1.Image, error) {
+func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle, art string) ([]releasev1.Image, error) {
 	data, err := Pull(ctx, art)
-	ctrl := versionsBundle.PackageController.Controller
 	if err != nil {
 		return nil, err
 	}
+	ctrl := versionsBundle.PackageController.Controller
 	bundle := &packagesv1.PackageBundle{}
 	err = yaml.Unmarshal(data, bundle)
 	if err != nil {
