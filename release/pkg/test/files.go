@@ -3,7 +3,6 @@ package test
 import (
 	"io/ioutil"
 	"os/exec"
-	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/release/pkg/utils"
@@ -47,5 +46,5 @@ func readFile(filepath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(string(data)), nil
+	return string(data), nil
 }
