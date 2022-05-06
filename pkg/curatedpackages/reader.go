@@ -40,7 +40,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 		}
 		packages, err := fetchPackages(ctx, vb, artifact)
 		if err != nil {
-			logger.MarkFail("Warning: Failed extracting packages", "error", err)
+			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
 		}
 		images = append(images, packages...)
