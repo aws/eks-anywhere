@@ -136,7 +136,6 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.ExternalEtcdController.Controller,
 		vb.ExternalEtcdController.KubeProxy,
 		vb.Haproxy.Image,
-		vb.PackageController.Controller,
 	}
 }
 
@@ -166,5 +165,11 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
 		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
+	}
+}
+
+func (vb *VersionsBundle) PackageControllerImage() []Image {
+	return []Image{
+		vb.PackageController.Controller,
 	}
 }
