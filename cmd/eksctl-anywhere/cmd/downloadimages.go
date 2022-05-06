@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"log"
 	"path/filepath"
 	"strings"
@@ -72,6 +74,10 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	downloadFolder := "tmp-eks-a-artifacts-download"
 	imagesFile := filepath.Join(downloadFolder, imagesTarFile)
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
+
+	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
+		return fmt.Errorf("curated packages installation is not supported in this release")
+	}
 
 	downloadArtifacts := artifacts.Download{
 		Reader: fetchReader(deps.ManifestReader, c.includePackages),
