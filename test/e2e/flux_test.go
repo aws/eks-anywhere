@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -50,7 +49,6 @@ func TestDockerKubernetes122GithubFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGithub(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -60,7 +58,6 @@ func TestDockerKubernetes122GitFlux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFluxGit(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -127,7 +124,6 @@ func TestVSphereKubernetes122GithubFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -140,7 +136,6 @@ func TestVSphereKubernetes122GitFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -177,7 +172,6 @@ func TestVSphereKubernetes121BottleRockeGithubtFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -190,7 +184,6 @@ func TestVSphereKubernetes121BottleRocketGitFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -288,7 +281,6 @@ func TestVSphereKubernetes121To122GitFluxUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.GenericGitProviderEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
