@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -1222,7 +1221,8 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 }
 
 func TestClusterCreateManagementCluster(t *testing.T) {
-	os.Setenv("FULL_LIFECYCLE_API", "true")
+	features.ClearCache()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -1237,12 +1237,12 @@ func TestClusterCreateManagementCluster(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(cluster.ValidateCreate()).NotTo(Succeed())
-	os.Unsetenv("FULL_LIFECYCLE_API")
 }
 
 func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T) {
-	os.Setenv(features.CloudStackProviderEnvVar, "true")
-	os.Setenv("FULL_LIFECYCLE_API", "true")
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"},
 		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test2"})
 	cluster := &v1alpha1.Cluster{
@@ -1263,12 +1263,11 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 
 	g := NewWithT(t)
 	g.Expect(cluster.ValidateCreate()).To(Succeed())
-	os.Unsetenv(features.CloudStackProviderEnvVar)
-	os.Unsetenv("FULL_LIFECYCLE_API")
 }
 
 func TestClusterCreateWorkloadCluster(t *testing.T) {
-	os.Setenv("FULL_LIFECYCLE_API", "true")
+	features.ClearCache()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -1285,7 +1284,6 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(cluster.ValidateCreate()).To(Succeed())
-	os.Unsetenv("FULL_LIFECYCLE_API")
 }
 
 func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
