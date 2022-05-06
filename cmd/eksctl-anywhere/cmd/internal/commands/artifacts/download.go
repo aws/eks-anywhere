@@ -25,7 +25,7 @@ type ChartDownloader interface {
 }
 
 type ManifestDownloader interface {
-	SaveManifests(ctx context.Context, bundles *releasev1.Bundles)
+	Download(ctx context.Context, bundles *releasev1.Bundles)
 }
 
 type Packager interface {

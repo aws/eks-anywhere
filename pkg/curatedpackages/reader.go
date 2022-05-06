@@ -61,7 +61,7 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 	return images
 }
 
-func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle, art string) ([]releasev1.Image, error) {
+func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
 	data, err := Pull(ctx, art)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle,
 	if err != nil {
 		return nil, err
 	}
-	var images []releasev1.Image
+	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages)
 	for _, p := range bundle.Spec.Packages {
 		pI := releasev1.Image{
 			Name:        p.Name,
