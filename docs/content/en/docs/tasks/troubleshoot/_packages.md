@@ -6,7 +6,7 @@ weight: 50
 ---
 
 
-The major component of Curated Packages is the package controller. If the container is not running or not running correctly, packages will not be installed. Generally it should be debugged like any other Kubernetes application. The first step is to check that then pod is running.
+The major component of Curated Packages is the package controller. If the container is not running or not running correctly, packages will not be installed. Generally it should be debugged like any other Kubernetes application. The first step is to check that the pod is running.
 ```bash
 kubectl get pods -n eksa-packages
 ```
