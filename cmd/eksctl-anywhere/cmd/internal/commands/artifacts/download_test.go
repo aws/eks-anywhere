@@ -40,7 +40,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 	toolsDownloader := mocks.NewMockImageMover(ctrl)
 	downloader := mocks.NewMockChartDownloader(ctrl)
 	packager := mocks.NewMockPackager(ctrl)
-	bundlePuller := mocks.NewMockManifestDownloader(ctrl)
+	manifestDownloader := mocks.NewMockManifestDownloader(ctrl)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -86,7 +86,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 			Version:                  version.Info{GitVersion: "v1.0.0"},
 			TmpDowloadFolder:         downloadFolder,
 			DstFile:                  "artifacts.tar",
-			ManifestDownloader:       bundlePuller,
+			ManifestDownloader:       manifestDownloader,
 		},
 		bundles: &releasev1.Bundles{
 			Spec: releasev1.BundlesSpec{
@@ -101,7 +101,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 				},
 			},
 		},
-		manifestDownloader: bundlePuller,
+		manifestDownloader: manifestDownloader,
 	}
 }
 
