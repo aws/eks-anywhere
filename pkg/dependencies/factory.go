@@ -95,6 +95,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -103,6 +104,7 @@ type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
 	executablesImage         string
 	registryMirror           string
+	proxyConfiguration       map[string]string
 	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -142,6 +144,11 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 
 func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	f.registryMirror = mirror
+	return f
+}
+
+func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory {
+	f.proxyConfiguration = proxyConfig
 	return f
 }
 
@@ -595,6 +602,10 @@ func (f *Factory) WithHelm() *Factory {
 		var opts []executables.HelmOpt
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		}
+
+		if f.proxyConfiguration != nil {
+			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
 		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)

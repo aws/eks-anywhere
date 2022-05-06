@@ -100,6 +100,13 @@ func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
 	return collectors
 }
 
+func (c *collectorFactory) PackagesCollectors() []*Collect {
+	var collectors []*Collect
+	collectors = append(collectors, c.packagesCrdCollectors()...)
+	collectors = append(collectors, c.packagesLogCollectors()...)
+	return collectors
+}
+
 func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
 	return map[v1alpha1.OSFamily][]*Collect{
 		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
@@ -176,6 +183,17 @@ func (c *collectorFactory) defaultLogCollectors() []*Collect {
 	}
 }
 
+func (c *collectorFactory) packagesLogCollectors() []*Collect {
+	return []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.EksaPackagesName,
+				Name:      logpath(constants.EksaPackagesName),
+			},
+		},
+	}
+}
+
 func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
 	return []*Collect{
 		{
@@ -247,6 +265,16 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 		"vspherevms.infrastructure.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(capvCrds)
+}
+
+func (c *collectorFactory) packagesCrdCollectors() []*Collect {
+	packageCrds := []string{
+		"packagebundlecontrollers.packages.eks.amazonaws.com",
+		"packagebundles.packages.eks.amazonaws.com",
+		"packagecontrollers.packages.eks.amazonaws.com",
+		"packages.packages.eks.amazonaws.com",
+	}
+	return c.generateCrdCollectors(packageCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {

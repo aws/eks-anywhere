@@ -50,7 +50,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
+func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *Provider {
 	return newProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -61,7 +61,7 @@ func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.Tin
 	)
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
+func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *Provider {
 	return NewProvider(
 		datacenterConfig,
 		machineConfigs,

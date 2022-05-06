@@ -207,7 +207,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("generating capi spec: %v", err)
 	}

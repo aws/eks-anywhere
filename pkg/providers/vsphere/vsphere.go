@@ -1022,7 +1022,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -1058,8 +1058,8 @@ func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootst
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}

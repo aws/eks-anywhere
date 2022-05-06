@@ -225,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
+      gitCommit: fc58772a67ea7af9bc7cf7bcc2be10cc7526c643
       kindNode:
         arch:
         - amd64
@@ -625,7 +625,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -633,8 +633,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -642,7 +643,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -650,7 +651,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -926,7 +927,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
+      gitCommit: fc58772a67ea7af9bc7cf7bcc2be10cc7526c643
       kindNode:
         arch:
         - amd64
@@ -1326,7 +1327,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1334,8 +1335,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -1343,7 +1345,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1351,7 +1353,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -1627,7 +1629,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 8c52c8bd1373fcc032e467d0dc51768ea8ff5bb9
+      gitCommit: fc58772a67ea7af9bc7cf7bcc2be10cc7526c643
       kindNode:
         arch:
         - amd64
@@ -2027,7 +2029,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2035,8 +2037,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -2044,7 +2047,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2052,7 +2055,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
