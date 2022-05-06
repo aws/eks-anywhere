@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
@@ -23,28 +22,12 @@ func NewPackageReader(mr *manifests.Reader) *PackageReader {
 	}
 }
 
-func (r *PackageReader) ReadBundlesForVersion(version string) (*releasev1.Bundles, error) {
-	return r.Reader.ReadBundlesForVersion(version)
-}
-
-func (r *PackageReader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Release, error) {
-	return r.Reader.ReadEKSD(eksaVersion, kubeVersion)
-}
-
-func (r *PackageReader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
-	return r.Reader.ReadImages(eksaVersion)
-}
-
 func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
 	images, err := r.Reader.ReadImagesFromBundles(b)
 	for _, v := range b.Spec.VersionsBundles {
 		images = append(images, v.PackageControllerImage()...)
 	}
 	return images, err
-}
-
-func (r *PackageReader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
-	return r.Reader.ReadCharts(eksaVersion)
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
