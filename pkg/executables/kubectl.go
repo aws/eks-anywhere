@@ -690,6 +690,18 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
+func (k *Kubectl) RestartCiliumDaemonset(ctx context.Context, kubeconfig string) error {
+	params := []string{
+		"rollout", "restart", "ds", "cilium",
+		"--kubeconfig", kubeconfig, "--namespace", constants.KubeSystemNamespace,
+	}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("restarting cilium daemonset: %v", err)
+	}
+	return nil
+}
+
 func (k *Kubectl) SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
 	params := []string{
 		"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal),
