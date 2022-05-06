@@ -3,8 +3,9 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
-	"github.com/go-logr/logr"
 	"strings"
+
+	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
