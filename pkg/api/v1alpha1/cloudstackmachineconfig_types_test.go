@@ -31,6 +31,20 @@ func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
 	g.Expect(diskOffering1.Equal(diskOffering2)).To(BeTrue())
 }
 
+func TestCloudStackMachineConfigDiskOfferingEqualSelf(t *testing.T) {
+	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "diskOffering1",
+		},
+		MountPath:  "/data",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
+	}
+	g := NewWithT(t)
+	g.Expect(diskOffering1.Equal(&diskOffering1)).To(BeTrue())
+}
+
 func TestCloudStackMachineConfigDiskOfferingNotEqualNil(t *testing.T) {
 	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -41,9 +55,8 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualNil(t *testing.T) {
 		Filesystem: "ext4",
 		Label:      "data_disk",
 	}
-	var diskOffering2 v1alpha1.CloudStackResourceDiskOffering
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Equal(&diskOffering2)).To(BeFalse())
+	g.Expect(diskOffering1.Equal(nil)).To(BeFalse())
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualName(t *testing.T) {

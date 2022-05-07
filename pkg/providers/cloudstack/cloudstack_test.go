@@ -1445,6 +1445,68 @@ func TestClusterUpgradeNeededMachineConfigsChanged(t *testing.T) {
 	}
 }
 
+func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	getEksaCloudStackMachineConfig := kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).AnyTimes()
+	getEksaCloudStackMachineConfig.DoAndReturn(
+		func(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+			if cloudstackMachineConfigName == "test" {
+				modifiedMachineConfig := machineConfigsMap["test"].DeepCopy()
+				modifiedMachineConfig.Spec.DiskOffering.Name = "shiny-new-diskoffering"
+				return modifiedMachineConfig, nil
+			}
+			return machineConfigsMap[cloudstackMachineConfigName], nil
+		})
+
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if !specChanged {
+		t.Fatalf("expected spec change but none was detected")
+	}
+}
+
+func TestAnyImmutableFieldChangedDiskOfferingNoChange(t *testing.T) {
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+}
+
+func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newMachineConfigsMap["test"].Spec.DiskOffering.Name = "newDiskOffering"
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+}
+
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
