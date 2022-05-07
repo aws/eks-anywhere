@@ -498,6 +498,21 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       0,
 		},
 		{
+			testName:         "listdiskofferings no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
 			testName:         "listdiskofferings multiple results",
 			jsonResponseFile: "testdata/cmk_list_diskoffering_multiple.json",
 			argumentsExecCall: []string{
