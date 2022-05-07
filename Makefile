@@ -27,8 +27,8 @@ GO_TEST ?= $(GO) test
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
-## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+## ensure local execution uses the 'release-0.9' branch bundle
+BRANCH_NAME?=release-0.9
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
