@@ -1021,7 +1021,7 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 	}
 }
 
-func TestKubectlRetartCiliumDaemonsetSuccess(t *testing.T) {
+func TestKubectlDaemonSetRolloutRestartSuccess(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1037,7 +1037,7 @@ func TestKubectlRetartCiliumDaemonsetSuccess(t *testing.T) {
 	}
 }
 
-func TestKubectlRetartCiliumDaemonsetError(t *testing.T) {
+func TestKubectlDaemonSetRolloutRestartError(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
