@@ -1,7 +1,6 @@
 package images
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,16 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/retrier"
 	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
-
-const (
-	realmKey   = "realm="
-	serviceKey = "service="
-	scopeKey   = "scope="
-)
-
-type tokenResponse struct {
-	Token string `json:"token"`
-}
 
 func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, imageUri, imageContainerRegistry, releaseEnvironment, branchName string) error {
 	repository, tag := utils.SplitImageUri(imageUri, imageContainerRegistry)
@@ -78,77 +67,6 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 	}
 
 	return nil
-}
-
-func PollForExistenceV2(imageUri string, authHeader string) (string, error) {
-	registry, repository, tag := utils.SplitImageUriV2(imageUri)
-	requestUrl := fmt.Sprintf("https://%s/v2/%s/manifests/%s", registry, repository, tag)
-
-	req, err := http.NewRequest("GET", requestUrl, nil)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-	req.Header.Add("Authorization", authHeader)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return "", fmt.Errorf("requested image not found")
-	} else if resp.StatusCode == http.StatusUnauthorized && len(authHeader) == 0 {
-		splits := strings.Split(resp.Header.Get("www-authenticate"), ",")
-		var realm, service, scope string
-		for _, split := range splits {
-			if strings.Contains(split, realmKey) {
-				startIndex := strings.Index(split, realmKey) + len(realmKey)
-				realm = strings.Trim(split[startIndex:], "\"")
-			} else if strings.Contains(split, serviceKey) {
-				startIndex := strings.Index(split, serviceKey) + len(serviceKey)
-				service = strings.Trim(split[startIndex:], "\"")
-			} else if strings.Contains(split, scopeKey) {
-				startIndex := strings.Index(split, scopeKey) + len(scopeKey)
-				scope = strings.Trim(split[startIndex:], "\"")
-			}
-		}
-		token, err := GetRegistryToken(realm, service, scope)
-		if err != nil {
-			return "", err
-		}
-		return PollForExistenceV2(imageUri, "Bearer "+token)
-	} else if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unknown response: %s", resp.Status)
-	}
-	return authHeader, nil
-}
-
-func GetRegistryToken(realm, service, scope string) (string, error) {
-	requestUrl := fmt.Sprintf("%s?service=\"%s\"&scope=\"%s\"", realm, service, scope)
-
-	req, err := http.NewRequest("GET", requestUrl, nil)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to token from %s", requestUrl)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	tokenResp := tokenResponse{}
-	if err := json.Unmarshal(body, &tokenResp); err != nil {
-		return "", err
-	}
-	return tokenResp.Token, nil
 }
 
 func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfiguration, sourceImageUri, releaseImageUri string) error {

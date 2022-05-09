@@ -11,11 +11,11 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
-	imagesUtil "github.com/aws/eks-anywhere/release/pkg/images"
 )
 
 type checkImagesOptions struct {
@@ -75,10 +75,11 @@ func checkImages(context context.Context, spec string) error {
 		}
 	}
 
-	authHeader := ""
+	checkImageExistence := artifacts.CheckImageExistence{}
 	for _, image := range images {
 		myImageUri := strings.ReplaceAll(image.URI, constants.DefaultRegistry, myRegistry)
-		if authHeader, err = imagesUtil.PollForExistenceV2(myImageUri, authHeader); err != nil {
+		checkImageExistence.ImageUri = myImageUri
+		if err = checkImageExistence.Run(context); err != nil {
 			fmt.Println(err.Error())
 			logger.MarkFail(myImageUri)
 		} else {
