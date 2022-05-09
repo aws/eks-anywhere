@@ -31,7 +31,7 @@ The flux configuration spec has three optional fields, regardless of the chosen 
 
 EKS Anywhere currently supports two git providers for FluxConfig: Github and Git.
 
-## Github provider
+### Github provider
 Please note that for the Flux config to work successfully with the Github provider, the environment variable `EKSA_GITHUB_TOKEN` needs to be set with a valid [GitHub PAT](https://github.com/settings/tokens/new).
 This is a generic template with detailed descriptions below for reference:
 ```yaml
@@ -65,31 +65,52 @@ spec:
 ### github Configuration Spec Details
 ### __repository__ (required)
 
-* __Description__: The name of the repository where we will store your cluster configuration, and sync it to the cluster. If the repository exists, we will clone it from the git provider; if it does not exist, we will create it for you.
+* __Description__: The name of the repository where EKS Anywhere will store your cluster configuration, and sync it to the cluster. If the repository exists, we will clone it from the git provider; if it does not exist, we will create it for you.
 * __Type__: string
 
 ### __owner__ (required)
 
-* __Description__: The owner of the git repository; either a github username or github organization name. The Personal Access Token used must belong to the owner if this is a personal repository, or have permissions over the organization if this is not a personal repository.
+* __Description__: The owner of the Github repository; either a Github username or Github organization name. The Personal Access Token used must belong to the owner if this is a personal repository, or have permissions over the organization if this is not a personal repository.
 * __Type__: string
 
 ### __personal__ (optional)
 
-* __Description__: Is the repository a personal or organization repository? If personal, this value is true; otherwise, false. If using an organizational repository (e.g. personal is false) the owner field will be used as the organization when authenticating to github.com (http://github.com/)
+* __Description__: Is the repository a personal or organization repository?
+  If personal, this value is `true`; otherwise, `false`.
+  If using an organizational repository (e.g. `personal` is `false`) the `owner` field will be used as the `organization` when authenticating to github.com
 * __Default__: true
 * __Type__: boolean
 
-## Git provider
+### Git provider
 
-Before you create a cluster using the Git provider, you will need to set and export these environment variables.
+Before you create a cluster using the Git provider, you will need to set and export the `EKSA_GIT_KNOWN_HOSTS` and `EKSA_GIT_PRIVATE_KEY` environment variables.
 
-`EKSA_GIT_KNOWN_HOSTS`: Path to your known hosts file
+#### `EKSA_GIT_KNOWN_HOSTS`
 
-*-** TODO: insert info on how to obtain known hosts info for the git provider*
+EKS Anywhere uses the provided known hosts file to verify the identity of the git provider when connecting to it with SSH.
+The `EKSA_GIT_KNOWN_HOSTS` environment variable should be a path to a known hosts file containing entries for the git server to which you'll be connecting.
 
-`EKSA_GIT_PRIVATE_KEY`: Path to your private key file associated with a valid SSH public key registered in your Git setup.
+For example, if you wanted to provide a known hosts file which allows you to connect to and verify the identity of github.com using a private key based on the key algorithm ecdsa, you can use the OpenSSH utility [ssh-keyscan](https://manpages.ubuntu.com/manpages/xenial/man1/ssh-keyscan.1.html) to obtain the known host entry used by github.com for the `ecdsa` key type.
+EKS Anywhere supports `ecdsa`, `rsa`, and `ed25519` key types, which can be specified via the `sshKeyAlgorithm` field of the git provider config.
 
-If your private key file is password protected, you must also set `EKSA_GIT_SSH_KEY_PASSPHRASE` with that value.
+`ssk-keyscan -t ecdsa github.com >> my_eksa_known_hosts`
+
+This will produce a file which contains known-hosts entries for the `ecdsa` key type supported by github.com, mapping the host to the key-type and public key.
+
+`github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=`
+
+EKS Anywhere will use the content of the file at the path `EKA_GIT_KNOWN_HOSTS` to verify the identity of the remote git server, and the provided known hosts file must contain an entry for the remote host and key type.
+
+
+#### `EKSA_GIT_PRIVATE_KEY`
+
+The `EKSA_GIT_PRIVATE_KEY` environment variable should be a path to the private key file associated with a valid SSH public key registered with your Git provider.
+This key must have permission to both read from and write to your repository.
+The key can use the key algorithms `rsa`, `ecdsa`, and `ed25519`.
+
+This key file must have restricted file permissions, allowing only the owner to read and write, such as octal permissions `600`.
+
+If your private key file is passphrase protected, you must also set `EKSA_GIT_SSH_KEY_PASSPHRASE` with that value.
 
 This is a generic template with detailed descriptions below for reference:
 ```yaml
@@ -121,13 +142,17 @@ spec:
 ### git Configuration Spec Details
 ### repositoryUrl (required)
 
-* __Description__: The URL of an existing repository where we will store your cluster configuration and sync it to the cluster.
+* __Description__: The URL of an existing repository where EKS Anywhere will store your cluster configuration and sync it to the cluster.
 * __Type__: string
 
 ### sshKeyAlgorithm (optional)
 
-* __Description__: The SSH public key algorithm for the private key specified. Defaults to `ecdsa`
+* __Description__: The SSH key algorithm of the private key specified via `EKSA_PRIVATE_KEY_FILE`. Defaults to `ecdsa`
 * __Type__: string
+
+Supported SSH key algorithm types are `ecdsa`, `rsa`, and `ed25519`.
+
+Be sure that this SSH key algorithm matches the private key file provided by `EKSA_GIT_PRIVATE_KEY_FILE` and that the known hosts entry for the key type is present in `EKSA_GIT_KNOWN_HOSTS`.
 
 ## GitOps Configuration
 
@@ -176,12 +201,12 @@ spec:
 
 ### github Configuration Spec Details
 #### __repository__ (required)
-* __Description__: The name of the repository where we will store your cluster configuration, and sync it to the cluster.
+* __Description__: The name of the repository where EKS Anywhere will store your cluster configuration, and sync it to the cluster.
   If the repository exists, we will clone it from the git provider; if it does not exist, we will create it for you.
 * __Type__: string
 
 #### __owner__ (required)
-* __Description__: The owner of the git repository; either a github username or github organization name.
+* __Description__: The owner of the Github repository; either a Github username or Github organization name.
   The Personal Access Token used must belong to the `owner` if this is a `personal` repository, or have permissions over the organization if this is not a `personal` repository.
 * __Type__: string
 
@@ -206,4 +231,3 @@ spec:
 * __Description__: The branch to use when committing the configuration.
 * __Default__: `main`
 * __Type__: string
-
