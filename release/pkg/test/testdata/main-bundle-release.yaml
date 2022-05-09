@@ -140,9 +140,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -152,8 +152,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -328,7 +328,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -435,7 +435,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -443,8 +443,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.8-eks-a-v0.0.0-dev-build.1
-      version: v0.1.8+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -842,9 +842,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -854,8 +854,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1030,7 +1030,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1137,7 +1137,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1145,8 +1145,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.8-eks-a-v0.0.0-dev-build.1
-      version: v0.1.8+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -1544,9 +1544,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1556,8 +1556,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1732,7 +1732,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1839,7 +1839,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1847,8 +1847,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.8-eks-a-v0.0.0-dev-build.1
-      version: v0.1.8+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml

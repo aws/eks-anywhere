@@ -133,11 +133,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -312,7 +328,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -657,11 +673,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -836,7 +868,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1181,11 +1213,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -1360,7 +1408,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
