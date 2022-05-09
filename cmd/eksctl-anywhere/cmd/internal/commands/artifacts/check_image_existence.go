@@ -27,7 +27,10 @@ type tokenResponse struct {
 }
 
 func (d CheckImageExistence) Run(ctx context.Context) error {
-	registry, repository, tag := splitImageUri(d.ImageUri)
+	registry, repository, tag, error := splitImageUri(d.ImageUri)
+	if error != nil {
+		return error
+	}
 	requestUrl := fmt.Sprintf("https://%s/v2/%s/manifests/%s", registry, repository, tag)
 
 	req, err := http.NewRequest("GET", requestUrl, nil)
@@ -98,11 +101,18 @@ func getRegistryToken(realm, service, scope string) (string, error) {
 	return tokenResp.Token, nil
 }
 
-func splitImageUri(imageUri string) (string, string, string) {
-	registry := imageUri[:strings.Index(imageUri, "/")]
+func splitImageUri(imageUri string) (string, string, string, error) {
+	indexOfSlash := strings.Index(imageUri, "/")
+	if indexOfSlash < 0 {
+		return "", "", "", errors.Errorf("Invalid URI: %s", imageUri)
+	}
+	registry := imageUri[:indexOfSlash]
 	imageUriSplit := strings.Split(imageUri[len(registry)+1:], ":")
+	if len(imageUriSplit) < 2 {
+		return "", "", "", errors.Errorf("Invalid URI: %s", imageUri)
+	}
 	repository := strings.Replace(imageUriSplit[0], registry+"/", "", -1)
 	tag := imageUriSplit[1]
 
-	return registry, repository, tag
+	return registry, repository, tag, nil
 }
