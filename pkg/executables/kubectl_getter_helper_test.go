@@ -58,7 +58,7 @@ func (tt *kubectlGetterTest) testSuccess() {
 
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "--namespace", tt.namespace, tt.resourceType, tt.name, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile,
+		"get", "--ignore-not-found", "--namespace", tt.namespace, tt.resourceType, tt.name, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile,
 	).Return(*bytes.NewBufferString(tt.json), nil)
 
 	got, err := tt.getter(tt)
@@ -71,7 +71,7 @@ func (tt *kubectlGetterTest) testError() {
 
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"get", "--namespace", tt.namespace, tt.resourceType, tt.name, "-o", "json", "--kubeconfig", tt.kubeconfig,
+		"get", "--ignore-not-found", "--namespace", tt.namespace, tt.resourceType, tt.name, "-o", "json", "--kubeconfig", tt.kubeconfig,
 	).Return(bytes.Buffer{}, errors.New("error in get"))
 
 	_, err := tt.getter(tt)

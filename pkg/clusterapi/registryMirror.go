@@ -6,6 +6,7 @@ import (
 	"net"
 
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -58,4 +59,36 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 		"sudo systemctl restart containerd",
 	}
 	return files, preKubeadmCommands, nil
+}
+
+func SetRegistryMirrorInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+	if mirrorConfig == nil {
+		return nil
+	}
+
+	containerdFiles, containerdCommands, err := registryMirrorConfig(mirrorConfig)
+	if err != nil {
+		return fmt.Errorf("setting registry mirror configuration: %v", err)
+	}
+
+	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
+	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, containerdCommands...)
+
+	return nil
+}
+
+func SetRegistryMirrorInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
+	if mirrorConfig == nil {
+		return nil
+	}
+
+	containerdFiles, containerdCommands, err := registryMirrorConfig(mirrorConfig)
+	if err != nil {
+		return fmt.Errorf("setting registry mirror configuration: %v", err)
+	}
+
+	kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
+	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, containerdCommands...)
+
+	return nil
 }

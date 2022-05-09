@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -10,6 +12,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -28,6 +32,7 @@ type createClusterOptions struct {
 	hardwareFileName string
 	skipPowerActions bool
 	setupTinkerbell  bool
+	installPackages  string
 }
 
 var cc = &createClusterOptions{}
@@ -55,6 +60,7 @@ func init() {
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -129,17 +135,21 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
+		WithEksdInstaller().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
 		return fmt.Errorf("provider tinkerbell is not supported in this release")
@@ -153,12 +163,17 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
+	if !features.IsActive(features.CuratedPackagesSupport()) && cc.installPackages != "" {
+		return fmt.Errorf("curated packages installation is not supported in this release")
+	}
+
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
+		deps.EksdInstaller,
 	)
 
 	var cluster *types.Cluster
@@ -183,8 +198,34 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		},
 		ManagementCluster: cluster,
 		Provider:          deps.Provider,
+		CliConfig:         cliConfig,
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean, cc.installPackages)
+	cleanup(deps, &err)
+	return err
+}
+
+func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
+	dirs := cc.mountDirs()
+	fluxConfig := clusterSpec.FluxConfig
+	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
+		return dirs
+	}
+	dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+	dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
+
+	return dirs
+}
+
+func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
+	cliConfig := &config.CliConfig{}
+	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
+		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
+		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
+	}
+
+	return cliConfig
 }

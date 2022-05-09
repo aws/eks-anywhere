@@ -6,7 +6,7 @@ metadata:
 spec:
   clusterName: {{.clusterName}}
   maxUnhealthy: 40%
-  nodeStartupTimeout: 10m
+  nodeStartupTimeout: 20m
   selector:
     matchLabels:
       cluster.x-k8s.io/deployment-name: "{{.clusterName}}-md-0"

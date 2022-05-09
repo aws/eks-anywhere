@@ -14,6 +14,7 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -729,7 +730,7 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			machineConfigName := "testMachineConfig"
 			e.EXPECT().Execute(ctx, []string{
-				"get", "--namespace", constants.EksaSystemNamespace,
+				"get", "--ignore-not-found", "--namespace", constants.EksaSystemNamespace,
 				"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
 				machineConfigName,
 				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
@@ -791,7 +792,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			datacenterConfigName := "testDatacenterConfig"
 			e.EXPECT().Execute(ctx, []string{
-				"get", "--namespace", constants.EksaSystemNamespace,
+				"get", "--ignore-not-found", "--namespace", constants.EksaSystemNamespace,
 				"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
 				datacenterConfigName,
 				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
@@ -1016,7 +1017,39 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 
 	err := k.SetEksaControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
 	if err != nil {
-		t.Fatalf("Kubectl.GetApiServerUrl() error = %v, want nil", err)
+		t.Fatalf("Kubectl.DaemonSetRolloutRestart() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDaemonSetRolloutRestartSuccess(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{
+			"rollout", "restart", "ds", "cilium",
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
+		},
+	).Return(bytes.Buffer{}, nil)
+
+	err := k.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
+	if err != nil {
+		t.Fatalf("Kubectl.DaemonSetRolloutRestart() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDaemonSetRolloutRestartError(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{
+			"rollout", "restart", "ds", "cilium",
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.KubeSystemNamespace,
+		},
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+
+	err := k.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
+	if err == nil {
+		t.Fatalf("Kubectl.DaemonSetRolloutRestart() expected error, but was nil")
 	}
 }
 
@@ -1758,4 +1791,211 @@ func TestGetHardwareWithLabel(t *testing.T) {
 	got, err := tt.k.GetHardwareWithLabel(tt.ctx, ownerNameLabel, tt.cluster.KubeconfigFile, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(got).To(Equal(wantHardwares))
+}
+
+func TestKubectlGetObjectNotFound(t *testing.T) {
+	tests := []struct {
+		name         string
+		resourceType string
+	}{
+		{
+			name:         "simple resource type",
+			resourceType: "cluster",
+		},
+		{
+			name:         "resource type with resource and group",
+			resourceType: "cluster.x-k8s.io",
+		},
+		{
+			name:         "resource type with resource, version and group",
+			resourceType: "cluster.v1beta1.x-k8s.io",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tt := newKubectlTest(t)
+			name := "my-cluster"
+			tt.e.EXPECT().Execute(
+				tt.ctx,
+				"get", "--ignore-not-found", "--namespace", tt.namespace, tc.resourceType, name, "-o", "json", "--kubeconfig", tt.kubeconfig,
+			).Return(bytes.Buffer{}, nil)
+
+			err := tt.k.GetObject(tt.ctx, tc.resourceType, name, tt.namespace, tt.kubeconfig, &clusterv1.Cluster{})
+			tt.Expect(err).To(HaveOccurred())
+			tt.Expect(apierrors.IsNotFound(err)).To(BeTrue())
+		})
+	}
+}
+
+func TestKubectlGetEksaFluxConfig(t *testing.T) {
+	kubeconfig := "/my/kubeconfig"
+	namespace := "eksa-system"
+	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
+
+	returnConfig := &v1alpha1.FluxConfig{}
+	returnConfigBytes, err := json.Marshal(returnConfig)
+	if err != nil {
+		t.Errorf("failed to create output object for test")
+	}
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"get", eksaFluxConfigResourceType, "testFluxConfig", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*bytes.NewBuffer(returnConfigBytes), nil)
+	_, err = k.GetEksaFluxConfig(ctx, "testFluxConfig", kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetEksaFluxConfig() error = %v, want error = nil", err)
+	}
+}
+
+func TestKubectlDeleteFluxConfig(t *testing.T) {
+	namespace := "eksa-system"
+	kubeconfig := "/my/kubeconfig"
+	eksaFluxConfigResourceType := fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
+
+	returnConfig := &v1alpha1.FluxConfig{}
+	returnConfigBytes, err := json.Marshal(returnConfig)
+	if err != nil {
+		t.Errorf("failed to create output object for test")
+	}
+
+	mgmtCluster := &types.Cluster{KubeconfigFile: kubeconfig}
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", eksaFluxConfigResourceType, "testFluxConfig", "--kubeconfig", mgmtCluster.KubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*bytes.NewBuffer(returnConfigBytes), nil)
+	err = k.DeleteFluxConfig(ctx, mgmtCluster, "testFluxConfig", namespace)
+	if err != nil {
+		t.Errorf("Kubectl.DeleteFluxConfig() error = %v, want error = nil", err)
+	}
+}
+
+func TestGetTinkerbellDatacenterConfig(t *testing.T) {
+	tt := newKubectlTest(t)
+	datacenterJson := test.ReadFile(t, "testdata/kubectl_tinkerbelldatacenter.json")
+	wantDatacenter := &v1alpha1.TinkerbellDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mycluster",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TinkerbellDatacenterConfig",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+		},
+		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
+			TinkerbellCertURL:      "http://1.2.3.4:42114/cert",
+			TinkerbellGRPCAuth:     "1.2.3.4:42113",
+			TinkerbellHegelURL:     "http://1.2.3.4:50061",
+			TinkerbellIP:           "1.2.3.4",
+			TinkerbellPBnJGRPCAuth: "1.2.3.4:50051",
+		},
+	}
+
+	params := []string{
+		"get", "tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com", "mycluster", "-o", "json", "--kubeconfig",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(datacenterJson), nil)
+
+	got, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "mycluster", tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(got).To(Equal(wantDatacenter))
+}
+
+func TestGetTinkerbellMachineConfig(t *testing.T) {
+	tt := newKubectlTest(t)
+	machineconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbellmachineconfig.json")
+	wantMachineConfig := &v1alpha1.TinkerbellMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "mycluster",
+		},
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "TinkerbellMachineConfig",
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+		},
+		Spec: v1alpha1.TinkerbellMachineConfigSpec{
+			OSFamily: "ubuntu",
+			TemplateRef: v1alpha1.Ref{
+				Name: "mycluster",
+				Kind: "TinkerbellTemplateConfig",
+			},
+		},
+	}
+
+	params := []string{
+		"get", "tinkerbellmachineconfigs.anywhere.eks.amazonaws.com", "mycluster", "-o", "json", "--kubeconfig",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(machineconfigJson), nil)
+
+	got, err := tt.k.GetEksaTinkerbellMachineConfig(tt.ctx, "mycluster", tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(got).To(Equal(wantMachineConfig))
+}
+
+func TestGetTinkerbellMachineConfigInvalid(t *testing.T) {
+	tt := newKubectlTest(t)
+	machineconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbellmachineconfig_invalid.json")
+
+	params := []string{
+		"get", "tinkerbellmachineconfigs.anywhere.eks.amazonaws.com", "mycluster", "-o", "json", "--kubeconfig",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(machineconfigJson), nil)
+
+	_, err := tt.k.GetEksaTinkerbellMachineConfig(tt.ctx, "mycluster", tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetTinkerbellDatacenterConfigInvalid(t *testing.T) {
+	tt := newKubectlTest(t)
+	datacenterconfigJson := test.ReadFile(t, "testdata/kubectl_tinkerbelldatacenter_invalid.json")
+
+	params := []string{
+		"get", "tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com", "mycluster", "-o", "json", "--kubeconfig",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(datacenterconfigJson), nil)
+
+	_, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "mycluster", tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetTinkerbellMachineConfigNotFound(t *testing.T) {
+	var kubeconfigfile string
+	tt := newKubectlTest(t)
+
+	params := []string{
+		"get", "tinkerbellmachineconfigs.anywhere.eks.amazonaws.com", "test", "-o", "json", "--kubeconfig",
+		kubeconfigfile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("machineconfig not found"))
+
+	_, err := tt.k.GetEksaTinkerbellMachineConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
+	var kubeconfigfile string
+	tt := newKubectlTest(t)
+
+	params := []string{
+		"get", "tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com", "test", "-o", "json", "--kubeconfig",
+		kubeconfigfile, "--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("datacenterconfig not found"))
+
+	_, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestKubectlDelete(t *testing.T) {
+	tt := newKubectlTest(t)
+	name := "my-cluster"
+	resourceType := "cluster.x-k8s.io"
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"delete", resourceType, name, "--namespace", tt.namespace, "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Delete(tt.ctx, resourceType, name, tt.namespace, tt.kubeconfig)).To(Succeed())
 }

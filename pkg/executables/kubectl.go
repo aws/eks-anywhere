@@ -2,6 +2,7 @@ package executables
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -16,12 +17,14 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,11 +43,14 @@ var (
 	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
 	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaGitOpsResourceType               = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaFluxConfigResourceType           = fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaOIDCResourceType                 = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsIamResourceType               = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
 	etcdadmClustersResourceType          = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
@@ -100,7 +106,7 @@ func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name str
 
 func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 	response := &v1alpha1.CloudStackMachineConfig{}
-	err := k.getObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
+	err := k.GetObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
 		return nil, fmt.Errorf("getting eksa cloudstack machineconfig: %v", err)
 	}
@@ -119,7 +125,7 @@ func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, clou
 
 func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error) {
 	response := &v1alpha1.CloudStackDatacenterConfig{}
-	err := k.getObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
+	err := k.GetObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
 		return nil, fmt.Errorf("getting eksa cloudstack datacenterconfig: %v", err)
 	}
@@ -309,6 +315,15 @@ func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *typ
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("deleting gitops config %s apply: %v", gitOpsConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types.Cluster, fluxConfigName, fluxConfigNamespace string) error {
+	params := []string{"delete", eksaFluxConfigResourceType, fluxConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", fluxConfigNamespace, "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("deleting gitops config %s apply: %v", fluxConfigName, err)
 	}
 	return nil
 }
@@ -675,6 +690,18 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
+func (k *Kubectl) DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
+	params := []string{
+		"rollout", "restart", "ds", dsName,
+		"--kubeconfig", kubeconfig, "--namespace", dsNamespace,
+	}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("restarting %s daemonset in namespace %s: %v", dsName, dsNamespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
 	params := []string{
 		"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal),
@@ -770,14 +797,6 @@ func WithSkipTLSVerify() KubectlOpt {
 
 func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
-}
-
-func WithOutput(output string) KubectlOpt {
-	return appendOpt("-o", output)
-}
-
-func WithArgs(args []string) KubectlOpt {
-	return appendOpt(args...)
 }
 
 func appendOpt(new ...string) KubectlOpt {
@@ -1070,6 +1089,22 @@ func (k *Kubectl) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName s
 	return response.Items, nil
 }
 
+func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error) {
+	params := []string{"get", eksaFluxConfigResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa FluxConfig: %v", err)
+	}
+
+	response := &v1alpha1.FluxConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing FluxConfig response: %v", err)
+	}
+
+	return response, nil
+}
+
 func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {
 	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1118,6 +1153,22 @@ func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName stri
 	return response, nil
 }
 
+func (k *Kubectl) GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error) {
+	params := []string{"get", eksaTinkerbellDatacenterResourceType, tinkerbellDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa TinkerbellDatacenterConfig %v", err)
+	}
+
+	response := &v1alpha1.TinkerbellDatacenterConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get eksa TinkerbellDatacenterConfig response: %v", err)
+	}
+
+	return response, nil
+}
+
 func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	params := []string{"get", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1129,6 +1180,22 @@ func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDat
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("parsing get eksa vsphere cluster response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error) {
+	params := []string{"get", eksaTinkerbellMachineResourceType, tinkerbellMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa TinkerbellMachineConfig %v", err)
+	}
+
+	response := &v1alpha1.TinkerbellMachineConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get eksa TinkerbellMachineConfig response: %v", err)
 	}
 
 	return response, nil
@@ -1371,10 +1438,22 @@ func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name str
 	return found, err
 }
 
-func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj client.Object) error {
-	stdOut, err := k.Execute(ctx, "get", "--namespace", namespace, resourceType, name, "-o", "json", "--kubeconfig", kubeconfig)
+// GetObject performs a GET call to the kube API server authenticating with a kubeconfig file
+// and unmarshalls the response into the provdied Object
+// If the object is not found, it returns an error implementing apimachinery errors.APIStatus
+func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
+	stdOut, err := k.Execute(ctx, "get", "--ignore-not-found", "--namespace", namespace, resourceType, name, "-o", "json", "--kubeconfig", kubeconfig)
 	if err != nil {
 		return fmt.Errorf("getting %s with kubectl: %v", resourceType, err)
+	}
+
+	if stdOut.Len() == 0 {
+		resourceTypeSplit := strings.SplitN(resourceType, ".", 2)
+		gr := schema.GroupResource{Resource: resourceTypeSplit[0]}
+		if len(resourceTypeSplit) == 2 {
+			gr.Group = resourceTypeSplit[1]
+		}
+		return apierrors.NewNotFound(gr, name)
 	}
 
 	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
@@ -1386,7 +1465,7 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 
 func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
 	obj := &eksdv1alpha1.Release{}
-	if err := k.getObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
+	if err := k.GetObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
 		return nil, err
 	}
 
@@ -1395,7 +1474,7 @@ func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfi
 
 func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {
 	obj := &appsv1.Deployment{}
-	if err := k.getObject(ctx, "deployment", name, namespace, kubeconfig, obj); err != nil {
+	if err := k.GetObject(ctx, "deployment", name, namespace, kubeconfig, obj); err != nil {
 		return nil, err
 	}
 
@@ -1404,20 +1483,11 @@ func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig
 
 func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.DaemonSet, error) {
 	obj := &appsv1.DaemonSet{}
-	if err := k.getObject(ctx, "daemonset", name, namespace, kubeconfig, obj); err != nil {
+	if err := k.GetObject(ctx, "daemonset", name, namespace, kubeconfig, obj); err != nil {
 		return nil, err
 	}
 
 	return obj, nil
-}
-
-func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
-	params := []string{
-		"get", resourceType,
-	}
-	applyOpts(&params, opts...)
-	stdOut, err := k.Execute(ctx, params...)
-	return stdOut.String(), err
 }
 
 // GetHardwareWithLabel gets the hardwares with given label.
@@ -1452,4 +1522,20 @@ func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kube
 	}
 
 	return strings.Fields(buffer.String()), nil
+}
+
+func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
+	return k.Execute(ctx, opts...)
+}
+
+// Delete performs a DELETE call to the kube API server authenticating with a kubeconfig file
+func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
+	if _, err := k.Execute(ctx, "delete", resourceType, name, "--namespace", namespace, "--kubeconfig", kubeconfig); err != nil {
+		return fmt.Errorf("deleting %s %s in namespace %s: %v", name, resourceType, namespace, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
+	return k.ExecuteWithStdin(ctx, yaml, opts...)
 }

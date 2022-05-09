@@ -43,7 +43,7 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "stream-image",
-			Image:   b.Tinkerbell.Actions.ImageToDisk.URI,
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,
 			Timeout: 360,
 			Environment: map[string]string{
 				"IMG_URL":    b.EksD.Raw.Ubuntu.URI,
@@ -58,7 +58,7 @@ func withNetplanAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "write-netplan",
-			Image:   b.Tinkerbell.Actions.WriteFile.URI,
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda2",
@@ -78,7 +78,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
-			Image:   b.Tinkerbell.Actions.WriteFile.URI,
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda2",
@@ -98,7 +98,7 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-ds-config",
-			Image:   b.Tinkerbell.Actions.WriteFile.URI,
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda2",
@@ -118,7 +118,7 @@ func withKexecAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "kexec-image",
-			Image:   b.Tinkerbell.Actions.Kexec.URI,
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.Kexec.URI,
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{

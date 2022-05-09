@@ -10,8 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
@@ -41,33 +40,26 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 func getResources(ctx context.Context, resourceType string, output string, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	deps, err := createKubectl(ctx)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
 
-	params := []executables.KubectlOpt{executables.WithKubeconfig(kubeConfig), executables.WithArgs(args), executables.WithNamespace(constants.EksaPackagesName)}
+	params := []string{"get", resourceType, "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	params = append(params, args...)
 	if output != "" {
-		params = append(params, executables.WithOutput(output))
+		params = append(params, "-o", output)
 	}
-	packages, err := kubectl.GetResources(ctx, resourceType, params...)
+	stdOut, err := kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
-		fmt.Print(packages)
+		fmt.Print(&stdOut)
 		return fmt.Errorf("kubectl execution failure: \n%v", err)
 	}
-	if packages == "" {
-		fmt.Printf("No resources found in %v namespace", constants.EksaPackagesName)
+	if len(stdOut.Bytes()) == 0 {
+		fmt.Printf("No resources found in %v namespace\n", constants.EksaPackagesName)
 		return nil
 	}
-	fmt.Println(packages)
+	fmt.Print(&stdOut)
 	return nil
-}
-
-func createKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
-	return dependencies.NewFactory().
-		UseExecutableImage(executables.DefaultEksaImage()).
-		WithExecutableBuilder().
-		WithKubectl().
-		Build(ctx)
 }
