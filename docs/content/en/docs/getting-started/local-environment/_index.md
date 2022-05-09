@@ -79,7 +79,7 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    {{% /alert %}}
    The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
-   eksctl anywhere generate package harbor -d .
+   eksctl anywhere generate package harbor --source registry --kubeversion 1.21 > packages.yaml
    ```
 
 1. Create a cluster
@@ -88,7 +88,7 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
    # Create a cluster with curated packages installation
-   eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --install-packages ./curated-packages/
+   eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --install-packages packages.yaml
    ```
    Example command output
    ```
@@ -107,6 +107,8 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    GitOps field not specified, bootstrap flux skipped
    Deleting bootstrap cluster
    🎉 Cluster created!
+   Installing curated packages controller on workload cluster
+   package.packages.eks.amazonaws.com/my-harbor created
    ```
 
 1. Use the cluster

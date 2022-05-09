@@ -1,10 +1,10 @@
 ---
-title: "Harbor package"
-linkTitle: "Add Harbor"
+title: "EKS Anywhere curated package Harbor"
+linkTitle: "Add EKS Anywhere curated package Harbor"
 weight: 13
 date: 2022-04-12
 description: >
-  Install/upgrade/uninstall Harbor
+  Install/upgrade/uninstall EKS Anywhere curated package Harbor
 ---
 
 {{% alert title="Important" color="warning" %}}
@@ -18,10 +18,10 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package harbor --source cluster -d .
+   eksctl anywhere generate package harbor --source cluster > packages.yaml
    ```
 
-1. Add the desired configuration to `curated-packages/my-harbor.yaml` 
+1. Add the desired configuration to `packages.yaml` 
 
    Please see [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all configuration options and their default values.
 
@@ -74,7 +74,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
 1. Install Harbor
 
    ```bash
-   eksctl anywhere create packages -f curated-packages/my-harbor.yaml
+   eksctl anywhere create packages -f packages.yaml
    ```
 
 1. Check Harbor
