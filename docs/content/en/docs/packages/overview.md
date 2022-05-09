@@ -8,5 +8,8 @@ EKS Anywhere Curated Packages is a management system for installation, configura
 
 The major components of EKS Anywhere Curated Packages are the [package controller]({{< relref "package-controller" >}}), the [package build artifacts]({{< relref "artifacts" >}}) and the [command line interface]({{< relref "cli" >}}). The package controller will run in a pod in an EKS Anywhere cluster. The package controller will manage the lifecycle of packages tested and maintained by EKS Anywhere.
 
-### Packages
+### Curated packages
 Please check out [curated package list]({{< relref "../reference/packagespec" >}}) for the complete list of EKS Anywhere curated packages.
+
+### Use cases
+Please check out [curated package workshop]({{< relref "../workshops/packages" >}}) for use cases of curated packages.
