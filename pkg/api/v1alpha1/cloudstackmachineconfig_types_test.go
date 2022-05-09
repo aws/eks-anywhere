@@ -191,7 +191,7 @@ func TestCloudStackMachineConfigDiskOfferingValidMountPath(t *testing.T) {
 	g.Expect(fieldValue == "").To(BeTrue())
 }
 
-func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
+func TestCloudStackMachineConfigDiskOfferingInValidNoIDAndName(t *testing.T) {
 	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{},
 		MountPath:                    "/data",
@@ -205,6 +205,17 @@ func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
 	g.Expect(fieldName == "id or name").To(BeTrue())
 	g.Expect(fieldValue == "").To(BeTrue())
 	g.Expect(err.Error() == "empty id/name").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
+	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{},
+	}
+	g := NewWithT(t)
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err == nil).To(BeTrue())
+	g.Expect(fieldName == "").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {

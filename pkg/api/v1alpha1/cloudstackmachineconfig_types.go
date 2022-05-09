@@ -47,13 +47,13 @@ type CloudStackMachineConfigSpec struct {
 
 type CloudStackResourceDiskOffering struct {
 	CloudStackResourceIdentifier `json:",inline"`
-	// path the storage will use to mount in VM
+	// path the filesystem will use to mount in VM
 	MountPath string `json:"mountPath"`
-	// device name
+	// device name of the disk offering in VM, shows up in lsblk command
 	Device string `json:"device"`
-	// filesystem
+	// filesystem used to mkfs in disk offering partition
 	Filesystem string `json:"filesystem"`
-	// disk label
+	// disk label used to label disk partition
 	Label string `json:"label"`
 }
 
