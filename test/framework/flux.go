@@ -55,13 +55,14 @@ var fluxGitRequiredEnvVars = []string{
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
+		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
 			api.WithGenericGitProvider(
 				api.WithStringFromEnvVarGenericGitProviderConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
 			api.WithSystemNamespace("default"),
-			api.WithClusterConfigPath(e.ClusterName),
+			api.WithClusterConfigPath(jobId),
 			api.WithBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
