@@ -6,7 +6,7 @@ description: >
   Common tasks for managing curated packages.
 ---
 
-The main goal of EKS Anywhere curated packages is to make it easy to install, configure and maintain operational components in an EKS Anywhere cluster. EKS Anywhere curated packages offers to run secure and tested operational components on EKS Anywhere clusters. Please check out [package controller]({{< relref "../../concepts" >}}) for more details.
+The main goal of EKS Anywhere curated packages is to make it easy to install, configure and maintain operational components in an EKS Anywhere cluster. EKS Anywhere curated packages offers to run secure and tested operational components on EKS Anywhere clusters. Please check out [package controller]({{< relref "../../packages" >}}) for more details.
 
 ### Check the existence of package controller
 ```bash
