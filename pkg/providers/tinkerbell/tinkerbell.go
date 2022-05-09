@@ -69,7 +69,7 @@ type Provider struct {
 
 	hardwareManifestPath string
 	// catalogue is a cache initialized during SetupAndValidateCreateCluster() from hardwareManifestPath.
-	catalogue hardware.Catalogue
+	catalogue *hardware.Catalogue
 
 	skipIpCheck      bool
 	skipPowerActions bool
@@ -201,9 +201,11 @@ func NewProviderCustomDep(
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
+		validator: NewValidator(providerTinkClient, netClient, pbnjClient),
+		writer:    writer,
+
 		hardwareManifestPath: hardwareManifestPath,
-		validator:            NewValidator(providerTinkClient, netClient, pbnjClient),
-		writer:               writer,
+		catalogue:            hardware.NewCatalogue(),
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch

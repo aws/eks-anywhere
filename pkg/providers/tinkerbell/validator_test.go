@@ -137,10 +137,10 @@ func newValidClusterSpec(cp, etcd, worker int) v1alpha1.ClusterSpec {
 	}
 }
 
-func newCatalogueWithHardware(hardwareCount int) hardware.Catalogue {
-	return hardware.Catalogue{
-		Hardware: make([]tinkv1alpha1.Hardware, hardwareCount),
-	}
+func newCatalogueWithHardware(hardwareCount int) *hardware.Catalogue {
+	catalogue := hardware.NewCatalogue()
+	catalogue.Hardware = make([]*tinkv1alpha1.Hardware, hardwareCount)
+	return catalogue
 }
 
 func newValidTinkerbellDatacenterConfig() *v1alpha1.TinkerbellDatacenterConfig {

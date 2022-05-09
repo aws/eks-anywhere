@@ -89,7 +89,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
-	if err := hardware.ParseYAMLCatalogueFromFile(&p.catalogue, p.hardwareManifestPath); err != nil {
+	if err := hardware.ParseYAMLCatalogueFromFile(p.catalogue, p.hardwareManifestPath); err != nil {
 		return err
 	}
 
@@ -179,7 +179,7 @@ func (p *Provider) setHardwareStateToProvisining(ctx context.Context) error {
 // setMachinesToPXEBoot iterates over all catalogue.BMCs and instructs them to turn off, one-time
 // PXE boot, then turn on.
 func (p *Provider) setMachinesToPXEBoot(ctx context.Context) error {
-	secrets := make(map[string]corev1.Secret, len(p.catalogue.Secrets))
+	secrets := make(map[string]*corev1.Secret, len(p.catalogue.Secrets))
 	for _, secret := range p.catalogue.Secrets {
 		secrets[secret.Name] = secret
 	}
@@ -217,7 +217,7 @@ func (p *Provider) setMachinesToPXEBoot(ctx context.Context) error {
 // scrubWorkflowsFromTinkerbell removes all workflows in the Tinkerbell stack that feature in hardware by retrieving
 // hardware MAC addresses using tinkerbellHardware. tinkerbellHardware is necessary because MAC addresses aren't
 // available on the Hardware object type.
-func (p *Provider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
+func (p *Provider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []*tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
 	workflows, err := p.providerTinkClient.GetWorkflow(ctx)
 	if err != nil {
 		return fmt.Errorf("retrieving workflows: %w", err)
@@ -257,7 +257,7 @@ func createHardwareIDToMACMapping(hardware []*tinkhardware.Hardware) (map[string
 	return hardwareMACLookup, nil
 }
 
-func createMACSetFromHardwareManifests(hardwareMACLookup map[string]string, hardware []tinkv1alpha1.Hardware) (macAddressSet, error) {
+func createMACSetFromHardwareManifests(hardwareMACLookup map[string]string, hardware []*tinkv1alpha1.Hardware) (macAddressSet, error) {
 	manifestHardwareMACs := make(macAddressSet)
 	for _, h := range hardware {
 		mac, found := hardwareMACLookup[h.Spec.ID]
