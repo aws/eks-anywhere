@@ -13,4 +13,4 @@ Any changes to a package custom resource will trigger and install, upgrade, conf
 ### Installation
 Please check out [create local cluster]({{< relref "../getting-started/local-environment" >}}) and [create production cluster]({{< relref "../getting-started/production-environment" >}}) for how to install package controller at the cluster creation time. 
 
-Please check out [package management]({{< relref "../tasks/packages" >}}) for how to install package controller separately and manage curated packages.
+Please check out [package management]({{< relref "../tasks/packages" >}}) for how to install package controller after cluster creation and manage curated packages.
