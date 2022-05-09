@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -22,15 +21,7 @@ import (
 // and any remaining functions either turned into stand-alone funcs or moved elsewhere.
 
 func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
-	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
-	if !skipPowerActions {
-		bmcRefMap = c.initBmcRefMap()
-	}
-
-	// A database of observed hardware IDs so we can check for uniqueness.
-	hardwareIdsDb := make(map[string]struct{}, len(c.Hardware))
-
-	for _, hw := range c.Hardware {
+	for _, hw := range c.AllHardware() {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
 		}
@@ -43,10 +34,14 @@ func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareM
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
 
-		if _, found := hardwareIdsDb[hw.Spec.ID]; found {
+		allHardwareWithID, err := c.LookupHardware(HardwareIDIndex, hw.Spec.ID)
+		if err != nil {
+			return err
+		}
+
+		if len(allHardwareWithID) > 1 {
 			return fmt.Errorf("duplicate hardware id: %v", hw.Spec.ID)
 		}
-		hardwareIdsDb[hw.Spec.ID] = struct{}{}
 
 		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
 			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
@@ -88,15 +83,23 @@ func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareM
 				return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
 			}
 
-			h, ok := bmcRefMap[hw.Spec.BmcRef]
-			if ok && h != nil {
-				return fmt.Errorf("bmcRef %s present in both hardware %s and hardware %s", hw.Spec.BmcRef, hw.Name, h.Name)
+			bmcs, err := c.LookupBMC(BMCNameIndex, hw.Spec.BmcRef)
+			if err != nil {
+				return err
 			}
-			if !ok {
+
+			if len(bmcs) == 0 {
 				return fmt.Errorf("bmcRef %s not found in hardware config", hw.Spec.BmcRef)
 			}
 
-			bmcRefMap[hw.Spec.BmcRef] = hw
+			hardwareSharingBMCRef, err := c.LookupHardware(HardwareBMCRefIndex, hw.Spec.BmcRef)
+			if err != nil {
+				return err
+			}
+
+			if len(hardwareSharingBMCRef) > 1 {
+				return fmt.Errorf("multiple hardware referencing bmc: bmc ref=%v", hw.Spec.BmcRef)
+			}
 		}
 	}
 
@@ -104,9 +107,8 @@ func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareM
 }
 
 func (c *Catalogue) ValidateBMC() error {
-	secretRefMap := c.initSecretRefMap()
-	bmcIpMap := make(map[string]struct{}, len(c.BMCs))
-	for _, bmc := range c.BMCs {
+	bmcIpMap := make(map[string]struct{}, c.TotalBMCs())
+	for _, bmc := range c.AllBMCs() {
 		if bmc.Name == "" {
 			return fmt.Errorf("bmc name is required")
 		}
@@ -119,7 +121,12 @@ func (c *Catalogue) ValidateBMC() error {
 			return fmt.Errorf("invalid authSecretRef namespace: %s for bmc %s", bmc.Spec.AuthSecretRef.Namespace, bmc.Name)
 		}
 
-		if _, ok := secretRefMap[bmc.Spec.AuthSecretRef.Name]; !ok {
+		secret, err := c.LookupSecret(SecretNameIndex, bmc.Spec.AuthSecretRef.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(secret) != 1 {
 			return fmt.Errorf("bmc authSecretRef: %s not present in hardware config", bmc.Spec.AuthSecretRef.String())
 		}
 
@@ -142,7 +149,7 @@ func (c *Catalogue) ValidateBMC() error {
 }
 
 func (c *Catalogue) ValidateBmcSecretRefs() error {
-	for _, s := range c.Secrets {
+	for _, s := range c.AllSecrets() {
 		if s.Name == "" {
 			return fmt.Errorf("secret name is required")
 		}
@@ -171,34 +178,16 @@ func (c *Catalogue) ValidateBmcSecretRefs() error {
 	return nil
 }
 
-func (c *Catalogue) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
-	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(c.BMCs))
-	for _, bmc := range c.BMCs {
-		bmcRefMap[bmc.Name] = nil
-	}
-
-	return bmcRefMap
-}
-
-func (c *Catalogue) initSecretRefMap() map[string]struct{} {
-	secretRefMap := make(map[string]struct{}, len(c.Secrets))
-	for _, s := range c.Secrets {
-		secretRefMap[s.Name] = struct{}{}
-	}
-
-	return secretRefMap
-}
-
 func (c *Catalogue) HardwareSpecMarshallable() ([]byte, error) {
 	var marshallables []v1alpha1.Marshallable
 
-	for _, hw := range c.Hardware {
+	for _, hw := range c.AllHardware() {
 		marshallables = append(marshallables, hw)
 	}
-	for _, bmc := range c.BMCs {
+	for _, bmc := range c.AllBMCs() {
 		marshallables = append(marshallables, bmc)
 	}
-	for _, secret := range c.Secrets {
+	for _, secret := range c.AllSecrets() {
 		marshallables = append(marshallables, secret)
 	}
 

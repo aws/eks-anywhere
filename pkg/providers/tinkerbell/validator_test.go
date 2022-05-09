@@ -139,7 +139,11 @@ func newValidClusterSpec(cp, etcd, worker int) v1alpha1.ClusterSpec {
 
 func newCatalogueWithHardware(hardwareCount int) *hardware.Catalogue {
 	catalogue := hardware.NewCatalogue()
-	catalogue.Hardware = make([]*tinkv1alpha1.Hardware, hardwareCount)
+	for i := 0; i < hardwareCount; i++ {
+		if err := catalogue.InsertHardware(&tinkv1alpha1.Hardware{}); err != nil {
+			panic(err)
+		}
+	}
 	return catalogue
 }
 

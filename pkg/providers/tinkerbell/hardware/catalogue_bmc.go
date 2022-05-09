@@ -12,14 +12,14 @@ func (c *Catalogue) InsertBMC(bmc *pbnjv1alpha1.BMC) error {
 	if err := c.bmcIndex.Insert(bmc); err != nil {
 		return err
 	}
-	c.BMCs = append(c.BMCs, bmc)
+	c.bmcs = append(c.bmcs, bmc)
 	return nil
 }
 
 // AllBMCs retrieves a copy of the catalogued BMC instances.
 func (c *Catalogue) AllBMCs() []*pbnjv1alpha1.BMC {
-	bmcs := make([]*pbnjv1alpha1.BMC, len(c.BMCs))
-	copy(bmcs, c.BMCs)
+	bmcs := make([]*pbnjv1alpha1.BMC, len(c.bmcs))
+	copy(bmcs, c.bmcs)
 	return bmcs
 }
 
@@ -41,7 +41,7 @@ func (c *Catalogue) LookupBMC(index, key string) ([]*pbnjv1alpha1.BMC, error) {
 
 // TotalBMCs returns the total BMCs registered in the catalogue.
 func (c *Catalogue) TotalBMCs() int {
-	return len(c.BMCs)
+	return len(c.bmcs)
 }
 
 const BMCNameIndex = ".ObjectMeta.Name"

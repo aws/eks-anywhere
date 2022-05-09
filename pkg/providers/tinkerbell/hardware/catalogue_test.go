@@ -60,9 +60,9 @@ func TestParseYAMLCatalogueWithData(t *testing.T) {
 	err := hardware.ParseYAMLCatalogue(catalogue, buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	g.Expect(catalogue.Hardware).To(gomega.HaveLen(1))
-	g.Expect(catalogue.BMCs).To(gomega.HaveLen(1))
-	g.Expect(catalogue.Secrets).To(gomega.HaveLen(1))
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+	g.Expect(catalogue.TotalBMCs()).To(gomega.Equal(1))
+	g.Expect(catalogue.TotalSecrets()).To(gomega.Equal(1))
 }
 
 func TestParseYAMLCatalogueWithoutData(t *testing.T) {
@@ -75,10 +75,7 @@ func TestParseYAMLCatalogueWithoutData(t *testing.T) {
 	err := hardware.ParseYAMLCatalogue(catalogue, buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	g.Expect(catalogue.Hardware).To(gomega.HaveLen(0))
-	g.Expect(catalogue.BMCs).To(gomega.HaveLen(0))
-	g.Expect(catalogue.Secrets).To(gomega.HaveLen(0))
-}
-
-func TestCatalogue_Thing(t *testing.T) {
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(0))
+	g.Expect(catalogue.TotalBMCs()).To(gomega.Equal(0))
+	g.Expect(catalogue.TotalSecrets()).To(gomega.Equal(0))
 }

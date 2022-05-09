@@ -205,7 +205,15 @@ func NewProviderCustomDep(
 		writer:    writer,
 
 		hardwareManifestPath: hardwareManifestPath,
-		catalogue:            hardware.NewCatalogue(),
+
+		// todo(chrisdoherty4)
+		// Inject the catalogue dependency so we can dynamically construcft the indexing capabilities.
+		catalogue: hardware.NewCatalogue(
+			hardware.WithHardwareIDIndex(),
+			hardware.WithHardwareBMCRefIndex(),
+			hardware.WithBMCNameIndex(),
+			hardware.WithSecretNameIndex(),
+		),
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch

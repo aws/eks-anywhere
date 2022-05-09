@@ -93,9 +93,6 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
-	// ValidateHardwareCatalogue performs a lazy load of hardware configuration. Given subsequent steps need the hardware
-	// read into memory it needs to be done first. It also needs connection to
-	// Tinkerbell steps to verify hardware availability on the stack
 	if err := p.validator.ValidateHardwareCatalogue(ctx, p.catalogue, tinkHardware, p.skipPowerActions, p.force); err != nil {
 		return err
 	}
@@ -111,7 +108,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 			}
 		}
 
-		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.catalogue.Hardware, tinkHardware); err != nil {
+		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.catalogue.AllHardware(), tinkHardware); err != nil {
 			return err
 		}
 	} else if !p.skipPowerActions {
@@ -152,7 +149,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 }
 
 func (p *Provider) setHardwareStateToProvisining(ctx context.Context) error {
-	for _, hardware := range p.catalogue.Hardware {
+	for _, hardware := range p.catalogue.AllHardware() {
 		tinkHardware, err := p.providerTinkClient.GetHardwareByUuid(ctx, hardware.Spec.ID)
 		if err != nil {
 			return fmt.Errorf("getting hardware with UUID '%s': %v", hardware.Spec.ID, err)
@@ -179,13 +176,13 @@ func (p *Provider) setHardwareStateToProvisining(ctx context.Context) error {
 // setMachinesToPXEBoot iterates over all catalogue.BMCs and instructs them to turn off, one-time
 // PXE boot, then turn on.
 func (p *Provider) setMachinesToPXEBoot(ctx context.Context) error {
-	secrets := make(map[string]*corev1.Secret, len(p.catalogue.Secrets))
-	for _, secret := range p.catalogue.Secrets {
+	secrets := make(map[string]*corev1.Secret, p.catalogue.TotalSecrets())
+	for _, secret := range p.catalogue.AllSecrets() {
 		secrets[secret.Name] = secret
 	}
 
 	var errs []error
-	for _, bmc := range p.catalogue.BMCs {
+	for _, bmc := range p.catalogue.AllBMCs() {
 		secret, found := secrets[bmc.Spec.AuthSecretRef.Name]
 		if !found {
 			errs = append(errs, fmt.Errorf("could not find bmc secret for '%v'", bmc.Name))

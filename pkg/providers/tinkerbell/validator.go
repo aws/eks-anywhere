@@ -10,7 +10,6 @@ import (
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -160,11 +159,20 @@ func (v *Validator) ValidateHardwareCatalogue(ctx context.Context, catalogue *ha
 }
 
 func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, catalogue *hardware.Catalogue) error {
-	for index, bmc := range catalogue.BMCs {
+	for _, bmc := range catalogue.AllBMCs() {
+		secrets, err := catalogue.LookupSecret(hardware.SecretNameIndex, bmc.Spec.AuthSecretRef.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(secrets) != 1 {
+			return fmt.Errorf("missing secret for bmc: %v", bmc.Name)
+		}
+
 		bmcInfo := pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
-			Username: string(catalogue.Secrets[index].Data["username"]),
-			Password: string(catalogue.Secrets[index].Data["password"]),
+			Username: string(secrets[0].Data["username"]),
+			Password: string(secrets[0].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		}
 		if _, err := v.pbnj.GetPowerState(ctx, bmcInfo); err != nil {
@@ -236,10 +244,10 @@ func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterS
 		requestedNodesCount += spec.ExternalEtcdConfiguration.Count
 	}
 
-	if len(catalogue.Hardware) < requestedNodesCount {
+	if catalogue.TotalHardware() < requestedNodesCount {
 		return fmt.Errorf(
 			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			len(catalogue.Hardware),
+			catalogue.TotalHardware(),
 			requestedNodesCount,
 		)
 	}
@@ -280,18 +288,21 @@ func (v *Validator) ValidateMinHardwareAvailableForUpgrade(spec v1alpha1.Cluster
 
 // ValidateMachinesPoweredOff validates the hardware submitted for provisioning is powered off.
 func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context, catalogue *hardware.Catalogue) error {
-	secrets := make(map[string]*corev1.Secret)
-	for _, s := range catalogue.Secrets {
-		secrets[s.Name] = s
-	}
-
 	var poweredOnHosts []string
-	for _, bmc := range catalogue.BMCs {
-		secret := secrets[bmc.Spec.AuthSecretRef.Name]
+	for _, bmc := range catalogue.AllBMCs() {
+		secrets, err := catalogue.LookupSecret(hardware.SecretNameIndex, bmc.Spec.AuthSecretRef.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(secrets) != 1 {
+			return fmt.Errorf("no secret for bmc: %v", bmc.Name)
+		}
+
 		state, err := v.pbnj.GetPowerState(ctx, pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
-			Username: string(secret.Data["username"]),
-			Password: string(secret.Data["password"]),
+			Username: string(secrets[0].Data["username"]),
+			Password: string(secrets[0].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		})
 		if err != nil {
