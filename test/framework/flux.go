@@ -807,10 +807,13 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 	p := e.clusterConfGitPath()
 	g := e.GitClient
 	if err := g.Add(p); err != nil {
-		return err
+		return fmt.Errorf("adding cluster config changes at path %s: %v", p, err)
 	}
 	if err := g.Commit("EKS-A E2E Flux test configuration update"); err != nil {
-		return err
+		return fmt.Errorf("commiting cluster config changes: %v", err)
+	}
+	if err := g.Pull(context.Background(), e.gitBranch()); err != nil {
+		return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
 	}
 	return g.Push(context.Background())
 }
