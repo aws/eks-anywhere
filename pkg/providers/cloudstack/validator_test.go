@@ -282,7 +282,7 @@ func TestSetupAndValidateInvalidDiskOfferingNotPresent(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "validating service offering: match me"
+	wantErrMsg := "validating disk offering: match me"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 
@@ -368,7 +368,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyDevice(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "machine config test validation failed: device:  invalid, must be non-empty"
+	wantErrMsg := "machine config test validation failed: device:  invalid, empty device"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 
@@ -411,7 +411,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyFilesystem(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "machine config test validation failed: filesystem:  invalid, must be non-empty"
+	wantErrMsg := "machine config test validation failed: filesystem:  invalid, empty filesystem"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 
@@ -454,7 +454,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyLabel(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "machine config test validation failed: label:  invalid, must be non-empty"
+	wantErrMsg := "machine config test validation failed: label:  invalid, empty label"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 

@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"github.com/pkg/errors"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,20 +74,30 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 	return r.Id == "" && o.Id == "" && r.Name == o.Name
 }
 
-func (r *CloudStackResourceDiskOffering) ValidatePath() bool {
-	if len(r.Id) > 0 || len(r.Name) > 0 {
+func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
+	if r.Provided() {
 		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
-			return false
+			return errors.New("must be non-empty and starts with /"), "mountPath", r.MountPath
+		}
+		if len(r.Filesystem) < 1 {
+			return errors.New("empty filesystem"), "filesystem", r.Filesystem
+		}
+		if len(r.Device) < 1 {
+			return errors.New("empty device"), "device", r.Device
+		}
+		if len(r.Label) < 1 {
+			return errors.New("empty label"), "label", r.Label
+		}
+	} else {
+		if len(r.MountPath) + len(r.Filesystem) + len(r.Device) + len(r.Label) > 0 {
+			return errors.New("empty id/name"), "id or name", r.Id
 		}
 	}
-	return true
+	return nil, "", ""
 }
 
-func (r *CloudStackResourceDiskOffering) Validate() bool {
-	if len(r.Id) > 0 || len(r.Name) > 0 {
-		return r.ValidatePath() && len(r.Filesystem) > 0 && len(r.Device) > 0 && len(r.Label) > 0
-	}
-	return true
+func (r *CloudStackResourceDiskOffering) Provided() bool {
+	return len(r.Id) > 0 || len(r.Name) > 0
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {

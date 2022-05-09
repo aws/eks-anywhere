@@ -245,21 +245,12 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		if err = v.cmk.ValidateServiceOfferingPresent(ctx, zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
 		}
-		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
-			if !machineConfig.Spec.DiskOffering.ValidatePath() {
-				return fmt.Errorf("mountPath: %s invalid, must be non-empty and starts with /", machineConfig.Spec.DiskOffering.MountPath)
-			}
-			if len(machineConfig.Spec.DiskOffering.Device) == 0 {
-				return fmt.Errorf("device: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Device)
-			}
-			if len(machineConfig.Spec.DiskOffering.Filesystem) == 0 {
-				return fmt.Errorf("filesystem: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Filesystem)
-			}
-			if len(machineConfig.Spec.DiskOffering.Label) == 0 {
-				return fmt.Errorf("label: %s invalid, must be non-empty", machineConfig.Spec.DiskOffering.Label)
-			}
+		if err, fieldName, fieldValue := machineConfig.Spec.DiskOffering.Validate(); err != nil {
+			return fmt.Errorf("%s: %s invalid, %v", fieldName, fieldValue, err.Error())
+		}
+		if machineConfig.Spec.DiskOffering.Provided() {
 			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {
-				return fmt.Errorf("validating service offering: %v", err)
+				return fmt.Errorf("validating disk offering: %v", err)
 			}
 		}
 	}

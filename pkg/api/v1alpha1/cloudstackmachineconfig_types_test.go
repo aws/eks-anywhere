@@ -185,8 +185,10 @@ func TestCloudStackMachineConfigDiskOfferingValidMountPath(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.ValidatePath()).To(BeTrue())
-	g.Expect(diskOffering1.Validate()).To(BeTrue())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err == nil).To(BeTrue())
+	g.Expect(fieldName == "").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
@@ -198,7 +200,11 @@ func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
 		Label:                        "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Validate()).To(BeTrue())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "id or name").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty id/name").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
@@ -212,7 +218,11 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.ValidatePath()).To(BeFalse())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "mountPath").To(BeTrue())
+	g.Expect(fieldValue == "/").To(BeTrue())
+	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.T) {
@@ -226,7 +236,11 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.ValidatePath()).To(BeFalse())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "mountPath").To(BeTrue())
+	g.Expect(fieldValue == "data").To(BeTrue())
+	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {
@@ -240,7 +254,10 @@ func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Validate()).To(BeTrue())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err == nil).To(BeTrue())
+	g.Expect(fieldName == "").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyDevice(t *testing.T) {
@@ -254,7 +271,11 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyDevice(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Validate()).To(BeFalse())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "device").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty device").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyFilesystem(t *testing.T) {
@@ -268,7 +289,11 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyFilesystem(t *testing.T)
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Validate()).To(BeFalse())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "filesystem").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty filesystem").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyLabel(t *testing.T) {
@@ -282,5 +307,9 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyLabel(t *testing.T) {
 		Label:      "",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Validate()).To(BeFalse())
+	err, fieldName, fieldValue := diskOffering1.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "label").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty label").To(BeTrue())
 }
