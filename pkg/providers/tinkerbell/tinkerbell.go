@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -40,6 +41,8 @@ const (
 	Provisioning                   = "provisioning"
 	maxRetries                     = 30
 	backOffPeriod                  = 5 * time.Second
+	deploymentWaitTimeout          = "5m"
+	tinkNamespace                  = "tink-system"
 )
 
 const defaultUsername = "ec2-user"
@@ -48,6 +51,7 @@ var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
+	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
 )
 
 type Provider struct {
@@ -81,6 +85,7 @@ type TinkerbellClients struct {
 
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
+	ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, spec string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
@@ -94,6 +99,7 @@ type ProviderKubectlClient interface {
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 }
 
 type ProviderTinkClient interface {
@@ -330,5 +336,53 @@ func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, cu
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func (p *Provider) InstallTinkerbellStack(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	bundle := clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack
+
+	components := []struct {
+		Name        string
+		Manifest    string
+		Deployments []string
+	}{
+		{
+			Name:        "tink",
+			Manifest:    bundle.Tink.Manifest.URI,
+			Deployments: []string{"tink-server", "tink-controller-manager"},
+		},
+		// {
+		// 	Name:        "boots",
+		// 	Manifest:    bundle.Boots.Manifest.URI,
+		// 	Deployments: []string{"boots"},
+		// },
+		// {
+		// 	Name:        "hegel",
+		// 	Manifest:    bundle.Hegel.Manifest.URI,
+		// 	Deployments: []string{"hegel"},
+		// },
+		// TODO: Uncomment this when rufio is added to the bundle
+		// {
+		// 	Name:        "rufio",
+		// 	Manifest:    bundle.Rufio.Manifest.URI,
+		// 	Deployments: []string{"rufio"},
+		// },
+	}
+
+	for _, component := range components {
+		logger.V(5).Info("Applying manifest", "component", component.Name)
+		if err := p.providerKubectlClient.ApplyKubeSpec(ctx, cluster, component.Manifest); err != nil {
+			return fmt.Errorf("applying %s manifest: %v", component.Name, err)
+		}
+
+		for _, deployment := range component.Deployments {
+			logger.V(5).Info("Waiting for deployment to be ready", "deployment", deployment, "timeout", deploymentWaitTimeout)
+			if err := p.providerKubectlClient.WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", deployment, tinkNamespace); err != nil {
+				return fmt.Errorf("waiting for deployment %s: %v", deployment, err)
+			}
+		}
+	}
+
 	return nil
 }

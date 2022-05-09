@@ -48,6 +48,20 @@ func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecor
 	return m.recorder
 }
 
+// ApplyKubeSpec mocks base method.
+func (m *MockProviderKubectlClient) ApplyKubeSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyKubeSpec", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyKubeSpec indicates an expected call of ApplyKubeSpec.
+func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpec", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpec), arg0, arg1, arg2)
+}
+
 // ApplyKubeSpecFromBytesForce mocks base method.
 func (m *MockProviderKubectlClient) ApplyKubeSpecFromBytesForce(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
 	m.ctrl.T.Helper()
@@ -262,6 +276,20 @@ func (mr *MockProviderKubectlClientMockRecorder) UpdateAnnotation(arg0, arg1, ar
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotation", reflect.TypeOf((*MockProviderKubectlClient)(nil).UpdateAnnotation), varargs...)
+}
+
+// WaitForDeployment mocks base method.
+func (m *MockProviderKubectlClient) WaitForDeployment(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForDeployment", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForDeployment indicates an expected call of WaitForDeployment.
+func (mr *MockProviderKubectlClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // MockProviderTinkClient is a mock of ProviderTinkClient interface.
