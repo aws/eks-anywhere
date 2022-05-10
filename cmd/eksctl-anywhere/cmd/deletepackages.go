@@ -24,6 +24,7 @@ var deletePackageCommand = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return deleteResources(cmd.Context(), args)
 	},
+	Args: cobra.MinimumNArgs(1),
 }
 
 func deleteResources(ctx context.Context, args []string) error {
