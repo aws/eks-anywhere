@@ -77,7 +77,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 		CmkTemplates []cmkTemplate `json:"template"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	templates := response.CmkTemplates
 	if len(templates) > 1 {
@@ -108,7 +108,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 		CmkServiceOfferings []cmkServiceOffering `json:"serviceoffering"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	offerings := response.CmkServiceOfferings
 	if len(offerings) > 1 {
@@ -140,7 +140,7 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, di
 		CmkDiskOfferings []cmkDiskOffering `json:"diskoffering"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	offerings := response.CmkDiskOfferings
 	if len(offerings) > 1 {
@@ -177,7 +177,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 			CmkAffinityGroups []cmkAffinityGroup `json:"affinitygroup"`
 		}{}
 		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return fmt.Errorf("failed to parse response into json: %v", err)
+			return fmt.Errorf("parsing response into json: %v", err)
 		}
 		affinityGroup := response.CmkAffinityGroups
 		if len(affinityGroup) > 1 {
@@ -210,7 +210,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 			CmkZones []cmkZone `json:"zone"`
 		}{}
 		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return nil, fmt.Errorf("failed to parse response into json: %v", err)
+			return nil, fmt.Errorf("parsing response into json: %v", err)
 		}
 		cmkZones := response.CmkZones
 		if len(cmkZones) > 1 {
@@ -244,7 +244,7 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 		CmkDomains []cmkDomain `json:"domain"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
+		return domainIdentifier, fmt.Errorf("parsing response into json: %v", err)
 	}
 	domains := response.CmkDomains
 	var domainPath string
@@ -310,7 +310,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 		CmkNetworks []cmkNetwork `json:"network"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	networks := response.CmkNetworks
 
@@ -363,7 +363,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domain
 		CmkAccounts []cmkAccount `json:"account"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	accounts := response.CmkAccounts
 	if len(accounts) > 1 {
