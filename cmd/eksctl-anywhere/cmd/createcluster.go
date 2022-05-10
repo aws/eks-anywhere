@@ -212,8 +212,8 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	dirs := cc.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
 	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
-    dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-    dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
