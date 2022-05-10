@@ -20,13 +20,13 @@ type helmTest struct {
 	envVars map[string]string
 }
 
-func newHelmTest(t *testing.T) *helmTest {
+func newHelmTest(t *testing.T, opts ...executables.HelmOpt) *helmTest {
 	ctrl := gomock.NewController(t)
 	e := mocks.NewMockExecutable(ctrl)
 	return &helmTest{
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
-		h:     executables.NewHelm(e),
+		h:     executables.NewHelm(e, opts...),
 		e:     e,
 		envVars: map[string]string{
 			"HELM_EXPERIMENTAL_OCI": "1",
@@ -42,9 +42,9 @@ type helmTemplateTest struct {
 	wantTemplateContent        []byte
 }
 
-func newHelmTemplateTest(t *testing.T) *helmTemplateTest {
+func newHelmTemplateTest(t *testing.T, opts ...executables.HelmOpt) *helmTemplateTest {
 	return &helmTemplateTest{
-		helmTest: newHelmTest(t),
+		helmTest: newHelmTest(t, opts...),
 		values: map[string]string{
 			"key1": "values1",
 			"key2": "values2",
@@ -70,11 +70,26 @@ func TestHelmTemplateSuccess(t *testing.T) {
 }
 
 func TestHelmTemplateSuccessWithRegistryMirror(t *testing.T) {
-	tt := newHelmTemplateTest(t)
-	tt.h = executables.NewHelm(tt.e, executables.WithRegistryMirror("1.2.3.4:443"))
+	tt := newHelmTemplateTest(t, executables.WithRegistryMirror("1.2.3.4:443"))
+	ociRegistryMirror := "oci://1.2.3.4:443/account/charts"
 	expectCommand(
-		tt.e, tt.ctx, "template", "oci://1.2.3.4:443/account/charts", "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
+		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
+
+	tt.Expect(tt.h.Template(tt.ctx, ociRegistryMirror, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
+}
+
+func TestHelmTemplateSuccessWithEnv(t *testing.T) {
+	tt := newHelmTemplateTest(t, executables.WithEnv(map[string]string{
+		"HTTPS_PROXY": "test1",
+	}))
+	expectedEnv := map[string]string{
+		"HTTPS_PROXY":           "test1",
+		"HELM_EXPERIMENTAL_OCI": "1",
+	}
+	expectCommand(
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
+	).withStdIn(tt.valuesYaml).withEnvVars(expectedEnv).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
 }

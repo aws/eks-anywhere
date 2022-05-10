@@ -10,7 +10,6 @@ import (
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -21,18 +20,16 @@ import (
 )
 
 type Validator struct {
-	tink           ProviderTinkClient
-	netClient      networkutils.NetClient
-	hardwareConfig hardware.HardwareConfig
-	pbnj           ProviderPbnjClient
+	tink      ProviderTinkClient
+	netClient networkutils.NetClient
+	pbnj      ProviderPbnjClient
 }
 
-func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig, pbnjClient ProviderPbnjClient) *Validator {
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, pbnjClient ProviderPbnjClient) *Validator {
 	return &Validator{
-		tink:           tink,
-		netClient:      netClient,
-		hardwareConfig: hardwareConfig,
-		pbnj:           pbnjClient,
+		tink:      tink,
+		netClient: netClient,
+		pbnj:      pbnjClient,
 	}
 }
 
@@ -125,11 +122,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
-	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
-		return fmt.Errorf("failed to get hardware Config: %v", err)
-	}
-
+func (v *Validator) ValidateHardwareCatalogue(ctx context.Context, catalogue *hardware.Catalogue, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
 	tinkHardwareMap := getHardwareMap(hardwares)
 
 	workflows, err := v.tink.GetWorkflow(ctx)
@@ -141,20 +134,20 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, force, tinkHardwareMap, tinkWorkflowMap); err != nil {
+	if err := catalogue.ValidateHardware(skipPowerActions, force, tinkHardwareMap, tinkWorkflowMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 
 	if !skipPowerActions {
-		if err := v.hardwareConfig.ValidateBMC(); err != nil {
+		if err := catalogue.ValidateBMC(); err != nil {
 			return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
 		}
 
-		if err := v.hardwareConfig.ValidateBmcSecretRefs(); err != nil {
+		if err := catalogue.ValidateBmcSecretRefs(); err != nil {
 			return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
 		}
 
-		if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
+		if err := v.ValidateBMCSecretCreds(ctx, catalogue); err != nil {
 			return fmt.Errorf("failed validating BMC connection in hardware config: %v", err)
 		}
 		logger.MarkPass("BMC connectivity validated")
@@ -165,17 +158,37 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	return nil
 }
 
-func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.HardwareConfig) error {
-	for index, bmc := range hc.Bmcs {
+func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, catalogue *hardware.Catalogue) error {
+	for _, bmc := range catalogue.AllBMCs() {
+		secrets, err := catalogue.LookupSecret(hardware.SecretNameIndex, bmc.Spec.AuthSecretRef.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(secrets) != 1 {
+			return fmt.Errorf("missing secret for bmc: %v", bmc.Name)
+		}
+
 		bmcInfo := pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
-			Username: string(hc.Secrets[index].Data["username"]),
-			Password: string(hc.Secrets[index].Data["password"]),
+			Username: string(secrets[0].Data["username"]),
+			Password: string(secrets[0].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		}
 		if _, err := v.pbnj.GetPowerState(ctx, bmcInfo); err != nil {
 			return fmt.Errorf("failed to connect to BMC (address=%s): %v", bmcInfo.Host, err)
 		}
+	}
+
+	return nil
+}
+
+func (v *Validator) ValidateAndPopulateTemplateForUpgrade(ctx context.Context, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, templateConfig *v1alpha1.TinkerbellTemplateConfig, imgUrl string, k8sVersion string) error {
+	// @TODO: Add any additional template validations here
+
+	err := v.ValidateAndPopulateTemplate(ctx, datacenterConfig, templateConfig)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -219,16 +232,10 @@ func (v *Validator) ValidateAndPopulateTemplate(ctx context.Context, datacenterC
 	return nil
 }
 
-// ValidateMinimumRequiredTinkerbellHardwareAvailable ensures there is sufficient hardware registered relative to the
+// ValidateMinHardwareAvailableForCreate ensures there is sufficient hardware registered relative to the
 // sum of requested control plane, etcd and worker node counts.
 // The system requires hardware >= to requested provisioning.
-// ValidateMinimumRequiredTinkerbellHardwareAvailable requires v.ValidateHardwareConfig() to be called first.
-func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1alpha1.ClusterSpec) error {
-	// ValidateMinimumRequiredTinkerbellHardwareAvailable relies on v.hardwareConfig being valid. A call to
-	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
-	// prior to calling ValidateMinimumRequiredTinkerbellHardwareAvailable. We should decouple validation including
-	// isolation of io in the parsing of hardware config.
-
+func (v *Validator) ValidateMinHardwareAvailableForCreate(spec v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
 	requestedNodesCount := spec.ControlPlaneConfiguration.Count +
 		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations)
 
@@ -237,10 +244,10 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 		requestedNodesCount += spec.ExternalEtcdConfiguration.Count
 	}
 
-	if len(v.hardwareConfig.Hardwares) < requestedNodesCount {
+	if catalogue.TotalHardware() < requestedNodesCount {
 		return fmt.Errorf(
 			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			len(v.hardwareConfig.Hardwares),
+			catalogue.TotalHardware(),
 			requestedNodesCount,
 		)
 	}
@@ -248,20 +255,54 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 	return nil
 }
 
-// ValidateMachinesPoweredOff validates the hardware submitted for provisioning is powered off.
-func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context) error {
-	secrets := make(map[string]corev1.Secret)
-	for _, s := range v.hardwareConfig.Secrets {
-		secrets[s.Name] = s
+// ValidateMinHardwareAvailableForUpgrade ensures there is sufficient hardware registered relative to the
+// sum of requested control plane, etcd and worker node counts.
+// The system requires hardware >= to requested provisioning.
+// ValidateMinHardwareAvailableForUpgrade requires v.ValidateHardwareConfig() to be called first.
+func (v *Validator) ValidateMinHardwareAvailableForUpgrade(spec v1alpha1.ClusterSpec, maxSurge int) error {
+	// @TODO: Add # of available hardware validation here
+
+	// ValidateMinHardwareAvailableForUpgrade relies on v.hardwareConfig being valid. A call to
+	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
+	// prior to calling ValidateMinTinkerbellHardwareAvailableForUpgrade. We should decouple validation including
+	// isolation of io in the parsing of hardware config.
+
+	/* requestedNodesCount := spec.ControlPlaneConfiguration.Count + maxSurge +
+		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations) + maxSurge
+
+	// Optional external etcd configuration.
+	if spec.ExternalEtcdConfiguration != nil {
+		requestedNodesCount += spec.ExternalEtcdConfiguration.Count + maxSurge
 	}
 
+	if len(v.hardwareConfig.Hardwares) < requestedNodesCount {
+		return fmt.Errorf(
+			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
+			len(v.hardwareConfig.Hardwares),
+			requestedNodesCount,
+		)
+	} */
+
+	return nil
+}
+
+// ValidateMachinesPoweredOff validates the hardware submitted for provisioning is powered off.
+func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context, catalogue *hardware.Catalogue) error {
 	var poweredOnHosts []string
-	for _, bmc := range v.hardwareConfig.Bmcs {
-		secret := secrets[bmc.Spec.AuthSecretRef.Name]
+	for _, bmc := range catalogue.AllBMCs() {
+		secrets, err := catalogue.LookupSecret(hardware.SecretNameIndex, bmc.Spec.AuthSecretRef.Name)
+		if err != nil {
+			return err
+		}
+
+		if len(secrets) != 1 {
+			return fmt.Errorf("no secret for bmc: %v", bmc.Name)
+		}
+
 		state, err := v.pbnj.GetPowerState(ctx, pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
-			Username: string(secret.Data["username"]),
-			Password: string(secret.Data["password"]),
+			Username: string(secrets[0].Data["username"]),
+			Password: string(secrets[0].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		})
 		if err != nil {

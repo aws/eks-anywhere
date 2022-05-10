@@ -1,7 +1,7 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: test_cluster
+  name: test-cluster
 spec:
   clusterNetwork:
     cni: cilium
@@ -17,22 +17,22 @@ spec:
       host: "192.168.1.71"
     machineGroupRef:
       kind: CloudStackMachineConfig
-      name: test_cluster
+      name: test-cluster
   datacenterRef:
     kind: CloudStackDatacenterConfig
-    name: test_cluster
+    name: test-cluster
   kubernetesVersion: "1.21"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
         kind: CloudStackMachineConfig
-        name: test_cluster
+        name: test-cluster
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackDatacenterConfig
 metadata:
-  name: test_cluster
+  name: test-cluster
 spec:
   domain: "root"
   account: "admin"
@@ -48,7 +48,7 @@ spec:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
 metadata:
-  name: test_cluster
+  name: test-cluster
 spec:
   computeOffering:
     name: "Large Instance"

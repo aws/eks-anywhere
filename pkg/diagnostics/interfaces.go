@@ -47,9 +47,11 @@ type AnalyzerFactory interface {
 	EksaExternalEtcdAnalyzers() []*Analyze
 	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 	ManagementClusterAnalyzers() []*Analyze
+	PackageAnalyzers() []*Analyze
 }
 
 type CollectorFactory interface {
+	PackagesCollectors() []*Collect
 	DefaultCollectors() []*Collect
 	ManagementClusterCollectors() []*Collect
 	EksaHostCollectors(configs []providers.MachineConfig) []*Collect

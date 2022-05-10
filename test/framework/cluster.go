@@ -443,23 +443,30 @@ func (e *ClusterE2ETest) generateClusterConfig() []byte {
 	if e.OIDCConfig != nil {
 		oidcConfigB, err := yaml.Marshal(e.OIDCConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling oidc config: %v", err)
+			e.T.Fatalf("marshalling oidc config: %v", err)
 		}
 		yamlB = append(yamlB, oidcConfigB)
 	}
 	if e.AWSIamConfig != nil {
 		awsIamConfigB, err := yaml.Marshal(e.AWSIamConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling aws iam config: %v", err)
+			e.T.Fatalf("marshalling aws iam config: %v", err)
 		}
 		yamlB = append(yamlB, awsIamConfigB)
 	}
 	if e.GitOpsConfig != nil {
 		gitOpsConfigB, err := yaml.Marshal(e.GitOpsConfig)
 		if err != nil {
-			e.T.Fatalf("error marshalling gitops config: %v", err)
+			e.T.Fatalf("marshalling gitops config: %v", err)
 		}
 		yamlB = append(yamlB, gitOpsConfigB)
+	}
+	if e.FluxConfig != nil {
+		fluxConfigB, err := yaml.Marshal(e.FluxConfig)
+		if err != nil {
+			e.T.Fatalf("marshalling gitops config: %v", err)
+		}
+		yamlB = append(yamlB, fluxConfigB)
 	}
 
 	return templater.AppendYamlResources(yamlB...)

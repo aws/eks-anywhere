@@ -2,7 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   computeoffering:
     name: large

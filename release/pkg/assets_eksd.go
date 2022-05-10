@@ -30,6 +30,7 @@ const (
 	kindProjectPath          = "projects/kubernetes-sigs/kind"
 	releasePath              = "release"
 	eksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
+	fakeGitCommit            = "0123456789abcdef0123456789abcdef01234567"
 )
 
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
@@ -267,12 +268,17 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		return anywherev1alpha1.EksDRelease{}, err
 	}
 
+	gitCommit := r.BuildRepoHead
+	if r.DryRun {
+		gitCommit = fakeGitCommit
+	}
+
 	bundle := anywherev1alpha1.EksDRelease{
 		Name:           eksdRelease.Name,
 		ReleaseChannel: eksDReleaseChannel,
 		KubeVersion:    kubeVer,
 		EksDReleaseUrl: eksDManifestUrl,
-		GitCommit:      r.BuildRepoHead,
+		GitCommit:      gitCommit,
 		KindNode:       bundleImageArtifacts["kind-node"],
 		Ova: anywherev1alpha1.OSImageBundle{
 			Bottlerocket: anywherev1alpha1.OSImage{

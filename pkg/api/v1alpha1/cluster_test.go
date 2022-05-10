@@ -2099,3 +2099,40 @@ func TestClusterRegistryMirror(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterProxyConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    map[string]string
+	}{
+		{
+			name: "with proxy configuration",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "test-http",
+						HttpsProxy: "test-https",
+						NoProxy:    []string{"test-noproxy-1", "test-noproxy-2", "test-noproxy-3"},
+					},
+				},
+			},
+			want: map[string]string{
+				"HTTP_PROXY":  "test-http",
+				"HTTPS_PROXY": "test-https",
+				"NO_PROXY":    "test-noproxy-1,test-noproxy-2,test-noproxy-3",
+			},
+		},
+		{
+			name:    "without proxy configuration",
+			cluster: &Cluster{},
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.ProxyConfiguration()).To(Equal(tt.want))
+		})
+	}
+}
