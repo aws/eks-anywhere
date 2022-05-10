@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -203,12 +204,15 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
 	dirs := cc.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
-		return dirs
+	if fluxConfig != nil && fluxConfig.Spec.Git != nil && cliConfig.GitPrivateKeyFile != "" {
+		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
 	}
 
-	if cliConfig.GitPrivateKeyFile != "" {
-		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
+	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
+		env, found := os.LookupEnv("EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT")
+		if found && len(env) > 0 {
+			dirs = append(dirs, strings.Split(env, ",")...)
+		}
 	}
 
 	return dirs
