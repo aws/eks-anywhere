@@ -817,7 +817,7 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 	repoUpToDateErr := &git.RepositoryUpToDateError{}
 	err := g.Pull(context.Background(), e.gitBranch())
 	if err != nil {
-		if !errors.As(err, repoUpToDateErr) {
+		if !errors.Is(err, repoUpToDateErr) {
 			return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
 		}
 		e.T.Log(err.Error())
@@ -825,7 +825,7 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 
 	err = g.Push(context.Background())
 	if err != nil {
-		if !errors.As(err, repoUpToDateErr) {
+		if !errors.Is(err, repoUpToDateErr) {
 			return fmt.Errorf("pushing config changes to remote: %v", err)
 		}
 		e.T.Log(err.Error())
