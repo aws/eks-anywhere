@@ -194,7 +194,7 @@ func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
 
 	e.buildClusterConfigFileForGit()
 
-	if err := e.pushConfigChanges(); err != nil {
+	if err := e.pushConfigChanges(ctx); err != nil {
 		e.T.Errorf("Error pushing local changes to remote git repo: %v", err)
 	}
 	e.T.Logf("Successfully updated version controlled cluster configuration")
@@ -408,7 +408,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 			datacenterConfig: vsphereClusterConfig,
 			machineConfigs:   e.convertVSphereMachineConfigs(cpName, workerName, etcdName, vsphereMachineConfigs),
 		}
-		_, err = e.updateEKSASpecInGit(clusterSpec, providerConfig)
+		_, err = e.updateEKSASpecInGit(ctx, clusterSpec, providerConfig)
 		if err != nil {
 			return err
 		}
@@ -480,7 +480,7 @@ func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) e
 	if err != nil {
 		return err
 	}
-	_, err = e.updateWorkerNodeCountValue(3)
+	_, err = e.updateWorkerNodeCountValue(ctx, 3)
 	if err != nil {
 		return err
 	}
@@ -489,7 +489,7 @@ func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) e
 		return err
 	}
 
-	_, err = e.updateWorkerNodeCountValue(1)
+	_, err = e.updateWorkerNodeCountValue(ctx, 1)
 	if err != nil {
 		return err
 	}
@@ -578,7 +578,7 @@ func (e *ClusterE2ETest) validateDeploymentsInManagementCluster(ctx context.Cont
 	return nil
 }
 
-func (e *ClusterE2ETest) updateWorkerNodeCountValue(newValue int) (string, error) {
+func (e *ClusterE2ETest) updateWorkerNodeCountValue(ctx context.Context, newValue int) (string, error) {
 	clusterConfGitPath := e.clusterConfigGitPath()
 	providerConfig, err := e.providerConfig(clusterConfGitPath)
 	if err != nil {
@@ -592,7 +592,7 @@ func (e *ClusterE2ETest) updateWorkerNodeCountValue(newValue int) (string, error
 	}
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = newValue
 
-	p, err := e.updateEKSASpecInGit(clusterSpec, *providerConfig)
+	p, err := e.updateEKSASpecInGit(ctx, clusterSpec, *providerConfig)
 	if err != nil {
 		return "", err
 	}
@@ -792,19 +792,19 @@ func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) erro
 	})
 }
 
-func (e *ClusterE2ETest) updateEKSASpecInGit(s *cluster.Spec, providersConfig providerConfig) (string, error) {
+func (e *ClusterE2ETest) updateEKSASpecInGit(ctx context.Context, s *cluster.Spec, providersConfig providerConfig) (string, error) {
 	p, err := e.writeEKSASpec(s, providersConfig.datacenterConfig, providersConfig.machineConfigs)
 	if err != nil {
 		return "", err
 	}
-	if err := e.pushConfigChanges(); err != nil {
+	if err := e.pushConfigChanges(ctx); err != nil {
 		return "", err
 	}
 	e.T.Logf("Successfully updated version controlled cluster configuration")
 	return p, nil
 }
 
-func (e *ClusterE2ETest) pushConfigChanges() error {
+func (e *ClusterE2ETest) pushConfigChanges(ctx context.Context) error {
 	p := e.clusterConfGitPath()
 	g := e.GitClient
 	if err := g.Add(p); err != nil {
@@ -815,16 +815,14 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 	}
 
 	repoUpToDateErr := &git.RepositoryUpToDateError{}
-	err := g.Pull(context.Background(), e.gitBranch())
-	if err != nil {
+	if err := g.Pull(ctx, e.gitBranch()); err != nil {
 		if !errors.Is(err, repoUpToDateErr) {
 			return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
 		}
 		e.T.Log(err.Error())
 	}
 
-	err = g.Push(context.Background())
-	if err != nil {
+	if err := g.Push(ctx); err != nil {
 		if !errors.Is(err, repoUpToDateErr) {
 			return fmt.Errorf("pushing config changes to remote: %v", err)
 		}
