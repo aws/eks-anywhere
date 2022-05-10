@@ -94,6 +94,9 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
    ![Harbor web portal](/images/harbor-portal.png)
 
 ## Upgrade
+{{% alert title="Note" color="primary" %}}
+* New versions of software packages will be automatically downloaded but not automatically installed. You can always manually run `eksctl` to check and install updates.
+{{% /alert %}}
 1. Verify a new bundle is available
    ```bash
    eksctl anywhere get packagebundle
