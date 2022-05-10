@@ -39,6 +39,7 @@ var generatePackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runGeneratePackages,
+	Args:         cobra.MinimumNArgs(1),
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
