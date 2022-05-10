@@ -65,7 +65,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false, false).
-		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig).
+		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().
 		WithEksdUpgrader().

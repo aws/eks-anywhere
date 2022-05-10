@@ -3,9 +3,19 @@ package gitfactory
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
+	"strings"
+
+	"github.com/go-git/go-git/v5/plumbing/transport"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	gogitssh "github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/git/gitclient"
@@ -25,7 +35,7 @@ type GitToolsOpt func(opts *GitTools)
 func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter, opts ...GitToolsOpt) (*GitTools, error) {
 	var repo string
 	var repoUrl string
-	var tokenAuth *git.TokenAuth
+	var gitAuth transport.AuthMethod
 	var err error
 	var tools GitTools
 
@@ -36,13 +46,27 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return nil, err
 		}
 
-		repo = fluxConfig.Spec.Github.Repository
-		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
-		tokenAuth = &git.TokenAuth{Token: githubToken, Username: fluxConfig.Spec.Github.Owner}
-		tools.Provider, err = buildGithubProvider(ctx, *tokenAuth, fluxConfig.Spec.Github)
+		tools.Provider, err = buildGithubProvider(ctx, githubToken, fluxConfig.Spec.Github)
 		if err != nil {
 			return nil, fmt.Errorf("building github provider: %v", err)
 		}
+
+		gitAuth = &http.BasicAuth{Password: githubToken, Username: fluxConfig.Spec.Github.Owner}
+		repo = fluxConfig.Spec.Github.Repository
+		repoUrl = github.RepoUrl(fluxConfig.Spec.Github.Owner, repo)
+	case fluxConfig.Spec.Git != nil:
+		privateKeyFile := os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		privateKeyPassphrase := os.Getenv(config.EksaGitPassphraseTokenEnv)
+		gitKnownHosts := os.Getenv(config.EksaGitKnownHostsFileEnv)
+		if err = os.Setenv(config.SshKnownHostsEnv, gitKnownHosts); err != nil {
+			return nil, fmt.Errorf("unable to set %s: %v", config.SshKnownHostsEnv, err)
+		}
+		gitAuth, err = getSshAuthFromPrivateKey(privateKeyFile, privateKeyPassphrase)
+		if err != nil {
+			return nil, err
+		}
+		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
+		repo = path.Base(strings.TrimSuffix(repoUrl, filepath.Ext(repoUrl)))
 	default:
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)
 	}
@@ -53,7 +77,7 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			opt(&tools)
 		}
 	}
-	tools.Client = buildGitClient(ctx, tokenAuth, repoUrl, tools.RepositoryDirectory)
+	tools.Client = buildGitClient(ctx, gitAuth, repoUrl, tools.RepositoryDirectory)
 
 	tools.Writer, err = newRepositoryWriter(writer, repo)
 	if err != nil {
@@ -63,20 +87,18 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return &tools, nil
 }
 
-func buildGitClient(ctx context.Context, tokenAuth *git.TokenAuth, repoUrl string, repo string) *gitclient.GitClient {
+func buildGitClient(ctx context.Context, auth transport.AuthMethod, repoUrl string, repo string) *gitclient.GitClient {
 	opts := []gitclient.Opt{
 		gitclient.WithRepositoryUrl(repoUrl),
 		gitclient.WithRepositoryDirectory(repo),
+		gitclient.WithAuth(auth),
 	}
-	// right now, we only support token auth
-	// however, the generic git provider will support both token auth and SSH auth
-	if tokenAuth != nil {
-		opts = append(opts, gitclient.WithTokenAuth(*tokenAuth))
-	}
+
 	return gitclient.New(opts...)
 }
 
-func buildGithubProvider(ctx context.Context, auth git.TokenAuth, config *v1alpha1.GithubProviderConfig) (git.ProviderClient, error) {
+func buildGithubProvider(ctx context.Context, githubToken string, config *v1alpha1.GithubProviderConfig) (git.ProviderClient, error) {
+	auth := git.TokenAuth{Token: githubToken, Username: config.Owner}
 	gogithubOpts := gogithub.Options{Auth: auth}
 	githubProviderClient := gogithub.New(ctx, gogithubOpts)
 	provider, err := github.New(githubProviderClient, config, auth)
@@ -101,4 +123,37 @@ func WithRepositoryDirectory(repoDir string) GitToolsOpt {
 	return func(opts *GitTools) {
 		opts.RepositoryDirectory = repoDir
 	}
+}
+
+func getSshAuthFromPrivateKey(privateKeyFile string, passphrase string) (gogitssh.AuthMethod, error) {
+	signer, err := getSignerFromPrivateKeyFile(privateKeyFile, passphrase)
+	if err != nil {
+		return nil, err
+	}
+	return &gogitssh.PublicKeys{
+		Signer: signer,
+		User:   "git",
+	}, nil
+}
+
+func getSignerFromPrivateKeyFile(privateKeyFile string, passphrase string) (ssh.Signer, error) {
+	var signer ssh.Signer
+	var err error
+
+	sshKey, err := ioutil.ReadFile(privateKeyFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if passphrase == "" {
+		signer, err = ssh.ParsePrivateKey(sshKey)
+		if err != nil {
+			if _, ok := err.(*ssh.PassphraseMissingError); ok {
+				return nil, fmt.Errorf("%s, please set the EKSA_GIT_SSH_KEY_PASSPHRASE environment variable", err)
+			}
+			return nil, err
+		}
+		return signer, nil
+	}
+	return ssh.ParsePrivateKeyWithPassphrase(sshKey, []byte(passphrase))
 }

@@ -43,6 +43,7 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 			if err != nil {
 				return nil, err
 			}
+			fluxConfig = gitOpsConfig.ConvertToFluxConfig()
 		}
 	}
 

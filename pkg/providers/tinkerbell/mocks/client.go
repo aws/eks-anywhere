@@ -8,17 +8,21 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	hardware "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
-	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	v1alpha10 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	hardware0 "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
-	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	v10 "k8s.io/api/core/v1"
+	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
+	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 )
 
 // MockProviderKubectlClient is a mock of ProviderKubectlClient interface.
@@ -42,6 +46,20 @@ func NewMockProviderKubectlClient(ctrl *gomock.Controller) *MockProviderKubectlC
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecorder {
 	return m.recorder
+}
+
+// ApplyKubeSpec mocks base method.
+func (m *MockProviderKubectlClient) ApplyKubeSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyKubeSpec", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyKubeSpec indicates an expected call of ApplyKubeSpec.
+func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpec", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpec), arg0, arg1, arg2)
 }
 
 // ApplyKubeSpecFromBytesForce mocks base method.
@@ -101,11 +119,76 @@ func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
 }
 
+// GetEksaCluster mocks base method.
+func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaCluster", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaCluster indicates an expected call of GetEksaCluster.
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaCluster), arg0, arg1, arg2)
+}
+
+// GetEksaTinkerbellDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) GetEksaTinkerbellDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.TinkerbellDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaTinkerbellDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.TinkerbellDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaTinkerbellDatacenterConfig indicates an expected call of GetEksaTinkerbellDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaTinkerbellDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaTinkerbellDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaTinkerbellDatacenterConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetEksaTinkerbellMachineConfig mocks base method.
+func (m *MockProviderKubectlClient) GetEksaTinkerbellMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.TinkerbellMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaTinkerbellMachineConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.TinkerbellMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaTinkerbellMachineConfig indicates an expected call of GetEksaTinkerbellMachineConfig.
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaTinkerbellMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaTinkerbellMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaTinkerbellMachineConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetEtcdadmCluster mocks base method.
+func (m *MockProviderKubectlClient) GetEtcdadmCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta1.EtcdadmCluster, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetEtcdadmCluster", varargs...)
+	ret0, _ := ret[0].(*v1beta1.EtcdadmCluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEtcdadmCluster indicates an expected call of GetEtcdadmCluster.
+func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEtcdadmCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEtcdadmCluster), varargs...)
+}
+
 // GetHardwareWithLabel mocks base method.
-func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
+func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha10.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHardwareWithLabel", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([]v1alpha1.Hardware)
+	ret0, _ := ret[0].([]v1alpha10.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -116,15 +199,35 @@ func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithLabel(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithLabel", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithLabel), arg0, arg1, arg2, arg3)
 }
 
+// GetKubeadmControlPlane mocks base method.
+func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta11.KubeadmControlPlane, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
+	ret0, _ := ret[0].(*v1beta11.KubeadmControlPlane)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetKubeadmControlPlane indicates an expected call of GetKubeadmControlPlane.
+func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKubeadmControlPlane", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetKubeadmControlPlane), varargs...)
+}
+
 // GetMachineDeployment mocks base method.
-func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
+func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta10.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{arg0, arg1}
 	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
-	ret0, _ := ret[0].(*v1beta1.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta10.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -134,6 +237,59 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
+}
+
+// GetSecret mocks base method.
+func (m *MockProviderKubectlClient) GetSecret(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v10.Secret, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetSecret", varargs...)
+	ret0, _ := ret[0].(*v10.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSecret indicates an expected call of GetSecret.
+func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
+}
+
+// UpdateAnnotation mocks base method.
+func (m *MockProviderKubectlClient) UpdateAnnotation(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 ...executables.KubectlOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2, arg3}
+	for _, a := range arg4 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateAnnotation", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAnnotation indicates an expected call of UpdateAnnotation.
+func (mr *MockProviderKubectlClientMockRecorder) UpdateAnnotation(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotation", reflect.TypeOf((*MockProviderKubectlClient)(nil).UpdateAnnotation), varargs...)
+}
+
+// WaitForDeployment mocks base method.
+func (m *MockProviderKubectlClient) WaitForDeployment(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForDeployment", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForDeployment indicates an expected call of WaitForDeployment.
+func (mr *MockProviderKubectlClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // MockProviderTinkClient is a mock of ProviderTinkClient interface.

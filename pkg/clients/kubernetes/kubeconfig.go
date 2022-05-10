@@ -6,6 +6,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+type Client interface {
+	Get(ctx context.Context, name, namespace string, obj runtime.Object) error
+}
+
 // KubeconfigClient is an authenticated kubernetes API client
 // it authenticates using the credentials of a kubeconfig file
 type KubeconfigClient struct {

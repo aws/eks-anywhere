@@ -27,12 +27,12 @@ import (
 const hexAlphabet = "0123456789abcdef"
 
 func ExecCommand(cmd *exec.Cmd) (string, error) {
-	stdout, err := cmd.Output()
-	stdoutStr := strings.TrimSpace(string(stdout))
+	commandOutput, err := cmd.CombinedOutput()
+	commandOutputStr := strings.TrimSpace(string(commandOutput))
 	if err != nil {
-		return stdoutStr, errors.Cause(err)
+		return commandOutputStr, errors.Cause(err)
 	}
-	return stdoutStr, nil
+	return commandOutputStr, nil
 }
 
 func SliceContains(s []string, str string) bool {
@@ -58,6 +58,15 @@ func SplitImageUri(imageUri, imageContainerRegistry string) (string, string) {
 	imageTag := imageUriSplit[1]
 
 	return imageRepository, imageTag
+}
+
+func SplitImageUriV2(imageUri string) (string, string, string) {
+	registry := imageUri[:strings.Index(imageUri, "/")]
+	imageUriSplit := strings.Split(imageUri[len(registry)+1:], ":")
+	repository := strings.Replace(imageUriSplit[0], registry+"/", "", -1)
+	tag := imageUriSplit[1]
+
+	return registry, repository, tag
 }
 
 func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string) string {

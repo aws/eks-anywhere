@@ -2,7 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackDatacenterConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   domain: domain1
   account: account1

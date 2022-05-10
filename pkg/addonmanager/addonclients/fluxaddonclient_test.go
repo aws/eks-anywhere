@@ -375,8 +375,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	f, m, g := newAddonClient(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
-
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add(eksaSystemDirPath).Return(nil)
@@ -419,7 +417,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, fGitOptions)
+	f := addonclients.NewFluxAddonClient(flux, fGitOptions, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -431,23 +429,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
 }
 
-func TestFluxAddonClientUpdateGitRepoEksaSpecErrorGetRepo(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "management-cluster"
-	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	f, m, _ := newAddonClient(t)
-
-	m.gitProvider.EXPECT().GetRepo(ctx).MaxTimes(2).Return(nil, errors.New("fail to get repo"))
-
-	datacenterConfig := datacenterConfig(clusterName)
-	machineConfig := machineConfig(clusterName)
-	err := f.UpdateGitEksaSpec(ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})
-	if err == nil {
-		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = nil, want failed to describe repo")
-	}
-}
-
 func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
@@ -455,14 +436,13 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
-	m.gitClient.EXPECT().Clone(ctx).MaxTimes(2).Return(errors.New("failed to clone repo"))
+	m.gitClient.EXPECT().Clone(ctx).MaxTimes(2).Return(errors.New("failed to cloneIfExists repo"))
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
 	err := f.UpdateGitEksaSpec(ctx, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})
 	if err == nil {
-		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = nil, want failed to clone repo")
+		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = nil, want failed to cloneIfExists repo")
 	}
 }
 
@@ -473,7 +453,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(errors.New("failed to switch branch"))
 
@@ -492,7 +471,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add("clusters/management-cluster/management-cluster/eksa-system").Return(errors.New("failed to add file"))
@@ -512,7 +490,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add("clusters/management-cluster/management-cluster/eksa-system").Return(nil)
@@ -533,7 +510,6 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 	m.gitClient.EXPECT().Add("clusters/management-cluster/management-cluster/eksa-system").Return(nil)
@@ -553,7 +529,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecSkip(t *testing.T) {
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	f := addonclients.NewFluxAddonClient(nil, nil)
+	f := addonclients.NewFluxAddonClient(nil, nil, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -586,7 +562,6 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
-	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
 	gitClient := gitMocks.NewMockClient(mockCtrl)
 	gitClient.EXPECT().Clone(ctx).Return(nil)
@@ -604,7 +579,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
+	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -621,7 +596,6 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
-	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
 	gitClient := gitMocks.NewMockClient(mockCtrl)
 	gitClient.EXPECT().Clone(ctx).Return(nil)
@@ -639,7 +613,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
+	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -653,7 +627,6 @@ func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
-	m.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 	m.gitClient.EXPECT().Clone(ctx).Return(nil)
 	m.gitClient.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
 
@@ -666,7 +639,7 @@ func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 func TestFluxAddonClientValidationsSkipFLux(t *testing.T) {
 	tt := newTest(t)
 	tt.gitOptions = nil
-	tt.f = addonclients.NewFluxAddonClient(tt.flux, tt.gitOptions)
+	tt.f = addonclients.NewFluxAddonClient(tt.flux, tt.gitOptions, nil)
 
 	tt.Expect(tt.f.Validations(tt.ctx, tt.clusterSpec)).To(BeEmpty())
 }
@@ -727,7 +700,7 @@ func newTest(t *testing.T) *fluxTest {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, gitOptions)
+	f := addonclients.NewFluxAddonClient(flux, gitOptions, nil)
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
 		s.Cluster = clusterConfig
@@ -869,7 +842,7 @@ func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *gitFa
 		Client:   m.gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(m.flux, gitTools)
+	f := addonclients.NewFluxAddonClient(m.flux, gitTools, nil)
 	retrier := retrier.NewWithMaxRetries(2, 1)
 	f.SetRetier(retrier)
 	return f, m, gitTools

@@ -35,6 +35,20 @@ func (m *MockKubectlGetter) EXPECT() *MockKubectlGetterMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockKubectlGetter) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, resourceType, name, namespace, kubeconfig)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockKubectlGetterMockRecorder) Delete(ctx, resourceType, name, namespace, kubeconfig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKubectlGetter)(nil).Delete), ctx, resourceType, name, namespace, kubeconfig)
+}
+
 // GetObject mocks base method.
 func (m *MockKubectlGetter) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
 	m.ctrl.T.Helper()
