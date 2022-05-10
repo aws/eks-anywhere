@@ -31,6 +31,6 @@ Please check out [workshop]({{< relref "../../workshops/packages" >}}) for curat
     Yes. You can install any optional software of your choice. Be aware you cannot use EKS Anywhere tooling to install or update your self-managed software. Amazon does not provide testing, security patching, software updates, or customer support for your self-managed software.
 
 
-2. *Can I install software that’s on the curated package list but not sourced from EKS Anywhere toolchain?*
+2. *Can I install software that’s on the curated package list but not sourced from EKS Anywhere repository?*
 
-    If, for example, you install a Harbor registry that is not sourced and installed by the EKS Anywhere toolchain, Amazon will not provide testing or customer support to your self-installed software.
+    If, for example, you deploy a Harbor image that is not built and signed by Amazon, Amazon will not provide testing or customer support to your self-built images.
