@@ -63,7 +63,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath(jobId),
-			api.WithBranch("main"),
+			api.WithBranch(jobId),
 		)
 		e.clusterFillers = append(e.clusterFillers,
 			api.WithGitOpsRef(fluxConfigName, v1alpha1.FluxConfigKind),
