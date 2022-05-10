@@ -14,9 +14,8 @@ func TestFieldIndexer_InsertAndLookup(t *testing.T) {
 	const Index = ".Name"
 
 	indexer := hardware.NewFieldIndexer(&Object{})
-	indexer.IndexField(Index, func(o interface{}) string {
-		object := o.(*Object)
-		return object.Name
+	indexer.IndexField(Index, func(o interface{}) []string {
+		return []string{o.(*Object).Name}
 	})
 
 	objects, err := indexer.Lookup(Index, "hello")
@@ -40,9 +39,8 @@ func TestFieldIndexer_InsertIncorrectType(t *testing.T) {
 	const Index = ".Name"
 
 	indexer := hardware.NewFieldIndexer(&Object{})
-	indexer.IndexField(Index, func(o interface{}) string {
-		object := o.(*Object)
-		return object.Name
+	indexer.IndexField(Index, func(o interface{}) []string {
+		return []string{o.(*Object).Name}
 	})
 
 	type IncorrectObject struct{}
@@ -82,9 +80,8 @@ func TestFieldIndexer_RemoveValue(t *testing.T) {
 	const Index = ".Name"
 
 	indexer := hardware.NewFieldIndexer(&Object{})
-	indexer.IndexField(Index, func(o interface{}) string {
-		object := o.(*Object)
-		return object.Name
+	indexer.IndexField(Index, func(o interface{}) []string {
+		return []string{o.(*Object).Name}
 	})
 
 	const name = "hello world"
@@ -110,9 +107,8 @@ func TestFieldIndexer_RemoveIncorrectTypeIsNoop(t *testing.T) {
 	const Index = ".Name"
 
 	indexer := hardware.NewFieldIndexer(&Object{})
-	indexer.IndexField(Index, func(o interface{}) string {
-		object := o.(*Object)
-		return object.Name
+	indexer.IndexField(Index, func(o interface{}) []string {
+		return []string{o.(*Object).Name}
 	})
 
 	objects, err := indexer.Lookup(Index, "hello")
@@ -133,9 +129,8 @@ func TestFieldIndexer_RemoveUnknownValueIsNoop(t *testing.T) {
 	const Index = ".Name"
 
 	indexer := hardware.NewFieldIndexer(&Object{})
-	indexer.IndexField(Index, func(o interface{}) string {
-		object := o.(*Object)
-		return object.Name
+	indexer.IndexField(Index, func(o interface{}) []string {
+		return []string{o.(*Object).Name}
 	})
 
 	objects, err := indexer.Lookup(Index, "hello")

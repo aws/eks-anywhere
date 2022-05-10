@@ -22,18 +22,22 @@ import (
 
 func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
 	for _, hw := range c.AllHardware() {
+		// Done
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
 		}
 
+		// Done
 		if errs := apimachineryvalidation.IsDNS1123Subdomain(hw.Name); len(errs) > 0 {
 			return fmt.Errorf("invalid hardware name: %v: %v", hw.Name, errs)
 		}
 
+		// Unncessary
 		if hw.Spec.ID == "" {
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
 
+		// Unncessary
 		allHardwareWithID, err := c.LookupHardware(HardwareIDIndex, hw.Spec.ID)
 		if err != nil {
 			return err
@@ -43,10 +47,12 @@ func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareM
 			return fmt.Errorf("duplicate hardware id: %v", hw.Spec.ID)
 		}
 
+		// Unncessary
 		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
 			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
 		}
 
+		// Done
 		hardwareInterface := tinkHardwareMap[hw.Spec.ID].GetNetwork().GetInterfaces()
 		for _, interfaces := range hardwareInterface {
 			mac := interfaces.GetDhcp()
@@ -65,6 +71,7 @@ func (c *Catalogue) ValidateHardware(skipPowerActions, force bool, tinkHardwareM
 			}
 		}
 
+		// Done
 		if !force {
 			hardwareMetadata := make(map[string]interface{})
 			tinkHardware := tinkHardwareMap[hw.Spec.ID]

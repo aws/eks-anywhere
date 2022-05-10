@@ -50,9 +50,8 @@ const HardwareIDIndex = ".Spec.ID"
 // WithHardwareIDIndex creates a Hardware index using HardwareIDIndex on Hardware.Spec.ID values.
 func WithHardwareIDIndex() CatalogueOption {
 	return func(c *Catalogue) {
-		c.IndexHardware(HardwareIDIndex, func(o interface{}) string {
-			hardware := o.(*v1alpha1.Hardware)
-			return hardware.Spec.ID
+		c.IndexHardware(HardwareIDIndex, func(o interface{}) []string {
+			return []string{o.(*v1alpha1.Hardware).Spec.ID}
 		})
 	}
 }
@@ -62,9 +61,8 @@ const HardwareBMCRefIndex = ".Spec.BmcRef"
 // WithHardwareBMCRefIndex creates a Hardware index using HardwareBMCRefIndex on Hardware.Spec.BmcRef.
 func WithHardwareBMCRefIndex() CatalogueOption {
 	return func(c *Catalogue) {
-		c.IndexHardware(HardwareBMCRefIndex, func(o interface{}) string {
-			hardware := o.(*v1alpha1.Hardware)
-			return hardware.Spec.BmcRef
+		c.IndexHardware(HardwareBMCRefIndex, func(o interface{}) []string {
+			return []string{o.(*v1alpha1.Hardware).Spec.BmcRef}
 		})
 	}
 }

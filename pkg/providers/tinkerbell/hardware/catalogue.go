@@ -17,16 +17,6 @@ import (
 
 const Provisioning = "provisioning"
 
-// Indexer provides indexing behavior for objects.
-type Indexer interface {
-	// Lookup retrieves objects associated with the index => value pair.
-	Lookup(index, value string) ([]interface{}, error)
-	// Insert inserts v int the index.
-	Insert(v interface{}) error
-	// IndexField associated index with fn such that Lookup may be used to retrieve objects.
-	IndexField(index string, fn KeyExtractorFunc)
-}
-
 // Catalogue represents a catalogue of Tinkerbell hardware manifests to be used with Tinkerbells
 // Kubefied back-end.
 type Catalogue struct {

@@ -49,9 +49,8 @@ const SecretNameIndex = ".ObjectMeta.Name"
 // WithSecretNameIndex creates a Secret index using SecretNameIndex on Secret.ObjectMeta.Name.
 func WithSecretNameIndex() CatalogueOption {
 	return func(c *Catalogue) {
-		c.IndexSecret(SecretNameIndex, func(o interface{}) string {
-			secret := o.(*corev1.Secret)
-			return secret.ObjectMeta.Name
+		c.IndexSecret(SecretNameIndex, func(o interface{}) []string {
+			return []string{o.(*corev1.Secret).ObjectMeta.Name}
 		})
 	}
 }

@@ -49,9 +49,8 @@ const BMCNameIndex = ".ObjectMeta.Name"
 // WithBMCNameIndex creates a BMC index using BMCNameIndex on BMC.ObjectMeta.Name.
 func WithBMCNameIndex() CatalogueOption {
 	return func(c *Catalogue) {
-		c.IndexBMCs(BMCNameIndex, func(o interface{}) string {
-			bmc := o.(*pbnjv1alpha1.BMC)
-			return bmc.ObjectMeta.Name
+		c.IndexBMCs(BMCNameIndex, func(o interface{}) []string {
+			return []string{o.(*pbnjv1alpha1.BMC).ObjectMeta.Name}
 		})
 	}
 }

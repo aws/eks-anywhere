@@ -26,8 +26,9 @@ func NewFieldIndexer(object interface{}) *FieldIndexer {
 	}
 }
 
-// KeyExtractorFunc returns a key from object that can be used to look up the object.
-type KeyExtractorFunc func(object interface{}) string
+// KeyExtractorFunc returns a key from object that can be used to look up the object. There may
+// be greater than 1 key for a given index hence the return is a slice of strings.
+type KeyExtractorFunc func(object interface{}) []string
 
 // IndexField registers a new index with i. field is the index name and should represent a path
 // to the field such as `.Spec.ID`. fn is used to extract the lookup key on Insert() from the object
@@ -88,8 +89,9 @@ type fieldIndex struct {
 }
 
 func (i *fieldIndex) Insert(v interface{}) {
-	key := i.keyExtractorFunc(v)
-	i.index[key] = append(i.index[key], v)
+	for _, k := range i.keyExtractorFunc(v) {
+		i.index[k] = append(i.index[k], v)
+	}
 }
 
 func (i *fieldIndex) Lookup(key string) []interface{} {
@@ -97,8 +99,9 @@ func (i *fieldIndex) Lookup(key string) []interface{} {
 }
 
 func (i *fieldIndex) Remove(v interface{}) {
-	key := i.keyExtractorFunc(v)
-	delete(i.index, key)
+	for _, k := range i.keyExtractorFunc(v) {
+		delete(i.index, k)
+	}
 }
 
 // ErrIncorrectType indicates an incorrect type was used with a FieldIndexer.
