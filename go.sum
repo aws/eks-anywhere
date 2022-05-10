@@ -213,8 +213,8 @@ github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kd
 github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e h1:GCzyKMDDjSGnlpl3clrdAK7I1AaVoaiKDOYkUzChZzg=
 github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20210826220005-b48c857c3a0e/go.mod h1:F7bn7fEU90QkQ3tnmaTx3LTKLEDqnwWODIYppRQ5hnY=
 github.com/aokoli/goutils v1.0.1/go.mod h1:SijmP0QR8LtwsmDs8Yii5Z/S4trXFGFC2oO5g9DP+DQ=
-github.com/apache/cloudstack-go/v2 v2.11.1-0.20211020121644-369057554f66 h1:oy3ZgpLnqxczrbO48a3ajp2sEmRELLWcFH7foIACrkU=
-github.com/apache/cloudstack-go/v2 v2.11.1-0.20211020121644-369057554f66/go.mod h1:2mPSVR6kkM3u1i9L3mmR+Du1f+QBwFKYOSI2XQEyhj4=
+github.com/apache/cloudstack-go/v2 v2.13.0 h1:t0uj7QxQpnzD/LSTP6a4w2NTuZXisxIM/mIDNkF44lc=
+github.com/apache/cloudstack-go/v2 v2.13.0/go.mod h1:aosD8Svfu5nhH5Sp4zcsVV1hT5UGt3mTgRXM8YqTKe0=
 github.com/apache/thrift v0.12.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/apache/thrift v0.13.0/go.mod h1:cp2SuWMxlEZw2r+iP2GNCdIi4C1qmUzdZFSVb+bacwQ=
 github.com/apex/log v1.9.0/go.mod h1:m82fZlWIuiWzWP04XCTXmnX0xRkYYbCdYn8jbJeLBEA=
@@ -281,8 +281,8 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoH
 github.com/aws/aws-sdk-go-v2/service/sts v1.6.0/go.mod h1:q7o0j7d7HrJk/vr9uUt3BVRASvcU7gYZB9PUgPiByXg=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/cluster-api-provider-cloudstack v0.4.2 h1:/qK/A9kM1la+eVEyR497/pdR8eG2dtTYJgoFK9LhS0w=
-github.com/aws/cluster-api-provider-cloudstack v0.4.2/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
+github.com/aws/cluster-api-provider-cloudstack v0.4.3 h1:P5Pc3uxaNpNMgA2AvFXmuEBrk6FhYpKzjsLYS4vwCBo=
+github.com/aws/cluster-api-provider-cloudstack v0.4.3/go.mod h1:szrQdQnkP/4WUVHo2RUMkxQJTT5RPdBcDkvJtZctYvw=
 github.com/aws/eks-anywhere-packages v0.1.1 h1:miuYyEPS0MAzC/1+v99XPzBILYjs+Jl5CoqC95IAIg8=
 github.com/aws/eks-anywhere-packages v0.1.1/go.mod h1:0rPTMF03bX8YuoaHsGzDANxrwjnL3XcyPg8g6I920Ys=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
