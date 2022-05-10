@@ -15,6 +15,9 @@
 package v1alpha1
 
 import (
+	"strings"
+
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -30,6 +33,8 @@ type CloudStackMachineConfigSpec struct {
 	Template CloudStackResourceIdentifier `json:"template"`
 	// ComputeOffering refers to a compute offering which has been previously registered in CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU speed. It can either be specified as a UUID or name
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
+	// DiskOffering refers to a disk offering which has been previously registered in CloudStack. It represents a disk offering with pre-defined size or custom specified disk size. It can either be specified as a UUID or name
+	DiskOffering CloudStackResourceDiskOffering `json:"diskOffering,omitempty"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
@@ -38,6 +43,57 @@ type CloudStackMachineConfigSpec struct {
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
 	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
+}
+
+type CloudStackResourceDiskOffering struct {
+	CloudStackResourceIdentifier `json:",inline"`
+	// path the filesystem will use to mount in VM
+	MountPath string `json:"mountPath"`
+	// device name of the disk offering in VM, shows up in lsblk command
+	Device string `json:"device"`
+	// filesystem used to mkfs in disk offering partition
+	Filesystem string `json:"filesystem"`
+	// disk label used to label disk partition
+	Label string `json:"label"`
+}
+
+func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id {
+		return false
+	}
+
+	if r.MountPath != o.MountPath || r.Filesystem != o.Filesystem || r.Label != o.Label || r.Device != o.Device {
+		return false
+	}
+	return r.Id == "" && o.Id == "" && r.Name == o.Name
+}
+
+func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
+	if len(r.Id) > 0 || len(r.Name) > 0 {
+		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
+			return errors.New("must be non-empty and starts with /"), "mountPath", r.MountPath
+		}
+		if len(r.Filesystem) < 1 {
+			return errors.New("empty filesystem"), "filesystem", r.Filesystem
+		}
+		if len(r.Device) < 1 {
+			return errors.New("empty device"), "device", r.Device
+		}
+		if len(r.Label) < 1 {
+			return errors.New("empty label"), "label", r.Label
+		}
+	} else {
+		if len(r.MountPath)+len(r.Filesystem)+len(r.Device)+len(r.Label) > 0 {
+			return errors.New("empty id/name"), "id or name", r.Id
+		}
+	}
+	return nil, "", ""
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
@@ -129,7 +185,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	if !c.Template.Equal(&o.Template) ||
-		!c.ComputeOffering.Equal(&o.ComputeOffering) {
+		!c.ComputeOffering.Equal(&o.ComputeOffering) ||
+		!c.DiskOffering.Equal(&o.DiskOffering) {
 		return false
 	}
 	if c.Affinity != o.Affinity {
