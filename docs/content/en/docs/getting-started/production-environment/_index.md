@@ -75,11 +75,25 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_LICENSE='my-license-here'
    ```
 
+1. Generate a curated-packages config
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+   The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   ```bash
+   eksctl anywhere generate package harbor --source registry --kubeversion 1.21 > packages.yaml
+   ```
+
 1. Create the initial cluster
 
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster:
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages packages.yaml
    ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
@@ -143,16 +157,15 @@ Follow these steps if you want to use your initial cluster to create and manage 
    Refer to the initial config described earlier for the required and optional settings.
    The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
 
-
 1. Create a workload cluster
 
    To create a new workload cluster from your management cluster run this command, identifying:
 
-   * The workload cluster yaml file
+   * The workload cluster YAML file
    * The initial cluster's credentials (this causes the workload cluster to be managed from the management cluster)
 
-
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster \
        -f eksa-w01-cluster.yaml  \
        --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
@@ -177,4 +190,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
 
-See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+## Next steps:
+* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
+
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section for more information on post-creation curated packages installation.
