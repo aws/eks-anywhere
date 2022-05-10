@@ -1,6 +1,6 @@
 ---
-title: "EKS Anywhere curated package Harbor use cases"
-linkTitle: "EKS Anywhere curated package Harbor use cases"
+title: "Harbor use cases"
+linkTitle: "Harbor use cases"
 weight: 2
 date: 2022-04-12
 description: >  

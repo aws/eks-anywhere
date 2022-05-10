@@ -1,10 +1,10 @@
 ---
-title: "EKS Anywhere curated package Harbor"
-linkTitle: "Add EKS Anywhere curated package Harbor"
+title: "Harbor"
+linkTitle: "Add Harbor"
 weight: 13
 date: 2022-04-12
 description: >
-  Install/upgrade/uninstall EKS Anywhere curated package Harbor
+  Install/upgrade/uninstall Harbor
 ---
 
 {{% alert title="Important" color="warning" %}}

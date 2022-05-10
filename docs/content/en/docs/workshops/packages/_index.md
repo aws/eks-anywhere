@@ -8,4 +8,4 @@ description: >
 
 This chapter walks through the following:
 
-* EKS Anywhere curated package Harbor use cases
+* Harbor use cases
