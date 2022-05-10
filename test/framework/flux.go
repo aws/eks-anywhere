@@ -813,10 +813,24 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 	if err := g.Commit("EKS-A E2E Flux test configuration update"); err != nil {
 		return fmt.Errorf("commiting cluster config changes: %v", err)
 	}
-	if err := g.Pull(context.Background(), e.gitBranch()); err != nil {
-		return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
+
+	repoUpToDateErr := &git.RepositoryUpToDateError{}
+	err := g.Pull(context.Background(), e.gitBranch())
+	if err != nil {
+		if !errors.As(err, repoUpToDateErr) {
+			return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
+		}
+		e.T.Log(err.Error())
 	}
-	return g.Push(context.Background())
+
+	err = g.Push(context.Background())
+	if err != nil {
+		if !errors.As(err, repoUpToDateErr) {
+			return fmt.Errorf("pushing config changes to remote: %v", err)
+		}
+		e.T.Log(err.Error())
+	}
+	return nil
 }
 
 // todo: reuse logic in clustermanager to template resources
