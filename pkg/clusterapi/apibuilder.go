@@ -112,7 +112,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			Kind:       kubeadmControlPlaneKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterSpec.Cluster.GetName(),
+			Name:      KubeadmControlPlaneName(clusterSpec),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
@@ -225,7 +225,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workerNodeGroupConfig.Name,
+			Name:      MachineDeploymentName(workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    clusterLabels(clusterName),
 		},

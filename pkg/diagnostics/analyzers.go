@@ -48,6 +48,33 @@ func (a *analyzerFactory) managementClusterCrdAnalyzers() []*Analyze {
 	return a.generateCrdAnalyzers(crds)
 }
 
+func (a *analyzerFactory) PackageAnalyzers() []*Analyze {
+	var analyzers []*Analyze
+	analyzers = append(analyzers, a.packageDeploymentAnalyzers()...)
+	return append(analyzers, a.packageCrdAnalyzers()...)
+}
+
+func (a *analyzerFactory) packageCrdAnalyzers() []*Analyze {
+	crds := []string{
+		"packagebundlecontrollers.packages.eks.amazonaws.com",
+		"packagebundles.packages.eks.amazonaws.com",
+		"packagecontrollers.packages.eks.amazonaws.com",
+		"packages.packages.eks.amazonaws.com",
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) packageDeploymentAnalyzers() []*Analyze {
+	d := []eksaDeployment{
+		{
+			Name:             "eks-anywhere-packages",
+			Namespace:        constants.EksaPackagesName,
+			ExpectedReplicas: 1,
+		},
+	}
+	return a.generateDeploymentAnalyzers(d)
+}
+
 func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{

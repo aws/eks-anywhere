@@ -134,7 +134,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -145,7 +145,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -156,7 +156,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -167,7 +167,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
@@ -260,7 +260,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Name)
 					cluster.Spec = datacenterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				existingVSDatacenter := &anywherev1.VSphereDatacenterConfig{}
@@ -277,14 +277,14 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
@@ -371,7 +371,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -382,7 +382,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -393,7 +393,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -404,7 +404,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
@@ -493,7 +493,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -504,7 +504,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -515,7 +515,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -526,7 +526,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
@@ -643,7 +643,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -654,7 +654,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -665,7 +665,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
@@ -742,7 +742,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Name)
 					cluster.Spec = datacenterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				machineSpec := &anywherev1.CloudStackMachineConfig{}
@@ -755,14 +755,14 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.CloudStackMachineConfig)
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
@@ -837,7 +837,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -848,7 +848,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -859,7 +859,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
@@ -946,7 +946,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -957,7 +957,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.CloudStackMachineConfig{}
@@ -968,7 +968,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					cluster.SetName(objectKey.Name)
 					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+					assert.Equal(t, objectKey.Name, "test-cluster", "expected Name to be test-cluster")
 				}).Return(nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}

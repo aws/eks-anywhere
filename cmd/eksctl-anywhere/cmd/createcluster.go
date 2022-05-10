@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -18,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -31,6 +34,7 @@ type createClusterOptions struct {
 	hardwareFileName string
 	skipPowerActions bool
 	setupTinkerbell  bool
+	installPackages  string
 }
 
 var cc = &createClusterOptions{}
@@ -58,6 +62,7 @@ func init() {
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -133,13 +138,16 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
 		Build(ctx)
@@ -158,6 +166,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
+	}
+
+	if !features.IsActive(features.CuratedPackagesSupport()) && cc.installPackages != "" {
+		return fmt.Errorf("curated packages installation is not supported in this release")
 	}
 
 	createCluster := workflows.NewCreate(
@@ -195,30 +207,41 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean, cc.installPackages)
 	cleanup(deps, &err)
 	return err
 }
 
-func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
+func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
 	dirs := cc.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
-		return dirs
+	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 	}
 
-	if cliConfig.GitPrivateKeyFile != "" {
-		dirs = append(dirs, cliConfig.GitPrivateKeyFile)
+	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
+		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+		if found && len(env) > 0 {
+			mountDirs := strings.Split(env, ",")
+			for _, dir := range mountDirs {
+				if _, err := os.Stat(dir); err != nil {
+					return nil, fmt.Errorf("invalid host path to mount: %v", err)
+				}
+				dirs = append(dirs, dir)
+			}
+		}
 	}
 
-	return dirs
+	return dirs, nil
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	cliConfig := &config.CliConfig{}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
-		cliConfig.GitPassword = os.Getenv(config.EksaGitPasswordTokenEnv)
+		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
 	}
 
 	return cliConfig

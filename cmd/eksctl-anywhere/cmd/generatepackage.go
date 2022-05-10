@@ -27,7 +27,7 @@ func init() {
 	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 }
 
@@ -39,6 +39,7 @@ var generatePackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runGeneratePackages,
+	Args:         cobra.MinimumNArgs(1),
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
@@ -50,7 +51,7 @@ func runGeneratePackages(cmd *cobra.Command, args []string) error {
 
 func generatePackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := newDependenciesForPackages(ctx, kubeConfig)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -81,6 +82,7 @@ func generatePackages(ctx context.Context, args []string) error {
 
 	packageClient := curatedpackages.NewPackageClient(
 		bundle,
+		deps.Kubectl,
 		args...,
 	)
 	packages, err := packageClient.GeneratePackages()

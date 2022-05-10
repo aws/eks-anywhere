@@ -13,7 +13,6 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	"github.com/go-git/go-git/v5/storage/memory"
 
 	"github.com/aws/eks-anywhere/pkg/git"
@@ -49,9 +48,9 @@ func New(opts ...Opt) *GitClient {
 	return c
 }
 
-func WithTokenAuth(auth git.TokenAuth) Opt {
+func WithAuth(auth transport.AuthMethod) Opt {
 	return func(c *GitClient) {
-		c.Auth = &http.BasicAuth{Password: auth.Token, Username: auth.Username}
+		c.Auth = auth
 	}
 }
 
@@ -175,7 +174,7 @@ func (g *GitClient) Pull(ctx context.Context, branch string) error {
 
 	if errors.Is(err, gogit.NoErrAlreadyUpToDate) {
 		logger.V(3).Info("Local repo already up-to-date", "repo", g.RepoDirectory, "remote", gogit.DefaultRemoteName)
-		return &git.RepositoryUpToDateError{Repository: g.RepoDirectory}
+		return &git.RepositoryUpToDateError{}
 	}
 
 	if err != nil {

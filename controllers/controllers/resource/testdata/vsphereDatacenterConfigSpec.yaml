@@ -2,7 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
 metadata:
   creationTimestamp: null
-  name: test_cluster
+  name: test-cluster
 spec:
   datacenter: SDDC-Datacenter
   network: /SDDC-Datacenter/network/sddc-cgw-network-1

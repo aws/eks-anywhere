@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"path/filepath"
 
@@ -13,9 +14,11 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 )
@@ -48,6 +51,7 @@ func init() {
 	if err := importImagesCmd.MarkFlagRequired("bundles"); err != nil {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
+	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
 }
 
 var importImagesCommand = ImportImagesCommand{}
@@ -56,9 +60,14 @@ type ImportImagesCommand struct {
 	InputFile        string
 	RegistryEndpoint string
 	BundlesFile      string
+	includePackages  bool
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
+	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
+		return fmt.Errorf("curated packages installation is not supported in this release")
+	}
+
 	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
@@ -110,7 +119,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
-		Reader:  deps.ManifestReader,
+		Reader:  fetchReader(deps.ManifestReader, c.includePackages),
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),
@@ -123,7 +132,15 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			password,
 		),
 		TmpArtifactsFolder: artifactsFolder,
+		FileImporter:       fetchFileRegistry(c.RegistryEndpoint, username, password, artifactsFolder, c.includePackages),
 	}
 
 	return importArtifacts.Run(ctx)
+}
+
+func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
+	if includePackages {
+		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder)
+	}
+	return &artifacts.Noop{}
 }

@@ -140,9 +140,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -152,8 +152,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -225,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1e23a4c549b46e293bc2c1c6be53f3a3b0e3679c
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -328,7 +328,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -362,7 +362,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -370,7 +370,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -380,8 +380,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
@@ -435,7 +435,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -443,8 +443,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.6-eks-a-v0.0.0-dev-build.1
-      version: v0.1.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -625,7 +625,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -633,8 +633,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -642,7 +643,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -650,7 +651,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -841,9 +842,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -853,8 +854,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -926,7 +927,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1e23a4c549b46e293bc2c1c6be53f3a3b0e3679c
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -1029,7 +1030,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1063,7 +1064,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1071,7 +1072,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1081,8 +1082,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
@@ -1136,7 +1137,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1144,8 +1145,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.6-eks-a-v0.0.0-dev-build.1
-      version: v0.1.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -1326,7 +1327,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1334,8 +1335,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -1343,7 +1345,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1351,7 +1353,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -1542,9 +1544,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1554,8 +1556,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.2/metadata.yaml
-      version: v0.4.2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
+      version: v0.4.3-RC1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1627,7 +1629,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: 1e23a4c549b46e293bc2c1c6be53f3a3b0e3679c
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -1730,7 +1732,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1764,7 +1766,7 @@ spec:
       version: v1.0.0-rc6+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
       controller:
         arch:
         - amd64
@@ -1772,7 +1774,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc8-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1782,8 +1784,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc8/metadata.yaml
-      version: v1.0.0-rc8+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
+      version: v1.0.0-rc9+abcdef1
     flux:
       helmController:
         arch:
@@ -1837,7 +1839,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1845,8 +1847,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.6-eks-a-v0.0.0-dev-build.1
-      version: v0.1.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
+      version: v0.1.10+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -2027,7 +2029,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2035,8 +2037,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
-          tinkManifest: {}
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+          tinkManifest:
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -2044,7 +2047,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2052,7 +2055,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:59b0126c7dc038853030e101818214a25de07390-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:

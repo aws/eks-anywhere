@@ -9,21 +9,31 @@ import (
 Implements ServerVersionInterface to provide the Kubernetes client version to be used.
 */
 type Discovery struct {
-	minor string
-	major string
+	kubeVersion *KubeVersion
 }
 
-func NewDiscovery(major string, minor string) *Discovery {
+type KubeVersion struct {
+	major string
+	minor string
+}
+
+func NewDiscovery(kubeVersion *KubeVersion) *Discovery {
 	return &Discovery{
-		minor: minor,
+		kubeVersion: kubeVersion,
+	}
+}
+
+func NewKubeVersion(major string, minor string) *KubeVersion {
+	return &KubeVersion{
 		major: major,
+		minor: minor,
 	}
 }
 
 func (d *Discovery) ServerVersion() (*version.Info, error) {
 	v := &version.Info{
-		Major: d.major,
-		Minor: d.minor,
+		Major: d.kubeVersion.major,
+		Minor: d.kubeVersion.minor,
 	}
 	return v, nil
 }

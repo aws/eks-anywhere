@@ -83,6 +83,20 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateCloudStackConnection(arg0 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCloudStackConnection", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateCloudStackConnection), arg0)
 }
 
+// ValidateDiskOfferingPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateDiskOfferingPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceDiskOffering) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateDiskOfferingPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateDiskOfferingPresent indicates an expected call of ValidateDiskOfferingPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateDiskOfferingPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateDiskOfferingPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateDiskOfferingPresent), arg0, arg1, arg2)
+}
+
 // ValidateDomainPresent mocks base method.
 func (m *MockProviderCmkClient) ValidateDomainPresent(arg0 context.Context, arg1 string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	m.ctrl.T.Helper()

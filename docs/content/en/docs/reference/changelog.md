@@ -11,6 +11,18 @@ menu:
 
 ### Added
 
+## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Added
+- Adding support to EKS Anywhere for a generic git provider as the source of truth for GitOps configuration management. [#9](https://github.com/aws/eks-anywhere/projects/9)
+- Allow users to configure Cloud Provider and CSI Driver with different credentials. [#1730](https://github.com/aws/eks-anywhere/pull/1730)
+- Support to install, configure and maintain operational components that are secure and tested by Amazon on EKS Anywhere clusters.[#2083](https://github.com/aws/eks-anywhere/issues/2083)
+- A new Workshop section has been added to EKS Anywhere documentation.
+
+### Fixed
+- Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)
+
+
 ## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
 
 ### Fixed

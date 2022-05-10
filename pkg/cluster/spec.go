@@ -137,7 +137,6 @@ func WithFluxConfig(fluxConfig *eksav1alpha1.FluxConfig) SpecOpt {
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
-		s.FluxConfig = gitOpsConfig.ConvertToFluxConfig()
 	}
 }
 
@@ -177,6 +176,9 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 	if err = SetConfigDefaults(clusterConfig); err != nil {
+		return nil, err
+	}
+	if err = ValidateConfig(clusterConfig); err != nil {
 		return nil, err
 	}
 

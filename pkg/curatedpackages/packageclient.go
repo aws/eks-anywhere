@@ -1,6 +1,8 @@
 package curatedpackages
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -27,12 +29,14 @@ const (
 type PackageClient struct {
 	bundle   *packagesv1.PackageBundle
 	packages []string
+	kubectl  KubectlRunner
 }
 
-func NewPackageClient(bundle *packagesv1.PackageBundle, packages ...string) *PackageClient {
+func NewPackageClient(bundle *packagesv1.PackageBundle, kubectl KubectlRunner, packages ...string) *PackageClient {
 	return &PackageClient{
 		bundle:   bundle,
 		packages: packages,
+		kubectl:  kubectl,
 	}
 }
 
@@ -57,7 +61,7 @@ func convertBundleVersionToPackageVersion(bundleVersions []packagesv1.SourceVers
 }
 
 func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
-	packageMap := pc.getPackageNameToPackage()
+	packageMap := pc.packageMap()
 	var packages []packagesv1.Package
 	for _, p := range pc.packages {
 		bundlePackage, found := packageMap[strings.ToLower(p)]
@@ -84,12 +88,86 @@ func (pc *PackageClient) WritePackagesToStdOut(packages []packagesv1.Package) er
 	return nil
 }
 
-func (pc *PackageClient) getPackageNameToPackage() map[string]packagesv1.BundlePackage {
+func (pc *PackageClient) GetPackageFromBundle(packageName string) (*packagesv1.BundlePackage, error) {
+	packageMap := pc.packageMap()
+	p, ok := packageMap[strings.ToLower(packageName)]
+	if !ok {
+		return nil, fmt.Errorf("package %s not found", packageName)
+	}
+	return &p, nil
+}
+
+func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
 	pMap := make(map[string]packagesv1.BundlePackage)
 	for _, p := range pc.bundle.Spec.Packages {
 		pMap[strings.ToLower(p.Name)] = p
 	}
 	return pMap
+}
+
+func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName string, kubeConfig string) error {
+	p := convertBundlePackageToPackage(*bp, customName, pc.bundle.APIVersion)
+	displayPackage := NewDisplayablePackage(&p)
+	params := []string{"create", "-f", "-", "--kubeconfig", kubeConfig}
+	packageYaml, err := yaml.Marshal(displayPackage)
+	if err != nil {
+		return err
+	}
+	stdOut, err := pc.kubectl.CreateFromYaml(ctx, packageYaml, params...)
+	if err != nil {
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
+	params := []string{"apply", "-f", fileName, "--kubeconfig", kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) CreatePackages(ctx context.Context, fileName string, kubeConfig string) error {
+	params := []string{"create", "-f", fileName, "--kubeconfig", kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) DeletePackages(ctx context.Context, packages []string, kubeConfig string) error {
+	params := []string{"delete", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	params = append(params, packages...)
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return err
+	}
+	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string, kubeConfig string) error {
+	params := []string{"describe", "packages", "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	params = append(params, packages...)
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		fmt.Print(&stdOut)
+		return fmt.Errorf("kubectl execution failure: \n%v", err)
+	}
+	if len(stdOut.Bytes()) == 0 {
+		return errors.New("no resources found")
+	}
+	fmt.Print(&stdOut)
+	return nil
 }
 
 func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, apiVersion string) packagesv1.Package {

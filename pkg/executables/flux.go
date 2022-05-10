@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	fluxPath            = "flux"
-	githubTokenEnv      = "GITHUB_TOKEN"
-	githubProvider      = "github"
-	gitProvider         = "git"
-	privateKeyAlgorithm = "ecdsa"
+	fluxPath                   = "flux"
+	githubTokenEnv             = "GITHUB_TOKEN"
+	githubProvider             = "github"
+	gitProvider                = "git"
+	defaultPrivateKeyAlgorithm = "ecdsa"
 )
 
 type Flux struct {
@@ -39,7 +39,7 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 		"--repository", c.Github.Repository,
 		"--owner", c.Github.Owner,
 		"--path", c.ClusterConfigPath,
-		"--ssh-key-algorithm", privateKeyAlgorithm,
+		"--ssh-key-algorithm", defaultPrivateKeyAlgorithm,
 	}
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
 
@@ -66,26 +66,31 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 // BootstrapToolkitsComponentsGit commits the toolkit components manifests to the branch of a Git repository.
 // It then configures the target cluster to synchronize with the repository. If the toolkit components are present on the cluster, the
 // bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig config.CliConfig) error {
+func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
 		gitProvider,
 		"--url", c.Git.RepositoryUrl,
-		"--username", c.Git.Username,
 		"--path", c.ClusterConfigPath,
-		"--ssh-key-algorithm", privateKeyAlgorithm,
+		"--private-key-file", cliConfig.GitPrivateKeyFile,
+		"--silent",
 	}
 
 	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
-	if cliConfig.GitPrivateKeyFile != "" {
-		params = append(params, "--private-key-file", cliConfig.GitPrivateKeyFile)
-	}
-	if cliConfig.GitPassword != "" {
-		params = append(params, "--password", cliConfig.GitPassword)
+	if fluxConfig.Spec.Git.SshKeyAlgorithm != "" {
+		params = append(params, "--ssh-key-algorithm", fluxConfig.Spec.Git.SshKeyAlgorithm)
+	} else {
+		params = append(params, "--ssh-key-algorithm", defaultPrivateKeyAlgorithm)
 	}
 
-	_, err := f.Execute(ctx, params...)
+	if cliConfig.GitSshKeyPassphrase != "" {
+		params = append(params, "--password", cliConfig.GitSshKeyPassphrase)
+	}
+
+	env := make(map[string]string)
+	env["SSH_KNOWN_HOSTS"] = cliConfig.GitKnownHostsFile
+	_, err := f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
 		return fmt.Errorf("executing flux bootstrap git: %v", err)
 	}

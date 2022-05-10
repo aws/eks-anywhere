@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -51,4 +52,39 @@ func (mr *MockChartImporterMockRecorder) Import(ctx interface{}, charts ...inter
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, charts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Import", reflect.TypeOf((*MockChartImporter)(nil).Import), varargs...)
+}
+
+// MockFileImporter is a mock of FileImporter interface.
+type MockFileImporter struct {
+	ctrl     *gomock.Controller
+	recorder *MockFileImporterMockRecorder
+}
+
+// MockFileImporterMockRecorder is the mock recorder for MockFileImporter.
+type MockFileImporterMockRecorder struct {
+	mock *MockFileImporter
+}
+
+// NewMockFileImporter creates a new mock instance.
+func NewMockFileImporter(ctrl *gomock.Controller) *MockFileImporter {
+	mock := &MockFileImporter{ctrl: ctrl}
+	mock.recorder = &MockFileImporterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFileImporter) EXPECT() *MockFileImporterMockRecorder {
+	return m.recorder
+}
+
+// Push mocks base method.
+func (m *MockFileImporter) Push(ctx context.Context, bundles *v1alpha1.Bundles) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Push", ctx, bundles)
+}
+
+// Push indicates an expected call of Push.
+func (mr *MockFileImporterMockRecorder) Push(ctx, bundles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Push", reflect.TypeOf((*MockFileImporter)(nil).Push), ctx, bundles)
 }

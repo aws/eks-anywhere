@@ -33,6 +33,19 @@ func TestClusterValidateUpdateFluxRepoUrlImmutable(t *testing.T) {
 	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateFluxSshKeyAlgoImmutable(t *testing.T) {
+	fOld := fluxConfig()
+	fOld.Spec.Git = &v1alpha1.GitProviderConfig{
+		RepositoryUrl:   "https://test.git/test",
+		SshKeyAlgorithm: "rsa",
+	}
+	c := fOld.DeepCopy()
+
+	c.Spec.Git.SshKeyAlgorithm = "rsa2"
+	f := NewWithT(t)
+	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+}
+
 func TestClusterValidateUpdateFluxBranchImmutable(t *testing.T) {
 	fOld := fluxConfig()
 	fOld.Spec.Branch = "oldMain"
