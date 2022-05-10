@@ -43,6 +43,7 @@ var installPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runInstallPackages,
+	Args:         cobra.ExactArgs(1),
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {
