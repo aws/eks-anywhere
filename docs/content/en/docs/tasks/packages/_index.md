@@ -29,7 +29,7 @@ Skip the following installation steps if the returned result is not empty.
 
 ### Install package controller
 
-1. Install package controller
+1. Install the package controller
     ```bash
     eksctl anywhere install packagecontroller —-kube-version 1.21
     ```
