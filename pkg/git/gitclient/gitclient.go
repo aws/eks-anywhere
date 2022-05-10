@@ -174,7 +174,7 @@ func (g *GitClient) Pull(ctx context.Context, branch string) error {
 
 	if errors.Is(err, gogit.NoErrAlreadyUpToDate) {
 		logger.V(3).Info("Local repo already up-to-date", "repo", g.RepoDirectory, "remote", gogit.DefaultRemoteName)
-		return &git.RepositoryUpToDateError{Repository: g.RepoDirectory}
+		return &git.RepositoryUpToDateError{}
 	}
 
 	if err != nil {
