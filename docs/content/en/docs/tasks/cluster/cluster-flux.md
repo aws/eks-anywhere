@@ -209,9 +209,11 @@ You may re-use an existing repo or use the same repo for multiple management clu
 Create the repository through your git provider and initialize it with a `README.md` documenting the purpose of the repository.
 
 ## Create a Private Key for use by EKS Anywhere and Flux
-EKS Anywhere requires a private key to authenticate to your git repository, push the cluster configuration, and configure Flux for ongoing management and monitoring of that configuration. The private key should have permissions to read to and write from the repository in question.
+EKS Anywhere requires a private key to authenticate to your git repository, push the cluster configuration, and configure Flux for ongoing management and monitoring of that configuration.
+The private key should have permissions to read and write from the repository in question.
 
-It is recommended that you create a new private key for use exclusivly by EKS Anywhere. You can use `ssh-keygen` to generate a new key.
+It is recommended that you create a new private key for use exclusively by EKS Anywhere. 
+You can use `ssh-keygen` to generate a new key.
 
 ```sh
 ssh-keygen -t ecdsa -C "my_email@example.com"
@@ -220,7 +222,7 @@ ssh-keygen -t ecdsa -C "my_email@example.com"
 Please consult the documentation for your git provider to determine how to add your key; for example, you can find the documentation 
 
 ## Add your private key to your SSH agent on your management machine
-When using a generic git provider EKS Anywhere requires that your management machine have a running SSH agent and the private key be added to that SSH agent. 
+When using a generic git provider, EKS Anywhere requires that your management machine has a running SSH agent and the private key be added to that SSH agent. 
 
 You can start an SSH agent and add your private key by executing the following in your current session:
 
@@ -238,14 +240,14 @@ For example, if you have a known hosts file at `/home/myUser/.ssh/known_hosts` t
 export EKSA_GIT_KNOWN_HOSTS=/home/myUser/.ssh/known_hosts
 ```
 
-While you can use your pre-existing SSH known hosts file it is recommended that you generate a new known hosts file for use by EKS Anywhere that contains only the known-hosts entries required for your git host and key type.
+While you can use your pre-existing SSH known hosts file, it is recommended that you generate a new known hosts file for use by EKS Anywhere that contains only the known-hosts entries required for your git host and key type.
 For example, if you wanted to generate a known hosts file for a git server located at `example.com` with key type `ecdsa`, you can use the OpenSSH utility `ssh-keyscan`:
 
 ```sh
 ssh-keyscan -t ecdsa example.com >> my_eksa_known_hosts
 ```
 
-This will generate a known hosts file which contains only the entry necessary to verify the identity of gitlab.com when using an `ecdsa` based private key file.
+This will generate a known hosts file which contains only the entry necessary to verify the identity of example.com when using an `ecdsa` based private key file.
 
 ### Example FluxConfig cluster configuration for a generic git provider
 For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
