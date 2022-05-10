@@ -73,12 +73,10 @@ func (e *RepositoryIsEmptyError) Error() string {
 	return fmt.Sprintf("repository %s is empty can cannot be cloned", e.Repository)
 }
 
-type RepositoryUpToDateError struct {
-	Repository string
-}
+type RepositoryUpToDateError struct{}
 
 func (e *RepositoryUpToDateError) Error() string {
-	return fmt.Sprintf("error pulling from repository %s: already up-to-date", e.Repository)
+	return "error pulling from repository: already up-to-date"
 }
 
 type RemoteBranchDoesNotExistError struct {
