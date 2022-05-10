@@ -219,7 +219,13 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
 		env, found := os.LookupEnv("EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT")
 		if found && len(env) > 0 {
-			dirs = append(dirs, strings.Split(env, ",")...)
+			mountDirs := strings.Split(env, ",")
+			for _, dir := range mountDirs {
+				dir = strings.TrimSpace(dir)
+				if _, err := os.Stat(dir); err == nil {
+					dirs = append(dirs, dir)
+				}
+			}
 		}
 	}
 
