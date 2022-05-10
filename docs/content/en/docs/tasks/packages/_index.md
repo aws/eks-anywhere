@@ -19,7 +19,7 @@ Skip the following installation steps if the returned result is not empty.
 
 * To install EKS Anywhere, create an EKS Anywhere cluster or review the EKS Anywhere system requirements. See the [Getting started]({{< relref "../../getting-started" >}}) guide for details.
 
-* Check if the version of `eksctl anywhere` is above `v0.9.0` with the following commands:
+* Check if the version of `eksctl anywhere` is `v0.9.0` or above with the following commands:
     ```bash
     eksctl anywhere version
     ```
