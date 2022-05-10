@@ -112,6 +112,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
+		WithPackagesCollectors().
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -252,6 +253,12 @@ func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDi
 		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.ManagementClusterAnalyzers()...)
 		e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.ManagementClusterCollectors()...)
 	}
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithPackagesCollectors() *EksaDiagnosticBundle {
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.PackageAnalyzers()...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.PackagesCollectors()...)
 	return e
 }
 

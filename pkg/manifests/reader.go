@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -92,6 +93,6 @@ func (r *Reader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
 	return bundles.Charts(bundle), nil
 }
 
-func (r *Reader) ReadChartsFromBundles(b *releasev1.Bundles) []releasev1.Image {
+func (r *Reader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
 	return bundles.Charts(b)
 }

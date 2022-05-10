@@ -2,11 +2,14 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 
@@ -19,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -50,7 +54,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
+func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *Provider {
 	return newProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -61,7 +65,7 @@ func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.Tin
 	)
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
+func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *Provider {
 	return NewProvider(
 		datacenterConfig,
 		machineConfigs,
@@ -300,4 +304,103 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_external_etcd.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_tinkerbell_md_multiple_node_groups.yaml")
+}
+
+func TestTinkerbellProviderPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
+	setupContext(t)
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
+	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
+	cluster := &types.Cluster{Name: "test"}
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack = releasev1alpha1.TinkerbellStackBundle{
+		Tink: releasev1alpha1.TinkBundle{
+			Manifest: releasev1alpha1.Manifest{URI: "tink.yaml"},
+		},
+	}
+
+	kubectl.EXPECT().ApplyKubeSpec(ctx, cluster, "tink.yaml")
+	kubectl.EXPECT().WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", "tink-server", tinkNamespace)
+	kubectl.EXPECT().WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", "tink-controller-manager", tinkNamespace)
+
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
+
+	err := provider.InstallTinkerbellStack(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to install Tinkerbell stack: %v", err)
+	}
+}
+
+func TestTinkerbellProviderPreCAPIInstallOnBootstrapFailureApplyingManifest(t *testing.T) {
+	setupContext(t)
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
+	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
+	cluster := &types.Cluster{Name: "test"}
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack = releasev1alpha1.TinkerbellStackBundle{
+		Tink: releasev1alpha1.TinkBundle{
+			Manifest: releasev1alpha1.Manifest{URI: "tink.yaml"},
+		},
+	}
+
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
+
+	kubectlError := "kubectl error"
+	expectedError := fmt.Sprintf("applying tink manifest: %s", kubectlError)
+	kubectl.EXPECT().ApplyKubeSpec(ctx, cluster, "tink.yaml").Return(errors.New(kubectlError))
+
+	err := provider.InstallTinkerbellStack(ctx, cluster, clusterSpec)
+	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
+}
+
+func TestTinkerbellProviderPreCAPIInstallOnBootstrapFailureWaitingForDeployment(t *testing.T) {
+	setupContext(t)
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
+	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
+	cluster := &types.Cluster{Name: "test"}
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack = releasev1alpha1.TinkerbellStackBundle{
+		Tink: releasev1alpha1.TinkBundle{
+			Manifest: releasev1alpha1.Manifest{URI: "tink.yaml"},
+		},
+	}
+
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
+
+	kubectlError := "kubectl error"
+	expectedError := fmt.Sprintf("waiting for deployment tink-server: %s", kubectlError)
+	kubectl.EXPECT().ApplyKubeSpec(ctx, cluster, "tink.yaml")
+	kubectl.EXPECT().WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", "tink-server", tinkNamespace).Return(errors.New(kubectlError))
+
+	err := provider.InstallTinkerbellStack(ctx, cluster, clusterSpec)
+	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
 }

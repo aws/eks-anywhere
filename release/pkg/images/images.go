@@ -70,15 +70,29 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 }
 
 func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfiguration, sourceImageUri, releaseImageUri string) error {
+	retrier := retrier.NewRetrier(60*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if err != nil && totalRetries < 10 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
+
 	sourceRegistryUsername := sourceAuthConfig.Username
 	sourceRegistryPassword := sourceAuthConfig.Password
 	releaseRegistryUsername := releaseAuthConfig.Username
 	releaseRegistryPassword := releaseAuthConfig.Password
-	cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
-	out, err := utils.ExecCommand(cmd)
-	fmt.Println(out)
+	err := retrier.Retry(func() error {
+		cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
+		out, err := utils.ExecCommand(cmd)
+		fmt.Println(out)
+		if err != nil {
+			return fmt.Errorf("executing skopeo copy command: %v", err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("executing skopeo copy command: %v", err)
+		return fmt.Errorf("retries exhausted performing image copy from source to destination: %v", err)
 	}
 
 	return nil

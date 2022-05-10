@@ -66,6 +66,7 @@ type ClusterClient interface {
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
 	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
@@ -86,6 +87,7 @@ type ClusterClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
+	DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -206,7 +208,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("generating capi spec: %v", err)
 	}
@@ -392,6 +394,15 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	if provider.Name() == constants.CloudStackProviderName {
+		// TODO: Move this logic to provider implementation: https://github.com/aws/eks-anywhere/issues/2061
+		logger.V(3).Info("Restarting cilium daemonset after upgrade")
+		err = c.clusterClient.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, eksaMgmtCluster.KubeconfigFile)
+		if err != nil {
+			return fmt.Errorf("restarting cilium daemonset after upgrade: %v", err)
+		}
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")
@@ -975,7 +986,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -993,6 +1004,12 @@ func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.Eksd
 func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
 		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
+func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
+		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 

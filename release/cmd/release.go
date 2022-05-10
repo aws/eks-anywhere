@@ -224,7 +224,6 @@ var releaseCmd = &cobra.Command{
 		}
 
 		if devRelease || !bundleRelease {
-			eksAReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.ReleaseKind, releaseConfig.BuildRepoBranchName)
 			release, err := releaseConfig.GetPreviousReleaseIfExists()
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A releases: %v\n", err)
@@ -290,6 +289,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
+			eksAReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.ReleaseKind, releaseConfig.BuildRepoBranchName)
 			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)

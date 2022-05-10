@@ -99,6 +99,20 @@ func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
+// DaemonSetRolloutRestart mocks base method.
+func (m *MockClusterClient) DaemonSetRolloutRestart(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DaemonSetRolloutRestart", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DaemonSetRolloutRestart indicates an expected call of DaemonSetRolloutRestart.
+func (mr *MockClusterClientMockRecorder) DaemonSetRolloutRestart(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DaemonSetRolloutRestart", reflect.TypeOf((*MockClusterClient)(nil).DaemonSetRolloutRestart), arg0, arg1, arg2, arg3)
+}
+
 // DeleteAWSIamConfig mocks base method.
 func (m *MockClusterClient) DeleteAWSIamConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -286,6 +300,21 @@ func (m *MockClusterClient) GetEksaCluster(arg0 context.Context, arg1 *types.Clu
 func (mr *MockClusterClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCluster), arg0, arg1, arg2)
+}
+
+// GetEksaFluxConfig mocks base method.
+func (m *MockClusterClient) GetEksaFluxConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.FluxConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaFluxConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.FluxConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaFluxConfig indicates an expected call of GetEksaFluxConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaFluxConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaFluxConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaFluxConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaGitOpsConfig mocks base method.
