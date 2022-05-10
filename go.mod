@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/cluster-api-provider-cloudstack v0.4.3-0.20220429021755-3187412c5ec7
+	github.com/aws/cluster-api-provider-cloudstack v0.4.3
 	github.com/aws/eks-anywhere-packages v0.1.1
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
