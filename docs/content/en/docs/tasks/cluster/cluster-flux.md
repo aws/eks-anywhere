@@ -76,7 +76,7 @@ If an immutable field has been changed in a Git repository, there are two ways t
 2. Check the Flux Kustomization Controller log: `kubectl logs -f -n flux-system kustomize-controller-******` for error message containing text similar to `Invalid value: 1: field is immutable`
 
 
-## Getting Started with EKS Anywhere GitOps
+## Getting Started with EKS Anywhere GitOps with Github
 
 In order to use GitOps to manage cluster scaling, you need a couple of things:
 
@@ -106,7 +106,7 @@ You need to set your PAT as the environment variable $EKSA_GITHUB_TOKEN to use i
 ### Create GitOps configuration repo
 
 If you have an existing repo you can set that as your repository name in the configuration.
-If you specify a repo in your `GitOpsConfig` which does not exist EKS Anywhere will create it for you.
+If you specify a repo in your `FluxConfig` which does not exist EKS Anywhere will create it for you.
 If you would like to create a new repo you can [click here](https://github.new) to create a new repo.
 
 If your repository contains multiple cluster specification files, store them in sub-folders and specify the [configuration path]({{< relref "../../reference/clusterspec/gitops/#__clusterconfigpath__-optional" >}}) in your cluster specification.
@@ -130,7 +130,7 @@ clusters
 ```
 *By default, Flux kustomization reconciles at the management cluster's root level (`./clusters/management-cluster`), so both the management cluster and all the workload clusters it manages are synced.*
 
-### Example GitOps cluster configuration
+### Example GitOps cluster configuration for Github
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -141,15 +141,14 @@ spec:
 ... # collapsed cluster spec fields
 # Below added for gitops support
   gitOpsRef:
-    kind: GitOpsConfig
+    kind: FluxConfig
     name: my-cluster-name
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: GitOpsConfig
+kind: FluxConfig
 metadata:
   name: my-cluster-name
 spec:
-  flux:
     github:
       personal: true
       repository: mygithubrepository
@@ -197,4 +196,78 @@ After your cluster has been created, you can test the GitOps controller by modif
     ```bash
     kubectl get nodes 
     ```
-   
+
+## Getting Started with EKS Anywhere GitOps with any Git source
+You can configure EKS Anywhere to use a generic git repository as the source of truth for GitOps by providing a `FluxConfig` with a `git` configuration.
+
+EKS Anywhere requires a valid SSH Known Hosts file and SSH Private key in order to connect to your repository and bootstrap Flux.
+
+## Create a Git repository for use by EKS Anywhere and Flux
+When using the `git` provider EKS requires that the configuration repository be pre-initialized.
+You may re-use an existing repo or use the same repo for multiple management clusters.
+
+Create the repository through your git provider and initialize it with a `README.md` documenting the purpose of the repository.
+
+## Create a Private Key for use by EKS Anywhere and Flux
+EKS Anywhere requires a private key to authenticate to your git repository, push the cluster configuration, and configure Flux for ongoing management and monitoring of that configuration. The private key should have permissions to read to and write from the repository in question.
+
+It is recommended that you create a new private key for use exclusivly by EKS Anywhere. You can use `ssh-keygen` to generate a new key.
+
+```sh
+ssh-keygen -t ecdsa -C "my_email@example.com"
+```
+
+Please consult the documentation for your git provider to determine how to add your key; for example, you can find the documentation 
+
+## Add your private key to your SSH agent on your management machine
+When using a generic git provider EKS Anywhere requires that your management machine have a running SSH agent and the private key be added to that SSH agent. 
+
+You can start an SSH agent and add your private key by executing the following in your current session:
+
+```sh
+eval "$(ssh-agent -s)" && ssh-add $EKSA_GIT_PRIVATE_KEY
+```
+
+## Create an SSH Known Hosts file for use by EKS Anywhere and Flux
+EKS Anywhere needs an SSH known hosts file to verify the identity of the remote git host.
+A path to a valid known hosts file must be provided to the EKS Anywhere command line via the environment variable `EKSA_GIT_KNOWN_HOSTS`.
+
+For example, if you have a known hosts file at `/home/myUser/.ssh/known_hosts` that you want EKS Anywhere to use, set the environment variable `EKSA_GIT_KNOWN_HOSTS` to the path to that file, `/home/myUser/.ssh/known_hosts`.
+
+```sh
+export EKSA_GIT_KNOWN_HOSTS=/home/myUser/.ssh/known_hosts
+```
+
+While you can use your pre-existing SSH known hosts file it is recommended that you generate a new known hosts file for use by EKS Anywhere that contains only the known-hosts entries required for your git host and key type.
+For example, if you wanted to generate a known hosts file for a git server located at `example.com` with key type `ecdsa`, you can use the OpenSSH utility `ssh-keyscan`:
+
+```sh
+ssh-keyscan -t ecdsa example.com >> my_eksa_known_hosts
+```
+
+This will generate a known hosts file which contains only the entry necessary to verify the identity of gitlab.com when using an `ecdsa` based private key file.
+
+### Example FluxConfig cluster configuration for a generic git provider
+For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: mynewgitopscluster
+spec:
+... # collapsed cluster spec fields
+# Below added for gitops support
+  gitOpsRef:
+    kind: FluxConfig
+    name: my-cluster-name
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: my-cluster-name
+spec:
+    git:
+      repositoryUrl: ssh://git@provider.com/myAccount/myClusterGitopsRepo.git
+      sshKeyAlgorithm: ecdsa
+```
