@@ -22,7 +22,7 @@ The main components of EKS Anywhere Curated Packages are the [package controller
 Please check out [curated package list]({{< relref "../../reference/packagespec" >}}) for the complete list of EKS Anywhere curated packages.
 
 ### Workshop
-Please check out [curated package workshop]({{< relref "../../workshops/packages" >}}) for curated packages.
+Please check out [workshop]({{< relref "../../workshops/packages" >}}) for curated packages.
 
 
 ### FAQ
@@ -33,7 +33,4 @@ Please check out [curated package workshop]({{< relref "../../workshops/packages
 
 2. *Can I install software that’s on the curated package list but not sourced from EKS Anywhere toolchain?*
 
-    If, for example, you install a Flux controller that is not sourced and installed by the EKS Anywhere toolchain, Amazon will not provide testing or customer support to your self-installed software.
-3. *How do I update the curated packages on EKS Anywhere clusters?*
-
-    New versions of software packages will be automatically downloaded but not automatically installed. You can always manually run eksctl to check and install updates.
+    If, for example, you install a Harbor registry that is not sourced and installed by the EKS Anywhere toolchain, Amazon will not provide testing or customer support to your self-installed software.

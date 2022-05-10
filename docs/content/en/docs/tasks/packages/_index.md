@@ -1,5 +1,6 @@
 ---
-title: "Package management"
+title: "EKS Anywhere curated package management"
+linkTitle: "Package management"
 date: 2022-04-12
 weight: 20
 description: >

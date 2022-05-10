@@ -1,7 +1,7 @@
 ---
 title: EKS Anywhere curated package controller
 linkTitle: Curated package controller
-weight: 20
+weight: 1
 ---
 
 ### Overview
