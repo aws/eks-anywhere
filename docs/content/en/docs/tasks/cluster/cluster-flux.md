@@ -203,7 +203,7 @@ You can configure EKS Anywhere to use a generic git repository as the source of 
 EKS Anywhere requires a valid SSH Known Hosts file and SSH Private key in order to connect to your repository and bootstrap Flux.
 
 ## Create a Git repository for use by EKS Anywhere and Flux
-When using the `git` provider, EKS requires that the configuration repository be pre-initialized.
+When using the `git` provider, EKS Anywhere requires that the configuration repository be pre-initialized.
 You may re-use an existing repo or use the same repo for multiple management clusters.
 
 Create the repository through your git provider and initialize it with a `README.md` documenting the purpose of the repository.
