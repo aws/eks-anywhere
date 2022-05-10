@@ -73,6 +73,25 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackDiskOfferingProvided }}
+      diskSetup:
+        filesystems:
+          - device: {{ .cloudstackDiskOfferingDevice }}1
+            overwrite: false
+            extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+            filesystem: {{ .cloudstackDiskOfferingFilesystem }}
+            label: data_disk
+        partitions:
+          - device: {{ .cloudstackDiskOfferingDevice }}
+            layout: true
+            overwrite: false
+            tableType: gpt
+      mounts:
+        - - LABEL={{ .cloudstackDiskOfferingLabel }}
+          - {{ .cloudstackDiskOfferingPath }}
+{{- end }}
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
@@ -130,6 +149,19 @@ spec:
 {{- end}}
 {{- if .cloudstackTemplateName }}
         name: {{.cloudstackTemplateName}}
+{{- end}}
+{{- if .cloudstackDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackDiskOfferingId }}
+        id: {{.cloudstackDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackDiskOfferingName }}
+        name: {{.cloudstackDiskOfferingName}}
+{{- end}}
+        mountPath: {{.cloudstackDiskOfferingPath}}
+        device: {{.cloudstackDiskOfferingDevice}}
+        filesystem: {{.cloudstackDiskOfferingFilesystem}}
+        label: {{.cloudstackDiskOfferingLabel}}
 {{- end}}
 {{- if .cloudstackCustomDetails }}
       details:
