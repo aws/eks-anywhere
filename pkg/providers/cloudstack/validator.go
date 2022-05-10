@@ -158,7 +158,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 			cloudStackClusterSpec.Cluster.Namespace,
 		)
 	}
-
 	for _, workerNodeGroupConfiguration := range cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		if workerNodeGroupConfiguration.MachineGroupRef == nil {
 			return fmt.Errorf("must specify machineGroupRef for worker nodes")
@@ -200,6 +199,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 		if len(machineConfig.Spec.Template.Id) == 0 && len(machineConfig.Spec.Template.Name) == 0 {
 			return fmt.Errorf("template is not set for CloudStackMachineConfig %s. Default template is not supported in CloudStack, please provide a template name or ID", machineConfig.Name)
+		}
+		if err, fieldName, fieldValue := machineConfig.Spec.DiskOffering.Validate(); err != nil {
+			return fmt.Errorf("machine config %s validation failed: %s: %s invalid, %v", machineConfig.Name, fieldName, fieldValue, err)
 		}
 		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
@@ -244,9 +246,6 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 		if err = v.cmk.ValidateServiceOfferingPresent(ctx, zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
-		}
-		if err, fieldName, fieldValue := machineConfig.Spec.DiskOffering.Validate(); err != nil {
-			return fmt.Errorf("%s: %s invalid, %v", fieldName, fieldValue, err.Error())
 		}
 		if machineConfig.Spec.DiskOffering.Provided() {
 			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {

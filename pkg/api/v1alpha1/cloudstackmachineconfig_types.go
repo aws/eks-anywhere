@@ -15,9 +15,9 @@
 package v1alpha1
 
 import (
-	"github.com/pkg/errors"
 	"strings"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -89,7 +89,7 @@ func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, va
 			return errors.New("empty label"), "label", r.Label
 		}
 	} else {
-		if len(r.MountPath) + len(r.Filesystem) + len(r.Device) + len(r.Label) > 0 {
+		if len(r.MountPath)+len(r.Filesystem)+len(r.Device)+len(r.Label) > 0 {
 			return errors.New("empty id/name"), "id or name", r.Id
 		}
 	}
