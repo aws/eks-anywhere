@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.38.40
-	github.com/aws/aws-sdk-go-v2 v1.9.0
+	github.com/aws/aws-sdk-go-v2 v1.16.3
 	github.com/aws/aws-sdk-go-v2/config v1.5.0
 	github.com/aws/aws-sdk-go-v2/service/ecr v1.5.0
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
@@ -26,11 +26,14 @@ require (
 	github.com/Microsoft/hcsshim v0.8.23 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.10 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.1.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.13.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.2.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.3.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.6.0 // indirect
-	github.com/aws/smithy-go v1.8.0 // indirect
+	github.com/aws/smithy-go v1.11.2 // indirect
 	github.com/containerd/cgroups v1.0.1 // indirect
 	github.com/containerd/containerd v1.5.0-rc.0 // indirect
 	github.com/containerd/continuity v0.1.0 // indirect
@@ -41,7 +44,7 @@ require (
 	github.com/go-logr/logr v1.2.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/go-cmp v0.5.6 // indirect
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
