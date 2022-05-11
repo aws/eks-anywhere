@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
+	"github.com/aws/aws-sdk-go-v2/service/ecrpublic"
+	ecrpublictypes "github.com/aws/aws-sdk-go-v2/service/ecrpublic/types"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
@@ -526,6 +528,10 @@ type ecrClient struct {
 	*ecr.Client
 }
 
+type ecrPublicClient struct {
+	*ecrpublic.Client
+}
+
 // NewECRClient Creates a new ECR Client Public client
 func NewECRClient() (*ecrClient, error) {
 	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
@@ -537,6 +543,19 @@ func NewECRClient() (*ecrClient, error) {
 		return nil, err
 	}
 	return ecrClient, nil
+}
+
+// ecrPublicClient Creates a new ECR Public Client Public client
+func NewECRPublicClient() (*ecrPublicClient, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-east-1"))
+	if err != nil {
+		return nil, fmt.Errorf("Unable to complete AWS Client connection %s", err)
+	}
+	ecrPublicClient := &ecrPublicClient{Client: ecrpublic.NewFromConfig(cfg)}
+	if err != nil {
+		return nil, err
+	}
+	return ecrPublicClient, nil
 }
 
 func (c *ecrClient) GetLatestUploadHelmSha(repoName string) (string, error) {
@@ -574,6 +593,57 @@ func getLastestImageSha(details []types.ImageDetail) (string, error) {
 		return "", fmt.Errorf("no details provided")
 	}
 	var latest types.ImageDetail
+	latest.ImagePushedAt = &time.Time{}
+	for _, detail := range details {
+		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 || *detail.ImageManifestMediaType != "application/vnd.oci.image.manifest.v1+json" {
+			continue
+		}
+		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+			latest = detail
+		}
+	}
+	// Check if latest is empty, and return error if that's the case.
+	if latest.ImageTags[0] == "" {
+		return "", fmt.Errorf("error no images found")
+	}
+	return latest.ImageTags[0], nil
+}
+
+func (c *ecrPublicClient) GetLatestPublicUploadHelmSha(repoName string) (string, error) {
+	ImageDetails, err := c.DescribePublic(&ecrpublic.DescribeImagesInput{
+		RepositoryName: aws.String(repoName),
+	})
+	if err != nil {
+		return "", err
+	}
+	sha, err := getLastestPublicImageSha(ImageDetails)
+	if err != nil {
+		return "", err
+	}
+	return sha, nil
+}
+
+func (c *ecrPublicClient) DescribePublic(describeInput *ecrpublic.DescribeImagesInput) ([]ecrpublictypes.ImageDetail, error) {
+	var images []ecrpublictypes.ImageDetail
+	resp, err := c.DescribeImages(context.TODO(), describeInput)
+	if err != nil {
+		return nil, fmt.Errorf("error: Unable to complete DescribeImagesRequest to ECR Public. %s", err)
+	}
+	images = append(images, resp.ImageDetails...)
+	if resp.NextToken != nil {
+		next := describeInput
+		next.NextToken = resp.NextToken
+		nextdetails, _ := c.DescribePublic(next)
+		images = append(images, nextdetails...)
+	}
+	return images, nil
+}
+
+func getLastestPublicImageSha(details []ecrpublictypes.ImageDetail) (string, error) {
+	if len(details) == 0 {
+		return "", fmt.Errorf("no details provided")
+	}
+	var latest ecrpublictypes.ImageDetail
 	latest.ImagePushedAt = &time.Time{}
 	for _, detail := range details {
 		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 || *detail.ImageManifestMediaType != "application/vnd.oci.image.manifest.v1+json" {

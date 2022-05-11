@@ -492,6 +492,23 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 
 func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, error) {
 	var sourceImageUri string
+	// If it's running a production release we only lookup from ECR public of the staging account.
+	if r.ReleaseEnvironment == "production" {
+		ecrpublicClient, err := NewECRPublicClient()
+		if err != nil {
+			return "", err
+		}
+		latestTag, err := ecrpublicClient.GetLatestPublicUploadHelmSha(repoName)
+		if err != nil {
+			return "", err
+		}
+		sourceImageUri = fmt.Sprintf("%s/%s:%s",
+			r.SourceContainerRegistry,
+			repoName,
+			latestTag,
+		)
+		return sourceImageUri, nil
+	}
 	ecrClient, err := NewECRClient()
 	if err != nil {
 		return "", err
