@@ -219,7 +219,7 @@ You can use `ssh-keygen` to generate a new key.
 ssh-keygen -t ecdsa -C "my_email@example.com"
 ```
 
-Please consult the documentation for your git provider to determine how to add your key; for example, you can find the documentation 
+Please consult the documentation for your git provider to determine how to add your corresponding public key; for example, if using Github enterprise, you can find the documentation for adding a public key [to your github account here](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
 
 ## Add your private key to your SSH agent on your management machine
 When using a generic git provider, EKS Anywhere requires that your management machine has a running SSH agent and the private key be added to that SSH agent. 
