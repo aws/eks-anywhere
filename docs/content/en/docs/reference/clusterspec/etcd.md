@@ -35,7 +35,8 @@ spec:
       services:
          cidrBlocks:
             - 10.96.0.0/12
-      cni: "cilium"
+      cniConfig:
+         cilium: {}
    controlPlaneConfiguration:
       count: 1
       endpoint:
