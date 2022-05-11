@@ -497,6 +497,7 @@ func (r *ReleaseConfig) GetSourceHelmURI(repoName, sourceImageUri string) (strin
 	// follow the same format of the image version tag.
 	if r.ReleaseEnvironment == "production" {
 		latestTag = strings.ReplaceAll(sourceImageUri, "packages:v", "packages:")
+		return latestTag, nil
 	} else {
 		ecrClient, err := NewECRClient()
 		if err != nil {
