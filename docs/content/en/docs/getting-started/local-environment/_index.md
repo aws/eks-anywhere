@@ -62,17 +62,13 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    spec: {}
    ```
 
-   Some key considerations and configuration parameters:
-   * Apart from the base configuration, you can add additional optional configuration to enable supported functionalities
+   * Apart from the base configuration, you can add additional optional configuration to enable supported features:
       * [OIDC](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/oidc/) 
       * [etcd](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/etcd/)
       * [proxy](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/proxy/)
       * [gitops](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/gitops/)
 
-
-   For full EKS Anywhere configuration reference for a VMware vSphere cluster and explanation on each parameter in the configuration generated above refer vSphere configuration
-
-1. Create Cluster: Post v0.9.0 release of `eksctl anywhere`, there is an optional support for including curated packages to the cluster installation. Choose one of the following paths to create your cluster:
+1. Create Cluster: Create your cluster either with or without curated packages:
 
    - Cluster creation without curated packages installation
       ```bash
