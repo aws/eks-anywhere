@@ -50,3 +50,10 @@ func buildGovc(t *testing.T) *executables.Govc {
 func buildDocker(t *testing.T) *executables.Docker {
 	return executables.BuildDockerExecutable()
 }
+
+func buildHelm(t *testing.T) *executables.Helm {
+	ctx := context.Background()
+	helm := executableBuilder(t, ctx).BuildHelmExecutable()
+
+	return helm
+}

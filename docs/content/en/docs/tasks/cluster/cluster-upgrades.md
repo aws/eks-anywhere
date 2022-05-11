@@ -99,8 +99,16 @@ spec:
 
 and then you will run the command
 
+**Management Cluster**
+
 ```
 eksctl anywhere upgrade cluster -f cluster.yaml
+```
+
+**Workload Cluster**
+
+```
+eksctl anywhere upgrade cluster -f cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
 ```
 
 This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.

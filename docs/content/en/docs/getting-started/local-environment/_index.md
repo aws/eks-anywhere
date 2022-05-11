@@ -20,11 +20,11 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       --provider docker > $CLUSTER_NAME.yaml
    ```
 
-The command above creates a file named eksa-cluster.yaml with the contents below in the path where it is executed.
-The configuration specification is divided into two sections:
+   The command above creates a file named eksa-cluster.yaml with the contents below in the path where it is executed.
+   The configuration specification is divided into two sections:
 
-* Cluster
-* DockerDatacenterConfig
+   * Cluster
+   * DockerDatacenterConfig
 
    ```yaml
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -33,7 +33,8 @@ The configuration specification is divided into two sections:
    name: dev-cluster
    spec:
    clusterNetwork:
-      cni: cilium
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
          - 192.168.0.0/16
@@ -61,21 +62,34 @@ The configuration specification is divided into two sections:
    spec: {}
    ```
 
-  Some key considerations and configuration parameters:
-  * Apart from the base configuration, you can add additional optional configuration to enable supported functionalities
-    * [OIDC](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/oidc/) 
-    * [etcd](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/etcd/)
-    * [proxy](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/proxy/)
-    * [gitops](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/gitops/)
+   Some key considerations and configuration parameters:
+   * Apart from the base configuration, you can add additional optional configuration to enable supported functionalities
+      * [OIDC](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/oidc/) 
+      * [etcd](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/etcd/)
+      * [proxy](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/proxy/)
+      * [gitops](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/gitops/)
 
 
-For full EKS Anywhere configuration reference for a VMware vSphere cluster and explanation on each parameter in the configuration generated above refer vSphere configuration
+   For full EKS Anywhere configuration reference for a VMware vSphere cluster and explanation on each parameter in the configuration generated above refer vSphere configuration
 
+1. Generate a curated-packages config
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+   The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+   ```bash
+   eksctl anywhere generate package harbor --source registry --kubeversion 1.21 > packages.yaml
+   ```
 
 1. Create a cluster
 
    ```bash
+   # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --install-packages packages.yaml
    ```
    Example command output
    ```
@@ -94,6 +108,8 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    GitOps field not specified, bootstrap flux skipped
    Deleting bootstrap cluster
    🎉 Cluster created!
+   Installing curated packages controller on workload cluster
+   package.packages.eks.amazonaws.com/my-harbor created
    ```
 
 1. Use the cluster
@@ -128,4 +144,8 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    ```
 
    Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
-   See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+
+## Next steps:
+* See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
+
+* See the [Package management]({{< relref "../../tasks/packages" >}}) section for more information on post-creation curated packages installation.

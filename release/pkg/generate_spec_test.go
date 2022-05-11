@@ -15,6 +15,7 @@
 package pkg
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -54,6 +55,8 @@ var releaseConfig = &ReleaseConfig{
 	DevRelease:               true,
 	DryRun:                   true,
 }
+
+var update = flag.Bool("update", false, "update the golden files of this test")
 
 func TestGenerateBundleManifest(t *testing.T) {
 	testCases := []struct {
@@ -163,7 +166,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 				t.Fatalf("Error writing bundles manifest file to disk: %v\n", err)
 			}
 
-			test.CheckFilesEquals(t, generatedBundleManifestFile, expectedBundleManifestFile)
+			test.CheckFilesEquals(t, generatedBundleManifestFile, expectedBundleManifestFile, *update)
 		})
 	}
 }

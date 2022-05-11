@@ -4,16 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
-	"strings"
 
-	"github.com/go-logr/logr"
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
-	"github.com/aws/eks-anywhere-packages/pkg/bundle"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -33,7 +28,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "", "Used to specify an alternative registry for discovery")
 }
 
@@ -56,13 +51,17 @@ var listPackagesCommand = &cobra.Command{
 
 func listPackages(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := newDependenciesForPackages(ctx, kubeConfig)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := createBundleManager(lpo.kubeVersion)
-	registry, err := newRegistry(ctx, deps, lpo)
+	bm := curatedpackages.CreateBundleManager(lpo.kubeVersion)
+	username, password, err := config.ReadCredentials()
+	if err != nil && gpOptions.registry != "" {
+		return err
+	}
+	registry, err := curatedpackages.NewRegistry(deps, lpo.registry, lpo.kubeVersion, username, password)
 	if err != nil {
 		return err
 	}
@@ -82,47 +81,9 @@ func listPackages(ctx context.Context) error {
 		return err
 	}
 	packages := curatedpackages.NewPackageClient(
-		bundle.Spec.Packages,
+		bundle,
+		deps.Kubectl,
 	)
 	packages.DisplayPackages()
 	return nil
-}
-
-func createBundleManager(kubeVersion string) bundle.Manager {
-	versionSplit := strings.Split(kubeVersion, ".")
-	if len(versionSplit) != 2 {
-		return nil
-	}
-	major, minor := versionSplit[0], versionSplit[1]
-	log := logr.Discard()
-	discovery := curatedpackages.NewDiscovery(major, minor)
-	puller := artifacts.NewRegistryPuller()
-	return bundle.NewBundleManager(log, discovery, puller)
-}
-
-func newRegistry(ctx context.Context, deps *dependencies.Dependencies, lpo *listPackagesOption) (curatedpackages.BundleRegistry, error) {
-	if lpo.registry != "" {
-		registryUsername := os.Getenv("REGISTRY_USERNAME")
-		registryPassword := os.Getenv("REGISTRY_PASSWORD")
-		if registryUsername == "" || registryPassword == "" {
-			return nil, fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD when using custom registry")
-		}
-		registry := curatedpackages.NewCustomRegistry(
-			deps.Helm,
-			lpo.registry,
-			registryUsername,
-			registryPassword,
-		)
-		err := registry.Login(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return registry, nil
-	}
-	defaultRegistry := curatedpackages.NewDefaultRegistry(
-		deps.ManifestReader,
-		lpo.kubeVersion,
-		version.Get(),
-	)
-	return defaultRegistry, nil
 }

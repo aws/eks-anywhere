@@ -1,0 +1,13 @@
+{
+    "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+    "kind": "TinkerbellDatacenterConfig",
+    "metadata": {
+        "name": "mycluster"
+    },
+    "spec": {
+        "tinkerbellCertURL": "http://1.2.3.4:42114/cert",
+        "tinkerbellGRPCAuth": "1.2.3.4:42113",
+        "tinkerbellHegelURL": "http://1.2.3.4:50061",
+        "tinkerbellIP": "1.2.3.4",
+        "tinkerbellPBnJGRPCAuth": "1.2.3.4:50051"
+}

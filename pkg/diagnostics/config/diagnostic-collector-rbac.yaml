@@ -8,6 +8,7 @@ rules:
     - infrastructure.cluster.x-k8s.io
     - controlplane.cluster.x-k8s.io
     - anywhere.eks.amazonaws.com
+    - packages.eks.amazonaws.com
     resources:
     - '*'
     verbs:

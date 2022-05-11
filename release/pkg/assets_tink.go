@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
@@ -30,12 +31,15 @@ func (r *ReleaseConfig) GetTinkAssets() ([]Artifact, error) {
 	}
 
 	tinkImages := []string{
+		"tink-controller",
 		"tink-server",
 		"tink-worker",
 		"tink-cli",
 	}
 
 	artifacts := []Artifact{}
+	imageTagOverrides := []ImageTagOverride{}
+	sourceBranch := ""
 	for _, image := range tinkImages {
 		repoName := fmt.Sprintf("tinkerbell/tink/%s", image)
 		tagOptions := map[string]string{
@@ -70,7 +74,50 @@ func (r *ReleaseConfig) GetTinkAssets() ([]Artifact, error) {
 			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
+
+		imageTagOverrides = append(imageTagOverrides, ImageTagOverride{
+			Repository: repoName,
+			ReleaseUri: imageArtifact.ReleaseImageURI,
+		})
+		sourceBranch = sourcedFromBranch
 	}
+
+	manifest := "tink.yaml"
+	var sourceS3Prefix string
+	var releaseS3Path string
+	latestPath := getLatestUploadDestination(sourceBranch)
+
+	if r.DevRelease || r.ReleaseEnvironment == "development" {
+		sourceS3Prefix = fmt.Sprintf("%s/%s", tinkProjectPath, latestPath)
+	} else {
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/tink", r.BundleNumber)
+	}
+
+	if r.DevRelease {
+		releaseS3Path = fmt.Sprintf("artifacts/%s/tink", r.DevReleaseUriVersion)
+	} else {
+		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/tink", r.BundleNumber)
+	}
+
+	cdnURI, err := r.GetURI(filepath.Join(
+		releaseS3Path,
+		manifest))
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	manifestArtifact := &ManifestArtifact{
+		SourceS3Key:       manifest,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(r.ArtifactDir, "tink", r.BuildRepoHead),
+		ReleaseName:       manifest,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		ImageTagOverrides: imageTagOverrides,
+		GitTag:            gitTag,
+		ProjectPath:       tinkProjectPath,
+	}
+	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 
 	return artifacts, nil
 }

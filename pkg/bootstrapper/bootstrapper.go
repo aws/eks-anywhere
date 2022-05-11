@@ -19,6 +19,7 @@ type ClusterClient interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (kubeconfig string, err error)
 	DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error
 	WithExtraDockerMounts() BootstrapClusterClientOption
+	WithExtraPortMappings([]int) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
 	WithDefaultCNIDisabled() BootstrapClusterClientOption
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
@@ -124,6 +125,12 @@ func (b *Bootstrapper) getClientOptions(opts []BootstrapClusterOption) []Bootstr
 func WithExtraDockerMounts() BootstrapClusterOption {
 	return func(b *Bootstrapper) BootstrapClusterClientOption {
 		return b.clusterClient.WithExtraDockerMounts()
+	}
+}
+
+func WithExtraPortMappings(ports []int) BootstrapClusterOption {
+	return func(b *Bootstrapper) BootstrapClusterClientOption {
+		return b.clusterClient.WithExtraPortMappings(ports)
 	}
 }
 

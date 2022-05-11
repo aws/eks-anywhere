@@ -13,16 +13,18 @@ import (
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git/factory"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -57,6 +59,7 @@ type Dependencies struct {
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
 	Helm                      *executables.Helm
+	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
@@ -91,6 +94,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -99,6 +103,7 @@ type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
 	executablesImage         string
 	registryMirror           string
+	proxyConfiguration       map[string]string
 	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -138,6 +143,11 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 
 func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	f.registryMirror = mirror
+	return f
+}
+
+func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory {
+	f.proxyConfiguration = proxyConfig
 	return f
 }
 
@@ -210,7 +220,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile).WithWriter()
 	case v1alpha1.SnowDatacenterKind:
-		f.WithKubectl().WithSnowConfigManager()
+		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -266,9 +276,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
-				f.dependencies.Kubectl,
+				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
-				time.Now,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:
@@ -594,6 +603,10 @@ func (f *Factory) WithHelm() *Factory {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
 
+		if f.proxyConfiguration != nil {
+			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
+		}
+
 		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
 		return nil
 	})
@@ -750,9 +763,18 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return fmt.Errorf("creating Git provider: %v", err)
 		}
 
-		err = tools.Provider.Validate(ctx)
-		if err != nil {
-			return fmt.Errorf("validating provider: %v", err)
+		if fluxConfig.Spec.Git != nil {
+			err = tools.Client.ValidateRemoteExists(ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		if tools.Provider != nil {
+			err = tools.Provider.Validate(ctx)
+			if err != nil {
+				return fmt.Errorf("validating provider: %v", err)
+			}
 		}
 
 		f.dependencies.Git = tools
@@ -761,7 +783,7 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig) *Factory {
+func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -775,6 +797,7 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 				Kubectl: f.dependencies.Kubectl,
 			},
 			f.dependencies.Git,
+			cliConfig,
 		)
 
 		return nil
@@ -895,6 +918,25 @@ func (f *Factory) WithManifestReader() *Factory {
 		}
 
 		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithUnAuthKubeClient() *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.UnAuthKubeClient != nil {
+			return nil
+		}
+
+		f.dependencies.UnAuthKubeClient = kubernetes.NewUnAuthClient(f.dependencies.Kubectl)
+		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
+			return fmt.Errorf("building unauth kube client: %v", err)
+		}
+
 		return nil
 	})
 

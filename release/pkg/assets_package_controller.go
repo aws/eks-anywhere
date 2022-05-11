@@ -44,7 +44,7 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	sourceHelmURI, err := r.GetSourceHelmURI(repoName)
+	sourceHelmURI, err := r.GetSourceHelmURI(repoName, sourceImageUri)
 	if err != nil {
 		// This is for Prow, where it's running e2e tests in an account where the ECR lookup will fail, we check for Prow accountID and bypass the error out.
 		if r.DryRun || strings.Contains(err.Error(), "316434458148") == true {

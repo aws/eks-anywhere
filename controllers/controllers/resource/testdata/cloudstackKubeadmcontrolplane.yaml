@@ -1,13 +1,13 @@
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: test_cluster
+  name: test-cluster
   namespace: default
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: CloudStackMachineTemplate
-    name: test_cluster-control-plane-template-v1.19.8-eks-1-19-4
+    name: test-cluster-control-plane-template-v1.19.8-eks-1-19-4
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes

@@ -437,7 +437,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, r.oidcConfig)
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, nil, r.oidcConfig)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {
@@ -616,6 +616,16 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	csSpec.Spec.Template = anywherev1.CloudStackResourceIdentifier{
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
+	}
+	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
+			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
+			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
+		},
+		MountPath:  csMachineTemplate.Spec.Spec.Spec.DiskOffering.MountPath,
+		Device:     csMachineTemplate.Spec.Spec.Spec.DiskOffering.Device,
+		Filesystem: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Filesystem,
+		Label:      csMachineTemplate.Spec.Spec.Spec.DiskOffering.Label,
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
