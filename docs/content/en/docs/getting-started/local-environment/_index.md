@@ -72,11 +72,9 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 
    For full EKS Anywhere configuration reference for a VMware vSphere cluster and explanation on each parameter in the configuration generated above refer vSphere configuration
 
-Post v0.9.0 release of eksctl anywhere, there is an optional support for including curated packages to the cluster installation.
+1. Create Cluster: Post v0.9.0 release of `eksctl anywhere`, there is an optional support for including curated packages to the cluster installation. Choose one of the following paths to create your cluster:
 
-1. Create Cluster
-
-   - Cluster creation  without curated packages installation
+   - Cluster creation without curated packages installation
       ```bash
       eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
       ```
@@ -99,12 +97,14 @@ Post v0.9.0 release of eksctl anywhere, there is an optional support for includi
       🎉 Cluster created!
       ```
    - Cluster creation with optional curated packages
+
    {{% alert title="Note" color="primary" %}}
-  * It is *optional* to install curated packages as part of the cluster creation.
-  * `eksctl anywhere version` version should be `v0.9.0` or later.
-  * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
-  * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-    {{% /alert %}}
+   * It is *optional* to install curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be later than `v0.9.0`.
+   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   {{% /alert %}}
+
       1. Discover curated-packages to install
          ```bash
          eksctl anywhere list packages --source registry --kube-version 1.21
