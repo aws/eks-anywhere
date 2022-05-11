@@ -490,22 +490,29 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, error) {
-	var sourceImageUri string
-	ecrClient, err := NewECRClient()
-	if err != nil {
-		return "", err
+//GetSourceHelmURI is a function which finds the latest helm chart tag for a given repository, and returns the full URI including that tag.
+func (r *ReleaseConfig) GetSourceHelmURI(repoName, sourceImageUri string) (string, error) {
+	var latestTag string
+	// If we are going to production, we don't need to lookup the helm chart since the name will always
+	// follow the same format of the image version tag.
+	if r.ReleaseEnvironment == "production" {
+		latestTag = strings.ReplaceAll(sourceImageUri, "packages:v", "packages:")
+	} else {
+		ecrClient, err := NewECRClient()
+		if err != nil {
+			return "", err
+		}
+		latestTag, err = ecrClient.GetLatestUploadHelmSha(repoName)
+		if err != nil {
+			return "", err
+		}
 	}
-	latestTag, err := ecrClient.GetLatestUploadHelmSha(repoName)
-	if err != nil {
-		return "", err
-	}
-	sourceImageUri = fmt.Sprintf("%s/%s:%s",
+	helmUri := fmt.Sprintf("%s/%s:%s",
 		r.SourceContainerRegistry,
 		repoName,
 		latestTag,
 	)
-	return sourceImageUri, nil
+	return helmUri, nil
 }
 
 func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
