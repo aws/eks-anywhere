@@ -79,19 +79,18 @@ After you have created your `eksa-mgmt-cluster.yaml` and set your credential env
 
 Post v0.9.0 release of eksctl anywhere, there is an **optional** support for including **curated packages** to the cluster installation.
 
-#### Cluster creation  without curated packages installation
+1. Create initial cluster
+   - Cluster creation  without curated packages installation
+      ```bash
+      # Create a cluster without curated packages installation
+      eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
+      ```
 
-Create the initial cluster
-
-   ```bash
-   # Create a cluster without curated packages installation
-   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
-   ```
-
-#### Cluster creation with optional curated packages
+   - Cluster creation with optional curated packages
 {{% alert title="Note" color="primary" %}}
 * It is *optional* to install the curated packages as part of the cluster creation.
 * `eksctl anywhere version` version should be `v0.9.0` or later.
+* If including curated packages during cluster creation, please set the environment variable: `CURATED_PACKAGES_SUPPORT=true`
 * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
 * The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”)
   are provided as “preview features” subject to the AWS Service Terms,
@@ -99,36 +98,36 @@ Create the initial cluster
   the AWS Service Terms are extended to provide customers access to these features free of charge.
   These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
   {{% /alert %}}
-1. Discover curated-packages to install
-   ```bash
-   eksctl anywhere list packages --source registry --kube-version 1.21
-   ```
-   Example command output
-   ```                 
-   Package                 Version(s)                                       
-   -------                 ----------                                       
-   harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
-   ```
-1. Generate a curated-packages config
+      1. Discover curated-packages to install
+         ```bash
+         eksctl anywhere list packages --source registry --kube-version 1.21
+         ```
+         Example command output
+         ```                 
+         Package                 Version(s)                                       
+         -------                 ----------                                       
+         harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
+         ```
+      1. Generate a curated-packages config
 
-   The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
-   ```bash
-   eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
-   ```
+         The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+         ```bash
+         eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
+         ```
 
-1. Create the initial cluster
+      1. Create the initial cluster
 
-   ```bash
-   # Create a cluster with curated packages installation
-   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages packages.yaml
-   ```
+         ```bash
+         # Create a cluster with curated packages installation
+         eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages packages.yaml
+         ```
 
-### Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
+1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
    ```bash
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    ```
-### Check the cluster nodes:
+1. Check the cluster nodes:
 
    To check that the cluster completed, list the machines to see the control plane, etcd, and worker nodes:
 
@@ -147,7 +146,7 @@ Create the initial cluster
 
    The etcd machine doesn't show the Kubernetes version because it doesn't run the kubelet service.
 
-### Check the initial cluster's CRD:
+1. Check the initial cluster's CRD:
 
    To ensure you are looking at the initial cluster, list the CRD to see that the name of its management cluster is itself:
 
