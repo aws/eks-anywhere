@@ -15,7 +15,8 @@ metadata:
    name: my-cluster-name
 spec:
    clusterNetwork:
-      cni: "cilium"
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
             - 192.168.0.0/16

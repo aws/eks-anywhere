@@ -33,7 +33,8 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    name: dev-cluster
    spec:
    clusterNetwork:
-      cni: cilium
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
          - 192.168.0.0/16
