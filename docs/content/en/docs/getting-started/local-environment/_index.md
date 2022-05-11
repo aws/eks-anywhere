@@ -114,14 +114,14 @@ Example command output
    -------                 ----------                                       
    harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
    ```
-2. Generate a curated-packages config
+1. Generate a curated-packages config
 
    The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
    ```bash
    eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
    ```
 
-3. Create a cluster
+1. Create a cluster
 
    ```bash
    # Create a cluster with curated packages installation
