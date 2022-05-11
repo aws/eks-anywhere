@@ -490,7 +490,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-//GetSourceHelmURI is a function which finds the latest helm chart tag for a given repository, and returns the full URI including that tag.
+// GetSourceHelmURI returns the URI for the latest tagged helm chart in the given repository.
 func (r *ReleaseConfig) GetSourceHelmURI(repoName, sourceImageUri string) (string, error) {
 	var latestTag string
 	// If we are going to production, we don't need to lookup the helm chart since the name will always
