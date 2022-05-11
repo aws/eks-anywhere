@@ -90,7 +90,7 @@ Post v0.9.0 release of eksctl anywhere, there is an **optional** support for inc
 {{% alert title="Note" color="primary" %}}
 * It is *optional* to install the curated packages as part of the cluster creation.
 * `eksctl anywhere version` version should be `v0.9.0` or later.
-* If including curated packages during cluster creation, please set the environment variable: `CURATED_PACKAGES_SUPPORT=true`
+* If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
 * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
 * The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”)
   are provided as “preview features” subject to the AWS Service Terms,
