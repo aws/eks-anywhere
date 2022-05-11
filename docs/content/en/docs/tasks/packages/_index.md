@@ -24,6 +24,7 @@ Skip the following installation steps if the returned result is not empty.
     eksctl anywhere version
     ```
 * Make sure cert-manager is up and running in the cluster.
+* Activate the feature flag by setting and exporting the environment variable `export CURATED_PACKAGES_SUPPORT=true`
 
 {{% /alert %}}
 

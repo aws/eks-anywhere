@@ -75,6 +75,7 @@ For full EKS Anywhere configuration reference for a VMware vSphere cluster and e
    {{% alert title="Note" color="primary" %}}
    * It is *optional* to install curated packages as part of the cluster creation.
    * `eksctl anywhere version` version should be `v0.9.0` or later.
+   * Activate the feature flag by setting and exporting the environment variable `export CURATED_PACKAGES_SUPPORT=true`
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
    The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
