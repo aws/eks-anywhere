@@ -102,7 +102,7 @@ Post v0.9.0 release of eksctl anywhere, there is an optional support for includi
    {{% alert title="Note" color="primary" %}}
   * It is *optional* to install curated packages as part of the cluster creation.
   * `eksctl anywhere version` version should be `v0.9.0` or later.
-  * If including curated packages during cluster creation, please set the environment variable: `CURATED_PACKAGES_SUPPORT=true`
+  * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
     {{% /alert %}}
       1. Discover curated-packages to install
