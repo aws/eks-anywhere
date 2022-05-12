@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -136,7 +138,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
@@ -207,16 +212,28 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	return err
 }
 
-func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
+func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
 	dirs := cc.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
-		return dirs
+	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 	}
-	dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-	dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 
-	return dirs
+	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
+		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+		if found && len(env) > 0 {
+			mountDirs := strings.Split(env, ",")
+			for _, dir := range mountDirs {
+				if _, err := os.Stat(dir); err != nil {
+					return nil, fmt.Errorf("invalid host path to mount: %v", err)
+				}
+				dirs = append(dirs, dir)
+			}
+		}
+	}
+
+	return dirs, nil
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {

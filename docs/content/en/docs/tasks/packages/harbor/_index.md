@@ -111,7 +111,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
 
 1. Upgrade Harbor
    ```bash
-   eksctl anywhere upgrade packages --bundleversion v1.21-1001
+   eksctl anywhere upgrade packages --bundle-version v1.21-1001
    ```
 
 1. Check Harbor
