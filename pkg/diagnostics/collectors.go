@@ -282,7 +282,7 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 }
 
 func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
-	capvCrds := []string{
+	crds := []string{
 		"cloudstackaffinitygroups.infrastructure.cluster.x-k8s.io",
 		"cloudstackclusters.infrastructure.cluster.x-k8s.io",
 		"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
@@ -293,7 +293,7 @@ func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
 		"cloudstackmachinetemplates.infrastructure.cluster.x-k8s.io",
 		"cloudstackzones.infrastructure.cluster.x-k8s.io",
 	}
-	return c.generateCrdCollectors(capvCrds)
+	return c.generateCrdCollectors(crds)
 }
 
 func (c *collectorFactory) packagesCrdCollectors() []*Collect {
