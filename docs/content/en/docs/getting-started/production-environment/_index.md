@@ -75,11 +75,10 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_LICENSE='my-license-here'
    ```
 
-After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster.
+   After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster.
 
-Post v0.9.0 release of eksctl anywhere, there is an **optional** support for including **curated packages** to the cluster installation.
 
-1. Create initial cluster
+1. Create initial cluster: Create your initial cluster either with or without curated packages:
    - Cluster creation  without curated packages installation
       ```bash
       # Create a cluster without curated packages installation
@@ -87,18 +86,16 @@ Post v0.9.0 release of eksctl anywhere, there is an **optional** support for inc
       ```
 
    - Cluster creation with optional curated packages
-{{% alert title="Note" color="primary" %}}
-* It is *optional* to install the curated packages as part of the cluster creation.
-* `eksctl anywhere version` version should be `v0.9.0` or later.
-* If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
-* Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-* The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”)
-  are provided as “preview features” subject to the AWS Service Terms,
-  (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview, 
-  the AWS Service Terms are extended to provide customers access to these features free of charge.
-  These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
-  {{% /alert %}}
-      1. Discover curated-packages to install
+
+   {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
+   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   * The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”) are provided as “preview features” subject to the AWS Service Terms, (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview, the AWS Service Terms are extended to provide customers access to these features free of charge. These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
+   {{% /alert %}}
+
+      1. Discover curated packages to install
          ```bash
          eksctl anywhere list packages --source registry --kube-version 1.21
          ```
