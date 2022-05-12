@@ -15,11 +15,6 @@ import (
 )
 
 func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
-	// TODO: validations?
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-
 	hardwares, err := p.providerKubectlClient.GetHardwareWithLabel(ctx, tinkerbellOwnerNameLabel, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
