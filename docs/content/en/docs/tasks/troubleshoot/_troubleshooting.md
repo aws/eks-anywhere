@@ -198,8 +198,8 @@ This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-r
 ### Generic cluster unavailable
 Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
 ```
-kubectl get pods -A -kubeconfig=<kubeconfig>
-kubectl get nodes -A -kubeconfig=<kubeconfig>
+kubectl get pods -A --kubeconfig=<kubeconfig>
+kubectl get nodes -A --kubeconfig=<kubeconfig>
 kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ....
 ```
