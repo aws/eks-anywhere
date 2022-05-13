@@ -101,7 +101,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    {{% /alert %}}
 
-      1. Discover curated-packages to install
+      a. Discover curated-packages to install
          ```bash
          eksctl anywhere list packages --source registry --kube-version 1.21
          ```
@@ -111,14 +111,14 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          -------                 ----------                                       
          harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
          ```
-      1. Generate a curated-packages config
+      b. Generate a curated-packages config
 
          The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
          ```bash
          eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
          ```
 
-      1. Create a cluster
+      c. Create a cluster
 
          ```bash
          # Create a cluster with curated packages installation
