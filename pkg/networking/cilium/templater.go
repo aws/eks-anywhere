@@ -125,6 +125,11 @@ func (c values) set(value interface{}, path ...string) {
 
 func templateValues(spec *cluster.Spec) values {
 	val := values{
+		"clustermesh": values{
+			"config": values{
+				"enabled": false,
+			},
+		},
 		"cni": values{
 			"chainingMode": "portmap",
 		},
