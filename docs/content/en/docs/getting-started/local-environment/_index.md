@@ -94,12 +94,12 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       ```
    - Cluster creation with optional curated packages
 
-   {{% alert title="Note" color="primary" %}}
+     {{% alert title="Note" color="primary" %}}
    * It is *optional* to install curated packages as part of the cluster creation.
    * `eksctl anywhere version` version should be later than `v0.9.0`.
    * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   {{% /alert %}}
+     {{% /alert %}}
 
       * Discover curated-packages to install
          ```bash
