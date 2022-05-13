@@ -87,15 +87,15 @@ Make sure you use single quotes around the values so that your shell does not in
 
    - Cluster creation with optional curated packages
 
-   {{% alert title="Note" color="primary" %}}
+     {{% alert title="Note" color="primary" %}}
    * It is *optional* to install the curated packages as part of the cluster creation.
    * `eksctl anywhere version` version should be `v0.9.0` or later.
    * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    * The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”) are provided as “preview features” subject to the AWS Service Terms, (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview, the AWS Service Terms are extended to provide customers access to these features free of charge. These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
-   {{% /alert %}}
+     {{% /alert %}}
 
-      a. Discover curated packages to install
+      * Discover curated packages to install
          ```bash
          eksctl anywhere list packages --source registry --kube-version 1.21
          ```
@@ -105,14 +105,14 @@ Make sure you use single quotes around the values so that your shell does not in
          -------                 ----------                                       
          harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
          ```
-      b. Generate a curated-packages config
+      * Generate a curated-packages config
 
          The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
          ```bash
          eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
          ```
 
-      c. Create the initial cluster
+      * Create the initial cluster
 
          ```bash
          # Create a cluster with curated packages installation
