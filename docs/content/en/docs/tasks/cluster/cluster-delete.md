@@ -10,7 +10,7 @@ description: >
 
 ### Deleting a workload cluster
 
-Follow these steps to delete it your EKS Anywhere cluster that is managed by a separate management cluster.
+Follow these steps to delete your EKS Anywhere cluster that is managed by a separate management cluster.
 
 To delete a workload cluster, you will need:
 - name of your workload cluster
