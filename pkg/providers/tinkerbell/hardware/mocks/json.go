@@ -12,42 +12,42 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockTinkerbellHardwareJsonFactory is a mock of TinkerbellHardwareJsonFactory interface.
-type MockTinkerbellHardwareJsonFactory struct {
+// MockTinkerbellHardwareJSONFactory is a mock of TinkerbellHardwareJSONFactory interface.
+type MockTinkerbellHardwareJSONFactory struct {
 	ctrl     *gomock.Controller
-	recorder *MockTinkerbellHardwareJsonFactoryMockRecorder
+	recorder *MockTinkerbellHardwareJSONFactoryMockRecorder
 }
 
-// MockTinkerbellHardwareJsonFactoryMockRecorder is the mock recorder for MockTinkerbellHardwareJsonFactory.
-type MockTinkerbellHardwareJsonFactoryMockRecorder struct {
-	mock *MockTinkerbellHardwareJsonFactory
+// MockTinkerbellHardwareJSONFactoryMockRecorder is the mock recorder for MockTinkerbellHardwareJSONFactory.
+type MockTinkerbellHardwareJSONFactoryMockRecorder struct {
+	mock *MockTinkerbellHardwareJSONFactory
 }
 
-// NewMockTinkerbellHardwareJsonFactory creates a new mock instance.
-func NewMockTinkerbellHardwareJsonFactory(ctrl *gomock.Controller) *MockTinkerbellHardwareJsonFactory {
-	mock := &MockTinkerbellHardwareJsonFactory{ctrl: ctrl}
-	mock.recorder = &MockTinkerbellHardwareJsonFactoryMockRecorder{mock}
+// NewMockTinkerbellHardwareJSONFactory creates a new mock instance.
+func NewMockTinkerbellHardwareJSONFactory(ctrl *gomock.Controller) *MockTinkerbellHardwareJSONFactory {
+	mock := &MockTinkerbellHardwareJSONFactory{ctrl: ctrl}
+	mock.recorder = &MockTinkerbellHardwareJSONFactoryMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockTinkerbellHardwareJsonFactory) EXPECT() *MockTinkerbellHardwareJsonFactoryMockRecorder {
+func (m *MockTinkerbellHardwareJSONFactory) EXPECT() *MockTinkerbellHardwareJSONFactoryMockRecorder {
 	return m.recorder
 }
 
 // Create mocks base method.
-func (m *MockTinkerbellHardwareJsonFactory) Create(name string) (*hardware.TinkerbellHardwareJson, error) {
+func (m *MockTinkerbellHardwareJSONFactory) Create(name string) (*hardware.TinkerbellHardwareJSON, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", name)
-	ret0, _ := ret[0].(*hardware.TinkerbellHardwareJson)
+	ret0, _ := ret[0].(*hardware.TinkerbellHardwareJSON)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockTinkerbellHardwareJsonFactoryMockRecorder) Create(name interface{}) *gomock.Call {
+func (mr *MockTinkerbellHardwareJSONFactoryMockRecorder) Create(name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTinkerbellHardwareJsonFactory)(nil).Create), name)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockTinkerbellHardwareJSONFactory)(nil).Create), name)
 }
 
 // MockTinkerbellHardwarePusher is a mock of TinkerbellHardwarePusher interface.

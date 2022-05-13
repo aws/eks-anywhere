@@ -91,25 +91,25 @@ func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string
 		return err
 	}
 
-	jsonDir, err := hardware.CreateDefaultJsonDir(outputDir)
+	jsonDir, err := hardware.CreateDefaultJSONDir(outputDir)
 	if err != nil {
 		return err
 	}
 
-	hardwareYaml, err := os.Create(filepath.Join(outputDir, hardware.DefaultHardwareManifestYamlFilename))
+	hardwareYAML, err := os.Create(filepath.Join(outputDir, hardware.DefaultHardwareManifestYAMLFilename))
 	if err != nil {
 		return fmt.Errorf("tinkerbell manifest yaml: %v", err)
 	}
-	yamlWriter := hardware.NewTinkerbellManifestYaml(hardwareYaml)
+	yamlWriter := hardware.NewTinkerbellManifestYAML(hardwareYAML)
 
 	var journal hardware.Journal
-	jsonFactory, err := hardware.RecordingTinkerbellHardwareJsonFactory(jsonDir, &journal)
+	jsonFactory, err := hardware.RecordingTinkerbellHardwareJSONFactory(jsonDir, &journal)
 	if err != nil {
 		return err
 	}
-	jsonWriter := hardware.NewTinkerbellHardwareJsonWriter(jsonFactory)
+	jsonWriter := hardware.NewTinkerbellHardwareJSONWriter(jsonFactory)
 
-	reader, err := hardware.NewCsvReader(csvFile)
+	reader, err := hardware.NewCSVReader(csvFile)
 	if err != nil {
 		return fmt.Errorf("csv: %v", err)
 	}

@@ -21,7 +21,7 @@ func TestTranslateReadsAndWrites(t *testing.T) {
 	validator := mocks.NewMockMachineValidator(ctrl)
 
 	machine := hardware.Machine{
-		Id:       "lucky-number-10",
+		ID:       "lucky-number-10",
 		Hostname: "foot-bar",
 	}
 
@@ -67,7 +67,7 @@ func TestTranslateWithWriteError(t *testing.T) {
 	validator := mocks.NewMockMachineValidator(ctrl)
 
 	machine := hardware.Machine{
-		Id: "lucky-number-10",
+		ID: "lucky-number-10",
 	}
 	expect := errors.New("luck-number-10")
 
@@ -121,7 +121,7 @@ func TestTranslateAllReadsAndWritesMaskingEOF(t *testing.T) {
 	validator := mocks.NewMockMachineValidator(ctrl)
 
 	machine := hardware.Machine{
-		Id: "lucky-number-10",
+		ID: "lucky-number-10",
 	}
 
 	// use readCount to track how many times the Read() call has been made. On
@@ -176,7 +176,7 @@ func TestTranslateAllWithWriteError(t *testing.T) {
 	validator := mocks.NewMockMachineValidator(ctrl)
 
 	machine := hardware.Machine{
-		Id: "lucky-number-10",
+		ID: "lucky-number-10",
 	}
 	expect := errors.New("luck-number-10")
 

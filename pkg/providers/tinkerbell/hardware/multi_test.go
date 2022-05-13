@@ -19,7 +19,7 @@ func TestTeeWriterWritesToAllWriters(t *testing.T) {
 	writer2 := mocks.NewMockMachineWriter(ctrl)
 
 	expect := hardware.Machine{
-		Id: "quxer",
+		ID: "quxer",
 	}
 
 	var machine1, machine2 hardware.Machine
@@ -54,7 +54,7 @@ func TestTeeWriterFirstWriterErrors(t *testing.T) {
 	writer1 := mocks.NewMockMachineWriter(ctrl)
 	writer2 := mocks.NewMockMachineWriter(ctrl)
 
-	machine := hardware.Machine{Id: "qux-foo"}
+	machine := hardware.Machine{ID: "qux-foo"}
 
 	expect := errors.New("first writer error")
 
@@ -76,7 +76,7 @@ func TestTeeWriterSecondWriterErrors(t *testing.T) {
 	writer1 := mocks.NewMockMachineWriter(ctrl)
 	writer2 := mocks.NewMockMachineWriter(ctrl)
 
-	machine := hardware.Machine{Id: "qux-foo"}
+	machine := hardware.Machine{ID: "qux-foo"}
 
 	expect := errors.New("first writer error")
 
