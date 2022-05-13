@@ -93,3 +93,21 @@ func WriteHardwareMapToCSV(hardware map[string]*Hardware, csvFile string) error 
 	slice := HardwareMapToSlice(hardware)
 	return WriteHardwareSliceToCSV(slice, csvFile)
 }
+
+func SplitHardware(slice []*Hardware, chunkSize int) [][]*Hardware {
+	var chunks [][]*Hardware
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		// check slice capacity
+		if end > len(slice) {
+			end = len(slice)
+			finalChunk := append(chunks[len(chunks)-1], slice[i:end]...)
+			chunks[len(chunks)-1] = finalChunk
+		} else {
+			chunks = append(chunks, slice[i:end])
+		}
+	}
+
+	return chunks
+}

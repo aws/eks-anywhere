@@ -29,6 +29,7 @@ const (
 
 type TestRunner interface {
 	createInstance(instanceConf instanceRunConf) (string, error)
+	tagInstance(instanceConf instanceRunConf, key, value string) error
 }
 
 type TestRunnerType string
@@ -67,12 +68,18 @@ func NewTestRunnerConfigFromFile(configFile string) (*TestInfraConfig, error) {
 	return &config, nil
 }
 
+type testRunner struct {
+	InstanceID string
+}
+
 type Ec2TestRunner struct {
+	testRunner
 	AmiID    string `yaml:"amiId"`
 	SubnetID string `yaml:"subnetId"`
 }
 
 type VSphereTestRunner struct {
+	testRunner
 	Url          string `yaml:"url"`
 	Insecure     bool   `yaml:"insecure"`
 	Library      string `yaml:"library"`
@@ -126,7 +133,8 @@ func (v VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 		return "", fmt.Errorf("unable to create ssm activation: %v", err)
 	}
 
-	// import ova template from url if not exist
+	// TODO: import ova template from url if not exist
+
 	opts := vsphere.OVFDeployOptions{
 		Name:             name,
 		PowerOn:          true,
@@ -157,7 +165,7 @@ func (v VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("waiting for ssm instance to activate %s : %v", name, err)
 	}
-
+	v.InstanceID = *ssmInstance.InstanceId
 	return *ssmInstance.InstanceId, nil
 }
 
@@ -169,7 +177,26 @@ func (e Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
 		return "", fmt.Errorf("creating instance for e2e tests: %v", err)
 	}
 	logger.V(1).Info("Instance created", "instance-id", instanceId)
+	e.InstanceID = instanceId
 	return instanceId, nil
+}
+
+func (v VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
+	vmName := getTestRunnerName(c.jobId)
+	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
+	tag := fmt.Sprintf("%s:%s", key, value)
+	if err := vsphere.TagVirtualMachine(vmPath, tag); err != nil {
+		return fmt.Errorf("failed to tag vSphere test runner: %v", err)
+	}
+	return nil
+}
+
+func (e Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
+	err := ec2.TagInstance(c.session, c.instanceId, key, value)
+	if err != nil {
+		return fmt.Errorf("failed to tag Ec2 test runner: %v", err)
+	}
+	return nil
 }
 
 func getTestRunnerName(jobId string) string {

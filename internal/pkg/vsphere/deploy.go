@@ -54,3 +54,21 @@ func DeployTemplate(library, templateName, vmName, deployFolder, datacenter, dat
 
 	return nil
 }
+
+func TagVirtualMachine(vmPath, tag string) error {
+	context := context.Background()
+	executableBuilder, close, err := executables.NewExecutableBuilder(context, executables.DefaultEksaImage())
+	if err != nil {
+		return fmt.Errorf("unable to initialize executables: %v", err)
+	}
+
+	defer close.CheckErr(context)
+	tmpWriter, _ := filewriter.NewWriter(vmPath)
+	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
+	defer govc.Close(context)
+
+	if err := govc.AddTag(context, vmPath, tag); err != nil {
+		return fmt.Errorf("failed to tag vm: %v", err)
+	}
+	return nil
+}

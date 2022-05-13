@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -42,6 +43,7 @@ type E2ESession struct {
 	cleanupVms          bool
 	requiredFiles       []string
 	branchName          string
+	hardware            []*api.Hardware
 }
 
 func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
@@ -57,6 +59,7 @@ func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error)
 		cleanupVms:          conf.cleanupVms,
 		requiredFiles:       requiredFiles,
 		branchName:          conf.branchName,
+		hardware:            conf.hardware,
 	}
 
 	return e, nil
@@ -214,7 +217,7 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 }
 
 func (e *E2ESession) createTestNameFile(testName string) error {
-	command := fmt.Sprintf("echo %s > %s", testName, testNameFile)
+	command := fmt.Sprintf("echo \"%s\" > %s", testName, testNameFile)
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("creating test name file in instance: %v", err)

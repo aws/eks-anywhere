@@ -14,10 +14,10 @@ import (
 func runTinkerbellForceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithForce())
-	test.DeleteCluster()
-	test.ValidateHardwareDecommissioned()
+	//test.PowerOnHardware()
+	//test.CreateCluster(framework.WithForce())
+	//test.DeleteCluster()
+	//test.ValidateHardwareDecommissioned()
 }
 
 func TestTinkerbellKubernetes121ForceFlow(t *testing.T) {

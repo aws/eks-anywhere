@@ -31,10 +31,10 @@ func runHelmInstallSimpleFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	test.PowerOffHardware()
-	test.CreateCluster()
-	test.DeleteCluster()
-	test.ValidateHardwareDecommissioned()
+	//test.PowerOffHardware()
+	//test.CreateCluster()
+	//test.DeleteCluster()
+	//test.ValidateHardwareDecommissioned()
 }
 
 func runSimpleFlow(test *framework.ClusterE2ETest) {
