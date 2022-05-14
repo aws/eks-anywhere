@@ -417,6 +417,7 @@ spec:
                       - webhook
                       type: object
                     cilium:
+                      description: This field has been deprecated
                       properties:
                         cilium:
                           properties:
@@ -2946,7 +2947,6 @@ spec:
                   - bottlerocketAdmin
                   - bottlerocketBootstrap
                   - certManager
-                  - cilium
                   - clusterAPI
                   - controlPlane
                   - docker

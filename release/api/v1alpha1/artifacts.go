@@ -45,9 +45,7 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Snow.Components.URI,
 			&vb.Snow.Metadata.URI,
 		},
-		"cilium": {
-			&vb.Cilium.Manifest.URI,
-		},
+
 		"kindnetd": {
 			&vb.Kindnetd.Manifest.URI,
 		},
@@ -118,8 +116,6 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.CertManager.Cainjector,
 		vb.CertManager.Controller,
 		vb.CertManager.Webhook,
-		vb.Cilium.Cilium,
-		vb.Cilium.Operator,
 		vb.ClusterAPI.Controller,
 		vb.ClusterAPI.KubeProxy,
 		vb.ControlPlane.Controller,
@@ -163,7 +159,6 @@ func (vb *VersionsBundle) Images() []Image {
 
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
-		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
 	}
 }

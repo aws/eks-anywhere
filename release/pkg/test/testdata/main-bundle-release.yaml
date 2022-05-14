@@ -108,30 +108,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -326,7 +306,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -540,7 +520,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -558,7 +538,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hegel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
           manifest: {}
         hook:
           bootkit:
@@ -625,7 +605,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -633,7 +613,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkManifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
@@ -643,7 +623,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -651,7 +631,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -810,30 +790,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -1028,7 +988,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1242,7 +1202,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -1260,7 +1220,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hegel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
           manifest: {}
         hook:
           bootkit:
@@ -1327,7 +1287,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1335,7 +1295,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkManifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
@@ -1345,7 +1305,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -1353,7 +1313,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:
@@ -1512,30 +1472,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -1730,7 +1670,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1944,7 +1884,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -1962,7 +1902,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hegel
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:v0.6.0-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
           manifest: {}
         hook:
           bootkit:
@@ -2029,7 +1969,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-cli
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2037,7 +1977,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkManifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
@@ -2047,7 +1987,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
@@ -2055,7 +1995,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:c9ebfa832578d55ccd1ddb5e892b49024187cd76-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
       version: v0.1.0+abcdef1
     vSphere:
       clusterAPIController:

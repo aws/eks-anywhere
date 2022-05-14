@@ -62,18 +62,19 @@ func init() {
 }
 
 type VersionsBundle struct {
-	KubeVersion            string                      `json:"kubeVersion"`
-	EksD                   EksDRelease                 `json:"eksD"`
-	CertManager            CertManagerBundle           `json:"certManager"`
-	ClusterAPI             CoreClusterAPI              `json:"clusterAPI"`
-	Bootstrap              KubeadmBootstrapBundle      `json:"bootstrap"`
-	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
-	Aws                    AwsBundle                   `json:"aws"`
-	VSphere                VSphereBundle               `json:"vSphere"`
-	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
-	Docker                 DockerBundle                `json:"docker"`
-	Eksa                   EksaBundle                  `json:"eksa"`
-	Cilium                 CiliumBundle                `json:"cilium"`
+	KubeVersion  string                    `json:"kubeVersion"`
+	EksD         EksDRelease               `json:"eksD"`
+	CertManager  CertManagerBundle         `json:"certManager"`
+	ClusterAPI   CoreClusterAPI            `json:"clusterAPI"`
+	Bootstrap    KubeadmBootstrapBundle    `json:"bootstrap"`
+	ControlPlane KubeadmControlPlaneBundle `json:"controlPlane"`
+	Aws          AwsBundle                 `json:"aws"`
+	VSphere      VSphereBundle             `json:"vSphere"`
+	CloudStack   CloudStackBundle          `json:"cloudStack,omitempty"`
+	Docker       DockerBundle              `json:"docker"`
+	Eksa         EksaBundle                `json:"eksa"`
+	// This field has been deprecated
+	Cilium                 CiliumBundle                `json:"cilium,omitempty"`
 	Kindnetd               KindnetdBundle              `json:"kindnetd"`
 	Flux                   FluxBundle                  `json:"flux"`
 	PackageController      PackageBundle               `json:"packageController"`
@@ -211,6 +212,7 @@ type CloudStackBundle struct {
 	Metadata             Manifest `json:"metadata"`
 }
 
+// This type has been deprecated
 type CiliumBundle struct {
 	Version   string   `json:"version,omitempty"`
 	Cilium    Image    `json:"cilium"`

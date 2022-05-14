@@ -111,11 +111,6 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for eks-a tools component")
 	}
 
-	ciliumBundle, err := r.GetCiliumBundle()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for Cilium")
-	}
-
 	kindnetdBundle, err := r.GetKindnetdBundle()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Kindnetd")
@@ -218,7 +213,6 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,
 			Eksa:                   eksaBundle,
-			Cilium:                 ciliumBundle,
 			Kindnetd:               kindnetdBundle,
 			Flux:                   fluxBundle,
 			PackageController:      packageBundle,
@@ -265,7 +259,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"cluster-api-provider-cloudstack": r.GetCapcAssets,
 		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
 		"cert-manager":                    r.GetCertManagerAssets,
-		"cilium":                          r.GetCiliumAssets,
 		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
 		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
 		"kube-vip":                        r.GetKubeVipAssets,

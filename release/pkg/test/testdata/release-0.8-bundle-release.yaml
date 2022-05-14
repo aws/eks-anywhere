@@ -108,30 +108,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-release-0.8-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -326,7 +306,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -648,30 +628,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-release-0.8-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -866,7 +826,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1188,30 +1148,10 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-release-0.8-build.1
     cilium:
-      cilium:
-        arch:
-        - amd64
-        description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
-        name: cilium
-        os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
-      helmChart:
-        description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
-        name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
-      manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
-      operator:
-        arch:
-        - amd64
-        description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
-        name: operator-generic
-        os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+      cilium: {}
+      helmChart: {}
+      manifest: {}
+      operator: {}
     cloudStack:
       clusterAPIController:
         arch:
@@ -1406,7 +1346,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
