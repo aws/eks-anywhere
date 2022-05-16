@@ -83,6 +83,9 @@ spec:
 {{- if .cloudstackControlPlaneDiskOfferingName}}
         name: {{.cloudstackControlPlaneDiskOfferingName}}
 {{- end}}
+{{- if gt .cloudstackControlPlaneDiskOfferingSize 0}}
+        sizeInGB: {{.cloudstackControlPlaneDiskOfferingSize}}
+{{- end}}
         mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
         device: {{.cloudstackControlPlaneDiskOfferingDevice}}
         filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
@@ -497,6 +500,9 @@ spec:
 {{- end}}
 {{- if .cloudstackEtcdDiskOfferingName}}
         name: {{.cloudstackEtcdDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackEtcdDiskOfferingSize 0}}
+        sizeInGB: {{.cloudstackEtcdDiskOfferingSize}}
 {{- end}}
         mountPath: {{.cloudstackEtcdDiskOfferingPath}}
         device: {{.cloudstackEtcdDiskOfferingDevice}}

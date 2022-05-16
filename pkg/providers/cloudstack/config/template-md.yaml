@@ -158,6 +158,9 @@ spec:
 {{- if .cloudstackDiskOfferingName }}
         name: {{.cloudstackDiskOfferingName}}
 {{- end}}
+{{- if gt .cloudstackDiskOfferingSize 0}}
+        sizeInGB: {{.cloudstackDiskOfferingSize}}
+{{- end}}
         mountPath: {{.cloudstackDiskOfferingPath}}
         device: {{.cloudstackDiskOfferingDevice}}
         filesystem: {{.cloudstackDiskOfferingFilesystem}}
