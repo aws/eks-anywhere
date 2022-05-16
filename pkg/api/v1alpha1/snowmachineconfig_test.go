@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestSnowSetDefaults(t *testing.T) {
@@ -136,4 +137,24 @@ func TestSetEtcdAnnotation(t *testing.T) {
 	m := &SnowMachineConfig{}
 	m.SetEtcdAnnotation()
 	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/etcd": "true"}))
+}
+
+func TestNewSnowMachineConfigGenerate(t *testing.T) {
+	g := NewWithT(t)
+	want := &SnowMachineConfigGenerate{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       SnowMachineConfigKind,
+			APIVersion: SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: ObjectMeta{
+			Name: "snow-cluster",
+		},
+		Spec: SnowMachineConfigSpec{
+			AMIID:                    "",
+			InstanceType:             DefaultSnowInstanceType,
+			SshKeyName:               DefaultSnowSshKeyName,
+			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+		},
+	}
+	g.Expect(NewSnowMachineConfigGenerate("snow-cluster")).To(Equal(want))
 }

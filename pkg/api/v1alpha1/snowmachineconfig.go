@@ -26,9 +26,10 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 			Name: name,
 		},
 		Spec: SnowMachineConfigSpec{
-			AMIID:        "",
-			InstanceType: DefaultSnowInstanceType,
-			SshKeyName:   DefaultSnowSshKeyName,
+			AMIID:                    "",
+			InstanceType:             DefaultSnowInstanceType,
+			SshKeyName:               DefaultSnowSshKeyName,
+			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 		},
 	}
 }
