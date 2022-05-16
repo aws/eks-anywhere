@@ -3,7 +3,9 @@ package validations
 import (
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -39,5 +41,14 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 		}
 	}
 
+	return nil
+}
+
+func ValidateK8s123Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s123Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube123 {
+			return fmt.Errorf("kubernetes version %s is not enabled. Please set the env variable %v", v1alpha1.Kube123, features.K8s123SupportEnvVar)
+		}
+	}
 	return nil
 }

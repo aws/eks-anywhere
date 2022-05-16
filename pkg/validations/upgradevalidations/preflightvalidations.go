@@ -7,6 +7,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -23,6 +24,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 			Name:        "validate certificate for registry mirror",
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
 			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
+		},
+		{
+			Name:        "validate kubernetes version 1.23 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s123SupportEnvVar),
+			Err:         validations.ValidateK8s123Support(u.Opts.Spec),
+			Silent:      true,
 		},
 		{
 			Name:        "control plane ready",
