@@ -22,11 +22,12 @@ This will let you create a cluster in multiple providers for local development o
 - 16GB memory
 - 30GB free disk space
 
-> **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
+   {{% alert title="Note" color="primary" %}}
+   * If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
+   * If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+   * Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
+   {{% /alert %}}
 
-> **_NOTE:_** If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
-
-> **_NOTE:_** Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
 
 ### Install EKS Anywhere CLI tools
 
@@ -59,7 +60,7 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.8.2" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=10
+export EKSA_RELEASE="0.9.0" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=11
 curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
     | tar xz ./eksctl-anywhere

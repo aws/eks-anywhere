@@ -39,6 +39,13 @@ NOTE: This snapshot file contains all information stored in the cluster, so make
 
 Restoring etcd is a 2-part process. The first part is restoring etcd using the snapshot, creating a new data-dir for etcd. The second part is replacing the current etcd data-dir with the one generated after restore. During etcd data-dir replacement, we cannot have any kube-apiserver instances running in the cluster. So we will first stop all instances of kube-apiserver and other controlplane components using the following steps for every controlplane VM:
 
+#### Pausing Etcdadm controller reconcile
+
+During restore, it is required to pause the Etcdadm controller reconcile for the target cluster (whether it is management or workload cluster). To do that, you need to add a `cluster.x-k8s.io/paused` annotation to the target cluster's `etcdadmclusters` resource. For example,
+```
+kubectl annotate etcdadmclusters workload-cluster-1-etcd cluster.x-k8s.io/paused=true -n eksa-system --kubeconfig mgmt-cluster.kubeconfig
+```
+
 #### Stopping the controlplane components
 1. Login to a controlplane VM
 ```
@@ -113,3 +120,10 @@ mv temp-manifests/*.yaml /etc/kubernetes/manifests
 ```
 3. Repeat these steps for all other controlplane VMs
 4. It may take a few minutes for the kube-apiserver and the other components to get restarted. After this you should be able to access all objects present in the cluster at the time the backup was taken.
+
+#### Resuming Etcdadm controller reconcile
+
+Resume Etcdadm controller reconcile for the target cluster by removing the `cluster.x-k8s.io/paused` annotation in the target cluster's `etcdadmclusters` resource. For example,
+```
+kubectl annotate etcdadmclusters workload-cluster-1-etcd cluster.x-k8s.io/paused- -n eksa-system
+```

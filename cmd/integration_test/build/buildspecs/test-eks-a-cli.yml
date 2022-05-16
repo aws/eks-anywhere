@@ -97,6 +97,7 @@ phases:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
       - export GIT_HASH=$(cat bin/githash)
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
       - >
         ./cmd/integration_test/build/script/upload_artifacts.sh
         $ARTIFACTS_BUCKET
@@ -109,7 +110,7 @@ phases:
         false
       - >
         ./bin/test e2e cleanup vsphere
-        -n ${BRANCH_NAME}
+        -n ${CLUSTER_NAME_PREFIX}
         -v 4
 reports:
   e2e-reports:
