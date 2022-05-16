@@ -65,6 +65,8 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) [
 		return c.eksaVsphereCollectors()
 	case v1alpha1.DockerDatacenterKind:
 		return c.eksaDockerCollectors()
+	case v1alpha1.CloudStackDatacenterKind:
+		return c.eksaCloudstackCollectors()
 	default:
 		return nil
 	}
@@ -80,6 +82,18 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 		},
 	}
 	return append(vsphereLogs, c.vsphereCrdCollectors()...)
+}
+
+func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
+	cloudstackLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapcSystemNamespace,
+				Name:      logpath(constants.CapcSystemNamespace),
+			},
+		},
+	}
+	return append(cloudstackLogs, c.cloudstackCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaDockerCollectors() []*Collect {
@@ -265,6 +279,21 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 		"vspherevms.infrastructure.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(capvCrds)
+}
+
+func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
+	crds := []string{
+		"cloudstackaffinitygroups.infrastructure.cluster.x-k8s.io",
+		"cloudstackclusters.infrastructure.cluster.x-k8s.io",
+		"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackisolatednetworks.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackmachines.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachinestatecheckers.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"cloudstackzones.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(crds)
 }
 
 func (c *collectorFactory) packagesCrdCollectors() []*Collect {
