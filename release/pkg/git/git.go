@@ -15,13 +15,15 @@
 package git
 
 import (
+	"fmt"
 	"os/exec"
 
 	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 func CloneRepo(cloneUrl, destination string) (string, error) {
-	cmd := exec.Command("git", "clone", cloneUrl, destination)
+	cloneRepoCommandSequence := fmt.Sprintf("git clone --depth 1 %s %[2]s; cd %[2]s; git config --unset-all remote.origin.fetch; git config --add remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'; git fetch --unshallow; git pull --all", cloneUrl, destination)
+	cmd := exec.Command("bash", "-c", cloneRepoCommandSequence)
 	return utils.ExecCommand(cmd)
 }
 
