@@ -12,38 +12,38 @@ import (
 
 // Machine is a machine configuration with optional BMC interface configuration.
 type Machine struct {
-	Id          string      `csv:"id"`
-	IpAddress   string      `csv:"ip_address"`
+	ID          string      `csv:"id"`
+	IPAddress   string      `csv:"ip_address"`
 	Gateway     string      `csv:"gateway"`
 	Nameservers Nameservers `csv:"nameservers"`
 	Netmask     string      `csv:"netmask"`
-	MacAddress  string      `csv:"mac"`
+	MACAddress  string      `csv:"mac"`
 	Hostname    string      `csv:"hostname"`
 
-	BmcIpAddress string `csv:"bmc_ip"`
-	BmcUsername  string `csv:"bmc_username"`
-	BmcPassword  string `csv:"bmc_password"`
-	BmcVendor    string `csv:"vendor"`
+	BMCIPAddress string `csv:"bmc_ip"`
+	BMCUsername  string `csv:"bmc_username"`
+	BMCPassword  string `csv:"bmc_password"`
+	BMCVendor    string `csv:"vendor"`
 }
 
-// HasBmc determines if m has a Bmc configuration. A Bmc configuration is present if any of the Bmc fields
+// HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields
 // contain non-empty strings.
-func (m *Machine) HasBmc() bool {
-	return m.BmcIpAddress != "" || m.BmcUsername != "" || m.BmcPassword != "" || m.BmcVendor != ""
+func (m *Machine) HasBMC() bool {
+	return m.BMCIPAddress != "" || m.BMCUsername != "" || m.BMCPassword != "" || m.BMCVendor != ""
 }
 
-// Validate ensures all fields on m are valid. Bmc configurationis only validated if m.HasBmc() returns true.
+// Validate ensures all fields on m are valid. BMC configurationis only validated if m.HasBMC() returns true.
 func (m *Machine) Validate() error {
-	if m.Id == "" {
-		return newEmptyFieldError("Id")
+	if m.ID == "" {
+		return newEmptyFieldError("ID")
 	}
 
-	if m.IpAddress == "" {
-		return newEmptyFieldError("IpAddress")
+	if m.IPAddress == "" {
+		return newEmptyFieldError("IPAddress")
 	}
 
-	if err := networkutils.ValidateIP(m.IpAddress); err != nil {
-		return fmt.Errorf("IpAddress: %v", err)
+	if err := networkutils.ValidateIP(m.IPAddress); err != nil {
+		return fmt.Errorf("IPAddress: %v", err)
 	}
 
 	if m.Gateway == "" {
@@ -68,12 +68,12 @@ func (m *Machine) Validate() error {
 		return newEmptyFieldError("Netmask")
 	}
 
-	if m.MacAddress == "" {
-		return newEmptyFieldError("MacAddress")
+	if m.MACAddress == "" {
+		return newEmptyFieldError("MACAddress")
 	}
 
-	if _, err := net.ParseMAC(m.MacAddress); err != nil {
-		return fmt.Errorf("MacAddress: %v", err)
+	if _, err := net.ParseMAC(m.MACAddress); err != nil {
+		return fmt.Errorf("MACAddress: %v", err)
 	}
 
 	if m.Hostname == "" {
@@ -84,25 +84,25 @@ func (m *Machine) Validate() error {
 		return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
 	}
 
-	if m.HasBmc() {
-		if m.BmcIpAddress == "" {
-			return newEmptyFieldError("BmcIpAddress")
+	if m.HasBMC() {
+		if m.BMCIPAddress == "" {
+			return newEmptyFieldError("BMCIPAddress")
 		}
 
-		if err := networkutils.ValidateIP(m.BmcIpAddress); err != nil {
-			return fmt.Errorf("BmcIpAddress: %v", err)
+		if err := networkutils.ValidateIP(m.BMCIPAddress); err != nil {
+			return fmt.Errorf("BMCIPAddress: %v", err)
 		}
 
-		if m.BmcUsername == "" {
-			return newEmptyFieldError("BmcUsername")
+		if m.BMCUsername == "" {
+			return newEmptyFieldError("BMCUsername")
 		}
 
-		if m.BmcPassword == "" {
-			return newEmptyFieldError("BmcPassword")
+		if m.BMCPassword == "" {
+			return newEmptyFieldError("BMCPassword")
 		}
 
-		if m.BmcVendor == "" {
-			return newEmptyFieldError("BmcVendor")
+		if m.BMCVendor == "" {
+			return newEmptyFieldError("BMCVendor")
 		}
 	}
 

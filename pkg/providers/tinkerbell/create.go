@@ -160,10 +160,10 @@ func (p *Provider) setHardwareStateToProvisining(ctx context.Context) error {
 
 			patchedHardware, err := json.Marshal(tinkHardware)
 			if err != nil {
-				return fmt.Errorf("marshaling hardware %s: %v", tinkHardware.Id, err)
+				return fmt.Errorf("marshaling hardware %s: %v", tinkHardware.ID, err)
 			}
 
-			logger.Info(fmt.Sprintf("Attempting to set state of hardware '%s' to '%s'", tinkHardware.Id, Provisioning))
+			logger.Info(fmt.Sprintf("Attempting to set state of hardware '%s' to '%s'", tinkHardware.ID, Provisioning))
 
 			if err := p.providerTinkClient.PushHardware(ctx, patchedHardware); err != nil {
 				return fmt.Errorf("patching hardware state: %v", err)
