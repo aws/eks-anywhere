@@ -475,11 +475,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:af0464c206b9e105be6f042e3db908006c0a9eed-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -489,7 +489,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -652,7 +652,7 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-      version: af0464c206b9e105be6f042e3db908006c0a9eed+abcdef1
+      version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
@@ -1177,11 +1177,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:af0464c206b9e105be6f042e3db908006c0a9eed-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1191,7 +1191,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1354,7 +1354,7 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-      version: af0464c206b9e105be6f042e3db908006c0a9eed+abcdef1
+      version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
@@ -1879,11 +1879,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:af0464c206b9e105be6f042e3db908006c0a9eed-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1893,7 +1893,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2056,7 +2056,7 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-      version: af0464c206b9e105be6f042e3db908006c0a9eed+abcdef1
+      version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
@@ -2572,11 +2572,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:af0464c206b9e105be6f042e3db908006c0a9eed-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2586,7 +2586,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/af0464c206b9e105be6f042e3db908006c0a9eed/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2749,7 +2749,7 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-      version: af0464c206b9e105be6f042e3db908006c0a9eed+abcdef1
+      version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
