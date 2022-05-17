@@ -63,6 +63,20 @@ func (mr *MockupgraderClientMockRecorder) Delete(ctx, cluster, data interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockupgraderClient)(nil).Delete), ctx, cluster, data)
 }
 
+// RolloutRestartCiliumDaemonSet mocks base method.
+func (m *MockupgraderClient) RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RolloutRestartCiliumDaemonSet", ctx, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RolloutRestartCiliumDaemonSet indicates an expected call of RolloutRestartCiliumDaemonSet.
+func (mr *MockupgraderClientMockRecorder) RolloutRestartCiliumDaemonSet(ctx, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RolloutRestartCiliumDaemonSet", reflect.TypeOf((*MockupgraderClient)(nil).RolloutRestartCiliumDaemonSet), ctx, cluster)
+}
+
 // WaitForCiliumDaemonSet mocks base method.
 func (m *MockupgraderClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
