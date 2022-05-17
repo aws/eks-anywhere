@@ -690,7 +690,7 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (k *Kubectl) DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
+func (k *Kubectl) RolloutRestartDaemonSet(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
 	params := []string{
 		"rollout", "restart", "ds", dsName,
 		"--kubeconfig", kubeconfig, "--namespace", dsNamespace,

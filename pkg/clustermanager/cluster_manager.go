@@ -87,7 +87,6 @@ type ClusterClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -104,6 +103,7 @@ type ClusterClient interface {
 type Networking interface {
 	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error)
+	RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error
 }
 
 type AwsIamAuth interface {
@@ -396,13 +396,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
-	if provider.Name() == constants.CloudStackProviderName {
-		// TODO: Move this logic to provider implementation: https://github.com/aws/eks-anywhere/issues/2061
-		logger.V(3).Info("Restarting cilium daemonset after upgrade")
-		err = c.clusterClient.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, eksaMgmtCluster.KubeconfigFile)
-		if err != nil {
-			return fmt.Errorf("restarting cilium daemonset after upgrade: %v", err)
-		}
+	logger.V(3).Info("Running CNI post control plane upgrade operations")
+	if err = c.networking.RunPostControlPlaneUpgradeSetup(ctx, workloadCluster); err != nil {
+		return fmt.Errorf("running CNI post control plane upgrade operations: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")

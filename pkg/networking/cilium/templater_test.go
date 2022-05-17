@@ -91,11 +91,6 @@ func (e *mapMatcher) String() string {
 
 func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
-		"clustermesh": map[string]interface{}{
-			"config": map[string]interface{}{
-				"enabled": false,
-			},
-		},
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},
@@ -149,11 +144,6 @@ func TestTemplaterGenerateUpgradePreflightManifestError(t *testing.T) {
 
 func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
-		"clustermesh": map[string]interface{}{
-			"config": map[string]interface{}{
-				"enabled": false,
-			},
-		},
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},
@@ -189,11 +179,6 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 
 func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
-		"clustermesh": map[string]interface{}{
-			"config": map[string]interface{}{
-				"enabled": false,
-			},
-		},
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},
@@ -239,11 +224,6 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 
 func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
-		"clustermesh": map[string]interface{}{
-			"config": map[string]interface{}{
-				"enabled": false,
-			},
-		},
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},

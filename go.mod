@@ -30,7 +30,7 @@ require (
 	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	gopkg.in/ini.v1 v1.66.2
@@ -164,7 +164,10 @@ require (
 replace (
 	github.com/aws/eks-anywhere/release => ./release
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20220207154021-dcf66392d606
+	// Fixing GMS-2022-20): this dependency comes from the cluster-api module.
+	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
+	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
+	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
 	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
 

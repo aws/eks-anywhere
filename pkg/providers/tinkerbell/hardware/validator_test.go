@@ -53,25 +53,25 @@ func TestUniquenessAssertions(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"Ids": {
-			Assertion: hardware.UniqueIds(),
+		"IDs": {
+			Assertion: hardware.UniqueIDs(),
 			Machines: []hardware.Machine{
-				{Id: "foo"},
-				{Id: "bar"},
+				{ID: "foo"},
+				{ID: "bar"},
 			},
 		},
-		"IpAddresses": {
-			Assertion: hardware.UniqueIpAddress(),
+		"IPAddresses": {
+			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
-				{IpAddress: "foo"},
-				{IpAddress: "bar"},
+				{IPAddress: "foo"},
+				{IPAddress: "bar"},
 			},
 		},
-		"MacAddresses": {
-			Assertion: hardware.UniqueMacAddress(),
+		"MACAddresses": {
+			Assertion: hardware.UniqueMACAddress(),
 			Machines: []hardware.Machine{
-				{MacAddress: "foo"},
-				{MacAddress: "bar"},
+				{MACAddress: "foo"},
+				{MACAddress: "bar"},
 			},
 		},
 		"Hostnames": {
@@ -81,11 +81,11 @@ func TestUniquenessAssertions(t *testing.T) {
 				{Hostname: "bar"},
 			},
 		},
-		"BmcIpAddresses": {
-			Assertion: hardware.UniqueBmcIpAddress(),
+		"BMCIPAddresses": {
+			Assertion: hardware.UniqueBMCIPAddress(),
 			Machines: []hardware.Machine{
-				{BmcIpAddress: "foo"},
-				{BmcIpAddress: "bar"},
+				{BMCIPAddress: "foo"},
+				{BMCIPAddress: "bar"},
 			},
 		},
 	}
@@ -104,25 +104,25 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"Ids": {
-			Assertion: hardware.UniqueIds(),
+		"IDs": {
+			Assertion: hardware.UniqueIDs(),
 			Machines: []hardware.Machine{
-				{Id: "foo"},
-				{Id: "foo"},
+				{ID: "foo"},
+				{ID: "foo"},
 			},
 		},
-		"IpAddresses": {
-			Assertion: hardware.UniqueIpAddress(),
+		"IPAddresses": {
+			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
-				{IpAddress: "foo"},
-				{IpAddress: "foo"},
+				{IPAddress: "foo"},
+				{IPAddress: "foo"},
 			},
 		},
-		"MacAddresses": {
-			Assertion: hardware.UniqueMacAddress(),
+		"MACAddresses": {
+			Assertion: hardware.UniqueMACAddress(),
 			Machines: []hardware.Machine{
-				{MacAddress: "foo"},
-				{MacAddress: "foo"},
+				{MACAddress: "foo"},
+				{MACAddress: "foo"},
 			},
 		},
 		"Hostnames": {
@@ -132,11 +132,11 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 				{Hostname: "foo"},
 			},
 		},
-		"BmcIpAddresses": {
-			Assertion: hardware.UniqueBmcIpAddress(),
+		"BMCIPAddresses": {
+			Assertion: hardware.UniqueBMCIPAddress(),
 			Machines: []hardware.Machine{
-				{BmcIpAddress: "foo"},
-				{BmcIpAddress: "foo"},
+				{BMCIPAddress: "foo"},
+				{BMCIPAddress: "foo"},
 			},
 		},
 	}
@@ -152,16 +152,16 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 
 func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
-		Id:           uuid.NewString(),
-		IpAddress:    "10.10.10.10",
+		ID:           uuid.NewString(),
+		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
 		Nameservers:  []string{"ns1"},
-		MacAddress:   "00:00:00:00:00:00",
+		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
-		BmcIpAddress: "10.10.10.11",
-		BmcUsername:  "username",
-		BmcPassword:  "password",
-		BmcVendor:    "dell",
+		BMCIPAddress: "10.10.10.11",
+		BMCUsername:  "username",
+		BMCPassword:  "password",
+		BMCVendor:    "dell",
 	}
 }

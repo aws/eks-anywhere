@@ -22,6 +22,7 @@ type Client interface {
 	DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*v1.DaemonSet, error)
 	GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*v1.Deployment, error)
+	RolloutRestartDaemonSet(ctx context.Context, name, namespace, kubeconfig string) error
 }
 
 type retrierClient struct {
@@ -107,6 +108,14 @@ func (c *retrierClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *typ
 	return c.Retry(
 		func() error {
 			return c.checkCiliumDaemonSetReady(ctx, cluster)
+		},
+	)
+}
+
+func (c *retrierClient) RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
+	return c.Retry(
+		func() error {
+			return c.RolloutRestartDaemonSet(ctx, ciliumDaemonSetName, namespace, cluster.KubeconfigFile)
 		},
 	)
 }

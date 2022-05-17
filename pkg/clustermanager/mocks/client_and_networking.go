@@ -99,20 +99,6 @@ func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
-// DaemonSetRolloutRestart mocks base method.
-func (m *MockClusterClient) DaemonSetRolloutRestart(arg0 context.Context, arg1, arg2, arg3 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DaemonSetRolloutRestart", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DaemonSetRolloutRestart indicates an expected call of DaemonSetRolloutRestart.
-func (mr *MockClusterClientMockRecorder) DaemonSetRolloutRestart(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DaemonSetRolloutRestart", reflect.TypeOf((*MockClusterClient)(nil).DaemonSetRolloutRestart), arg0, arg1, arg2, arg3)
-}
-
 // DeleteAWSIamConfig mocks base method.
 func (m *MockClusterClient) DeleteAWSIamConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -689,6 +675,20 @@ func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Sp
 func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
+}
+
+// RunPostControlPlaneUpgradeSetup mocks base method.
+func (m *MockNetworking) RunPostControlPlaneUpgradeSetup(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostControlPlaneUpgradeSetup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostControlPlaneUpgradeSetup indicates an expected call of RunPostControlPlaneUpgradeSetup.
+func (mr *MockNetworkingMockRecorder) RunPostControlPlaneUpgradeSetup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneUpgradeSetup", reflect.TypeOf((*MockNetworking)(nil).RunPostControlPlaneUpgradeSetup), arg0, arg1)
 }
 
 // Upgrade mocks base method.
