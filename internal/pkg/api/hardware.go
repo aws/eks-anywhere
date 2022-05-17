@@ -24,10 +24,10 @@ type Hardware = hardware.Machine
 
 func NewBmcSecretConfig(h *Hardware) pbnj.BmcSecretConfig {
 	return pbnj.BmcSecretConfig{
-		Host:     h.BmcIpAddress,
-		Username: h.BmcUsername,
-		Password: h.BmcPassword,
-		Vendor:   h.BmcVendor,
+		Host:     h.BMCIPAddress,
+		Username: h.BMCUsername,
+		Password: h.BMCPassword,
+		Vendor:   h.BMCVendor,
 	}
 }
 
@@ -62,8 +62,8 @@ func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
 	for _, h := range slice {
-		if _, exists := hardwareMap[h.Id]; !exists {
-			hardwareMap[h.Id] = h
+		if _, exists := hardwareMap[h.ID]; !exists {
+			hardwareMap[h.ID] = h
 		}
 	}
 

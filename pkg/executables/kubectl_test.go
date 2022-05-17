@@ -1026,11 +1026,11 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 
 	err := k.SetEksaControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
 	if err != nil {
-		t.Fatalf("Kubectl.DaemonSetRolloutRestart() error = %v, want nil", err)
+		t.Fatalf("Kubectl.RolloutRestartDaemonSet() error = %v, want nil", err)
 	}
 }
 
-func TestKubectlDaemonSetRolloutRestartSuccess(t *testing.T) {
+func TestKubectlRolloutRestartDaemonSetSuccess(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1040,13 +1040,13 @@ func TestKubectlDaemonSetRolloutRestartSuccess(t *testing.T) {
 		},
 	).Return(bytes.Buffer{}, nil)
 
-	err := k.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
+	err := k.RolloutRestartDaemonSet(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
 	if err != nil {
-		t.Fatalf("Kubectl.DaemonSetRolloutRestart() error = %v, want nil", err)
+		t.Fatalf("Kubectl.RolloutRestartDaemonSet() error = %v, want nil", err)
 	}
 }
 
-func TestKubectlDaemonSetRolloutRestartError(t *testing.T) {
+func TestKubectlRolloutRestartDaemonSetError(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
@@ -1056,9 +1056,9 @@ func TestKubectlDaemonSetRolloutRestartError(t *testing.T) {
 		},
 	).Return(bytes.Buffer{}, fmt.Errorf("error"))
 
-	err := k.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
+	err := k.RolloutRestartDaemonSet(ctx, "cilium", constants.KubeSystemNamespace, cluster.KubeconfigFile)
 	if err == nil {
-		t.Fatalf("Kubectl.DaemonSetRolloutRestart() expected error, but was nil")
+		t.Fatalf("Kubectl.RolloutRestartDaemonSet() expected error, but was nil")
 	}
 }
 

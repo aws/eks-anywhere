@@ -109,7 +109,7 @@ func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 
 		var count int
 		for id, h := range hardwarePool {
-			if strings.ToLower(h.BmcVendor) == vendor || vendor == api.HardwareVendorUnspecified {
+			if strings.ToLower(h.BMCVendor) == vendor || vendor == api.HardwareVendorUnspecified {
 				if _, exists := e.TestHardware[id]; !exists {
 					count++
 					e.TestHardware[id] = h
@@ -283,10 +283,10 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		}
 
 		if powerState != pbnj.PowerStateOff {
-			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
+			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.ID, h.Hostname, h.BMCIPAddress)
 			failedToDecomm = append(failedToDecomm, h)
 		} else {
-			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.ID, h.Hostname, h.BMCIPAddress)
 		}
 	}
 

@@ -61,3 +61,8 @@ func TestKindnetdGenerateManifestWriterError(t *testing.T) {
 		t.Fatalf("Kindnetd.GenerateManifestFile() error = nil, want not nil")
 	}
 }
+
+func TestKindnetdRunPostControlPlaneUpgradeSetup(t *testing.T) {
+	tt := newKindnetdTest(t)
+	tt.Expect(tt.k.RunPostControlPlaneUpgradeSetup(context.Background(), nil)).To(Succeed())
+}

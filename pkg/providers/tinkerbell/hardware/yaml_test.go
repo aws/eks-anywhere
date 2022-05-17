@@ -16,11 +16,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func TestTinkerbellManifestYamlWrites(t *testing.T) {
+func TestTinkerbellManifestYAMLWrites(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	var buf bytes.Buffer
-	writer := hardware.NewTinkerbellManifestYaml(&buf)
+	writer := hardware.NewTinkerbellManifestYAML(&buf)
 
 	expect := NewValidMachine()
 
@@ -52,10 +52,10 @@ func TestTinkerbellManifestYamlWrites(t *testing.T) {
 	AsserBMCSecretRepresentsMachine(g, secret, expect)
 }
 
-func TestTinkerbellManifestYamlWriteErrors(t *testing.T) {
+func TestTinkerbellManifestYAMLWriteErrors(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	writer := hardware.NewTinkerbellManifestYaml(ErrWriter{})
+	writer := hardware.NewTinkerbellManifestYAML(ErrWriter{})
 
 	expect := NewValidMachine()
 
@@ -65,17 +65,17 @@ func TestTinkerbellManifestYamlWriteErrors(t *testing.T) {
 
 func AssertTinkerbellHardwareRepresentsMachine(g *gomega.WithT, h tinkv1alpha1.Hardware, m hardware.Machine) {
 	g.Expect(h.ObjectMeta.Name).To(gomega.Equal(m.Hostname))
-	g.Expect(h.Spec.ID).To(gomega.Equal(m.Id))
+	g.Expect(h.Spec.ID).To(gomega.Equal(m.ID))
 }
 
 func AssertTinkerbellBMCRepresentsMachine(g *gomega.WithT, b pbnjv1alpha1.BMC, m hardware.Machine) {
-	g.Expect(b.Spec.Host).To(gomega.Equal(m.BmcIpAddress))
-	g.Expect(b.Spec.Vendor).To(gomega.Equal(m.BmcVendor))
+	g.Expect(b.Spec.Host).To(gomega.Equal(m.BMCIPAddress))
+	g.Expect(b.Spec.Vendor).To(gomega.Equal(m.BMCVendor))
 }
 
 func AsserBMCSecretRepresentsMachine(g *gomega.WithT, s corev1.Secret, m hardware.Machine) {
-	g.Expect(s.Data).To(gomega.HaveKeyWithValue("username", []byte(m.BmcUsername)))
-	g.Expect(s.Data).To(gomega.HaveKeyWithValue("password", []byte(m.BmcPassword)))
+	g.Expect(s.Data).To(gomega.HaveKeyWithValue("username", []byte(m.BMCUsername)))
+	g.Expect(s.Data).To(gomega.HaveKeyWithValue("password", []byte(m.BMCPassword)))
 }
 
 type ErrWriter struct{}

@@ -174,3 +174,9 @@ func TestUpgraderUpgradeSuccessValuesChangedUpgradeFromNilCiliumConfigSpec(t *te
 
 	tt.Expect(tt.u.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec, []string{})).To(BeNil(), "upgrader.Upgrade() should succeed and return nil ChangeDiff")
 }
+
+func TestUpgraderRunPostControlPlaneUpgradeSetup(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.client.EXPECT().RolloutRestartCiliumDaemonSet(tt.ctx, tt.cluster)
+	tt.Expect(tt.u.RunPostControlPlaneUpgradeSetup(tt.ctx, tt.cluster)).To(Succeed())
+}

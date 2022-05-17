@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type Kindnetd struct {
@@ -28,6 +29,10 @@ func NewKindnetd(client Client) *Kindnetd {
 
 func (c *Kindnetd) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error) {
 	return generateManifest(clusterSpec)
+}
+
+func (c *Kindnetd) RunPostControlPlaneUpgradeSetup(_ context.Context, _ *types.Cluster) error {
+	return nil
 }
 
 func generateManifest(clusterSpec *cluster.Spec) ([]byte, error) {

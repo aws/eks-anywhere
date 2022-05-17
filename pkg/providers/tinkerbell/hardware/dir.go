@@ -9,8 +9,8 @@ import (
 // DefaultManifestDir is the default directory for writing Tinkerbell hardware files.
 const DefaultManifestDir = "hardware-manifests"
 
-// DefaultJsonDir is the default directory for writing hardware json files.
-const DefaultJsonDir = "json"
+// DefaultJSONDir is the default directory for writing hardware json files.
+const DefaultJSONDir = "json"
 
 // CreateDefaultManifestDir creates the defaut directory where hardware files are written returning it as the string parameter.
 func CreateManifestDir(path string) (string, error) {
@@ -29,10 +29,10 @@ func CreateManifestDir(path string) (string, error) {
 	return path, nil
 }
 
-// CreateDefaultJsonDir creates the defaut directory where hardware json files are written returning it as the string
+// CreateDefaultJSONDir creates the defaut directory where hardware json files are written returning it as the string
 // parameter.
-func CreateDefaultJsonDir(basepath string) (string, error) {
-	path := filepath.Join(basepath, DefaultJsonDir)
+func CreateDefaultJSONDir(basepath string) (string, error) {
+	path := filepath.Join(basepath, DefaultJSONDir)
 	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return "", fmt.Errorf(
 			"could not create json manifest directory: %v: %v",
