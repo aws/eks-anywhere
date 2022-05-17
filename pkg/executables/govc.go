@@ -618,12 +618,19 @@ func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) 
 	exists := false
 
 	err := g.retrier.Retry(func() error {
-		networkResponse, err := g.exec(ctx, "find", "-maxdepth=1", filepath.Dir(network), "-type", "n", "-name", filepath.Base(network))
+		networkResponse, err := g.exec(ctx, "find", "-maxdepth=1", "-json=true", filepath.Dir(network), "-type", "n", "-name", filepath.Base(network))
 		if err != nil {
 			return err
 		}
 
-		if networkResponse.String() == "" {
+		foundNetworks := make([]string, 0)
+		if err = json.Unmarshal(networkResponse.Bytes(), &foundNetworks); err != nil {
+			logger.V(2).Info(fmt.Sprintf("Failed unmarshalling govc response: %s, %v", networkResponse.String(), err))
+			exists = false
+			return nil
+		}
+
+		if len(foundNetworks) != 1 {
 			exists = false
 			return nil
 		}
