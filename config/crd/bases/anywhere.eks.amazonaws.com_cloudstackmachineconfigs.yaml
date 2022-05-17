@@ -97,7 +97,7 @@ spec:
                     description: Name of a resource in the CloudStack environment.
                       Mutually exclusive with Id
                     type: string
-                  sizeInGB:
+                  customSizeInGB:
                     description: disk size in GB, > 0 for customized disk offering;
                       = 0 for non-customized disk offering
                     format: int64

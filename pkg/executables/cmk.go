@@ -149,11 +149,11 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, di
 		return fmt.Errorf("disk offering ID/Name %s/%s not found", diskOffering.Id, diskOffering.Name)
 	}
 
-	if offerings[0].Customized && diskOffering.Size <= 0 {
-		return fmt.Errorf("disk offering size %d <= 0 for customized disk offering", diskOffering.Size)
+	if offerings[0].Customized && diskOffering.CustomSize <= 0 {
+		return fmt.Errorf("disk offering size %d <= 0 for customized disk offering", diskOffering.CustomSize)
 	}
-	if !offerings[0].Customized && diskOffering.Size > 0 {
-		return fmt.Errorf("disk offering size %d > 0 for non-customized disk offering", diskOffering.Size)
+	if !offerings[0].Customized && diskOffering.CustomSize > 0 {
+		return fmt.Errorf("disk offering size %d > 0 for non-customized disk offering", diskOffering.CustomSize)
 	}
 	return nil
 }

@@ -73,11 +73,11 @@ var diskOfferingResourceID = v1alpha1.CloudStackResourceDiskOffering{
 	Label:      "data_disk",
 }
 
-var diskOfferingSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
+var diskOfferingCustomSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
 	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 		Id: "TEST_RESOURCE",
 	},
-	Size:       1,
+	CustomSize: 1,
 	MountPath:  "/TEST_RESOURCE",
 	Device:     "/dev/vdb",
 	Filesystem: "ext4",
@@ -539,14 +539,14 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       4,
 		},
 		{
-			testName:         "listdiskofferings customized results with sizeInGB > 0",
+			testName:         "listdiskofferings customized results with customSizeInGB > 0",
 			jsonResponseFile: "testdata/cmk_list_diskoffering_singular_customized.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
 				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingSizeInGB)
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingCustomSizeInGB)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -554,14 +554,14 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       1,
 		},
 		{
-			testName:         "listdiskofferings non-customized results with sizeInGB > 0",
+			testName:         "listdiskofferings non-customized results with customSizeInGB > 0",
 			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
 				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingSizeInGB)
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingCustomSizeInGB)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -569,7 +569,7 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       1,
 		},
 		{
-			testName:         "listdiskofferings non-customized results with sizeInGB > 0",
+			testName:         "listdiskofferings non-customized results with customSizeInGB > 0",
 			jsonResponseFile: "testdata/cmk_list_diskoffering_singular_customized.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
