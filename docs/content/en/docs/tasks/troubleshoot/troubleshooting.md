@@ -4,6 +4,8 @@ linkTitle: "Troubleshooting"
 weight: 40
 description: >
   Troubleshooting EKS Anywhere clusters
+aliases:
+   - /docs/tasks/troubleshoot/_troubleshooting
 ---
 
 This guide covers some generic troubleshooting techniques and then cover more detailed examples. You may want to search this document for a fragment of the error you are seeing.
