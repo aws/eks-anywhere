@@ -638,6 +638,13 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
 	}
+	if csSpec.Spec.Symlinks == nil {
+		csSpec.Spec.Symlinks = map[string]string{}
+	}
+	// TODO: update capc to add symlinks
+	//for key, element := range csMachineTemplate.Spec.Spec.Spec.Symlinks {
+	//	csSpec.Spec.Symlinks[key] = element
+	//}
 	return csSpec, nil
 }
 

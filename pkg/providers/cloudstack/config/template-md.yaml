@@ -73,6 +73,9 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackSymlinks}}
+      - if [ ! -L {{$dir}} ] ; then mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ; mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ; else echo "{{$dir}} already symlnk"; fi
+{{- end}}
 {{- if .cloudstackDiskOfferingProvided }}
       diskSetup:
         filesystems:
@@ -82,7 +85,7 @@ spec:
               - -E
               - lazy_itable_init=1,lazy_journal_init=1
             filesystem: {{ .cloudstackDiskOfferingFilesystem }}
-            label: data_disk
+            label: {{ .cloudstackDiskOfferingLabel }}
         partitions:
           - device: {{ .cloudstackDiskOfferingDevice }}
             layout: true

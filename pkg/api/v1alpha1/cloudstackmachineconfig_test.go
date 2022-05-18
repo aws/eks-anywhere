@@ -33,6 +33,9 @@ var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
 	UserCustomDetails: map[string]string{
 		"foo": "bar",
 	},
+	Symlinks: map[string]string{
+		"/var/log/kubernetes": "/data/var/log/kubernetes",
+	},
 	AffinityGroupIds: []string{"affinityGroupId1"},
 	Affinity:         "pro",
 }
@@ -368,9 +371,23 @@ func TestCloudStackMachineNotEqualUserCustomDetailsNil(t *testing.T) {
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
 }
 
+func TestCloudStackMachineNotEqualSymlinksNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Symlinks = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
+}
+
 func TestCloudStackMachineNotEqualUserCustomDetails(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.UserCustomDetails["i"] = "j"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualSynlinks(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Symlinks["i"] = "j"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
 }

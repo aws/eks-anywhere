@@ -755,6 +755,12 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}
+			// TODO: add symlinks to capc provider
+			//if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.Symlinks, csMachineTemplate.Spec.Spec.Spec.Symlinks) {
+			//	err := fmt.Errorf("MachineSpec %s Synlinks are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Symlinks, csMachineTemplate.Spec.Spec.Spec.Symlinks)
+			//	e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+			//	return err
+			//}
 			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs) {
 				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs)
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())

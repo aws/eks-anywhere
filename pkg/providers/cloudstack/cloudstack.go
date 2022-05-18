@@ -539,6 +539,14 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 			return true
 		}
 	}
+	if len(oldCsmc.Spec.Symlinks) != len(newCsmc.Spec.Symlinks) {
+		return true
+	}
+	for key, value := range oldCsmc.Spec.Symlinks {
+		if value != newCsmc.Spec.Symlinks[key] {
+			return true
+		}
+	}
 	return false
 }
 
@@ -647,6 +655,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackControlPlaneTemplateOfferingId":     controlPlaneMachineSpec.Template.Id,
 		"cloudstackControlPlaneTemplateOfferingName":   controlPlaneMachineSpec.Template.Name,
 		"cloudstackControlPlaneCustomDetails":          controlPlaneMachineSpec.UserCustomDetails,
+		"cloudstackControlPlaneSymlinks":               controlPlaneMachineSpec.Symlinks,
 		"cloudstackControlPlaneAffinity":               controlPlaneMachineSpec.Affinity,
 		"cloudstackControlPlaneAffinityGroupIds":       controlPlaneMachineSpec.AffinityGroupIds,
 		"cloudstackEtcdDiskOfferingProvided":           len(etcdMachineSpec.DiskOffering.Id) > 0 || len(etcdMachineSpec.DiskOffering.Name) > 0,
@@ -662,6 +671,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackEtcdTemplateOfferingId":             etcdMachineSpec.Template.Id,
 		"cloudstackEtcdTemplateOfferingName":           etcdMachineSpec.Template.Name,
 		"cloudstackEtcdCustomDetails":                  etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdSymlinks":                       etcdMachineSpec.Symlinks,
 		"cloudstackEtcdAffinity":                       etcdMachineSpec.Affinity,
 		"cloudstackEtcdAffinityGroupIds":               etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                      controlPlaneMachineSpec.Users[0].Name,
@@ -752,6 +762,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDiskOfferingFilesystem": workerNodeGroupMachineSpec.DiskOffering.Filesystem,
 		"cloudstackDiskOfferingLabel":      workerNodeGroupMachineSpec.DiskOffering.Label,
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
+		"cloudstackSymlinks":          workerNodeGroupMachineSpec.Symlinks,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   workerNodeGroupConfiguration.Count,
