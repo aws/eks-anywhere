@@ -53,14 +53,14 @@ func NewHelm(executable Executable, opts ...HelmOpt) *Helm {
 	return h
 }
 
-func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error) {
+func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
 	valuesYaml, err := yaml.Marshal(values)
 	if err != nil {
 		return nil, fmt.Errorf("failed marshalling values for helm template: %v", err)
 	}
 
 	result, err := h.executable.Command(
-		ctx, "template", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
+		ctx, "template", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "--kube-version", kubeVersion, "-f", "-",
 	).WithStdIn(valuesYaml).WithEnvVars(h.env).Run()
 	if err != nil {
 		return nil, err

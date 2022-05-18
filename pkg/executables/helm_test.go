@@ -63,20 +63,20 @@ key2: values2
 func TestHelmTemplateSuccess(t *testing.T) {
 	tt := newHelmTemplateTest(t)
 	expectCommand(
-		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
-	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
+	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
 }
 
 func TestHelmTemplateSuccessWithRegistryMirror(t *testing.T) {
 	tt := newHelmTemplateTest(t, executables.WithRegistryMirror("1.2.3.4:443"))
 	ociRegistryMirror := "oci://1.2.3.4:443/account/charts"
 	expectCommand(
-		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
+		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
-	tt.Expect(tt.h.Template(tt.ctx, ociRegistryMirror, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
+	tt.Expect(tt.h.Template(tt.ctx, ociRegistryMirror, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
 }
 
 func TestHelmTemplateSuccessWithEnv(t *testing.T) {
@@ -88,17 +88,17 @@ func TestHelmTemplateSuccessWithEnv(t *testing.T) {
 		"HELM_EXPERIMENTAL_OCI": "1",
 	}
 	expectCommand(
-		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(expectedEnv).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
-	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
+	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
 }
 
 func TestHelmTemplateErrorYaml(t *testing.T) {
 	tt := newHelmTemplateTest(t)
 	values := func() {}
 
-	_, gotErr := tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, values)
+	_, gotErr := tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, values, "1.22")
 	tt.Expect(gotErr).To(HaveOccurred(), "helm.Template() should fail marshalling values to yaml")
 	tt.Expect(gotErr).To(MatchError(ContainSubstring("failed marshalling values for helm template: error marshaling into JSON")))
 }

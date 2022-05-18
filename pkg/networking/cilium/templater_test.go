@@ -57,8 +57,8 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 	}
 }
 
-func (t *templaterTest) expectHelmTemplateWith(wantValues gomock.Matcher) *gomock.Call {
-	return t.h.EXPECT().Template(t.ctx, t.uri, t.version, t.namespace, wantValues)
+func (t *templaterTest) expectHelmTemplateWith(wantValues gomock.Matcher, kubeVersion string) *gomock.Call {
+	return t.h.EXPECT().Template(t.ctx, t.uri, t.version, t.namespace, wantValues, kubeVersion)
 }
 
 func eqMap(m map[string]interface{}) gomock.Matcher {
@@ -128,14 +128,14 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 	}
 
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateUpgradePreflightManifest() should return right manifest")
 }
 
 func TestTemplaterGenerateUpgradePreflightManifestError(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(gomock.Any()).Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
+	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
 
 	_, err := tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradePreflightManifest() should fail")
@@ -172,7 +172,7 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	}
 
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }
@@ -208,14 +208,14 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 	}
 
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }
 
 func TestTemplaterGenerateManifestError(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(gomock.Any()).Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
+	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
 
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
@@ -253,14 +253,14 @@ func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
 	}
 
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
 
 	tt.Expect(tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
 }
 
 func TestTemplaterGenerateUpgradeManifestError(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(gomock.Any()).Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
+	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
 
 	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")

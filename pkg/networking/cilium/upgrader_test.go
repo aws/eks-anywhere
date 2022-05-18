@@ -69,7 +69,7 @@ func (tt *upgraderTest) expectTemplateManifest() *gomock.Call {
 func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 	// Using Any because this already tested in the templater tests
 	return tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}),
+		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
 	).Return(manifest, nil)
 }
 
