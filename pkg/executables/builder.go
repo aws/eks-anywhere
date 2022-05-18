@@ -117,7 +117,7 @@ func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string
 	if useDocker {
 		// We build, init and store the container in the builder so we reuse the same one for all the executables
 		container := newDockerContainer(image, e.workingDir, e.mountDirs, BuildDockerExecutable())
-		if err := container.init(ctx); err != nil {
+		if err := container.Init(ctx); err != nil {
 			return nil, nil, err
 		}
 		e.container = container
