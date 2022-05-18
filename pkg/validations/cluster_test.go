@@ -93,3 +93,10 @@ func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
+
+func TestValidateK8s123Support(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube123
+	tt.Expect(validations.ValidateK8s123Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.23 is not enabled. Please set the env variable K8S_1_23_SUPPORT")))
+}
