@@ -1,8 +1,12 @@
 
 ---
-title: "Curating Packages Troubleshooting"
-linkTitle: "Curating Packages Troubleshooting"
+title: "Curated Packages Troubleshooting"
+linkTitle: "Curated Packages Troubleshooting"
 weight: 50
+description: >
+  Troubleshooting specific to curated packages
+aliases:
+   - /docs/tasks/troubleshoot/_packages
 ---
 
 

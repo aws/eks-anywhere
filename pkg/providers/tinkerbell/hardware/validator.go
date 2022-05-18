@@ -3,6 +3,7 @@ package hardware
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 
@@ -93,6 +94,16 @@ func StaticMachineAssertions() MachineAssertion {
 
 		if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
 			return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
+		}
+
+		for key, value := range m.Labels {
+			if err := validateLabelKey(key); err != nil {
+				return err
+			}
+
+			if err := validateLabelValue(value); err != nil {
+				return err
+			}
 		}
 
 		if m.HasBMC() {
@@ -216,4 +227,18 @@ func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
 		UniqueHostnames(),
 		UniqueBMCIPAddress(),
 	}...)
+}
+
+func validateLabelKey(k string) error {
+	if errs := apimachineryvalidation.IsQualifiedName(k); len(errs) != 0 {
+		return fmt.Errorf("%v", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+func validateLabelValue(v string) error {
+	if errs := apimachineryvalidation.IsValidLabelValue(v); len(errs) != 0 {
+		return fmt.Errorf("%v", strings.Join(errs, "; "))
+	}
+	return nil
 }
