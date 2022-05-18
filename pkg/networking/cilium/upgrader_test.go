@@ -41,10 +41,12 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 		manifest: []byte("manifestContent"),
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.10-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		newSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		cluster: &types.Cluster{
@@ -69,7 +71,7 @@ func (tt *upgraderTest) expectTemplateManifest() *gomock.Call {
 func (tt *upgraderTest) expectTemplate(manifest []byte) *gomock.Call {
 	// Using Any because this already tested in the templater tests
 	return tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}),
+		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
 	).Return(manifest, nil)
 }
 
