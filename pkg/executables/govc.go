@@ -56,7 +56,7 @@ const (
 type Govc struct {
 	writer filewriter.FileWriter
 	Executable
-	retrier      *retrier.Retrier
+	*retrier.Retrier
 	requiredEnvs *syncSlice
 }
 
@@ -67,7 +67,7 @@ func NewGovc(executable Executable, writer filewriter.FileWriter) *Govc {
 	return &Govc{
 		writer:       writer,
 		Executable:   executable,
-		retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		Retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		requiredEnvs: envVars,
 	}
 }
@@ -106,7 +106,13 @@ func (g *Govc) Logout(ctx context.Context) error {
 
 func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
 	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
-	templateResponse, err := g.exec(ctx, params...)
+
+	var templateResponse bytes.Buffer
+	var err error
+	err = g.Retry(func() error {
+		templateResponse, err = g.exec(ctx, params...)
+		return err
+	})
 	if err != nil {
 		return "", fmt.Errorf("getting template: %v", err)
 	}
@@ -355,7 +361,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 
 	bFolderNotFound := false
 	params := []string{"folder.info", deployFolder}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		errBuffer, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		errString := strings.ToLower(errBuffer.String())
 		if err != nil {
@@ -369,7 +375,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 	})
 	if err != nil || bFolderNotFound {
 		params = []string{"folder.create", deployFolder}
-		err = g.retrier.Retry(func() error {
+		err = g.Retry(func() error {
 			errBuffer, err := g.ExecuteWithEnv(ctx, envMap, params...)
 			errString := strings.ToLower(errBuffer.String())
 			if err != nil && !strings.Contains(errString, "already exists") {
@@ -546,7 +552,7 @@ func (g *Govc) ValidateVCenterConnection(ctx context.Context, server string) err
 }
 
 func (g *Govc) ValidateVCenterAuthentication(ctx context.Context) error {
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		_, err := g.exec(ctx, "about", "-k")
 		return err
 	})
@@ -593,7 +599,7 @@ func (g *Govc) ConfigureCertThumbprint(ctx context.Context, server, thumbprint s
 
 func (g *Govc) DatacenterExists(ctx context.Context, datacenter string) (bool, error) {
 	exists := false
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		result, err := g.exec(ctx, "datacenter.info", datacenter)
 		if err == nil {
 			exists = true
@@ -617,7 +623,7 @@ func (g *Govc) DatacenterExists(ctx context.Context, datacenter string) (bool, e
 func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) {
 	exists := false
 
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		networkResponse, err := g.exec(ctx, "find", "-maxdepth=1", filepath.Dir(network), "-type", "n", "-name", filepath.Base(network))
 		if err != nil {
 			return err
@@ -648,7 +654,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		return err
 	}
 	params := []string{"datastore.info", machineConfig.Spec.Datastore}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		_, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
 			datastorePath := filepath.Dir(machineConfig.Spec.Datastore)
@@ -673,7 +679,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 			return err
 		}
 		params = []string{"folder.info", machineConfig.Spec.Folder}
-		err = g.retrier.Retry(func() error {
+		err = g.Retry(func() error {
 			_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 			if err != nil {
 				err = g.createFolder(ctx, envMap, machineConfig)
@@ -699,7 +705,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 
 	var poolInfoResponse bytes.Buffer
 	params = []string{"find", "-json", "/" + datacenterConfig.Spec.Datacenter, "-type", "p", "-name", filepath.Base(machineConfig.Spec.ResourcePool)}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		poolInfoResponse, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		return err
 	})
@@ -756,7 +762,7 @@ func prependPath(folderType FolderType, folderPath string, datacenter string) (s
 
 func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, machineConfig *v1alpha1.VSphereMachineConfig) error {
 	params := []string{"folder.create", machineConfig.Spec.Folder}
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
 			return fmt.Errorf("creating folder: %v", err)
@@ -773,7 +779,12 @@ func (g *Govc) isValidPath(ctx context.Context, envMap map[string]string, path s
 }
 
 func (g *Govc) GetTags(ctx context.Context, path string) ([]string, error) {
-	tagsResponse, err := g.exec(ctx, "tags.attached.ls", "-json", "-r", path)
+	var tagsResponse bytes.Buffer
+	var err error
+	err = g.Retry(func() error {
+		tagsResponse, err = g.exec(ctx, "tags.attached.ls", "-json", "-r", path)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("govc returned error when listing tags for %s: %v", path, err)
 	}
