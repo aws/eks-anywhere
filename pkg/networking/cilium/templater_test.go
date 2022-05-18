@@ -45,6 +45,7 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
 			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
 			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
@@ -52,6 +53,7 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
+			s.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1.22.5-eks-1-22-9"
 			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 	}
@@ -142,6 +144,14 @@ func TestTemplaterGenerateUpgradePreflightManifestError(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
 }
 
+func TestTemplaterGenerateUpgradePreflightManifestInvalidKubeVersion(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+	_, err := tt.t.GenerateUpgradePreflightManifest(tt.ctx, tt.spec)
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradePreflightManifest() should fail")
+	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
+}
+
 func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
 		"cni": map[string]interface{}{
@@ -222,6 +232,14 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
 }
 
+func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
+	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
+}
+
 func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
 	wantValues := map[string]interface{}{
 		"cni": map[string]interface{}{
@@ -265,6 +283,15 @@ func TestTemplaterGenerateUpgradeManifestError(t *testing.T) {
 	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
+}
+
+func TestTemplaterGenerateUpgradeManifestInvalidKubeVersion(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.currentSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+
+	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
+	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
 }
 
 func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
@@ -335,4 +362,13 @@ func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
 			test.AssertContentToFile(t, string(networkPolicy), tt.wantNetworkPolicyFile)
 		})
 	}
+}
+
+func TestGenerateNetworkPolicyManifestInvalidKubeVersion(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+
+	_, err := tt.t.GenerateNetworkPolicyManifest(tt.spec, []string{})
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
+	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
 }

@@ -38,13 +38,11 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 
 	uri, version := getChartUriAndVersion(spec)
 
-	k8sVersion, err := getKubeVersion(spec)
+	kubeVersion, err := getKubeVersionString(spec)
 	if err != nil {
 		return nil, err
 	}
 
-	kubeVersion := fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor)
-	
 	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
@@ -64,12 +62,10 @@ func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, ne
 
 	uri, version := getChartUriAndVersion(newSpec)
 
-	k8sVersion, err := getKubeVersion(currentSpec)
+	kubeVersion, err := getKubeVersionString(currentSpec)
 	if err != nil {
 		return nil, err
 	}
-
-	kubeVersion := fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor)
 
 	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
@@ -84,12 +80,10 @@ func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([
 
 	uri, version := getChartUriAndVersion(spec)
 
-	k8sVersion, err := getKubeVersion(spec)
+	kubeVersion, err := getKubeVersionString(spec)
 	if err != nil {
 		return nil, err
 	}
-
-	kubeVersion := fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor)
 
 	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
@@ -194,4 +188,12 @@ func getKubeVersion(spec *cluster.Spec) (*semver.Version, error) {
 		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
 	}
 	return k8sVersion, nil
+}
+
+func getKubeVersionString(spec *cluster.Spec) (string, error) {
+	k8sVersion, err := getKubeVersion(spec)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor), nil
 }
