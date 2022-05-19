@@ -34,7 +34,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -48,11 +47,8 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Cmk                       *executables.Cmk
-	Tink                      *executables.Tink
-	Pbnj                      *pbnj.Pbnj
 	SnowAwsClient             aws.Clients
 	SnowConfigManager         *snow.ConfigManager
-	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
@@ -218,7 +214,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile).WithWriter()
+		f.WithKubectl().WithWriter()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -297,10 +293,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				clusterConfig,
 				f.dependencies.Writer,
 				f.dependencies.Kubectl,
-				tinkerbell.TinkerbellClients{
-					ProviderTinkClient: f.dependencies.Tink,
-					ProviderPbnjClient: f.dependencies.Pbnj,
-				},
 				time.Now,
 				skipIpCheck,
 				hardwareConfigFile,
@@ -464,48 +456,6 @@ func (f *Factory) WithAwsSnow() *Factory {
 
 		f.dependencies.SnowAwsClient = deviceClientMap
 
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithTink(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Tink != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
-		if err != nil {
-			return err
-		}
-		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithPbnj(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Pbnj != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
-		if err != nil {
-			return err
-		}
-
-		pbnjClient, err := pbnj.NewPBNJClient(tinkerbellDatacenterConfig.Spec.TinkerbellPBnJGRPCAuth)
-		if err != nil {
-			return err
-		}
-		f.dependencies.Pbnj = pbnjClient
 		return nil
 	})
 
