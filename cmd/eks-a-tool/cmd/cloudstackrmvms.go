@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -54,9 +54,14 @@ func cloudstackRmVms(ctx context.Context, clusterName string, dryRun bool) error
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	defer close.CheckErr(ctx)
-	log.Printf("dryrun %t", dryRun)
-	tmpWriter, _ := filewriter.NewWriter("rmvms")
+	tmpWriter, err := filewriter.NewWriter("rmvms")
+	if err != nil {
+		return fmt.Errorf("creating filewriter for directory rmvms: %v", err)
+	}
 	execConfig, err := decoder.ParseCloudStackSecret()
+	if err != nil {
+		return fmt.Errorf("building cmk executable: %v", err)
+	}
 	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, *execConfig)
 	defer cmk.Close(ctx)
 
