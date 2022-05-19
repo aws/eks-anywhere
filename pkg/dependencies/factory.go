@@ -278,6 +278,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			f.dependencies.Provider = snow.NewProvider(
 				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
+				skipIpCheck,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:
