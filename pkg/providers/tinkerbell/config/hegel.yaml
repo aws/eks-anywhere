@@ -1,0 +1,78 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: hegel-role
+rules:
+  - apiGroups:
+      - tinkerbell.org
+    resources:
+      - hardware
+      - hardware/status
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - tinkerbell.org
+    resources:
+      - workflows
+      - workflows/status
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: hegel
+  namespace: eksa-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: hegel-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: hegel-role
+subjects:
+  - kind: ServiceAccount
+    name: hegel
+    namespace: eksa-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: hegel
+  name: hegel
+  namespace: eksa-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hegel
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: hegel
+    spec:
+      containers:
+      - args:
+        - --data-model=kubernetes
+        - --grpc-use-tls=false
+        image: public.ecr.aws/h6q6q4n4/hegel:kubified
+        name: hegel
+        ports:
+          - containerPort: 50061
+            hostPort: 50061
+            name: http
+        resources: {}
+      serviceAccountName: hegel
+status: {}

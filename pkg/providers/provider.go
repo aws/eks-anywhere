@@ -21,6 +21,7 @@ type Provider interface {
 	// PreCAPIInstallOnBootstrap is called after the bootstrap cluster is setup but before CAPI resources are installed on it. This allows us to do provider specific configuration on the bootstrap cluster.
 	PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
+	PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string

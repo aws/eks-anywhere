@@ -96,13 +96,13 @@ func validateMinimumExpectedHardware(cluster v1alpha1.ClusterSpec, catalogue *ha
 		requestedNodesCount += cluster.ExternalEtcdConfiguration.Count
 	}
 
-	if catalogue.TotalHardware() < requestedNodesCount {
-		return fmt.Errorf(
-			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			catalogue.TotalHardware(),
-			requestedNodesCount,
-		)
-	}
+	// if catalogue.TotalHardware() < requestedNodesCount {
+	// 	return fmt.Errorf(
+	// 		"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
+	// 		catalogue.TotalHardware(),
+	// 		requestedNodesCount,
+	// 	)
+	// }
 
 	return nil
 }

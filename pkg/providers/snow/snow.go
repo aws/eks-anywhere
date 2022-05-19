@@ -139,6 +139,10 @@ func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1
 	return nil
 }
 
+func (p *SnowProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *SnowProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	return nil, nil
 }

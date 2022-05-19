@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -39,7 +38,7 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if p.setupTinkerbell {
 		logger.V(4).Info("Installing Tinkerbell stack on the bootstrap cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec); err != nil {
+		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, true); err != nil {
 			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
 		}
 	}
@@ -49,13 +48,29 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 
 func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
-	hardwareSpec, err := p.catalogue.HardwareSpecMarshallable()
-	if err != nil {
-		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
-	}
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
+	// hardwareSpec, err := p.catalogue.HardwareSpecMarshallable()
+	// if err != nil {
+	// 	return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	// }
+	err := p.providerKubectlClient.ApplyKubeSpec(ctx, cluster, p.hardwareManifestPath)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
+	return nil
+}
+
+func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if p.setupTinkerbell {
+
+		logger.V(4).Info("Installing Tinkerbell stack on the workload cluster")
+		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, false); err != nil {
+			return fmt.Errorf("installing tinkerbell stack on the workload cluster: %v", err)
+		}
+
+		logger.V(4).Info("Removing local boots container")
+		if err := p.providerDockerClient.ForceRemove(ctx, bootsContainerName); err != nil {
+			return fmt.Errorf("removing local boots container: %v", err)
+		}
 	}
 	return nil
 }
@@ -63,9 +78,9 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	if err := hardware.ParseYAMLCatalogueFromFile(p.catalogue, p.hardwareManifestPath); err != nil {
-		return err
-	}
+	// if err := hardware.ParseYAMLCatalogueFromFile(p.catalogue, p.hardwareManifestPath); err != nil {
+	// 	return err
+	// }
 
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
