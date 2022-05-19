@@ -191,6 +191,10 @@ func TestCmkCleanupVms(t *testing.T) {
 					"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
 				},
 				{
+					"-c", configFilePath, "stop", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
+					"forced=true",
+				},
+				{
 					"-c", configFilePath, "destroy", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
 					"expunge=true",
 				},

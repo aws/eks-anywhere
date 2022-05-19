@@ -420,11 +420,17 @@ func (c *Cmk) CleanupVms(ctx context.Context, clusterName string, dryRun bool) e
 			logger.Info("Found ", "vm_name", vm.Name)
 			continue
 		}
-		deleteCommand := newCmkCommand("destroy virtualmachine")
-		applyCmkArgs(&deleteCommand, withCloudStackId(vm.Id), appendArgs("expunge=true"))
-		deleteResult, err := c.exec(ctx, deleteCommand...)
+		stopCommand := newCmkCommand("stop virtualmachine")
+		applyCmkArgs(&stopCommand, withCloudStackId(vm.Id), appendArgs("forced=true"))
+		stopResult, err := c.exec(ctx, stopCommand...)
 		if err != nil {
-			return fmt.Errorf("destroying virtual machine with name %s and id %s: %s: %v", vm.Name, vm.Id, deleteResult.String(), err)
+			return fmt.Errorf("stopping virtual machine with name %s and id %s: %s: %v", vm.Name, vm.Id, stopResult.String(), err)
+		}
+		destroyCommand := newCmkCommand("destroy virtualmachine")
+		applyCmkArgs(&destroyCommand, withCloudStackId(vm.Id), appendArgs("expunge=true"))
+		destroyResult, err := c.exec(ctx, destroyCommand...)
+		if err != nil {
+			return fmt.Errorf("destroying virtual machine with name %s and id %s: %s: %v", vm.Name, vm.Id, destroyResult.String(), err)
 		}
 		logger.Info("Deleted ", "vm_name", vm.Name, "vm_id", vm.Id)
 	}
