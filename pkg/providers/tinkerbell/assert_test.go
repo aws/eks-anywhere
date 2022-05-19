@@ -26,7 +26,7 @@ func TestAssertMachineConfigsValid_InvalidFails(t *testing.T) {
 	clusterSpec := builder.Build()
 
 	// Invalidate the namespace check.
-	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Namespace = ""
+	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Name = ""
 
 	g.Expect(tinkerbell.AssertMachineConfigsValid(clusterSpec)).ToNot(gomega.Succeed())
 }
@@ -43,9 +43,6 @@ func TestAssertDatacenterConfigValid_InvalidFails(t *testing.T) {
 	for name, mutate := range map[string]func(*tinkerbell.ClusterSpec){
 		"NoObjectName": func(c *tinkerbell.ClusterSpec) {
 			c.DatacenterConfig.ObjectMeta.Name = ""
-		},
-		"NoObjectNamespace": func(c *tinkerbell.ClusterSpec) {
-			c.DatacenterConfig.ObjectMeta.Namespace = ""
 		},
 		"NoTinkerbellIP": func(c *tinkerbell.ClusterSpec) {
 			c.DatacenterConfig.Spec.TinkerbellIP = ""

@@ -63,7 +63,7 @@ func AssertWorkerNodeGroupMachineRefsExists(spec *ClusterSpec) error {
 	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		groupRef := group.MachineGroupRef
 		if err := validateMachineRefExists(groupRef, spec.MachineConfigs); err != nil {
-			return fmt.Errorf("external etcd configuration machine group ref: %v", err)
+			return fmt.Errorf("worker node group configuration machine group ref: %v", err)
 		}
 	}
 
