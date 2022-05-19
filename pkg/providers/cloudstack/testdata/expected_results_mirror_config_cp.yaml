@@ -373,11 +373,15 @@ metadata:
 spec:
   replicas: 3
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: cloud-config
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
     preEtcdadmCommands:
     - swapoff -a
     - hostname "{{ ds.meta_data.local_hostname }}"

@@ -281,8 +281,8 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoH
 github.com/aws/aws-sdk-go-v2/service/sts v1.6.0/go.mod h1:q7o0j7d7HrJk/vr9uUt3BVRASvcU7gYZB9PUgPiByXg=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/cluster-api-provider-cloudstack v0.4.5-0.20220517182938-efac5f45b7af h1:ZqkZycadSKHPrGNP7EBST1fgUcDWt4N3AQpOR/O6eIo=
-github.com/aws/cluster-api-provider-cloudstack v0.4.5-0.20220517182938-efac5f45b7af/go.mod h1:fafGBTlbWJKQz5EuGV36U0smcZ4BYPZ0bxCyz1nLdgg=
+github.com/aws/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220519023735-9b493607e6c3 h1:9c7kQkx/7Gua6WGdx8odZiu32ARRpvRVkH7/3K5oM30=
+github.com/aws/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220519023735-9b493607e6c3/go.mod h1:fafGBTlbWJKQz5EuGV36U0smcZ4BYPZ0bxCyz1nLdgg=
 github.com/aws/eks-anywhere-packages v0.1.1 h1:miuYyEPS0MAzC/1+v99XPzBILYjs+Jl5CoqC95IAIg8=
 github.com/aws/eks-anywhere-packages v0.1.1/go.mod h1:0rPTMF03bX8YuoaHsGzDANxrwjnL3XcyPg8g6I920Ys=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
@@ -1810,7 +1810,6 @@ golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b/go.mod h1:T9bdIzuCu7OtxOm
 golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf/go.mod h1:P+XmwS30IXTQdn5tA2iutPOUgjI07+tq3H3K9MVA1s8=
 golang.org/x/crypto v0.0.0-20210817164053-32db794688a5/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871 h1:/pEO3GD/ABYAjuakUS6xSEmmlyVS4kxBNkeA9tLJiTI=
 golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=
 golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167 h1:O8uGbHCqlTp2P6QJSLmCojM4mN6UemYv8K+dCnmHmu0=
 golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167/go.mod h1:IxCIyHEi3zRg3s0A5j5BB6A9Jmi73HwBIUl50j+osU4=

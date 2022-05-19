@@ -389,11 +389,15 @@ metadata:
 spec:
   replicas: 3
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: cloud-config
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
     preEtcdadmCommands:
     - swapoff -a
     - hostname "{{ ds.meta_data.local_hostname }}"
@@ -401,23 +405,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-    diskSetup:
-      filesystems:
-        - device: /dev/vdb1
-          overwrite: false
-          extraOpts:
-            - -E
-            - lazy_itable_init=1,lazy_journal_init=1
-          filesystem: ext4
-          label: data_disk
-      partitions:
-        - device: /dev/vdb
-          layout: true
-          overwrite: false
-          tableType: gpt
-    mounts:
-      - - LABEL=data_disk
-        - /data-small
+    - echo "type=83" | sfdisk /dev/vdb && mkfs -t ext4 /dev/vdb1 && mkdir -p /data-small && echo /dev/vdb1 /data-small ext4 defaults 0 2 >> /etc/fstab && mount /data-small
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername

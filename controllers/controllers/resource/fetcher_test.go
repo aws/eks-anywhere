@@ -344,6 +344,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 								Affinity:         "anti",
 								AffinityGroupIDs: []string{"c", "d"},
 								Details:          map[string]string{"foo": "bar"},
+								Symlinks: map[string]string{"/var/log/kubernetes": "/data/var/log/kubernetes"},
 							},
 						},
 					},
