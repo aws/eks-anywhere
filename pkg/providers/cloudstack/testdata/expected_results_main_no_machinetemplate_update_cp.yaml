@@ -401,23 +401,6 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-    diskSetup:
-      filesystems:
-        - device: /dev/vdb1
-          overwrite: false
-          extraOpts:
-            - -E
-            - lazy_itable_init=1,lazy_journal_init=1
-          filesystem: ext4
-          label: data_disk
-      partitions:
-        - device: /dev/vdb
-          layout: true
-          overwrite: false
-          tableType: gpt
-    mounts:
-      - - LABEL=data_disk
-        - /data-small
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
