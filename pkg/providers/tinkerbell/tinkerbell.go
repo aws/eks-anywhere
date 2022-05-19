@@ -28,24 +28,20 @@ import (
 )
 
 const (
-	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
-	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellIPKey                = "TINKERBELL_IP"
-	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
-	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
-	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
-	Provisioning                   = "provisioning"
-	maxRetries                     = 30
-	backOffPeriod                  = 5 * time.Second
-	deploymentWaitTimeout          = "5m"
-	tinkNamespace                  = "tink-system"
+	tinkerbellIPKey            = "TINKERBELL_IP"
+	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
+	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
+	Provisioning               = "provisioning"
+	maxRetries                 = 30
+	backOffPeriod              = 5 * time.Second
+	deploymentWaitTimeout      = "5m"
+	tinkNamespace              = "tink-system"
 )
 
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
+	requiredEnvs                         = []string{tinkerbellIPKey}
 	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
 )
 
