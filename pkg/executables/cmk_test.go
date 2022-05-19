@@ -116,6 +116,123 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	}
 }
 
+func TestCmkCleanupVms(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	clusterName := "test"
+	tests := []struct {
+		testName           string
+		argumentsExecCalls [][]string
+		jsonResponseFile   string
+		cmkFunc            func(cmk executables.Cmk, ctx context.Context) error
+		cmkResponseError   error
+		wantErr            bool
+	}{
+		{
+			testName:         "listvirtualmachines json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "dry run succeeds",
+			jsonResponseFile: "testdata/cmk_list_virtualmachine_singular.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, true)
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+		{
+			testName:         "listvirtualmachines no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "listaffinitygroups json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "full runthrough succeeds",
+			jsonResponseFile: "testdata/cmk_list_virtualmachine_singular.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+				},
+				{
+					"-c", configFilePath, "stop", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
+					"forced=true",
+				},
+				{
+					"-c", configFilePath, "destroy", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
+					"expunge=true",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			for _, argsList := range tt.argumentsExecCalls {
+				executable.EXPECT().Execute(ctx, argsList).
+					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			}
+			cmk := executables.NewCmk(executable, writer, execConfig)
+			err := tt.cmkFunc(*cmk, ctx)
+			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
+				return
+			}
+			t.Fatalf("Cmk error: %v", err)
+		})
+	}
+}
+
 func TestCmkListOperations(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
