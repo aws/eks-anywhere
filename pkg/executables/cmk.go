@@ -387,9 +387,44 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	command := newCmkCommand("sync")
 	buffer, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("validating cloudstack connection for cmk config %s: %v", buffer.String(), err)
+		return fmt.Errorf("validating cloudstack connection for cmk: %s: %v", buffer.String(), err)
 	}
 	logger.MarkPass("Connected to CloudStack server")
+	return nil
+}
+
+func (c *Cmk) CleanupVms(ctx context.Context, clusterName string, dryRun bool) error {
+	command := newCmkCommand("list virtualmachines")
+	applyCmkArgs(&command, withCloudStackKeyword(clusterName), appendArgs("listall=true"))
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("listing virtual machines in cluster %s: %s: %v", clusterName, result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("virtual machines for cluster %s not found", clusterName)
+	}
+	response := struct {
+		CmkVirtualMachines []cmkVirtualMachine `json:"virtualmachine"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	for _, vm := range response.CmkVirtualMachines {
+		vmName := vm.Name
+		vmId := vm.Id
+		if dryRun {
+			logger.Info("Found ", "vm_name", vmName)
+			continue
+		}
+		deleteCommand := newCmkCommand("destroy virtualmachine")
+		applyCmkArgs(&deleteCommand, withCloudStackId(vmId), appendArgs("expunge=true"))
+		deleteResult, err := c.exec(ctx, deleteCommand...)
+		if err != nil {
+			return fmt.Errorf("destroying virtual machine with name %s and id %s: %s: %v", vmName, vmId, deleteResult.String(), err)
+		}
+		logger.Info("Deleted ", "vm_name", vmName, "vm_id", vmId)
+	}
+
 	return nil
 }
 
@@ -467,6 +502,11 @@ type cmkZone struct {
 }
 
 type cmkNetwork struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type cmkVirtualMachine struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
