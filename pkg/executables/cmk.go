@@ -133,7 +133,7 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, di
 		return fmt.Errorf("getting disk offerings info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
-		return fmt.Errorf("disk offering %s not found", diskOffering)
+		return fmt.Errorf("disk offering ID/Name %s/%s not found", diskOffering.Id, diskOffering.Name)
 	}
 
 	response := struct {
@@ -144,11 +144,17 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, di
 	}
 	offerings := response.CmkDiskOfferings
 	if len(offerings) > 1 {
-		return fmt.Errorf("duplicate disk offering %s found", diskOffering)
+		return fmt.Errorf("duplicate disk offering ID/Name %s/%s found", diskOffering.Id, diskOffering.Name)
 	} else if len(offerings) == 0 {
-		return fmt.Errorf("disk offering %s not found", diskOffering)
+		return fmt.Errorf("disk offering ID/Name %s/%s not found", diskOffering.Id, diskOffering.Name)
 	}
 
+	if offerings[0].Customized && diskOffering.CustomSize <= 0 {
+		return fmt.Errorf("disk offering size %d <= 0 for customized disk offering", diskOffering.CustomSize)
+	}
+	if !offerings[0].Customized && diskOffering.CustomSize > 0 {
+		return fmt.Errorf("disk offering size %d > 0 for non-customized disk offering", diskOffering.CustomSize)
+	}
 	return nil
 }
 
@@ -451,8 +457,9 @@ type cmkServiceOffering struct {
 }
 
 type cmkDiskOffering struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Customized bool   `json:"iscustomized"`
 }
 
 type cmkAffinityGroup struct {
