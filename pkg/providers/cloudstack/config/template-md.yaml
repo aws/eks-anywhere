@@ -169,6 +169,12 @@ spec:
         filesystem: {{.cloudstackDiskOfferingFilesystem}}
         label: {{.cloudstackDiskOfferingLabel}}
 {{- end}}
+{{- if .cloudstackSymlinks }}
+      symlinks:
+{{- range $key, $value := .cloudstackSymlinks}}
+        {{$key}}: {{$value}}
+{{- end}}
+{{- end}}
 {{- if .cloudstackCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackCustomDetails}}

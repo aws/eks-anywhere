@@ -91,6 +91,12 @@ spec:
         filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
         label: {{.cloudstackControlPlaneDiskOfferingLabel}}
 {{- end}}
+{{- if .cloudstackControlPlaneSymlinks }}
+      symlinks:
+{{- range $key, $value := .cloudstackControlPlaneSymlinks}}
+        {{$key}}: {{$value}}
+{{- end}}
+{{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
@@ -502,6 +508,12 @@ spec:
         device: {{.cloudstackEtcdDiskOfferingDevice}}
         filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
         label: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- end}}
+{{- if .cloudstackEtcdSymlinks }}
+      symlinks:
+{{- range $key, $value := .cloudstackEtcdSymlinks}}
+        {{$key}}: {{$value}}
+{{- end}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:
