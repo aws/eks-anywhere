@@ -205,13 +205,13 @@ func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	c, m := newClusterManager(t)
 
 	b := m.diagnosticsBundle
-	m.diagnosticsFactory.EXPECT().DiagnosticBundleManagementCluster(bootstrapCluster.KubeconfigFile).Return(b, nil)
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleManagementCluster(clusterSpec, bootstrapCluster.KubeconfigFile).Return(b, nil)
 	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
 
-	m.diagnosticsFactory.EXPECT().DiagnosticBundleFromSpec(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleWorkloadCluster(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
 	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
 
-	if err := c.SaveLogsManagementCluster(ctx, bootstrapCluster); err != nil {
+	if err := c.SaveLogsManagementCluster(ctx, clusterSpec, bootstrapCluster); err != nil {
 		t.Errorf("ClusterManager.SaveLogsManagementCluster() error = %v, wantErr nil", err)
 	}
 

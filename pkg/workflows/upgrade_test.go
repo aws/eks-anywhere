@@ -339,7 +339,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types
 
 func (c *upgradeTestSetup) expectSaveLogs(expectedWorkloadCluster *types.Cluster) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.bootstrapCluster).Return(nil),
+		c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.newClusterSpec, c.bootstrapCluster).Return(nil),
 		c.clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.newClusterSpec, expectedWorkloadCluster),
 	)
 }
