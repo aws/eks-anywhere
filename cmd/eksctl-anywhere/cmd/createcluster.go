@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -221,16 +220,11 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
-		if found && len(env) > 0 {
-			mountDirs := strings.Split(env, ",")
-			for _, dir := range mountDirs {
-				if _, err := os.Stat(dir); err != nil {
-					return nil, fmt.Errorf("invalid host path to mount: %v", err)
-				}
-				dirs = append(dirs, dir)
-			}
+		extraMounts, err := decoder.GetCloudStackExtraMounts()
+		if err != nil {
+			return nil, fmt.Errorf("invalid host path to mount: %v", err)
 		}
+		dirs = append(dirs, extraMounts...)
 	}
 
 	return dirs, nil

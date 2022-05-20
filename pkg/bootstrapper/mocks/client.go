@@ -200,6 +200,20 @@ func (mr *MockClusterClientMockRecorder) WithEnv(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithEnv", reflect.TypeOf((*MockClusterClient)(nil).WithEnv), arg0)
 }
 
+// WithExtraCloudStackMounts mocks base method.
+func (m *MockClusterClient) WithExtraCloudStackMounts(arg0 []string) bootstrapper.BootstrapClusterClientOption {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithExtraCloudStackMounts", arg0)
+	ret0, _ := ret[0].(bootstrapper.BootstrapClusterClientOption)
+	return ret0
+}
+
+// WithExtraCloudStackMounts indicates an expected call of WithExtraCloudStackMounts.
+func (mr *MockClusterClientMockRecorder) WithExtraCloudStackMounts(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExtraCloudStackMounts", reflect.TypeOf((*MockClusterClient)(nil).WithExtraCloudStackMounts), arg0)
+}
+
 // WithExtraDockerMounts mocks base method.
 func (m *MockClusterClient) WithExtraDockerMounts() bootstrapper.BootstrapClusterClientOption {
 	m.ctrl.T.Helper()

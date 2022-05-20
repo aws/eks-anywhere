@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
@@ -59,6 +60,21 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		ManagementUrl: apiUrl.Value(),
 		VerifySsl:     verifySslValue,
 	}, nil
+}
+
+func GetCloudStackExtraMounts() ([]string, error) {
+	var extraMounts []string
+	env, found := os.LookupEnv(EksaCloudStackHostPathToMount)
+	if found && len(env) > 0 {
+		mountDirs := strings.Split(env, ",")
+		for _, dir := range mountDirs {
+			if _, err := os.Stat(dir); err != nil {
+				return nil, fmt.Errorf("invalid host path to mount: %v", err)
+			}
+			extraMounts = append(extraMounts, dir)
+		}
+	}
+	return extraMounts, nil
 }
 
 type CloudStackExecConfig struct {

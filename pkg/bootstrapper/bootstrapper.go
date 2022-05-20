@@ -20,6 +20,7 @@ type ClusterClient interface {
 	DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error
 	WithExtraDockerMounts() BootstrapClusterClientOption
 	WithExtraPortMappings([]int) BootstrapClusterClientOption
+	WithExtraCloudStackMounts(extraMounts []string) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
 	WithDefaultCNIDisabled() BootstrapClusterClientOption
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
@@ -131,6 +132,12 @@ func WithExtraDockerMounts() BootstrapClusterOption {
 func WithExtraPortMappings(ports []int) BootstrapClusterOption {
 	return func(b *Bootstrapper) BootstrapClusterClientOption {
 		return b.clusterClient.WithExtraPortMappings(ports)
+	}
+}
+
+func WithExtraCloudStackMounts(extraMounts []string) BootstrapClusterOption {
+	return func(b *Bootstrapper) BootstrapClusterClientOption {
+		return b.clusterClient.WithExtraCloudStackMounts(extraMounts)
 	}
 }
 

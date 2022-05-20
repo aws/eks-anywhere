@@ -242,7 +242,16 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.ManagementApiEndpoint, p.clusterConfig)
+	extraMounts, err := decoder.GetCloudStackExtraMounts()
+	if err != nil {
+		return nil, fmt.Errorf("invalid host path to mount: %v", err)
+	}
+
+	opts, err := common.BootstrapClusterOpts(p.datacenterConfig.Spec.ManagementApiEndpoint, p.clusterConfig)
+	if err == nil {
+		opts = append(opts, bootstrapper.WithExtraCloudStackMounts(extraMounts))
+	}
+	return opts, err
 }
 
 func (p *cloudstackProvider) Name() string {
