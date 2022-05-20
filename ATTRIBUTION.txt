@@ -35,7 +35,7 @@ https://github.com/aws/aws-sdk-go-v2/service/sso
 ** github.com/aws/aws-sdk-go-v2/service/sts; version v1.16.3 --
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
-** github.com/aws/cluster-api-provider-cloudstack; version v0.4.3 --
+** github.com/aws/cluster-api-provider-cloudstack; version v0.4.5-0.20220517182938-efac5f45b7af --
 https://github.com/aws/cluster-api-provider-cloudstack
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -137,9 +137,6 @@ https://github.com/mrajashree/etcdadm-bootstrap-provider
 ** github.com/mrajashree/etcdadm-controller/api/v1beta1; version v1.0.0-rc3 --
 https://github.com/mrajashree/etcdadm-controller
 
-** github.com/mwitkow/go-proto-validators; version v0.3.2 --
-https://github.com/mwitkow/go-proto-validators
-
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
@@ -169,9 +166,6 @@ https://github.com/spf13/cobra
 
 ** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
 https://github.com/pokearu/cluster-api-provider-tinkerbell
-
-** github.com/tinkerbell/pbnj; version v0.0.0-20220204202246-b98856895e1c --
-https://github.com/tinkerbell/pbnj
 
 ** github.com/tinkerbell/tink/protos; version v0.6.0 --
 https://github.com/tinkerbell/tink
@@ -747,13 +741,13 @@ https://github.com/aws/aws-sdk-go-v2
 ** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
 https://github.com/ProtonMail/go-crypto
 
-** golang.org/go; version go1.17.9 --
+** golang.org/go; version go1.17.10 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20220517005047-85d78b3ac167 --
 https://go.googlesource.com/crypto
 
-** golang.org/x/net; version v0.0.0-20220107192237-5cfca573fb4d --
+** golang.org/x/net; version v0.0.0-20220225172249-27dd8689420f --
 https://go.googlesource.com/net
 
 ** golang.org/x/oauth2; version v0.0.0-20211104180415-d3ed0bb246c8 --
@@ -762,10 +756,10 @@ https://go.googlesource.com/oauth2
 ** golang.org/x/sync; version v0.0.0-20210220032951-036812b2e83c --
 https://go.googlesource.com/sync
 
-** golang.org/x/sys; version v0.0.0-20211216021012-1d35b9e2eb4e --
+** golang.org/x/sys; version v0.0.0-20220319134239-a9b59b0215f8 --
 https://go.googlesource.com/sys
 
-** golang.org/x/term; version v0.0.0-20210615171337-6886f2dfbf5b --
+** golang.org/x/term; version v0.0.0-20210927222741-03fcf44c2211 --
 https://go.googlesource.com/term
 
 ** golang.org/x/text; version v0.3.7 --
@@ -1477,7 +1471,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 https://github.com/morikuni/aec
 Copyright (c) 2016 Taihei Morikuni
 
-** github.com/onsi/gomega; version v1.17.0 --
+** github.com/onsi/gomega; version v1.19.0 --
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
