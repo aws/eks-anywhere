@@ -135,7 +135,7 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 	return p.generateCAPISpec(ctx, cluster, clusterSpec)
 }
 
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, managementCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, _, managementCluster *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	return p.generateCAPISpec(ctx, managementCluster, clusterSpec)
 }
 
