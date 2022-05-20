@@ -74,7 +74,13 @@ spec:
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
 {{- range $dir, $target := .cloudstackSymlinks}}
-      - if [ ! -L {{$dir}} ] ; then mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ; mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ; else echo "{{$dir}} already symlnk"; fi
+      - >-
+        if [ ! -L {{$dir}} ] ;
+          then
+            mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+          else echo "{{$dir}} already symlnk" ;
+        fi
 {{- end}}
 {{- if .cloudstackDiskOfferingProvided }}
       diskSetup:
