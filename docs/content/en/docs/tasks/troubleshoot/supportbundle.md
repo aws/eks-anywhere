@@ -4,6 +4,8 @@ linkTitle: "Generating a Support Bundle"
 weight: 30
 description: >
     Using the Support Bundle with your EKS Anywhere Cluster
+aliases:
+   - /docs/tasks/troubleshoot/_supportbundle
 ---
 
 This guide covers the use of the EKS Anywhere Support Bundle for troubleshooting and support.

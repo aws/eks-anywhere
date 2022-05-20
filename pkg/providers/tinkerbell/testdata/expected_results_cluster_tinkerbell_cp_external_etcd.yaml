@@ -216,21 +216,17 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls:
-                    - http://1.2.3.4:50051
+                    metadata_urls: []
                     strict_id: false
-                manage_etc_hosts: localhost
                 system_info:
                   default_user:
-                    groups:
-                    - wheel
-                    - adm
                     name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
                     shell: /bin/bash
-                    sudo:
-                    - ALL=(ALL) NOPASSWD:ALL
+                manage_etc_hosts: localhost
                 warnings:
-                  dsid_missing_source: false
+                  dsid_missing_source: off
               DEST_DISK: /dev/sda2
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"
@@ -327,21 +323,17 @@ spec:
               CONTENTS: |
                 datasource:
                   Ec2:
-                    metadata_urls:
-                    - http://1.2.3.4:50051
+                    metadata_urls: []
                     strict_id: false
-                manage_etc_hosts: localhost
                 system_info:
                   default_user:
-                    groups:
-                    - wheel
-                    - adm
                     name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
                     shell: /bin/bash
-                    sudo:
-                    - ALL=(ALL) NOPASSWD:ALL
+                manage_etc_hosts: localhost
                 warnings:
-                  dsid_missing_source: false
+                  dsid_missing_source: off
               DEST_DISK: /dev/sda2
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"

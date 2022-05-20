@@ -87,7 +87,6 @@ type ClusterClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	DaemonSetRolloutRestart(ctx context.Context, dsName, dsNamespace, kubeconfig string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -104,6 +103,7 @@ type ClusterClient interface {
 type Networking interface {
 	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error)
+	RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error
 }
 
 type AwsIamAuth interface {
@@ -396,13 +396,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
-	if provider.Name() == constants.CloudStackProviderName {
-		// TODO: Move this logic to provider implementation: https://github.com/aws/eks-anywhere/issues/2061
-		logger.V(3).Info("Restarting cilium daemonset after upgrade")
-		err = c.clusterClient.DaemonSetRolloutRestart(ctx, "cilium", constants.KubeSystemNamespace, eksaMgmtCluster.KubeconfigFile)
-		if err != nil {
-			return fmt.Errorf("restarting cilium daemonset after upgrade: %v", err)
-		}
+	logger.V(3).Info("Running CNI post control plane upgrade operations")
+	if err = c.networking.RunPostControlPlaneUpgradeSetup(ctx, workloadCluster); err != nil {
+		return fmt.Errorf("running CNI post control plane upgrade operations: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")
@@ -638,7 +634,7 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 	return nil
 }
 
-func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error {
 	if cluster == nil {
 		return nil
 	}
@@ -647,9 +643,9 @@ func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster 
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(spec, cluster.KubeconfigFile)
 	if err != nil {
-		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
+		logger.V(5).Info("Error generating support bundle for management cluster", "error", err)
 		return nil
 	}
 	return collectDiagnosticBundle(ctx, bundle)
@@ -664,7 +660,7 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleWorkloadCluster(spec, provider, cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
 		return nil

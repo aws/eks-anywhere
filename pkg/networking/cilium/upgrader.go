@@ -18,6 +18,7 @@ type upgraderClient interface {
 	WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error
 	WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
 	WaitForCiliumDeployment(ctx context.Context, cluster *types.Cluster) error
+	RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
 }
 
 type Upgrader struct {
@@ -152,4 +153,12 @@ func ciliumHelmChartValuesChanged(currentSpec, newSpec *cluster.Spec) bool {
 	}
 	// we can add comparisons for more values here as we start accepting them from cluster spec
 	return false
+}
+
+func (u *Upgrader) RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error {
+	// we need to restart cilium pods after control plane vms get upgraded to prevent issue seen in https://github.com/aws/eks-anywhere/issues/1888
+	if err := u.client.RolloutRestartCiliumDaemonSet(ctx, cluster); err != nil {
+		return fmt.Errorf("restarting cilium daemonset: %v", err)
+	}
+	return nil
 }

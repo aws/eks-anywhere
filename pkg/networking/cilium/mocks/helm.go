@@ -35,16 +35,16 @@ func (m *MockHelm) EXPECT() *MockHelmMockRecorder {
 }
 
 // Template mocks base method.
-func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error) {
+func (m *MockHelm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values)
+	ret := m.ctrl.Call(m, "Template", ctx, ociURI, version, namespace, values, kubeVersion)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Template indicates an expected call of Template.
-func (mr *MockHelmMockRecorder) Template(ctx, ociURI, version, namespace, values interface{}) *gomock.Call {
+func (mr *MockHelmMockRecorder) Template(ctx, ociURI, version, namespace, values, kubeVersion interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockHelm)(nil).Template), ctx, ociURI, version, namespace, values)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Template", reflect.TypeOf((*MockHelm)(nil).Template), ctx, ociURI, version, namespace, values, kubeVersion)
 }

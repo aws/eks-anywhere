@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/cluster-api-provider-cloudstack v0.4.3
+	github.com/aws/cluster-api-provider-cloudstack v0.4.5-0.20220517182938-efac5f45b7af
 	github.com/aws/eks-anywhere-packages v0.1.1
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
@@ -20,7 +20,7 @@ require (
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
 	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
-	github.com/onsi/gomega v1.17.0
+	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/pflag v1.0.5
@@ -30,9 +30,9 @@ require (
 	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.1
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
-	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	k8s.io/api v0.23.1
@@ -136,9 +136,9 @@ require (
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d // indirect
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
@@ -164,7 +164,10 @@ require (
 replace (
 	github.com/aws/eks-anywhere/release => ./release
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
-	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20220207154021-dcf66392d606
+	// Fixing GMS-2022-20): this dependency comes from the cluster-api module.
+	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
+	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
+	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
 	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
 

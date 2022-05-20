@@ -9,7 +9,6 @@ import (
 	"github.com/gocarina/gocsv"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 )
 
 const (
@@ -21,15 +20,6 @@ const (
 
 // Alias for backwards compatibility.
 type Hardware = hardware.Machine
-
-func NewBmcSecretConfig(h *Hardware) pbnj.BmcSecretConfig {
-	return pbnj.BmcSecretConfig{
-		Host:     h.BmcIpAddress,
-		Username: h.BmcUsername,
-		Password: h.BmcPassword,
-		Vendor:   h.BmcVendor,
-	}
-}
 
 func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {
 	hardware := []*Hardware{}
@@ -62,8 +52,8 @@ func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
 	for _, h := range slice {
-		if _, exists := hardwareMap[h.Id]; !exists {
-			hardwareMap[h.Id] = h
+		if _, exists := hardwareMap[h.ID]; !exists {
+			hardwareMap[h.ID] = h
 		}
 	}
 

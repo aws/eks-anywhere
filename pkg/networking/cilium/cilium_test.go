@@ -60,7 +60,7 @@ func TestCiliumGenerateManifestSuccess(t *testing.T) {
 	// templater tests already test whether templater.GenerateManifest returns expected values or not. This test ensures that cilium.GenerateManifest
 	// calls the templater and does not try to load the static manifest like earlier version
 	tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}),
+		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
 	).Return(tt.ciliumValues, nil)
 	_, err := tt.cilium.GenerateManifest(tt.ctx, tt.spec, []string{})
 	tt.Expect(err).To(Not(HaveOccurred()), "GenerateManifest() should succeed")
@@ -71,7 +71,7 @@ func TestCiliumGenerateManifestAndGenerateNetworkPolicySuccess(t *testing.T) {
 	/* templater tests already test whether templater.GenerateManifest returns expected values or not. This test ensures that cilium.GenerateManifest
 	calls the templater and does not try to load the static manifest like earlier version */
 	tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}),
+		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
 	).Return(tt.ciliumValues, nil)
 
 	/* templater tests already test network policy generation based on the infra provider, gitops, mgmt/workload cluster and k8s version.

@@ -13,28 +13,28 @@ import (
 	"github.com/tinkerbell/tink/protos/packet"
 )
 
-// ErrTinkebellHardwareJsonRepeatWrites occurs when a TinkerbellHardwareJson receives multiple calls to Write().
-var ErrTinkebellHardwareJsonRepeatWrites = errors.New("TinkerbellHardwareJson can only be written to once")
+// ErrTinkebellHardwareJSONRepeatWrites occurs when a TinkerbellHardwareJSON receives multiple calls to Write().
+var ErrTinkebellHardwareJSONRepeatWrites = errors.New("TinkerbellHardwareJSON can only be written to once")
 
-// TinkerbellHardwareJsonFactory creates new TinkerbellHardwareJson instances.
-type TinkerbellHardwareJsonFactory interface {
-	Create(name string) (*TinkerbellHardwareJson, error)
+// TinkerbellHardwareJSONFactory creates new TinkerbellHardwareJSON instances.
+type TinkerbellHardwareJSONFactory interface {
+	Create(name string) (*TinkerbellHardwareJSON, error)
 }
 
-// TinkerbellHardwareJsonWriter writes discrete instances of TinkerbellHardwareJson's. Paths for files that were
+// TinkerbellHardwareJSONWriter writes discrete instances of TinkerbellHardwareJSON's. Paths for files that were
 // successfully written can be retrieved from Journal().
-type TinkerbellHardwareJsonWriter struct {
-	json TinkerbellHardwareJsonFactory
+type TinkerbellHardwareJSONWriter struct {
+	json TinkerbellHardwareJSONFactory
 }
 
-// NewTinkerbellHardwareJsonWriter creates a newTinkerbellHardwareJsonWriter instance that uses factory to create
-// TinkerbellHardwareJson instances and write to them.
-func NewTinkerbellHardwareJsonWriter(factory TinkerbellHardwareJsonFactory) *TinkerbellHardwareJsonWriter {
-	return &TinkerbellHardwareJsonWriter{json: factory}
+// NewTinkerbellHardwareJSONWriter creates a newTinkerbellHardwareJSONWriter instance that uses factory to create
+// TinkerbellHardwareJSON instances and write to them.
+func NewTinkerbellHardwareJSONWriter(factory TinkerbellHardwareJSONFactory) *TinkerbellHardwareJSONWriter {
+	return &TinkerbellHardwareJSONWriter{json: factory}
 }
 
-// Write creates a new TinkerbellHardwareJson instance and writes m to it.
-func (tw *TinkerbellHardwareJsonWriter) Write(m Machine) error {
+// Write creates a new TinkerbellHardwareJSON instance and writes m to it.
+func (tw *TinkerbellHardwareJSONWriter) Write(m Machine) error {
 	file, err := tw.json.Create(fmt.Sprintf("%v.json", m.Hostname))
 	if err != nil {
 		return err
@@ -47,26 +47,26 @@ func (tw *TinkerbellHardwareJsonWriter) Write(m Machine) error {
 	return nil
 }
 
-// TinkerbellHardwareJson represents a discrete Tinkerbell hardware json file. It can only be written to once.
-type TinkerbellHardwareJson struct {
+// TinkerbellHardwareJSON represents a discrete Tinkerbell hardware json file. It can only be written to once.
+type TinkerbellHardwareJSON struct {
 	writer io.WriteCloser
 	closed bool
 }
 
-// NewTinkerbellHardwareJson creates a new TinkerbellHardwareJson instance that uses w as its destination for Write calls.
-func NewTinkerbellHardwareJson(w io.WriteCloser) *TinkerbellHardwareJson {
-	return &TinkerbellHardwareJson{writer: w}
+// NewTinkerbellHardwareJSON creates a new TinkerbellHardwareJSON instance that uses w as its destination for Write calls.
+func NewTinkerbellHardwareJSON(w io.WriteCloser) *TinkerbellHardwareJSON {
+	return &TinkerbellHardwareJSON{writer: w}
 }
 
 // Write marshals m as a Tinkerbell hardware json object and writes it to tj's writer. Upon successfully completing the
-// write, tj will close its writer. Subsequent calls to Write will return ErrTinkebellHardwareJsonRepeatWrites.
-func (tj *TinkerbellHardwareJson) Write(m Machine) error {
+// write, tj will close its writer. Subsequent calls to Write will return ErrTinkebellHardwareJSONRepeatWrites.
+func (tj *TinkerbellHardwareJSON) Write(m Machine) error {
 	if tj.closed {
-		return ErrTinkebellHardwareJsonRepeatWrites
+		return ErrTinkebellHardwareJSONRepeatWrites
 	}
 	defer func() { tj.closed = true; tj.writer.Close() }()
 
-	marshalled, err := marshalTinkerbellHardwareJson(m)
+	marshalled, err := marshalTinkerbellHardwareJSON(m)
 	if err != nil {
 		return err
 	}
@@ -80,22 +80,22 @@ func (tj *TinkerbellHardwareJson) Write(m Machine) error {
 
 // Hardware describes the hardware json structure required by the Tinkerbell API when registering hardware.
 type Hardware struct {
-	Id       string                     `json:"id"`
+	ID       string                     `json:"id"`
 	Metadata *packet.Metadata           `json:"metadata"`
 	Network  *hardware.Hardware_Network `json:"network"`
 }
 
-func marshalTinkerbellHardwareJson(m Machine) ([]byte, error) {
+func marshalTinkerbellHardwareJSON(m Machine) ([]byte, error) {
 	return json.Marshal(
 		Hardware{
-			Id: m.Id,
+			ID: m.ID,
 			Metadata: &packet.Metadata{
 				Facility: &packet.Metadata_Facility{
 					FacilityCode: "onprem",
 					PlanSlug:     "c2.medium.x86",
 				},
 				Instance: &packet.Metadata_Instance{
-					Id:       m.Id,
+					Id:       m.ID,
 					Hostname: m.Hostname,
 					Storage: &packet.Metadata_Instance_Storage{
 						Disks: []*packet.Metadata_Instance_Storage_Disk{
@@ -112,11 +112,11 @@ func marshalTinkerbellHardwareJson(m Machine) ([]byte, error) {
 							Arch:     "x86_64",
 							Hostname: m.Hostname,
 							Ip: &hardware.Hardware_DHCP_IP{
-								Address: m.IpAddress,
+								Address: m.IPAddress,
 								Gateway: m.Gateway,
 								Netmask: m.Netmask,
 							},
-							Mac:         m.MacAddress,
+							Mac:         m.MACAddress,
 							NameServers: m.Nameservers,
 							Uefi:        true,
 						},
@@ -140,18 +140,18 @@ func (journal *Journal) Write(b []byte) (int, error) {
 	return len(b), nil
 }
 
-// tinkerbellHardwareJsonFactoryFunc is a convinience function type that satisfies the TinkerbellHardwareJsonFactory
+// tinkerbellHardwareJSONFactoryFunc is a convinience function type that satisfies the TinkerbellHardwareJSONFactory
 // interface.
-type tinkerbellHardwareJsonFactoryFunc func(name string) (*TinkerbellHardwareJson, error)
+type tinkerbellHardwareJSONFactoryFunc func(name string) (*TinkerbellHardwareJSON, error)
 
 // Create calls fn returning its return values to the caller.
-func (fn tinkerbellHardwareJsonFactoryFunc) Create(name string) (*TinkerbellHardwareJson, error) {
+func (fn tinkerbellHardwareJSONFactoryFunc) Create(name string) (*TinkerbellHardwareJSON, error) {
 	return fn(name)
 }
 
-// RecordingTinkerbellHardwareJsonFactory creates a new TinkerbellHardwareJson where all writes to the
-// TinkerbellHardwareJson are recorded in journal.
-func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) (TinkerbellHardwareJsonFactory, error) {
+// RecordingTinkerbellHardwareJSONFactory creates a new TinkerbellHardwareJSON where all writes to the
+// TinkerbellHardwareJSON are recorded in journal.
+func RecordingTinkerbellHardwareJSONFactory(basepath string, journal *Journal) (TinkerbellHardwareJSONFactory, error) {
 	info, err := os.Stat(basepath)
 	if os.IsNotExist(err) {
 		return nil, fmt.Errorf("basepath does not exist: %v", basepath)
@@ -161,7 +161,7 @@ func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) (
 		return nil, fmt.Errorf("basepath is not a directory: %v", basepath)
 	}
 
-	return tinkerbellHardwareJsonFactoryFunc(func(name string) (*TinkerbellHardwareJson, error) {
+	return tinkerbellHardwareJSONFactoryFunc(func(name string) (*TinkerbellHardwareJSON, error) {
 		path := filepath.Join(basepath, name)
 
 		fh, err := os.Create(path)
@@ -179,7 +179,7 @@ func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) (
 			Closer: fh,
 		}
 
-		return NewTinkerbellHardwareJson(writer), nil
+		return NewTinkerbellHardwareJSON(writer), nil
 	}), nil
 }
 
@@ -188,10 +188,10 @@ type TinkerbellHardwarePusher interface {
 	PushHardware(ctx context.Context, hardware []byte) error
 }
 
-// RegisterTinkerbellHardware uses client to push all serializedJsons representing TinkerbellHardwareJson to a
+// RegisterTinkerbellHardware uses client to push all serializedJSONs representing TinkerbellHardwareJSON to a
 // Tinkerbell server.
-func RegisterTinkerbellHardware(ctx context.Context, client TinkerbellHardwarePusher, serializedJsons [][]byte) error {
-	for _, json := range serializedJsons {
+func RegisterTinkerbellHardware(ctx context.Context, client TinkerbellHardwarePusher, serializedJSONs [][]byte) error {
+	for _, json := range serializedJSONs {
 		if err := client.PushHardware(ctx, json); err != nil {
 			return err
 		}

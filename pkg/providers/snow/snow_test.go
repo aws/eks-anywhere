@@ -225,6 +225,7 @@ func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *
 	return snow.NewProvider(
 		kubeUnAuthClient,
 		configManager,
+		false,
 	)
 }
 
@@ -407,7 +408,7 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 			return nil
 		})
 
-	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, tt.cluster, nil, nil, tt.clusterSpec)
+	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, nil, tt.cluster, nil, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md.yaml")

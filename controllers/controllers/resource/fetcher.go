@@ -622,6 +622,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
 		},
+		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
 		MountPath:  csMachineTemplate.Spec.Spec.Spec.DiskOffering.MountPath,
 		Device:     csMachineTemplate.Spec.Spec.Spec.DiskOffering.Device,
 		Filesystem: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Filesystem,

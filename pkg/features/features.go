@@ -9,6 +9,7 @@ const (
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
+	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -75,5 +76,12 @@ func CuratedPackagesSupport() Feature {
 	return Feature{
 		Name:     "Curated Packages Support",
 		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+	}
+}
+
+func K8s123Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.23 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
 	}
 }
