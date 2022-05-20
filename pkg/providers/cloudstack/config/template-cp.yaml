@@ -83,6 +83,9 @@ spec:
 {{- if .cloudstackControlPlaneDiskOfferingName}}
         name: {{.cloudstackControlPlaneDiskOfferingName}}
 {{- end}}
+{{- if gt .cloudstackControlPlaneDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackControlPlaneDiskOfferingCustomSize}}
+{{- end}}
         mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
         device: {{.cloudstackControlPlaneDiskOfferingDevice}}
         filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
@@ -420,25 +423,6 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
-{{- if .cloudstackEtcdDiskOfferingProvided }}
-    diskSetup:
-      filesystems:
-        - device: {{ .cloudstackEtcdDiskOfferingDevice }}1
-          overwrite: false
-          extraOpts:
-            - -E
-            - lazy_itable_init=1,lazy_journal_init=1
-          filesystem: {{ .cloudstackEtcdDiskOfferingFilesystem }}
-          label: data_disk
-      partitions:
-        - device: {{ .cloudstackEtcdDiskOfferingDevice }}
-          layout: true
-          overwrite: false
-          tableType: gpt
-    mounts:
-      - - LABEL={{ .cloudstackEtcdDiskOfferingLabel }}
-        - {{ .cloudstackEtcdDiskOfferingPath }}
-{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -497,6 +481,9 @@ spec:
 {{- end}}
 {{- if .cloudstackEtcdDiskOfferingName}}
         name: {{.cloudstackEtcdDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackEtcdDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackEtcdDiskOfferingCustomSize}}
 {{- end}}
         mountPath: {{.cloudstackEtcdDiskOfferingPath}}
         device: {{.cloudstackEtcdDiskOfferingDevice}}

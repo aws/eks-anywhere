@@ -8,8 +8,6 @@ import (
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
-	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
-	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -24,33 +22,26 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
-	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellIPKey                = "TINKERBELL_IP"
-	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
-	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
-	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
-	Provisioning                   = "provisioning"
-	maxRetries                     = 30
-	backOffPeriod                  = 5 * time.Second
-	deploymentWaitTimeout          = "5m"
-	tinkNamespace                  = "tink-system"
+	tinkerbellIPKey            = "TINKERBELL_IP"
+	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
+	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
+	Provisioning               = "provisioning"
+	maxRetries                 = 30
+	backOffPeriod              = 5 * time.Second
+	deploymentWaitTimeout      = "5m"
+	tinkNamespace              = "tink-system"
 )
-
-const defaultUsername = "ec2-user"
 
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
+	requiredEnvs                         = []string{tinkerbellIPKey}
 	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
 )
 
@@ -60,10 +51,7 @@ type Provider struct {
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	hardwares             []tinkv1alpha1.Hardware
 	providerKubectlClient ProviderKubectlClient
-	providerTinkClient    ProviderTinkClient
-	pbnj                  ProviderPbnjClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	validator             *Validator
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
@@ -71,16 +59,16 @@ type Provider struct {
 	// catalogue is a cache initialized during SetupAndValidateCreateCluster() from hardwareManifestPath.
 	catalogue *hardware.Catalogue
 
+	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
+	// This is already a dependency, just uncached, because we require it during the initializing
+	// constructor call for constructing the validator in-line.
+	netClient networkutils.NetClient
+
 	skipIpCheck      bool
 	skipPowerActions bool
 	setupTinkerbell  bool
 	force            bool
 	Retrier          *retrier.Retrier
-}
-
-type TinkerbellClients struct {
-	ProviderTinkClient ProviderTinkClient
-	ProviderPbnjClient ProviderPbnjClient
 }
 
 // TODO: Add necessary kubectl functions here
@@ -102,21 +90,6 @@ type ProviderKubectlClient interface {
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 }
 
-type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
-	GetHardwareByUuid(ctx context.Context, uuid string) (*hardware.Hardware, error)
-	PushHardware(ctx context.Context, hardware []byte) error
-	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
-	DeleteWorkflow(ctx context.Context, workflowIDs ...string) error
-}
-
-type ProviderPbnjClient interface {
-	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
-	PowerOff(context.Context, pbnj.BmcSecretConfig) error
-	PowerOn(context.Context, pbnj.BmcSecretConfig) error
-	SetBootDevice(ctx context.Context, info pbnj.BmcSecretConfig, mode pbnj.BootDevice) error
-}
-
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
 type SSHAuthKeyGenerator interface {
 	GenerateSSHAuthKey(filewriter.FileWriter) (string, error)
@@ -128,7 +101,6 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	writer filewriter.FileWriter,
 	providerKubectlClient ProviderKubectlClient,
-	providerTinkbellClient TinkerbellClients,
 	now types.NowFunc,
 	skipIpCheck bool,
 	hardwareManifestPath string,
@@ -142,8 +114,6 @@ func NewProvider(
 		clusterConfig,
 		writer,
 		providerKubectlClient,
-		providerTinkbellClient.ProviderTinkClient,
-		providerTinkbellClient.ProviderPbnjClient,
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
@@ -160,8 +130,6 @@ func NewProviderCustomDep(
 	clusterConfig *v1alpha1.Cluster,
 	writer filewriter.FileWriter,
 	providerKubectlClient ProviderKubectlClient,
-	providerTinkClient ProviderTinkClient,
-	pbnjClient ProviderPbnjClient,
 	netClient networkutils.NetClient,
 	now types.NowFunc,
 	skipIpCheck bool,
@@ -192,8 +160,6 @@ func NewProviderCustomDep(
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
-		providerTinkClient:    providerTinkClient,
-		pbnj:                  pbnjClient,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -201,8 +167,7 @@ func NewProviderCustomDep(
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		validator: NewValidator(providerTinkClient, netClient, pbnjClient),
-		writer:    writer,
+		writer: writer,
 
 		hardwareManifestPath: hardwareManifestPath,
 
@@ -219,6 +184,8 @@ func NewProviderCustomDep(
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
+
+		netClient: netClient,
 
 		// Behavioral flags.
 		skipIpCheck:      skipIpCheck,
