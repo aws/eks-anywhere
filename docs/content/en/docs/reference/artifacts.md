@@ -52,19 +52,19 @@ EKS-D Release
 
 ## Ubuntu with Kubernetes 1.22
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/9/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-9-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-22-eks-6`
 
 ## Ubuntu with Kubernetes 1.21
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/9/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-9-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-21-eks-13`
 
 ## Ubuntu with Kubernetes 1.20
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/9/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-9-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-20-eks-15`
 
