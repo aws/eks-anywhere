@@ -123,3 +123,24 @@ func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...stri
 
 	return nil
 }
+
+func (d *Docker) Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error {
+	params := []string{"run", "-d", "-i"}
+	params = append(params, flags...)
+	params = append(params, "--name", name, image)
+	params = append(params, cmd...)
+
+	if _, err := d.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("running docker container %s with image %s: %v", name, image, err)
+	}
+	return nil
+}
+
+func (d *Docker) ForceRemove(ctx context.Context, name string) error {
+	params := []string{"rm", "-f", name}
+
+	if _, err := d.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("force removing docker container %s: %v", name, err)
+	}
+	return nil
+}
