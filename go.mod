@@ -27,7 +27,6 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
-	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
@@ -118,7 +117,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mrajashree/etcdadm-bootstrap-provider v1.0.0-rc3 // indirect
-	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect

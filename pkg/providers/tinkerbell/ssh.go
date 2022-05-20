@@ -7,6 +7,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
 
+const defaultUsername = "ec2-user"
+
 func ensureMachineConfigsHaveAtLeast1User(machines map[string]*v1alpha1.TinkerbellMachineConfig) {
 	for _, machine := range machines {
 		if len(machine.Spec.Users) == 0 {

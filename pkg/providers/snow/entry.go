@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
-	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
 )
 
 type ConfigManager struct {
@@ -45,9 +43,6 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			},
 		},
 		Validations: []cluster.Validation{
-			func(c *cluster.Config) error {
-				return providerValidator.ValidateControlPlaneIpUniqueness(c.Cluster, &networkutils.DefaultNetClient{})
-			},
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
 					if err := cm.validator.ValidateEC2ImageExistsOnDevice(ctx, m); err != nil {

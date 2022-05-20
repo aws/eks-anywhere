@@ -225,6 +225,7 @@ func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *
 	return snow.NewProvider(
 		kubeUnAuthClient,
 		configManager,
+		false,
 	)
 }
 
