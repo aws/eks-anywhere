@@ -24,14 +24,14 @@ type AWSIamConfigSpec struct {
 
 // MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
 type MapRoles struct {
-	RoleARN  string   `json:"roleARN"`
+	RoleARN  string   `yaml:"rolearn" json:"roleARN"`
 	Username string   `json:"username"`
 	Groups   []string `json:"groups,omitempty"`
 }
 
 // MapUsers defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
 type MapUsers struct {
-	UserARN  string   `json:"userARN"`
+	UserARN  string   `yaml:"userarn" json:"userARN"`
 	Username string   `json:"username"`
 	Groups   []string `json:"groups,omitempty"`
 }

@@ -27,7 +27,6 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
-	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
@@ -35,6 +34,7 @@ require (
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8
 	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.23.1
 	k8s.io/client-go v0.23.1
@@ -118,7 +118,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/mrajashree/etcdadm-bootstrap-provider v1.0.0-rc3 // indirect
-	github.com/mwitkow/go-proto-validators v0.3.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml v1.9.4 // indirect
@@ -149,7 +148,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiextensions-apiserver v0.23.1 // indirect
 	k8s.io/cluster-bootstrap v0.23.0 // indirect
 	k8s.io/component-base v0.23.1 // indirect
