@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -13,21 +14,25 @@ import (
 )
 
 func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	env := map[string]string{}
-	// Adding proxy environment vars to the bootstrap cluster
+	var opts []bootstrapper.BootstrapClusterOption
+
 	if p.clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxy := fmt.Sprintf("%s,%s", p.clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, p.datacenterConfig.Spec.TinkerbellIP)
-		for _, s := range p.clusterConfig.Spec.ProxyConfiguration.NoProxy {
-			if s != "" {
-				noProxy += "," + s
-			}
-		}
+		// +2 for control plane endpoint and tinkerbell IP.
+		noProxyAddresses := make([]string, 0, len(p.clusterConfig.Spec.ProxyConfiguration.NoProxy)+2)
+		noProxyAddresses = append(
+			noProxyAddresses,
+			p.clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host,
+			p.datacenterConfig.Spec.TinkerbellIP,
+		)
+		noProxyAddresses = append(noProxyAddresses, p.clusterConfig.Spec.ProxyConfiguration.NoProxy...)
+
+		env := make(map[string]string, 3)
 		env["HTTP_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpProxy
 		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
-		env["NO_PROXY"] = noProxy
-	}
+		env["NO_PROXY"] = strings.Join(noProxyAddresses, ",")
 
-	opts := []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}
+		opts = append(opts, bootstrapper.WithEnv(env))
+	}
 
 	if p.setupTinkerbell {
 		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
