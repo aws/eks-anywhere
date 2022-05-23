@@ -113,6 +113,10 @@ phases:
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
 reports:
   e2e-reports:
     files:
