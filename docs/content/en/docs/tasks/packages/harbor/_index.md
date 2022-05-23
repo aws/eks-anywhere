@@ -43,7 +43,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
       name: my-harbor
       namespace: eksa-packages
    spec:
-      packageName: Harbor
+      packageName: harbor
       config: |-
          secretKey: "use-a-secret-key"
          externalURL: https://harbor.eksa.demo:30003
@@ -62,7 +62,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
       name: my-harbor
       namespace: eksa-packages
    spec:
-      packageName: Harbor
+      packageName: harbor
       config: |-
          secretKey: "use-a-secret-key"
          externalURL: http://harbor.eksa.demo:30002
@@ -86,7 +86,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
    Example command output
    ```
    NAME        PACKAGE   AGE     STATE       CURRENTVERSION             TARGETVERSION        DETAIL
-   my-harbor   Harbor    5m34s   installed   v2.5.0                     v2.5.0 (latest)
+   my-harbor   harbor    5m34s   installed   v2.5.0                     v2.5.0 (latest)
    ```
 
    Harbor web portal is accessible at whatever `externalURL` is set to. See [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all default values.
