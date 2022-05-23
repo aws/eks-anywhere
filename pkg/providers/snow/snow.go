@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
+	"github.com/aws/eks-anywhere/pkg/providers/validation"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -72,7 +72,7 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
 	if !p.skipIpCheck {
-		if err := providerValidator.ValidateControlPlaneIpUniqueness(clusterSpec.Cluster, &networkutils.DefaultNetClient{}); err != nil {
+		if err := validation.ValidateControlPlaneIpUniqueness(clusterSpec.Cluster, &networkutils.DefaultNetClient{}); err != nil {
 			return err
 		}
 	} else {

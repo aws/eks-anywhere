@@ -1,4 +1,4 @@
-package validator_test
+package validation_test
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
-	"github.com/aws/eks-anywhere/pkg/providers/validator"
+	"github.com/aws/eks-anywhere/pkg/providers/validation"
 )
 
 func TestValidateControlPlaneIpUniqueness(t *testing.T) {
@@ -28,5 +28,5 @@ func TestValidateControlPlaneIpUniqueness(t *testing.T) {
 	client.EXPECT().DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
 		Times(5).
 		Return(nil, errors.New("no connection"))
-	g.Expect(validator.ValidateControlPlaneIpUniqueness(cluster, client)).To(Succeed())
+	g.Expect(validation.ValidateControlPlaneIpUniqueness(cluster, client)).To(Succeed())
 }
