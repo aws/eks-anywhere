@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/aws/eks-anywhere/internal/test/e2e"
 	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/internal/test/e2e"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
