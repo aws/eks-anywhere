@@ -297,9 +297,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				time.Now,
 				skipIpCheck,
 				hardwareConfigFile,
-				skipPowerActions,
 				setupTinkerbell,
-				force,
 			)
 
 		case v1alpha1.DockerDatacenterKind:

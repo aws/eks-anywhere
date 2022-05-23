@@ -54,8 +54,6 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		true,
 		"testdata/hardware_config.yaml",
 		false,
-		false,
-		false,
 	)
 }
 
