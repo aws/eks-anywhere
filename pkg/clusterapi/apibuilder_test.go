@@ -276,7 +276,7 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 			Kind:       "KubeadmConfigTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "wng-1",
+			Name:      "test-cluster-wng-1-1",
 			Namespace: "eksa-system",
 		},
 		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
@@ -340,7 +340,7 @@ func TestMachineDeployment(t *testing.T) {
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "wng-1",
+			Name:      "test-cluster-wng-1",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
 				"cluster.x-k8s.io/cluster-name": "test-cluster",

@@ -36,9 +36,9 @@ func oldControlPlaneMachineTemplate(ctx context.Context, kubeClient kubernetes.C
 	return mt, nil
 }
 
-func oldWorkerMachineTemplate(ctx context.Context, kubeclient kubernetes.Client, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*snowv1.AWSSnowMachineTemplate, error) {
+func oldWorkerMachineTemplate(ctx context.Context, kubeclient kubernetes.Client, clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*snowv1.AWSSnowMachineTemplate, error) {
 	md := &clusterv1.MachineDeployment{}
-	err := kubeclient.Get(ctx, clusterapi.MachineDeploymentName(workerNodeGroupConfig), constants.EksaSystemNamespace, md)
+	err := kubeclient.Get(ctx, clusterapi.MachineDeploymentName(clusterSpec, workerNodeGroupConfig), constants.EksaSystemNamespace, md)
 	if apierrors.IsNotFound(err) {
 		return nil, nil
 	}
