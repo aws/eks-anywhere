@@ -52,7 +52,7 @@ func init() {
 
 func cleanUpCloudstackTestResources(ctx context.Context) error {
 	clusterName := viper.GetString(clusterNameFlagName)
-	err := e2e.CleanUpCloudstackTestResources(ctx, clusterName)
+	err := e2e.CleanUpCloudstackTestResources(ctx, clusterName, false)
 	if err != nil {
 		return fmt.Errorf("running cleanup for cloudstack vms: %v", err)
 	}

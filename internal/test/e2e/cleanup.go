@@ -71,7 +71,7 @@ func CleanUpVsphereTestResources(ctx context.Context, clusterName string) error 
 	return nil
 }
 
-func CleanUpCloudstackTestResources(ctx context.Context, clusterName string) error {
+func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
 	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
@@ -92,5 +92,5 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string) err
 		return fmt.Errorf("validating cloudstack connection with cloudmonkey: %v", err)
 	}
 
-	return cmk.CleanupVms(ctx, clusterName, false)
+	return cmk.CleanupVms(ctx, clusterName, dryRun)
 }

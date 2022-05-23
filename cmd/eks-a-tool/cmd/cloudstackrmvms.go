@@ -1,16 +1,12 @@
 package cmd
 
 import (
-	"context"
-	"fmt"
+	"github.com/aws/eks-anywhere/internal/test/e2e"
 	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -29,7 +25,7 @@ var cloudstackRmVmsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = cloudstackRmVms(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
+		err = e2e.CleanUpCloudstackTestResources(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
 		if err != nil {
 			log.Fatalf("Error removing vms: %v", err)
 		}
@@ -46,28 +42,4 @@ func init() {
 	if err != nil {
 		log.Fatalf("Error initializing flags: %v", err)
 	}
-}
-
-func cloudstackRmVms(ctx context.Context, clusterName string, dryRun bool) error {
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
-	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-	defer close.CheckErr(ctx)
-	tmpWriter, err := filewriter.NewWriter("rmvms")
-	if err != nil {
-		return fmt.Errorf("creating filewriter for directory rmvms: %v", err)
-	}
-	execConfig, err := decoder.ParseCloudStackSecret()
-	if err != nil {
-		return fmt.Errorf("building cmk executable: %v", err)
-	}
-	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, *execConfig)
-	defer cmk.Close(ctx)
-
-	if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
-		return fmt.Errorf("validating cloudstack connection with cloudmonkey: %v", err)
-	}
-
-	return cmk.CleanupVms(ctx, clusterName, dryRun)
 }
