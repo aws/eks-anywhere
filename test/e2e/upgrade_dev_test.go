@@ -187,7 +187,7 @@ func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(
 			framework.UpdateRedhatTemplate121Var(),
-			api.WithCloudStackComputeOffering(cloudstackComputeOfferingUpdateVar),
+			api.WithCloudStackComputeOfferingForAllMachines(cloudstackComputeOfferingUpdateVar),
 		),
 	)
 }

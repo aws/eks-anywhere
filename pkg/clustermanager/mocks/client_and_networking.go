@@ -288,6 +288,21 @@ func (mr *MockClusterClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCluster), arg0, arg1, arg2)
 }
 
+// GetEksaFluxConfig mocks base method.
+func (m *MockClusterClient) GetEksaFluxConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.FluxConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaFluxConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.FluxConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaFluxConfig indicates an expected call of GetEksaFluxConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaFluxConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaFluxConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaFluxConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaGitOpsConfig mocks base method.
 func (m *MockClusterClient) GetEksaGitOpsConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.GitOpsConfig, error) {
 	m.ctrl.T.Helper()
@@ -660,6 +675,20 @@ func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Sp
 func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
+}
+
+// RunPostControlPlaneUpgradeSetup mocks base method.
+func (m *MockNetworking) RunPostControlPlaneUpgradeSetup(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostControlPlaneUpgradeSetup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostControlPlaneUpgradeSetup indicates an expected call of RunPostControlPlaneUpgradeSetup.
+func (mr *MockNetworkingMockRecorder) RunPostControlPlaneUpgradeSetup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneUpgradeSetup", reflect.TypeOf((*MockNetworking)(nil).RunPostControlPlaneUpgradeSetup), arg0, arg1)
 }
 
 // Upgrade mocks base method.

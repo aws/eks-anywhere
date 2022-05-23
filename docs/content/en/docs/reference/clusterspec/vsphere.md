@@ -15,7 +15,8 @@ metadata:
    name: my-cluster-name
 spec:
    clusterNetwork:
-      cni: "cilium"
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
             - 192.168.0.0/16
@@ -291,3 +292,18 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 
 ### storagePolicyName (optional)
 The storage policy name associated with your VMs.
+
+## Optional VSphere Credentials 
+Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
+
+### EKSA_VSPHERE_CP_USERNAME
+Username for Cloud Provider (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CP_PASSWORD
+Password for Cloud Provider (Default: $EKSA_VSPHERE_PASSWORD).
+
+### EKSA_VSPHERE_CSI_USERNAME
+Username for CSI Driver (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CSI_PASSWORD
+Password for CSI Driver (Default: $EKSA_VSPHERE_PASSWORD).

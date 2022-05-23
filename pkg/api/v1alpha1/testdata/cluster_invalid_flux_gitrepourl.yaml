@@ -69,5 +69,4 @@ metadata:
   namespace: default
 spec:
   git:
-    username: "test"
     repositoryUrl: "http://test.git/test"

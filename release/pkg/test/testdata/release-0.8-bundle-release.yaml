@@ -133,11 +133,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -209,7 +225,7 @@ spec:
     eksD:
       channel: 1-20
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -310,9 +326,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -415,8 +431,20 @@ spec:
       version: v0.11.1+abcdef1
     kubeVersion: "1.20"
     packageController:
-      helmChart: {}
-      packageController: {}
+      helmChart:
+        description: 'Helm chart: eks-anywhere-packages-helm'
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      packageController:
+        arch:
+        - amd64
+        description: Container image for eks-anywhere-packages image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      version: v0.1.2+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -424,34 +452,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -635,11 +673,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -711,7 +765,7 @@ spec:
     eksD:
       channel: 1-21
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -812,9 +866,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -917,8 +971,20 @@ spec:
       version: v0.11.1+abcdef1
     kubeVersion: "1.21"
     packageController:
-      helmChart: {}
-      packageController: {}
+      helmChart:
+        description: 'Helm chart: eks-anywhere-packages-helm'
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      packageController:
+        arch:
+        - amd64
+        description: Container image for eks-anywhere-packages image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      version: v0.1.2+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -926,34 +992,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -1137,11 +1213,27 @@ spec:
         uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
       version: v1.9.13-eksa.2
     cloudStack:
-      clusterAPIController: {}
-      components: {}
-      kubeVip: {}
-      metadata: {}
-      version: ""
+      clusterAPIController:
+        arch:
+        - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.1-eks-a-v0.0.0-dev-release-0.8-build.1
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-release-0.8-build.1
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.1/metadata.yaml
+      version: v0.4.1+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/cluster-api/manifests/cluster-api/v1.0.2/core-components.yaml
@@ -1213,7 +1305,7 @@ spec:
     eksD:
       channel: 1-22
       components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
-      gitCommit: b66f9a82b317464178991e0a5b8f5c28980f70da
+      gitCommit: 0123456789abcdef0123456789abcdef01234567
       kindNode:
         arch:
         - amd64
@@ -1314,9 +1406,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.8.2-eks-a-v0.0.0-dev-release-0.8-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-release-0.8-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/v0.8.2/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.8-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
@@ -1419,8 +1511,20 @@ spec:
       version: v0.11.1+abcdef1
     kubeVersion: "1.22"
     packageController:
-      helmChart: {}
-      packageController: {}
+      helmChart:
+        description: 'Helm chart: eks-anywhere-packages-helm'
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      packageController:
+        arch:
+        - amd64
+        description: Container image for eks-anywhere-packages image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: eks-anywhere-packages
+        os: linux
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.2-eks-a-v0.0.0-dev-release-0.8-build.1
+      version: v0.1.2+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -1428,34 +1532,44 @@ spec:
       metadata: {}
       version: ""
     tinkerbell:
-      actions:
-        cexec: {}
-        imageToDisk: {}
-        kexec: {}
-        ociToDisk: {}
-        writeFile: {}
-      boots: {}
-      cfssl: {}
       clusterAPIController: {}
       clusterTemplate: {}
       components: {}
-      hegel: {}
-      hook:
-        bootkit: {}
-        docker: {}
-        initramfs:
-          amd: {}
-          arm: {}
-        kernel: {}
-        vmlinuz:
-          amd: {}
-          arm: {}
       kubeVip: {}
       metadata: {}
-      pbnj: {}
-      tinkCli: {}
-      tinkServer: {}
-      tinkWorker: {}
+      tinkerbellStack:
+        actions:
+          cexec: {}
+          imageToDisk: {}
+          kexec: {}
+          ociToDisk: {}
+          writeFile: {}
+        boots:
+          image: {}
+          manifest: {}
+        cfssl: {}
+        hegel:
+          image: {}
+          manifest: {}
+        hook:
+          bootkit: {}
+          docker: {}
+          initramfs:
+            amd: {}
+            arm: {}
+          kernel: {}
+          vmlinuz:
+            amd: {}
+            arm: {}
+        pbnj:
+          image: {}
+          manifest: {}
+        tink:
+          tinkCli: {}
+          tinkController: {}
+          tinkManifest: {}
+          tinkServer: {}
+          tinkWorker: {}
       version: ""
     vSphere:
       clusterAPIController:

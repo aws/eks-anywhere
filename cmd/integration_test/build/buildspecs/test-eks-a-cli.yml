@@ -6,7 +6,11 @@ env:
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 120
     T_VSPHERE_CIDR: "198.18.128.0/17"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
-    SKIPPED_TESTS: "TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120ThreeWorkersConformanceFlow,TestCloudStackKubernetes121ThreeWorkersConformanceFlow,TestCloudStackKubernetes121GitopsOptionsFlux,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestCloudStackKubernetes120SimpleFlow,TestCloudStackKubernetes121DifferentNamespaceSimpleFlow,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120To121CpComputeOfferingUpgrade,TestCloudStackKubernetes120RedhatTo121Upgrade,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes121WorkloadClusterDemo,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFlux,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes121WorkloadCluster,TestCloudStackKubernetes120GitopsOptionsFlux"
+    T_CLOUDSTACK_CIDR: "10.11.101.0/16"
+    SKIPPED_TESTS: "TestVSphereKubernetes122BottlerocketAutoimport,TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow"
+    CLOUDSTACK_PROVIDER: true
+    EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
+    EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -27,6 +31,7 @@ env:
     T_VSPHERE_TEMPLATE_UBUNTU_1_20: "vsphere_ci_beta_connection:template_20"
     T_VSPHERE_TEMPLATE_UBUNTU_1_21: "vsphere_ci_beta_connection:template_21"
     T_VSPHERE_TEMPLATE_UBUNTU_1_22: "vsphere_ci_beta_connection:template_22"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_23: "vsphere_ci_beta_connection:template_23"
     T_VSPHERE_TEMPLATE_BR_1_20: "vsphere_ci_beta_connection:template_br_20"
     T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
     T_VSPHERE_TEMPLATE_BR_1_22: "vsphere_ci_beta_connection:template_br_22"
@@ -35,6 +40,7 @@ env:
     EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
+    T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
     T_HTTP_PROXY: "proxy-config-data:httpProxy"
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
     T_NO_PROXY: "proxy-config-data:noProxy"
@@ -54,10 +60,9 @@ env:
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGE: "cloudstack_ci_beta_connection:compute_offering_large"
     T_CLOUDSTACK_COMPUTE_OFFERING_LARGER: "cloudstack_ci_beta_connection:compute_offering_larger"
     T_CLOUDSTACK_TLS_INSECURE: "cloudstack_ci_beta_connection:tls_insecure"
-    T_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
+    EKSA_CLOUDSTACK_B64ENCODED_SECRET: "cloudstack_ci_beta_connection:b64_encoded_secret"
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
-    T_CLOUDSTACK_CLUSTER_IP_POOL: "cloudstack_ci_beta_connection:cluster_ip_pool"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
 
 phases:
@@ -93,6 +98,7 @@ phases:
     commands:
       - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
       - export GIT_HASH=$(cat bin/githash)
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
       - >
         ./cmd/integration_test/build/script/upload_artifacts.sh
         $ARTIFACTS_BUCKET
@@ -105,7 +111,7 @@ phases:
         false
       - >
         ./bin/test e2e cleanup vsphere
-        -n ${BRANCH_NAME}
+        -n ${CLUSTER_NAME_PREFIX}
         -v 4
 reports:
   e2e-reports:

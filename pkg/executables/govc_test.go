@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
 const (
@@ -230,7 +231,8 @@ func TestSearchTemplateError(t *testing.T) {
 	datacenter := "SDDC-Datacenter"
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+	g.Retrier = retrier.NewWithMaxRetries(5, 0)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env")).Times(5)
 
 	_, err := g.SearchTemplate(ctx, datacenter, machineConfig)
 	if err == nil {
@@ -607,7 +609,8 @@ func TestGetTagsErrorGovc(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(bytes.Buffer{}, errors.New("error from exec"))
+	g.Retrier = retrier.NewWithMaxRetries(5, 0)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(bytes.Buffer{}, errors.New("error from exec")).Times(5)
 
 	_, err := g.GetTags(ctx, path)
 	if err == nil {

@@ -11,6 +11,7 @@ func init() {
 		gitOpsEntry(),
 		fluxEntry(),
 		vsphereEntry(),
+		cloudstackEntry(),
 		dockerEntry(),
 		snowEntry(),
 		tinkerbellEntry(),

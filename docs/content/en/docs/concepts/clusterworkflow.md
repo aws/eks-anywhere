@@ -79,7 +79,7 @@ This section steps through an example of an EKS Anywhere cluster being created o
 Once you understand this process, you can use the following documentation to create your own cluster:
 
 * [Create production cluster]({{< relref "../getting-started/production-environment" >}}) for the exact procedure to create a cluster on vSphere.
-* [Troubleshooting]({{< relref "../tasks/troubleshoot/_troubleshooting" >}}) if you encounter problems along the way.
+* [Troubleshooting]({{< relref "../tasks/troubleshoot/troubleshooting" >}}) if you encounter problems along the way.
 
 ### Starting the process
 

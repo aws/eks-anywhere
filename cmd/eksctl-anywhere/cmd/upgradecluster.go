@@ -73,19 +73,27 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, uc.forceClean).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
+		WithEksdUpgrader().
+		WithEksdInstaller().
 		WithKubectl().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if deps.Provider.Name() == "tinkerbell" {
 		return fmt.Errorf("Error: upgrade operation is not supported for provider tinkerbell")
@@ -98,6 +106,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
+		deps.EksdUpgrader,
+		deps.EksdInstaller,
 	)
 
 	workloadCluster := &types.Cluster{
@@ -105,29 +115,24 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 	}
 
-	var cluster *types.Cluster
+	var managementCluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
-		}
+		managementCluster = workloadCluster
 	} else {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.ManagementCluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
-		}
+		managementCluster = clusterSpec.ManagementCluster
 	}
 
 	validationOpts := &validations.Opts{
 		Kubectl:           deps.Kubectl,
 		Spec:              clusterSpec,
 		WorkloadCluster:   workloadCluster,
-		ManagementCluster: cluster,
+		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean)
+	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	cleanup(deps, &err)
 	return err
 }
 

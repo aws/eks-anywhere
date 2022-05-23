@@ -6,7 +6,9 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -21,10 +23,11 @@ type Create struct {
 	clusterManager interfaces.ClusterManager
 	addonManager   interfaces.AddonManager
 	writer         filewriter.FileWriter
+	eksdInstaller  interfaces.EksdInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 ) *Create {
 	return &Create{
 		bootstrapper:   bootstrapper,
@@ -32,10 +35,11 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		clusterManager: clusterManager,
 		addonManager:   addonManager,
 		writer:         writer,
+		eksdInstaller:  eksdInstaller,
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool, packagesLocation string) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Cluster.Name,
@@ -51,13 +55,23 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		ClusterSpec:    clusterSpec,
 		Writer:         c.writer,
 		Validations:    validator,
+		EksdInstaller:  c.eksdInstaller,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	return task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
+	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
+	if err != nil {
+		return err
+	}
+
+	if packagesLocation != "" {
+		curatedpackages.PrintLicense()
+		err = installCuratedPackages(ctx, clusterSpec, packagesLocation)
+	}
+	return err
 }
 
 // task related entities
@@ -100,6 +114,12 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return nil
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
+
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
 
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
 	if err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
@@ -198,7 +218,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	logger.Info("Installing storage class on workload cluster")
 	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
@@ -265,6 +284,12 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
 		}
+		logger.Info("Installing EKS-D components on workload cluster")
+		err = commandContext.EksdInstaller.InstallEksdCRDs(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
 	}
 
 	logger.Info("Creating EKS-A CRDs instances on workload cluster")
@@ -280,6 +305,11 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		targetCluster = commandContext.BootstrapCluster
 	}
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -347,10 +377,49 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
 }
 
-func getManagementCluster(commandContext *task.CommandContext) *types.Cluster {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
+func installCuratedPackages(ctx context.Context, spec *cluster.Spec, packagesLocation string) error {
+	err := installPackagesController(ctx, spec)
+	if err != nil {
+		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
+		return nil
 	}
-	return target
+
+	err = installPackages(ctx, spec.Cluster.Name, packagesLocation)
+	if err != nil {
+		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
+	}
+	return nil
+}
+
+func installPackagesController(ctx context.Context, spec *cluster.Spec) error {
+	logger.Info("Installing curated packages controller on workload cluster")
+	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
+	if err != nil {
+		return err
+	}
+	chart := spec.VersionsBundle.VersionsBundle.PackageController.HelmChart
+	pc := curatedpackages.NewPackageControllerClient(deps.Helm, deps.Kubectl, kubeConfig, chart.Image(), chart.Name, chart.Tag())
+	err = pc.InstallController(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func installPackages(ctx context.Context, clusterName, packagesLocation string) error {
+	kubeConfig := kubeconfig.FromClusterName(clusterName)
+	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig, packagesLocation)
+	if err != nil {
+		return err
+	}
+	packageClient := curatedpackages.NewPackageClient(
+		nil,
+		deps.Kubectl,
+	)
+	err = packageClient.CreatePackages(ctx, packagesLocation, kubeConfig)
+	if err != nil {
+		return err
+	}
+	return nil
 }

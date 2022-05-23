@@ -5,10 +5,7 @@ import (
 	"fmt"
 )
 
-// Provider acts as an interface for specific Git hosting providers -- e.g. GitHub, BitBucket, GitLab, etc.
-// It wraps a low-level git implementation (e.g. gogit) and abstracts auth and provider specific configurations
-// while providing a common interface for local git actions.
-type Provider interface {
+type Client interface {
 	Add(filename string) error
 	Remove(filename string) error
 	Clone(ctx context.Context) error
@@ -17,6 +14,10 @@ type Provider interface {
 	Pull(ctx context.Context, branch string) error
 	Init() error
 	Branch(name string) error
+	ValidateRemoteExists(ctx context.Context) error
+}
+
+type ProviderClient interface {
 	GetRepo(ctx context.Context) (repo *Repository, err error)
 	CreateRepo(ctx context.Context, opts CreateRepoOpts) (repo *Repository, err error)
 	DeleteRepo(ctx context.Context, opts DeleteRepoOpts) error
@@ -72,12 +73,10 @@ func (e *RepositoryIsEmptyError) Error() string {
 	return fmt.Sprintf("repository %s is empty can cannot be cloned", e.Repository)
 }
 
-type RepositoryUpToDateError struct {
-	Repository string
-}
+type RepositoryUpToDateError struct{}
 
 func (e *RepositoryUpToDateError) Error() string {
-	return fmt.Sprintf("error pulling from repository %s: already up-to-date", e.Repository)
+	return "error pulling from repository: already up-to-date"
 }
 
 type RemoteBranchDoesNotExistError struct {

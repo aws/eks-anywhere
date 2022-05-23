@@ -164,6 +164,10 @@ func NewCluster(clusterName string) *Cluster {
 
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
+	// TODO(chrisdoherty) Uncomment and fix unit tests. This broke _lots_ of unit tests so will
+	// return shortly.
+	// validateControlPlaneEndpoint,
+	// validateControlPlaneMachineRef,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
@@ -288,6 +292,19 @@ func (c *Cluster) RegistryMirror() string {
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
+func (c *Cluster) ProxyConfiguration() map[string]string {
+	if c.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+	noProxyList := append(c.Spec.ProxyConfiguration.NoProxy, c.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, c.Spec.ClusterNetwork.Services.CidrBlocks...)
+	return map[string]string{
+		"HTTP_PROXY":  c.Spec.ProxyConfiguration.HttpProxy,
+		"HTTPS_PROXY": c.Spec.ProxyConfiguration.HttpsProxy,
+		"NO_PROXY":    strings.Join(noProxyList[:], ","),
+	}
+}
+
 func (c *Cluster) IsReconcilePaused() bool {
 	if s, ok := c.Annotations[pausedAnnotation]; ok {
 		return s == "true"
@@ -325,6 +342,25 @@ func validateClusterConfigName(clusterConfig *Cluster) error {
 	return nil
 }
 
+// func validateControlPlaneEndpoint(cluster *Cluster) error {
+// 	if cluster.Spec.ControlPlaneConfiguration.Endpoint.Host == "" {
+// 		return errors.New("control plane endpoint host cannot be empty")
+// 	}
+
+// 	if err := networkutils.ValidateIP(cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+// 		return fmt.Errorf("invalid control plane endpoint host: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+// func validateControlPlaneMachineRef(cluster *Cluster) error {
+// 	if cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
+// 		return errors.New("control plane machine group ref cannot be nil")
+// 	}
+// 	return nil
+// }
+
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count <= 0 {
 		return errors.New("control plane node count must be positive")
@@ -356,15 +392,18 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
+
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
 	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
 	for i, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
 			return errors.New("worker node group names must be unique")
 		}
+
 		if len(workerNodeGroupConfig.Taints) != 0 {
 			for _, taint := range workerNodeGroupConfig.Taints {
 				if taint.Effect == "NoExecute" || taint.Effect == "NoSchedule" {
@@ -372,15 +411,24 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 				}
 			}
 		}
+
 		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
 		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
 			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
 		}
+
+		// TODO(chrisdoherty4) uncomment and fix
+		// if workerNodeGroupConfig.MachineGroupRef == nil {
+		// 	return fmt.Errorf("worker node group missing machineg roup ref: name=%v", workerNodeGroupConfig.Name)
+		// }
+
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
+
 	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
 		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
 	}
+
 	return nil
 }
 
@@ -577,11 +625,15 @@ func validateGitOps(clusterConfig *Cluster) error {
 	if gitOpsRef == nil {
 		return nil
 	}
-	if gitOpsRef.Kind != GitOpsConfigKind {
-		return errors.New("only GitOpsConfig Kind is supported at this time")
+
+	gitOpsRefKind := gitOpsRef.Kind
+
+	if gitOpsRefKind != GitOpsConfigKind && gitOpsRefKind != FluxConfigKind {
+		return errors.New("only GitOpsConfig or FluxConfig Kind are supported at this time")
 	}
+
 	if gitOpsRef.Name == "" {
-		return errors.New("GitOpsConfig name can't be empty; specify a valid name for GitOpsConfig")
+		return errors.New("GitOpsRef name can't be empty; specify a valid GitOpsConfig name")
 	}
 	return nil
 }

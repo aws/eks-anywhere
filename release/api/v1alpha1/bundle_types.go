@@ -263,26 +263,18 @@ type EtcdadmControllerBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
-type TinkerbellBundle struct {
-	Version              string   `json:"version"`
-	ClusterAPIController Image    `json:"clusterAPIController"`
-	KubeVip              Image    `json:"kubeVip"`
-	TinkServer           Image    `json:"tinkServer"`
-	TinkWorker           Image    `json:"tinkWorker"`
-	TinkCli              Image    `json:"tinkCli"`
-	Hegel                Image    `json:"hegel"`
-	Cfssl                Image    `json:"cfssl"`
-	Pbnj                 Image    `json:"pbnj"`
-	Boots                Image    `json:"boots"`
-	Actions              Actions  `json:"actions"`
-	Components           Manifest `json:"components"`
-	Metadata             Manifest `json:"metadata"`
-	ClusterTemplate      Manifest `json:"clusterTemplate"`
-	Hook                 Hook     `json:"hook"`
+type TinkerbellStackBundle struct {
+	Actions ActionsBundle           `json:"actions"`
+	Boots   TinkerbellServiceBundle `json:"boots"`
+	Cfssl   Image                   `json:"cfssl"`
+	Hegel   TinkerbellServiceBundle `json:"hegel"`
+	Hook    HookBundle              `json:"hook"`
+	Pbnj    TinkerbellServiceBundle `json:"pbnj"`
+	Tink    TinkBundle              `json:"tink"`
 }
 
 // Tinkerbell Template Actions
-type Actions struct {
+type ActionsBundle struct {
 	Cexec       Image `json:"cexec"`
 	Kexec       Image `json:"kexec"`
 	ImageToDisk Image `json:"imageToDisk"`
@@ -290,8 +282,21 @@ type Actions struct {
 	WriteFile   Image `json:"writeFile"`
 }
 
+type TinkerbellServiceBundle struct {
+	Image    Image    `json:"image"`
+	Manifest Manifest `json:"manifest"`
+}
+
+type TinkBundle struct {
+	TinkCli        Image    `json:"tinkCli"`
+	TinkController Image    `json:"tinkController"`
+	TinkServer     Image    `json:"tinkServer"`
+	TinkWorker     Image    `json:"tinkWorker"`
+	Manifest       Manifest `json:"tinkManifest"`
+}
+
 // Tinkerbell hook OS
-type Hook struct {
+type HookBundle struct {
 	Bootkit   Image    `json:"bootkit"`
 	Docker    Image    `json:"docker"`
 	Kernel    Image    `json:"kernel"`
@@ -302,6 +307,16 @@ type Hook struct {
 type HookArch struct {
 	Arm Archive `json:"arm"`
 	Amd Archive `json:"amd"`
+}
+
+type TinkerbellBundle struct {
+	Version              string                `json:"version"`
+	ClusterAPIController Image                 `json:"clusterAPIController"`
+	KubeVip              Image                 `json:"kubeVip"`
+	Components           Manifest              `json:"components"`
+	Metadata             Manifest              `json:"metadata"`
+	ClusterTemplate      Manifest              `json:"clusterTemplate"`
+	TinkerbellStack      TinkerbellStackBundle `json:"tinkerbellStack,omitempty"`
 }
 
 type HaproxyBundle struct {

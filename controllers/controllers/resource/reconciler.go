@@ -125,14 +125,13 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		if err != nil {
 			return err
 		}
-		if len(cs.Spec.WorkerNodeGroupConfigurations) != 1 {
-			return fmt.Errorf("expects WorkerNodeGroupConfigurations's length to be 1, but found %d", len(cs.Spec.WorkerNodeGroupConfigurations))
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerCsmc)
+			if err != nil {
+				return err
+			}
+			workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerCsmc
 		}
-		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}, workerCsmc)
-		if err != nil {
-			return err
-		}
-		workerCsmcs[cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] = *workerCsmc
 		if cs.Spec.ExternalEtcdConfiguration != nil {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdCsmc)
 			if err != nil {

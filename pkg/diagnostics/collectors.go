@@ -65,6 +65,8 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) [
 		return c.eksaVsphereCollectors()
 	case v1alpha1.DockerDatacenterKind:
 		return c.eksaDockerCollectors()
+	case v1alpha1.CloudStackDatacenterKind:
+		return c.eksaCloudstackCollectors()
 	default:
 		return nil
 	}
@@ -82,6 +84,18 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 	return append(vsphereLogs, c.vsphereCrdCollectors()...)
 }
 
+func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
+	cloudstackLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapcSystemNamespace,
+				Name:      logpath(constants.CapcSystemNamespace),
+			},
+		},
+	}
+	return append(cloudstackLogs, c.cloudstackCrdCollectors()...)
+}
+
 func (c *collectorFactory) eksaDockerCollectors() []*Collect {
 	return []*Collect{
 		{
@@ -97,6 +111,13 @@ func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.managementClusterCrdCollectors()...)
 	collectors = append(collectors, c.managementClusterLogCollectors()...)
+	return collectors
+}
+
+func (c *collectorFactory) PackagesCollectors() []*Collect {
+	var collectors []*Collect
+	collectors = append(collectors, c.packagesCrdCollectors()...)
+	collectors = append(collectors, c.packagesLogCollectors()...)
 	return collectors
 }
 
@@ -176,6 +197,17 @@ func (c *collectorFactory) defaultLogCollectors() []*Collect {
 	}
 }
 
+func (c *collectorFactory) packagesLogCollectors() []*Collect {
+	return []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.EksaPackagesName,
+				Name:      logpath(constants.EksaPackagesName),
+			},
+		},
+	}
+}
+
 func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
 	return []*Collect{
 		{
@@ -247,6 +279,31 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 		"vspherevms.infrastructure.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(capvCrds)
+}
+
+func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
+	crds := []string{
+		"cloudstackaffinitygroups.infrastructure.cluster.x-k8s.io",
+		"cloudstackclusters.infrastructure.cluster.x-k8s.io",
+		"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackisolatednetworks.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackmachines.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachinestatecheckers.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"cloudstackzones.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(crds)
+}
+
+func (c *collectorFactory) packagesCrdCollectors() []*Collect {
+	packageCrds := []string{
+		"packagebundlecontrollers.packages.eks.amazonaws.com",
+		"packagebundles.packages.eks.amazonaws.com",
+		"packagecontrollers.packages.eks.amazonaws.com",
+		"packages.packages.eks.amazonaws.com",
+	}
+	return c.generateCrdCollectors(packageCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {

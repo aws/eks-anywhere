@@ -17,8 +17,8 @@ type BundleClient interface {
 
 type DiagnosticBundleFactory interface {
 	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
-	DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
-	DiagnosticBundleManagementCluster(kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleDefault() DiagnosticBundle
 	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
 }
@@ -47,9 +47,11 @@ type AnalyzerFactory interface {
 	EksaExternalEtcdAnalyzers() []*Analyze
 	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 	ManagementClusterAnalyzers() []*Analyze
+	PackageAnalyzers() []*Analyze
 }
 
 type CollectorFactory interface {
+	PackagesCollectors() []*Collect
 	DefaultCollectors() []*Collect
 	ManagementClusterCollectors() []*Collect
 	EksaHostCollectors(configs []providers.MachineConfig) []*Collect

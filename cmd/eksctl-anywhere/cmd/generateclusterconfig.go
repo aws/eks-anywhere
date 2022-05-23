@@ -35,7 +35,7 @@ var generateClusterConfigCmd = &cobra.Command{
 		}
 		err = generateClusterConfig(clusterName)
 		if err != nil {
-			return fmt.Errorf("failed to generate eks-a cluster config: %v", err) // need to have better error handling here in own func
+			return fmt.Errorf("generating eks-a cluster config: %v", err) // need to have better error handling here in own func
 		}
 		return nil
 	},
@@ -45,7 +45,7 @@ func preRunGenerateClusterConfig(cmd *cobra.Command, args []string) {
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		err := viper.BindPFlag(flag.Name, flag)
 		if err != nil {
-			log.Fatalf("failed initializing flags: %v", err)
+			log.Fatalf("initializing flags: %v", err)
 		}
 	})
 }
@@ -55,7 +55,7 @@ func init() {
 	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (docker, vsphere or nutanix)")
 	err := generateClusterConfigCmd.MarkFlagRequired("provider")
 	if err != nil {
-		log.Fatalf("failed marking flag as required: %v", err)
+		log.Fatalf("marking flag as required: %v", err)
 	}
 }
 
@@ -77,7 +77,7 @@ func generateClusterConfig(clusterName string) error {
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		datacenterYaml = dcyaml
 	case constants.VSphereProviderName:
@@ -92,7 +92,7 @@ func generateClusterConfig(clusterName string) error {
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		datacenterYaml = dcyaml
 		// need to default control plane config name to something different from the cluster name based on assumption
@@ -107,15 +107,15 @@ func generateClusterConfig(clusterName string) error {
 		)
 		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.SnowProviderName:
@@ -132,7 +132,7 @@ func generateClusterConfig(clusterName string) error {
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		datacenterYaml = dcyaml
 
@@ -144,11 +144,11 @@ func generateClusterConfig(clusterName string) error {
 		)
 		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	case constants.CloudStackProviderName:
@@ -165,7 +165,7 @@ func generateClusterConfig(clusterName string) error {
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		datacenterYaml = dcyaml
 		// need to default control plane config name to something different from the cluster name based on assumption
@@ -180,15 +180,15 @@ func generateClusterConfig(clusterName string) error {
 		)
 		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
 		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.TinkerbellProviderName:
@@ -203,18 +203,18 @@ func generateClusterConfig(clusterName string) error {
 			)
 			dcyaml, err := yaml.Marshal(datacenterConfig)
 			if err != nil {
-				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 			datacenterYaml = dcyaml
 			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), v1alpha1.GetClusterDefaultKubernetesVersion())
 			if err != nil {
-				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 
 			tinkTmpConfig := v1alpha1.NewDefaultTinkerbellTemplateConfigGenerate(clusterName, *versionBundle)
 			tinkTmpYaml, err := yaml.Marshal(tinkTmpConfig)
 			if err != nil {
-				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 			tinkerbellTemplateYaml = tinkTmpYaml
 
@@ -228,11 +228,11 @@ func generateClusterConfig(clusterName string) error {
 			)
 			cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 			if err != nil {
-				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 			workerMcYaml, err := yaml.Marshal(workerMachineConfig)
 			if err != nil {
-				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 			machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 		} else {
@@ -286,11 +286,11 @@ func generateClusterConfig(clusterName string) error {
 
 	configMarshal, err := yaml.Marshal(config)
 	if err != nil {
-		return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		return fmt.Errorf("generating cluster yaml: %v", err)
 	}
 	clusterYaml, err := api.CleanupPathsFromYaml(configMarshal, removeFromDefaultConfig)
 	if err != nil {
-		return fmt.Errorf("failed to clean up paths from yaml: %v", err)
+		return fmt.Errorf("cleaning up paths from yaml: %v", err)
 	}
 	resources = append(resources, clusterYaml, datacenterYaml)
 	if len(machineGroupYaml) > 0 {

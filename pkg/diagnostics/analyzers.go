@@ -48,11 +48,42 @@ func (a *analyzerFactory) managementClusterCrdAnalyzers() []*Analyze {
 	return a.generateCrdAnalyzers(crds)
 }
 
+func (a *analyzerFactory) PackageAnalyzers() []*Analyze {
+	var analyzers []*Analyze
+	analyzers = append(analyzers, a.packageDeploymentAnalyzers()...)
+	return append(analyzers, a.packageCrdAnalyzers()...)
+}
+
+func (a *analyzerFactory) packageCrdAnalyzers() []*Analyze {
+	crds := []string{
+		"packagebundlecontrollers.packages.eks.amazonaws.com",
+		"packagebundles.packages.eks.amazonaws.com",
+		"packagecontrollers.packages.eks.amazonaws.com",
+		"packages.packages.eks.amazonaws.com",
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) packageDeploymentAnalyzers() []*Analyze {
+	d := []eksaDeployment{
+		{
+			Name:             "eks-anywhere-packages",
+			Namespace:        constants.EksaPackagesName,
+			ExpectedReplicas: 1,
+		},
+	}
+	return a.generateDeploymentAnalyzers(d)
+}
+
 func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
 			Namespace:        constants.CapvSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapcSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager-webhook",
@@ -122,6 +153,8 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 		return a.eksaVsphereAnalyzers()
 	case v1alpha1.DockerDatacenterKind:
 		return a.eksaDockerAnalyzers()
+	case v1alpha1.CloudStackDatacenterKind:
+		return a.eksaCloudstackAnalyzers()
 	default:
 		return nil
 	}
@@ -131,6 +164,14 @@ func (a *analyzerFactory) eksaVsphereAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) eksaCloudstackAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
 }

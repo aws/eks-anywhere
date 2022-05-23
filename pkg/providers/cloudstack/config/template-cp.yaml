@@ -75,6 +75,22 @@ spec:
 {{- if .cloudstackControlPlaneTemplateOfferingName}}
         name: {{.cloudstackControlPlaneTemplateOfferingName}}
 {{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackControlPlaneDiskOfferingId}}
+        id: {{.cloudstackControlPlaneDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingName}}
+        name: {{.cloudstackControlPlaneDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackControlPlaneDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackControlPlaneDiskOfferingCustomSize}}
+{{- end}}
+        mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
+        device: {{.cloudstackControlPlaneDiskOfferingDevice}}
+        filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+        label: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
@@ -357,6 +373,25 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackControlPlaneDiskOfferingProvided }}
+    diskSetup:
+      filesystems:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}1
+          overwrite: false
+          extraOpts:
+            - -E
+            - lazy_itable_init=1,lazy_journal_init=1
+          filesystem: {{ .cloudstackControlPlaneDiskOfferingFilesystem }}
+          label: data_disk
+      partitions:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}
+          layout: true
+          overwrite: false
+          tableType: gpt
+    mounts:
+      - - LABEL={{ .cloudstackControlPlaneDiskOfferingLabel }}
+        - {{ .cloudstackControlPlaneDiskOfferingPath }}
+{{- end }}
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
@@ -438,6 +473,22 @@ spec:
 {{- end}}
 {{- if .cloudstackEtcdTemplateOfferingName}}
         name: {{.cloudstackEtcdTemplateOfferingName}}
+{{- end}}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackEtcdDiskOfferingId}}
+        id: {{.cloudstackEtcdDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackEtcdDiskOfferingName}}
+        name: {{.cloudstackEtcdDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackEtcdDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackEtcdDiskOfferingCustomSize}}
+{{- end}}
+        mountPath: {{.cloudstackEtcdDiskOfferingPath}}
+        device: {{.cloudstackEtcdDiskOfferingDevice}}
+        filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
+        label: {{.cloudstackEtcdDiskOfferingLabel}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:

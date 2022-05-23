@@ -31,7 +31,7 @@ export KUBEVERSION="1.22"
 ```
 5. Download the OVA
 ```
-OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.6.2.ova"
+OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.7.2.ova"
 tuftool download . --target-name "${OVA}" \
    --root ./root.json \
    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -44,29 +44,29 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-4`
+1.22 - `eksdRelease:kubernetes-1-22-eks-6`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-11`
+1.21 - `eksdRelease:kubernetes-1-21-eks-13`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-13`
+1.20 - `eksdRelease:kubernetes-1-20-eks-15`
 
 ## Ubuntu with Kubernetes 1.22
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/8/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-4-eks-a-8-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-10-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-22-eks-4`
+* `eksdRelease:kubernetes-1-22-eks-6`
 
 ## Ubuntu with Kubernetes 1.21
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/8/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-11-eks-a-8-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-10-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-11`
+* `eksdRelease:kubernetes-1-21-eks-13`
 
 ## Ubuntu with Kubernetes 1.20
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/8/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-13-eks-a-8-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-10-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-13`
+* `eksdRelease:kubernetes-1-20-eks-15`
 
 ## Building your own Ubuntu OVA
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)

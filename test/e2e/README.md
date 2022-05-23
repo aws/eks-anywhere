@@ -39,6 +39,7 @@ T_VSPHERE_TEMPLATE_UBUNTU_1_19
 T_VSPHERE_TEMPLATE_UBUNTU_1_20
 T_VSPHERE_TEMPLATE_UBUNTU_1_21
 T_VSPHERE_TEMPLATE_UBUNTU_1_22
+T_VSPHERE_TEMPLATE_UBUNTU_1_23
 T_VSPHERE_TLS_INSECURE
 T_VSPHERE_TLS_THUMBPRINT
 VSPHERE_USERNAME
@@ -63,6 +64,12 @@ T_TINKERBELL_NETWORK_CIDR
 T_TINKERBELL_INVENTORY_CSV # path to hardware-inventory.csv file
 T_TINKERBELL_SSH_AUTHORIZED_KEY # ssh public key for connectioning to machines
 ```
+## Tinkerbell hardware-inventory.csv example
+```csv
+guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password
+bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password
+cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password
+```
 
 # CloudStack tests requisites
 
@@ -86,11 +93,16 @@ EKSA_CLOUDSTACK_B64ENCODED_SECRET
 CLOUDSTACK_PROVIDER=true (while cloudstack provider is under development)
 ```
 
-## Tinkerbell hardware-inventory.csv example
-```csv
-guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password
-bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password
-cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password
+# Snow tests requisites
+The following env variables need to be set:
+
+```sh
+T_SNOW_AMIID_UBUNTU_1_20
+T_SNOW_AMIID_UBUNTU_1_21
+T_SNOW_CONTROL_PLANE_CIDR
+T_SNOW_POD_CIDR
+EKSA_AWS_CREDENTIALS_FILE
+EKSA_AWS_CA_BUNDLES_FILE
 ```
 
 # OIDC tests requisites

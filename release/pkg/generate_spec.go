@@ -146,7 +146,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
 	}
 
-	var packageBundle anywherev1alpha1.PackageBundle
+	packageBundle, err := r.GetPackagesBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
+	}
+
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
 	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
@@ -159,19 +163,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
 		}
-
-		packageBundle, err = r.GetPackagesBundle(imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
-		}
 	}
 
-	var cloudStackBundle anywherev1alpha1.CloudStackBundle
-	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
-		cloudStackBundle, err = r.GetCloudStackBundle(imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
-		}
+	cloudStackBundle, err := r.GetCloudStackBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 	}
 
 	eksDReleaseMap, err := readEksDReleases(r)
@@ -267,32 +263,33 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCAPIAssets,
-		"cluster-api-provider-aws":     r.GetCapaAssets,
-		"cluster-api-provider-docker":  r.GetDockerAssets,
-		"cluster-api-provider-vsphere": r.GetCapvAssets,
-		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
-		"cert-manager":                 r.GetCertManagerAssets,
-		"cilium":                       r.GetCiliumAssets,
-		"local-path-provisioner":       r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":              r.GetKubeRbacProxyAssets,
-		"kube-vip":                     r.GetKubeVipAssets,
-		"flux":                         r.GetFluxAssets,
-		"etcdadm-bootstrap-provider":   r.GetEtcdadmBootstrapAssets,
-		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
-		"cluster-controller":           r.GetClusterControllerAssets,
-		"kindnetd":                     r.GetKindnetdAssets,
-		"etcdadm":                      r.GetEtcdadmAssets,
-		"cri-tools":                    r.GetCriToolsAssets,
-		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
-		"haproxy":                      r.GetHaproxyAssets,
-		"cluster-api-provider-nutanix": r.GetCapxAssets,
+		"eks-a-tools":                     r.GetEksAToolsAssets,
+		"cluster-api":                     r.GetCAPIAssets,
+		"cluster-api-provider-aws":        r.GetCapaAssets,
+		"cluster-api-provider-docker":     r.GetDockerAssets,
+		"cluster-api-provider-vsphere":    r.GetCapvAssets,
+		"cluster-api-provider-cloudstack": r.GetCapcAssets,
+		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
+		"cert-manager":                    r.GetCertManagerAssets,
+		"cilium":                          r.GetCiliumAssets,
+		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
+		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
+		"kube-vip":                        r.GetKubeVipAssets,
+		"flux":                            r.GetFluxAssets,
+		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
+		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
+		"cluster-controller":              r.GetClusterControllerAssets,
+		"kindnetd":                        r.GetKindnetdAssets,
+		"etcdadm":                         r.GetEtcdadmAssets,
+		"cri-tools":                       r.GetCriToolsAssets,
+		"diagnostic-collector":            r.GetDiagnosticCollectorAssets,
+		"haproxy":                         r.GetHaproxyAssets,
+		"eks-anywhere-packages":           r.GetPackagesAssets,
+		"cluster-api-provider-nutanix":    r.GetCapxAssets,
 	}
 
 	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
-		eksAArtifactsFuncs["cluster-api-provider-cloudstack"] = r.GetCapcAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
@@ -301,7 +298,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
-		eksAArtifactsFuncs["eks-anywhere-packages"] = r.GetPackagesAssets
 		eksAArtifactsFuncs["cluster-api-provider-nutanix"] = r.GetCapxAssets
 	}
 
@@ -502,22 +498,30 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, error) {
-	var sourceImageUri string
-	ecrClient, err := NewECRClient()
-	if err != nil {
-		return "", err
+// GetSourceHelmURI returns the URI for the latest tagged helm chart in the given repository.
+func (r *ReleaseConfig) GetSourceHelmURI(repoName, sourceImageUri string) (string, error) {
+	var latestTag string
+	// If we are going to production, we don't need to lookup the helm chart since the name will always
+	// follow the same format of the image version tag.
+	if r.ReleaseEnvironment == "production" {
+		latestTag = strings.ReplaceAll(sourceImageUri, "packages:v", "packages:")
+		return latestTag, nil
+	} else {
+		ecrClient, err := NewECRClient()
+		if err != nil {
+			return "", err
+		}
+		latestTag, err = ecrClient.GetLatestUploadHelmSha(repoName)
+		if err != nil {
+			return "", err
+		}
 	}
-	latestTag, err := ecrClient.GetLatestUploadHelmSha(repoName)
-	if err != nil {
-		return "", err
-	}
-	sourceImageUri = fmt.Sprintf("%s/%s:%s",
+	helmUri := fmt.Sprintf("%s/%s:%s",
 		r.SourceContainerRegistry,
 		repoName,
 		latestTag,
 	)
-	return sourceImageUri, nil
+	return helmUri, nil
 }
 
 func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {

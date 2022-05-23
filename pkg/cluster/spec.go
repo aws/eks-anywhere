@@ -10,10 +10,10 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/bundles"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -128,6 +128,12 @@ func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
 	}
 }
 
+func WithFluxConfig(fluxConfig *eksav1alpha1.FluxConfig) SpecOpt {
+	return func(s *Spec) {
+		s.FluxConfig = fluxConfig
+	}
+}
+
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
@@ -170,6 +176,9 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 	if err = SetConfigDefaults(clusterConfig); err != nil {
+		return nil, err
+	}
+	if err = ValidateConfig(clusterConfig); err != nil {
 		return nil, err
 	}
 
@@ -401,28 +410,6 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
-}
-
-type EksdManifests struct {
-	ReleaseManifestContent []byte
-	ReleaseCrdContent      []byte
-}
-
-func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
-	releaseCrdContent, err := s.reader.ReadFile(release.Components)
-	if err != nil {
-		return nil, err
-	}
-
-	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	return &EksdManifests{
-		ReleaseManifestContent: releaseManifestContent,
-		ReleaseCrdContent:      releaseCrdContent,
-	}, nil
 }
 
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {

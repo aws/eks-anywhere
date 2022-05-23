@@ -15,7 +15,7 @@ import (
 var networkPolicyAllowAll string
 
 type Helm interface {
-	Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error)
+	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
 }
 
 type Templater struct {
@@ -38,7 +38,12 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 
 	uri, version := getChartUriAndVersion(spec)
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
+	kubeVersion, err := getKubeVersionString(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -57,7 +62,12 @@ func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, ne
 
 	uri, version := getChartUriAndVersion(newSpec)
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
+	kubeVersion, err := getKubeVersionString(currentSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade manifest: %v", err)
 	}
@@ -70,7 +80,12 @@ func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([
 
 	uri, version := getChartUriAndVersion(spec)
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
+	kubeVersion, err := getKubeVersionString(spec)
+	if err != nil {
+		return nil, err
+	}
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}
@@ -97,9 +112,9 @@ func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces
 	So we will create networkPolicy using this default label as namespaceSelector for all versions 1.21 and higher
 	For 1.20 we will create a networkPolicy that allows allow traffic to/from kube-system pods, and document this. Users can still modify it and add new policies
 	as needed*/
-	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
+	k8sVersion, err := getKubeVersion(spec)
 	if err != nil {
-		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
+		return nil, err
 	}
 	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		values["kubeSystemNSHasLabel"] = true
@@ -165,4 +180,20 @@ func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {
 	uri = fmt.Sprintf("oci://%s", chart.Image())
 	version = chart.Tag()
 	return uri, version
+}
+
+func getKubeVersion(spec *cluster.Spec) (*semver.Version, error) {
+	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
+	}
+	return k8sVersion, nil
+}
+
+func getKubeVersionString(spec *cluster.Spec) (string, error) {
+	k8sVersion, err := getKubeVersion(spec)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d.%d", k8sVersion.Major, k8sVersion.Minor), nil
 }

@@ -118,6 +118,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupFluxGitEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	err = e.setupProxyEnv(regex)
 	if err != nil {
 		return err

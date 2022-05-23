@@ -11,7 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
-const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"
+const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1864"
 
 type ExecutableBuilder struct {
 	useDocker  bool
@@ -117,7 +117,7 @@ func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string
 	if useDocker {
 		// We build, init and store the container in the builder so we reuse the same one for all the executables
 		container := newDockerContainer(image, e.workingDir, e.mountDirs, BuildDockerExecutable())
-		if err := container.init(ctx); err != nil {
+		if err := container.Init(ctx); err != nil {
 			return nil, nil, err
 		}
 		e.container = container

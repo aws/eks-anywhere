@@ -10,6 +10,7 @@ resources:
 - bases/anywhere.eks.amazonaws.com_cloudstackdatacenterconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_cloudstackmachineconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_bundles.yaml
+- bases/anywhere.eks.amazonaws.com_fluxconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_gitopsconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_oidcconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_awsiamconfigs.yaml

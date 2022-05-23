@@ -20,7 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/releases"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 

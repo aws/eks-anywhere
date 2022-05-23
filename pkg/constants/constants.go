@@ -38,4 +38,6 @@ const (
 	VSphereCredentialsName = "vsphere-credentials"
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
+
+	DefaultRegistry = "public.ecr.aws"
 )
