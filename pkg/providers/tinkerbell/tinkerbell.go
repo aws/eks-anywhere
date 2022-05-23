@@ -47,7 +47,7 @@ type Provider struct {
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	hardwares             []tinkv1alpha1.Hardware
 	providerKubectlClient ProviderKubectlClient
-	templateBuilder       *TinkerbellTemplateBuilder
+	templateBuilder       *TemplateBuilder
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
@@ -148,7 +148,7 @@ func NewProviderCustomDep(
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
-		templateBuilder: &TinkerbellTemplateBuilder{
+		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
