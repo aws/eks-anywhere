@@ -60,11 +60,9 @@ type Provider struct {
 	// constructor call for constructing the validator in-line.
 	netClient networkutils.NetClient
 
-	skipIpCheck      bool
-	skipPowerActions bool
-	setupTinkerbell  bool
-	force            bool
-	Retrier          *retrier.Retrier
+	skipIpCheck     bool
+	setupTinkerbell bool
+	Retrier         *retrier.Retrier
 }
 
 // TODO: Add necessary kubectl functions here
@@ -100,9 +98,7 @@ func NewProvider(
 	now types.NowFunc,
 	skipIpCheck bool,
 	hardwareManifestPath string,
-	skipPowerActions bool,
 	setupTinkerbell bool,
-	force bool,
 ) *Provider {
 	return NewProviderCustomDep(
 		datacenterConfig,
@@ -114,9 +110,7 @@ func NewProvider(
 		now,
 		skipIpCheck,
 		hardwareManifestPath,
-		skipPowerActions,
 		setupTinkerbell,
-		force,
 	)
 }
 
@@ -130,9 +124,7 @@ func NewProviderCustomDep(
 	now types.NowFunc,
 	skipIpCheck bool,
 	hardwareManifestPath string,
-	skipPowerActions bool,
 	setupTinkerbell bool,
-	force bool,
 ) *Provider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -184,11 +176,9 @@ func NewProviderCustomDep(
 		netClient: netClient,
 
 		// Behavioral flags.
-		skipIpCheck:      skipIpCheck,
-		skipPowerActions: skipPowerActions,
-		setupTinkerbell:  setupTinkerbell,
-		force:            force,
-		Retrier:          retrier,
+		skipIpCheck:     skipIpCheck,
+		setupTinkerbell: setupTinkerbell,
+		Retrier:         retrier,
 	}
 }
 
