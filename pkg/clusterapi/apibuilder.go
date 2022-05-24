@@ -178,7 +178,7 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			Kind:       kubeadmConfigTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workerNodeGroupConfig.Name, // TODO: diff
+			Name:      DefaultKubeadmConfigTemplateName(clusterSpec, workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
@@ -225,7 +225,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      MachineDeploymentName(workerNodeGroupConfig),
+			Name:      MachineDeploymentName(clusterSpec, workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    clusterLabels(clusterName),
 		},

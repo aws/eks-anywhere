@@ -18,6 +18,7 @@ menu:
 - Allow users to configure Cloud Provider and CSI Driver with different credentials. [#1730](https://github.com/aws/eks-anywhere/pull/1730)
 - Support to install, configure and maintain operational components that are secure and tested by Amazon on EKS Anywhere clusters.[#2083](https://github.com/aws/eks-anywhere/issues/2083)
 - A new Workshop section has been added to EKS Anywhere documentation.
+- Added support for curated packages behind a feature flag [#1893](https://github.com/aws/eks-anywhere/pull/1893)
 
 ### Fixed
 - Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)

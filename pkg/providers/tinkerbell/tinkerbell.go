@@ -3,7 +3,6 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -28,10 +27,8 @@ import (
 )
 
 const (
-	tinkerbellIPKey            = "TINKERBELL_IP"
 	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
 	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
-	Provisioning               = "provisioning"
 	maxRetries                 = 30
 	backOffPeriod              = 5 * time.Second
 	deploymentWaitTimeout      = "5m"
@@ -41,7 +38,6 @@ const (
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellIPKey}
 	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
 )
 
@@ -223,16 +219,7 @@ func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 }
 
 func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
-	// TODO: determine if any env vars are needed and add them to requiredEnvs
-	envMap := make(map[string]string)
-	for _, key := range requiredEnvs {
-		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
-			envMap[key] = env
-		} else {
-			return envMap, fmt.Errorf("warning required env not set %s", key)
-		}
-	}
-	return envMap, nil
+	return map[string]string{}, nil
 }
 
 func (p *Provider) GetDeployments() map[string][]string {

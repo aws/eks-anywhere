@@ -152,7 +152,7 @@ func TestWorkersObjects(t *testing.T) {
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			clusterapi.MachineDeploymentName(g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(g.clusterSpec, g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
@@ -190,7 +190,7 @@ func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			clusterapi.MachineDeploymentName(g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(g.clusterSpec, g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
@@ -207,7 +207,7 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			clusterapi.MachineDeploymentName(g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(g.clusterSpec, g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
@@ -234,7 +234,7 @@ func TestWorkersObjectsGetMachineDeploymentError(t *testing.T) {
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			clusterapi.MachineDeploymentName(g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(g.clusterSpec, g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
@@ -249,7 +249,7 @@ func TestWorkersObjectsGetMachineTemplateError(t *testing.T) {
 	g.kubeconfigClient.EXPECT().
 		Get(
 			g.ctx,
-			clusterapi.MachineDeploymentName(g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(g.clusterSpec, g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).

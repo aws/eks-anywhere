@@ -24,7 +24,7 @@ type ClusterManager interface {
 	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, provider providers.Provider) (*types.ChangeDiff, error)
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
-	SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error
+	SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error
 	SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error
 	InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
