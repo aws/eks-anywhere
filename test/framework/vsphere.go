@@ -94,7 +94,7 @@ func UpdateUbuntuTemplate122Var() api.VSphereFiller {
 }
 
 func UpdateUbuntuTemplate123Var() api.VSphereFiller {
-	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines)
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu123Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
