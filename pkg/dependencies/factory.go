@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -312,6 +313,24 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				datacenterConfig,
 				f.dependencies.DockerClient,
 				f.dependencies.Kubectl,
+				time.Now,
+			)
+
+		case v1alpha1.NutanixDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			f.dependencies.Provider = nutanix.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
 				time.Now,
 			)
 		default:

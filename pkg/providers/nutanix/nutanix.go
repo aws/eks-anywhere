@@ -465,3 +465,7 @@ func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 func (p *nutanixProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
+
+func (p *nutanixProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
