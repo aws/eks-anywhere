@@ -12,39 +12,6 @@ const (
 	mountedFile      = "MountedFile"
 )
 
-func GetAndValidateAWSIamConfig(fileName string, refName string, clusterConfig *Cluster) (*AWSIamConfig, error) {
-	config, err := getAWSIamConfig(fileName)
-	if err != nil {
-		return nil, err
-	}
-	config.SetDefaults()
-
-	if err = validateAWSIamConfig(config); err != nil {
-		return nil, err
-	}
-	if err = validateAWSIamRefName(config, refName); err != nil {
-		return nil, err
-	}
-	if err = validateAWSIamNamespace(config, clusterConfig); err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
-
-func getAWSIamConfig(fileName string) (*AWSIamConfig, error) {
-	var config AWSIamConfig
-	err := ParseClusterConfig(fileName, &config)
-	if err != nil {
-		return nil, err
-	}
-	// If the name is empty, we can assume that they didn't configure their AWS IAM configuration, so return nil
-	if config.Name == "" {
-		return nil, nil
-	}
-	return &config, nil
-}
-
 func validateAWSIamConfig(config *AWSIamConfig) error {
 	if config == nil {
 		return nil
@@ -95,31 +62,6 @@ func validateMapUsers(mapUsers []MapUsers) error {
 			return fmt.Errorf("AWSIamConfig MapUsers Username is required")
 		}
 	}
-	return nil
-}
-
-func validateAWSIamRefName(config *AWSIamConfig, refName string) error {
-	if config == nil {
-		return nil
-	}
-
-	if config.Name != refName {
-		return fmt.Errorf("AWSIamConfig retrieved with name %s does not match name (%s) specified in "+
-			"identityProviderRefs", config.Name, refName)
-	}
-
-	return nil
-}
-
-func validateAWSIamNamespace(config *AWSIamConfig, clusterConfig *Cluster) error {
-	if config == nil {
-		return nil
-	}
-
-	if config.Namespace != clusterConfig.Namespace {
-		return fmt.Errorf("AWSIamConfig and Cluster objects must have the same namespace specified")
-	}
-
 	return nil
 }
 
