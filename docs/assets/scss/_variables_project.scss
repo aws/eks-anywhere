@@ -1,23 +1,10 @@
-$primary: #3371E2;
+$primary: #16191F;
+$orange: #EC7211;
 
-// used for landing page video banner
-// changes padding from td-box
-.td-vid-box {
-    .row.section {
-         padding-left: 5vw;
-         padding-right: 5vw;
-         flex-direction: column;
-  
-         > table {
-          @extend .table-striped;
-  
-          @extend .table-responsive;
-  
-          @extend .table;
-         }
-     }
-  
-    .row {
-         flex-direction: row;
-    }
-}
+$warning: $orange;
+
+$navbar-height: 70px;
+$navbar-dark-active-color: $orange;
+$navbar-dark-hover-color: $orange;
+$navbar-dark-brand-color: white;
+
