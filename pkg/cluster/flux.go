@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"path"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,19 +26,20 @@ func fluxEntry() *ConfigManagerEntry {
 	}
 }
 
-func processFlux(c *Config, objects ObjectLookup) {
+func processFlux(c *Config, objects ObjectLookup) error {
 	if c.Cluster.Spec.GitOpsRef == nil {
-		return
+		return nil
 	}
 
 	if c.Cluster.Spec.GitOpsRef.Kind == anywherev1.FluxConfigKind {
 		flux := objects.GetFromRef(c.Cluster.APIVersion, *c.Cluster.Spec.GitOpsRef)
 		if flux == nil {
-			return
+			return fmt.Errorf("no %s named %s", anywherev1.FluxConfigKind, c.Cluster.Spec.GitOpsRef.Name)
 		}
 
 		c.FluxConfig = flux.(*anywherev1.FluxConfig)
 	}
+	return nil
 }
 
 func validateFlux(c *Config) error {

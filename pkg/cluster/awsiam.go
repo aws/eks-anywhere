@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"fmt"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func awsIamEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -39,18 +43,19 @@ func awsIamEntry() *ConfigManagerEntry {
 	}
 }
 
-func processAWSIam(c *Config, objects ObjectLookup) {
+func processAWSIam(c *Config, objects ObjectLookup) error {
 	if c.AWSIAMConfigs == nil {
 		c.AWSIAMConfigs = map[string]*anywherev1.AWSIamConfig{}
 	}
 
 	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
 		idp := objects.GetFromRef(c.Cluster.APIVersion, idr)
-		if idp == nil {
-			return
-		}
 		if idr.Kind == anywherev1.AWSIamConfigKind {
+			if idp == nil {
+				return fmt.Errorf("no %s named %s", anywherev1.AWSIamConfigKind, idr.Name)
+			}
 			c.AWSIAMConfigs[idp.GetName()] = idp.(*anywherev1.AWSIamConfig)
 		}
 	}
+	return nil
 }

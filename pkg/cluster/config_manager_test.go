@@ -18,9 +18,10 @@ func TestConfigManagerParseSuccess(t *testing.T) {
 	g.Expect(c.RegisterMapping(anywherev1.DockerDatacenterKind, func() cluster.APIObject {
 		return &anywherev1.DockerDatacenterConfig{}
 	})).To(Succeed())
-	c.RegisterProcessors(func(c *cluster.Config, ol cluster.ObjectLookup) {
+	c.RegisterProcessors(func(c *cluster.Config, ol cluster.ObjectLookup) error {
 		d := ol.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
 		c.DockerDatacenter = d.(*anywherev1.DockerDatacenterConfig)
+		return nil
 	})
 
 	yamlManifest := []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml"))

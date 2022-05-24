@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"path"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,15 +26,15 @@ func gitOpsEntry() *ConfigManagerEntry {
 	}
 }
 
-func processGitOps(c *Config, objects ObjectLookup) {
+func processGitOps(c *Config, objects ObjectLookup) error {
 	if c.Cluster.Spec.GitOpsRef == nil {
-		return
+		return nil
 	}
 
 	if c.Cluster.Spec.GitOpsRef.Kind == anywherev1.GitOpsConfigKind {
 		gitOps := objects.GetFromRef(c.Cluster.APIVersion, *c.Cluster.Spec.GitOpsRef)
 		if gitOps == nil {
-			return
+			return fmt.Errorf("no %s named %s", anywherev1.GitOpsConfigKind, c.Cluster.Spec.GitOpsRef.Name)
 		}
 
 		// GitOpsConfig will be deprecated.
@@ -43,6 +44,7 @@ func processGitOps(c *Config, objects ObjectLookup) {
 		c.GitOpsConfig = gitOpsConf
 		c.FluxConfig = gitOpsConf.ConvertToFluxConfig()
 	}
+	return nil
 }
 
 func validateGitOps(c *Config) error {

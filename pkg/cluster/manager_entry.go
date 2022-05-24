@@ -6,7 +6,7 @@ type (
 	// APIObjectGenerator returns an implementor of the APIObject interface
 	APIObjectGenerator func() APIObject
 	// ParsedProcessor fills the Config struct from the parsed API objects in ObjectLookup
-	ParsedProcessor func(*Config, ObjectLookup)
+	ParsedProcessor func(*Config, ObjectLookup) error
 	// Validation performs a validation over the Config object
 	Validation func(*Config) error
 	// Defaulter sets defaults in a Config object

@@ -169,7 +169,9 @@ func (c *ConfigManager) buildConfigFromParsed(p *parsed) (*Config, error) {
 	}
 
 	for _, processor := range c.entry.Processors {
-		processor(config, p.objects)
+		if err := processor(config, p.objects); err != nil {
+			return nil, err
+		}
 	}
 
 	return config, nil
@@ -177,9 +179,10 @@ func (c *ConfigManager) buildConfigFromParsed(p *parsed) (*Config, error) {
 
 // machineConfigsProcessor is a helper to generate a ParsedProcessor for all machine configs in a Cluster
 func machineConfigsProcessor(processMachineRef func(c *Config, o ObjectLookup, machineRef *anywherev1.Ref)) ParsedProcessor {
-	return func(c *Config, o ObjectLookup) {
+	return func(c *Config, o ObjectLookup) error {
 		for _, m := range c.Cluster.MachineConfigRefs() {
 			processMachineRef(c, o, &m)
 		}
+		return nil
 	}
 }
