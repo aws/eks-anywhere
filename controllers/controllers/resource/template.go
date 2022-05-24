@@ -306,7 +306,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	for _, wnConfig := range workerTmc {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
 	}
-	templateBuilder := tinkerbell.NewTinkerbellTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, r.now)
+	templateBuilder := tinkerbell.NewTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	cp, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
