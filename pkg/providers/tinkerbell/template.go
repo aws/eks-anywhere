@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 //go:embed config/template-cp.yaml
@@ -47,6 +48,14 @@ func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec,
 
 func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.controlPlaneMachineSpec.TemplateRef.Name]
+	if cpTemplateConfig == nil {
+		versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
+		if err != nil {
+			return nil, fmt.Errorf("creating control plane template config: %v", err)
+		}
+		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle)
+	}
+
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Control Plane TinkerbellTemplateConfig: %v", err)
@@ -78,6 +87,13 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
+		if wTemplateConfig == nil {
+			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
+			if err != nil {
+				return nil, fmt.Errorf("creating worker node template config: %v", err)
+			}
+			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle)
+		}
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
@@ -249,7 +265,6 @@ func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Clust
 
 func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
-
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
