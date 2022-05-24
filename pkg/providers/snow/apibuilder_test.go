@@ -246,7 +246,7 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 			Kind:       "KubeadmConfigTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "md-0",
+			Name:      "snow-test-md-0-1",
 			Namespace: "eksa-system",
 		},
 		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
@@ -300,7 +300,7 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "md-0",
+			Name:      "snow-test-md-0",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
 				"cluster.x-k8s.io/cluster-name": "snow-test",
@@ -322,7 +322,7 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 						ConfigRef: &v1.ObjectReference{
 							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
 							Kind:       "KubeadmConfigTemplate",
-							Name:       "md-0",
+							Name:       "snow-test-md-0-1",
 						},
 					},
 					ClusterName: "snow-test",
