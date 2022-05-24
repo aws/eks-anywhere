@@ -45,24 +45,43 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker Docker, kubectl ProviderKubectlClient) *Provider {
+func newProvider(
+	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+	clusterConfig *v1alpha1.Cluster,
+	writer filewriter.FileWriter,
+	docker Docker,
+	kubectl ProviderKubectlClient,
+) *Provider {
+	templateBuilder, err := NewTemplateBuilder(
+		&datacenterConfig.Spec,
+		clusterConfig,
+		machineConfigs,
+	)
+	if err != nil {
+		panic(err)
+	}
+
 	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
 	if err != nil {
 		panic(err)
 	}
 
-	return NewProvider(
+	provider := NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		reader,
+		templateBuilder,
 		writer,
 		docker,
 		kubectl,
-		test.FakeNow,
 		true,
 		false,
 	)
+	provider.SetNowFunc(test.FakeNow)
+
+	return provider
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
@@ -78,6 +97,9 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	fmt.Printf("%+v\n", machineConfigs)
+
 	ctx := context.Background()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, kubectl)

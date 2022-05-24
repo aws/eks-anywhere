@@ -17,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
@@ -51,7 +50,6 @@ type AWSIamConfigTemplate struct {
 
 type TinkerbellTemplate struct {
 	ResourceFetcher
-	now anywhereTypes.NowFunc
 }
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -298,45 +296,6 @@ func (r *CloudStackTemplate) getWorkloadTemplateNames(ctx context.Context, eksaC
 		}
 	}
 	return workloadTemplateNames, nil
-}
-
-// TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind
-func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, etcdTmc anywherev1.TinkerbellMachineConfig, workerTmc map[string]anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
-	workerNodeGroupMachineSpecs := make(map[string]anywherev1.TinkerbellMachineConfigSpec, len(workerTmc))
-	for _, wnConfig := range workerTmc {
-		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
-	}
-	templateBuilder := tinkerbell.NewTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, r.now)
-	cp, err := r.ControlPlane(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
-	var etcdTemplateName string
-	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
-		etcd, err := r.Etcd(ctx, eksaCluster)
-		if err != nil {
-			return nil, err
-		}
-		etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
-	}
-
-	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
-		if err != nil {
-			return nil, err
-		}
-		workloadTemplateNames[workerNodeGroupConfiguration.Name] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = cp.Spec.MachineTemplate.InfrastructureRef.Name
-		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
-		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
-		values["etcdTemplateName"] = etcdTemplateName
-	}
-
-	return generateTemplateResources(templateBuilder, clusterSpec, nil, nil, cpOpt)
 }
 
 func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {

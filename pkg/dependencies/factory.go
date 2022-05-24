@@ -294,15 +294,24 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return err
 			}
 
+			templateBuilder, err := tinkerbell.NewTemplateBuilder(
+				&datacenterConfig.Spec,
+				clusterConfig,
+				machineConfigs,
+			)
+			if err != nil {
+				return fmt.Errorf("construct template builder: %v", err)
+			}
+
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
 				machines,
+				templateBuilder,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
 				f.dependencies.Kubectl,
-				time.Now,
 				skipIpCheck,
 				setupTinkerbell,
 			)

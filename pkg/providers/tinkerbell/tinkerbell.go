@@ -52,6 +52,7 @@ type Provider struct {
 	templateBuilder       *TemplateBuilder
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
+	Retrier               *retrier.Retrier
 
 	machines  hardware.MachineReader
 	catalogue *hardware.Catalogue
@@ -63,7 +64,9 @@ type Provider struct {
 
 	skipIpCheck     bool
 	setupTinkerbell bool
-	retrier         *retrier.Retrier
+
+	// now can be overriden with SetNowFunc() for testability.
+	now types.NowFunc
 }
 
 type Docker interface {
@@ -99,46 +102,25 @@ func NewProvider(
 	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
 	machines hardware.MachineReader,
+	templateBuilder *TemplateBuilder,
 	writer filewriter.FileWriter,
 	docker Docker,
 	providerKubectlClient ProviderKubectlClient,
-	now types.NowFunc,
 	skipIpCheck bool,
 	setupTinkerbell bool,
 ) *Provider {
-	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
-	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
-			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
-			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
-		}
-	}
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		docker:                docker,
 		providerKubectlClient: providerKubectlClient,
-		templateBuilder: &TemplateBuilder{
-			datacenterSpec:              &datacenterConfig.Spec,
-			controlPlaneMachineSpec:     controlPlaneMachineSpec,
-			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-			etcdMachineSpec:             etcdMachineSpec,
-			now:                         now,
-		},
-		writer:   writer,
-		machines: machines,
-		// TODO(chrisdoherty4) Inject the catalogue dependency so we can dynamically construcft the
-		// indexing capabilities.
+		templateBuilder:       templateBuilder,
+		writer:                writer,
+		machines:              machines,
+
+		// todo(chrisdoherty4)
+		// Inject the catalogue dependency so we can dynamically construcft the indexing capabilities.
 		catalogue: hardware.NewCatalogue(
 			hardware.WithHardwareIDIndex(),
 			hardware.WithHardwareBMCRefIndex(),
@@ -146,15 +128,23 @@ func NewProvider(
 			hardware.WithSecretNameIndex(),
 		),
 		netClient: &networkutils.DefaultNetClient{},
-		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		Retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
+
 		// Behavioral flags.
 		skipIpCheck:     skipIpCheck,
 		setupTinkerbell: setupTinkerbell,
+
+		now: time.Now,
 	}
+}
+
+// SetNowFunc overrides tb's Now func. Useful for testing.
+func (p *Provider) SetNowFunc(fn types.NowFunc) {
+	p.now = fn
 }
 
 func (p *Provider) Name() string {

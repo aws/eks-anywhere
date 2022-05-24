@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -31,19 +32,36 @@ var mhcTemplate []byte
 type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
 	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
-	WorkerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
+	workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
-	now                         types.NowFunc
 }
 
-func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
-	return &TemplateBuilder{
-		controlPlaneMachineSpec:     controlPlaneMachineSpec,
-		datacenterSpec:              datacenterSpec,
-		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-		etcdMachineSpec:             etcdMachineSpec,
-		now:                         now,
+func NewTemplateBuilder(
+	datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec,
+	clusterConfig *v1alpha1.Cluster,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+) (*TemplateBuilder, error) {
+	controlPlaneMachineConfigSpec, err := controlPlaneMachineSpec(clusterConfig, machineConfigs)
+	if err != nil {
+		return nil, err
 	}
+
+	workerNodeGroupMachineConfigSpecs, err := workerNodeGroupMachineSpecs(clusterConfig, machineConfigs)
+	if err != nil {
+		return nil, err
+	}
+
+	externalEtcdMachineConfigSpec, err := externalEtcdMachineSpec(clusterConfig, machineConfigs)
+	if err != nil {
+		return nil, err
+	}
+
+	return &TemplateBuilder{
+		controlPlaneMachineSpec:     controlPlaneMachineConfigSpec,
+		datacenterSpec:              datacenterSpec,
+		workerNodeGroupMachineSpecs: workerNodeGroupMachineConfigSpecs,
+		etcdMachineSpec:             externalEtcdMachineConfigSpec,
+	}, nil
 }
 
 func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
@@ -86,7 +104,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
+		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
 		if wTemplateConfig == nil {
 			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
 			if err != nil {
@@ -99,7 +117,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
 		}
 
-		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
+		values := buildTemplateMapMD(clusterSpec, tb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
 		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		if workloadTemplateNames == nil || !ok {
 			return nil, fmt.Errorf("workloadTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
@@ -108,7 +126,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		if kubeadmconfigTemplateNames == nil || !ok {
 			return nil, fmt.Errorf("kubeadmconfigTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
 		}
-		values["workerSshAuthorizedKey"] = tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
+		values["workerSshAuthorizedKey"] = tb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
@@ -149,7 +167,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		}
 		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
-		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.now)
 	}
 
 	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
@@ -175,7 +193,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			kubeadmconfigTemplateName = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
 		} else {
-			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.now)
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
 		}
 
@@ -188,10 +206,10 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
-			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 
 	// @TODO: upgrade of external etcd
@@ -222,7 +240,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			if err != nil {
 				return nil, nil, err
 			}
-			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.now)
 		}
 	}
 
@@ -266,12 +284,12 @@ func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Clust
 func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.now)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 		}
-		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -281,9 +299,9 @@ func (p *Provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *c
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.now)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.now)
+		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
@@ -387,4 +405,75 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workertemplateOverride": workerTemplateOverride,
 	}
 	return values
+}
+
+// controlPlaneMachineSpec returns the TinkerbellMachineConfigSpec in machineConfigs for control
+// plane nodes.
+func controlPlaneMachineSpec(
+	clusterConfig *v1alpha1.Cluster,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+) (*v1alpha1.TinkerbellMachineConfigSpec, error) {
+	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
+		return nil, errors.New("missing control plane machine group ref")
+	}
+
+	if machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] == nil {
+		return nil, fmt.Errorf(
+			"missing TinkerbellMachineConfig for control plane: %v",
+			clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
+		)
+	}
+
+	return &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec, nil
+}
+
+// workerNodeGroupMachineSpecs returns the TinkerbellMachineConfigSpecs in machineConfigs associated with
+// worker node groups.
+func workerNodeGroupMachineSpecs(
+	clusterConfig *v1alpha1.Cluster,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+) (map[string]v1alpha1.TinkerbellMachineConfigSpec, error) {
+	machineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
+	for _, config := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		if config.MachineGroupRef == nil {
+			return nil, errors.New("missing worker node group configuration machine group ref")
+		}
+
+		if machineConfigs[config.MachineGroupRef.Name] == nil {
+			return nil, fmt.Errorf(
+				"missing TinkerbellMachineConfig for worker node group: %v",
+				config.MachineGroupRef.Name,
+			)
+		}
+
+		machineSpecs[config.MachineGroupRef.Name] = machineConfigs[config.MachineGroupRef.Name].Spec
+	}
+
+	return machineSpecs, nil
+}
+
+// externalEtcdMachineSpec returns the TinkerbellMachineConfigSpec in machineConfigs for etcd nodes.
+// It can return nil, nil meaning no external etcd configuration is specified.
+func externalEtcdMachineSpec(
+	clusterConfig *v1alpha1.Cluster,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+) (*v1alpha1.TinkerbellMachineConfigSpec, error) {
+	if clusterConfig.Spec.ExternalEtcdConfiguration == nil {
+		// This is odd but valid. It means there is no external etcd configuration and callers
+		// must handle it.
+		return nil, nil
+	}
+
+	if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+		return nil, errors.New("missing control plane machine group ref")
+	}
+
+	if machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] == nil {
+		return nil, fmt.Errorf(
+			"missing TinkerbellMachineConfig for external etcd: %v",
+			clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name,
+		)
+	}
+
+	return &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec, nil
 }
