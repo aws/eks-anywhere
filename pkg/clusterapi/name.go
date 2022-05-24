@@ -37,6 +37,16 @@ func KubeadmControlPlaneName(clusterSpec *cluster.Spec) string {
 	return clusterSpec.Cluster.GetName()
 }
 
-func MachineDeploymentName(workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
-	return workerNodeGroupConfig.Name
+func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	// Adding cluster name prefix guarantees the machine deployment name uniqueness
+	// among clusters under the same management cluster setting.
+	return clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig)
+}
+
+func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return DefaultObjectName(clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig))
+}
+
+func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
