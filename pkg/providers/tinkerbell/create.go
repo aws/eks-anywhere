@@ -44,7 +44,7 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if p.setupTinkerbell {
 		logger.V(4).Info("Installing Tinkerbell stack on the bootstrap cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec); err != nil {
+		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, true); err != nil {
 			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
 		}
 	}
@@ -61,6 +61,22 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
+	return nil
+}
+
+func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if p.setupTinkerbell {
+
+		logger.V(4).Info("Installing Tinkerbell stack on the workload cluster")
+		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, false); err != nil {
+			return fmt.Errorf("install tinkerbell stack on workload cluster: %v", err)
+		}
+
+		logger.V(4).Info("Removing local boots container")
+		if err := p.docker.ForceRemove(ctx, bootsContainerName); err != nil {
+			return fmt.Errorf("remove local boots container: %v", err)
+		}
 	}
 	return nil
 }

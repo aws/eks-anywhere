@@ -1116,6 +1116,10 @@ func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.VSphere.Version
 }
