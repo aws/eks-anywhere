@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // IndexHardware indexes Hardware instances on index by extracfting the key using fn.
@@ -69,5 +70,78 @@ func WithHardwareBMCRefIndex() CatalogueOption {
 			hardware := o.(*v1alpha1.Hardware)
 			return hardware.Spec.BMCRef.String()
 		})
+	}
+}
+
+// HardwareCatalogueWriter converts Machine instances to Tinkerbell Hardware and inserts them
+// in a catalogue.
+type HardwareCatalogueWriter struct {
+	catalogue *Catalogue
+}
+
+var _ MachineWriter = &HardwareCatalogueWriter{}
+
+// NewHardwareCatalogueWriter creates a new HardwareCatalogueWriter instance.
+func NewHardwareCatalogueWriter(catalogue *Catalogue) *HardwareCatalogueWriter {
+	return &HardwareCatalogueWriter{catalogue: catalogue}
+}
+
+// Write converts m to a Tinkerbell Hardware and inserts it into w's Catalogue.
+func (w *HardwareCatalogueWriter) Write(m Machine) error {
+	return w.catalogue.InsertHardware(hardwareFromMachine(m))
+}
+
+func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
+	// allow is necessary to allocate memory so we can get a bool pointer required by
+	// the hardware.
+	allow := true
+
+	// TODO(chrisdoherty4) Set the namespace to the CAPT namespace.
+	return &v1alpha1.Hardware{
+		TypeMeta: newHardwareTypeMeta(),
+		ObjectMeta: v1.ObjectMeta{
+			Name:   m.Hostname,
+			Labels: m.Labels,
+		},
+		Spec: v1alpha1.HardwareSpec{
+			Disks: []v1alpha1.Disk{{Device: m.Disk}},
+			Metadata: &v1alpha1.HardwareMetadata{
+				Instance: &v1alpha1.MetadataInstance{
+					ID:       m.ID,
+					Hostname: m.Hostname,
+					Ips: []*v1alpha1.MetadataInstanceIP{
+						{
+							Address: m.IPAddress,
+							Netmask: m.Netmask,
+							Gateway: m.Gateway,
+							Family:  4,
+							Public:  true,
+						},
+					},
+					AllowPxe:  true,
+					AlwaysPxe: true,
+				},
+				State: "provisioning",
+			},
+			Interfaces: []v1alpha1.Interface{
+				{
+					Netboot: &v1alpha1.Netboot{
+						AllowPXE:      &allow,
+						AllowWorkflow: &allow,
+					},
+					DHCP: &v1alpha1.DHCP{
+						MAC: m.MACAddress,
+						IP: &v1alpha1.IP{
+							Address: m.IPAddress,
+							Netmask: m.Netmask,
+							Gateway: m.Gateway,
+							Family:  4,
+						},
+						Hostname:    m.Hostname,
+						NameServers: m.Nameservers,
+					},
+				},
+			},
+		},
 	}
 }

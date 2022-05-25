@@ -2,6 +2,8 @@ package hardware
 
 import (
 	"github.com/tinkerbell/rufio/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // IndexBMCs indexes BMC instances on index by extracfting the key using fn.
@@ -55,5 +57,47 @@ func WithBMCNameIndex() CatalogueOption {
 			bmc := o.(*v1alpha1.BaseboardManagement)
 			return bmc.ObjectMeta.Name
 		})
+	}
+}
+
+// BMCCatalogueWriter converts Machine instances to Tinkerbell BaseboardManagement and inserts them
+// in a catalogue.
+type BMCCatalogueWriter struct {
+	catalogue *Catalogue
+}
+
+var _ MachineWriter = &BMCCatalogueWriter{}
+
+// NewBMCCatalogueWriter creates a new BMCCatalogueWriter instance.
+func NewBMCCatalogueWriter(catalogue *Catalogue) *BMCCatalogueWriter {
+	return &BMCCatalogueWriter{catalogue: catalogue}
+}
+
+// Write converts m to a Tinkerbell BaseboardManagement and inserts it into w's Catalogue.
+func (w *BMCCatalogueWriter) Write(m Machine) error {
+	if m.HasBMC() {
+		return w.catalogue.InsertBMC(baseboardManagementComputerFromMachine(m))
+	}
+	return nil
+}
+
+func baseboardManagementComputerFromMachine(m Machine) *v1alpha1.BaseboardManagement {
+	// TODO(chrisdoherty4)
+	// 	- Set the namespace to the CAPT namespace.
+	// 	- Patch through insecure TLS.
+	return &v1alpha1.BaseboardManagement{
+		TypeMeta: newBaseboardManagementTypeMeta(),
+		ObjectMeta: v1.ObjectMeta{
+			Name: formatBMCRef(m),
+		},
+		Spec: v1alpha1.BaseboardManagementSpec{
+			Connection: v1alpha1.Connection{
+				Host: m.BMCIPAddress,
+				AuthSecretRef: corev1.SecretReference{
+					Name: formatBMCSecretRef(m),
+				},
+				InsecureTLS: true,
+			},
+		},
 	}
 }

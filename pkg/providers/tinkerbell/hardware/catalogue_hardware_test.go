@@ -108,3 +108,18 @@ func TestCatalogue_Hardware_AllHardwareReceivesCopy(t *testing.T) {
 	unchangedHardware := catalogue.AllHardware()
 	g.Expect(unchangedHardware).ToNot(gomega.Equal(changedHardware))
 }
+
+func TestHardwareCatalogueWriter_Write(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	writer := hardware.NewHardwareCatalogueWriter(catalogue)
+	machine := NewValidMachine()
+
+	err := writer.Write(machine)
+	g.Expect(err).To(gomega.Succeed())
+
+	hardware := catalogue.AllHardware()
+	g.Expect(hardware).To(gomega.HaveLen(1))
+	g.Expect(hardware[0].Name).To(gomega.Equal(machine.Hostname))
+}
