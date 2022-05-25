@@ -43,7 +43,7 @@ type CloudStackMachineConfigSpec struct {
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
 	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
-	// Symlnks create soft symbolic links folders. Possible usage is to use data disk to store logs
+	// Symlinks create soft symbolic links folders. One use case is to use data disk to store logs
 	Symlinks map[string]string `json:"symlinks,omitempty"`
 }
 
