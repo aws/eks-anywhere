@@ -22,24 +22,24 @@ func fluxEntry() *ConfigManagerEntry {
 		Validations: []Validation{
 			validateFlux,
 			validateFluxNamespace,
+			validateFluxConfigName,
 		},
 	}
 }
 
-func processFlux(c *Config, objects ObjectLookup) error {
+func processFlux(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.GitOpsRef == nil {
-		return nil
+		return
 	}
 
 	if c.Cluster.Spec.GitOpsRef.Kind == anywherev1.FluxConfigKind {
 		flux := objects.GetFromRef(c.Cluster.APIVersion, *c.Cluster.Spec.GitOpsRef)
 		if flux == nil {
-			return fmt.Errorf("no %s named %s", anywherev1.FluxConfigKind, c.Cluster.Spec.GitOpsRef.Name)
+			return
 		}
 
 		c.FluxConfig = flux.(*anywherev1.FluxConfig)
 	}
-	return nil
 }
 
 func validateFlux(c *Config) error {
@@ -54,6 +54,13 @@ func validateFluxNamespace(c *Config) error {
 		if err := validateSameNamespace(c, c.FluxConfig); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func validateFluxConfigName(c *Config) error {
+	if c.FluxConfig == nil && c.Cluster.Spec.GitOpsRef != nil && c.Cluster.Spec.GitOpsRef.Kind == anywherev1.FluxConfigKind {
+		return fmt.Errorf("%s/%s referenced in Cluster but not present in the cluster config", anywherev1.FluxConfigKind, c.Cluster.Spec.GitOpsRef.Name)
 	}
 	return nil
 }

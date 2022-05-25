@@ -39,22 +39,31 @@ func awsIamEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			validateAWSIamConfigName,
 		},
 	}
 }
 
-func processAWSIam(c *Config, objects ObjectLookup) error {
+func processAWSIam(c *Config, objects ObjectLookup) {
 	if c.AWSIAMConfigs == nil {
 		c.AWSIAMConfigs = map[string]*anywherev1.AWSIamConfig{}
 	}
 
 	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
 		idp := objects.GetFromRef(c.Cluster.APIVersion, idr)
+		if idp == nil {
+			return
+		}
 		if idr.Kind == anywherev1.AWSIamConfigKind {
-			if idp == nil {
-				return fmt.Errorf("no %s named %s", anywherev1.AWSIamConfigKind, idr.Name)
-			}
 			c.AWSIAMConfigs[idp.GetName()] = idp.(*anywherev1.AWSIamConfig)
+		}
+	}
+}
+
+func validateAWSIamConfigName(c *Config) error {
+	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
+		if idr.Kind == anywherev1.AWSIamConfigKind && c.AWSIAMConfigs == nil {
+			return fmt.Errorf("%s/%s referenced in Cluster but not present in the cluster config", anywherev1.AWSIamConfigKind, idr.Name)
 		}
 	}
 	return nil

@@ -15,7 +15,7 @@ func TestConfigManagerEntryMerge(t *testing.T) {
 	kind2 := "kind2"
 	kind3 := "kind3"
 	generator := func() cluster.APIObject { return &anywherev1.Cluster{} }
-	processor := func(*cluster.Config, cluster.ObjectLookup) error { return nil }
+	processor := func(*cluster.Config, cluster.ObjectLookup) {}
 	validator := func(*cluster.Config) error { return nil }
 	defaulter := func(*cluster.Config) error { return nil }
 

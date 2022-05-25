@@ -1,10 +1,6 @@
 package cluster
 
-import (
-	"fmt"
-
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-)
+import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 
 func snowEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -58,15 +54,11 @@ func snowEntry() *ConfigManagerEntry {
 	}
 }
 
-func processSnowDatacenter(c *Config, objects ObjectLookup) error {
+func processSnowDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.SnowDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		if datacenter == nil {
-			return fmt.Errorf("no %s named %s", anywherev1.SnowDatacenterKind, c.Cluster.Spec.DatacenterRef.Name)
-		}
 		c.SnowDatacenter = datacenter.(*anywherev1.SnowDatacenterConfig)
 	}
-	return nil
 }
 
 func processSnowMachineConfig(c *Config, objects ObjectLookup, machineRef *anywherev1.Ref) {

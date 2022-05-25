@@ -31,22 +31,31 @@ func oidcEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			validateOIDCConfigName,
 		},
 	}
 }
 
-func processOIDC(c *Config, objects ObjectLookup) error {
+func processOIDC(c *Config, objects ObjectLookup) {
 	if c.OIDCConfigs == nil {
 		c.OIDCConfigs = map[string]*anywherev1.OIDCConfig{}
 	}
 
 	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
 		idp := objects.GetFromRef(c.Cluster.APIVersion, idr)
+		if idp == nil {
+			return
+		}
 		if idr.Kind == anywherev1.OIDCConfigKind {
-			if idp == nil {
-				return fmt.Errorf("no %s named %s", anywherev1.OIDCConfigKind, idr.Name)
-			}
 			c.OIDCConfigs[idp.GetName()] = idp.(*anywherev1.OIDCConfig)
+		}
+	}
+}
+
+func validateOIDCConfigName(c *Config) error {
+	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
+		if idr.Kind == anywherev1.OIDCConfigKind && c.OIDCConfigs == nil {
+			return fmt.Errorf("%s/%s referenced in Cluster but not present in the cluster config", anywherev1.OIDCConfigKind, idr.Name)
 		}
 	}
 	return nil

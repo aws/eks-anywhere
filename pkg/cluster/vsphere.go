@@ -1,10 +1,6 @@
 package cluster
 
-import (
-	"fmt"
-
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-)
+import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 
 func vsphereEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -63,15 +59,11 @@ func vsphereEntry() *ConfigManagerEntry {
 	}
 }
 
-func processVSphereDatacenter(c *Config, objects ObjectLookup) error {
+func processVSphereDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		if datacenter == nil {
-			return fmt.Errorf("no %s named %s", anywherev1.VSphereDatacenterKind, c.Cluster.Spec.DatacenterRef.Name)
-		}
 		c.VSphereDatacenter = datacenter.(*anywherev1.VSphereDatacenterConfig)
 	}
-	return nil
 }
 
 func processVSphereMachineConfig(c *Config, objects ObjectLookup, machineRef *anywherev1.Ref) {

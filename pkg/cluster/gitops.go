@@ -22,19 +22,20 @@ func gitOpsEntry() *ConfigManagerEntry {
 		Validations: []Validation{
 			validateGitOps,
 			validateGitOpsNamespace,
+			validateGitOpsConfigName,
 		},
 	}
 }
 
-func processGitOps(c *Config, objects ObjectLookup) error {
+func processGitOps(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.GitOpsRef == nil {
-		return nil
+		return
 	}
 
 	if c.Cluster.Spec.GitOpsRef.Kind == anywherev1.GitOpsConfigKind {
 		gitOps := objects.GetFromRef(c.Cluster.APIVersion, *c.Cluster.Spec.GitOpsRef)
 		if gitOps == nil {
-			return fmt.Errorf("no %s named %s", anywherev1.GitOpsConfigKind, c.Cluster.Spec.GitOpsRef.Name)
+			return
 		}
 
 		// GitOpsConfig will be deprecated.
@@ -44,7 +45,6 @@ func processGitOps(c *Config, objects ObjectLookup) error {
 		c.GitOpsConfig = gitOpsConf
 		c.FluxConfig = gitOpsConf.ConvertToFluxConfig()
 	}
-	return nil
 }
 
 func validateGitOps(c *Config) error {
@@ -59,6 +59,13 @@ func validateGitOpsNamespace(c *Config) error {
 		if err := validateSameNamespace(c, c.GitOpsConfig); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func validateGitOpsConfigName(c *Config) error {
+	if c.GitOpsConfig == nil && c.Cluster.Spec.GitOpsRef != nil && c.Cluster.Spec.GitOpsRef.Kind == anywherev1.GitOpsConfigKind {
+		return fmt.Errorf("%s/%s referenced in Cluster but not present in the cluster config", anywherev1.GitOpsConfigKind, c.Cluster.Spec.GitOpsRef.Name)
 	}
 	return nil
 }

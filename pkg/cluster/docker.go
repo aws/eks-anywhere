@@ -1,10 +1,6 @@
 package cluster
 
-import (
-	"fmt"
-
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-)
+import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 
 func dockerEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -35,13 +31,9 @@ func dockerEntry() *ConfigManagerEntry {
 	}
 }
 
-func processDockerDatacenter(c *Config, objects ObjectLookup) error {
+func processDockerDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		if datacenter == nil {
-			return fmt.Errorf("no %s named %s", anywherev1.DockerDatacenterKind, c.Cluster.Spec.DatacenterRef.Name)
-		}
 		c.DockerDatacenter = datacenter.(*anywherev1.DockerDatacenterConfig)
 	}
-	return nil
 }
