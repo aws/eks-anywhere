@@ -3,12 +3,14 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
@@ -142,4 +144,109 @@ func TestDockerSaveToFileNoImages(t *testing.T) {
 	d := executables.NewDocker(executable)
 
 	g.Expect(d.SaveToFile(ctx, file)).To(Succeed())
+}
+
+func TestDockerRunBasicSucess(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "run", "-d", "-i", "--name", "basic_test", "basic_test:latest")
+
+	if err := d.Run(ctx, "basic_test:latest", "basic_test", []string{}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
+func TestDockerRunWithCmdSucess(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "run", "-d", "-i", "--name", "basic_test", "basic_test:latest", "foo", "bar")
+
+	if err := d.Run(ctx, "basic_test:latest", "basic_test", []string{"foo", "bar"}); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
+func TestDockerRunWithFlagsSucess(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "run", "-d", "-i", "--flag1", "--flag2", "--name", "basic_test", "basic_test:latest")
+
+	if err := d.Run(ctx, "basic_test:latest", "basic_test", []string{}, "--flag1", "--flag2"); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
+func TestDockerRunWithCmdAndFlagsSucess(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "run", "-d", "-i", "--flag1", "--flag2", "--name", "basic_test", "basic_test:latest", "foo", "bar")
+
+	if err := d.Run(ctx, "basic_test:latest", "basic_test", []string{"foo", "bar"}, "--flag1", "--flag2"); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
+func TestDockerRunFailure(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	name := "basic_test"
+	image := "basic_test:latest"
+	dockerRunError := "docker run error"
+	expectedError := fmt.Sprintf("running docker container %s with image %s: %s", name, image, dockerRunError)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "run", "-d", "-i", "--name", name, image).Return(bytes.Buffer{}, errors.New(dockerRunError))
+
+	err := d.Run(ctx, image, name, []string{})
+	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
+}
+
+func TestDockerForceRemoveSuccess(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "rm", "-f", "basic_test")
+
+	if err := d.ForceRemove(ctx, "basic_test"); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+}
+
+func TestDockerForceRemoveFailure(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	name := "basic_test"
+	dockerForceRemoveError := "docker force remove error"
+	expectedError := fmt.Sprintf("force removing docker container %s: %s", name, dockerForceRemoveError)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "rm", "-f", name).Return(bytes.Buffer{}, errors.New(dockerForceRemoveError))
+
+	err := d.ForceRemove(ctx, name)
+	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
 }
