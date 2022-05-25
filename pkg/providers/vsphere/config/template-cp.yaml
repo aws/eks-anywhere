@@ -171,8 +171,8 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
-{{- if .controllermanagerExtraArgs }}
-{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{- if .controllerManagerExtraArgs }}
+{{ .controllerManagerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:

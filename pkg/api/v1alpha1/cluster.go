@@ -21,9 +21,10 @@ import (
 )
 
 const (
-	ClusterKind         = "Cluster"
-	YamlSeparator       = "\n---\n"
-	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
+	ClusterKind              = "Cluster"
+	YamlSeparator            = "\n---\n"
+	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
+	podSubnetNodeMaskMaxDiff = 16
 )
 
 // +kubebuilder:object:generate=false
@@ -463,28 +464,45 @@ func validateEtcdReplicas(clusterConfig *Cluster) error {
 }
 
 func validateNetworking(clusterConfig *Cluster) error {
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) <= 0 {
+	clusterNetwork := clusterConfig.Spec.ClusterNetwork
+
+	if len(clusterNetwork.Pods.CidrBlocks) <= 0 {
 		return errors.New("pods CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) <= 0 {
+	if len(clusterNetwork.Services.CidrBlocks) <= 0 {
 		return errors.New("services CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) > 1 {
+	if len(clusterNetwork.Pods.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Pods are not yet supported")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) > 1 {
+	if len(clusterNetwork.Services.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Services are not yet supported")
 	}
-	_, _, err := net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0])
+	_, podCIDRIpNet, err := net.ParseCIDR(clusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterConfig.Spec.ClusterNetwork.Pods)
+		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterNetwork.Pods)
 	}
-	_, _, err = net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks[0])
+	_, _, err = net.ParseCIDR(clusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
+		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterNetwork.Services)
 	}
 
-	return validateCNIPlugin(clusterConfig.Spec.ClusterNetwork)
+	if clusterNetwork.Nodes != nil && clusterNetwork.Nodes.CIDRMaskSize != nil {
+		podMaskSize, _ := podCIDRIpNet.Mask.Size()
+		nodeCidrMaskSize := clusterNetwork.Nodes.CIDRMaskSize
+		// the pod subnet mask needs to allow one or multiple node-masks
+		// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
+		// the below validations are run by kubeadm and we are bubbling those up here for better customer experience
+		if podMaskSize > *nodeCidrMaskSize {
+			return fmt.Errorf("the size of pod subnet with mask %d is smaller than the size of node subnet with mask %d", podMaskSize, *nodeCidrMaskSize)
+		} else if (*nodeCidrMaskSize - podMaskSize) > podSubnetNodeMaskMaxDiff {
+			// PodSubnetNodeMaskMaxDiff is limited to 16 due to an issue with uncompressed IP bitmap in core
+			// The node subnet mask size must be no more than the pod subnet mask size + 16
+			return fmt.Errorf("pod subnet mask (%d) and node-mask (%d) difference is greater than %d", podMaskSize, *nodeCidrMaskSize, podSubnetNodeMaskMaxDiff)
+		}
+	}
+
+	return validateCNIPlugin(clusterNetwork)
 }
 
 func validateCNIPlugin(network ClusterNetwork) error {
