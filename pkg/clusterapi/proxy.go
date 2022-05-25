@@ -14,10 +14,12 @@ import (
 //go:embed config/http-proxy.conf
 var proxyConfig string
 
-var NoProxyDefaults = []string{
-	"localhost",
-	"127.0.0.1",
-	".svc",
+func NoProxyDefaults() []string {
+	return []string{
+		"localhost",
+		"127.0.0.1",
+		".svc",
+	}
 }
 
 func proxyConfigContent(cluster v1alpha1.ClusterSpec) (string, error) {
@@ -31,7 +33,7 @@ func proxyConfigContent(cluster v1alpha1.ClusterSpec) (string, error) {
 	noProxyList = append(noProxyList, cluster.ProxyConfiguration.NoProxy...)
 
 	// Add no-proxy defaults
-	noProxyList = append(noProxyList, NoProxyDefaults...)
+	noProxyList = append(noProxyList, NoProxyDefaults()...)
 	noProxyList = append(noProxyList, cluster.ControlPlaneConfiguration.Endpoint.Host)
 
 	val := values{

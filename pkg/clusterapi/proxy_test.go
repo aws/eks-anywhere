@@ -73,3 +73,13 @@ func TestSetProxyConfigInKubeadmConfigTemplate(t *testing.T) {
 		})
 	}
 }
+
+func TestNoProxyDefaults(t *testing.T) {
+	g := NewWithT(t)
+	want := []string{
+		"localhost",
+		"127.0.0.1",
+		".svc",
+	}
+	g.Expect(clusterapi.NoProxyDefaults()).To(Equal(want))
+}
