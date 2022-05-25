@@ -84,6 +84,10 @@ func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	return nil
 }
 
+func (p *provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *provider) Name() string {
 	return constants.DockerProviderName
 }

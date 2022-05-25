@@ -109,13 +109,31 @@ func TestMachineDeploymentName(t *testing.T) {
 	}{
 		{
 			name: "wng 1",
-			want: "wng-1",
+			want: "test-cluster-wng-1",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
-			g.Expect(clusterapi.MachineDeploymentName(*g.workerNodeGroupConfig)).To(Equal(tt.want))
+			g.Expect(clusterapi.MachineDeploymentName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestDefaultKubeadmConfigTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "wng 1",
+			want: "test-cluster-wng-1-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.DefaultKubeadmConfigTemplateName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
 		})
 	}
 }

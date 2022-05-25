@@ -95,7 +95,7 @@ func WorkerMachineTemplates(ctx context.Context, kubeClient kubernetes.Client, c
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		new := SnowMachineTemplate(clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
 
-		old, err := oldWorkerMachineTemplate(ctx, kubeClient, workerNodeGroupConfig)
+		old, err := oldWorkerMachineTemplate(ctx, kubeClient, clusterSpec, workerNodeGroupConfig)
 		if err != nil {
 			return nil, err
 		}
