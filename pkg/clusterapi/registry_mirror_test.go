@@ -89,8 +89,6 @@ var registryMirrorTests = []struct {
 func wantRegistryMirrorCommands() []string {
 	return []string{
 		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
-		"sudo systemctl daemon-reload",
-		"sudo systemctl restart containerd",
 	}
 }
 

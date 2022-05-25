@@ -17,6 +17,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
+var restartContainerdCommands = []string{
+	"sudo systemctl daemon-reload",
+	"sudo systemctl restart containerd",
+}
+
 type apiBuilerTest struct {
 	*WithT
 	clusterSpec             *cluster.Spec
@@ -65,6 +70,9 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 					},
 				},
 				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+					Endpoint: &v1alpha1.Endpoint{
+						Host: "1.2.3.4",
+					},
 					Count: 3,
 				},
 				KubernetesVersion: "1.21",
@@ -263,7 +271,22 @@ func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), restartContainerdCommands...)
+			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestKubeadmControlPlaneWithProxyConfig(t *testing.T) {
+	for _, tt := range proxyTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
+			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
+			g.Expect(err).To(Succeed())
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = tt.wantCmd
 			g.Expect(got).To(Equal(want))
 		})
 	}
@@ -323,7 +346,7 @@ func TestKubeadmConfigTemplateWithRegistryMirror(t *testing.T) {
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.Files = tt.wantFiles
-			want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
+			want.Spec.Template.Spec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), restartContainerdCommands...)
 			g.Expect(got).To(Equal(want))
 		})
 	}

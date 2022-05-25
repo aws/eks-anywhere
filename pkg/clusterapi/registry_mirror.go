@@ -26,7 +26,7 @@ func registryMirrorConfigContent(registryAddress, registryCert string, insecureS
 
 	config, err := templater.Execute(containerdConfig, val)
 	if err != nil {
-		return "", fmt.Errorf("failed building containerd config file: %v", err)
+		return "", fmt.Errorf("building containerd config file: %v", err)
 	}
 	return string(config), nil
 }
@@ -55,8 +55,6 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 
 	preKubeadmCommands = []string{
 		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
-		"sudo systemctl daemon-reload",
-		"sudo systemctl restart containerd",
 	}
 	return files, preKubeadmCommands, nil
 }
