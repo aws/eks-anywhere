@@ -192,14 +192,14 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
-    - groups:
-      - group1
-      - group2
-      roleARN: test-role-arn
+    - rolearn: test-role-arn
       username: test
+      groups:
+        - group1
+        - group2
   mapUsers: |
-    - groups:
-      - group1
-      - group2
-      userARN: test-user-arn
+    - userarn: test-user-arn
       username: test
+      groups:
+        - group1
+        - group2

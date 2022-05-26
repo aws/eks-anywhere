@@ -27,7 +27,7 @@ require (
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
-	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
+	github.com/tinkerbell/pbnj v0.0.0-20211027151347-2fb19ffbe7ad
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
@@ -35,6 +35,7 @@ require (
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e
 	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/square/go-jose.v2 v2.6.0
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	k8s.io/api v0.23.1
 	k8s.io/apimachinery v0.23.1
 	k8s.io/client-go v0.23.1
@@ -149,7 +150,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/apiextensions-apiserver v0.23.1 // indirect
 	k8s.io/cluster-bootstrap v0.23.0 // indirect
 	k8s.io/component-base v0.23.1 // indirect
