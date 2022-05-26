@@ -34,6 +34,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -205,7 +206,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, skipPowerActions, setupTinkerbell, force bool) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -288,16 +289,21 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			machines, err := hardware.NewCSVReaderFromFile(hardwareCSVPath)
+			if err != nil {
+				return err
+			}
+
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
+				machines,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
 				f.dependencies.Kubectl,
 				time.Now,
 				skipIpCheck,
-				hardwareConfigFile,
 				setupTinkerbell,
 			)
 

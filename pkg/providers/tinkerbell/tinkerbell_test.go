@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -45,16 +46,21 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 }
 
 func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker Docker, kubectl ProviderKubectlClient) *Provider {
+	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
+	if err != nil {
+		panic(err)
+	}
+
 	return NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
+		reader,
 		writer,
 		docker,
 		kubectl,
 		test.FakeNow,
 		true,
-		"testdata/hardware_config.yaml",
 		false,
 	)
 }

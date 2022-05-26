@@ -1,8 +1,10 @@
 package hardware
 
 import (
+	"bufio"
 	stdcsv "encoding/csv"
 	"io"
+	"os"
 
 	csv "github.com/gocarina/gocsv"
 	"github.com/google/uuid"
@@ -26,6 +28,16 @@ func NewCSVReader(r io.Reader) (CSVReader, error) {
 	}
 
 	return CSVReader{reader: reader, uuidGenerator: uuid.NewString}, nil
+}
+
+// NewCSVReaderFromFile creates a CSVReader instance that reads from path.
+func NewCSVReaderFromFile(path string) (CSVReader, error) {
+	fh, err := os.Open(path)
+	if err != nil {
+		return CSVReader{}, err
+	}
+
+	return NewCSVReader(bufio.NewReader(fh))
 }
 
 // NewCSVReaderWithUUIDGenerator returns a new CSVReader instance as defined in NewCSVReader with its internal

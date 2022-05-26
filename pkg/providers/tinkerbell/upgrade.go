@@ -88,7 +88,7 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
 	// The long term solution is to add this capability to the cluster-api controller,
 	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
-	/* err := p.Retrier.Retry(
+	/* err := p.retrier.Retry(
 		func() error {
 			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
 		},

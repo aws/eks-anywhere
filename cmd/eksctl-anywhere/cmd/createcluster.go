@@ -31,7 +31,7 @@ type createClusterOptions struct {
 	clusterOptions
 	forceClean       bool
 	skipIpCheck      bool
-	hardwareFileName string
+	hardwareCSVPath  string
 	skipPowerActions bool
 	setupTinkerbell  bool
 	installPackages  string
@@ -52,7 +52,7 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
+		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, "hardware-csv", "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
 		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
 		if features.IsActive(features.TinkerbellStackSetup()) {
 			createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
@@ -105,8 +105,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			return fmt.Errorf("required flag \"hardwarefile\" not set")
 		}
 
-		if !validations.FileExists(cc.hardwareFileName) {
-			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareFileName)
+		if !validations.FileExists(cc.hardwareCSVPath) {
+			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareCSVPath)
 		}
 	}
 
@@ -146,7 +146,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
