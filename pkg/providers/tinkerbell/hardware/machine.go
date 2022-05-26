@@ -58,6 +58,9 @@ func (n *Nameservers) MarshalCSV() (string, error) {
 	return n.String(), nil
 }
 
+// LabelSSeparator is used to separate key value label pairs.
+const LabelsSeparator = "|"
+
 // Labels defines a lebsl set. It satisfies https://pkg.go.dev/k8s.io/apimachinery/pkg/labels#Labels.
 type Labels map[string]string
 
@@ -77,13 +80,13 @@ func (l *Labels) UnmarshalCSV(s string) error {
 	*l = make(Labels)
 
 	// Cater for no labels being specified.
-	split := strings.Split(s, ",")
+	split := strings.Split(s, LabelsSeparator)
 	if len(split) == 1 && split[0] == "" {
 		return nil
 	}
 
-	for _, pair := range strings.Split(s, ",") {
-		keyValue := strings.Split(pair, "=")
+	for _, pair := range split {
+		keyValue := strings.Split(strings.TrimSpace(pair), "=")
 		if len(keyValue) != 2 {
 			return fmt.Errorf("badly formatted key-value pair: %v", pair)
 		}
@@ -100,7 +103,7 @@ func (l Labels) String() string {
 	}
 	// Sort for determinism.
 	sort.StringSlice(labels).Sort()
-	return strings.Join(labels, ",")
+	return strings.Join(labels, LabelsSeparator)
 }
 
 func newEmptyFieldError(s string) error {
