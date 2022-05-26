@@ -3,6 +3,8 @@ package hardware
 import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // IndexSecret indexes Secret instances on index by extracfting the key using fn.
@@ -81,13 +83,11 @@ func (w *SecretCatalogueWriter) Write(m Machine) error {
 }
 
 func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
-	// TODO(chrisdoherty4)
-	// 	- Set the namespace to the CAPT namespace.
-	// 	- Patch through insecure TLS.
 	return &corev1.Secret{
 		TypeMeta: newSecretTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
-			Name: formatBMCSecretRef(m),
+			Name:      formatBMCSecretRef(m),
+			Namespace: constants.EksaSystemNamespace,
 		},
 		Type: "kubernetes.io/basic-auth",
 		Data: map[string][]byte{

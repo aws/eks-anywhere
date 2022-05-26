@@ -3,6 +3,8 @@ package hardware
 import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // IndexHardware indexes Hardware instances on index by extracfting the key using fn.
@@ -100,8 +102,9 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 	return &v1alpha1.Hardware{
 		TypeMeta: newHardwareTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
-			Name:   m.Hostname,
-			Labels: m.Labels,
+			Name:      m.Hostname,
+			Namespace: constants.EksaSystemNamespace,
+			Labels:    m.Labels,
 		},
 		Spec: v1alpha1.HardwareSpec{
 			Disks: []v1alpha1.Disk{{Device: m.Disk}},
