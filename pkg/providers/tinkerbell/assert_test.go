@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
@@ -152,9 +152,9 @@ func TestNewMinimumHardwareAvailableAssertion_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	catalogue := hardware.NewCatalogue()
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 
 	assertion := tinkerbell.NewMinimumHardwareAvailableAssertion(catalogue)
@@ -165,9 +165,9 @@ func TestNewMinimumHardwareAvailableAssertion_SufficientSucceedsWithoutExternalE
 	g := gomega.NewWithT(t)
 
 	catalogue := hardware.NewCatalogue()
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
-	g.Expect(catalogue.InsertHardware(&tinkv1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
