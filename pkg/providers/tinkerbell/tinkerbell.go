@@ -3,7 +3,6 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -17,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -33,7 +31,6 @@ const (
 	maxRetries                 = 30
 	backOffPeriod              = 5 * time.Second
 	deploymentWaitTimeout      = "5m"
-	bootsContainerName         = "boots"
 )
 
 var (
@@ -48,6 +45,7 @@ type Provider struct {
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	hardwares             []tinkv1alpha1.Hardware
 	docker                Docker
+	helm                  Helm
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TemplateBuilder
 	writer                filewriter.FileWriter
@@ -69,6 +67,10 @@ type Provider struct {
 type Docker interface {
 	ForceRemove(ctx context.Context, name string) error
 	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
+}
+
+type Helm interface {
+	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
 }
 
 type ProviderKubectlClient interface {
@@ -101,6 +103,7 @@ func NewProvider(
 	machines hardware.MachineReader,
 	writer filewriter.FileWriter,
 	docker Docker,
+	helm Helm,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
 	skipIpCheck bool,
@@ -127,6 +130,7 @@ func NewProvider(
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		docker:                docker,
+		helm:                  helm,
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
@@ -279,88 +283,5 @@ func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, cu
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return nil
-}
-
-func (p *Provider) InstallTinkerbellStack(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, bootstrap bool) error {
-	bundle := clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack
-
-	components := []struct {
-		Name        string
-		Manifest    string
-		Deployments []string
-	}{
-		{
-			Name:        "tink",
-			Manifest:    bundle.Tink.Manifest.URI,
-			Deployments: []string{"tink-server", "tink-controller-manager"},
-		},
-		{
-			Name:        "boots",
-			Manifest:    bundle.Boots.Manifest.URI,
-			Deployments: []string{"boots"},
-		},
-		{
-			Name:        "hegel",
-			Manifest:    bundle.Hegel.Manifest.URI,
-			Deployments: []string{"hegel"},
-		},
-		// TODO: Uncomment this when rufio is added to the bundle
-		// {
-		// 	Name:        "rufio",
-		// 	Manifest:    bundle.Rufio.Manifest.URI,
-		// 	Deployments: []string{"rufio"},
-		// },
-	}
-
-	for _, component := range components {
-		if !(bootstrap && component.Name == "boots") {
-			logger.V(5).Info("Applying manifest", "component", component.Name)
-
-			if err := p.providerKubectlClient.ApplyKubeSpec(ctx, cluster, component.Manifest); err != nil {
-				return fmt.Errorf("applying %s manifest: %v", component.Name, err)
-			}
-
-			for _, deployment := range component.Deployments {
-				logger.V(5).Info("Waiting for deployment to be ready", "deployment", deployment, "timeout", deploymentWaitTimeout)
-
-				if err := p.providerKubectlClient.WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", deployment, constants.EksaSystemNamespace); err != nil {
-					return fmt.Errorf("waiting for deployment %s: %v", deployment, err)
-				}
-			}
-		}
-	}
-
-	if bootstrap {
-		kubeconfig, err := filepath.Abs(cluster.KubeconfigFile)
-		if err != nil {
-			return fmt.Errorf("getting absolute path for kubeconfig: %v", err)
-		}
-
-		logger.V(5).Info("Running boots on docker for bootstrap")
-
-		bootsEnv := map[string]string{
-			"DATA_MODEL_VERSION":        "kubernetes",
-			"BOOTS_EXTRA_KERNEL_ARGS":   fmt.Sprintf("tink_worker_image=%s", bundle.Tink.TinkWorker.URI),
-			"MIRROR_BASE_URL":           "https://tinkerbell-storage-for-eksa.s3.us-west-2.amazonaws.com",
-			"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:42113", p.datacenterConfig.Spec.TinkerbellIP),
-			"TINKERBELL_TLS":            "false",
-		}
-
-		flags := []string{
-			"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
-			"--network", "host",
-		}
-
-		for name, value := range bootsEnv {
-			flags = append(flags, "-e", fmt.Sprintf("%s=%s", name, value))
-		}
-
-		cmd := []string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67"}
-		if err := p.docker.Run(ctx, bundle.Boots.Image.URI, bootsContainerName, cmd, flags...); err != nil {
-			return fmt.Errorf("run boots with docker: %v", err)
-		}
-	}
-
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
@@ -17,6 +18,7 @@ import (
 var (
 	validPorts   = []string{"443", "8080", "32000"}
 	invalidPorts = []string{"", "443a", "abc", "0", "123456"}
+	localAddr    = net.IPv4(192, 168, 0, 1)
 )
 
 func TestIsPortValidExpectValid(t *testing.T) {
@@ -63,6 +65,23 @@ func TestIsIPInUseFail(t *testing.T) {
 	g.Expect(res).To(gomega.BeTrue())
 }
 
+func TestGetLocalIP(t *testing.T) {
+	ctrl := gomock.NewController(t)
+
+	conn := NewMockConn(ctrl)
+	conn.EXPECT().Close().Return(nil)
+
+	client := mocks.NewMockNetClient(ctrl)
+	client.EXPECT().DialTimeout("udp", "1.2.3.4:80", time.Second).
+		Return(conn, nil)
+
+	ip, err := networkutils.GetLocalIP(client)
+	if err != nil {
+		t.Fatalf("unable to get local IP: %v", err)
+	}
+	assert.Equal(t, ip, localAddr)
+}
+
 // MockConn is a mock of NetClient interface. It is hand written.
 type MockConn struct {
 	ctrl     *gomock.Controller
@@ -96,9 +115,12 @@ func (m *MockConn) Close() error {
 	return ret0
 }
 
+func (m *MockConn) LocalAddr() net.Addr {
+	return &net.UDPAddr{IP: localAddr}
+}
+
 func (m *MockConn) Read(b []byte) (n int, err error)   { panic("unimplemented") }
 func (m *MockConn) Write(b []byte) (n int, err error)  { panic("unimplemented") }
-func (m *MockConn) LocalAddr() net.Addr                { panic("unimplemented") }
 func (m *MockConn) RemoteAddr() net.Addr               { panic("unimplemented") }
 func (m *MockConn) SetDeadline(t time.Time) error      { panic("unimplemented") }
 func (m *MockConn) SetReadDeadline(t time.Time) error  { panic("unimplemented") }

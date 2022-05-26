@@ -42,3 +42,13 @@ func IsIPInUse(client NetClient, ip string) bool {
 
 	return false
 }
+
+func GetLocalIP(client NetClient) (net.IP, error) {
+	conn, err := client.DialTimeout("udp", "1.2.3.4:80", time.Second)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve local IP: %v", err)
+	}
+	defer conn.Close()
+
+	return conn.LocalAddr().(*net.UDPAddr).IP, nil
+}
