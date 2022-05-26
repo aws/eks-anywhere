@@ -40,11 +40,24 @@ func NewWithMaxRetries(maxRetries int, backOffPeriod time.Duration) *Retrier {
 	return New(time.Duration(math.MaxInt64), WithMaxRetries(maxRetries, backOffPeriod))
 }
 
+// NewWithNSecondsWaitRetries creates a new retrier with a global timeout and N-seconds wait retries policy
+func NewWithNSecondsWaitRetries(timeout time.Duration, waitSeconds int) *Retrier {
+	return New(timeout, WithNSecondsWaitRetries(waitSeconds))
+}
+
 // WithMaxRetries sets a retry policy that will retry up to maxRetries times
 // with a wait time between retries of backOffPeriod
 func WithMaxRetries(maxRetries int, backOffPeriod time.Duration) RetrierOpt {
 	return func(r *Retrier) {
 		r.retryPolicy = maxRetriesPolicy(maxRetries, backOffPeriod)
+	}
+}
+
+// WithNSecondsWaitRetries sets a retry policy that will retry forever with N-seconds wait time
+// between retries
+func WithNSecondsWaitRetries(waitSeconds int) RetrierOpt {
+	return func(r *Retrier) {
+		r.retryPolicy = nSecondWaitPolicy(waitSeconds)
 	}
 }
 
@@ -100,6 +113,12 @@ func Retry(maxRetries int, backOffPeriod time.Duration, fn func() error) error {
 
 func zeroWaitPolicy(_ int, _ error) (retry bool, wait time.Duration) {
 	return true, 0
+}
+
+func nSecondWaitPolicy(waitSeconds int) RetryPolicy {
+	return func(_ int, _ error) (retry bool, wait time.Duration) {
+		return true, time.Duration(waitSeconds) * time.Second
+	}
 }
 
 func maxRetriesPolicy(maxRetries int, backOffPeriod time.Duration) RetryPolicy {

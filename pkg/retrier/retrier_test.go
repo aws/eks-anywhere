@@ -171,3 +171,35 @@ func TestNewWithRetryPolicyFinishByPolicy(t *testing.T) {
 		t.Fatalf("Wrong number of retries, got %d, want %d", gotRetries, wantRetries)
 	}
 }
+
+func TestNewWithNSecondsWaitRetries(t *testing.T) {
+	wantRetries := 3
+	waitSeconds := 1
+
+	r := retrier.NewWithNSecondsWaitRetries(time.Duration(wantRetries/waitSeconds)*time.Second, waitSeconds)
+	gotRetries := 0
+	fn := func() error {
+		gotRetries += 1
+		return errors.New("")
+	}
+
+	if err := r.Retry(fn); err == nil {
+		t.Fatal("Retrier.Retry() error = nil, want not nil")
+	}
+
+	if gotRetries != wantRetries/waitSeconds {
+		t.Fatalf("Wrong number of retries, got %d, want %d", gotRetries, wantRetries/waitSeconds)
+	}
+
+	waitSeconds = 3
+	r = retrier.NewWithNSecondsWaitRetries(time.Duration(wantRetries/waitSeconds)*time.Second, waitSeconds)
+	gotRetries = 0
+
+	if err := r.Retry(fn); err == nil {
+		t.Fatal("Retrier.Retry() error = nil, want not nil")
+	}
+
+	if gotRetries != wantRetries/waitSeconds {
+		t.Fatalf("Wrong number of retries, got %d, want %d", gotRetries, wantRetries/waitSeconds)
+	}
+}

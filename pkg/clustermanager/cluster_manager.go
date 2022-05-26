@@ -727,7 +727,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.New(timeout)
+	r := retrier.NewWithNSecondsWaitRetries(timeout, 1)
 	if err := r.Retry(isMdReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
