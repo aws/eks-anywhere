@@ -62,3 +62,20 @@ func TestCatalogue_Secret_AllSecretsReceivesCopy(t *testing.T) {
 	unchangedHardware := catalogue.AllSecrets()
 	g.Expect(unchangedHardware).ToNot(gomega.Equal(changedHardware))
 }
+
+func TestSecretCatalogueWriter_Write(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	writer := hardware.NewSecretCatalogueWriter(catalogue)
+	machine := NewValidMachine()
+
+	err := writer.Write(machine)
+	g.Expect(err).To(gomega.Succeed())
+
+	secrets := catalogue.AllSecrets()
+	g.Expect(secrets).To(gomega.HaveLen(1))
+	g.Expect(secrets[0].Name).To(gomega.ContainSubstring(machine.Hostname))
+	g.Expect(secrets[0].Data).To(gomega.HaveKeyWithValue("username", []byte(machine.BMCUsername)))
+	g.Expect(secrets[0].Data).To(gomega.HaveKeyWithValue("password", []byte(machine.BMCPassword)))
+}

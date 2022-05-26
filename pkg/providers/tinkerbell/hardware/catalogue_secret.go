@@ -2,6 +2,7 @@ package hardware
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // IndexSecret indexes Secret instances on index by extracfting the key using fn.
@@ -55,5 +56,43 @@ func WithSecretNameIndex() CatalogueOption {
 			secret := o.(*corev1.Secret)
 			return secret.ObjectMeta.Name
 		})
+	}
+}
+
+// SecretCatalogueWriter converts Machine instances to Tinkerbell BaseboardManagement and inserts them
+// in a catalogue.
+type SecretCatalogueWriter struct {
+	catalogue *Catalogue
+}
+
+var _ MachineWriter = &SecretCatalogueWriter{}
+
+// NewSecretCatalogueWriter creates a new SecretCatalogueWriter instance.
+func NewSecretCatalogueWriter(catalogue *Catalogue) *SecretCatalogueWriter {
+	return &SecretCatalogueWriter{catalogue: catalogue}
+}
+
+// Write converts m to a Tinkerbell BaseboardManagement and inserts it into w's Catalogue.
+func (w *SecretCatalogueWriter) Write(m Machine) error {
+	if m.HasBMC() {
+		return w.catalogue.InsertSecret(baseboardManagementSecretFromMachine(m))
+	}
+	return nil
+}
+
+func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
+	// TODO(chrisdoherty4)
+	// 	- Set the namespace to the CAPT namespace.
+	// 	- Patch through insecure TLS.
+	return &corev1.Secret{
+		TypeMeta: newSecretTypeMeta(),
+		ObjectMeta: v1.ObjectMeta{
+			Name: formatBMCSecretRef(m),
+		},
+		Type: "kubernetes.io/basic-auth",
+		Data: map[string][]byte{
+			"username": []byte(m.BMCUsername),
+			"password": []byte(m.BMCPassword),
+		},
 	}
 }

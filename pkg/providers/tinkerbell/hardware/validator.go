@@ -3,6 +3,7 @@ package hardware
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -42,6 +43,11 @@ func (mv *DefaultMachineValidator) Validate(machine Machine) error {
 func (mv *DefaultMachineValidator) Register(v ...MachineAssertion) {
 	mv.assertions = append(mv.assertions, v...)
 }
+
+var (
+	linuxPathRegex      = `^(/dev/[\w-]+)+$`
+	linuxPathValidation = regexp.MustCompile(linuxPathRegex)
+)
 
 // StaticMachineAssertions defines all static data assertions performed on a Machine.
 func StaticMachineAssertions() MachineAssertion {
@@ -94,6 +100,13 @@ func StaticMachineAssertions() MachineAssertion {
 
 		if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
 			return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
+		}
+
+		if !linuxPathValidation.MatchString(m.Disk) {
+			return fmt.Errorf(
+				"disk must be a valid linux path (\"%v\")",
+				linuxPathRegex,
+			)
 		}
 
 		for key, value := range m.Labels {

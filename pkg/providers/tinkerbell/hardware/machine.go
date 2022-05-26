@@ -16,6 +16,11 @@ type Machine struct {
 	Nameservers Nameservers `csv:"nameservers"`
 	MACAddress  string      `csv:"mac"`
 
+	// Disk used to populate the default workflow actions.
+	// Currently needs to be the same for all hardware residing in the same group where a group
+	// is either: control plane hardwar, external etcd hard, or the definable worker node groups.
+	Disk string `csv:"disk"`
+
 	// Labels to be applied to the Hardware resource.
 	Labels Labels `csv:"labels"`
 

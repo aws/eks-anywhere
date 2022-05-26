@@ -161,3 +161,13 @@ func MarshalCatalogue(c *Catalogue) ([]byte, error) {
 	}
 	return templater.AppendYamlResources(resources...), nil
 }
+
+// NewMachineCatalogueWriter creates a MachineWriter instance that writes Machine instances to
+// catalogue including its BaseboardManagement and Secret data.
+func NewMachineCatalogueWriter(catalogue *Catalogue) MachineWriter {
+	return MultiMachineWriter(
+		NewHardwareCatalogueWriter(catalogue),
+		NewBMCCatalogueWriter(catalogue),
+		NewSecretCatalogueWriter(catalogue),
+	)
+}

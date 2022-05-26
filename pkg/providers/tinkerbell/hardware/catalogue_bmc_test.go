@@ -62,3 +62,20 @@ func TestCatalogue_BMC_AllBMCsReceivesCopy(t *testing.T) {
 	unchangedHardware := catalogue.AllBMCs()
 	g.Expect(unchangedHardware).ToNot(gomega.Equal(changedHardware))
 }
+
+func TestBMCCatalogueWriter_Write(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+	writer := hardware.NewBMCCatalogueWriter(catalogue)
+	machine := NewValidMachine()
+
+	err := writer.Write(machine)
+	g.Expect(err).To(gomega.Succeed())
+
+	bmcs := catalogue.AllBMCs()
+	g.Expect(bmcs).To(gomega.HaveLen(1))
+	g.Expect(bmcs[0].Name).To(gomega.ContainSubstring(machine.Hostname))
+	g.Expect(bmcs[0].Spec.Connection.Host).To(gomega.Equal(machine.BMCIPAddress))
+	g.Expect(bmcs[0].Spec.Connection.AuthSecretRef.Name).To(gomega.ContainSubstring(machine.Hostname))
+}
