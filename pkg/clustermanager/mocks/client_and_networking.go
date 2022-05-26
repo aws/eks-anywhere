@@ -398,6 +398,26 @@ func (mr *MockClusterClientMockRecorder) GetMachineDeployment(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeployment), varargs...)
 }
 
+// GetMachineDeployments mocks base method.
+func (m *MockClusterClient) GetMachineDeployments(arg0 context.Context, arg1 ...executables.KubectlOpt) ([]v1beta1.MachineDeployment, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMachineDeployments", varargs...)
+	ret0, _ := ret[0].([]v1beta1.MachineDeployment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMachineDeployments indicates an expected call of GetMachineDeployments.
+func (mr *MockClusterClientMockRecorder) GetMachineDeployments(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployments", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeployments), varargs...)
+}
+
 // GetMachines mocks base method.
 func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster, arg2 string) ([]types.Machine, error) {
 	m.ctrl.T.Helper()

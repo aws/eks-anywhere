@@ -97,6 +97,7 @@ type ClusterClient interface {
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
 	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetMachineDeployments(ctx context.Context, opts ...executables.KubectlOpt) ([]clusterv1.MachineDeployment, error)
 	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
 }
 
@@ -709,11 +710,13 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	var machineDeploymentReplicasCount int
+	readyReplicas, totalReplicas := 0, 0
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
 	}
 
 	isMdReady := func() error {
+		readyReplicas, totalReplicas, _ = c.countReplicasReady(ctx)
 		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
 	}
 
@@ -727,11 +730,28 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.NewWithNSecondsWaitRetries(timeout, 1)
+	retryPolicy := func(_ int, _ error) (bool, time.Duration) {
+		return true, c.machineBackoff * time.Duration(totalReplicas-readyReplicas)
+	}
+	r := retrier.New(timeout, retrier.WithRetryPolicy(retryPolicy))
 	if err := r.Retry(isMdReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
+}
+
+func (c *ClusterManager) countReplicasReady(ctx context.Context) (ready, total int, err error) {
+	deployments, err := c.clusterClient.GetMachineDeployments(ctx)
+	if err != nil {
+		return 0, 0, fmt.Errorf("getting deployments resources from management cluster: %v", err)
+	}
+
+	readyReplicas, totalReplicas := 0, 0
+	for _, md := range deployments {
+		readyReplicas += int(md.Status.ReadyReplicas)
+		totalReplicas += int(md.Status.Replicas)
+	}
+	return readyReplicas, totalReplicas, nil
 }
 
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {

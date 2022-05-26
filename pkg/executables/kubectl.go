@@ -488,15 +488,15 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, k
 	}
 	for _, machineDeployment := range deployments {
 		if machineDeployment.Status.Phase != "Running" {
-			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
+			return fmt.Errorf("machine deployment %s is in %s phase", machineDeployment.Name, machineDeployment.Status.Phase)
 		}
 
 		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+			return fmt.Errorf("%v replicas of machine deployment %s are unavailable", machineDeployment.Status.UnavailableReplicas, machineDeployment.Name)
 		}
 
 		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
-			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
+			return fmt.Errorf("%v replicas of machine deployment %s replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas, machineDeployment.Name)
 		}
 	}
 	return nil
