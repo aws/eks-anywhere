@@ -1,6 +1,8 @@
 package hardware
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	corev1 "k8s.io/api/core/v1"
+)
 
 // IndexSecret indexes Secret instances on index by extracfting the key using fn.
 func (c *Catalogue) IndexSecret(index string, fn KeyExtractorFunc) {

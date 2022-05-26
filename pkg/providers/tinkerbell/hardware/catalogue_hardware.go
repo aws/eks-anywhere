@@ -1,6 +1,8 @@
 package hardware
 
-import "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+import (
+	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+)
 
 // IndexHardware indexes Hardware instances on index by extracfting the key using fn.
 func (c *Catalogue) IndexHardware(index string, fn KeyExtractorFunc) {
@@ -45,26 +47,27 @@ func (c *Catalogue) TotalHardware() int {
 	return len(c.hardware)
 }
 
-const HardwareIDIndex = ".Spec.ID"
+const HardwareIDIndex = ".Spec.Metadata.Instance.ID"
 
-// WithHardwareIDIndex creates a Hardware index using HardwareIDIndex on Hardware.Spec.ID values.
+// WithHardwareIDIndex creates a Hardware index using HardwareIDIndex on .Spec.Metadata.Instance.ID
+// values.
 func WithHardwareIDIndex() CatalogueOption {
 	return func(c *Catalogue) {
 		c.IndexHardware(HardwareIDIndex, func(o interface{}) string {
 			hardware := o.(*v1alpha1.Hardware)
-			return hardware.Spec.ID
+			return hardware.Spec.Metadata.Instance.ID
 		})
 	}
 }
 
 const HardwareBMCRefIndex = ".Spec.BmcRef"
 
-// WithHardwareBMCRefIndex creates a Hardware index using HardwareBMCRefIndex on Hardware.Spec.BmcRef.
+// WithHardwareBMCRefIndex creates a Hardware index using HardwareBMCRefIndex on .Spec.BmcRef.
 func WithHardwareBMCRefIndex() CatalogueOption {
 	return func(c *Catalogue) {
 		c.IndexHardware(HardwareBMCRefIndex, func(o interface{}) string {
 			hardware := o.(*v1alpha1.Hardware)
-			return hardware.Spec.BmcRef
+			return hardware.Spec.BMCRef.String()
 		})
 	}
 }
