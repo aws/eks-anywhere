@@ -88,21 +88,21 @@ func validateIPUnused(client networkutils.NetClient, ip string) error {
 }
 
 func validateMinimumExpectedHardware(cluster v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
-	// requestedNodesCount := cluster.ControlPlaneConfiguration.Count +
-	// 	sumWorkerNodeCounts(cluster.WorkerNodeGroupConfigurations)
+	requestedNodesCount := cluster.ControlPlaneConfiguration.Count +
+		sumWorkerNodeCounts(cluster.WorkerNodeGroupConfigurations)
 
-	// // Optional external etcd configuration.
-	// if cluster.ExternalEtcdConfiguration != nil {
-	// 	requestedNodesCount += cluster.ExternalEtcdConfiguration.Count
-	// }
+	// Optional external etcd configuration.
+	if cluster.ExternalEtcdConfiguration != nil {
+		requestedNodesCount += cluster.ExternalEtcdConfiguration.Count
+	}
 
-	// if catalogue.TotalHardware() < requestedNodesCount {
-	// 	return fmt.Errorf(
-	// 		"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-	// 		catalogue.TotalHardware(),
-	// 		requestedNodesCount,
-	// 	)
-	// }
+	if catalogue.TotalHardware() < requestedNodesCount {
+		return fmt.Errorf(
+			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
+			catalogue.TotalHardware(),
+			requestedNodesCount,
+		)
+	}
 
 	return nil
 }

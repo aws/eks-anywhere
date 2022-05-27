@@ -1,0 +1,29 @@
+boots:
+    deploy: true
+    env:
+        - name: DATA_MODEL_VERSION
+          value: kubernetes
+        - name: TINKERBELL_TLS
+          value: "false"
+        - name: MIRROR_BASE_URL
+          value: https://tinkerbell-storage-for-eksa.s3.us-west-2.amazonaws.com
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: 1.2.3.4:42113
+        - name: BOOTS_EXTRA_KERNEL_ARGS
+          value: tink_worker_image=tink-worker:latest
+    image: boots:latest
+createNamespace: false
+hegel:
+    args:
+        - --grpc-use-tls=false
+    deploy: true
+    image: hegel:latest
+namespace: eksa-system
+tinkController:
+    deploy: true
+    image: tink-controller-manager:latest
+tinkServer:
+    args:
+        - --tls=false
+    deploy: true
+    image: tink-server:latest
