@@ -109,6 +109,10 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 		Spec: v1alpha1.HardwareSpec{
 			Disks: []v1alpha1.Disk{{Device: m.Disk}},
 			Metadata: &v1alpha1.HardwareMetadata{
+				Facility: &v1alpha1.MetadataFacility{
+					FacilityCode: "onprem",
+					PlanSlug:     "c2.medium.x86",
+				},
 				Instance: &v1alpha1.MetadataInstance{
 					ID:       m.ID,
 					Hostname: m.Hostname,
@@ -121,8 +125,15 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 							Public:  true,
 						},
 					},
-					AllowPxe:  true,
-					AlwaysPxe: true,
+					// TODO(chrisdoherty4) Fix upstream. The OperatingSystem is used in boots to
+					// detect what iPXE scripts should be served. The Kubernetes back-end nilifies
+					// its response to retrieving the OS data and the handling code doesn't check
+					// for nil resulting in a segfault.
+					//
+					// Upstream needs patching but this will suffice for now.
+					OperatingSystem: &v1alpha1.MetadataInstanceOperatingSystem{},
+					AllowPxe:        true,
+					AlwaysPxe:       true,
 				},
 				State: "provisioning",
 			},
@@ -133,7 +144,8 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 						AllowWorkflow: &allow,
 					},
 					DHCP: &v1alpha1.DHCP{
-						MAC: m.MACAddress,
+						Arch: "x86_64",
+						MAC:  m.MACAddress,
 						IP: &v1alpha1.IP{
 							Address: m.IPAddress,
 							Netmask: m.Netmask,
@@ -142,6 +154,7 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 						},
 						Hostname:    m.Hostname,
 						NameServers: m.Nameservers,
+						UEFI:        true,
 					},
 				},
 			},
