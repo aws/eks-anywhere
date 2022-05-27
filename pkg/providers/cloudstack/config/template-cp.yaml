@@ -58,6 +58,18 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .cloudstackControlPlaneAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackControlPlaneSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -90,12 +102,6 @@ spec:
         device: {{.cloudstackControlPlaneDiskOfferingDevice}}
         filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
         label: {{.cloudstackControlPlaneDiskOfferingLabel}}
-{{- end}}
-{{- if .cloudstackControlPlaneSymlinks }}
-      symlinks:
-{{- range $key, $value := .cloudstackControlPlaneSymlinks}}
-        {{$key}}: {{$value}}
-{{- end}}
 {{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
@@ -495,6 +501,18 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
   namespace: '{{.eksaSystemNamespace}}'
+{{- if .cloudstackEtcdAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackEtcdSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -527,12 +545,6 @@ spec:
         device: {{.cloudstackEtcdDiskOfferingDevice}}
         filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
         label: {{.cloudstackEtcdDiskOfferingLabel}}
-{{- end}}
-{{- if .cloudstackEtcdSymlinks }}
-      symlinks:
-{{- range $key, $value := .cloudstackEtcdSymlinks}}
-        {{$key}}: {{$value}}
-{{- end}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:

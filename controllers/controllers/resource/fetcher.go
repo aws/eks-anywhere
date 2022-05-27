@@ -29,6 +29,8 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const cloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
+
 type ResourceFetcher interface {
 	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*clusterv1.MachineDeployment, error)
 	KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error)
@@ -623,10 +625,10 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
 		},
 		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Spec.Spec.Spec.DiskOffering.MountPath,
-		Device:     csMachineTemplate.Spec.Spec.Spec.DiskOffering.Device,
-		Filesystem: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Filesystem,
-		Label:      csMachineTemplate.Spec.Spec.Spec.DiskOffering.Label,
+		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+cloudstackAnnotationSuffix],
+		Device:     csMachineTemplate.Annotations["device.diskoffering."+cloudstackAnnotationSuffix],
+		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+cloudstackAnnotationSuffix],
+		Label:      csMachineTemplate.Annotations["label.diskoffering."+cloudstackAnnotationSuffix],
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
@@ -641,8 +643,16 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	if csSpec.Spec.Symlinks == nil {
 		csSpec.Spec.Symlinks = map[string]string{}
 	}
-	for key, element := range csMachineTemplate.Spec.Spec.Spec.Symlinks {
-		csSpec.Spec.Symlinks[key] = element
+	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+cloudstackAnnotationSuffix], ",") {
+		keyValueStr = strings.TrimSpace(keyValueStr)
+		if len(keyValueStr) == 0 {
+			continue
+		}
+		keyV := strings.Split(keyValueStr, ":")
+		if len(keyV) != 2 {
+			return nil, fmt.Errorf("symlinks: %s is not key:value format", keyV)
+		}
+		csSpec.Spec.Symlinks[keyV[0]] = keyV[1]
 	}
 	return csSpec, nil
 }
