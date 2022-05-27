@@ -27,6 +27,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
+const tinkerbellHardwareCSVFlag = "hardware-csv"
+
 type createClusterOptions struct {
 	clusterOptions
 	forceClean       bool
@@ -52,7 +54,7 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, "hardware-csv", "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
+		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, tinkerbellHardwareCSVFlag, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
 		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
 		if features.IsActive(features.TinkerbellStackSetup()) {
 			createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
@@ -93,7 +95,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup("hardwarefile")
+		flag := cmd.Flags().Lookup(tinkerbellHardwareCSVFlag)
 
 		// If no flag was returned there is a developer error as the flag has been removed
 		// from the program rendering it invalid.
@@ -101,8 +103,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			panic("'hardwarefile' flag not configured")
 		}
 
-		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
-			return fmt.Errorf("required flag \"hardwarefile\" not set")
+		if !viper.IsSet(tinkerbellHardwareCSVFlag) || viper.GetString(tinkerbellHardwareCSVFlag) == "" {
+			return fmt.Errorf("required flag \"%v\" not set", tinkerbellHardwareCSVFlag)
 		}
 
 		if !validations.FileExists(cc.hardwareCSVPath) {
