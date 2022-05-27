@@ -36,7 +36,7 @@ https://github.com/aws/aws-sdk-go-v2/service/sso
 https://github.com/aws/aws-sdk-go-v2/service/sts
 
 ** github.com/aws/cluster-api-provider-cloudstack; version v0.4.5-0.20220517182938-efac5f45b7af --
-https://github.com/aws/cluster-api-provider-cloudstack
+https://github.com/kubernetes-purgatory/cluster-api-provider-cloudstack
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
@@ -152,7 +152,7 @@ https://github.com/prometheus/client_golang
 ** github.com/prometheus/client_model/go; version v0.2.0 --
 https://github.com/prometheus/client_model
 
-** github.com/prometheus/common; version v0.30.0 --
+** github.com/prometheus/common; version v0.32.1 --
 https://github.com/prometheus/common
 
 ** github.com/prometheus/procfs; version v0.7.3 --
@@ -161,13 +161,16 @@ https://github.com/prometheus/procfs
 ** github.com/spf13/afero; version v1.6.0 --
 https://github.com/spf13/afero
 
-** github.com/spf13/cobra; version v1.3.0 --
+** github.com/spf13/cobra; version v1.4.0 --
 https://github.com/spf13/cobra
 
 ** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
 https://github.com/pokearu/cluster-api-provider-tinkerbell
 
-** github.com/tinkerbell/tink/protos; version v0.6.0 --
+** github.com/tinkerbell/rufio/api/v1alpha1; version v0.0.0-20220525183727-7ab74dd6173a --
+https://github.com/tinkerbell/rufio
+
+** github.com/tinkerbell/tink; version v0.6.1-0.20220509141453-30fe9e015575 --
 https://github.com/tinkerbell/tink
 
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
@@ -176,7 +179,7 @@ https://github.com/xanzy/ssh-agent
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
 
-** google.golang.org/genproto; version v0.0.0-20220107163113-42d7afdf6368 --
+** google.golang.org/genproto/googleapis; version v0.0.0-20220107163113-42d7afdf6368 --
 https://github.com/googleapis/go-genproto
 
 ** google.golang.org/grpc; version v1.43.0 --
@@ -206,7 +209,7 @@ https://github.com/kubernetes/cluster-bootstrap
 ** k8s.io/component-base; version v0.23.1 --
 https://github.com/kubernetes/component-base
 
-** k8s.io/klog/v2; version v2.30.0 --
+** k8s.io/klog/v2; version v2.60.1 --
 https://github.com/kubernetes/klog
 
 ** k8s.io/kube-openapi/pkg; version v0.0.0-20211115234752-e816edb12b65 --
@@ -984,7 +987,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/google/go-cmp/cmp; version v0.5.7 --
+** github.com/google/go-cmp/cmp; version v0.5.8 --
 https://github.com/google/go-cmp
 
 Copyright (c) 2017 The Go Authors. All rights reserved.
@@ -1149,39 +1152,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/grpc-ecosystem/grpc-gateway; version v1.16.0 --
-https://github.com/grpc-ecosystem/grpc-gateway
-
-Copyright (c) 2015, Gengo, Inc.
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright notice,
-      this list of conditions and the following disclaimer.
-
-    * Redistributions in binary form must reproduce the above copyright notice,
-      this list of conditions and the following disclaimer in the documentation
-      and/or other materials provided with the distribution.
-
-    * Neither the name of Gengo, Inc. nor the names of its
-      contributors may be used to endorse or promote products derived from this
-      software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-------
-
 ** github.com/imdario/mergo; version v0.3.12 --
 https://github.com/imdario/mergo
 
@@ -1249,7 +1219,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg; version v0.30.0 --
+** github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg; version v0.32.1 --
 https://github.com/prometheus/common
 
 Copyright (c) 2011, Open Knowledge Foundation Ltd.
@@ -1503,9 +1473,9 @@ Copyright (c) 2013 Alif Rachmawadi
 https://github.com/uber-go/atomic
 Copyright (c) 2016 Uber Technologies, Inc.
 
-** go.uber.org/multierr; version v1.6.0 --
+** go.uber.org/multierr; version v1.7.0 --
 https://github.com/uber-go/multierr
-Copyright (c) 2017 Uber Technologies, Inc.
+Copyright (c) 2017-2021 Uber Technologies, Inc.
 
 ** go.uber.org/zap; version v1.19.1 --
 https://github.com/uber-go/zap
