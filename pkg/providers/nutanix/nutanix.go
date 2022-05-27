@@ -103,6 +103,10 @@ func (p *nutanixProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *nutanixProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *nutanixProvider) Name() string {
 	return constants.NutanixProviderName
 }
