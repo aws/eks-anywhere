@@ -638,7 +638,7 @@ func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) 
 		return nil
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed checking '%s' network", filepath.Base(network))
+		return false, fmt.Errorf("failed checking if network '%s' exists: %v", network, err)
 	}
 
 	return exists, nil
