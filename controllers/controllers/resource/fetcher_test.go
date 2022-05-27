@@ -333,7 +333,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 							"device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "/dev/vdb",
 							"filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "ext4",
 							"label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":      "data_disk",
-							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":  "/var/log/kubernetes:/data/var/log/kubernetes",
+							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":                "/var/log/kubernetes:/data/var/log/kubernetes",
 						},
 					},
 					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
