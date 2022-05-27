@@ -50,24 +50,20 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
-	ip, err := networkutils.GetLocalIP(p.netClient)
+	ip, err := networkutils.GetLocalIP()
 	if err != nil {
 		return err
 	}
 
-	stack := newStack(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
-		withNamespace(constants.EksaSystemNamespace, false).
-		withoutBoots().
-		withHegel().
-		withTinkController().
-		withTinkServer()
+	stack := NewStackInstaller(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
+		WithNamespace(constants.EksaSystemNamespace, false).
+		WithBootsOnDocker().
+		WithHegel().
+		WithTinkController().
+		WithTinkServer()
 
-	if err := stack.install(ctx, cluster.KubeconfigFile); err != nil {
+	if err := stack.Install(ctx, cluster.KubeconfigFile); err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
-	}
-
-	if err := stack.installBootsOnDocker(ctx, cluster.KubeconfigFile); err != nil {
-		return err
 	}
 
 	return nil
@@ -92,19 +88,19 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
-	ip, err := networkutils.GetLocalIP(p.netClient)
+	ip, err := networkutils.GetLocalIP()
 	if err != nil {
 		return err
 	}
 
-	stack := newStack(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
-		withNamespace(constants.EksaSystemNamespace, true).
-		withBoots().
-		withHegel().
-		withTinkController().
-		withTinkServer()
+	stack := NewStackInstaller(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
+		WithNamespace(constants.EksaSystemNamespace, true).
+		WithBootsOnKubernetes().
+		WithHegel().
+		WithTinkController().
+		WithTinkServer()
 
-	if err := stack.install(ctx, cluster.KubeconfigFile); err != nil {
+	if err := stack.Install(ctx, cluster.KubeconfigFile); err != nil {
 		return fmt.Errorf("install stack on workload cluster: %v", err)
 	}
 

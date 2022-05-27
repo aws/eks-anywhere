@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
@@ -66,20 +65,10 @@ func TestIsIPInUseFail(t *testing.T) {
 }
 
 func TestGetLocalIP(t *testing.T) {
-	ctrl := gomock.NewController(t)
-
-	conn := NewMockConn(ctrl)
-	conn.EXPECT().Close().Return(nil)
-
-	client := mocks.NewMockNetClient(ctrl)
-	client.EXPECT().DialTimeout("udp", "1.2.3.4:80", time.Second).
-		Return(conn, nil)
-
-	ip, err := networkutils.GetLocalIP(client)
+	_, err := networkutils.GetLocalIP()
 	if err != nil {
 		t.Fatalf("unable to get local IP: %v", err)
 	}
-	assert.Equal(t, ip, localAddr)
 }
 
 // MockConn is a mock of NetClient interface. It is hand written.

@@ -5,19 +5,21 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"sigs.k8s.io/yaml"
 )
 
 const (
-	args            = "args"
-	createNamespace = "createNamespace"
-	deploy          = "deploy"
-	env             = "env"
-	image           = "image"
-	namespace       = "namespace"
+	args              = "args"
+	createNamespace   = "createNamespace"
+	deploy            = "deploy"
+	env               = "env"
+	image             = "image"
+	namespace         = "namespace"
+	overridesFileName = "tinkerbell-chart-overrides.yaml"
 
 	boots          = "boots"
 	hegel          = "hegel"
@@ -31,17 +33,18 @@ const (
 	helmChartVersion = "0.1.0"
 )
 
-type stack struct {
-	bundle     releasev1alpha1.TinkerbellStackBundle
-	docker     Docker
-	filewriter filewriter.FileWriter
-	helm       Helm
-	ip         string
-	values     map[string]interface{}
+type StackInstaller struct {
+	bundle        releasev1alpha1.TinkerbellStackBundle
+	docker        Docker
+	filewriter    filewriter.FileWriter
+	helm          Helm
+	ip            string
+	values        map[string]interface{}
+	bootsOnDocker bool
 }
 
-func newStack(bundle releasev1alpha1.TinkerbellStackBundle, docker Docker, filewriter filewriter.FileWriter, helm Helm, ip string) *stack {
-	return &stack{
+func NewStackInstaller(bundle releasev1alpha1.TinkerbellStackBundle, docker Docker, filewriter filewriter.FileWriter, helm Helm, ip string, extraInstallers ...func()) *StackInstaller {
+	return &StackInstaller{
 		bundle:     bundle,
 		docker:     docker,
 		filewriter: filewriter,
@@ -51,8 +54,41 @@ func newStack(bundle releasev1alpha1.TinkerbellStackBundle, docker Docker, filew
 	}
 }
 
-func (s *stack) withBoots() *stack {
+func (s *StackInstaller) WithNamespace(ns string, create bool) *StackInstaller {
+	s.values[namespace] = ns
+	s.values[createNamespace] = create
+	return s
+}
+
+func (s *StackInstaller) WithTinkController() *StackInstaller {
+	s.values[tinkController] = map[string]interface{}{
+		deploy: true,
+		image:  s.bundle.Tink.TinkController.URI,
+	}
+	return s
+}
+
+func (s *StackInstaller) WithTinkServer() *StackInstaller {
+	s.values[tinkServer] = map[string]interface{}{
+		deploy: true,
+		image:  s.bundle.Tink.TinkServer.URI,
+		args:   []string{"--tls=false"},
+	}
+	return s
+}
+
+func (s *StackInstaller) WithBootsOnDocker() *StackInstaller {
+	s.bootsOnDocker = true
+	s.values[boots] = map[string]interface{}{
+		deploy: false,
+	}
+	return s
+}
+
+func (s *StackInstaller) WithBootsOnKubernetes() *StackInstaller {
+	s.bootsOnDocker = false
 	environment := []map[string]string{}
+
 	for k, v := range s.getBootsEnv() {
 		environment = append(environment, map[string]string{
 			"name":  k,
@@ -65,17 +101,11 @@ func (s *stack) withBoots() *stack {
 		image:  s.bundle.Boots.Image.URI,
 		env:    environment,
 	}
+
 	return s
 }
 
-func (s *stack) withoutBoots() *stack {
-	s.values[boots] = map[string]interface{}{
-		deploy: false,
-	}
-	return s
-}
-
-func (s *stack) withHegel() *stack {
+func (s *StackInstaller) WithHegel() *StackInstaller {
 	s.values[hegel] = map[string]interface{}{
 		deploy: true,
 		image:  s.bundle.Hegel.Image.URI,
@@ -84,57 +114,31 @@ func (s *stack) withHegel() *stack {
 	return s
 }
 
-func (s *stack) withTinkController() *stack {
-	s.values[tinkController] = map[string]interface{}{
-		deploy: true,
-		image:  s.bundle.Tink.TinkController.URI,
-	}
-	return s
-}
-
-func (s *stack) withTinkServer() *stack {
-	s.values[tinkServer] = map[string]interface{}{
-		deploy: true,
-		image:  s.bundle.Tink.TinkServer.URI,
-		args:   []string{"--tls=false"},
-	}
-	return s
-}
-
-func (s *stack) withNamespace(ns string, create bool) *stack {
-	s.values[namespace] = ns
-	s.values[createNamespace] = create
-	return s
-}
-
-func (s *stack) getValues() []string {
-	values := []string{}
-	for k, v := range s.values {
-		values = append(values, fmt.Sprintf("%s=%s", k, v))
-	}
-	return values
-}
-
-func (s *stack) install(ctx context.Context, kubeconfig string) error {
+func (s *StackInstaller) Install(ctx context.Context, kubeconfig string) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	values, err := yaml.Marshal(s.values)
 	if err != nil {
-		return fmt.Errorf("marshalling values override for Tinkerbell stack helm chart: %s", err)
+		return fmt.Errorf("marshalling values override for Tinkerbell StackInstaller helm chart: %s", err)
 	}
 
-	valuesPath, err := s.filewriter.Write("tinkerbell-chart-values.yaml", values)
+	valuesPath, err := s.filewriter.Write(overridesFileName, values)
 	if err != nil {
-		return fmt.Errorf("writing values override for Tinkerbell stack helm chart: %s", err)
+		return fmt.Errorf("writing values override for Tinkerbell StackInstaller helm chart: %s", err)
 	}
 
 	if err := s.helm.InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, kubeconfig, valuesPath); err != nil {
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
-	return nil
+
+	return s.installBootsOnDocker(ctx, kubeconfig)
 }
 
-func (s *stack) installBootsOnDocker(ctx context.Context, kubeconfig string) error {
+func (s *StackInstaller) installBootsOnDocker(ctx context.Context, kubeconfig string) error {
+	if !s.bootsOnDocker {
+		return nil
+	}
+
 	kubeconfig, err := filepath.Abs(kubeconfig)
 	if err != nil {
 		return fmt.Errorf("getting absolute path for kubeconfig: %v", err)
@@ -157,7 +161,7 @@ func (s *stack) installBootsOnDocker(ctx context.Context, kubeconfig string) err
 	return nil
 }
 
-func (s *stack) getBootsEnv() map[string]string {
+func (s *StackInstaller) getBootsEnv() map[string]string {
 	return map[string]string{
 		"DATA_MODEL_VERSION":        "kubernetes",
 		"TINKERBELL_TLS":            "false",

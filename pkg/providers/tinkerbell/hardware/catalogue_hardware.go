@@ -152,6 +152,7 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 							Gateway: m.Gateway,
 							Family:  4,
 						},
+						LeaseTime:   300,
 						Hostname:    m.Hostname,
 						NameServers: m.Nameservers,
 						UEFI:        true,

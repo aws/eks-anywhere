@@ -30,7 +30,7 @@ const (
 	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
 	maxRetries                 = 30
 	backOffPeriod              = 5 * time.Second
-	deploymentWaitTimeout      = "5m"
+	// deploymentWaitTimeout      = "5m"
 )
 
 var (
