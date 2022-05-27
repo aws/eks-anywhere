@@ -73,7 +73,11 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 		return false
 	}
 
-	if r.MountPath != o.MountPath || r.Filesystem != o.Filesystem || r.Label != o.Label || r.Device != o.Device {
+	if r.CustomSize != o.CustomSize ||
+		r.MountPath != o.MountPath ||
+		r.Filesystem != o.Filesystem ||
+		r.Label != o.Label ||
+		r.Device != o.Device {
 		return false
 	}
 	return r.Id == "" && o.Id == "" && r.Name == o.Name
