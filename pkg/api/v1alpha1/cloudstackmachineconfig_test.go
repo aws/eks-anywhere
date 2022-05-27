@@ -385,9 +385,18 @@ func TestCloudStackMachineNotEqualUserCustomDetails(t *testing.T) {
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
 }
 
-func TestCloudStackMachineNotEqualSynlinks(t *testing.T) {
+func TestCloudStackMachineNotEqualSymlinks(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Symlinks["i"] = "j"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualSymlinksDifferentTargetSameKey(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	for k, v := range cloudStackMachineConfigSpec2.Symlinks {
+		cloudStackMachineConfigSpec2.Symlinks[k] = "/different" + v
+	}
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
 }
