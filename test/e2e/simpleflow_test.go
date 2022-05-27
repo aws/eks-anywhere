@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -74,7 +75,7 @@ func TestDockerKubernetes123SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar("K8S_1_23_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -111,7 +112,7 @@ func TestVSphereKubernetes123SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu123()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithEnvVar("K8S_1_23_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
