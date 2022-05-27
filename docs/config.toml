@@ -76,7 +76,7 @@ weight = 1
 section = ["HTML", "print"]
 
 [[menu.main]]
-    name = "Download on GitHub"
+    name = "GitHub"
     weight = 50
     url = "https://github.com/aws/eks-anywhere"
 
