@@ -4,10 +4,8 @@ env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 120
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 120
-    T_VSPHERE_CIDR: "198.18.128.0/17"
-    T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
     T_CLOUDSTACK_CIDR: "10.11.101.0/16"
-    SKIPPED_TESTS: "TestVSphereKubernetes122BottlerocketAutoimport,TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow"
+    SKIPPED_TESTS: "TestVSphereKubernetes122BottlerocketAutoimport,TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackKubernetes120GitopsOptionsFluxLegacy,TestCloudStackKubernetes121RedhatAndRemoveWorkerNodeGroups,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes120RedhatTo121Upgrade,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes121DifferentNamespaceSimpleFlow,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes120SimpleFlow,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
@@ -23,6 +21,8 @@ env:
     T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
     T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
     T_VSPHERE_PRIVATE_NETWORK: "vsphere_ci_beta_connection:private_network"
+    T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
+    T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
     T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
     T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
     T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
@@ -111,6 +111,10 @@ phases:
         false
       - >
         ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      - >
+        ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
 reports:

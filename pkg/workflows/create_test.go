@@ -114,6 +114,12 @@ func (c *createTestSetup) expectCreateWorkload() {
 	)
 }
 
+func (c *createTestSetup) expectInstallResourcesOnManagementTask() {
+	gomock.InOrder(
+		c.provider.EXPECT().PostWorkloadInit(c.ctx, c.workloadCluster, c.clusterSpec),
+	)
+}
+
 func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().CreateWorkloadCluster(
@@ -237,6 +243,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectCreateBootstrap()
 	test.expectCreateWorkload()
+	test.expectInstallResourcesOnManagementTask()
 	test.expectMoveManagement()
 	test.expectInstallEksaComponents()
 	test.expectInstallAddonManager()
@@ -258,6 +265,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectSetup()
 	test.expectCreateBootstrap()
 	test.expectCreateWorkload()
+	test.expectInstallResourcesOnManagementTask()
 	test.expectMoveManagement()
 	test.expectInstallEksaComponents()
 	test.expectInstallAddonManager()

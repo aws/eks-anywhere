@@ -344,7 +344,7 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"md-0",
+			"snow-test-md-0",
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
@@ -387,7 +387,7 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.MachineDeploymentName(tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			clusterapi.MachineDeploymentName(tt.clusterSpec, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).

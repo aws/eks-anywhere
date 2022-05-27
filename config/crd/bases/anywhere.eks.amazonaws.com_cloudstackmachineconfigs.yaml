@@ -76,6 +76,11 @@ spec:
                   with pre-defined size or custom specified disk size. It can either
                   be specified as a UUID or name
                 properties:
+                  customSizeInGB:
+                    description: disk size in GB, > 0 for customized disk offering;
+                      = 0 for non-customized disk offering
+                    format: int64
+                    type: integer
                   device:
                     description: device name of the disk offering in VM, shows up
                       in lsblk command
@@ -97,11 +102,6 @@ spec:
                     description: Name of a resource in the CloudStack environment.
                       Mutually exclusive with Id
                     type: string
-                  customSizeInGB:
-                    description: disk size in GB, > 0 for customized disk offering;
-                      = 0 for non-customized disk offering
-                    format: int64
-                    type: integer
                 required:
                 - device
                 - filesystem

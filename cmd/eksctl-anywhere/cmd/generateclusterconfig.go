@@ -12,13 +12,11 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 var removeFromDefaultConfig = []string{"spec.clusterNetwork.dns"}
@@ -63,7 +61,6 @@ func generateClusterConfig(clusterName string) error {
 	var resources [][]byte
 	var datacenterYaml []byte
 	var machineGroupYaml [][]byte
-	var tinkerbellTemplateYaml []byte
 	var clusterConfigOpts []v1alpha1.ClusterGenerateOpt
 	switch strings.ToLower(viper.GetString("provider")) {
 	case constants.DockerProviderName:
@@ -206,22 +203,9 @@ func generateClusterConfig(clusterName string) error {
 				return fmt.Errorf("generating cluster yaml: %v", err)
 			}
 			datacenterYaml = dcyaml
-			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), v1alpha1.GetClusterDefaultKubernetesVersion())
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
 
-			tinkTmpConfig := v1alpha1.NewDefaultTinkerbellTemplateConfigGenerate(clusterName, *versionBundle)
-			tinkTmpYaml, err := yaml.Marshal(tinkTmpConfig)
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-			tinkerbellTemplateYaml = tinkTmpYaml
-
-			cpMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName),
-				v1alpha1.WithTemplateRef(tinkTmpConfig))
-			workerMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(clusterName,
-				v1alpha1.WithTemplateRef(tinkTmpConfig))
+			cpMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
+			workerMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(clusterName)
 			clusterConfigOpts = append(clusterConfigOpts,
 				v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
 				v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
@@ -296,9 +280,7 @@ func generateClusterConfig(clusterName string) error {
 	if len(machineGroupYaml) > 0 {
 		resources = append(resources, machineGroupYaml...)
 	}
-	if len(tinkerbellTemplateYaml) > 0 {
-		resources = append(resources, tinkerbellTemplateYaml)
-	}
+
 	fmt.Println(string(templater.AppendYamlResources(resources...)))
 	return nil
 }

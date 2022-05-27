@@ -82,6 +82,8 @@ type SetAndValidateTask struct{}
 
 type CreateWorkloadClusterTask struct{}
 
+type InstallResourcesOnManagementTask struct{}
+
 type InstallEksaComponentsTask struct{}
 
 type InstallAddonManagerTask struct{}
@@ -247,11 +249,29 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &MoveClusterManagementTask{}
+	return &InstallResourcesOnManagementTask{}
 }
 
 func (s *CreateWorkloadClusterTask) Name() string {
 	return "workload-cluster-init"
+}
+
+// InstallResourcesOnManagement implementation
+func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster.ExistingManagement {
+		return &MoveClusterManagementTask{}
+	}
+	logger.Info("Installing resources on management cluster")
+
+	if err := commandContext.Provider.PostWorkloadInit(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	return &MoveClusterManagementTask{}
+}
+
+func (s *InstallResourcesOnManagementTask) Name() string {
+	return "install-resources-on-management-cluster"
 }
 
 // MoveClusterManagementTask implementation

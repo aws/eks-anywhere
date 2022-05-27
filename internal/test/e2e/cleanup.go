@@ -9,7 +9,10 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -66,4 +69,28 @@ func CleanUpVsphereTestResources(ctx context.Context, clusterName string) error 
 	}
 	logger.V(1).Info("Vsphere vcenter vms cleanup complete")
 	return nil
+}
+
+func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	if err != nil {
+		return fmt.Errorf("unable to initialize executables: %v", err)
+	}
+	defer close.CheckErr(ctx)
+	tmpWriter, err := filewriter.NewWriter("rmvms")
+	if err != nil {
+		return fmt.Errorf("creating filewriter for directory rmvms: %v", err)
+	}
+	execConfig, err := decoder.ParseCloudStackSecret()
+	if err != nil {
+		return fmt.Errorf("building cmk executable: %v", err)
+	}
+	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, *execConfig)
+	defer cmk.Close(ctx)
+
+	if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
+		return fmt.Errorf("validating cloudstack connection with cloudmonkey: %v", err)
+	}
+
+	return cmk.CleanupVms(ctx, clusterName, dryRun)
 }

@@ -118,3 +118,16 @@ func (s *SnowMachineConfig) ConvertConfigToConfigGenerateStruct() *SnowMachineCo
 func (s *SnowMachineConfig) Marshallable() Marshallable {
 	return s.ConvertConfigToConfigGenerateStruct()
 }
+
+//+kubebuilder:object:root=true
+
+// SnowMachineConfigList contains a list of SnowMachineConfig
+type SnowMachineConfigList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []SnowMachineConfig `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&SnowMachineConfig{}, &SnowMachineConfigList{})
+}
