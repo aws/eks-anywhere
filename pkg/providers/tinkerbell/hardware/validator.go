@@ -52,10 +52,6 @@ var (
 // StaticMachineAssertions defines all static data assertions performed on a Machine.
 func StaticMachineAssertions() MachineAssertion {
 	return func(m Machine) error {
-		if m.ID == "" {
-			return newEmptyFieldError("ID")
-		}
-
 		if m.IPAddress == "" {
 			return newEmptyFieldError("IPAddress")
 		}
@@ -135,26 +131,7 @@ func StaticMachineAssertions() MachineAssertion {
 			if m.BMCPassword == "" {
 				return newEmptyFieldError("BMCPassword")
 			}
-
-			if m.BMCVendor == "" {
-				return newEmptyFieldError("BMCVendor")
-			}
 		}
-
-		return nil
-	}
-}
-
-// UniqueIDs asserts a given Machine instance has a unique ID field relative to previously seen Machine instances.
-// It is not thread safe. It has a 1 time use.
-func UniqueIDs() MachineAssertion {
-	ids := make(map[string]struct{})
-	return func(m Machine) error {
-		if _, seen := ids[m.ID]; seen {
-			return fmt.Errorf("duplicate ID: %v", m.ID)
-		}
-
-		ids[m.ID] = struct{}{}
 
 		return nil
 	}
@@ -216,7 +193,7 @@ func UniqueBMCIPAddress() MachineAssertion {
 		}
 
 		if m.BMCIPAddress == "" {
-			return fmt.Errorf("missing BMCIPAddress (id=\"%v\")", m.ID)
+			return fmt.Errorf("missing BMCIPAddress (mac=\"%v\")", m.MACAddress)
 		}
 
 		if _, seen := ips[m.BMCIPAddress]; seen {
@@ -234,7 +211,6 @@ func UniqueBMCIPAddress() MachineAssertion {
 func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
 	validator.Register([]MachineAssertion{
 		StaticMachineAssertions(),
-		UniqueIDs(),
 		UniqueIPAddress(),
 		UniqueMACAddress(),
 		UniqueHostnames(),

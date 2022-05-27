@@ -28,26 +28,26 @@ func NewTinkerbellManifestYAML(w io.Writer) *TinkerbellManifestYAML {
 func (yw *TinkerbellManifestYAML) Write(m Machine) error {
 	hardware, err := marshalTinkerbellHardwareYAML(m)
 	if err != nil {
-		return fmt.Errorf("marshalling tinkerbell hardware yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("marshalling tinkerbell hardware yaml (mac=%v): %v", m.MACAddress, err)
 	}
 	if err := yw.writeWithPrependedSeparator(hardware); err != nil {
-		return fmt.Errorf("writing tinkerbell hardware yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("writing tinkerbell hardware yaml (mac=%v): %v", m.MACAddress, err)
 	}
 
 	bmc, err := marshalTinkerbellBMCYAML(m)
 	if err != nil {
-		return fmt.Errorf("marshalling tinkerbell bmc yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("marshalling tinkerbell bmc yaml (mac=%v): %v", m.MACAddress, err)
 	}
 	if err := yw.writeWithPrependedSeparator(bmc); err != nil {
-		return fmt.Errorf("writing tinkerbell bmc yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("writing tinkerbell bmc yaml (mac=%v): %v", m.MACAddress, err)
 	}
 
 	secret, err := marshalSecretYAML(m)
 	if err != nil {
-		return fmt.Errorf("marshalling bmc secret yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("marshalling bmc secret yaml (mac=%v): %v", m.MACAddress, err)
 	}
 	if err := yw.writeWithPrependedSeparator(secret); err != nil {
-		return fmt.Errorf("writing bmc secret yaml (id=%v): %v", m.ID, err)
+		return fmt.Errorf("writing bmc secret yaml (mac=%v): %v", m.MACAddress, err)
 	}
 
 	return nil

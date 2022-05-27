@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -53,13 +52,6 @@ func TestUniquenessAssertions(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"IDs": {
-			Assertion: hardware.UniqueIDs(),
-			Machines: []hardware.Machine{
-				{ID: "foo"},
-				{ID: "bar"},
-			},
-		},
 		"IPAddresses": {
 			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
@@ -104,13 +96,6 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"IDs": {
-			Assertion: hardware.UniqueIDs(),
-			Machines: []hardware.Machine{
-				{ID: "foo"},
-				{ID: "foo"},
-			},
-		},
 		"IPAddresses": {
 			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
@@ -163,9 +148,6 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	cases := map[string]func(*hardware.Machine){
-		"EmptyID": func(h *hardware.Machine) {
-			h.ID = ""
-		},
 		"EmptyIPAddress": func(h *hardware.Machine) {
 			h.IPAddress = ""
 		},
@@ -211,9 +193,6 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"EmptyBMCPassword": func(h *hardware.Machine) {
 			h.BMCPassword = ""
 		},
-		"EmptyBMCVendor": func(h *hardware.Machine) {
-			h.BMCVendor = ""
-		},
 		"InvalidLabelKey": func(h *hardware.Machine) {
 			h.Labels["?$?$?"] = "foo"
 		},
@@ -240,7 +219,6 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 
 func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
-		ID:           uuid.NewString(),
 		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
 		Nameservers:  []string{"ns1"},
@@ -252,6 +230,5 @@ func NewValidMachine() hardware.Machine {
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",
 		BMCPassword:  "password",
-		BMCVendor:    "dell",
 	}
 }

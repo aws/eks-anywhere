@@ -114,7 +114,7 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 					PlanSlug:     "c2.medium.x86",
 				},
 				Instance: &v1alpha1.MetadataInstance{
-					ID:       m.ID,
+					ID:       m.MACAddress,
 					Hostname: m.Hostname,
 					Ips: []*v1alpha1.MetadataInstanceIP{
 						{
