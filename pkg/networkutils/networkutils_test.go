@@ -17,7 +17,6 @@ import (
 var (
 	validPorts   = []string{"443", "8080", "32000"}
 	invalidPorts = []string{"", "443a", "abc", "0", "123456"}
-	localAddr    = net.IPv4(192, 168, 0, 1)
 )
 
 func TestIsPortValidExpectValid(t *testing.T) {
@@ -104,12 +103,9 @@ func (m *MockConn) Close() error {
 	return ret0
 }
 
-func (m *MockConn) LocalAddr() net.Addr {
-	return &net.UDPAddr{IP: localAddr}
-}
-
 func (m *MockConn) Read(b []byte) (n int, err error)   { panic("unimplemented") }
 func (m *MockConn) Write(b []byte) (n int, err error)  { panic("unimplemented") }
+func (m *MockConn) LocalAddr() net.Addr                { panic("unimplemented") }
 func (m *MockConn) RemoteAddr() net.Addr               { panic("unimplemented") }
 func (m *MockConn) SetDeadline(t time.Time) error      { panic("unimplemented") }
 func (m *MockConn) SetReadDeadline(t time.Time) error  { panic("unimplemented") }

@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -50,19 +51,20 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
-	ip, err := networkutils.GetLocalIP()
+	localIP, err := networkutils.GetLocalIP()
 	if err != nil {
 		return err
 	}
 
-	stack := NewStackInstaller(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
-		WithNamespace(constants.EksaSystemNamespace, false).
-		WithBootsOnDocker().
-		WithHegel().
-		WithTinkController().
-		WithTinkServer()
-
-	if err := stack.Install(ctx, cluster.KubeconfigFile); err != nil {
+	err = p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		localIP.String(),
+		cluster.KubeconfigFile,
+		stack.WithNamespace(constants.EksaSystemNamespace, false),
+		stack.WithBootsOnDocker(),
+	)
+	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
 	}
 
@@ -88,25 +90,20 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
-	ip, err := networkutils.GetLocalIP()
+	err := p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		p.templateBuilder.datacenterSpec.TinkerbellIP,
+		cluster.KubeconfigFile,
+		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithBootsOnKubernetes(),
+	)
 	if err != nil {
+		return fmt.Errorf("installing stack on workload cluster: %v", err)
+	}
+
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
 		return err
-	}
-
-	stack := NewStackInstaller(clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack, p.docker, p.writer, p.helm, ip.String()).
-		WithNamespace(constants.EksaSystemNamespace, true).
-		WithBootsOnKubernetes().
-		WithHegel().
-		WithTinkController().
-		WithTinkServer()
-
-	if err := stack.Install(ctx, cluster.KubeconfigFile); err != nil {
-		return fmt.Errorf("install stack on workload cluster: %v", err)
-	}
-
-	logger.V(4).Info("Removing local boots container")
-	if err := p.docker.ForceRemove(ctx, boots); err != nil {
-		return fmt.Errorf("remove local boots container: %v", err)
 	}
 
 	return nil

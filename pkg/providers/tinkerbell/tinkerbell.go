@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -30,7 +31,6 @@ const (
 	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
 	maxRetries                 = 30
 	backOffPeriod              = 5 * time.Second
-	// deploymentWaitTimeout      = "5m"
 )
 
 var (
@@ -44,8 +44,7 @@ type Provider struct {
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	hardwares             []tinkv1alpha1.Hardware
-	docker                Docker
-	helm                  Helm
+	stackInstaller        stack.StackInstaller
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TemplateBuilder
 	writer                filewriter.FileWriter
@@ -62,15 +61,6 @@ type Provider struct {
 	skipIpCheck     bool
 	setupTinkerbell bool
 	retrier         *retrier.Retrier
-}
-
-type Docker interface {
-	ForceRemove(ctx context.Context, name string) error
-	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
-}
-
-type Helm interface {
-	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
 }
 
 type ProviderKubectlClient interface {
@@ -102,8 +92,8 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	machines hardware.MachineReader,
 	writer filewriter.FileWriter,
-	docker Docker,
-	helm Helm,
+	docker stack.Docker,
+	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
 	skipIpCheck bool,
@@ -129,8 +119,7 @@ func NewProvider(
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		docker:                docker,
-		helm:                  helm,
+		stackInstaller:        stack.NewInstaller(docker, writer, helm),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,

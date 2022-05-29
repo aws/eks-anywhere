@@ -15,7 +15,10 @@ import (
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
+	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const testDataDir = "testdata"
@@ -40,7 +43,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker Docker, helm Helm, kubectl ProviderKubectlClient) *Provider {
+func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient) *Provider {
 	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
 	if err != nil {
 		panic(err)
@@ -66,8 +69,8 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
@@ -95,8 +98,8 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_missing_ssh_keys.yaml"
 	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	keyGenerator := mocks.NewMockSSHAuthKeyGenerator(mockCtrl)
@@ -131,8 +134,8 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
@@ -160,8 +163,8 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_multiple_node_groups.yaml"
 	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
@@ -183,4 +186,75 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_external_etcd.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_tinkerbell_md_multiple_node_groups.yaml")
+}
+
+func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
+	t.Setenv(features.TinkerbellProviderEnvVar, "true")
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+	provider.setupTinkerbell = true
+
+	stackInstaller.EXPECT().Install(
+		ctx,
+		releasev1alpha1.TinkerbellStackBundle{},
+		gomock.Any(),
+		"test.kubeconfig",
+		gomock.Any(),
+		gomock.Any(),
+	)
+
+	err := provider.PreCAPIInstallOnBootstrap(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed PreCAPIInstallOnBootstrap: %v", err)
+	}
+}
+
+func TestPostWorkloadInitSuccess(t *testing.T) {
+	t.Setenv(features.TinkerbellProviderEnvVar, "true")
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+	provider.setupTinkerbell = true
+
+	stackInstaller.EXPECT().Install(
+		ctx,
+		releasev1alpha1.TinkerbellStackBundle{},
+		gomock.Any(),
+		"test.kubeconfig",
+		gomock.Any(),
+		gomock.Any(),
+	)
+	stackInstaller.EXPECT().UninstallLocal(ctx)
+
+	err := provider.PostWorkloadInit(ctx, cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed PostWorkloadInit: %v", err)
+	}
 }
