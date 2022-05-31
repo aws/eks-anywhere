@@ -301,6 +301,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				machines,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				time.Now,
 				skipIpCheck,

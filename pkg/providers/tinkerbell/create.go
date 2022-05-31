@@ -8,8 +8,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -42,11 +45,27 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if p.setupTinkerbell {
-		logger.V(4).Info("Installing Tinkerbell stack on the bootstrap cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, true); err != nil {
-			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
-		}
+	if !p.setupTinkerbell {
+		return nil
+	}
+
+	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
+
+	localIP, err := networkutils.GetLocalIP()
+	if err != nil {
+		return err
+	}
+
+	err = p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		localIP.String(),
+		cluster.KubeconfigFile,
+		stack.WithNamespace(constants.EksaSystemNamespace, false),
+		stack.WithBootsOnDocker(),
+	)
+	if err != nil {
+		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
 	}
 
 	return nil
@@ -65,18 +84,28 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 }
 
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if p.setupTinkerbell {
-
-		logger.V(4).Info("Installing Tinkerbell stack on the workload cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, false); err != nil {
-			return fmt.Errorf("install tinkerbell stack on workload cluster: %v", err)
-		}
-
-		logger.V(4).Info("Removing local boots container")
-		if err := p.docker.ForceRemove(ctx, bootsContainerName); err != nil {
-			return fmt.Errorf("remove local boots container: %v", err)
-		}
+	if !p.setupTinkerbell {
+		return nil
 	}
+
+	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
+
+	err := p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		p.templateBuilder.datacenterSpec.TinkerbellIP,
+		cluster.KubeconfigFile,
+		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithBootsOnKubernetes(),
+	)
+	if err != nil {
+		return fmt.Errorf("installing stack on workload cluster: %v", err)
+	}
+
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
