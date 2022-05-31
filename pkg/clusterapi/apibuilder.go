@@ -162,17 +162,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 	}
 
-	if err := SetRegistryMirrorInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
-	}
-
-	if err := SetProxyConfigInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec); err != nil {
-		return nil, err
-	}
-
 	SetIdentityAuthInKubeadmControlPlane(kcp, clusterSpec)
-
-	RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec)
 
 	return kcp, nil
 }
@@ -212,16 +202,6 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			},
 		},
 	}
-
-	if err := SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
-	}
-
-	if err := SetProxyConfigInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec); err != nil {
-		return nil, err
-	}
-
-	RestartContainerdInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec)
 
 	return kct, nil
 }

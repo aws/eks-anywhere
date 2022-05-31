@@ -14,13 +14,11 @@ var proxyTests = []struct {
 	name      string
 	proxy     *v1alpha1.ProxyConfiguration
 	wantFiles []bootstrapv1.File
-	wantCmd   []string
 }{
 	{
 		name:      "proxy config nil",
 		proxy:     nil,
 		wantFiles: []bootstrapv1.File{},
-		wantCmd:   []string{},
 	},
 	{
 		name: "with proxy, pods cidr, service cidr, cp endpoint",
@@ -42,7 +40,6 @@ Environment="HTTPS_PROXY=1.2.3.4:8888"
 Environment="NO_PROXY=1.2.3.4/5,1.2.3.4/5,1.2.3.4/0,1.2.3.5/0,localhost,127.0.0.1,.svc,1.2.3.4"`,
 			},
 		},
-		wantCmd: restartContainerdCommands,
 	},
 }
 

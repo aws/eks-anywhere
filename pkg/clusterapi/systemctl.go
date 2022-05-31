@@ -7,9 +7,25 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+var buildContainerdConfigCommands = []string{
+	"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
+}
+
 var restartContainerdCommands = []string{
 	"sudo systemctl daemon-reload",
 	"sudo systemctl restart containerd",
+}
+
+func CreateContainerdConfigFileInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster v1alpha1.ClusterSpec) {
+	if cluster.RegistryMirrorConfiguration != nil {
+		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, buildContainerdConfigCommands...)
+	}
+}
+
+func CreateContainerdConfigFileInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemplate, cluster v1alpha1.ClusterSpec) {
+	if cluster.RegistryMirrorConfiguration != nil {
+		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, buildContainerdConfigCommands...)
+	}
 }
 
 func RestartContainerdInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, cluster v1alpha1.ClusterSpec) {

@@ -17,11 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
-var restartContainerdCommands = []string{
-	"sudo systemctl daemon-reload",
-	"sudo systemctl restart containerd",
-}
-
 type apiBuilerTest struct {
 	*WithT
 	clusterSpec             *cluster.Spec
@@ -262,36 +257,6 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), restartContainerdCommands...)
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
-func TestKubeadmControlPlaneWithProxyConfig(t *testing.T) {
-	for _, tt := range proxyTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = tt.wantCmd
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	return &bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -335,21 +300,6 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 	want := wantKubeadmConfigTemplate()
 	tt.Expect(got).To(Equal(want))
-}
-
-func TestKubeadmConfigTemplateWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmConfigTemplate(g.clusterSpec, *g.workerNodeGroupConfig)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmConfigTemplate()
-			want.Spec.Template.Spec.Files = tt.wantFiles
-			want.Spec.Template.Spec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), restartContainerdCommands...)
-			g.Expect(got).To(Equal(want))
-		})
-	}
 }
 
 func TestMachineDeployment(t *testing.T) {

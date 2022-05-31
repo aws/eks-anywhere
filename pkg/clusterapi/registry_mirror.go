@@ -31,11 +31,11 @@ func registryMirrorConfigContent(registryAddress, registryCert string, insecureS
 	return string(config), nil
 }
 
-func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, preKubeadmCommands []string, err error) {
+func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
 	registryAddress := net.JoinHostPort(registryMirrorConfig.Endpoint, registryMirrorConfig.Port)
 	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	files = []bootstrapv1.File{
 		{
@@ -53,10 +53,7 @@ func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfigura
 		})
 	}
 
-	preKubeadmCommands = []string{
-		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
-	}
-	return files, preKubeadmCommands, nil
+	return files, nil
 }
 
 func SetRegistryMirrorInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPlane, mirrorConfig *v1alpha1.RegistryMirrorConfiguration) error {
@@ -64,13 +61,12 @@ func SetRegistryMirrorInKubeadmControlPlane(kcp *controlplanev1.KubeadmControlPl
 		return nil
 	}
 
-	containerdFiles, containerdCommands, err := registryMirrorConfig(mirrorConfig)
+	containerdFiles, err := registryMirrorConfig(mirrorConfig)
 	if err != nil {
 		return fmt.Errorf("setting registry mirror configuration: %v", err)
 	}
 
 	kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
-	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, containerdCommands...)
 
 	return nil
 }
@@ -80,13 +76,12 @@ func SetRegistryMirrorInKubeadmConfigTemplate(kct *bootstrapv1.KubeadmConfigTemp
 		return nil
 	}
 
-	containerdFiles, containerdCommands, err := registryMirrorConfig(mirrorConfig)
+	containerdFiles, err := registryMirrorConfig(mirrorConfig)
 	if err != nil {
 		return fmt.Errorf("setting registry mirror configuration: %v", err)
 	}
 
 	kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
-	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, containerdCommands...)
 
 	return nil
 }
