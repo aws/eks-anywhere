@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -178,31 +177,6 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 	)
 }
 
-func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
-	)
-	runUpgradeFromLatestReleaseFlow(
-		test,
-		anywherev1.Kube123,
-		provider.WithProviderUpgrade(
-			framework.UpdateUbuntuTemplate123Var(), // Set the template so it doesn't get autoimported
-		),
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
-	)
-}
-
 func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
@@ -217,24 +191,5 @@ func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		anywherev1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
-	)
-}
-
-func TestDockerKubernetes122to123UpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewDocker(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
-	)
-	runUpgradeFromLatestReleaseFlow(
-		test,
-		anywherev1.Kube123,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
