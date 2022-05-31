@@ -232,6 +232,7 @@ func TestGoGitBranch(t *testing.T) {
 		Name:   "testBranch",
 		Remote: "origin",
 		Merge:  "refs/heads/testBranch",
+		Rebase: "true",
 	}
 	cOpts := &goGit.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName("testBranch"),
@@ -268,6 +269,7 @@ func TestGoGitBranchRemoteExists(t *testing.T) {
 		Name:   "testBranch",
 		Remote: "origin",
 		Merge:  "refs/heads/testBranch",
+		Rebase: "true",
 	}
 	localBranchRef := plumbing.NewBranchReferenceName("testBranch")
 	cOpts := &goGit.CheckoutOptions{
