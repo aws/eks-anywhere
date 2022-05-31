@@ -50,8 +50,8 @@ type Provider struct {
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
-	machines  hardware.MachineReader
-	catalogue *hardware.Catalogue
+	hardwareCSVFile string
+	catalogue       *hardware.Catalogue
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
@@ -90,7 +90,7 @@ func NewProvider(
 	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
-	machines hardware.MachineReader,
+	hardwareCSVPath string,
 	writer filewriter.FileWriter,
 	docker stack.Docker,
 	helm stack.Helm,
@@ -128,8 +128,8 @@ func NewProvider(
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		writer:   writer,
-		machines: machines,
+		writer:          writer,
+		hardwareCSVFile: hardwareCSVPath,
 		// TODO(chrisdoherty4) Inject the catalogue dependency so we can dynamically construcft the
 		// indexing capabilities.
 		catalogue: hardware.NewCatalogue(
