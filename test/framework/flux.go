@@ -192,6 +192,11 @@ func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
 		opt(e)
 	}
 
+	err := e.pullRemoteConfig(ctx)
+	if err != nil {
+		e.T.Errorf("pulling remote configuration: %v", err)
+	}
+
 	e.buildClusterConfigFileForGit()
 
 	if err := e.pushConfigChanges(ctx); err != nil {
@@ -793,13 +798,9 @@ func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) erro
 }
 
 func (e *ClusterE2ETest) updateEKSASpecInGit(ctx context.Context, s *cluster.Spec, providersConfig providerConfig) (string, error) {
-	g := e.GitClient
-	repoUpToDateErr := &git.RepositoryUpToDateError{}
-	if err := g.Pull(ctx, e.gitBranch()); err != nil {
-		if !errors.Is(err, repoUpToDateErr) {
-			e.T.Errorf("pulling from remote before pushing config changes: %v", err)
-		}
-		e.T.Log(err.Error())
+	err := e.pullRemoteConfig(ctx)
+	if err != nil {
+		return "", err
 	}
 
 	p, err := e.writeEKSASpec(s, providersConfig.datacenterConfig, providersConfig.machineConfigs)
@@ -824,16 +825,21 @@ func (e *ClusterE2ETest) pushConfigChanges(ctx context.Context) error {
 	}
 
 	repoUpToDateErr := &git.RepositoryUpToDateError{}
-	if err := g.Pull(ctx, e.gitBranch()); err != nil {
-		if !errors.Is(err, repoUpToDateErr) {
-			return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
-		}
-		e.T.Log(err.Error())
-	}
-
 	if err := g.Push(ctx); err != nil {
 		if !errors.Is(err, repoUpToDateErr) {
 			return fmt.Errorf("pushing config changes to remote: %v", err)
+		}
+		e.T.Log(err.Error())
+	}
+	return nil
+}
+
+func (e *ClusterE2ETest) pullRemoteConfig(ctx context.Context) error {
+	g := e.GitClient
+	repoUpToDateErr := &git.RepositoryUpToDateError{}
+	if err := g.Pull(ctx, e.gitBranch()); err != nil {
+		if !errors.Is(err, repoUpToDateErr) {
+			return fmt.Errorf("pulling from remote before pushing config changes: %v", err)
 		}
 		e.T.Log(err.Error())
 	}
