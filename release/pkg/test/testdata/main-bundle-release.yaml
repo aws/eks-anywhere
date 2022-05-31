@@ -140,9 +140,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc3-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -152,8 +152,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
+      version: v0.4.5-rc3+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -475,11 +475,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:d3667631daf7c2b4e64c3bda801487e5c14c24c9-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -489,7 +489,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -625,9 +625,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -853,9 +853,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc3-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -865,8 +865,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
+      version: v0.4.5-rc3+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1188,11 +1188,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:d3667631daf7c2b4e64c3bda801487e5c14c24c9-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1202,7 +1202,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1338,9 +1338,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -1566,9 +1566,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc3-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1578,8 +1578,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
+      version: v0.4.5-rc3+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1901,11 +1901,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:d3667631daf7c2b4e64c3bda801487e5c14c24c9-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1915,7 +1915,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2051,9 +2051,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -2279,9 +2279,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc3-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2291,8 +2291,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
+      version: v0.4.5-rc3+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -2605,11 +2605,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:d3667631daf7c2b4e64c3bda801487e5c14c24c9-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2619,7 +2619,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/d3667631daf7c2b4e64c3bda801487e5c14c24c9/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2755,9 +2755,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
         tink:
           tinkCli:
             arch:
