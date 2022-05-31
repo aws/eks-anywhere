@@ -102,33 +102,11 @@ func WithCloudStackConfigNamespace(ns string) CloudStackFiller {
 
 func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		if len(config.cpMachineConfig.Spec.Users) == 0 {
-			config.cpMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capc"}}
-		}
-		if len(config.workerMachineConfig.Spec.Users) == 0 {
-			config.workerMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capc"}}
-		}
-		for _, user := range config.workerMachineConfig.Spec.Users {
-			if len(user.SshAuthorizedKeys) == 0 {
-				user.SshAuthorizedKeys = []string{""}
+		for _, m := range config.machineConfigs {
+			if len(m.Spec.Users) == 0 {
+				m.Spec.Users = []anywherev1.UserConfiguration{{Name: "capc"}}
 			}
-			for i := range user.SshAuthorizedKeys {
-				user.SshAuthorizedKeys[i] = value
-			}
-		}
-		for _, user := range config.workerMachineConfig.Spec.Users {
-			if len(user.SshAuthorizedKeys) == 0 {
-				user.SshAuthorizedKeys = []string{""}
-			}
-			for i := range user.SshAuthorizedKeys {
-				user.SshAuthorizedKeys[i] = value
-			}
-		}
-		if config.etcdMachineConfig != nil {
-			if len(config.cpMachineConfig.Spec.Users) == 0 {
-				config.etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capc"}}
-			}
-			for _, user := range config.etcdMachineConfig.Spec.Users {
+			for _, user := range m.Spec.Users {
 				if len(user.SshAuthorizedKeys) == 0 {
 					user.SshAuthorizedKeys = []string{""}
 				}
