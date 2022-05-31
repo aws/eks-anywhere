@@ -22,7 +22,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
@@ -35,7 +34,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -49,11 +48,8 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Cmk                       *executables.Cmk
-	Tink                      *executables.Tink
-	Pbnj                      *pbnj.Pbnj
 	SnowAwsClient             aws.Clients
 	SnowConfigManager         *snow.ConfigManager
-	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
@@ -210,7 +206,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, skipPowerActions, setupTinkerbell, force bool) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -219,7 +215,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile).WithWriter()
+		f.WithDocker().WithKubectl().WithWriter()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -279,6 +275,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			f.dependencies.Provider = snow.NewProvider(
 				f.dependencies.UnAuthKubeClient,
 				f.dependencies.SnowConfigManager,
+				skipIpCheck,
 			)
 
 		case v1alpha1.TinkerbellDatacenterKind:
@@ -292,22 +289,22 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			machines, err := hardware.NewCSVReaderFromFile(hardwareCSVPath)
+			if err != nil {
+				return err
+			}
+
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
+				machines,
 				f.dependencies.Writer,
+				f.dependencies.DockerClient,
 				f.dependencies.Kubectl,
-				tinkerbell.TinkerbellClients{
-					ProviderTinkClient: f.dependencies.Tink,
-					ProviderPbnjClient: f.dependencies.Pbnj,
-				},
 				time.Now,
 				skipIpCheck,
-				hardwareConfigFile,
-				skipPowerActions,
 				setupTinkerbell,
-				force,
 			)
 
 		case v1alpha1.DockerDatacenterKind:
@@ -465,48 +462,6 @@ func (f *Factory) WithAwsSnow() *Factory {
 
 		f.dependencies.SnowAwsClient = deviceClientMap
 
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithTink(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Tink != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
-		if err != nil {
-			return err
-		}
-		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithPbnj(clusterConfigFile string) *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Pbnj != nil {
-			return nil
-		}
-		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
-		if err != nil {
-			return err
-		}
-
-		pbnjClient, err := pbnj.NewPBNJClient(tinkerbellDatacenterConfig.Spec.TinkerbellPBnJGRPCAuth)
-		if err != nil {
-			return err
-		}
-		f.dependencies.Pbnj = pbnjClient
 		return nil
 	})
 
@@ -764,12 +719,10 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 			return fmt.Errorf("creating Git provider: %v", err)
 		}
 
-		if features.IsActive(features.GenericGitProviderSupport()) {
-			if fluxConfig.Spec.Git != nil {
-				err = tools.Client.ValidateRemoteExists(ctx)
-				if err != nil {
-					return err
-				}
+		if fluxConfig.Spec.Git != nil {
+			err = tools.Client.ValidateRemoteExists(ctx)
+			if err != nil {
+				return err
 			}
 		}
 

@@ -46,7 +46,7 @@ type EksaDiagnosticBundle struct {
 	analysis         []*executables.SupportBundleAnalysis
 }
 
-func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, client BundleClient,
 	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
 ) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
@@ -69,7 +69,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
+	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true).WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef)
 
 	err := b.WriteBundleConfig()
 	if err != nil {

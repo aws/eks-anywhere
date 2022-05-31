@@ -136,34 +136,34 @@ func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleDefault() *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleDefault", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleDefault))
 }
 
-// DiagnosticBundleFromSpec mocks base method.
-func (m *MockDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (diagnostics.DiagnosticBundle, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DiagnosticBundleFromSpec", spec, provider, kubeconfig)
-	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// DiagnosticBundleFromSpec indicates an expected call of DiagnosticBundleFromSpec.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleFromSpec(spec, provider, kubeconfig interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleFromSpec", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleFromSpec), spec, provider, kubeconfig)
-}
-
 // DiagnosticBundleManagementCluster mocks base method.
-func (m *MockDiagnosticBundleFactory) DiagnosticBundleManagementCluster(kubeconfig string) (diagnostics.DiagnosticBundle, error) {
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (diagnostics.DiagnosticBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DiagnosticBundleManagementCluster", kubeconfig)
+	ret := m.ctrl.Call(m, "DiagnosticBundleManagementCluster", spec, kubeconfig)
 	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // DiagnosticBundleManagementCluster indicates an expected call of DiagnosticBundleManagementCluster.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleManagementCluster(kubeconfig interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleManagementCluster(spec, kubeconfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleManagementCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleManagementCluster), kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleManagementCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleManagementCluster), spec, kubeconfig)
+}
+
+// DiagnosticBundleWorkloadCluster mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleWorkloadCluster(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (diagnostics.DiagnosticBundle, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DiagnosticBundleWorkloadCluster", spec, provider, kubeconfig)
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DiagnosticBundleWorkloadCluster indicates an expected call of DiagnosticBundleWorkloadCluster.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleWorkloadCluster(spec, provider, kubeconfig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleWorkloadCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleWorkloadCluster), spec, provider, kubeconfig)
 }
 
 // MockDiagnosticBundle is a mock of DiagnosticBundle interface.

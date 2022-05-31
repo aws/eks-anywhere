@@ -43,6 +43,7 @@ var installPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runInstallPackages,
+	Args:         cobra.ExactArgs(1),
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {
@@ -94,6 +95,8 @@ func installPackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	curatedpackages.PrintLicense()
 	err = packages.InstallPackage(ctx, p, ipo.packageName, kubeConfig)
 	if err != nil {
 		return err

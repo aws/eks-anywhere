@@ -135,7 +135,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
 	})
 }
 
@@ -189,7 +189,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
 	})
 }
 
@@ -243,7 +243,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleWorkloadCluster(spec, p, "")
 	})
 }
 
@@ -362,7 +362,7 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		b, _ := f.DiagnosticBundleFromSpec(spec, p, kubeconfig)
+		b, _ := f.DiagnosticBundleWorkloadCluster(spec, p, kubeconfig)
 		err = b.CollectAndAnalyze(ctx, sinceTimeValue)
 		if err != nil {
 			t.Errorf("CollectAndAnalyze() error = %v, wantErr nil", err)

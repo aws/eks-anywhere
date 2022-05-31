@@ -677,6 +677,20 @@ func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
 }
 
+// RunPostControlPlaneUpgradeSetup mocks base method.
+func (m *MockNetworking) RunPostControlPlaneUpgradeSetup(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostControlPlaneUpgradeSetup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostControlPlaneUpgradeSetup indicates an expected call of RunPostControlPlaneUpgradeSetup.
+func (mr *MockNetworkingMockRecorder) RunPostControlPlaneUpgradeSetup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneUpgradeSetup", reflect.TypeOf((*MockNetworking)(nil).RunPostControlPlaneUpgradeSetup), arg0, arg1)
+}
+
 // Upgrade mocks base method.
 func (m *MockNetworking) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec, arg4 []string) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()

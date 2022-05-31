@@ -77,7 +77,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 		CmkTemplates []cmkTemplate `json:"template"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	templates := response.CmkTemplates
 	if len(templates) > 1 {
@@ -108,7 +108,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 		CmkServiceOfferings []cmkServiceOffering `json:"serviceoffering"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	offerings := response.CmkServiceOfferings
 	if len(offerings) > 1 {
@@ -117,6 +117,44 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 		return fmt.Errorf("service offering %s not found", serviceOffering)
 	}
 
+	return nil
+}
+
+func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering v1alpha1.CloudStackResourceDiskOffering) error {
+	command := newCmkCommand("list diskofferings")
+	if len(diskOffering.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(diskOffering.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(diskOffering.Name))
+	}
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("getting disk offerings info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("disk offering ID/Name %s/%s not found", diskOffering.Id, diskOffering.Name)
+	}
+
+	response := struct {
+		CmkDiskOfferings []cmkDiskOffering `json:"diskoffering"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	offerings := response.CmkDiskOfferings
+	if len(offerings) > 1 {
+		return fmt.Errorf("duplicate disk offering ID/Name %s/%s found", diskOffering.Id, diskOffering.Name)
+	} else if len(offerings) == 0 {
+		return fmt.Errorf("disk offering ID/Name %s/%s not found", diskOffering.Id, diskOffering.Name)
+	}
+
+	if offerings[0].Customized && diskOffering.CustomSize <= 0 {
+		return fmt.Errorf("disk offering size %d <= 0 for customized disk offering", diskOffering.CustomSize)
+	}
+	if !offerings[0].Customized && diskOffering.CustomSize > 0 {
+		return fmt.Errorf("disk offering size %d > 0 for non-customized disk offering", diskOffering.CustomSize)
+	}
 	return nil
 }
 
@@ -145,7 +183,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 			CmkAffinityGroups []cmkAffinityGroup `json:"affinitygroup"`
 		}{}
 		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return fmt.Errorf("failed to parse response into json: %v", err)
+			return fmt.Errorf("parsing response into json: %v", err)
 		}
 		affinityGroup := response.CmkAffinityGroups
 		if len(affinityGroup) > 1 {
@@ -175,10 +213,10 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 		}
 
 		response := struct {
-			CmkZones []cmkZone `json:"zone"`
+			CmkZones []cmkResourceIdentifier `json:"zone"`
 		}{}
 		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return nil, fmt.Errorf("failed to parse response into json: %v", err)
+			return nil, fmt.Errorf("parsing response into json: %v", err)
 		}
 		cmkZones := response.CmkZones
 		if len(cmkZones) > 1 {
@@ -212,7 +250,7 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 		CmkDomains []cmkDomain `json:"domain"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
+		return domainIdentifier, fmt.Errorf("parsing response into json: %v", err)
 	}
 	domains := response.CmkDomains
 	var domainPath string
@@ -275,10 +313,10 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	}
 
 	response := struct {
-		CmkNetworks []cmkNetwork `json:"network"`
+		CmkNetworks []cmkResourceIdentifier `json:"network"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	networks := response.CmkNetworks
 
@@ -287,7 +325,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	// if only name is provided, the following code is to only get networks with specified name.
 
 	if len(zone.Network.Name) > 0 {
-		networks = []cmkNetwork{}
+		networks = []cmkResourceIdentifier{}
 		for _, net := range response.CmkNetworks {
 			if net.Name == zone.Network.Name {
 				networks = append(networks, net)
@@ -331,7 +369,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domain
 		CmkAccounts []cmkAccount `json:"account"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
+		return fmt.Errorf("parsing response into json: %v", err)
 	}
 	accounts := response.CmkAccounts
 	if len(accounts) > 1 {
@@ -355,9 +393,48 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	command := newCmkCommand("sync")
 	buffer, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("validating cloudstack connection for cmk config %s: %v", buffer.String(), err)
+		return fmt.Errorf("validating cloudstack connection for cmk: %s: %v", buffer.String(), err)
 	}
 	logger.MarkPass("Connected to CloudStack server")
+	return nil
+}
+
+func (c *Cmk) CleanupVms(ctx context.Context, clusterName string, dryRun bool) error {
+	command := newCmkCommand("list virtualmachines")
+	applyCmkArgs(&command, withCloudStackKeyword(clusterName), appendArgs("listall=true"))
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("listing virtual machines in cluster %s: %s: %v", clusterName, result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("virtual machines for cluster %s not found", clusterName)
+	}
+	response := struct {
+		CmkVirtualMachines []cmkResourceIdentifier `json:"virtualmachine"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	for _, vm := range response.CmkVirtualMachines {
+		if dryRun {
+			logger.Info("Found ", "vm_name", vm.Name)
+			continue
+		}
+		stopCommand := newCmkCommand("stop virtualmachine")
+		applyCmkArgs(&stopCommand, withCloudStackId(vm.Id), appendArgs("forced=true"))
+		stopResult, err := c.exec(ctx, stopCommand...)
+		if err != nil {
+			return fmt.Errorf("stopping virtual machine with name %s and id %s: %s: %v", vm.Name, vm.Id, stopResult.String(), err)
+		}
+		destroyCommand := newCmkCommand("destroy virtualmachine")
+		applyCmkArgs(&destroyCommand, withCloudStackId(vm.Id), appendArgs("expunge=true"))
+		destroyResult, err := c.exec(ctx, destroyCommand...)
+		if err != nil {
+			return fmt.Errorf("destroying virtual machine with name %s and id %s: %s: %v", vm.Name, vm.Id, destroyResult.String(), err)
+		}
+		logger.Info("Deleted ", "vm_name", vm.Name, "vm_id", vm.Id)
+	}
+
 	return nil
 }
 
@@ -418,18 +495,19 @@ type cmkServiceOffering struct {
 	Name      string `json:"name"`
 }
 
+type cmkResourceIdentifier struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type cmkDiskOffering struct {
+	Id         string `json:"id"`
+	Name       string `json:"name"`
+	Customized bool   `json:"iscustomized"`
+}
+
 type cmkAffinityGroup struct {
 	Type string `json:"type"`
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type cmkZone struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type cmkNetwork struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }

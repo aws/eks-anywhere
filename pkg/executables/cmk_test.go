@@ -53,6 +53,37 @@ var resourceId = v1alpha1.CloudStackResourceIdentifier{
 	Id: "TEST_RESOURCE",
 }
 
+var diskOfferingResourceName = v1alpha1.CloudStackResourceDiskOffering{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+		Name: "TEST_RESOURCE",
+	},
+	MountPath:  "/TEST_RESOURCE",
+	Device:     "/dev/vdb",
+	Filesystem: "ext4",
+	Label:      "data_disk",
+}
+
+var diskOfferingResourceID = v1alpha1.CloudStackResourceDiskOffering{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+		Id: "TEST_RESOURCE",
+	},
+	MountPath:  "/TEST_RESOURCE",
+	Device:     "/dev/vdb",
+	Filesystem: "ext4",
+	Label:      "data_disk",
+}
+
+var diskOfferingCustomSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+		Id: "TEST_RESOURCE",
+	},
+	CustomSize: 1,
+	MountPath:  "/TEST_RESOURCE",
+	Device:     "/dev/vdb",
+	Filesystem: "ext4",
+	Label:      "data_disk",
+}
+
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	ctx := context.Background()
@@ -82,6 +113,123 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	err := c.ValidateCloudStackConnection(ctx)
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
+	}
+}
+
+func TestCmkCleanupVms(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	clusterName := "test"
+	tests := []struct {
+		testName           string
+		argumentsExecCalls [][]string
+		jsonResponseFile   string
+		cmkFunc            func(cmk executables.Cmk, ctx context.Context) error
+		cmkResponseError   error
+		wantErr            bool
+	}{
+		{
+			testName:         "listvirtualmachines json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "dry run succeeds",
+			jsonResponseFile: "testdata/cmk_list_virtualmachine_singular.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, true)
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+		{
+			testName:         "listvirtualmachines no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "listaffinitygroups json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCalls: [][]string{{
+				"-c", configFilePath,
+				"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+			}},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          true,
+		},
+		{
+			testName:         "full runthrough succeeds",
+			jsonResponseFile: "testdata/cmk_list_virtualmachine_singular.json",
+			argumentsExecCalls: [][]string{
+				{
+					"-c", configFilePath,
+					"list", "virtualmachines", fmt.Sprintf("keyword=\"%s\"", clusterName), "listall=true",
+				},
+				{
+					"-c", configFilePath, "stop", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
+					"forced=true",
+				},
+				{
+					"-c", configFilePath, "destroy", "virtualmachine", "id=\"30e8b0b1-f286-4372-9f1f-441e199a3f49\"",
+					"expunge=true",
+				},
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.CleanupVms(ctx, clusterName, false)
+			},
+			cmkResponseError: nil,
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			for _, argsList := range tt.argumentsExecCalls {
+				executable.EXPECT().Execute(ctx, argsList).
+					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			}
+			cmk := executables.NewCmk(executable, writer, execConfig)
+			err := tt.cmkFunc(*cmk, ctx)
+			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
+				return
+			}
+			t.Fatalf("Cmk error: %v", err)
+		})
 	}
 }
 
@@ -426,6 +574,156 @@ func TestCmkListOperations(t *testing.T) {
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
 				return cmk.ValidateServiceOfferingPresent(ctx, zoneId, resourceName)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: false,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "listdiskofferings success on name filter",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName.Name), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceName)
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: false,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "listdiskofferings success on id filter",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: true,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "listdiskofferings no results",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_empty.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "listdiskofferings no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "listdiskofferings multiple results",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_multiple.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       4,
+		},
+		{
+			testName:         "listdiskofferings customized results with customSizeInGB > 0",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular_customized.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingCustomSizeInGB)
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: true,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "listdiskofferings non-customized results with customSizeInGB > 0",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingCustomSizeInGB)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "listdiskofferings non-customized results with customSizeInGB > 0",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular_customized.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "listdiskofferings throw exception",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceID)
+			},
+			cmkResponseError:      errors.New("cmk calling return exception"),
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "listdiskofferings json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName.Name), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateDiskOfferingPresent(ctx, zoneId, diskOfferingResourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,

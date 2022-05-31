@@ -70,6 +70,44 @@ spec:
                       Mutually exclusive with Id
                     type: string
                 type: object
+              diskOffering:
+                description: DiskOffering refers to a disk offering which has been
+                  previously registered in CloudStack. It represents a disk offering
+                  with pre-defined size or custom specified disk size. It can either
+                  be specified as a UUID or name
+                properties:
+                  customSizeInGB:
+                    description: disk size in GB, > 0 for customized disk offering;
+                      = 0 for non-customized disk offering
+                    format: int64
+                    type: integer
+                  device:
+                    description: device name of the disk offering in VM, shows up
+                      in lsblk command
+                    type: string
+                  filesystem:
+                    description: filesystem used to mkfs in disk offering partition
+                    type: string
+                  id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
+                    type: string
+                  label:
+                    description: disk label used to label disk partition
+                    type: string
+                  mountPath:
+                    description: path the filesystem will use to mount in VM
+                    type: string
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
+                    type: string
+                required:
+                - device
+                - filesystem
+                - label
+                - mountPath
+                type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified

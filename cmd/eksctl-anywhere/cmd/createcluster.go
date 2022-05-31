@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -19,17 +20,20 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
+const tinkerbellHardwareCSVFlag = "hardware-csv"
+
 type createClusterOptions struct {
 	clusterOptions
 	forceClean       bool
 	skipIpCheck      bool
-	hardwareFileName string
+	hardwareCSVPath  string
 	skipPowerActions bool
 	setupTinkerbell  bool
 	installPackages  string
@@ -50,11 +54,9 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
+		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, tinkerbellHardwareCSVFlag, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
 		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
-		if features.IsActive(features.TinkerbellStackSetup()) {
-			createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
-		}
+		createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -91,7 +93,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup("hardwarefile")
+		flag := cmd.Flags().Lookup(tinkerbellHardwareCSVFlag)
 
 		// If no flag was returned there is a developer error as the flag has been removed
 		// from the program rendering it invalid.
@@ -99,12 +101,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			panic("'hardwarefile' flag not configured")
 		}
 
-		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
-			return fmt.Errorf("required flag \"hardwarefile\" not set")
+		if !viper.IsSet(tinkerbellHardwareCSVFlag) || viper.GetString(tinkerbellHardwareCSVFlag) == "" {
+			return fmt.Errorf("required flag \"%v\" not set", tinkerbellHardwareCSVFlag)
 		}
 
-		if !validations.FileExists(cc.hardwareFileName) {
-			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareFileName)
+		if !validations.FileExists(cc.hardwareCSVPath) {
+			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareCSVPath)
 		}
 	}
 
@@ -136,12 +138,15 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
@@ -207,16 +212,28 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	return err
 }
 
-func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) []string {
+func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
 	dirs := cc.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig == nil || fluxConfig.Spec.Git == nil {
-		return dirs
+	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 	}
-	dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-	dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
 
-	return dirs
+	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
+		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+		if found && len(env) > 0 {
+			mountDirs := strings.Split(env, ",")
+			for _, dir := range mountDirs {
+				if _, err := os.Stat(dir); err != nil {
+					return nil, fmt.Errorf("invalid host path to mount: %v", err)
+				}
+				dirs = append(dirs, dir)
+			}
+		}
+	}
+
+	return dirs, nil
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {

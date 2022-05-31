@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func TestCsvReaderReads(t *testing.T) {
+func TestCSVReaderReads(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	buf := NewBufferedCSV()
@@ -23,7 +23,7 @@ func TestCsvReaderReads(t *testing.T) {
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	reader, err := hardware.NewCsvReader(buf.Buffer)
+	reader, err := hardware.NewCSVReader(buf.Buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -31,34 +31,82 @@ func TestCsvReaderReads(t *testing.T) {
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
 }
 
-func TestCsvReaderReadsWithNoIdSpecified(t *testing.T) {
+func TestCSVReaderReadsWithNoIDSpecified(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	buf := NewBufferedCSV()
 
 	expect := NewValidMachine()
-	expect.Id = ""
+	expect.ID = ""
 
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	const uuid = "unique-id"
-	reader, err := hardware.NewCsvReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
+	reader, err := hardware.NewCSVReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	expect.Id = uuid // patch the expected machine with the expected uuid
+	expect.ID = uuid // patch the expected machine with the expected uuid
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
 }
 
-func TestNewCsvReaderWithIOReaderError(t *testing.T) {
+func TestCSVReaderWithMultipleLabels(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	buf := NewBufferedCSV()
+
+	expect := NewValidMachine()
+	expect.Labels["foo"] = "bar"
+	expect.Labels["qux"] = "baz"
+
+	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	const uuid = "unique-id"
+	reader, err := hardware.NewCSVReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
+}
+
+func TestCSVReaderFromFile(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(machine).To(gomega.Equal(
+		hardware.Machine{
+			ID:           "worker1",
+			Labels:       map[string]string{"type": "cp"},
+			Nameservers:  []string{"1.1.1.1"},
+			Gateway:      "10.10.10.1",
+			Netmask:      "255.255.255.0",
+			IPAddress:    "10.10.10.10",
+			MACAddress:   "00:00:00:00:00:01",
+			Hostname:     "worker1",
+			Disk:         "/dev/sda",
+			BMCIPAddress: "192.168.0.10",
+			BMCUsername:  "Admin",
+			BMCPassword:  "admin",
+			BMCVendor:    "HP",
+		},
+	))
+}
+
+func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	expect := errors.New("read err")
 
-	_, err := hardware.NewCsvReader(iotest.ErrReader(expect))
+	_, err := hardware.NewCSVReader(iotest.ErrReader(expect))
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
 }

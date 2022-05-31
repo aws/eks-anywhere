@@ -95,7 +95,10 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().

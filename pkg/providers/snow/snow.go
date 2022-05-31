@@ -13,7 +13,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	providerValidator "github.com/aws/eks-anywhere/pkg/providers/validator"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -39,6 +42,7 @@ type SnowProvider struct {
 	retrier          *retrier.Retrier
 	bootstrapCreds   bootstrapCreds
 	configManager    *ConfigManager
+	skipIpCheck      bool
 }
 
 type KubeUnAuthClient interface {
@@ -46,12 +50,13 @@ type KubeUnAuthClient interface {
 	Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
 }
 
-func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager) *SnowProvider {
+func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager, skipIpCheck bool) *SnowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &SnowProvider{
 		kubeUnAuthClient: kubeUnAuthClient,
 		retrier:          retrier,
 		configManager:    configManager,
+		skipIpCheck:      skipIpCheck,
 	}
 }
 
@@ -65,6 +70,13 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
+	}
+	if !p.skipIpCheck {
+		if err := providerValidator.ValidateControlPlaneIpUniqueness(clusterSpec.Cluster, &networkutils.DefaultNetClient{}); err != nil {
+			return err
+		}
+	} else {
+		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 	return nil
 }
@@ -123,7 +135,7 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 	return p.generateCAPISpec(ctx, cluster, clusterSpec)
 }
 
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, managementCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, _, managementCluster *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	return p.generateCAPISpec(ctx, managementCluster, clusterSpec)
 }
 
@@ -136,6 +148,10 @@ func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *t
 }
 
 func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *SnowProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 

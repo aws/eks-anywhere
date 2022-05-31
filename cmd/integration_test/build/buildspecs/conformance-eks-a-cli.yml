@@ -4,8 +4,6 @@ env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 25
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 25
-    T_VSPHERE_CIDR: "198.18.0.0/16"
-    T_VSPHERE_PRIVATE_NETWORK_CIDR: "10.1.0.0/24"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -18,6 +16,8 @@ env:
     T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
     T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
     T_VSPHERE_PRIVATE_NETWORK: "vsphere_ci_beta_connection:private_network"
+    T_VSPHERE_CIDR: "vsphere_ci_beta_connection:vsphere_cidr"
+    T_VSPHERE_PRIVATE_NETWORK_CIDR: "vsphere_ci_beta_connection:vsphere_private_network_cidr"
     T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
     T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
     T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
@@ -26,6 +26,7 @@ env:
     T_VSPHERE_TEMPLATE_UBUNTU_1_20: "vsphere_ci_beta_connection:template_20"
     T_VSPHERE_TEMPLATE_UBUNTU_1_21: "vsphere_ci_beta_connection:template_21"
     T_VSPHERE_TEMPLATE_UBUNTU_1_22: "vsphere_ci_beta_connection:template_22"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_23: "vsphere_ci_beta_connection:template_23"
     T_VSPHERE_TEMPLATE_BR_1_20: "vsphere_ci_beta_connection:template_br_20"
     T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
     T_VSPHERE_TEMPLATE_BR_1_22: "vsphere_ci_beta_connection:template_br_22"

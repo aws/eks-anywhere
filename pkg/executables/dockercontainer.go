@@ -1,6 +1,7 @@
 package executables
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"path/filepath"
@@ -9,15 +10,22 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 )
+
+type DockerClient interface {
+	PullImage(ctx context.Context, image string) error
+	Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error)
+}
 
 type dockerContainer struct {
 	image               string
 	workingDir          string
 	mountDirs           []string
 	containerName       string
-	dockerBinary        *Docker
+	dockerBinary        DockerClient
 	initOnce, closeOnce sync.Once
+	*retrier.Retrier
 }
 
 func newDockerContainer(image, workingDir string, mountDirs []string, dockerBinary *Docker) *dockerContainer {
@@ -27,13 +35,23 @@ func newDockerContainer(image, workingDir string, mountDirs []string, dockerBina
 		mountDirs:     mountDirs,
 		containerName: containerNamePrefix + strconv.FormatInt(time.Now().UnixNano(), 10),
 		dockerBinary:  dockerBinary,
+		Retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
-func (d *dockerContainer) init(ctx context.Context) error {
+func NewDockerContainerCustomBinary(docker DockerClient) *dockerContainer {
+	return &dockerContainer{
+		dockerBinary: docker,
+	}
+}
+
+func (d *dockerContainer) Init(ctx context.Context) error {
 	var err error
 	d.initOnce.Do(func() {
-		if err = d.dockerBinary.PullImage(ctx, d.image); err != nil {
+		err = d.Retry(func() error {
+			return d.dockerBinary.PullImage(ctx, d.image)
+		})
+		if err != nil {
 			return
 		}
 

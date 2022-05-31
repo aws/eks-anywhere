@@ -690,6 +690,18 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
+func (k *Kubectl) RolloutRestartDaemonSet(ctx context.Context, dsName, dsNamespace, kubeconfig string) error {
+	params := []string{
+		"rollout", "restart", "ds", dsName,
+		"--kubeconfig", kubeconfig, "--namespace", dsNamespace,
+	}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("restarting %s daemonset in namespace %s: %v", dsName, dsNamespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
 	params := []string{
 		"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal),

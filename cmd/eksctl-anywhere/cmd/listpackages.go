@@ -28,7 +28,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "", "Used to specify an alternative registry for discovery")
 }
 

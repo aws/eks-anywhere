@@ -52,6 +52,7 @@ func applyPackages(ctx context.Context) error {
 		deps.Kubectl,
 	)
 
+	curatedpackages.PrintLicense()
 	err = packages.ApplyPackages(ctx, apo.fileName, kubeConfig)
 	if err != nil {
 		return err

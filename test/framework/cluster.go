@@ -22,7 +22,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -109,7 +108,7 @@ func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 
 		var count int
 		for id, h := range hardwarePool {
-			if strings.ToLower(h.BmcVendor) == vendor || vendor == api.HardwareVendorUnspecified {
+			if strings.ToLower(h.BMCVendor) == vendor || vendor == api.HardwareVendorUnspecified {
 				if _, exists := e.TestHardware[id]; !exists {
 					count++
 					e.TestHardware[id] = h
@@ -222,77 +221,15 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) PowerOffHardware() {
-	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
-	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
-	if err != nil {
-		e.T.Fatalf("failed to create pbnj client: %v", err)
-	}
-
-	ctx := context.Background()
-
-	for _, h := range e.TestHardware {
-		bmcInfo := api.NewBmcSecretConfig(h)
-		err := pbnjClient.PowerOff(ctx, bmcInfo)
-		if err != nil {
-			e.T.Fatalf("failed to power off hardware: %v", err)
-		}
-	}
+	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
 }
 
 func (e *ClusterE2ETest) PowerOnHardware() {
-	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
-	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
-	if err != nil {
-		e.T.Fatalf("failed to create pbnj client: %v", err)
-	}
-
-	ctx := context.Background()
-
-	for _, h := range e.TestHardware {
-		bmcInfo := api.NewBmcSecretConfig(h)
-		err := pbnjClient.PowerOn(ctx, bmcInfo)
-		if err != nil {
-			e.T.Fatalf("failed to power on hardware: %v", err)
-		}
-	}
+	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
 }
 
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
-	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
-	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
-	if err != nil {
-		e.T.Fatalf("failed to create pbnj client: %v", err)
-	}
-
-	ctx := context.Background()
-
-	var failedToDecomm []*api.Hardware
-	for _, h := range e.TestHardware {
-		bmcInfo := api.NewBmcSecretConfig(h)
-
-		powerState, err := pbnjClient.GetPowerState(ctx, bmcInfo)
-		// add sleep retries to give the machine time to power off
-		timeout := 15
-		for powerState != pbnj.PowerStateOff && timeout > 0 {
-			if err != nil {
-				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
-			}
-			time.Sleep(5 * time.Second)
-			timeout = timeout - 5
-			powerState, err = pbnjClient.GetPowerState(ctx, bmcInfo)
-		}
-
-		if powerState != pbnj.PowerStateOff {
-			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
-			failedToDecomm = append(failedToDecomm, h)
-		} else {
-			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
-		}
-	}
-
-	if len(failedToDecomm) > 0 {
-		e.T.Fatalf("failed to decommision hardware during cluster deletion")
-	}
+	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {

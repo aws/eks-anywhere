@@ -617,6 +617,17 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
+	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
+			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
+			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
+		},
+		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
+		MountPath:  csMachineTemplate.Spec.Spec.Spec.DiskOffering.MountPath,
+		Device:     csMachineTemplate.Spec.Spec.Spec.DiskOffering.Device,
+		Filesystem: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Filesystem,
+		Label:      csMachineTemplate.Spec.Spec.Spec.DiskOffering.Label,
+	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs

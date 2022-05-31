@@ -82,6 +82,10 @@ func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapcSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
 			Name:             "cert-manager-webhook",
 			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
@@ -149,6 +153,8 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 		return a.eksaVsphereAnalyzers()
 	case v1alpha1.DockerDatacenterKind:
 		return a.eksaDockerAnalyzers()
+	case v1alpha1.CloudStackDatacenterKind:
+		return a.eksaCloudstackAnalyzers()
 	default:
 		return nil
 	}
@@ -158,6 +164,14 @@ func (a *analyzerFactory) eksaVsphereAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) eksaCloudstackAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
 }

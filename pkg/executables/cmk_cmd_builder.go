@@ -46,3 +46,7 @@ func withCloudStackId(id string) cmkCommandArgs {
 func withCloudStackName(name string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("name=\"%s\"", name))
 }
+
+func withCloudStackKeyword(keyword string) cmkCommandArgs {
+	return appendArgs(fmt.Sprintf("keyword=\"%s\"", keyword))
+}

@@ -3,13 +3,11 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
-	"os"
+	"path/filepath"
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
-	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
-	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -19,35 +17,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
-	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellIPKey                = "TINKERBELL_IP"
-	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
-	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
-	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
-	Provisioning                   = "provisioning"
-	maxRetries                     = 30
-	backOffPeriod                  = 5 * time.Second
+	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
+	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
+	maxRetries                 = 30
+	backOffPeriod              = 5 * time.Second
+	deploymentWaitTimeout      = "5m"
+	bootsContainerName         = "boots"
 )
-
-const defaultUsername = "ec2-user"
 
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
+	tinkerbellStackPorts                 = []int{42113, 50051, 50061}
 )
 
 type Provider struct {
@@ -55,32 +47,32 @@ type Provider struct {
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	hardwares             []tinkv1alpha1.Hardware
+	docker                Docker
 	providerKubectlClient ProviderKubectlClient
-	providerTinkClient    ProviderTinkClient
-	pbnj                  ProviderPbnjClient
-	templateBuilder       *TinkerbellTemplateBuilder
-	validator             *Validator
+	templateBuilder       *TemplateBuilder
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
-	hardwareManifestPath string
-	// catalogue is a cache initialized during SetupAndValidateCreateCluster() from hardwareManifestPath.
-	catalogue hardware.Catalogue
+	machines  hardware.MachineReader
+	catalogue *hardware.Catalogue
 
-	skipIpCheck      bool
-	skipPowerActions bool
-	setupTinkerbell  bool
-	force            bool
-	Retrier          *retrier.Retrier
+	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
+	// This is already a dependency, just uncached, because we require it during the initializing
+	// constructor call for constructing the validator in-line.
+	netClient networkutils.NetClient
+
+	skipIpCheck     bool
+	setupTinkerbell bool
+	retrier         *retrier.Retrier
 }
 
-type TinkerbellClients struct {
-	ProviderTinkClient ProviderTinkClient
-	ProviderPbnjClient ProviderPbnjClient
+type Docker interface {
+	ForceRemove(ctx context.Context, name string) error
+	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
 }
 
-// TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
+	ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, spec string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
@@ -94,21 +86,7 @@ type ProviderKubectlClient interface {
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
-}
-
-type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
-	GetHardwareByUuid(ctx context.Context, uuid string) (*hardware.Hardware, error)
-	PushHardware(ctx context.Context, hardware []byte) error
-	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
-	DeleteWorkflow(ctx context.Context, workflowIDs ...string) error
-}
-
-type ProviderPbnjClient interface {
-	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
-	PowerOff(context.Context, pbnj.BmcSecretConfig) error
-	PowerOn(context.Context, pbnj.BmcSecretConfig) error
-	SetBootDevice(ctx context.Context, info pbnj.BmcSecretConfig, mode pbnj.BootDevice) error
+	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -120,49 +98,13 @@ func NewProvider(
 	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
+	machines hardware.MachineReader,
 	writer filewriter.FileWriter,
+	docker Docker,
 	providerKubectlClient ProviderKubectlClient,
-	providerTinkbellClient TinkerbellClients,
 	now types.NowFunc,
 	skipIpCheck bool,
-	hardwareManifestPath string,
-	skipPowerActions bool,
 	setupTinkerbell bool,
-	force bool,
-) *Provider {
-	return NewProviderCustomDep(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		writer,
-		providerKubectlClient,
-		providerTinkbellClient.ProviderTinkClient,
-		providerTinkbellClient.ProviderPbnjClient,
-		&networkutils.DefaultNetClient{},
-		now,
-		skipIpCheck,
-		hardwareManifestPath,
-		skipPowerActions,
-		setupTinkerbell,
-		force,
-	)
-}
-
-func NewProviderCustomDep(
-	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
-	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
-	clusterConfig *v1alpha1.Cluster,
-	writer filewriter.FileWriter,
-	providerKubectlClient ProviderKubectlClient,
-	providerTinkClient ProviderTinkClient,
-	pbnjClient ProviderPbnjClient,
-	netClient networkutils.NetClient,
-	now types.NowFunc,
-	skipIpCheck bool,
-	hardwareManifestPath string,
-	skipPowerActions bool,
-	setupTinkerbell bool,
-	force bool,
 ) *Provider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -180,36 +122,38 @@ func NewProviderCustomDep(
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 		}
 	}
-	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
+		docker:                docker,
 		providerKubectlClient: providerKubectlClient,
-		providerTinkClient:    providerTinkClient,
-		pbnj:                  pbnjClient,
-		templateBuilder: &TinkerbellTemplateBuilder{
+		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		hardwareManifestPath: hardwareManifestPath,
-		validator:            NewValidator(providerTinkClient, netClient, pbnjClient),
-		writer:               writer,
-
+		writer:   writer,
+		machines: machines,
+		// TODO(chrisdoherty4) Inject the catalogue dependency so we can dynamically construcft the
+		// indexing capabilities.
+		catalogue: hardware.NewCatalogue(
+			hardware.WithHardwareIDIndex(),
+			hardware.WithHardwareBMCRefIndex(),
+			hardware.WithBMCNameIndex(),
+			hardware.WithSecretNameIndex(),
+		),
+		netClient: &networkutils.DefaultNetClient{},
+		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
-
 		// Behavioral flags.
-		skipIpCheck:      skipIpCheck,
-		skipPowerActions: skipPowerActions,
-		setupTinkerbell:  setupTinkerbell,
-		force:            force,
-		Retrier:          retrier,
+		skipIpCheck:     skipIpCheck,
+		setupTinkerbell: setupTinkerbell,
 	}
 }
 
@@ -239,17 +183,22 @@ func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
-func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
-	// TODO: determine if any env vars are needed and add them to requiredEnvs
-	envMap := make(map[string]string)
-	for _, key := range requiredEnvs {
-		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
-			envMap[key] = env
-		} else {
-			return envMap, fmt.Errorf("warning required env not set %s", key)
-		}
-	}
-	return envMap, nil
+func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
+	return map[string]string{
+		// The TINKERBELL_IP is input for the CAPT deployment and used as part of default template
+		// generation. However, we use custom templates and leverage the template override
+		// functionality of CAPT hence this never gets used.
+		//
+		// Deployment manifest requiring the env var for replacement.
+		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/config/manager/manager.yaml#L23
+		//
+		// Template override
+		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L182
+		//
+		// Env read having set TINKERBELL_IP in the deployment manifest.
+		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
+		"TINKERBELL_IP": "<set in eks-a tinkerbell provider>",
+	}, nil
 }
 
 func (p *Provider) GetDeployments() map[string][]string {
@@ -330,5 +279,88 @@ func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, cu
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func (p *Provider) InstallTinkerbellStack(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, bootstrap bool) error {
+	bundle := clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack
+
+	components := []struct {
+		Name        string
+		Manifest    string
+		Deployments []string
+	}{
+		{
+			Name:        "tink",
+			Manifest:    bundle.Tink.Manifest.URI,
+			Deployments: []string{"tink-server", "tink-controller-manager"},
+		},
+		{
+			Name:        "boots",
+			Manifest:    bundle.Boots.Manifest.URI,
+			Deployments: []string{"boots"},
+		},
+		{
+			Name:        "hegel",
+			Manifest:    bundle.Hegel.Manifest.URI,
+			Deployments: []string{"hegel"},
+		},
+		// TODO: Uncomment this when rufio is added to the bundle
+		// {
+		// 	Name:        "rufio",
+		// 	Manifest:    bundle.Rufio.Manifest.URI,
+		// 	Deployments: []string{"rufio"},
+		// },
+	}
+
+	for _, component := range components {
+		if !(bootstrap && component.Name == "boots") {
+			logger.V(5).Info("Applying manifest", "component", component.Name)
+
+			if err := p.providerKubectlClient.ApplyKubeSpec(ctx, cluster, component.Manifest); err != nil {
+				return fmt.Errorf("applying %s manifest: %v", component.Name, err)
+			}
+
+			for _, deployment := range component.Deployments {
+				logger.V(5).Info("Waiting for deployment to be ready", "deployment", deployment, "timeout", deploymentWaitTimeout)
+
+				if err := p.providerKubectlClient.WaitForDeployment(ctx, cluster, deploymentWaitTimeout, "Available", deployment, constants.EksaSystemNamespace); err != nil {
+					return fmt.Errorf("waiting for deployment %s: %v", deployment, err)
+				}
+			}
+		}
+	}
+
+	if bootstrap {
+		kubeconfig, err := filepath.Abs(cluster.KubeconfigFile)
+		if err != nil {
+			return fmt.Errorf("getting absolute path for kubeconfig: %v", err)
+		}
+
+		logger.V(5).Info("Running boots on docker for bootstrap")
+
+		bootsEnv := map[string]string{
+			"DATA_MODEL_VERSION":        "kubernetes",
+			"BOOTS_EXTRA_KERNEL_ARGS":   fmt.Sprintf("tink_worker_image=%s", bundle.Tink.TinkWorker.URI),
+			"MIRROR_BASE_URL":           "https://tinkerbell-storage-for-eksa.s3.us-west-2.amazonaws.com",
+			"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:42113", p.datacenterConfig.Spec.TinkerbellIP),
+			"TINKERBELL_TLS":            "false",
+		}
+
+		flags := []string{
+			"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
+			"--network", "host",
+		}
+
+		for name, value := range bootsEnv {
+			flags = append(flags, "-e", fmt.Sprintf("%s=%s", name, value))
+		}
+
+		cmd := []string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67"}
+		if err := p.docker.Run(ctx, bundle.Boots.Image.URI, bootsContainerName, cmd, flags...); err != nil {
+			return fmt.Errorf("run boots with docker: %v", err)
+		}
+	}
+
 	return nil
 }

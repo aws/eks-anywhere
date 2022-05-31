@@ -37,6 +37,10 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackMachineConfig resource creation")
 	}
 
+	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+	}
+
 	return nil
 }
 
@@ -61,11 +65,18 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	var allErrs field.ErrorList
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
-	if len(allErrs) == 0 {
-		return nil
+
+	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "diskOffering", fieldName), fieldValue, err.Error()),
+		)
+	}
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+	return nil
 }
 
 func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineConfig) field.ErrorList {

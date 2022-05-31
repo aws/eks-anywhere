@@ -60,6 +60,15 @@ func SplitImageUri(imageUri, imageContainerRegistry string) (string, string) {
 	return imageRepository, imageTag
 }
 
+func SplitImageUriV2(imageUri string) (string, string, string) {
+	registry := imageUri[:strings.Index(imageUri, "/")]
+	imageUriSplit := strings.Split(imageUri[len(registry)+1:], ":")
+	repository := strings.Replace(imageUriSplit[0], registry+"/", "", -1)
+	tag := imageUriSplit[1]
+
+	return registry, repository, tag
+}
+
 func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string) string {
 	var manifestFilepath string
 	switch kind {

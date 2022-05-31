@@ -7,8 +7,6 @@ import (
 
 	tinkHardware "github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/workflow"
-
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 const (
@@ -65,27 +63,6 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*tinkHardware.Hardware, error
 	}
 
 	return hardwareList, nil
-}
-
-func (t *Tink) GetHardwareByUuid(ctx context.Context, uuid string) (*hardware.Hardware, error) {
-	params := []string{"hardware", "id", uuid}
-	hw, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
-	if err != nil {
-		return nil, fmt.Errorf("getting hardware by uuid '%s': %v", uuid, err)
-	}
-
-	hardwareListData := hardware.Hardware{}
-	if err = json.Unmarshal(hw.Bytes(), &hardwareListData); err != nil {
-		return nil, fmt.Errorf("unmarshling hardware json: %v", err)
-	}
-
-	return &hardwareListData, nil
-
-	// if len(hardwareListData["data"]) == 0 {
-	// 	return nil, fmt.Errorf("hardware with UUID '%s' not found", uuid)
-	// }
-
-	// return hardwareListData["data"][0], nil
 }
 
 func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {

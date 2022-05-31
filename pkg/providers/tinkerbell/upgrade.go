@@ -2,7 +2,6 @@ package tinkerbell
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -64,47 +63,16 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	hardware, err := p.providerTinkClient.GetHardware(ctx)
-	if err != nil {
-		return fmt.Errorf("retrieving tinkerbell hardware: %v", err)
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
-
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-
-	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
 
-	// ValidateHardwareCatalogue performs a lazy load of hardware configuration. Given subsequent steps need the hardware
-	// read into memory it needs to be done first. It also needs connection to
-	// Tinkerbell steps to verify hardware availability on the stack
-	if err := p.validator.ValidateHardwareCatalogue(ctx, p.catalogue, hardware, p.skipPowerActions, p.force); err != nil {
+	// TODO(chrisdoherty4) Look to inject the validator.
+	validator := NewClusterSpecValidator()
+	if err := validator.Validate(tinkerbellClusterSpec); err != nil {
 		return err
-	}
-
-	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
-		return err
-	}
-
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
-		return err
-	}
-
-	if err := p.validator.ValidateAndPopulateTemplateForUpgrade(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name], clusterSpec.VersionsBundle.EksD.Raw.Ubuntu.URI, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
-		return fmt.Errorf("failed validating control plane template config: %v", err)
-	}
-
-	if err := p.validator.ValidateMinHardwareAvailableForUpgrade(tinkerbellClusterSpec.Spec.Cluster.Spec, 1); err != nil {
-		return fmt.Errorf("minimum hardware not available: %v", err)
-	}
-
-	if err := p.validator.ValidateAndPopulateTemplateForUpgrade(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name], clusterSpec.VersionsBundle.EksD.Raw.Ubuntu.URI, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
-		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
 	// TODO: Add validations when this is supported
@@ -120,7 +88,7 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
 	// The long term solution is to add this capability to the cluster-api controller,
 	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
-	/* err := p.Retrier.Retry(
+	/* err := p.retrier.Retry(
 		func() error {
 			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
 		},

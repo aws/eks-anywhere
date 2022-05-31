@@ -2,6 +2,13 @@ package hardware
 
 import (
 	"fmt"
+	"net"
+	"regexp"
+	"strings"
+
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 // MachineAssertion defines a condition that Machine must meet.
@@ -17,16 +24,12 @@ var _ MachineValidator = &DefaultMachineValidator{}
 // NewDefaultMachineValidator creates a machineValidator instance with default assertions registered.
 func NewDefaultMachineValidator() *DefaultMachineValidator {
 	validator := &DefaultMachineValidator{}
-	WithDefaultAssertions(validator)
+	RegisterDefaultAssertions(validator)
 	return validator
 }
 
 // Validate validates machine by executing its Validate() method and passing it to all registered MachineAssertions.
 func (mv *DefaultMachineValidator) Validate(machine Machine) error {
-	if err := machine.Validate(); err != nil {
-		return err
-	}
-
 	for _, fn := range mv.assertions {
 		if err := fn(machine); err != nil {
 			return err
@@ -41,46 +44,147 @@ func (mv *DefaultMachineValidator) Register(v ...MachineAssertion) {
 	mv.assertions = append(mv.assertions, v...)
 }
 
-// UniqueIds asserts a given Machine instance has a unique Id field relative to previously seen Machine instances.
+var (
+	linuxPathRegex      = `^(/dev/[\w-]+)+$`
+	linuxPathValidation = regexp.MustCompile(linuxPathRegex)
+)
+
+// StaticMachineAssertions defines all static data assertions performed on a Machine.
+func StaticMachineAssertions() MachineAssertion {
+	return func(m Machine) error {
+		if m.ID == "" {
+			return newEmptyFieldError("ID")
+		}
+
+		if m.IPAddress == "" {
+			return newEmptyFieldError("IPAddress")
+		}
+
+		if err := networkutils.ValidateIP(m.IPAddress); err != nil {
+			return fmt.Errorf("IPAddress: %v", err)
+		}
+
+		if m.Gateway == "" {
+			return newEmptyFieldError("Gateway")
+		}
+
+		if err := networkutils.ValidateIP(m.Gateway); err != nil {
+			return fmt.Errorf("Gateway: %v", err)
+		}
+
+		if len(m.Nameservers) == 0 {
+			return newEmptyFieldError("Nameservers")
+		}
+
+		for _, nameserver := range m.Nameservers {
+			if nameserver == "" {
+				return newMachineError("Nameservers contains an empty entry")
+			}
+		}
+
+		if m.Netmask == "" {
+			return newEmptyFieldError("Netmask")
+		}
+
+		if m.MACAddress == "" {
+			return newEmptyFieldError("MACAddress")
+		}
+
+		if _, err := net.ParseMAC(m.MACAddress); err != nil {
+			return fmt.Errorf("MACAddress: %v", err)
+		}
+
+		if m.Hostname == "" {
+			return newEmptyFieldError("Hostname")
+		}
+
+		if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
+			return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
+		}
+
+		if !linuxPathValidation.MatchString(m.Disk) {
+			return fmt.Errorf(
+				"disk must be a valid linux path (\"%v\")",
+				linuxPathRegex,
+			)
+		}
+
+		for key, value := range m.Labels {
+			if err := validateLabelKey(key); err != nil {
+				return err
+			}
+
+			if err := validateLabelValue(value); err != nil {
+				return err
+			}
+		}
+
+		if m.HasBMC() {
+			if m.BMCIPAddress == "" {
+				return newEmptyFieldError("BMCIPAddress")
+			}
+
+			if err := networkutils.ValidateIP(m.BMCIPAddress); err != nil {
+				return fmt.Errorf("BMCIPAddress: %v", err)
+			}
+
+			if m.BMCUsername == "" {
+				return newEmptyFieldError("BMCUsername")
+			}
+
+			if m.BMCPassword == "" {
+				return newEmptyFieldError("BMCPassword")
+			}
+
+			if m.BMCVendor == "" {
+				return newEmptyFieldError("BMCVendor")
+			}
+		}
+
+		return nil
+	}
+}
+
+// UniqueIDs asserts a given Machine instance has a unique ID field relative to previously seen Machine instances.
 // It is not thread safe. It has a 1 time use.
-func UniqueIds() MachineAssertion {
+func UniqueIDs() MachineAssertion {
 	ids := make(map[string]struct{})
 	return func(m Machine) error {
-		if _, seen := ids[m.Id]; seen {
-			return fmt.Errorf("duplicate Id: %v", m.Id)
+		if _, seen := ids[m.ID]; seen {
+			return fmt.Errorf("duplicate ID: %v", m.ID)
 		}
 
-		ids[m.Id] = struct{}{}
+		ids[m.ID] = struct{}{}
 
 		return nil
 	}
 }
 
-// UniqueIpAddress asserts a given Machine instance has a unique IpAddress field relative to previously seen Machine
+// UniqueIPAddress asserts a given Machine instance has a unique IPAddress field relative to previously seen Machine
 // instances. It is not thread safe. It has a 1 time use.
-func UniqueIpAddress() MachineAssertion {
+func UniqueIPAddress() MachineAssertion {
 	ips := make(map[string]struct{})
 	return func(m Machine) error {
-		if _, seen := ips[m.IpAddress]; seen {
-			return fmt.Errorf("duplicate IpAddress: %v", m.IpAddress)
+		if _, seen := ips[m.IPAddress]; seen {
+			return fmt.Errorf("duplicate IPAddress: %v", m.IPAddress)
 		}
 
-		ips[m.IpAddress] = struct{}{}
+		ips[m.IPAddress] = struct{}{}
 
 		return nil
 	}
 }
 
-// UniqueMacAddress asserts a given Machine instance has a unique MacAddress field relative to previously seen Machine
+// UniqueMACAddress asserts a given Machine instance has a unique MACAddress field relative to previously seen Machine
 // instances. It is not thread safe. It has a 1 time use.
-func UniqueMacAddress() MachineAssertion {
+func UniqueMACAddress() MachineAssertion {
 	macs := make(map[string]struct{})
 	return func(m Machine) error {
-		if _, seen := macs[m.MacAddress]; seen {
-			return fmt.Errorf("duplicate MacAddress: %v", m.MacAddress)
+		if _, seen := macs[m.MACAddress]; seen {
+			return fmt.Errorf("duplicate MACAddress: %v", m.MACAddress)
 		}
 
-		macs[m.MacAddress] = struct{}{}
+		macs[m.MACAddress] = struct{}{}
 
 		return nil
 	}
@@ -101,40 +205,53 @@ func UniqueHostnames() MachineAssertion {
 	}
 }
 
-// UniqueBmcIpAddress asserts a given Machine instance has a unique BmcIpAddress field relative to previously seen
-// Machine instances. If there is no Bmc configuration as defined by machine.HasBmc() the check is a noop. It is
+// UniqueBMCIPAddress asserts a given Machine instance has a unique BMCIPAddress field relative to previously seen
+// Machine instances. If there is no BMC configuration as defined by machine.HasBMC() the check is a noop. It is
 // not thread safe. It has a 1 time use.
-func UniqueBmcIpAddress() MachineAssertion {
+func UniqueBMCIPAddress() MachineAssertion {
 	ips := make(map[string]struct{})
 	return func(m Machine) error {
-		if !m.HasBmc() {
+		if !m.HasBMC() {
 			return nil
 		}
 
-		if m.BmcIpAddress == "" {
-			return fmt.Errorf("missing BmcIpAddress (id=\"%v\")", m.Id)
+		if m.BMCIPAddress == "" {
+			return fmt.Errorf("missing BMCIPAddress (id=\"%v\")", m.ID)
 		}
 
-		if _, seen := ips[m.BmcIpAddress]; seen {
-			return fmt.Errorf("duplicate IpAddress: %v", m.BmcIpAddress)
+		if _, seen := ips[m.BMCIPAddress]; seen {
+			return fmt.Errorf("duplicate IPAddress: %v", m.BMCIPAddress)
 		}
 
-		ips[m.BmcIpAddress] = struct{}{}
+		ips[m.BMCIPAddress] = struct{}{}
 
 		return nil
 	}
 }
 
-var defaultAssertions = []MachineAssertion{
-	UniqueIds(),
-	UniqueIpAddress(),
-	UniqueMacAddress(),
-	UniqueHostnames(),
-	UniqueBmcIpAddress(),
+// RegisterDefaultAssertions applies a set of default assertions to validator. The default assertions
+// include UniqueHostnames and UniqueIDs.
+func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
+	validator.Register([]MachineAssertion{
+		StaticMachineAssertions(),
+		UniqueIDs(),
+		UniqueIPAddress(),
+		UniqueMACAddress(),
+		UniqueHostnames(),
+		UniqueBMCIPAddress(),
+	}...)
 }
 
-// WithDefaultAssertions applies a set of default assertions to validator. The default assertions include
-// UniqueHostnames and UniqueIds.
-func WithDefaultAssertions(validator *DefaultMachineValidator) {
-	validator.Register(defaultAssertions...)
+func validateLabelKey(k string) error {
+	if errs := apimachineryvalidation.IsQualifiedName(k); len(errs) != 0 {
+		return fmt.Errorf("%v", strings.Join(errs, "; "))
+	}
+	return nil
+}
+
+func validateLabelValue(v string) error {
+	if errs := apimachineryvalidation.IsValidLabelValue(v); len(errs) != 0 {
+		return fmt.Errorf("%v", strings.Join(errs, "; "))
+	}
+	return nil
 }
