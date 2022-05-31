@@ -53,8 +53,7 @@ type Provider struct {
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 
-	hardwareManifestPath string
-	// catalogue is a cache initialized during SetupAndValidateCreateCluster() from hardwareManifestPath.
+	machines  hardware.MachineReader
 	catalogue *hardware.Catalogue
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
@@ -64,7 +63,7 @@ type Provider struct {
 
 	skipIpCheck     bool
 	setupTinkerbell bool
-	Retrier         *retrier.Retrier
+	retrier         *retrier.Retrier
 }
 
 type Docker interface {
@@ -99,40 +98,12 @@ func NewProvider(
 	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
+	machines hardware.MachineReader,
 	writer filewriter.FileWriter,
 	docker Docker,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
 	skipIpCheck bool,
-	hardwareManifestPath string,
-	setupTinkerbell bool,
-) *Provider {
-	return NewProviderCustomDep(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		writer,
-		docker,
-		providerKubectlClient,
-		&networkutils.DefaultNetClient{},
-		now,
-		skipIpCheck,
-		hardwareManifestPath,
-		setupTinkerbell,
-	)
-}
-
-func NewProviderCustomDep(
-	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
-	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
-	clusterConfig *v1alpha1.Cluster,
-	writer filewriter.FileWriter,
-	docker Docker,
-	providerKubectlClient ProviderKubectlClient,
-	netClient networkutils.NetClient,
-	now types.NowFunc,
-	skipIpCheck bool,
-	hardwareManifestPath string,
 	setupTinkerbell bool,
 ) *Provider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
@@ -151,7 +122,6 @@ func NewProviderCustomDep(
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 		}
 	}
-	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
@@ -165,30 +135,25 @@ func NewProviderCustomDep(
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		writer: writer,
-
-		hardwareManifestPath: hardwareManifestPath,
-
-		// todo(chrisdoherty4)
-		// Inject the catalogue dependency so we can dynamically construcft the indexing capabilities.
+		writer:   writer,
+		machines: machines,
+		// TODO(chrisdoherty4) Inject the catalogue dependency so we can dynamically construcft the
+		// indexing capabilities.
 		catalogue: hardware.NewCatalogue(
 			hardware.WithHardwareIDIndex(),
 			hardware.WithHardwareBMCRefIndex(),
 			hardware.WithBMCNameIndex(),
 			hardware.WithSecretNameIndex(),
 		),
-
+		netClient: &networkutils.DefaultNetClient{},
+		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
-
-		netClient: netClient,
-
 		// Behavioral flags.
 		skipIpCheck:     skipIpCheck,
 		setupTinkerbell: setupTinkerbell,
-		Retrier:         retrier,
 	}
 }
 
@@ -218,8 +183,22 @@ func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
-func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
-	return map[string]string{}, nil
+func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
+	return map[string]string{
+		// The TINKERBELL_IP is input for the CAPT deployment and used as part of default template
+		// generation. However, we use custom templates and leverage the template override
+		// functionality of CAPT hence this never gets used.
+		//
+		// Deployment manifest requiring the env var for replacement.
+		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/config/manager/manager.yaml#L23
+		//
+		// Template override
+		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L182
+		//
+		// Env read having set TINKERBELL_IP in the deployment manifest.
+		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
+		"TINKERBELL_IP": "<set in eks-a tinkerbell provider>",
+	}, nil
 }
 
 func (p *Provider) GetDeployments() map[string][]string {

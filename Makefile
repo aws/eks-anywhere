@@ -436,7 +436,6 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
-	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
 	${GOPATH}/bin/mockgen -destination=pkg/docker/mocks/mocks.go -package=mocks -source "pkg/docker/mover.go"
 	${GOPATH}/bin/mockgen -destination=internal/test/mocks/reader.go -package=mocks -source "internal/test/reader.go"
 	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/download.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/download.go"

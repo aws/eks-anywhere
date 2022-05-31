@@ -53,8 +53,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 }
 
 func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	// TODO: figure out if we need something else here
-	hardwareSpec, err := p.catalogue.HardwareSpecMarshallable()
+	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
 	}
@@ -84,10 +83,6 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	if err := hardware.ParseYAMLCatalogueFromFile(p.catalogue, p.hardwareManifestPath); err != nil {
-		return err
-	}
-
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
 	if err := p.configureSshKeys(); err != nil {
@@ -106,6 +101,17 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		validator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
+	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
+	machineValidator := hardware.NewDefaultMachineValidator()
+
+	// Translate all Machine instances from the p.machines source into Kubernetes object types.
+	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
+	// and submits it to the clsuter.
+	if err := hardware.TranslateAll(p.machines, writer, machineValidator); err != nil {
+		return err
+	}
+
+	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
 	if err := validator.Validate(spec); err != nil {
 		return err
 	}

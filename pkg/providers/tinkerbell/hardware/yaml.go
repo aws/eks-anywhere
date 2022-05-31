@@ -7,25 +7,11 @@ import (
 	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterctlv1alpha3 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/yaml"
-
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // DefaultHardwareManifestYAMLFilename is the default file for writing yinkerbell yaml manifests
 const DefaultHardwareManifestYAMLFilename = "hardware.yaml"
-
-// Kubernetes related constants for describing kinds and api versions.
-const (
-	tinkerbellApiVersion = "tinkerbell.org/v1alpha1"
-	hardwareKind         = "Hardware"
-	bmcKind              = "BMC"
-
-	secretApiVersion = "v1"
-	secretKind       = "Secret"
-)
 
 // TinkerbellManifestYAML is a MachineWriter that writes Tinkerbell manifests to a destination.
 type TinkerbellManifestYAML struct {
@@ -84,81 +70,21 @@ func (yw *TinkerbellManifestYAML) write(data []byte) error {
 	return nil
 }
 
+// TODO(chrisdoherty4) Patch these types so we can generate yamls again with the new Hardware
+// and BaseboardManagement types.
+
 func marshalTinkerbellHardwareYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(
-		tinkv1alpha1.Hardware{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       hardwareKind,
-				APIVersion: tinkerbellApiVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      m.Hostname,
-				Namespace: constants.EksaSystemNamespace,
-				Labels: map[string]string{
-					clusterctlv1alpha3.ClusterctlMoveLabelName: "true",
-				},
-			},
-			Spec: tinkv1alpha1.HardwareSpec{
-				ID:     m.ID,
-				BmcRef: formatBMCRef(m),
-			},
-		},
-	)
+	return yaml.Marshal(tinkv1alpha1.Hardware{})
 }
 
 func marshalTinkerbellBMCYAML(m Machine) ([]byte, error) {
 	return yaml.Marshal(
-		pbnjv1alpha1.BMC{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       bmcKind,
-				APIVersion: tinkerbellApiVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      formatBMCRef(m),
-				Namespace: constants.EksaSystemNamespace,
-				Labels: map[string]string{
-					clusterctlv1alpha3.ClusterctlMoveLabelName: "true",
-				},
-			},
-			Spec: pbnjv1alpha1.BMCSpec{
-				Host:   m.BMCIPAddress,
-				Vendor: m.BMCVendor,
-				AuthSecretRef: corev1.SecretReference{
-					Name:      formatBMCSecretRef(m),
-					Namespace: constants.EksaSystemNamespace,
-				},
-			},
-		},
+		pbnjv1alpha1.BMC{},
 	)
 }
 
 func marshalSecretYAML(m Machine) ([]byte, error) {
 	return yaml.Marshal(
-		corev1.Secret{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       secretKind,
-				APIVersion: secretApiVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      formatBMCSecretRef(m),
-				Namespace: constants.EksaSystemNamespace,
-				Labels: map[string]string{
-					clusterctlv1alpha3.ClusterctlMoveLabelName: "true",
-				},
-			},
-			Type: "kubernetes.io/basic-auth",
-			Data: map[string][]byte{
-				"username": []byte(m.BMCUsername),
-				"password": []byte(m.BMCPassword),
-			},
-		},
+		corev1.Secret{},
 	)
-}
-
-func formatBMCRef(m Machine) string {
-	return fmt.Sprintf("bmc-%s", m.Hostname)
-}
-
-func formatBMCSecretRef(m Machine) string {
-	return fmt.Sprintf("%s-auth", formatBMCRef(m))
 }

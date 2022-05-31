@@ -29,12 +29,6 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 			wantErr:     true,
 		},
 		{
-			testName:    "invalid kind",
-			fileName:    "testdata/cluster_invalid_kinds_tinkerbell.yaml",
-			wantConfigs: nil,
-			wantErr:     true,
-		},
-		{
 			testName: "valid tinkerbell template config",
 			fileName: "testdata/cluster_1_21_valid_tinkerbell.yaml",
 			wantConfigs: map[string]*TinkerbellTemplateConfig{

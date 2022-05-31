@@ -153,20 +153,7 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 func TestStaticMachineAssertions_ValidMachine(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	machine := hardware.Machine{
-		ID:           "unique string",
-		IPAddress:    "10.10.10.10",
-		Gateway:      "10.10.10.1",
-		Nameservers:  []string{"nameserver1"},
-		Netmask:      "255.255.255.255",
-		MACAddress:   "00:00:00:00:00:00",
-		Hostname:     "localhost",
-		Labels:       make(hardware.Labels),
-		BMCIPAddress: "10.10.10.11",
-		BMCUsername:  "username",
-		BMCPassword:  "password",
-		BMCVendor:    "dell",
-	}
+	machine := NewValidMachine()
 
 	validate := hardware.StaticMachineAssertions()
 	g.Expect(validate(machine)).ToNot(gomega.HaveOccurred())
@@ -233,6 +220,12 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"InvalidLabelValue": func(h *hardware.Machine) {
 			h.Labels["foo"] = "\\/dsa"
 		},
+		"InvalidDisk": func(h *hardware.Machine) {
+			h.Disk = "*&!@#!%"
+		},
+		"InvalidWithJustDev": func(h *hardware.Machine) {
+			h.Disk = "/dev/"
+		},
 	}
 
 	validate := hardware.StaticMachineAssertions()
@@ -255,6 +248,7 @@ func NewValidMachine() hardware.Machine {
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
 		Labels:       make(hardware.Labels),
+		Disk:         "/dev/sda",
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",
 		BMCPassword:  "password",

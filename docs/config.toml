@@ -75,18 +75,10 @@ weight = 1
 [outputs]
 section = ["HTML", "print"]
 
-
-[[menu.main]]
-    name = "Community"
-    weight = 40
-    url = "/docs/community"
-    pre = "<i class='fas fa-user-friends'></i>"
-
 [[menu.main]]
     name = "GitHub"
     weight = 50
     url = "https://github.com/aws/eks-anywhere"
-    pre = "<i class='fab fa-github'></i>"
 
 [params]
 copyright = "Amazon.com, Inc. or its affilliates."
@@ -98,7 +90,7 @@ images = ['https://anywhere.eks.amazonaws.com/images/social-feature.png']
 
 # Menu title if your navbar has a versions selector to access old versions of your site.
 # This menu appears only if you have at least one [params.versions] set.
-version_menu = "Releases"
+version_menu = "Versions"
 
 # Flag used in the "version-banner" partial to decide whether to display a 
 # banner on every page indicating that this is an archived version of the docs.

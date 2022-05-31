@@ -2,7 +2,6 @@ package features
 
 const (
 	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
-	TinkebellStackSetupEnvVar       = "TINKERBELL_ENABLE_STACK_CREATION"
 	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
@@ -41,13 +40,6 @@ func TinkerbellProvider() Feature {
 	return Feature{
 		Name:     "Tinkerbell provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
-	}
-}
-
-func TinkerbellStackSetup() Feature {
-	return Feature{
-		Name:     "Tinkerbell stack creation support",
-		IsActive: globalFeatures.isActiveForEnvVar(TinkebellStackSetupEnvVar),
 	}
 }
 
