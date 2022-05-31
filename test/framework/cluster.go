@@ -98,7 +98,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
+func WithHardware(requiredCount int) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
 
@@ -108,20 +108,18 @@ func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 
 		var count int
 		for id, h := range hardwarePool {
-			if strings.ToLower(h.BMCVendor) == vendor || vendor == api.HardwareVendorUnspecified {
-				if _, exists := e.TestHardware[id]; !exists {
-					count++
-					e.TestHardware[id] = h
-				}
+			if _, exists := e.TestHardware[id]; !exists {
+				count++
+				e.TestHardware[id] = h
+			}
 
-				if count == requiredCount {
-					break
-				}
+			if count == requiredCount {
+				break
 			}
 		}
 
 		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
+			e.T.Errorf("this test requires at least %d piece(s) of hardware", requiredCount)
 		}
 	}
 }
