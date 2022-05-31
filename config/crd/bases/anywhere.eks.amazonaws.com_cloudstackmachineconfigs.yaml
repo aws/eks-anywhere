@@ -111,8 +111,8 @@ spec:
               symlinks:
                 additionalProperties:
                   type: string
-                description: Symlnks create soft symbolic links folders. Possible
-                  usage is to use data disk to store logs
+                description: Symlinks create soft symbolic links folders. One use
+                  case is to use data disk to store logs
                 type: object
               template:
                 description: Template refers to a VM image template which has been
