@@ -70,7 +70,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-15-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-16-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -112,26 +112,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
+        imageDigest: sha256:9674f67425c28e820c72cf07e26e1d4303d4c2a8226b15273647d6eb84684510
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.10.11-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
+        imageDigest: sha256:b4b6f8524313658d412829d3d281918ac1e4432073123fc38b0650ab1a45e2e1
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.10.11-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.10.11-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
+        imageDigest: sha256:5e52535b615b0c59996926c509ebb1401a3ea384f91e275e90bdccda352a6f67
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.10.11-eksa.2
+      version: v1.10.11-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -140,9 +140,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -152,8 +152,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
-      version: v0.4.3-RC1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
+      version: v0.4.5-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -233,23 +233,23 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.20.15
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-15.yaml
-      name: kubernetes-1-20-eks-15
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-16.yaml
+      name: kubernetes-1-20-eks-16
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-20-15 release
+          description: Bottlerocket OVA for EKS-D 1-20-16 release
           etcdadm: {}
-          name: bottlerocket-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-15/bottlerocket-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-16/bottlerocket-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -262,7 +262,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-15 release
+          description: Ubuntu OVA for EKS-D 1-20-16 release
           etcdadm:
             arch:
             - amd64
@@ -272,12 +272,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-15/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-16/ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -294,7 +294,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-15 release
+          description: Ubuntu OVA for EKS-D 1-20-16 release
           etcdadm:
             arch:
             - amd64
@@ -304,12 +304,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-20/1-20-15/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-20/1-20-16/ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -326,7 +326,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -475,11 +475,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -489,7 +489,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -625,7 +625,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: 534507367037.dkr.ecr.us-west-2.amazonaws.com/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
           manifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
         tink:
@@ -783,7 +783,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-13-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-14-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -825,26 +825,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
+        imageDigest: sha256:9674f67425c28e820c72cf07e26e1d4303d4c2a8226b15273647d6eb84684510
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.10.11-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
+        imageDigest: sha256:b4b6f8524313658d412829d3d281918ac1e4432073123fc38b0650ab1a45e2e1
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.10.11-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.10.11-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
+        imageDigest: sha256:5e52535b615b0c59996926c509ebb1401a3ea384f91e275e90bdccda352a6f67
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.10.11-eksa.2
+      version: v1.10.11-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -853,9 +853,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -865,8 +865,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
-      version: v0.4.3-RC1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
+      version: v0.4.5-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -946,23 +946,23 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.21.9
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-13.yaml
-      name: kubernetes-1-21-eks-13
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.21.12
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-14.yaml
+      name: kubernetes-1-21-eks-14
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-21-13 release
+          description: Bottlerocket OVA for EKS-D 1-21-14 release
           etcdadm: {}
-          name: bottlerocket-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-13/bottlerocket-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-14/bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -975,7 +975,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-13 release
+          description: Ubuntu OVA for EKS-D 1-21-14 release
           etcdadm:
             arch:
             - amd64
@@ -985,12 +985,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-13/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-14/ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -1007,7 +1007,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-13 release
+          description: Ubuntu OVA for EKS-D 1-21-14 release
           etcdadm:
             arch:
             - amd64
@@ -1017,12 +1017,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-13/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-14/ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -1039,7 +1039,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1188,11 +1188,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1202,7 +1202,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -1338,7 +1338,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: 534507367037.dkr.ecr.us-west-2.amazonaws.com/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
           manifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
         tink:
@@ -1496,7 +1496,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-7-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -1538,26 +1538,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
+        imageDigest: sha256:9674f67425c28e820c72cf07e26e1d4303d4c2a8226b15273647d6eb84684510
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.10.11-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
+        imageDigest: sha256:b4b6f8524313658d412829d3d281918ac1e4432073123fc38b0650ab1a45e2e1
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.10.11-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.10.11-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
+        imageDigest: sha256:5e52535b615b0c59996926c509ebb1401a3ea384f91e275e90bdccda352a6f67
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.10.11-eksa.2
+      version: v1.10.11-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -1566,9 +1566,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1578,8 +1578,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
-      version: v0.4.3-RC1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
+      version: v0.4.5-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -1659,23 +1659,23 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.22.6
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-6.yaml
-      name: kubernetes-1-22-eks-6
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.22.9
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-7.yaml
+      name: kubernetes-1-22-eks-7
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-22-6 release
+          description: Bottlerocket OVA for EKS-D 1-22-7 release
           etcdadm: {}
-          name: bottlerocket-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-6/bottlerocket-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-7/bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -1688,7 +1688,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-6 release
+          description: Ubuntu OVA for EKS-D 1-22-7 release
           etcdadm:
             arch:
             - amd64
@@ -1698,12 +1698,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-6/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-7/ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -1720,7 +1720,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-6 release
+          description: Ubuntu OVA for EKS-D 1-22-7 release
           etcdadm:
             arch:
             - amd64
@@ -1730,12 +1730,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-6/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-7/ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -1752,7 +1752,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1901,11 +1901,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1915,7 +1915,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2051,7 +2051,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: 534507367037.dkr.ecr.us-west-2.amazonaws.com/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
           manifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
         tink:
@@ -2209,7 +2209,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-2-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -2251,26 +2251,26 @@ spec:
         arch:
         - amd64
         description: Container image for cilium image
-        imageDigest: sha256:e0c5180610dd7a2bac4ed271309b07eb6102d0bd74ed7dd33fb619879cc006f3
+        imageDigest: sha256:9674f67425c28e820c72cf07e26e1d4303d4c2a8226b15273647d6eb84684510
         name: cilium
         os: linux
-        uri: public.ecr.aws/isovalent/cilium:v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:v1.10.11-eksa.2
       helmChart:
         description: Helm chart for cilium-chart
-        imageDigest: sha256:5982a9b5feded74c14a0b410006bba6d748655f8bc01f393b4519c9b10a463d0
+        imageDigest: sha256:b4b6f8524313658d412829d3d281918ac1e4432073123fc38b0650ab1a45e2e1
         name: cilium-chart
-        uri: public.ecr.aws/isovalent/cilium:1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/cilium:1.10.11-eksa.2
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.9.13-eksa.2/cilium.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cilium/manifests/cilium/v1.10.11-eksa.2/cilium.yaml
       operator:
         arch:
         - amd64
         description: Container image for operator-generic image
-        imageDigest: sha256:fd78027e876b00ea850f875e87a9ce81f6e4e6b4d963f115e978e8e7d180f478
+        imageDigest: sha256:5e52535b615b0c59996926c509ebb1401a3ea384f91e275e90bdccda352a6f67
         name: operator-generic
         os: linux
-        uri: public.ecr.aws/isovalent/operator-generic:v1.9.13-eksa.2
-      version: v1.9.13-eksa.2
+        uri: public.ecr.aws/isovalent/operator-generic:v1.10.11-eksa.2
+      version: v1.10.11-eksa.2
     cloudStack:
       clusterAPIController:
         arch:
@@ -2279,9 +2279,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-cloudstack-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.3-RC1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2291,8 +2291,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.3-RC1/metadata.yaml
-      version: v0.4.3-RC1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
+      version: v0.4.5-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
@@ -2372,10 +2372,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.23.6
-      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-1.yaml
-      name: kubernetes-1-23-eks-1
+      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-2.yaml
+      name: kubernetes-1-23-eks-2
       ova:
         bottlerocket:
           crictl: {}
@@ -2392,7 +2392,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-1 release
+          description: Ubuntu OVA for EKS-D 1-23-2 release
           etcdadm:
             arch:
             - amd64
@@ -2402,12 +2402,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-1/ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -2424,7 +2424,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-1 release
+          description: Ubuntu OVA for EKS-D 1-23-2 release
           etcdadm:
             arch:
             - amd64
@@ -2434,12 +2434,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-1/ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -2456,7 +2456,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.0-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -2605,11 +2605,11 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9d7804056a4f59e5858ab648e7c9520be203d904-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2619,7 +2619,7 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9d7804056a4f59e5858ab648e7c9520be203d904/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
@@ -2755,7 +2755,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: 534507367037.dkr.ecr.us-west-2.amazonaws.com/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
           manifest:
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
         tink:
