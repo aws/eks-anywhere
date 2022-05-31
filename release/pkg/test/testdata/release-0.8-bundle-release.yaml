@@ -484,6 +484,9 @@ spec:
         pbnj:
           image: {}
           manifest: {}
+        rufio:
+          image: {}
+          manifest: {}
         tink:
           tinkCli: {}
           tinkController: {}
@@ -1024,6 +1027,9 @@ spec:
         pbnj:
           image: {}
           manifest: {}
+        rufio:
+          image: {}
+          manifest: {}
         tink:
           tinkCli: {}
           tinkController: {}
@@ -1562,6 +1568,9 @@ spec:
             amd: {}
             arm: {}
         pbnj:
+          image: {}
+          manifest: {}
+        rufio:
           image: {}
           manifest: {}
         tink:
