@@ -30,15 +30,14 @@ import (
 )
 
 const (
-	eksaConfigFileName         = "eksa-cluster.yaml"
-	fluxSystemNamespace        = "flux-system"
-	gitRepositoryVar           = "T_GIT_REPOSITORY"
-	gitRepoSshUrl              = "T_GIT_SSH_REPO_URL"
-	githubUserVar              = "T_GITHUB_USER"
-	githubTokenVar             = "EKSA_GITHUB_TOKEN"
-	gitKnownHosts              = "EKSA_GIT_KNOWN_HOSTS"
-	gitPrivateKeyFile          = "EKSA_GIT_PRIVATE_KEY"
-	cloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
+	eksaConfigFileName  = "eksa-cluster.yaml"
+	fluxSystemNamespace = "flux-system"
+	gitRepositoryVar    = "T_GIT_REPOSITORY"
+	gitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
+	githubUserVar       = "T_GITHUB_USER"
+	githubTokenVar      = "EKSA_GITHUB_TOKEN"
+	gitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
+	gitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
 )
 
 var fluxGithubRequiredEnvVars = []string{
@@ -760,8 +759,8 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 			for key, value := range cloudstackWorkerConfig.Spec.Symlinks {
 				symlinks = append(symlinks, key+":"+value)
 			}
-			if strings.Join(symlinks, ",") != csMachineTemplate.Annotations["symlinks."+cloudstackAnnotationSuffix] {
-				err := fmt.Errorf("MachineSpec %s Symlinks are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Symlinks, csMachineTemplate.Annotations["symlinks."+cloudstackAnnotationSuffix])
+			if strings.Join(symlinks, ",") != csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix] {
+				err := fmt.Errorf("MachineSpec %s Symlinks are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Symlinks, csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix])
 				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
 				return err
 			}

@@ -38,4 +38,5 @@ const (
 	EksaPackagesName       = "eksa-packages"
 
 	DefaultRegistry = "public.ecr.aws"
+	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 )

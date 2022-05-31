@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -44,8 +45,10 @@ type CloudStackMachineConfigSpec struct {
 	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
 	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
 	// Symlinks create soft symbolic links folders. One use case is to use data disk to store logs
-	Symlinks map[string]string `json:"symlinks,omitempty"`
+	Symlinks SymlinkMaps `json:"symlinks,omitempty"`
 }
+
+type SymlinkMaps map[string]string
 
 type CloudStackResourceDiskOffering struct {
 	CloudStackResourceIdentifier `json:",inline"`
@@ -100,6 +103,27 @@ func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, va
 	} else {
 		if len(r.MountPath)+len(r.Filesystem)+len(r.Device)+len(r.Label) > 0 {
 			return errors.New("empty id/name"), "id or name", r.Id
+		}
+	}
+	return nil, "", ""
+}
+
+func (r SymlinkMaps) Validate() (err error, field string, value string) {
+	isPortableFileNameSet := regexp.MustCompile(`^[a-zA-Z0-9\.\-\_\/]+$`)
+	for key, value := range r {
+		if !strings.HasPrefix(key, "/") || strings.HasSuffix(key, "/") {
+			return errors.New("must start with / and NOT end with /"), "symlinks", key
+		}
+		if !strings.HasPrefix(value, "/") || strings.HasSuffix(value, "/") {
+			return errors.New("must start with / and NOT end with /"), "symlinks", value
+		}
+		match := isPortableFileNameSet.Match([]byte(key))
+		if !match {
+			return errors.New("has char not in portable file name set"), "symlinks", key
+		}
+		match = isPortableFileNameSet.Match([]byte(value))
+		if !match {
+			return errors.New("has char not in portable file name set"), "symlinks", value
 		}
 	}
 	return nil, "", ""

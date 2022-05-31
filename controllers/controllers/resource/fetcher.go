@@ -29,8 +29,6 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const cloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
-
 type ResourceFetcher interface {
 	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*clusterv1.MachineDeployment, error)
 	KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error)
@@ -625,10 +623,10 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
 		},
 		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+cloudstackAnnotationSuffix],
-		Device:     csMachineTemplate.Annotations["device.diskoffering."+cloudstackAnnotationSuffix],
-		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+cloudstackAnnotationSuffix],
-		Label:      csMachineTemplate.Annotations["label.diskoffering."+cloudstackAnnotationSuffix],
+		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
@@ -643,16 +641,17 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	if csSpec.Spec.Symlinks == nil {
 		csSpec.Spec.Symlinks = map[string]string{}
 	}
-	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+cloudstackAnnotationSuffix], ",") {
+	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix], ",") {
 		keyValueStr = strings.TrimSpace(keyValueStr)
 		if len(keyValueStr) == 0 {
 			continue
 		}
-		keyV := strings.Split(keyValueStr, ":")
-		if len(keyV) != 2 {
-			return nil, fmt.Errorf("symlinks: %s is not key:value format", keyV)
+		key, value, err := parseKeyValue(keyValueStr)
+		if err != nil {
+			return nil, err
 		}
-		csSpec.Spec.Symlinks[keyV[0]] = keyV[1]
+
+		csSpec.Spec.Symlinks[key] = value
 	}
 	return csSpec, nil
 }
@@ -675,4 +674,12 @@ func convertStringToLabelsMap(labels string) map[string]string {
 		labelsMap[pair[0]] = pair[1]
 	}
 	return labelsMap
+}
+
+func parseKeyValue(keyValueStr string) (key string, value string, err error) {
+	keyV := strings.Split(keyValueStr, ":")
+	if len(keyV) != 2 {
+		return "", "", fmt.Errorf("symlinks: %s is not key:value format", keyV)
+	}
+	return keyV[0], keyV[1], nil
 }

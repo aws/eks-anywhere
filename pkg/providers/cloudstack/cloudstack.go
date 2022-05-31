@@ -36,7 +36,6 @@ import (
 const (
 	eksaLicense                = "EKSA_LICENSE"
 	controlEndpointDefaultPort = "6443"
-	cloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 )
 
 //go:embed config/template-cp.yaml
@@ -643,7 +642,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDomain":                             datacenterConfigSpec.Domain,
 		"cloudstackZones":                              datacenterConfigSpec.Zones,
 		"cloudstackAccount":                            datacenterConfigSpec.Account,
-		"cloudstackAnnotationSuffix":                   cloudstackAnnotationSuffix,
+		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
 		"cloudstackControlPlaneDiskOfferingName":       controlPlaneMachineSpec.DiskOffering.Name,
@@ -753,7 +752,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
-		"cloudstackAnnotationSuffix":       cloudstackAnnotationSuffix,
+		"cloudstackAnnotationSuffix":       constants.CloudstackAnnotationSuffix,
 		"cloudstackTemplateId":             workerNodeGroupMachineSpec.Template.Id,
 		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
