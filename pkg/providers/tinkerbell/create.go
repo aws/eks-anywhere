@@ -136,7 +136,12 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
-	if err := hardware.TranslateAll(p.machines, writer, machineValidator); err != nil {
+	machines, err := hardware.NewCSVReaderFromFile(p.hardwareCSVFile)
+	if err != nil {
+		return err
+	}
+
+	if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
 		return err
 	}
 
