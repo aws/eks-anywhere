@@ -63,6 +63,13 @@ func TestIsIPInUseFail(t *testing.T) {
 	g.Expect(res).To(gomega.BeTrue())
 }
 
+func TestGetLocalIP(t *testing.T) {
+	_, err := networkutils.GetLocalIP()
+	if err != nil {
+		t.Fatalf("unable to get local IP: %v", err)
+	}
+}
+
 // MockConn is a mock of NetClient interface. It is hand written.
 type MockConn struct {
 	ctrl     *gomock.Controller

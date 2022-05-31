@@ -35,6 +35,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
+		"rufio":                           r.BundleArtifactsTable["rufio"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -150,6 +151,10 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 			Pbnj: anywherev1alpha1.TinkerbellServiceBundle{
 				Image:    bundleImageArtifacts["pbnj"],
 				Manifest: bundleManifestArtifacts["pbnj.yaml"],
+			},
+			Rufio: anywherev1alpha1.TinkerbellServiceBundle{
+				Image:    bundleImageArtifacts["rufio"],
+				Manifest: bundleManifestArtifacts["manifest.yaml"],
 			},
 			Tink: anywherev1alpha1.TinkBundle{
 				TinkCli:        bundleImageArtifacts["tink-cli"],

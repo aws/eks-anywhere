@@ -26,7 +26,7 @@ func TestTinkerbellKubernetes121ForceFlow(t *testing.T) {
 		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
 		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithHardware(api.HardwareVendorUnspecified, 2),
+		framework.WithHardware(2),
 	)
 	runTinkerbellForceFlow(test)
 }
@@ -37,7 +37,7 @@ func TestTinkerbellKubernetes122ForceFlow(t *testing.T) {
 		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
 		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithHardware(api.HardwareVendorUnspecified, 2),
+		framework.WithHardware(2),
 	)
 	runTinkerbellForceFlow(test)
 }
@@ -50,7 +50,7 @@ func TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithHardware(api.HardwareVendorUnspecified, 5),
+		framework.WithHardware(5),
 	)
 	runTinkerbellForceFlow(test)
 }

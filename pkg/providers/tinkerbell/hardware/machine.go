@@ -8,7 +8,6 @@ import (
 
 // Machine is a machine configuration with optional BMC interface configuration.
 type Machine struct {
-	ID          string      `csv:"id"`
 	Hostname    string      `csv:"hostname"`
 	IPAddress   string      `csv:"ip_address"`
 	Netmask     string      `csv:"netmask"`
@@ -27,13 +26,12 @@ type Machine struct {
 	BMCIPAddress string `csv:"bmc_ip"`
 	BMCUsername  string `csv:"bmc_username"`
 	BMCPassword  string `csv:"bmc_password"`
-	BMCVendor    string `csv:"bmc_vendor"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields
 // contain non-empty strings.
 func (m *Machine) HasBMC() bool {
-	return m.BMCIPAddress != "" || m.BMCUsername != "" || m.BMCPassword != "" || m.BMCVendor != ""
+	return m.BMCIPAddress != "" || m.BMCUsername != "" || m.BMCPassword != ""
 }
 
 // NameserversSeparator is used to unmarshal Nameservers.

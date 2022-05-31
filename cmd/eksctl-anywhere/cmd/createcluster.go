@@ -56,9 +56,7 @@ func init() {
 	if features.IsActive(features.TinkerbellProvider()) {
 		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, tinkerbellHardwareCSVFlag, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
 		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
-		if features.IsActive(features.TinkerbellStackSetup()) {
-			createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
-		}
+		createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")

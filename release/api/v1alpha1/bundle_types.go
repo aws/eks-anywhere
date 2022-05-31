@@ -270,6 +270,7 @@ type TinkerbellStackBundle struct {
 	Hegel   TinkerbellServiceBundle `json:"hegel"`
 	Hook    HookBundle              `json:"hook"`
 	Pbnj    TinkerbellServiceBundle `json:"pbnj"`
+	Rufio   TinkerbellServiceBundle `json:"rufio"`
 	Tink    TinkBundle              `json:"tink"`
 }
 

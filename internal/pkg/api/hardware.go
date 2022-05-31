@@ -52,8 +52,8 @@ func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
 	for _, h := range slice {
-		if _, exists := hardwareMap[h.ID]; !exists {
-			hardwareMap[h.ID] = h
+		if _, exists := hardwareMap[h.MACAddress]; !exists {
+			hardwareMap[h.MACAddress] = h
 		}
 	}
 
