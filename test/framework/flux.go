@@ -793,6 +793,15 @@ func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) erro
 }
 
 func (e *ClusterE2ETest) updateEKSASpecInGit(ctx context.Context, s *cluster.Spec, providersConfig providerConfig) (string, error) {
+	g := e.GitClient
+	repoUpToDateErr := &git.RepositoryUpToDateError{}
+	if err := g.Pull(ctx, e.gitBranch()); err != nil {
+		if !errors.Is(err, repoUpToDateErr) {
+			e.T.Errorf("pulling from remote before pushing config changes: %v", err)
+		}
+		e.T.Log(err.Error())
+	}
+
 	p, err := e.writeEKSASpec(s, providersConfig.datacenterConfig, providersConfig.machineConfigs)
 	if err != nil {
 		return "", err
