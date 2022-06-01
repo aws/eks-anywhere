@@ -101,6 +101,12 @@ func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	return &installCAPI{}
 }
 
