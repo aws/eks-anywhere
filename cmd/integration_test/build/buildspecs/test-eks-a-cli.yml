@@ -70,6 +70,11 @@ phases:
     commands:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${CLUSTER_NAME_PREFIX}
+        -v 4
   build:
     commands:
       - export JOB_ID=$CODEBUILD_BUILD_ID
