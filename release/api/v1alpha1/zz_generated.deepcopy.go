@@ -811,6 +811,7 @@ func (in *TinkerbellStackBundle) DeepCopyInto(out *TinkerbellStackBundle) {
 	in.Hegel.DeepCopyInto(&out.Hegel)
 	in.Hook.DeepCopyInto(&out.Hook)
 	in.Pbnj.DeepCopyInto(&out.Pbnj)
+	in.Rufio.DeepCopyInto(&out.Rufio)
 	in.Tink.DeepCopyInto(&out.Tink)
 }
 

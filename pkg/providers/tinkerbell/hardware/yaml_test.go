@@ -66,7 +66,6 @@ func TestTinkerbellManifestYAMLWriteErrors(t *testing.T) {
 
 func AssertTinkerbellHardwareRepresentsMachine(g *gomega.WithT, h tinkv1alpha1.Hardware, m hardware.Machine) {
 	g.Expect(h.ObjectMeta.Name).To(gomega.Equal(m.Hostname))
-	g.Expect(h.Spec.Metadata.Instance.ID).To(gomega.Equal(m.ID))
 }
 
 func AssertTinkerbellBMCRepresentsMachine(g *gomega.WithT, b rufiov1alpha1.BaseboardManagement, m hardware.Machine) {

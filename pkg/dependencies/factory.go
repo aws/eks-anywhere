@@ -34,7 +34,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -289,18 +288,14 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			machines, err := hardware.NewCSVReaderFromFile(hardwareCSVPath)
-			if err != nil {
-				return err
-			}
-
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
-				machines,
+				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				time.Now,
 				skipIpCheck,
