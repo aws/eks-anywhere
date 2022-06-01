@@ -40,6 +40,7 @@ type Options struct {
 type GithubClient interface {
 	GetRepo(ctx context.Context, opts git.GetRepoOpts) (repo *git.Repository, err error)
 	CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (repo *git.Repository, err error)
+	AddDeployKeyToRepo(ctx context.Context) (repo *git.Repository, err error)
 	AuthenticatedUser(ctx context.Context) (*goGithub.User, error)
 	Organization(ctx context.Context, org string) (*goGithub.Organization, error)
 	GetAccessTokenPermissions(accessToken string) (string, error)

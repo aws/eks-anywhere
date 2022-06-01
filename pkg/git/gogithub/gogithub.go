@@ -206,9 +206,14 @@ func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path str
 	return true, nil
 }
 
-func (g *GoGithub) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
-	logger.V(3).Info("Adding deploy key to repository", "repository", repo)
-	return g.Client.AddDeployKeyToRepo(ctx, owner, repo, key)
+func (g *GoGithub) AddDeployKeyToRepo(ctx context.Context, opts git.AddDeployKeyOpts) error {
+	logger.V(3).Info("Adding deploy key to repository", "repository", opts.Repository)
+	k := &goGithub.Key{
+		Key:       &opts.Key,
+		Title:     &opts.Title,
+		ReadOnly:  &opts.ReadOnly,
+	}
+	return g.Client.AddDeployKeyToRepo(ctx, opts.Owner, opts.Repository, k)
 }
 
 // DeleteRepo deletes a Github repository.
