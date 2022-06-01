@@ -279,7 +279,14 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
-	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider))
+	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider)+3)
+	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
+	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
+	// (@g-gaston) This is a temporary fix to avoid overloading the CI system and we should remove it once we
+	// stabilize the test runs
+	clusterConfigFillers = append(clusterConfigFillers,
+		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
+	)
 	clusterConfigFillers = append(clusterConfigFillers, e.clusterFillers...)
 	clusterConfigFillers = append(clusterConfigFillers, clusterFillersFromProvider...)
 	e.ClusterConfigB = e.customizeClusterConfig(e.ClusterConfigLocation, clusterConfigFillers...)
