@@ -27,4 +27,3 @@ func (e *E2ESession) TestGithubClient(ctx context.Context, githubToken string, o
 
 	return provider, nil
 }
-

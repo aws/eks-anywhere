@@ -907,10 +907,6 @@ func RequiredFluxGithubEnvVars() []string {
 	return fluxGithubRequiredEnvVars
 }
 
-func RequiredFluxGitEnvVars() []string {
-	return fluxGitRequiredEnvVars
-}
-
 func RequiredFluxGitCreateRepoEnvVars() []string {
 	return fluxGitCreateGenerateRepoEnvVars
 }

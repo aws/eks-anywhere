@@ -3,14 +3,14 @@ package e2e
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/git"
 	"log"
 	"os"
 	"regexp"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
@@ -110,7 +110,7 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	return nil
 }
 
-func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error){
+func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error) {
 	logger.V(1).Info("setting up Github repo for test...")
 	owner := os.Getenv(e2etests.GithubUserVar)
 
@@ -133,7 +133,11 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		Description: fmt.Sprintf("repository for use with E2E test job %v", e.jobId),
 		Personal:    true,
 	}
+
 	r, err := g.CreateRepo(ctx, o)
+	if err != nil {
+		return nil, fmt.Errorf("creating repository in Github for test: %v", err)
+	}
 
 	pk, pub, err := e.generateKeyPairForGitTest()
 	if err != nil {
