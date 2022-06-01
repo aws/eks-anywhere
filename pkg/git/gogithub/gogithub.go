@@ -38,6 +38,7 @@ type HTTPClient interface {
 
 type Client interface {
 	CreateRepo(ctx context.Context, org string, repo *goGithub.Repository) (*goGithub.Repository, *goGithub.Response, error)
+	AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error
 	Repo(ctx context.Context, owner, repo string) (*goGithub.Repository, *goGithub.Response, error)
 	User(ctx context.Context, user string) (*goGithub.User, *goGithub.Response, error)
 	Organization(ctx context.Context, org string) (*goGithub.Organization, *goGithub.Response, error)
@@ -79,6 +80,11 @@ func (ggc *githubClient) GetContents(ctx context.Context, owner, repo, path stri
 
 func (ggc *githubClient) DeleteRepo(ctx context.Context, owner, repo string) (*goGithub.Response, error) {
 	return ggc.client.Repositories.Delete(ctx, owner, repo)
+}
+
+func (ggc *githubClient) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
+	_, _, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+	return err
 }
 
 // CreateRepo creates an empty Github Repository. The repository must be initialized locally or
@@ -198,6 +204,11 @@ func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path str
 	}
 
 	return true, nil
+}
+
+func (g *GoGithub) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
+	logger.V(3).Info("Adding deploy key to repository", "repository", repo)
+	return g.Client.AddDeployKeyToRepo(ctx, owner, repo, key)
 }
 
 // DeleteRepo deletes a Github repository.
