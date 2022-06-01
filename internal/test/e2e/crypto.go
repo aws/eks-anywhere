@@ -34,8 +34,8 @@ func pemFromPrivateKeyEcdsa(k *ecdsa.PrivateKey) ([]byte, error) {
 	}
 
 	p := pem.Block{
-		Type:    "PRIVATE KEY",
-		Bytes:   pk,
+		Type:  "PRIVATE KEY",
+		Bytes: pk,
 	}
 
 	return pem.EncodeToMemory(&p), nil

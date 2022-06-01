@@ -49,7 +49,7 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		return fmt.Errorf("setting up github repo for test: %v", err)
 	}
 	// add the newly generated repository to the test
-	e.testEnvVars[e2etests.GitRepoSshUrl] = gitRepoSshUrl(repo.Name, repo.Owner)
+	e.testEnvVars[e2etests.GitRepoSshUrl] = gitRepoSshUrl(repo.Name, e.testEnvVars[e2etests.GithubUserVar])
 
 	for _, file := range buildFluxGitFiles(e.testEnvVars) {
 		if err := e.downloadFileInInstance(file); err != nil {
@@ -112,7 +112,7 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 
 func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error) {
 	logger.V(1).Info("setting up Github repo for test")
-	owner := os.Getenv(e2etests.GithubUserVar)
+	owner := envVars[e2etests.GithubUserVar]
 
 	c := &v1alpha1.GithubProviderConfig{
 		Owner:      owner,
@@ -121,7 +121,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 	}
 
 	ctx := context.Background()
-	g, err := e.TestGithubClient(ctx, os.Getenv(e2etests.GithubTokenVar), c.Owner, c.Repository, c.Personal)
+	g, err := e.TestGithubClient(ctx, envVars[e2etests.GithubTokenVar], c.Owner, c.Repository, c.Personal)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Github client for test setup: %v", err)
 	}
@@ -195,5 +195,5 @@ func (e *E2ESession) generateKeyPairForGitTest() (privateKeyBytes, publicKeyByte
 
 func gitRepoSshUrl(repo, owner string) string {
 	t := "ssh://git@github.com/%s/%s.git"
-	return fmt.Sprintf(t, repo, owner)
+	return fmt.Sprintf(t, owner, repo)
 }
