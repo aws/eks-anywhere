@@ -29,3 +29,17 @@ func GetInstanceByActivationId(session *session.Session, id string) (*ssm.Instan
 
 	return infoList[0], nil
 }
+
+func DeregisterInstance(session *session.Session, id string) (*ssm.DeregisterManagedInstanceOutput, error) {
+	s := ssm.New(session)
+	input := ssm.DeregisterManagedInstanceInput{
+		InstanceId: &id,
+	}
+
+	output, err := s.DeregisterManagedInstance(&input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deregister ssm instance %s: %v", id, err)
+	}
+
+	return output, nil
+}

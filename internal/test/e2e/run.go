@@ -135,6 +135,13 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 		return "", nil, err
 	}
 
+	defer func() {
+		err := testRunner.decommInstance(conf)
+		if err != nil {
+			logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+		}
+	}()
+
 	session, err := newE2ESession(instanceId, conf)
 	if err != nil {
 		return "", nil, err
@@ -169,7 +176,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
-		command = fmt.Sprintf("%s -test.run %s", command, regex)
+		command = fmt.Sprintf("%s -test.run \"%s\"", command, regex)
 	}
 
 	command = e.commandWithEnvVars(command)
@@ -190,16 +197,20 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	testName := strings.Trim(c.regex, "\"")
-	e.uploadJUnitReportFromInstance(testName)
-	if c.testReportFolder != "" {
-		e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
-	}
+	regex := strings.Trim(c.regex, "\"")
+	tests := strings.Split(regex, "|")
 
-	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(testName)
-		e.uploadDiagnosticArchiveFromInstance(testName)
-		return nil
+	for _, testName := range tests {
+		e.uploadJUnitReportFromInstance(testName)
+		if c.testReportFolder != "" {
+			e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
+		}
+
+		if !testCommandResult.Successful() {
+			e.uploadGeneratedFilesFromInstance(testName)
+			e.uploadDiagnosticArchiveFromInstance(testName)
+			return nil
+		}
 	}
 
 	return nil

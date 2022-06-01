@@ -28,3 +28,18 @@ func CreateActivation(session *session.Session, instanceName, role string) (*Act
 
 	return &ActivationInfo{ActivationCode: *result.ActivationCode, ActivationID: *result.ActivationId}, nil
 }
+
+func DeleteActivation(session *session.Session, activationId string) (*ssm.DeleteActivationOutput, error) {
+	s := ssm.New(session)
+
+	request := ssm.DeleteActivationInput{
+		ActivationId: &activationId,
+	}
+
+	result, err := s.DeleteActivation(&request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to delete ssm activation: %v", err)
+	}
+
+	return result, nil
+}

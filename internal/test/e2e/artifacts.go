@@ -14,7 +14,7 @@ const e2eHomeFolder = "/home/e2e/"
 func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	logger.V(1).Info("Uploading log files to s3 bucket")
 	command := newCopyCommand().from(
-		e2eHomeFolder, clusterName(e.branchName, e.instanceId),
+		e2eHomeFolder, clusterName(e.branchName, e.instanceId, testName),
 	).to(
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().String()
@@ -29,7 +29,7 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	bundleNameFormat := "support-bundle-*.tar.gz"
 	logger.V(1).Info("Uploading diagnostic bundle to s3 bucket")
-	command := newCopyCommand().from(e2eHomeFolder).to(
+	command := newCopyCommand().from(e2eHomeFolder, clusterName(e.branchName, e.instanceId, testName)).to(
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().exclude("*").include(bundleNameFormat).String()
 

@@ -36,7 +36,7 @@ const (
 	defaultClusterName               = "eksa-test"
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
-	ClusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 	CleanupVmsVar                    = "T_CLEANUP_VMS"
@@ -87,7 +87,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
-	e.ClusterConfigFolder = fmt.Sprintf("%s-config", e.ClusterName)
+	e.ClusterConfigFolder = e.ClusterName
 	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
 	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
 
@@ -604,17 +604,22 @@ func (e *ClusterE2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
 }
 
+func GetTestNameHash(name string) string {
+	h := sha1.New()
+	h.Write([]byte(name))
+	testNameHash := fmt.Sprintf("%x", h.Sum(nil))
+	return testNameHash[:7]
+}
+
 func getClusterName(t *testing.T) string {
-	value := os.Getenv(ClusterNameVar)
+	value := os.Getenv(ClusterPrefixVar)
+	// Append hash to make each cluster name unique per test. Using the testname will be too long
+	// and would fail validations
 	if len(value) == 0 {
-		h := sha1.New()
-		h.Write([]byte(t.Name()))
-		testNameHash := fmt.Sprintf("%x", h.Sum(nil))
-		// Append hash to make each cluster name unique per test. Using the testname will be too long
-		// and would fail validations
-		return fmt.Sprintf("%s-%s", defaultClusterName, testNameHash[:7])
+		value = defaultClusterName
 	}
-	return value
+
+	return fmt.Sprintf("%s-%s", value, GetTestNameHash(t.Name()))
 }
 
 func getBundlesOverride() string {

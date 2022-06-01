@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -30,6 +31,7 @@ const (
 type TestRunner interface {
 	createInstance(instanceConf instanceRunConf) (string, error)
 	tagInstance(instanceConf instanceRunConf, key, value string) error
+	decommInstance(instanceRunConf) error
 }
 
 type TestRunnerType string
@@ -41,9 +43,9 @@ const (
 
 func newTestRunner(runnerType TestRunnerType, config TestInfraConfig) TestRunner {
 	if runnerType == VSphereTestRunnerType {
-		return config.VSphereTestRunner
+		return &config.VSphereTestRunner
 	} else {
-		return config.Ec2TestRunner
+		return &config.Ec2TestRunner
 	}
 }
 
@@ -80,6 +82,7 @@ type Ec2TestRunner struct {
 
 type VSphereTestRunner struct {
 	testRunner
+	ActivationId string
 	Url          string `yaml:"url"`
 	Insecure     bool   `yaml:"insecure"`
 	Library      string `yaml:"library"`
@@ -119,7 +122,7 @@ func (v *VSphereTestRunner) setEnvironment() error {
 	return nil
 }
 
-func (v VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
+func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	name := getTestRunnerName(c.jobId)
 	logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
 
@@ -165,11 +168,14 @@ func (v VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("waiting for ssm instance to activate %s : %v", name, err)
 	}
+
 	v.InstanceID = *ssmInstance.InstanceId
+	v.ActivationId = ssmActivationInfo.ActivationID
+
 	return *ssmInstance.InstanceId, nil
 }
 
-func (e Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
+func (e *Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
 	name := getTestRunnerName(c.jobId)
 	logger.V(1).Info("Creating ec2 Test Runner instance", "name", name)
 	instanceId, err := ec2.CreateInstance(c.session, e.AmiID, key, tag, c.instanceProfileName, e.SubnetID, name)
@@ -181,7 +187,7 @@ func (e Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
 	return instanceId, nil
 }
 
-func (v VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
+func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
 	vmName := getTestRunnerName(c.jobId)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
@@ -191,11 +197,35 @@ func (v VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) err
 	return nil
 }
 
-func (e Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
+func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
 	err := ec2.TagInstance(c.session, c.instanceId, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to tag Ec2 test runner: %v", err)
 	}
+	return nil
+}
+
+func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
+	_, deregisterError := ssm.DeregisterInstance(c.session, v.InstanceID)
+	_, deactivateError := ssm.DeleteActivation(c.session, v.ActivationId)
+	deleteError := vsphereRmVms(context.Background(), getTestRunnerName(c.jobId))
+
+	if deregisterError != nil {
+		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deregisterError)
+	}
+
+	if deactivateError != nil {
+		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deactivateError)
+	}
+
+	if deleteError != nil {
+		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deleteError)
+	}
+
+	return nil
+}
+
+func (v *Ec2TestRunner) decommInstance(c instanceRunConf) error {
 	return nil
 }
 
