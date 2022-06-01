@@ -133,6 +133,10 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
 	machineValidator := hardware.NewDefaultMachineValidator()
 
+	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's
+	var selectors []hardware.MachineSelector
+	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
+
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
 	// and submits it to the clsuter.
