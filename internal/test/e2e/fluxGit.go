@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/git"
+	"log"
 	"os"
 	"regexp"
 
@@ -18,6 +20,16 @@ type s3Files struct {
 	permission   int
 }
 
+type fileFromBytes struct {
+	dstPath    string
+	permission int
+	content    []byte
+}
+
+func (f *fileFromBytes) contentString() string {
+	return string(f.content)
+}
+
 func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*GitFlux.*$`)
 	if !re.MatchString(testRegex) {
@@ -25,12 +37,19 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		return nil
 	}
 
-	requiredEnvVars := e2etests.RequiredFluxGitEnvVars()
+	requiredEnvVars := e2etests.RequiredFluxGitCreateRepoEnvVars()
 	for _, eVar := range requiredEnvVars {
 		if val, ok := os.LookupEnv(eVar); ok {
 			e.testEnvVars[eVar] = val
 		}
 	}
+
+	repo, err := e.setupGithubRepo(e.jobId, e.testEnvVars)
+	if err != nil {
+		return fmt.Errorf("setting up github repo for test: %v", err)
+	}
+	// add the newly generated repository to the test
+	e.testEnvVars[e2etests.GitRepoSshUrl] = gitRepoSshUrl(repo.Name, repo.Owner)
 
 	for _, file := range buildFluxGitFiles(e.testEnvVars) {
 		if err := e.downloadFileInInstance(file); err != nil {
@@ -38,7 +57,7 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		}
 	}
 
-	err := e.setUpSshAgent(e.testEnvVars[config.EksaGitPrivateKeyTokenEnv])
+	err = e.setUpSshAgent(e.testEnvVars[config.EksaGitPrivateKeyTokenEnv])
 	if err != nil {
 		return fmt.Errorf("setting up ssh agent on remote instance: %v", err)
 	}
@@ -53,12 +72,19 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 			dstPath:    envVars[config.EksaGitKnownHostsFileEnv],
 			permission: 644,
 		},
-		{
-			key:        "git-flux/private-key",
-			dstPath:    envVars[config.EksaGitPrivateKeyTokenEnv],
-			permission: 600,
-		},
 	}
+}
+
+func (e *E2ESession) writeFileToInstance(file fileFromBytes) error {
+	logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
+
+	command := fmt.Sprintf("echo \"%s\" >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+		return fmt.Errorf("writing file in instance: %v", err)
+	}
+	logger.V(1).Info("Successfully wrote file", "file", file.dstPath)
+
+	return nil
 }
 
 func (e *E2ESession) downloadFileInInstance(file s3Files) error {
@@ -84,17 +110,86 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	return nil
 }
 
-func (e *E2ESession) setupGithubRepoForTest() {
-	logger.V(1).Info("Creating Github repo for test setup...")
+func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error){
+	logger.V(1).Info("setting up Github repo for test...")
+	owner := os.Getenv(e2etests.GithubUserVar)
+
 	c := &v1alpha1.GithubProviderConfig{
-		Owner:      os.Getenv(e2etests.GithubUserVar),
-		Repository: fmt.Sprintf("%s-%s", e., e.jobId),
+		Owner:      owner,
+		Repository: repo,
 		Personal:   true,
 	}
 
-	g, err := e.TestGithubClient(context.Background(), os.Getenv(e2etests.GithubTokenVar), e.TestGithubOptions.Owner, e.TestGithubOptions.Repository, e.TestGithubOptions.Personal)
+	ctx := context.Background()
+	g, err := e.TestGithubClient(ctx, os.Getenv(e2etests.GithubTokenVar), c.Owner, c.Repository, c.Personal)
 	if err != nil {
-		e.T.Fatalf("couldn't create Github client for test setup: %v", err)
+		return nil, fmt.Errorf("couldn't create Github client for test setup: %v", err)
 	}
-	e.TestGithubProvider = g
+
+	// Create a new github repository for the tests to run on
+	o := git.CreateRepoOpts{
+		Name:        repo,
+		Owner:       owner,
+		Description: fmt.Sprintf("repository for use with E2E test job %v", e.jobId),
+		Personal:    true,
+	}
+	r, err := g.CreateRepo(ctx, o)
+
+	pk, pub, err := e.generateKeyPairForGitTest()
+	if err != nil {
+		return nil, fmt.Errorf("genearting key pair for git tests: %v", err)
+	}
+
+	// Add the newly generated public key to the newly created repository as a deploy key
+	ko := git.AddDeployKeyOpts{
+		Owner:      owner,
+		Repository: repo,
+		Key:        string(pub),
+		Title:      fmt.Sprintf("Test key created for job %v", e.jobId),
+		ReadOnly:   false,
+	}
+
+	err = g.AddDeployKeyToRepo(ctx, ko)
+	if err != nil {
+		return r, fmt.Errorf("couldn't add deploy key to repo: %v", err)
+	}
+
+	// Generate a PEM file from the private key and write it instance at the user-provided path
+	pkFile := fileFromBytes{
+		dstPath:    envVars[config.EksaGitPrivateKeyTokenEnv],
+		permission: 600,
+		content:    pk,
+	}
+
+	err = e.writeFileToInstance(pkFile)
+	if err != nil {
+		return nil, fmt.Errorf("writing private key file to instance: %v", err)
+	}
+
+	return r, err
+}
+
+func (e *E2ESession) generateKeyPairForGitTest() (privateKeyBytes, publicKeyBytes []byte, err error) {
+	k, err := generateKeyPairEcdsa()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privateKeyBytes, err = pemFromPrivateKeyEcdsa(k)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	publicKeyBytes, err = pubFromPrivateKeyEcdsa(k)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	log.Println("Public key generated")
+	return privateKeyBytes, publicKeyBytes, nil
+}
+
+func gitRepoSshUrl(repo, owner string) string {
+	t := "ssh://git@github.com/%s/%s.git"
+	return fmt.Sprintf(t, repo, owner)
 }
