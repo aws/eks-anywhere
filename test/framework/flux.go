@@ -32,24 +32,30 @@ import (
 const (
 	eksaConfigFileName  = "eksa-cluster.yaml"
 	fluxSystemNamespace = "flux-system"
-	gitRepositoryVar    = "T_GIT_REPOSITORY"
-	gitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
-	githubUserVar       = "T_GITHUB_USER"
-	githubTokenVar      = "EKSA_GITHUB_TOKEN"
-	gitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
-	gitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
+	GitRepositoryVar    = "T_GIT_REPOSITORY"
+	GitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
+	GithubUserVar       = "T_GITHUB_USER"
+	GithubTokenVar      = "EKSA_GITHUB_TOKEN"
+	GitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
+	GitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
 )
 
 var fluxGithubRequiredEnvVars = []string{
-	gitRepositoryVar,
-	githubUserVar,
-	githubTokenVar,
+	GitRepositoryVar,
+	GithubUserVar,
+	GithubTokenVar,
 }
 
 var fluxGitRequiredEnvVars = []string{
-	gitKnownHosts,
-	gitPrivateKeyFile,
-	gitRepoSshUrl,
+	GitKnownHosts,
+	GitPrivateKeyFile,
+	GitRepoSshUrl,
+}
+
+var fluxGitCreateGenerateRepoEnvVars = []string{
+	GitKnownHosts,
+	GitRepositoryVar,
+	GithubUserVar,
 }
 
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
@@ -59,7 +65,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		fluxConfigName := fluxConfigName()
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
 			api.WithGenericGitProvider(
-				api.WithStringFromEnvVarGenericGitProviderConfig(gitRepoSshUrl, api.WithGitRepositoryUrl),
+				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath(jobId),
@@ -83,8 +89,8 @@ func WithFluxGithub(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
 			api.WithGithubProvider(
 				api.WithPersonalGithubRepository(true),
-				api.WithStringFromEnvVarGithubProviderConfig(gitRepositoryVar, api.WithGithubRepository),
-				api.WithStringFromEnvVarGithubProviderConfig(githubUserVar, api.WithGithubOwner),
+				api.WithStringFromEnvVarGithubProviderConfig(GitRepositoryVar, api.WithGithubRepository),
+				api.WithStringFromEnvVarGithubProviderConfig(GithubUserVar, api.WithGithubOwner),
 			),
 			api.WithSystemNamespace("default"),
 			api.WithClusterConfigPath("path2"),
@@ -112,8 +118,8 @@ func WithFluxLegacy(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 		gitOpsConfigName := fluxConfigName()
 		e.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
 			api.WithPersonalFluxRepository(true),
-			api.WithStringFromEnvVarGitOpsConfig(gitRepositoryVar, api.WithFluxRepository),
-			api.WithStringFromEnvVarGitOpsConfig(githubUserVar, api.WithFluxOwner),
+			api.WithStringFromEnvVarGitOpsConfig(GitRepositoryVar, api.WithFluxRepository),
+			api.WithStringFromEnvVarGitOpsConfig(GithubUserVar, api.WithFluxOwner),
 			api.WithFluxNamespace("default"),
 			api.WithFluxConfigurationPath("path2"),
 			api.WithFluxBranch("main"),
@@ -462,7 +468,7 @@ func (e *ClusterE2ETest) validateGitopsRepoContent(gitTools *gitfactory.GitTools
 		e.T.Errorf("Error opening file from the newly created repo directory: %v", err)
 	}
 	if !bytes.Equal(gitFile, localFile) {
-		e.T.Errorf("Error validating the content of github repo: %v", err)
+		e.T.Errorf("Error validating the content of git repo: %v", err)
 	}
 }
 
@@ -820,9 +826,6 @@ func (e *ClusterE2ETest) pushConfigChanges(ctx context.Context) error {
 	if err := g.Add(p); err != nil {
 		return fmt.Errorf("adding cluster config changes at path %s: %v", p, err)
 	}
-	if err := g.Commit("EKS-A E2E Flux test configuration update"); err != nil {
-		return fmt.Errorf("commiting cluster config changes: %v", err)
-	}
 
 	repoUpToDateErr := &git.RepositoryUpToDateError{}
 	if err := g.Push(ctx); err != nil {
@@ -906,4 +909,8 @@ func RequiredFluxGithubEnvVars() []string {
 
 func RequiredFluxGitEnvVars() []string {
 	return fluxGitRequiredEnvVars
+}
+
+func RequiredFluxGitCreateRepoEnvVars() []string {
+	return fluxGitCreateGenerateRepoEnvVars
 }

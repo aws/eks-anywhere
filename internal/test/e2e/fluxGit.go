@@ -1,7 +1,9 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"os"
 	"regexp"
 
@@ -80,4 +82,19 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	logger.V(1).Info("Successfully started SSH agent on instance")
 
 	return nil
+}
+
+func (e *E2ESession) setupGithubRepoForTest() {
+	logger.V(1).Info("Creating Github repo for test setup...")
+	c := &v1alpha1.GithubProviderConfig{
+		Owner:      os.Getenv(e2etests.GithubUserVar),
+		Repository: fmt.Sprintf("%s-%s", e., e.jobId),
+		Personal:   true,
+	}
+
+	g, err := e.TestGithubClient(context.Background(), os.Getenv(e2etests.GithubTokenVar), e.TestGithubOptions.Owner, e.TestGithubOptions.Repository, e.TestGithubOptions.Personal)
+	if err != nil {
+		e.T.Fatalf("couldn't create Github client for test setup: %v", err)
+	}
+	e.TestGithubProvider = g
 }
