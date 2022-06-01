@@ -20,7 +20,7 @@ func generateKeyPairEcdsa() (*ecdsa.PrivateKey, error) {
 }
 
 func pubFromPrivateKeyEcdsa(k *ecdsa.PrivateKey) ([]byte, error) {
-	pub, err := ssh.NewPublicKey(k)
+	pub, err := ssh.NewPublicKey(k.Public())
 	if err != nil {
 		return nil, err
 	}
@@ -34,14 +34,9 @@ func pemFromPrivateKeyEcdsa(k *ecdsa.PrivateKey) ([]byte, error) {
 	}
 
 	p := pem.Block{
-		Type:    "ECDSA PRIVATE KEY",
-		Headers: nil,
+		Type:    "PRIVATE KEY",
 		Bytes:   pk,
 	}
 
-	kb := pem.EncodeToMemory(&p)
-	if kb == nil {
-		return nil, fmt.Errorf("invalid headers in private key block")
-	}
-	return kb, nil
+	return pem.EncodeToMemory(&p), nil
 }

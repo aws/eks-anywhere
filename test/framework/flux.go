@@ -54,6 +54,7 @@ var fluxGitRequiredEnvVars = []string{
 
 var fluxGitCreateGenerateRepoEnvVars = []string{
 	GitKnownHosts,
+	GitPrivateKeyFile,
 	GitRepositoryVar,
 	GithubUserVar,
 }

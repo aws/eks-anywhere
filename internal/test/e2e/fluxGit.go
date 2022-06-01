@@ -78,7 +78,7 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 func (e *E2ESession) writeFileToInstance(file fileFromBytes) error {
 	logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
 
-	command := fmt.Sprintf("echo \"%s\" >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
+	command := fmt.Sprintf("echo $'%s' >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("writing file in instance: %v", err)
 	}
@@ -111,7 +111,7 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 }
 
 func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error) {
-	logger.V(1).Info("setting up Github repo for test...")
+	logger.V(1).Info("setting up Github repo for test")
 	owner := os.Getenv(e2etests.GithubUserVar)
 
 	c := &v1alpha1.GithubProviderConfig{
@@ -141,7 +141,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 
 	pk, pub, err := e.generateKeyPairForGitTest()
 	if err != nil {
-		return nil, fmt.Errorf("genearting key pair for git tests: %v", err)
+		return nil, fmt.Errorf("generating key pair for git tests: %v", err)
 	}
 
 	// Add the newly generated public key to the newly created repository as a deploy key
