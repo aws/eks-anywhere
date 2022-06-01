@@ -78,6 +78,30 @@ func GenerateSSHAuthKey(writer filewriter.FileWriter) (string, error) {
 	return key, nil
 }
 
+func ProcessSshKeysForUsers(users []v1alpha1.UserConfiguration, generatedKey string, writer filewriter.FileWriter) (string, error) {
+	var err error
+	for _, user := range users {
+		for i, key := range user.SshAuthorizedKeys {
+			if len(key) > 0 {
+				user.SshAuthorizedKeys[i], err = StripSshAuthorizedKeyComment(key)
+				if err != nil {
+					return "", err
+				}
+			} else {
+				if len(generatedKey) == 0 {
+					logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
+					generatedKey, err = GenerateSSHAuthKey(writer)
+					if err != nil {
+						return "", err
+					}
+				}
+				user.SshAuthorizedKeys[i] = generatedKey
+			}
+		}
+	}
+	return generatedKey, nil
+}
+
 func CPMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)

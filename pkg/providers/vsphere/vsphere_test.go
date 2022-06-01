@@ -753,6 +753,78 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 	}
 }
 
+func TestProviderGenerateCAPISpecForCreateWithMultpleUsers(t *testing.T) {
+	clusterSpecManifest := "cluster_multiple_users.yaml"
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_multiple_users_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_multiple_users_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForUpgradeWithMultpleUsers(t *testing.T) {
+	clusterSpecManifest := "cluster_multiple_users.yaml"
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	bootstrapCluster := &types.Cluster{
+		Name: "bootstrap-test",
+	}
+	vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			Users: []v1alpha1.UserConfiguration{
+				{
+					Name:              "capv",
+					SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+				},
+			},
+		},
+	}
+
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(datacenterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(vsphereMachineConfig, nil)
+	kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", cluster.Name), map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)))
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_multiple_users_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_multiple_users_md.yaml")
+}
+
 func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext

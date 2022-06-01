@@ -399,8 +399,8 @@ spec:
       {{- range $user.SshAuthorizedKeys }}
       - '{{.}}'
       {{- end }}
-    {{- end}}
       sudo: ALL=(ALL) NOPASSWD:ALL
+    {{- end}}
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
@@ -435,8 +435,8 @@ spec:
       {{- range $user.SshAuthorizedKeys }}
       - '{{.}}'
       {{- end }}
-    {{- end}}
       sudo: ALL=(ALL) NOPASSWD:ALL
+    {{- end}}
 {{- if .proxyConfig }}
     proxy:
       httpProxy: {{ .httpProxy }}

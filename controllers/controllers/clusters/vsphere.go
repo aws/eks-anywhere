@@ -200,14 +200,10 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, time.Now)
-		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
-
+		values["controlPlaneSshUsers"] = machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users
 		if cluster.Spec.ExternalEtcdConfiguration != nil {
-			etcdUser := machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
+			values["etcdSshUsers"] = machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users
 		}
-
 		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
 	}
 	v.Log.Info("cluster", "name", cluster.Name)

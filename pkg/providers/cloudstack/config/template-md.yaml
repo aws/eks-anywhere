@@ -98,8 +98,8 @@ spec:
         {{- range $user.SshAuthorizedKeys }}
         - '{{.}}'
         {{- end }}
-      {{- end}}
         sudo: ALL=(ALL) NOPASSWD:ALL
+      {{- end}}
       format: {{.format}}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1

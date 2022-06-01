@@ -100,11 +100,14 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
-      users:
-      - name: {{.workerSshUsername}}
+      users:{{ range $user := .workerSshUsers }}
+      - name: {{ $user.Name }}
         sshAuthorizedKeys:
-        - '{{.vsphereWorkerSshAuthorizedKey}}'
+        {{- range $user.SshAuthorizedKeys }}
+        - '{{.}}'
+        {{- end }}
         sudo: ALL=(ALL) NOPASSWD:ALL
+      {{- end}}
       format: {{.format}}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1

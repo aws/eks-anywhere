@@ -263,47 +263,23 @@ func (p *cloudstackProvider) MachineResourceType() string {
 
 func (p *cloudstackProvider) setupSSHAuthKeysForCreateOrUpgrade() error {
 	var generatedKey string
-	generatedKey, err := p.processSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+	generatedKey, err := common.ProcessSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey, p.writer)
 	if err != nil {
 		return err
 	}
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		generatedKey, err = p.processSshKeysForUsers(p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+		generatedKey, err = common.ProcessSshKeysForUsers(p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey, p.writer)
 		if err != nil {
 			return err
 		}
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		_, err = p.processSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey)
+		_, err = common.ProcessSshKeysForUsers(p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users, generatedKey, p.writer)
 		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (p *cloudstackProvider) processSshKeysForUsers(users []v1alpha1.UserConfiguration, generatedKey string) (string, error) {
-	var err error
-	for _, user := range users {
-		for i, key := range user.SshAuthorizedKeys {
-			if len(key) > 0 {
-				user.SshAuthorizedKeys[i], err = common.StripSshAuthorizedKeyComment(key)
-				if err != nil {
-					return "", err
-				}
-			} else {
-				if len(generatedKey) == 0 {
-					logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-					generatedKey, err = common.GenerateSSHAuthKey(p.writer)
-					if err != nil {
-						return "", err
-					}
-				}
-				user.SshAuthorizedKeys[i] = generatedKey
-			}
-		}
-	}
-	return generatedKey, nil
 }
 
 func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error {
