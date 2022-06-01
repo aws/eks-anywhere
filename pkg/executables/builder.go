@@ -45,10 +45,6 @@ func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, exe
 	return NewCmk(b.buildExecutable(cmkPath), writer, execConfig)
 }
 
-func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {
-	return NewTink(b.buildExecutable(tinkPath), tinkerbellCertUrl, tinkerbellGrpcAuthority)
-}
-
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {
 	return NewAwsCli(b.buildExecutable(awsCliPath))
 }
