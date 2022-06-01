@@ -55,7 +55,6 @@ var fluxGitRequiredEnvVars = []string{
 var fluxGitCreateGenerateRepoEnvVars = []string{
 	GitKnownHosts,
 	GitPrivateKeyFile,
-	GitRepositoryVar,
 	GithubUserVar,
 }
 
@@ -826,6 +825,10 @@ func (e *ClusterE2ETest) pushConfigChanges(ctx context.Context) error {
 	g := e.GitClient
 	if err := g.Add(p); err != nil {
 		return fmt.Errorf("adding cluster config changes at path %s: %v", p, err)
+	}
+
+	if err := g.Commit("EKS-A E2E Flux test configuration update"); err != nil {
+		return fmt.Errorf("commiting cluster config changes: %v", err)
 	}
 
 	repoUpToDateErr := &git.RepositoryUpToDateError{}
