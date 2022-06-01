@@ -24,7 +24,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const etcdadmBootstrapProviderProjectPath = "projects/mrajashree/etcdadm-bootstrap-provider"
+const etcdadmBootstrapProviderProjectPath = "projects/aws/etcdadm-bootstrap-provider"
 
 // GetEtcdadmBootstrapAssets returns the eks-a artifacts for etcdadm bootstrap provider
 func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
@@ -34,7 +34,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	}
 
 	name := "etcdadm-bootstrap-provider"
-	repoName := fmt.Sprintf("mrajashree/%s", name)
+	repoName := fmt.Sprintf("aws/%s", name)
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": etcdadmBootstrapProviderProjectPath,
