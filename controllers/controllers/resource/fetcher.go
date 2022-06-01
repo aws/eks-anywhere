@@ -500,7 +500,12 @@ func (r *CapiResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(ctx co
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+	existingControlPlane, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	users := existingControlPlane.Spec.KubeadmConfigSpec.Users
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
@@ -508,7 +513,12 @@ func (r *CapiResourceFetcher) ExistingCloudStackEtcdMachineConfig(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+	existingEtcd, err := r.Etcd(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	users := existingEtcd.Spec.EtcdadmConfigSpec.Users
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.CloudStackMachineConfig, error) {
@@ -516,7 +526,12 @@ func (r *CapiResourceFetcher) ExistingCloudStackWorkerMachineConfig(ctx context.
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+	existingKubeadmConfigTemplate, err := r.KubeadmConfigTemplate(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	users := existingKubeadmConfigTemplate.Spec.Template.Spec.Users
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error) {
@@ -607,7 +622,7 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 	return csSpec
 }
 
-func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
+func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate, users []kubeadmv1.User) (*anywherev1.CloudStackMachineConfig, error) {
 	csSpec := &anywherev1.CloudStackMachineConfig{}
 	csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{
 		Id:   csMachineTemplate.Spec.Spec.Spec.Offering.ID,
@@ -637,6 +652,13 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	}
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
+	}
+	for _, user := range users {
+		user := anywherev1.UserConfiguration{
+			Name:              user.Name,
+			SshAuthorizedKeys: user.SSHAuthorizedKeys,
+		}
+		csSpec.Spec.Users = append(csSpec.Spec.Users, user)
 	}
 	return csSpec, nil
 }

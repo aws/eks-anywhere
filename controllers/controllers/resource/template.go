@@ -207,6 +207,8 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values["controlPlaneSshUsers"] = cpCsmc.Spec.Users
+		values["etcdSshUsers"] = etcdCsmc.Spec.Users
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 

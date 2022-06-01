@@ -315,6 +315,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 	type args struct {
 		csMachineTemplate *cloudstackv1.CloudStackMachineTemplate
+		users             []kubeadmv1.User
 	}
 	tests := []struct {
 		name    string
@@ -371,7 +372,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapMachineTemplateToCloudStackMachineConfigSpec(tt.args.csMachineTemplate)
+			got, err := resource.MapMachineTemplateToCloudStackMachineConfigSpec(tt.args.csMachineTemplate, tt.args.users)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MapMachineTemplateToCloudStackWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
 				return
