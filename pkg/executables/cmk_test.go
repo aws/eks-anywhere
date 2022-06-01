@@ -84,6 +84,22 @@ var diskOfferingCustomSizeInGB = v1alpha1.CloudStackResourceDiskOffering{
 	Label:      "data_disk",
 }
 
+var isoAttachmentResourceName = v1alpha1.CloudStackISOAttachment{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+		Name: "TEST_RESOURCE",
+	},
+	MountPath:  "/TEST_RESOURCE",
+	Device:     "/dev/sr0",
+}
+
+var isoAttachmentResourceID = v1alpha1.CloudStackISOAttachment{
+	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+		Id: "TEST_RESOURCE",
+	},
+	MountPath:  "/TEST_RESOURCE",
+	Device:     "/dev/sr0",
+}
+
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	ctx := context.Background()
@@ -789,6 +805,81 @@ func TestCmkListOperations(t *testing.T) {
 			wantErr:               true,
 			shouldSecondCallOccur: false,
 			wantResultCount:       0,
+		},
+		{
+			testName:         "list isos success on name filter",
+			jsonResponseFile: "testdata/cmk_list_iso_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("name=\"%s\"", isoAttachmentResourceName.Name), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceName)
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: false,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "list isos success on id filter",
+			jsonResponseFile: "testdata/cmk_list_iso_singular.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("id=\"%s\"", isoAttachmentResourceID.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: true,
+			wantResultCount:       1,
+		},
+		{
+			testName:         "list isos no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("id=\"%s\"", isoAttachmentResourceID.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "list isos json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("name=\"%s\"", isoAttachmentResourceName.Name), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceName)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: false,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "list isos multiple results",
+			jsonResponseFile: "testdata/cmk_list_iso_multiple.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("id=\"%s\"", isoAttachmentResourceID.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       2,
 		},
 		{
 			testName:         "listaffinitygroups success on id filter",

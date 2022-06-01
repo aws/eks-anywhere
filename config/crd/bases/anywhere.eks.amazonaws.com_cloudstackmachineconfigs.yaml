@@ -38,6 +38,48 @@ spec:
             description: CloudStackMachineConfigSpec defines the desired state of
               CloudStackMachineConfig
             properties:
+              ISOAttachment:
+                description: ISOAttachment attach an ISO rom which has been previously
+                  registered in CloudStack. ISO rom will be attached before VM starts.
+                properties:
+                  device:
+                    description: device name of the ISO in VM, shows up in lsblk command
+                    type: string
+                  id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
+                    type: string
+                  mountPath:
+                    description: path the ISO will use to mount in VM
+                    type: string
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
+                    type: string
+                  postKubeadmCommandArgs:
+                    description: specifies a list of args to be passed to postKubeadmCommand
+                      pre-defined in ISO directory.
+                    items:
+                      type: string
+                    type: array
+                  preKubeadmCommandArgs:
+                    description: specifies a list of args to be passed to preKubeadmCommand
+                      pre-defined in ISO directory.
+                    items:
+                      type: string
+                    type: array
+                  runPostKubeadmCommand:
+                    description: run preKubeadmCommand pre-defined in attached ISO
+                      directory.
+                    type: boolean
+                  runPreKubeadmCommand:
+                    description: run preKubeadmCommand pre-defined in attached ISO
+                      directory.
+                    type: boolean
+                required:
+                - device
+                - mountPath
+                type: object
               affinity:
                 description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
                   or `anti`, will create an affinity group per machine set of the

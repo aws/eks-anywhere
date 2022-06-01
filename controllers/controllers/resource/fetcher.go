@@ -628,6 +628,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
 		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
 	}
+	csSpec.Spec.ISOAttachment = parseISOAttachment(csMachineTemplate)
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
@@ -654,6 +655,29 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		csSpec.Spec.Symlinks[key] = value
 	}
 	return csSpec, nil
+}
+
+func parseISOAttachment(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (ISOAttachment anywherev1.CloudStackISOAttachment) {
+	var preKubeadmCommandArgs []string
+	var postKubeadmCommandArgs []string
+	if len(csMachineTemplate.Annotations["preKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix]) > 0 {
+		preKubeadmCommandArgs = strings.Split(csMachineTemplate.Annotations["preKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix], ",")
+	}
+	if len(csMachineTemplate.Annotations["postKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix]) > 0 {
+		postKubeadmCommandArgs = strings.Split(csMachineTemplate.Annotations["postKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix], ",")
+	}
+	return anywherev1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
+			Id:   csMachineTemplate.Spec.Spec.Spec.ISOAttachment.ID,
+			Name: csMachineTemplate.Spec.Spec.Spec.ISOAttachment.Name,
+		},
+		Device:                 csMachineTemplate.Annotations["device.ISOAttachment"+constants.CloudstackAnnotationSuffix],
+		MountPath:              csMachineTemplate.Annotations["mountPath.ISOAttachment"+constants.CloudstackAnnotationSuffix],
+		RunPreKubeadmCommand:   csMachineTemplate.Annotations["runPreKubeadmCommand.ISOAttachment"+constants.CloudstackAnnotationSuffix] == "true",
+		RunPostKubeadmCommand:  csMachineTemplate.Annotations["runPostKubeadmCommand.ISOAttachment"+constants.CloudstackAnnotationSuffix] == "true",
+		PreKubeadmCommandArgs:  preKubeadmCommandArgs,
+		PostKubeadmCommandArgs: postKubeadmCommandArgs,
+	}
 }
 
 func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {

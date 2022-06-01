@@ -281,8 +281,6 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoH
 github.com/aws/aws-sdk-go-v2/service/sts v1.6.0/go.mod h1:q7o0j7d7HrJk/vr9uUt3BVRASvcU7gYZB9PUgPiByXg=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220524192516-7918d6e69552 h1:UNnnGn6vNV4PvQmXMMUzkbLNs5HFWjKALAZ2H0nln5w=
-github.com/aws/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220524192516-7918d6e69552/go.mod h1:fafGBTlbWJKQz5EuGV36U0smcZ4BYPZ0bxCyz1nLdgg=
 github.com/aws/eks-anywhere-packages v0.1.1 h1:miuYyEPS0MAzC/1+v99XPzBILYjs+Jl5CoqC95IAIg8=
 github.com/aws/eks-anywhere-packages v0.1.1/go.mod h1:0rPTMF03bX8YuoaHsGzDANxrwjnL3XcyPg8g6I920Ys=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
@@ -1640,6 +1638,8 @@ github.com/vishvananda/netns v0.0.0-20200728191858-db3c7e526aae/go.mod h1:DD4vA1
 github.com/vmware/govmomi v0.27.1/go.mod h1:daTuJEcQosNMXYJOeku0qdBJP9SOLLWB3Mqz8THtv6o=
 github.com/vmware/vmw-guestinfo v0.0.0-20170707015358-25eff159a728/go.mod h1:x9oS4Wk2s2u4tS29nEaDLdzvuHdB19CvSGJjPgkZJNk=
 github.com/vmware/vmw-ovflib v0.0.0-20170608004843-1f217b9dc714/go.mod h1:jiPk45kn7klhByRvUq5i2vo1RtHKBHj+iWGFpxbXuuI=
+github.com/wanyufe/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220601153610-4f3e7128e44b h1:wyy/G7wRzSqzCb0fjWUAaclfoQEoSTv+wsM+iP0ZA5I=
+github.com/wanyufe/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220601153610-4f3e7128e44b/go.mod h1:fafGBTlbWJKQz5EuGV36U0smcZ4BYPZ0bxCyz1nLdgg=
 github.com/xanzy/go-gitlab v0.50.0/go.mod h1:Q+hQhV508bDPoBijv7YjK/Lvlb4PhVhJdKqXVQrUoAE=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=

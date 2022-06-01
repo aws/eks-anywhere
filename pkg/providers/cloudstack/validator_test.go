@@ -189,6 +189,7 @@ func TestSetupAndValidateDiskOfferingEmpty(t *testing.T) {
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	cmk.EXPECT().ValidateISOAttachmentPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)

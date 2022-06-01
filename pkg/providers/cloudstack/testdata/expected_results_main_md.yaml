@@ -28,14 +28,14 @@ spec:
           then
             mv /var/log/containers /var/log/containers-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
             mkdir -p /data-small/var/log/containers && ln -s /data-small/var/log/containers /var/log/containers ;
-          else echo "/var/log/containers already symlnk" ;
+          else echo "/var/log/containers already symlink" ;
         fi
       - >-
         if [ ! -L /var/log/pods ] ;
           then
             mv /var/log/pods /var/log/pods-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
             mkdir -p /data-small/var/log/pods && ln -s /data-small/var/log/pods /var/log/pods ;
-          else echo "/var/log/pods already symlnk" ;
+          else echo "/var/log/pods already symlink" ;
         fi
       diskSetup:
         filesystems:

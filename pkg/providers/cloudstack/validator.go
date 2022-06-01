@@ -40,6 +40,7 @@ type ProviderCmkClient interface {
 	ValidateCloudStackConnection(ctx context.Context) error
 	ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
 	ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
+	ValidateISOAttachmentPresent(ctx context.Context, zoneId string, diskOffering anywherev1.CloudStackISOAttachment) error
 	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
 	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZone) ([]anywherev1.CloudStackResourceIdentifier, error)
@@ -250,6 +251,11 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
 			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {
 				return fmt.Errorf("validating disk offering: %v", err)
+			}
+		}
+		if len(machineConfig.Spec.ISOAttachment.Id) > 0 || len(machineConfig.Spec.ISOAttachment.Name) > 0 {
+			if err = v.cmk.ValidateISOAttachmentPresent(ctx, zone.Id, machineConfig.Spec.ISOAttachment); err != nil {
+				return fmt.Errorf("validating iso attachment: %v", err)
 			}
 		}
 	}

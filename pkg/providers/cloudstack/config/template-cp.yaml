@@ -1,3 +1,18 @@
+{{- $suffix := .cloudstackAnnotationSuffix -}}
+{{- $templateCP := .cloudstackControlPlaneTemplate -}}
+{{- $offeringCP := .cloudstackControlPlaneOffering -}}
+{{- $diskCP := .cloudstackControlPlaneDiskOffering -}}
+{{- $isoCP := .cloudstackControlPlaneISOAttachment -}}
+{{- $diskConfiguredCP := or (gt (len $diskCP.Id) 0) (gt (len $diskCP.Name) 0) -}}
+{{- $isoConfiguredCP := or (gt (len $isoCP.Id) 0) (gt (len $isoCP.Name) 0) -}}
+{{- $annotationsCP := or $diskConfiguredCP $isoConfiguredCP .cloudstackControlPlaneSymlinks -}}
+{{- $templateEtcd := .cloudstackEtcdTemplate -}}
+{{- $offeringEtcd := .cloudstackEtcdOffering -}}
+{{- $diskEtcd := .cloudstackEtcdDiskOffering -}}
+{{- $isoEtcd := .cloudstackEtcdISOAttachment -}}
+{{- $diskConfiguredEtcd := or (gt (len $diskEtcd.Id) 0) (gt (len $diskEtcd.Name) 0) -}}
+{{- $isoConfiguredEtcd := or (gt (len $isoEtcd.Id) 0) (gt (len $isoEtcd.Name) 0) -}}
+{{- $annotationsEtcd := or $diskConfiguredEtcd $isoConfiguredEtcd .cloudstackEtcdSymlinks -}}
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -58,50 +73,67 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
   namespace: {{.eksaSystemNamespace}}
-{{- if .cloudstackControlPlaneAnnotations}}
+{{- if $annotationsCP}}
   annotations:
 {{- end }}
-{{- if .cloudstackControlPlaneDiskOfferingProvided}}
-    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingPath}}
-    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingDevice}}
-    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
-    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- if $diskConfiguredCP}}
+    mountpath.diskoffering.{{$suffix}}: {{$diskCP.MountPath}}
+    device.diskoffering.{{$suffix}}: {{$diskCP.Device}}
+    filesystem.diskoffering.{{$suffix}}: {{$diskCP.Filesystem}}
+    label.diskoffering.{{$suffix}}: {{$diskCP.Label}}
+{{- end }}
+{{- if $isoConfiguredCP}}
+    device.ISOAttachment.{{$suffix}}: {{$isoCP.Device}}
+    mountPath.ISOAttachment.{{$suffix}}: {{$isoCP.MountPath}}
+    runPreKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoCP.RunPreKubeadmCommand}}"
+    runPostKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoCP.RunPostKubeadmCommand}}"
+    preKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoCP.PreKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
+    postKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoCP.PostKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
 {{- end }}
 {{- if .cloudstackControlPlaneSymlinks }}
-    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+    symlinks.{{$suffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
 {{- end}}
 spec:
   template:
     spec:
       offering:
-{{- if .cloudstackControlPlaneComputeOfferingId}}
-        id: {{.cloudstackControlPlaneComputeOfferingId}}
+{{- if $offeringCP.Id}}
+        id: {{$offeringCP.Id}}
 {{- end}}
-{{- if .cloudstackControlPlaneComputeOfferingName}}
-        name: {{.cloudstackControlPlaneComputeOfferingName}}
+{{- if $offeringCP.Name}}
+        name: {{$offeringCP.Name}}
 {{- end}}
       template:
-{{- if .cloudstackControlPlaneTemplateOfferingId}}
-        id: {{.cloudstackControlPlaneTemplateOfferingId}}
+{{- if $templateCP.Id}}
+        id: {{$templateCP.Id}}
 {{- end}}
-{{- if .cloudstackControlPlaneTemplateOfferingName}}
-        name: {{.cloudstackControlPlaneTemplateOfferingName}}
+{{- if $templateCP.Name}}
+        name: {{$templateCP.Name}}
 {{- end}}
-{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+{{- if $diskConfiguredCP}}
       diskOffering:
-{{- if .cloudstackControlPlaneDiskOfferingId}}
-        id: {{.cloudstackControlPlaneDiskOfferingId}}
+{{- if $diskCP.Id}}
+        id: {{$diskCP.Id}}
 {{- end}}
-{{- if .cloudstackControlPlaneDiskOfferingName}}
-        name: {{.cloudstackControlPlaneDiskOfferingName}}
+{{- if $diskCP.Name}}
+        name: {{$diskCP.Name}}
 {{- end}}
-{{- if gt .cloudstackControlPlaneDiskOfferingCustomSize 0}}
-        customSizeInGB: {{.cloudstackControlPlaneDiskOfferingCustomSize}}
+{{- if gt $diskCP.CustomSize 0}}
+        customSizeInGB: {{$diskCP.CustomSize}}
 {{- end}}
-        mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
-        device: {{.cloudstackControlPlaneDiskOfferingDevice}}
-        filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
-        label: {{.cloudstackControlPlaneDiskOfferingLabel}}
+        mountPath: {{$diskCP.MountPath}}
+        device: {{$diskCP.Device}}
+        filesystem: {{$diskCP.Filesystem}}
+        label: {{$diskCP.Label}}
+{{- end}}
+{{- if $isoConfiguredCP}}
+      ISOAttachment:
+{{- if $isoCP.Id}}
+        id: {{$isoCP.Id}}
+{{- end}}
+{{- if $isoCP.Name}}
+        name: {{$isoCP.Name}}
+{{- end}}
 {{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
@@ -391,28 +423,44 @@ spec:
         then
           mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
-        else echo "{{$dir}} already symlnk";
+        else
+          echo "{{$dir}} already symlink";
       fi
 {{- end}}
-{{- if .cloudstackControlPlaneDiskOfferingProvided }}
+{{- if and $isoConfiguredCP $isoCP.RunPreKubeadmCommand}}
+    - {{ $isoCP.MountPath}}/preKubeadmCommands.sh {{- range $isoCP.PreKubeadmCommandArgs}} {{ .}}{{- end}}
+{{- end}}
+{{- if and $isoConfiguredCP $isoCP.RunPostKubeadmCommand}}
+    postKubeadmCommands:
+    - {{ $isoCP.MountPath}}/postKubeadmCommands.sh {{- range $isoCP.PostKubeadmCommandArgs}} {{ .}}{{- end}}
+{{- end}}
+{{- if $diskConfiguredCP }}
     diskSetup:
       filesystems:
-        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}1
+        - device: {{ $diskCP.Device }}1
           overwrite: false
           extraOpts:
             - -E
             - lazy_itable_init=1,lazy_journal_init=1
-          filesystem: {{ .cloudstackControlPlaneDiskOfferingFilesystem }}
-          label: {{ .cloudstackControlPlaneDiskOfferingLabel }}
+          filesystem: {{ $diskCP.Filesystem }}
+          label: {{ $diskCP.Label }}
       partitions:
-        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}
+        - device: {{ $diskCP.Device }}
           layout: true
           overwrite: false
           tableType: gpt
-    mounts:
-      - - LABEL={{ .cloudstackControlPlaneDiskOfferingLabel }}
-        - {{ .cloudstackControlPlaneDiskOfferingPath }}
 {{- end }}
+{{- if or $diskConfiguredCP $isoConfiguredCP}}
+    mounts:
+{{- if $diskConfiguredCP }}
+      - - LABEL={{ $diskCP.Label }}
+        - {{ $diskCP.MountPath }}
+{{- end}}
+{{- if $isoConfiguredCP }}
+      - - {{ $isoCP.Device }}
+        - {{ $isoCP.MountPath }}
+{{- end}}
+{{- end}}
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
@@ -449,13 +497,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
-{{- if .cloudstackEtcdDiskOfferingProvided }}
+{{- if $diskConfiguredEtcd }}
     - >-
-      echo "type=83" | sfdisk {{ .cloudstackEtcdDiskOfferingDevice }} &&
-      mkfs -t {{ .cloudstackEtcdDiskOfferingFilesystem }} {{ .cloudstackEtcdDiskOfferingDevice }}1 &&
-      mkdir -p {{ .cloudstackEtcdDiskOfferingPath }} &&
-      echo {{ .cloudstackEtcdDiskOfferingDevice }}1 {{ .cloudstackEtcdDiskOfferingPath }} {{ .cloudstackEtcdDiskOfferingFilesystem }} defaults 0 2 >> /etc/fstab &&
-      mount {{ .cloudstackEtcdDiskOfferingPath }}
+      echo "type=83" | sfdisk {{ $diskEtcd.Device }} &&
+      mkfs -t {{ $diskEtcd.Filesystem }} {{ $diskEtcd.Device }}1 &&
+      mkdir -p {{ $diskEtcd.MountPath }} &&
+      echo {{ $diskEtcd.Device }}1 {{ $diskEtcd.MountPath }} {{ $diskEtcd.Filesystem }} defaults 0 2 >> /etc/fstab &&
+      mount {{ $diskEtcd.MountPath }}
 {{- end }}
 {{- range $dir, $target := .cloudstackEtcdSymlinks}}
     - >-
@@ -464,8 +512,17 @@ spec:
           mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
         else
-          echo "{{$dir}} already symlnk" ;
+          echo "{{$dir}} already symlink" ;
       fi
+{{- end}}
+{{- if $isoConfiguredEtcd }}
+    - >-
+      mkdir -p {{ $isoEtcd.MountPath }} &&
+      echo {{ $isoEtcd.Device }} {{ $isoEtcd.MountPath }} auto ro 0 0 >> /etc/fstab &&
+      mount {{ $isoEtcd.MountPath }}
+{{- end }}
+{{- if and $isoConfiguredEtcd $isoEtcd.RunPreKubeadmCommand}}
+    - {{ $isoEtcd.MountPath}}/preKubeadmCommands.sh {{- range $isoEtcd.PreKubeadmCommandArgs}} {{ .}}{{- end}}
 {{- end}}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
@@ -501,50 +558,67 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
   namespace: '{{.eksaSystemNamespace}}'
-{{- if .cloudstackEtcdAnnotations}}
+{{- if $annotationsEtcd}}
   annotations:
 {{- end }}
-{{- if .cloudstackEtcdDiskOfferingProvided}}
-    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingPath}}
-    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingDevice}}
-    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingFilesystem}}
-    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- if $diskConfiguredEtcd}}
+    mountpath.diskoffering.{{$suffix}}: {{$diskEtcd.MountPath}}
+    device.diskoffering.{{$suffix}}: {{$diskEtcd.Device}}
+    filesystem.diskoffering.{{$suffix}}: {{$diskEtcd.Filesystem}}
+    label.diskoffering.{{$suffix}}: {{$diskEtcd.Label}}
+{{- end }}
+{{- if $isoConfiguredEtcd}}
+    device.ISOAttachment.{{$suffix}}: {{$isoEtcd.Device}}
+    mountPath.ISOAttachment.{{$suffix}}: {{$isoEtcd.MountPath}}
+    runPreKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoEtcd.RunPreKubeadmCommand}}"
+    runPostKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoEtcd.RunPostKubeadmCommand}}"
+    preKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoEtcd.PreKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
+    postKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoEtcd.PostKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
 {{- end }}
 {{- if .cloudstackEtcdSymlinks }}
-    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+    symlinks.{{$suffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
 {{- end}}
 spec:
   template:
     spec:
       offering:
-{{- if .cloudstackEtcdComputeOfferingId}}
-        id: {{.cloudstackEtcdComputeOfferingId}}
+{{- if $offeringEtcd.Id}}
+        id: {{$offeringEtcd.Id}}
 {{- end}}
-{{- if .cloudstackEtcdComputeOfferingName}}
-        name: {{.cloudstackEtcdComputeOfferingName}}
+{{- if $offeringEtcd.Name}}
+        name: {{$offeringEtcd.Name}}
 {{- end}}
       template:
-{{- if .cloudstackEtcdTemplateOfferingId}}
-        id: {{.cloudstackEtcdTemplateOfferingId}}
+{{- if $templateEtcd.Id}}
+        id: {{$templateEtcd.Id}}
 {{- end}}
-{{- if .cloudstackEtcdTemplateOfferingName}}
-        name: {{.cloudstackEtcdTemplateOfferingName}}
+{{- if $templateEtcd.Name}}
+        name: {{$templateEtcd.Name}}
 {{- end}}
-{{- if .cloudstackEtcdDiskOfferingProvided}}
+{{- if $diskConfiguredEtcd}}
       diskOffering:
-{{- if .cloudstackEtcdDiskOfferingId}}
-        id: {{.cloudstackEtcdDiskOfferingId}}
+{{- if $diskEtcd.Id}}
+        id: {{$diskEtcd.Id}}
 {{- end}}
-{{- if .cloudstackEtcdDiskOfferingName}}
-        name: {{.cloudstackEtcdDiskOfferingName}}
+{{- if $diskEtcd.Name}}
+        name: {{$diskEtcd.Name}}
 {{- end}}
-{{- if gt .cloudstackEtcdDiskOfferingCustomSize 0}}
-        customSizeInGB: {{.cloudstackEtcdDiskOfferingCustomSize}}
+{{- if gt $diskEtcd.CustomSize 0}}
+        customSizeInGB: {{$diskEtcd.CustomSize}}
 {{- end}}
-        mountPath: {{.cloudstackEtcdDiskOfferingPath}}
-        device: {{.cloudstackEtcdDiskOfferingDevice}}
-        filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
-        label: {{.cloudstackEtcdDiskOfferingLabel}}
+        mountPath: {{$diskEtcd.MountPath}}
+        device: {{$diskEtcd.Device}}
+        filesystem: {{$diskEtcd.Filesystem}}
+        label: {{$diskEtcd.Label}}
+{{- end}}
+{{- if $isoConfiguredEtcd}}
+      ISOAttachment:
+{{- if $isoEtcd.Id}}
+        id: {{$isoEtcd.Id}}
+{{- end}}
+{{- if $isoEtcd.Name}}
+        name: {{$isoEtcd.Name}}
+{{- end}}
 {{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:

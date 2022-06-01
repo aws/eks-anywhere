@@ -158,6 +158,37 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, zoneId string, di
 	return nil
 }
 
+func (c *Cmk) ValidateISOAttachmentPresent(ctx context.Context, zoneId string, ISOAttachment v1alpha1.CloudStackISOAttachment) error {
+	command := newCmkCommand("list isos")
+	if len(ISOAttachment.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(ISOAttachment.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(ISOAttachment.Name))
+	}
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("getting ISO info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("ISO ID/Name %s/%s not found", ISOAttachment.Id, ISOAttachment.Name)
+	}
+
+	response := struct {
+		CmkISOs []cmkResourceIdentifier `json:"iso"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	offerings := response.CmkISOs
+	if len(offerings) > 1 {
+		return fmt.Errorf("duplicate ISO ID/Name %s/%s found", ISOAttachment.Id, ISOAttachment.Name)
+	} else if len(offerings) == 0 {
+		return fmt.Errorf("ISO ID/Name %s/%s not found", ISOAttachment.Id, ISOAttachment.Name)
+	}
+	return nil
+}
+
 func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		command := newCmkCommand("list affinitygroups")

@@ -365,7 +365,8 @@ spec:
         then
           mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
-        else echo "/var/log/kubernetes already symlnk";
+        else
+          echo "/var/log/kubernetes already symlink";
       fi
     diskSetup:
       filesystems:
@@ -431,7 +432,7 @@ spec:
           mv /var/lib/ /var/lib/-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p /data-small/var/lib && ln -s /data-small/var/lib /var/lib/ ;
         else
-          echo "/var/lib/ already symlnk" ;
+          echo "/var/lib/ already symlink" ;
       fi
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:

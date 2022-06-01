@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220524192516-7918d6e69552
+	github.com/aws/cluster-api-provider-cloudstack v0.4.4
 	github.com/aws/eks-anywhere-packages v0.1.1
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
@@ -160,6 +160,7 @@ require (
 
 // TODO: Once the repo is public, remove this so we use a versioned module
 replace (
+	github.com/aws/cluster-api-provider-cloudstack => github.com/wanyufe/cluster-api-provider-cloudstack v0.4.5-rc2.0.20220601153610-4f3e7128e44b
 	github.com/aws/eks-anywhere/release => ./release
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
 	// Fixing GMS-2022-20): this dependency comes from the cluster-api module.

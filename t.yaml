@@ -1,0 +1,182 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/paused: "true"
+  name: wanyufe
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 172.31.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 192.168.1.141:6443
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: wanyufe-cp
+  datacenterRef:
+    kind: CloudStackDatacenterConfig
+    name: wanyufe
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: wanyufe-etcd
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: wanyufe
+  workerNodeGroupConfigurations:
+  - count: 1
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: wanyufe
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDatacenterConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/paused: "true"
+  name: wanyufe
+  namespace: default
+spec:
+  account: admin
+  domain: ROOT
+  managementApiEndpoint: http://192.168.1.130:8080/client/api
+  zones:
+  - name: zone1
+    network:
+      name: GuestNet1
+  - name: zone2
+    network:
+      name: GuestNet2
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/control-plane: "true"
+  name: wanyufe-cp
+  namespace: default
+spec:
+  ISOAttachment:
+    device: /dev/sr0
+    mountPath: /mnt/cloudstack-scripts/
+    name: cloudstack-scripts.iso
+    postKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    preKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    runPostKubeadmCommand: true
+    runPreKubeadmCommand: true
+  computeOffering:
+    name: Large Instance
+  diskOffering:
+    customSizeInGB: 0
+    device: /dev/vdb
+    filesystem: ext4
+    label: my_disk
+    mountPath: /data
+    name: Medium
+  symlinks:
+    /var/log/kubernetes: /data/var/log/kubernetes
+  template:
+    name: rhel-8-kube-v1.21.5
+  users:
+  - name: wanyufe
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDXbSgyXZnqzGeCUYZZvxUUlltUW+3wOkyn1yHYAn2G4gM93s9ltqxhZcAOAxhIgj/pn14Nk57YvaD9pUDMAUHIG9im5pkREB1ehGK6zDQVoDAEXOXinTVKezdsXur+EIm4tMPqx1bmyozMK+rOqoJVErJRrDImciJWoqQ7Ezl42KDp8K/lZZtAmzPRv8MODpMAmnBtT/lE4s2QP5voIAS/fy5mTH0YqCIo31Knh1N4afXgUOtIXZrOC7Ngbyii+fzDnthYLRtNi9vwSgrUgjS+EZSX5wFgi/5BiC3m3zP9pvL9zyDvkSpNVc3q6SNG29vCmU0HP50/GQyDQ8CBEkYPwEbO+aAJ47UkO/R+YjN4RaNKfiYS3O36d0SWldqIrAyu99EH7bTog0DHibVqv2s08MMxQS9lDGoSsAOQkkHSAvysA0MSicfvbX9Zx4lqjcJJ3qsyKj0xsklPpoukeNt42ACijsJ6MHKcHqoIgvNXV8J4b9vq45KDKmuLEW0emM0=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/etcd: "true"
+  name: wanyufe-etcd
+  namespace: default
+spec:
+  ISOAttachment:
+    device: /dev/sr0
+    mountPath: /mnt/cloudstack-scripts/
+    name: cloudstack-scripts.iso
+    postKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    preKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    runPreKubeadmCommand: true
+  computeOffering:
+    name: Large Instance
+  diskOffering:
+    customSizeInGB: 0
+    device: /dev/vdb
+    filesystem: ext4
+    label: my_disk
+    mountPath: /data
+    name: Small
+  symlinks:
+    /var/lib: /data/var/lib
+  template:
+    name: rhel-8-kube-v1.21.5
+  userCustomDetails:
+    foo: bar
+  users:
+  - name: wanyufe
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDXbSgyXZnqzGeCUYZZvxUUlltUW+3wOkyn1yHYAn2G4gM93s9ltqxhZcAOAxhIgj/pn14Nk57YvaD9pUDMAUHIG9im5pkREB1ehGK6zDQVoDAEXOXinTVKezdsXur+EIm4tMPqx1bmyozMK+rOqoJVErJRrDImciJWoqQ7Ezl42KDp8K/lZZtAmzPRv8MODpMAmnBtT/lE4s2QP5voIAS/fy5mTH0YqCIo31Knh1N4afXgUOtIXZrOC7Ngbyii+fzDnthYLRtNi9vwSgrUgjS+EZSX5wFgi/5BiC3m3zP9pvL9zyDvkSpNVc3q6SNG29vCmU0HP50/GQyDQ8CBEkYPwEbO+aAJ47UkO/R+YjN4RaNKfiYS3O36d0SWldqIrAyu99EH7bTog0DHibVqv2s08MMxQS9lDGoSsAOQkkHSAvysA0MSicfvbX9Zx4lqjcJJ3qsyKj0xsklPpoukeNt42ACijsJ6MHKcHqoIgvNXV8J4b9vq45KDKmuLEW0emM0=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: wanyufe
+  namespace: default
+spec:
+  ISOAttachment:
+    device: /dev/sr0
+    mountPath: /mnt/cloudstack-scripts/
+    name: cloudstack-scripts.iso
+    postKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    preKubeadmCommandArgs:
+    - --dryrun=true
+    - --env=prod
+    runPostKubeadmCommand: true
+    runPreKubeadmCommand: true
+  computeOffering:
+    name: Large Instance
+  diskOffering:
+    customSizeInGB: 0
+    device: /dev/vdb
+    filesystem: ext4
+    label: my_disk
+    mountPath: /data
+    name: Small
+  symlinks:
+    /var/log/containers: /data/var/log/containers
+    /var/log/pods: /data/var/log/pods
+  template:
+    name: rhel-8-kube-v1.21.5
+  userCustomDetails:
+    foo: bar
+  users:
+  - name: wanyufe
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDXbSgyXZnqzGeCUYZZvxUUlltUW+3wOkyn1yHYAn2G4gM93s9ltqxhZcAOAxhIgj/pn14Nk57YvaD9pUDMAUHIG9im5pkREB1ehGK6zDQVoDAEXOXinTVKezdsXur+EIm4tMPqx1bmyozMK+rOqoJVErJRrDImciJWoqQ7Ezl42KDp8K/lZZtAmzPRv8MODpMAmnBtT/lE4s2QP5voIAS/fy5mTH0YqCIo31Knh1N4afXgUOtIXZrOC7Ngbyii+fzDnthYLRtNi9vwSgrUgjS+EZSX5wFgi/5BiC3m3zP9pvL9zyDvkSpNVc3q6SNG29vCmU0HP50/GQyDQ8CBEkYPwEbO+aAJ47UkO/R+YjN4RaNKfiYS3O36d0SWldqIrAyu99EH7bTog0DHibVqv2s08MMxQS9lDGoSsAOQkkHSAvysA0MSicfvbX9Zx4lqjcJJ3qsyKj0xsklPpoukeNt42ACijsJ6MHKcHqoIgvNXV8J4b9vq45KDKmuLEW0emM0=
+
+---

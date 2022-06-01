@@ -112,6 +112,20 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateDomainPresent(arg0, arg1 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateDomainPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateDomainPresent), arg0, arg1)
 }
 
+// ValidateISOAttachmentPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateISOAttachmentPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackISOAttachment) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateISOAttachmentPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateISOAttachmentPresent indicates an expected call of ValidateISOAttachmentPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateISOAttachmentPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateISOAttachmentPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateISOAttachmentPresent), arg0, arg1, arg2)
+}
+
 // ValidateNetworkPresent mocks base method.
 func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackZone, arg3 []v1alpha1.CloudStackResourceIdentifier, arg4 string, arg5 bool) error {
 	m.ctrl.T.Helper()
