@@ -785,7 +785,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -878,7 +878,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,

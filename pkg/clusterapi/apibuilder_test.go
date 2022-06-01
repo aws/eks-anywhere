@@ -65,6 +65,9 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 					},
 				},
 				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+					Endpoint: &v1alpha1.Endpoint{
+						Host: "1.2.3.4",
+					},
 					Count: 3,
 				},
 				KubernetesVersion: "1.21",
@@ -254,21 +257,6 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	return &bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -312,21 +300,6 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 	want := wantKubeadmConfigTemplate()
 	tt.Expect(got).To(Equal(want))
-}
-
-func TestKubeadmConfigTemplateWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmConfigTemplate(g.clusterSpec, *g.workerNodeGroupConfig)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmConfigTemplate()
-			want.Spec.Template.Spec.Files = tt.wantFiles
-			want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
-			g.Expect(got).To(Equal(want))
-		})
-	}
 }
 
 func TestMachineDeployment(t *testing.T) {
