@@ -110,8 +110,6 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
-
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
 	if err := p.configureSshKeys(); err != nil {
