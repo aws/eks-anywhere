@@ -14,6 +14,7 @@ func nutanixEntry() *ConfigManagerEntry {
 		},
 		Processors: []ParsedProcessor{
 			processNutanixDatacenter,
+			machineConfigsProcessor(processNutanixMachineConfig),
 		},
 		Validations: []Validation{
 			func(c *Config) error {
@@ -39,4 +40,25 @@ func processNutanixDatacenter(c *Config, objects ObjectLookup) {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
 		c.NutanixDatacenter = datacenter.(*anywherev1.NutanixDatacenterConfig)
 	}
+}
+
+func processNutanixMachineConfig(c *Config, objects ObjectLookup, machineRef *anywherev1.Ref) {
+	if machineRef == nil {
+		return
+	}
+
+	if machineRef.Kind != anywherev1.NutanixMachineConfigKind {
+		return
+	}
+
+	if c.NutanixMachineConfigs == nil {
+		c.NutanixMachineConfigs = map[string]*anywherev1.NutanixMachineConfig{}
+	}
+
+	m := objects.GetFromRef(c.Cluster.APIVersion, *machineRef)
+	if m == nil {
+		return
+	}
+
+	c.NutanixMachineConfigs[m.GetName()] = m.(*anywherev1.NutanixMachineConfig)
 }

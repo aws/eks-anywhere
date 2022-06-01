@@ -17,13 +17,16 @@ type NutanixDatacenterConfigSpec struct {
 	// NutanixPort is the Port of Nutanix Prism Central
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=9440
-	NutanixPort     int    `json:"nutanixPort"`
+	NutanixPort int `json:"nutanixPort"`
 	// NutanixUser is the User name for Nutanix Prism Central
 	// +kubebuilder:validation:Required
-	NutanixUser     string `json:"nutanixUser"`
+	NutanixUser string `json:"nutanixUser"`
 	// NutanixPassword is the Password for Nutanix Prism Central
 	// +kubebuilder:validation:Required
 	NutanixPassword string `json:"nutanixPassword"`
+	// NutanixInsecure is the protocol type to connect to Nutanix Prism Central
+	// +kubebuilder:validation:Required
+	NutanixInsecure bool `json:"nutanixInsecure"`
 }
 
 // NutanixDatacenterConfigStatus defines the observed state of NutanixDatacenterConfig

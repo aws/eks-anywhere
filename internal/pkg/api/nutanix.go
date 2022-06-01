@@ -1,0 +1,109 @@
+package api
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+
+	"sigs.k8s.io/yaml"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/templater"
+)
+
+type NutanixConfig struct {
+	datacenterConfig *anywherev1.NutanixDatacenterConfig
+	machineConfigs   map[string]*anywherev1.NutanixMachineConfig
+}
+
+type NutanixFiller func(config NutanixConfig)
+
+func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
+	config, err := cluster.ParseConfigFromFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	nutanixConfig := NutanixConfig{
+		datacenterConfig: config.NutanixDatacenter,
+		machineConfigs:   config.NutanixMachineConfigs,
+	}
+
+	for _, f := range fillers {
+		f(nutanixConfig)
+	}
+
+	resources := make([]interface{}, 0, len(nutanixConfig.machineConfigs)+1)
+	resources = append(resources, nutanixConfig.datacenterConfig)
+
+	for _, m := range nutanixConfig.machineConfigs {
+		resources = append(resources, m)
+	}
+
+	yamlResources := make([][]byte, 0, len(resources))
+	for _, r := range resources {
+		yamlContent, err := yaml.Marshal(r)
+		if err != nil {
+			return nil, fmt.Errorf("marshalling nutanix resource: %v", err)
+		}
+
+		yamlResources = append(yamlResources, yamlContent)
+	}
+
+	return templater.AppendYamlResources(yamlResources...), nil
+}
+
+func WithNutanixStringFromEnvVar(envVar string, opt func(string) NutanixFiller) NutanixFiller {
+	return opt(os.Getenv(envVar))
+}
+
+func WithNutanixIntFromEnvVar(envVar string, opt func(int) NutanixFiller) NutanixFiller {
+	intVar, _ := strconv.Atoi(os.Getenv(envVar))
+	return opt(intVar)
+}
+
+func WithNutanixInt32FromEnvVar(envVar string, opt func(int32) NutanixFiller) NutanixFiller {
+	intVar, _ := strconv.Atoi(os.Getenv(envVar))
+	return opt(int32(intVar))
+}
+
+func WithNutanixBoolFromEnvVar(envVar string, opt func(bool) NutanixFiller) NutanixFiller {
+	return opt(os.Getenv(envVar) == "true")
+}
+
+func WithNutanixEndpoint(value string) NutanixFiller {
+	return func(config NutanixConfig) {
+		config.datacenterConfig.Spec.NutanixEndpoint = value
+	}
+}
+func WithNutanixPort(value int) NutanixFiller {
+	return func(config NutanixConfig) {
+		config.datacenterConfig.Spec.NutanixPort = value
+	}
+}
+
+func WithNutanixUser(value string) NutanixFiller {
+	return func(config NutanixConfig) {
+		config.datacenterConfig.Spec.NutanixUser = value
+	}
+}
+func WithNutanixPwd(value string) NutanixFiller {
+	return func(config NutanixConfig) {
+		config.datacenterConfig.Spec.NutanixPassword = value
+	}
+}
+
+// func WithNutanixInsure(value bool) NutanixFiller {
+// 	return func(config NutanixConfig) {
+// 		config.datacenterConfig.Spec.NutanixEndpoint = value
+// 	}
+// }
+
+func WithNutanixVCPUsPerSocket(vcpusPerSocket int32) NutanixFiller {
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.VCPUsPerSocket = vcpusPerSocket
+		}
+	}
+}
