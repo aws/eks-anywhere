@@ -293,7 +293,7 @@ func (p *cloudstackProvider) processSshKeysForUsers(users []v1alpha1.UserConfigu
 				}
 			} else {
 				if len(generatedKey) == 0 {
-					logger.Info("Provided control plane sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
+					logger.Info("Provided sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
 					generatedKey, err = common.GenerateSSHAuthKey(p.writer)
 					if err != nil {
 						return "", err

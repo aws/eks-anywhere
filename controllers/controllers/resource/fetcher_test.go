@@ -349,6 +349,10 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 						},
 					},
 				},
+				users: []kubeadmv1.User{
+					{Name: "user1", SSHAuthorizedKeys: []string{"ssh-key1"}},
+					{Name: "user2", SSHAuthorizedKeys: []string{"ssh-key2-1", "ssh-key2-2"}},
+				},
 			},
 			want: &anywherev1.CloudStackMachineConfig{
 				Spec: anywherev1.CloudStackMachineConfigSpec{
@@ -366,6 +370,10 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 					Affinity:          "anti",
 					AffinityGroupIds:  []string{"c", "d"},
 					UserCustomDetails: map[string]string{"foo": "bar"},
+					Users: []anywherev1.UserConfiguration{
+						{Name: "user1", SshAuthorizedKeys: []string{"ssh-key1"}},
+						{Name: "user2", SshAuthorizedKeys: []string{"ssh-key2-1", "ssh-key2-2"}},
+					},
 				},
 			},
 		},
