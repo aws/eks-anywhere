@@ -91,7 +91,13 @@ func (ggc *githubClient) AddDeployKeyToRepo(ctx context.Context, owner, repo str
 // file must be added to it via the github api before it can be successfully cloned.
 func (g *GoGithub) CreateRepo(ctx context.Context, opts git.CreateRepoOpts) (repository *git.Repository, err error) {
 	logger.V(3).Info("Attempting to create new Github repo", "repo", opts.Name, "owner", opts.Owner)
-	r := &goGithub.Repository{Name: &opts.Name, Private: &opts.Privacy, Description: &opts.Description}
+	autoInit := true
+	r := &goGithub.Repository{
+		Name:        &opts.Name,
+		Private:     &opts.Privacy,
+		Description: &opts.Description,
+		AutoInit:    &autoInit,
+	}
 
 	org := ""
 	if !opts.Personal {
