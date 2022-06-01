@@ -540,7 +540,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -1253,7 +1253,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -1966,7 +1966,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
@@ -2670,7 +2670,7 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: boots
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
           manifest: {}
         cfssl:
           arch:
