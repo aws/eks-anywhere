@@ -151,10 +151,6 @@ func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 	}
 }
 
-func (c *ClusterManager) SetMaxWaitPerMachine(maxWaitPerMachine time.Duration) {
-	c.machineMaxWait = maxWaitPerMachine
-}
-
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}

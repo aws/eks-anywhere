@@ -69,7 +69,7 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.ClusterManager).To(BeNil())
+	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithMultipleDependencies(t *testing.T) {

@@ -23,7 +23,7 @@ type CliConfig struct {
 	MaxWaitPerMachine   time.Duration
 }
 
-const defaultMaxWaitPerMachine = 10 * time.Minute
+const DefaultMaxWaitPerMachine = 10 * time.Minute
 
 func GetMaxWaitPerMachine() time.Duration {
 	if env, found := os.LookupEnv(EksaReplicasReadyTimeoutEnv); found {
@@ -31,8 +31,8 @@ func GetMaxWaitPerMachine() time.Duration {
 			return duration
 		} else {
 			logger.V(3).Info(fmt.Sprintf("Invalid EKSA_REPLICAS_READY_TIMEOUT value: %s Use the default timeout: %s",
-				env, defaultMaxWaitPerMachine.String()))
+				env, DefaultMaxWaitPerMachine.String()))
 		}
 	}
-	return defaultMaxWaitPerMachine
+	return DefaultMaxWaitPerMachine
 }

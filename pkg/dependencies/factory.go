@@ -638,8 +638,9 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
-		if f.dependencies.CliConfig == nil {
-			return nil
+		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
+		if f.dependencies.CliConfig != nil {
+			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
 		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
@@ -651,7 +652,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			f.dependencies.CliConfig.MaxWaitPerMachine,
+			maxWaitPerMachine,
 		)
 		return nil
 	})
@@ -660,11 +661,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 }
 
 func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		f.dependencies.CliConfig = cliConfig
-		return nil
-	})
-
+	f.dependencies.CliConfig = cliConfig
 	return f
 }
 
