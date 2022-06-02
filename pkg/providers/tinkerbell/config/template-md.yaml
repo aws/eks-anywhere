@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        cluster.x-k8s.io/cluster-name: {{.clusterName}}
+        cluster.x-k8s.io/cluster-nameCI: {{.clusterName}}
         pool: {{.workerNodeGroupName}}
     spec:
       bootstrap:
@@ -60,6 +60,14 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if (eq .format "bottlerocket") }}
+        pause:
+          imageRepository: {{.pauseRepository}}
+          imageTag: {{.pauseVersion}}
+        bottlerocketBootstrap:
+          imageRepository: {{.bottlerocketBootstrapRepository}}
+          imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: PROVIDER_ID
