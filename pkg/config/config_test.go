@@ -1,4 +1,4 @@
-package cmd_test
+package config_test
 
 import (
 	"os"
@@ -7,7 +7,6 @@ import (
 
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd"
 	"github.com/aws/eks-anywhere/pkg/config"
 )
 
@@ -24,7 +23,7 @@ func newTest(t *testing.T) *testSetup {
 func TestGetMaxWaitPerMachineDefault(t *testing.T) {
 	tt := newTest(t)
 
-	maxWaitPerMachine := cmd.GetMaxWaitPerMachine()
+	maxWaitPerMachine := config.GetMaxWaitPerMachine()
 	tt.Expect(maxWaitPerMachine).To(Equal(10 * time.Minute))
 }
 
@@ -35,7 +34,7 @@ func TestGetMaxWaitPerMachineFromValidEnv(t *testing.T) {
 	os.Setenv(config.EksaReplicasReadyTimeoutEnv, "15m")
 	defer os.Setenv(config.EksaReplicasReadyTimeoutEnv, oldEnv)
 
-	maxWaitPerMachine := cmd.GetMaxWaitPerMachine()
+	maxWaitPerMachine := config.GetMaxWaitPerMachine()
 	tt.Expect(maxWaitPerMachine).To(Equal(15 * time.Minute))
 }
 
@@ -46,6 +45,6 @@ func TestGetMaxWaitPerMachineFromInvalidEnv(t *testing.T) {
 	os.Setenv(config.EksaReplicasReadyTimeoutEnv, "15x")
 	defer os.Setenv(config.EksaReplicasReadyTimeoutEnv, oldEnv)
 
-	maxWaitPerMachine := cmd.GetMaxWaitPerMachine()
+	maxWaitPerMachine := config.GetMaxWaitPerMachine()
 	tt.Expect(maxWaitPerMachine).To(Equal(10 * time.Minute))
 }

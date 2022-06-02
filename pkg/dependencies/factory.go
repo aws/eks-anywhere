@@ -72,6 +72,7 @@ type Dependencies struct {
 	FileReader                *files.Reader
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
+	CliConfig                 *config.CliConfig
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -637,6 +638,9 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
+		if f.dependencies.CliConfig == nil {
+			return nil
+		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			&clusterManagerClient{
@@ -647,6 +651,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			f.dependencies.CliConfig.MaxWaitPerMachine,
 		)
 		return nil
 	})
@@ -654,13 +659,9 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
-func (f *Factory) WithMaxWaitPerMachine(maxWaitPerMachine time.Duration) *Factory {
+func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ClusterManager != nil {
-			return nil
-		}
-
-		f.dependencies.ClusterManager.SetMaxWaitPerMachine(maxWaitPerMachine)
+		f.dependencies.CliConfig = cliConfig
 		return nil
 	})
 

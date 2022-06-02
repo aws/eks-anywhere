@@ -102,8 +102,8 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithMaxWaitPerMachine(cliConfig.MaxWaitPerMachine).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().

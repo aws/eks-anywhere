@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -21,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -40,8 +38,6 @@ type createClusterOptions struct {
 	setupTinkerbell  bool
 	installPackages  string
 }
-
-const defaultMaxWaitPerMachine = 10 * time.Minute
 
 var cc = &createClusterOptions{}
 
@@ -149,8 +145,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithMaxWaitPerMachine(cliConfig.MaxWaitPerMachine).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -248,19 +244,7 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
 		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
 	}
-	cliConfig.MaxWaitPerMachine = GetMaxWaitPerMachine()
+	cliConfig.MaxWaitPerMachine = config.GetMaxWaitPerMachine()
 
 	return cliConfig
-}
-
-func GetMaxWaitPerMachine() time.Duration {
-	if env, found := os.LookupEnv(config.EksaReplicasReadyTimeoutEnv); found {
-		if duration, err := time.ParseDuration(env); err == nil {
-			return duration
-		} else {
-			logger.V(3).Info(fmt.Sprintf("Invalid EKSA_REPLICAS_READY_TIMEOUT value: %s Use the default timeout: %s",
-				env, defaultMaxWaitPerMachine.String()))
-		}
-	}
-	return defaultMaxWaitPerMachine
 }
