@@ -8,7 +8,6 @@ import (
 
 // Machine is a machine configuration with optional BMC interface configuration.
 type Machine struct {
-	ID          string      `csv:"id"`
 	Hostname    string      `csv:"hostname"`
 	IPAddress   string      `csv:"ip_address"`
 	Netmask     string      `csv:"netmask"`
@@ -16,19 +15,23 @@ type Machine struct {
 	Nameservers Nameservers `csv:"nameservers"`
 	MACAddress  string      `csv:"mac"`
 
+	// Disk used to populate the default workflow actions.
+	// Currently needs to be the same for all hardware residing in the same group where a group
+	// is either: control plane hardwar, external etcd hard, or the definable worker node groups.
+	Disk string `csv:"disk"`
+
 	// Labels to be applied to the Hardware resource.
 	Labels Labels `csv:"labels"`
 
 	BMCIPAddress string `csv:"bmc_ip"`
 	BMCUsername  string `csv:"bmc_username"`
 	BMCPassword  string `csv:"bmc_password"`
-	BMCVendor    string `csv:"bmc_vendor"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields
 // contain non-empty strings.
 func (m *Machine) HasBMC() bool {
-	return m.BMCIPAddress != "" || m.BMCUsername != "" || m.BMCPassword != "" || m.BMCVendor != ""
+	return m.BMCIPAddress != "" || m.BMCUsername != "" || m.BMCPassword != ""
 }
 
 // NameserversSeparator is used to unmarshal Nameservers.
@@ -53,6 +56,9 @@ func (n *Nameservers) MarshalCSV() (string, error) {
 	return n.String(), nil
 }
 
+// LabelSSeparator is used to separate key value label pairs.
+const LabelsSeparator = "|"
+
 // Labels defines a lebsl set. It satisfies https://pkg.go.dev/k8s.io/apimachinery/pkg/labels#Labels.
 type Labels map[string]string
 
@@ -72,13 +78,13 @@ func (l *Labels) UnmarshalCSV(s string) error {
 	*l = make(Labels)
 
 	// Cater for no labels being specified.
-	split := strings.Split(s, ",")
+	split := strings.Split(s, LabelsSeparator)
 	if len(split) == 1 && split[0] == "" {
 		return nil
 	}
 
-	for _, pair := range strings.Split(s, ",") {
-		keyValue := strings.Split(pair, "=")
+	for _, pair := range split {
+		keyValue := strings.Split(strings.TrimSpace(pair), "=")
 		if len(keyValue) != 2 {
 			return fmt.Errorf("badly formatted key-value pair: %v", pair)
 		}
@@ -95,7 +101,7 @@ func (l Labels) String() string {
 	}
 	// Sort for determinism.
 	sort.StringSlice(labels).Sort()
-	return strings.Join(labels, ",")
+	return strings.Join(labels, LabelsSeparator)
 }
 
 func newEmptyFieldError(s string) error {

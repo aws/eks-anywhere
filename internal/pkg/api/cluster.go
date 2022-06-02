@@ -132,6 +132,14 @@ func WithExternalEtcdTopology(count int) ClusterFiller {
 	}
 }
 
+func WithEtcdCountIfExternal(count int) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ExternalEtcdConfiguration != nil {
+			c.Spec.ExternalEtcdConfiguration.Count = count
+		}
+	}
+}
+
 func WithExternalEtcdMachineRef(kind string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.ExternalEtcdConfiguration == nil {

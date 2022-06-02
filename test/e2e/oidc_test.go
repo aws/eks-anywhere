@@ -83,6 +83,19 @@ func TestVSphereKubernetes121OIDC(t *testing.T) {
 	runOIDCFlow(test)
 }
 
+func TestSnowKubernetes121OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu121()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runOIDCFlow(test)
+}
+
 func TestCloudStackKubernetes120OIDC(t *testing.T) {
 	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(

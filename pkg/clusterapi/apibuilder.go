@@ -162,10 +162,6 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 	}
 
-	if err := SetRegistryMirrorInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
-	}
-
 	SetIdentityAuthInKubeadmControlPlane(kcp, clusterSpec)
 
 	return kcp, nil
@@ -205,10 +201,6 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 				},
 			},
 		},
-	}
-
-	if err := SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
-		return nil, err
 	}
 
 	return kct, nil

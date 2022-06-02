@@ -3,6 +3,7 @@ package hardware
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -43,13 +44,14 @@ func (mv *DefaultMachineValidator) Register(v ...MachineAssertion) {
 	mv.assertions = append(mv.assertions, v...)
 }
 
+var (
+	linuxPathRegex      = `^(/dev/[\w-]+)+$`
+	linuxPathValidation = regexp.MustCompile(linuxPathRegex)
+)
+
 // StaticMachineAssertions defines all static data assertions performed on a Machine.
 func StaticMachineAssertions() MachineAssertion {
 	return func(m Machine) error {
-		if m.ID == "" {
-			return newEmptyFieldError("ID")
-		}
-
 		if m.IPAddress == "" {
 			return newEmptyFieldError("IPAddress")
 		}
@@ -96,6 +98,13 @@ func StaticMachineAssertions() MachineAssertion {
 			return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
 		}
 
+		if !linuxPathValidation.MatchString(m.Disk) {
+			return fmt.Errorf(
+				"disk must be a valid linux path (\"%v\")",
+				linuxPathRegex,
+			)
+		}
+
 		for key, value := range m.Labels {
 			if err := validateLabelKey(key); err != nil {
 				return err
@@ -122,26 +131,7 @@ func StaticMachineAssertions() MachineAssertion {
 			if m.BMCPassword == "" {
 				return newEmptyFieldError("BMCPassword")
 			}
-
-			if m.BMCVendor == "" {
-				return newEmptyFieldError("BMCVendor")
-			}
 		}
-
-		return nil
-	}
-}
-
-// UniqueIDs asserts a given Machine instance has a unique ID field relative to previously seen Machine instances.
-// It is not thread safe. It has a 1 time use.
-func UniqueIDs() MachineAssertion {
-	ids := make(map[string]struct{})
-	return func(m Machine) error {
-		if _, seen := ids[m.ID]; seen {
-			return fmt.Errorf("duplicate ID: %v", m.ID)
-		}
-
-		ids[m.ID] = struct{}{}
 
 		return nil
 	}
@@ -203,7 +193,7 @@ func UniqueBMCIPAddress() MachineAssertion {
 		}
 
 		if m.BMCIPAddress == "" {
-			return fmt.Errorf("missing BMCIPAddress (id=\"%v\")", m.ID)
+			return fmt.Errorf("missing BMCIPAddress (mac=\"%v\")", m.MACAddress)
 		}
 
 		if _, seen := ips[m.BMCIPAddress]; seen {
@@ -221,7 +211,6 @@ func UniqueBMCIPAddress() MachineAssertion {
 func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
 	validator.Register([]MachineAssertion{
 		StaticMachineAssertions(),
-		UniqueIDs(),
 		UniqueIPAddress(),
 		UniqueMACAddress(),
 		UniqueHostnames(),

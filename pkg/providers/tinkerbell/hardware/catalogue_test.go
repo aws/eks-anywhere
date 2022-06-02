@@ -19,23 +19,24 @@ metadata:
   name: worker1
   namespace: eksa-system
 spec:
-  bmcRef: bmc-worker1
-  id: b14d7f5b-8903-4a4c-b38d-55889ba820ba
+  metadata:
+    instance:
+      id: "foo"
 status: {}
 ---
 apiVersion: tinkerbell.org/v1alpha1
-kind: BMC
+kind: BaseboardManagement
 metadata:
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
   name: bmc-worker1
   namespace: eksa-system
 spec:
-  authSecretRef:
-    name: bmc-worker1-auth
-    namespace: eksa-system
-  host: 192.168.0.10
-  vendor: supermicro
+  connection:
+    authSecretRef:
+      name: bmc-worker1-auth
+      namespace: eksa-system
+    host: 192.168.0.10
 status: {}
 ---
 apiVersion: v1

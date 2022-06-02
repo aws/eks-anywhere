@@ -111,6 +111,12 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	return err
 }
 
+func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
+	params := []string{"install", chart, ociURI, "--version", version, insecureSkipVerifyFlag, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath}
+	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	return err
+}
+
 func (h *Helm) url(originalURL string) string {
 	return urls.ReplaceHost(originalURL, h.registryMirror)
 }

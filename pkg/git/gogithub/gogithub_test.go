@@ -312,6 +312,55 @@ func TestGoGithubDeleteRepoFail(t *testing.T) {
 	}
 }
 
+func TestGoGithubAddDeployKeySuccess(t *testing.T) {
+	type fields struct {
+		opts gogithub.Options
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    git.AddDeployKeyOpts
+		wantErr error
+	}{
+		{
+			name: "github repo deleted successfully",
+			args: git.AddDeployKeyOpts{
+				Owner:      "owner1",
+				Repository: "repo1",
+				Key:        "KEY STRING YO",
+				Title:      "My test key",
+				ReadOnly:   false,
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+			client := mockGoGithub.NewMockClient(mockCtrl)
+
+			k := &github.Key{
+				Key:      &tt.args.Key,
+				Title:    &tt.args.Title,
+				ReadOnly: &tt.args.ReadOnly,
+			}
+
+			client.EXPECT().AddDeployKeyToRepo(ctx, tt.args.Owner, tt.args.Repository, k).Return(tt.wantErr)
+
+			g := &gogithub.GoGithub{
+				Opts:   tt.fields.opts,
+				Client: client,
+			}
+			err := g.AddDeployKeyToRepo(ctx, tt.args)
+			if err != tt.wantErr {
+				t.Errorf("AddDeployKeyToRepo() got error: %v want error: %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestGoGithub_CheckAccessTokenPermissions(t *testing.T) {
 	type fields struct {
 		opts gogithub.Options
