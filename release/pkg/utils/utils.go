@@ -27,7 +27,6 @@ import (
 const hexAlphabet = "0123456789abcdef"
 
 func ExecCommand(cmd *exec.Cmd) (string, error) {
-	fmt.Println(cmd.String())
 	commandOutput, err := cmd.CombinedOutput()
 	commandOutputStr := strings.TrimSpace(string(commandOutput))
 	if err != nil {
