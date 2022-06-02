@@ -98,7 +98,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
+func WithHardware(requiredCount int) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
 
@@ -108,20 +108,18 @@ func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 
 		var count int
 		for id, h := range hardwarePool {
-			if strings.ToLower(h.BMCVendor) == vendor || vendor == api.HardwareVendorUnspecified {
-				if _, exists := e.TestHardware[id]; !exists {
-					count++
-					e.TestHardware[id] = h
-				}
+			if _, exists := e.TestHardware[id]; !exists {
+				count++
+				e.TestHardware[id] = h
+			}
 
-				if count == requiredCount {
-					break
-				}
+			if count == requiredCount {
+				break
 			}
 		}
 
 		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
+			e.T.Errorf("this test requires at least %d piece(s) of hardware", requiredCount)
 		}
 	}
 }
@@ -281,7 +279,14 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
-	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider))
+	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider)+3)
+	// This defaults all tests to a 1:1:1 configuration. Since all the fillers defined on each test are run
+	// after these 3, if the tests is explicit about any of these, the defaults will be overwritten
+	// (@g-gaston) This is a temporary fix to avoid overloading the CI system and we should remove it once we
+	// stabilize the test runs
+	clusterConfigFillers = append(clusterConfigFillers,
+		api.WithControlPlaneCount(1), api.WithWorkerNodeCount(1), api.WithEtcdCountIfExternal(1),
+	)
 	clusterConfigFillers = append(clusterConfigFillers, e.clusterFillers...)
 	clusterConfigFillers = append(clusterConfigFillers, clusterFillersFromProvider...)
 	e.ClusterConfigB = e.customizeClusterConfig(e.ClusterConfigLocation, clusterConfigFillers...)

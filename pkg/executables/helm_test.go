@@ -154,3 +154,17 @@ func TestHelmGetValueArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestHelmInstallChartWithValuesFile(t *testing.T) {
+	tt := newHelmTest(t)
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	valuesFileName := "values.yaml"
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--insecure-skip-tls-verify", "--values", valuesFileName, "--kubeconfig", kubeconfig,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
+}

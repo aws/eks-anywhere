@@ -623,10 +623,10 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
 		},
 		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Spec.Spec.Spec.DiskOffering.MountPath,
-		Device:     csMachineTemplate.Spec.Spec.Spec.DiskOffering.Device,
-		Filesystem: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Filesystem,
-		Label:      csMachineTemplate.Spec.Spec.Spec.DiskOffering.Label,
+		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
+		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
@@ -637,6 +637,21 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	}
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
+	}
+	if csSpec.Spec.Symlinks == nil {
+		csSpec.Spec.Symlinks = map[string]string{}
+	}
+	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix], ",") {
+		keyValueStr = strings.TrimSpace(keyValueStr)
+		if len(keyValueStr) == 0 {
+			continue
+		}
+		key, value, err := parseKeyValue(keyValueStr)
+		if err != nil {
+			return nil, err
+		}
+
+		csSpec.Spec.Symlinks[key] = value
 	}
 	return csSpec, nil
 }
@@ -659,4 +674,12 @@ func convertStringToLabelsMap(labels string) map[string]string {
 		labelsMap[pair[0]] = pair[1]
 	}
 	return labelsMap
+}
+
+func parseKeyValue(keyValueStr string) (key string, value string, err error) {
+	keyV := strings.Split(keyValueStr, ":")
+	if len(keyV) != 2 {
+		return "", "", fmt.Errorf("symlinks: %s is not key:value format", keyV)
+	}
+	return keyV[0], keyV[1], nil
 }

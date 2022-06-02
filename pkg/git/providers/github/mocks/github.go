@@ -36,6 +36,20 @@ func (m *MockGithubClient) EXPECT() *MockGithubClientMockRecorder {
 	return m.recorder
 }
 
+// AddDeployKeyToRepo mocks base method.
+func (m *MockGithubClient) AddDeployKeyToRepo(arg0 context.Context, arg1 git.AddDeployKeyOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddDeployKeyToRepo", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddDeployKeyToRepo indicates an expected call of AddDeployKeyToRepo.
+func (mr *MockGithubClientMockRecorder) AddDeployKeyToRepo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddDeployKeyToRepo", reflect.TypeOf((*MockGithubClient)(nil).AddDeployKeyToRepo), arg0, arg1)
+}
+
 // AuthenticatedUser mocks base method.
 func (m *MockGithubClient) AuthenticatedUser(arg0 context.Context) (*github.User, error) {
 	m.ctrl.T.Helper()

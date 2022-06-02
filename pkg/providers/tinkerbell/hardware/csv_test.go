@@ -31,26 +31,49 @@ func TestCSVReaderReads(t *testing.T) {
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
 }
 
-func TestCSVReaderReadsWithNoIDSpecified(t *testing.T) {
+func TestCSVReaderWithMultipleLabels(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	buf := NewBufferedCSV()
 
 	expect := NewValidMachine()
-	expect.ID = ""
+	expect.Labels["foo"] = "bar"
+	expect.Labels["qux"] = "baz"
 
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	const uuid = "unique-id"
-	reader, err := hardware.NewCSVReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
+	reader, err := hardware.NewCSVReader(buf.Buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
-
-	expect.ID = uuid // patch the expected machine with the expected uuid
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
+}
+
+func TestCSVReaderFromFile(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(machine).To(gomega.Equal(
+		hardware.Machine{
+			Labels:       map[string]string{"type": "cp"},
+			Nameservers:  []string{"1.1.1.1"},
+			Gateway:      "10.10.10.1",
+			Netmask:      "255.255.255.0",
+			IPAddress:    "10.10.10.10",
+			MACAddress:   "00:00:00:00:00:01",
+			Hostname:     "worker1",
+			Disk:         "/dev/sda",
+			BMCIPAddress: "192.168.0.10",
+			BMCUsername:  "Admin",
+			BMCPassword:  "admin",
+		},
+	))
 }
 
 func TestNewCSVReaderWithIOReaderError(t *testing.T) {

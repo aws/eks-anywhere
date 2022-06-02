@@ -53,11 +53,18 @@ func (p *Provider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spe
 }
 
 func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
 	// We want to validate cluster nodes are powered off.
 	// We wait on BMC status.powerState to check for power off.
 	bmcRefs := make([]string, 0, len(p.hardwares))
 	for _, hw := range p.hardwares {
 		bmcRefs = append(bmcRefs, hw.Spec.BmcRef)
+	}
+
+	if len(bmcRefs) == 0 {
+		return nil
 	}
 
 	// TODO (pokearu): The retry logic can be substituted by changing GetBmcsPowerState to use kubectl wait --for

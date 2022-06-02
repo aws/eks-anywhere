@@ -4,14 +4,12 @@ linkTitle = "EKS-A"
 
 +++
 
-{{< blocks/cover title="Amazon EKS Anywhere" image_anchor="top" height="min" >}}
-<p class="lead">Run EKS in your datacenter</p>
-<div class="mx-auto mt-5">
-	<a class="btn rounded-lg btn-primary" href="{{< relref "./docs/getting-started/" >}}">
-		Get Started
-	</a>
-</div>
-{{< /blocks/cover >}}
+{{< blocks/header >}}
+    <!-- This needs to be passed in as content because we can't use `relref` outside of the content dir -->
+    <a class="btn rounded-sm btn-warning" href="{{< relref `docs/getting-started/` >}}">
+        Get Started with EKS Anywhere
+    </a>
+{{< /blocks/header >}}
 
 {{< blocks/section color="white" class="w-75 mx-auto" >}}
 {{< blocks/feature title="" class="text-xl text-center mb-5" >}}
@@ -19,33 +17,14 @@ Amazon EKS Anywhere is an open-source deployment option for Amazon EKS that allo
 EKS Anywhere supports VMware vSphere as the first deployment target, with others coming in the near future, including bare metal coming in 2022.
 {{< /blocks/feature >}}
 
-{{< blocks/feature title="Simplify On-Premises Kubernetes Management" image="/images/thumbs-up.svg" order="left" >}}
+{{< blocks/feature title="Simplify On-Premises Kubernetes Management" image="/images/line-server-rack.svg" order="left" >}}
 Amazon EKS Anywhere helps simplify the creation and operation of on-premises Kubernetes clusters with default component configurations while providing tools for automating cluster management.
 {{< /blocks/feature >}}
 
-{{< blocks/feature title="One Stop Support" image="/images/cloud-disk.svg" order="right" >}}
+{{< blocks/feature title="One Stop Support" image="/images/line-container-cloud.svg" order="right" >}}
 AWS supports all Amazon EKS Anywhere components including the integrated 3rd-party software, so that customers can reduce their support costs and avoid maintenance of redundant open-source and third-party tools.
 {{< /blocks/feature >}}
 
-{{< blocks/feature title="Consistent and Reliable" image="/images/network.svg" order="left" >}}
+{{< blocks/feature title="Consistent and Reliable" image="/images/line-toolbox.svg" order="left" >}}
 Amazon EKS Anywhere gives you on-premises Kubernetes operational tooling that’s consistent with Amazon EKS. It builds on the strengths of Amazon EKS Distro and provides open-source software that’s up-to-date and patched, so you can have a Kubernetes environment on-premises that is more reliable than self-managed Kubernetes offerings.
 {{< /blocks/feature >}}
-
-{{< /blocks/section >}}
-
-{{< blocks/section section="td-vid-box py-0" >}}
-<div class="card card-image w-100" style="background-image: url(/images/containers-background.jpg);">
-    <div class="text-white text-left d-flex justify-content-center mx-auto align-items-center rgba-black-strong py-5 px-5 w-75"
-        style="max-width: 1000px;">
-        <div>
-            <h4><i style="color: orange;" class="fas fa-couch display-4"></i> Containers from the Couch</h4>
-            <p class="display-5 py-1">Come see EKS Anywhere in action with a demo and Q&A. We will create a cluster and show admin workflows for scaling, upgrading the cluster version, and GitOps management.</p>
-			<a class="btn rounded-lg btn-primary card-link" target="_blank" href="https://containersfromthecouch.com">Subscribe on YouTube</a>
-        </div>
-    </div>
-</div>
-{{< /blocks/section >}}
-
-{{< blocks/section height="auto" color="white" >}}
-
-{{< /blocks/section >}}

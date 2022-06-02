@@ -205,7 +205,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, skipPowerActions, setupTinkerbell, force bool) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -292,12 +292,13 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
+				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				time.Now,
 				skipIpCheck,
-				hardwareConfigFile,
 				setupTinkerbell,
 			)
 

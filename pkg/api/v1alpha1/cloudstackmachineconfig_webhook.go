@@ -40,6 +40,9 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
 	}
+	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+	}
 
 	return nil
 }
@@ -72,6 +75,13 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 			field.Invalid(field.NewPath("spec", "diskOffering", fieldName), fieldValue, err.Error()),
 		)
 	}
+	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
+		)
+	}
+
 	if len(allErrs) > 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 	}

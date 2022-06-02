@@ -141,7 +141,7 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 func WithUbuntu123() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines),
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu123Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
