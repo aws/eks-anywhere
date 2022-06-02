@@ -176,21 +176,13 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfigured}}
-    mountpath.diskoffering.{{$suffix}}: {{$disk.MountPath}}
-    device.diskoffering.{{$suffix}}: {{$disk.Device}}
-    filesystem.diskoffering.{{$suffix}}: {{$disk.Filesystem}}
-    label.diskoffering.{{$suffix}}: {{$disk.Label}}
+    diskoffering.{{$suffix}}: "{{.cloudstackDiskOfferingJsonStr | js}}"
 {{- end }}
 {{- if $isoConfigured}}
-    device.ISOAttachment.{{$suffix}}: {{$iso.Device}}
-    mountPath.ISOAttachment.{{$suffix}}: {{$iso.MountPath}}
-    runPreKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$iso.RunPreKubeadmCommand}}"
-    runPostKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$iso.RunPostKubeadmCommand}}"
-    preKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $iso.PreKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
-    postKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $iso.PostKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
+    ISOAttachment.{{$suffix}}: "{{.cloudstackISOAttachmentJsonStr | js}}"
 {{- end }}
 {{- if .cloudstackSymlinks }}
-    symlinks.{{$suffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+    symlinks.{{$suffix}}: "{{.cloudstackSymlinksJsonStr | js}}"
 {{- end}}
 spec:
   template:

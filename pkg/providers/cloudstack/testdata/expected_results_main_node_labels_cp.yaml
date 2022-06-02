@@ -46,10 +46,7 @@ metadata:
   name: test-control-plane-template-1234567890000
   namespace: eksa-system
   annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
 spec:
   template:
     spec:
@@ -436,10 +433,7 @@ metadata:
   name: test-etcd-template-1234567890000
   namespace: 'eksa-system'
   annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
 spec:
   template:
     spec:

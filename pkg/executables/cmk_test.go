@@ -88,16 +88,16 @@ var isoAttachmentResourceName = v1alpha1.CloudStackISOAttachment{
 	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 		Name: "TEST_RESOURCE",
 	},
-	MountPath:  "/TEST_RESOURCE",
-	Device:     "/dev/sr0",
+	MountPath: "/TEST_RESOURCE",
+	Device:    "/dev/sr0",
 }
 
 var isoAttachmentResourceID = v1alpha1.CloudStackISOAttachment{
 	CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 		Id: "TEST_RESOURCE",
 	},
-	MountPath:  "/TEST_RESOURCE",
-	Device:     "/dev/sr0",
+	MountPath: "/TEST_RESOURCE",
+	Device:    "/dev/sr0",
 }
 
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {

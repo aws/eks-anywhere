@@ -2,6 +2,7 @@
 {{- $templateCP := .cloudstackControlPlaneTemplate -}}
 {{- $offeringCP := .cloudstackControlPlaneOffering -}}
 {{- $diskCP := .cloudstackControlPlaneDiskOffering -}}
+{{- $diskJsonStrCP := .cloudstackControlPlaneDiskOfferingJsonStr -}}
 {{- $isoCP := .cloudstackControlPlaneISOAttachment -}}
 {{- $diskConfiguredCP := or (gt (len $diskCP.Id) 0) (gt (len $diskCP.Name) 0) -}}
 {{- $isoConfiguredCP := or (gt (len $isoCP.Id) 0) (gt (len $isoCP.Name) 0) -}}
@@ -77,21 +78,13 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfiguredCP}}
-    mountpath.diskoffering.{{$suffix}}: {{$diskCP.MountPath}}
-    device.diskoffering.{{$suffix}}: {{$diskCP.Device}}
-    filesystem.diskoffering.{{$suffix}}: {{$diskCP.Filesystem}}
-    label.diskoffering.{{$suffix}}: {{$diskCP.Label}}
+    diskoffering.{{$suffix}}: "{{.cloudstackControlPlaneDiskOfferingJsonStr | js}}"
 {{- end }}
 {{- if $isoConfiguredCP}}
-    device.ISOAttachment.{{$suffix}}: {{$isoCP.Device}}
-    mountPath.ISOAttachment.{{$suffix}}: {{$isoCP.MountPath}}
-    runPreKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoCP.RunPreKubeadmCommand}}"
-    runPostKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoCP.RunPostKubeadmCommand}}"
-    preKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoCP.PreKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
-    postKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoCP.PostKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
+    ISOAttachment.{{$suffix}}: "{{.cloudstackControlPlaneISOAttachmentJsonStr | js}}"
 {{- end }}
 {{- if .cloudstackControlPlaneSymlinks }}
-    symlinks.{{$suffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+    symlinks.{{$suffix}}: "{{.cloudstackControlPlaneSymlinksJsonStr | js}}"
 {{- end}}
 spec:
   template:
@@ -562,21 +555,13 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfiguredEtcd}}
-    mountpath.diskoffering.{{$suffix}}: {{$diskEtcd.MountPath}}
-    device.diskoffering.{{$suffix}}: {{$diskEtcd.Device}}
-    filesystem.diskoffering.{{$suffix}}: {{$diskEtcd.Filesystem}}
-    label.diskoffering.{{$suffix}}: {{$diskEtcd.Label}}
+    diskoffering.{{$suffix}}: "{{.cloudstackEtcdDiskOfferingJsonStr | js}}"
 {{- end }}
 {{- if $isoConfiguredEtcd}}
-    device.ISOAttachment.{{$suffix}}: {{$isoEtcd.Device}}
-    mountPath.ISOAttachment.{{$suffix}}: {{$isoEtcd.MountPath}}
-    runPreKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoEtcd.RunPreKubeadmCommand}}"
-    runPostKubeadmCommand.ISOAttachment.{{$suffix}}: "{{$isoEtcd.RunPostKubeadmCommand}}"
-    preKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoEtcd.PreKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
-    postKubeadmCommandArgs.ISOAttachment.{{$suffix}}: {{ $first := true }}{{- range $isoEtcd.PostKubeadmCommandArgs}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{.}}{{- end}}
+    ISOAttachment.{{$suffix}}: "{{.cloudstackEtcdISOAttachmentJsonStr | js}}"
 {{- end }}
 {{- if .cloudstackEtcdSymlinks }}
-    symlinks.{{$suffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+    symlinks.{{$suffix}}: "{{.cloudstackEtcdSymlinksJsonStr | js}}"
 {{- end}}
 spec:
   template:

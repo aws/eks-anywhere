@@ -329,11 +329,8 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":  "/data",
-							"device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "/dev/vdb",
-							"filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "ext4",
-							"label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":      "data_disk",
-							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":                "/var/log/kubernetes:/data/var/log/kubernetes",
+							"diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}",
+							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "{\"/var/log/kubernetes\":\"/data/var/log/kubernetes\"}",
 						},
 					},
 					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
@@ -375,50 +372,14 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			},
 		},
 		{
-			name:    "Symlink in wrong format",
-			wantErr: true,
-			args: args{
-				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: map[string]string{
-							"mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":  "/data",
-							"device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "/dev/vdb",
-							"filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "ext4",
-							"label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":      "data_disk",
-							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":                "/var/log/kubernetes,/data/var/log/kubernetes",
-						},
-					},
-					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
-						Spec: cloudstackv1.CloudStackMachineTemplateResource{
-							Spec: cloudstackv1.CloudStackMachineSpec{
-								Offering: cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
-								Template: cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
-								DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
-									CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
-										Name: "Small",
-									},
-								},
-								Affinity:         "anti",
-								AffinityGroupIDs: []string{"c", "d"},
-								Details:          map[string]string{"foo": "bar"},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
 			name:    "Symlink empty",
 			wantErr: false,
 			args: args{
 				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":  "/data",
-							"device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "/dev/vdb",
-							"filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "ext4",
-							"label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":      "data_disk",
-							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":                "",
+							"diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}",
+							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1":     "",
 						},
 					},
 					Spec: cloudstackv1.CloudStackMachineTemplateSpec{

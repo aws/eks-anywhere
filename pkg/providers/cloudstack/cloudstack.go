@@ -3,6 +3,7 @@ package cloudstack
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -621,58 +622,70 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
 
+	diskOfferingJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.DiskOffering)
+	isoAttachementJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.ISOAttachment)
+	symLinksJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.Symlinks)
+	diskOfferingJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.DiskOffering)
+	isoAttachementJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.ISOAttachment)
+	symLinksJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.Symlinks)
 	values := map[string]interface{}{
-		"clusterName":                                  clusterSpec.Cluster.Name,
-		"controlPlaneEndpointHost":                     host,
-		"controlPlaneEndpointPort":                     port,
-		"controlPlaneReplicas":                         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                         bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                            bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                               bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                                 bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                            bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                               bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":                     bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                           bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                        bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":                     bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
-		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
-		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
+		"clusterName":                                clusterSpec.Cluster.Name,
+		"controlPlaneEndpointHost":                   host,
+		"controlPlaneEndpointPort":                   port,
+		"controlPlaneReplicas":                       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":                       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":                          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":                             bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                               bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":                          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                             bundle.KubeDistro.CoreDNS.Tag,
+		"nodeDriverRegistrarImage":                   bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
+		"livenessProbeImage":                         bundle.KubeDistro.LivenessProbe.VersionedImage(),
+		"externalAttacherImage":                      bundle.KubeDistro.ExternalAttacher.VersionedImage(),
+		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
+		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeVipImage":                               bundle.CloudStack.KubeVip.VersionedImage(),
+		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
+		"cloudstackDomain":                           datacenterConfigSpec.Domain,
+		"cloudstackZones":                            datacenterConfigSpec.Zones,
+		"cloudstackAccount":                          datacenterConfigSpec.Account,
+		"cloudstackAnnotationSuffix":                 constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOffering":         controlPlaneMachineSpec.DiskOffering,
-		"cloudstackControlPlaneOffering":      controlPlaneMachineSpec.ComputeOffering,
-		"cloudstackControlPlaneTemplate":     controlPlaneMachineSpec.Template,
-		"cloudstackControlPlaneCustomDetails":          controlPlaneMachineSpec.UserCustomDetails,
-		"cloudstackControlPlaneSymlinks":               controlPlaneMachineSpec.Symlinks,
-		"cloudstackControlPlaneISOAttachment": controlPlaneMachineSpec.ISOAttachment,
-		"cloudstackControlPlaneAffinity":               controlPlaneMachineSpec.Affinity,
-		"cloudstackControlPlaneAffinityGroupIds":       controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackControlPlaneDiskOfferingJsonStr":  string(diskOfferingJsonStrCP),
+		"cloudstackControlPlaneOffering":             controlPlaneMachineSpec.ComputeOffering,
+		"cloudstackControlPlaneTemplate":             controlPlaneMachineSpec.Template,
+		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
+		"cloudstackControlPlaneSymlinks":             controlPlaneMachineSpec.Symlinks,
+		"cloudstackControlPlaneSymlinksJsonStr":      string(symLinksJsonStrCP),
+		"cloudstackControlPlaneISOAttachment":        controlPlaneMachineSpec.ISOAttachment,
+		"cloudstackControlPlaneISOAttachmentJsonStr": string(isoAttachementJsonStrCP),
+		"cloudstackControlPlaneAffinity":             controlPlaneMachineSpec.Affinity,
+		"cloudstackControlPlaneAffinityGroupIds":     controlPlaneMachineSpec.AffinityGroupIds,
 		"cloudstackEtcdDiskOffering":                 etcdMachineSpec.DiskOffering,
-		"cloudstackEtcdOffering":              etcdMachineSpec.ComputeOffering,
-		"cloudstackEtcdTemplate":             etcdMachineSpec.Template,
-		"cloudstackEtcdCustomDetails":                  etcdMachineSpec.UserCustomDetails,
-		"cloudstackEtcdSymlinks":                       etcdMachineSpec.Symlinks,
-		"cloudstackEtcdISOAttachment": etcdMachineSpec.ISOAttachment,
-		"cloudstackEtcdAffinity":                       etcdMachineSpec.Affinity,
-		"cloudstackEtcdAffinityGroupIds":               etcdMachineSpec.AffinityGroupIds,
-		"controlPlaneSshUsername":                      controlPlaneMachineSpec.Users[0].Name,
-		"podCidrs":                                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                           apiServerExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":                             kubeletExtraArgs.ToPartialYaml(),
-		"etcdExtraArgs":                                etcdExtraArgs.ToPartialYaml(),
-		"etcdCipherSuites":                             crypto.SecureCipherSuitesString(),
-		"controllermanagerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
-		"schedulerExtraArgs":                           sharedExtraArgs.ToPartialYaml(),
-		"format":                                       format,
-		"externalEtcdVersion":                          bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                                    bundle.KubeDistro.EtcdImage.VersionedImage(),
-		"eksaSystemNamespace":                          constants.EksaSystemNamespace,
-		"auditPolicy":                                  common.GetAuditPolicy(),
+		"cloudstackEtcdDiskOfferingJsonStr":          string(diskOfferingJsonStrEtcd),
+		"cloudstackEtcdOffering":                     etcdMachineSpec.ComputeOffering,
+		"cloudstackEtcdTemplate":                     etcdMachineSpec.Template,
+		"cloudstackEtcdCustomDetails":                etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdSymlinks":                     etcdMachineSpec.Symlinks,
+		"cloudstackEtcdSymlinksJsonStr":              string(symLinksJsonStrEtcd),
+		"cloudstackEtcdISOAttachment":                etcdMachineSpec.ISOAttachment,
+		"cloudstackEtcdISOAttachmentJsonStr":         string(isoAttachementJsonStrEtcd),
+		"cloudstackEtcdAffinity":                     etcdMachineSpec.Affinity,
+		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
+		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
+		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                           kubeletExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                              etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                           crypto.SecureCipherSuitesString(),
+		"controllermanagerExtraArgs":                 sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
+		"format":                                     format,
+		"externalEtcdVersion":                        bundle.KubeDistro.EtcdVersion,
+		"etcdImage":                                  bundle.KubeDistro.EtcdImage.VersionedImage(),
+		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
+		"auditPolicy":                                common.GetAuditPolicy(),
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -731,16 +744,22 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
+	diskOfferingJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.DiskOffering)
+	isoAttachementJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.ISOAttachment)
+	symLinksJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.Symlinks)
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
 		"cloudstackAnnotationSuffix":       constants.CloudstackAnnotationSuffix,
-		"cloudstackTemplate":             workerNodeGroupMachineSpec.Template,
-		"cloudstackOffering":             workerNodeGroupMachineSpec.ComputeOffering,
+		"cloudstackTemplate":               workerNodeGroupMachineSpec.Template,
+		"cloudstackOffering":               workerNodeGroupMachineSpec.ComputeOffering,
 		"cloudstackDiskOffering":           workerNodeGroupMachineSpec.DiskOffering,
-		"cloudstackISOAttachment": workerNodeGroupMachineSpec.ISOAttachment,
+		"cloudstackDiskOfferingJsonStr":    string(diskOfferingJsonStr),
+		"cloudstackISOAttachment":          workerNodeGroupMachineSpec.ISOAttachment,
+		"cloudstackISOAttachmentJsonStr":   string(isoAttachementJsonStr),
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
 		"cloudstackSymlinks":               workerNodeGroupMachineSpec.Symlinks,
+		"cloudstackSymlinksJsonStr":        string(symLinksJsonStr),
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   workerNodeGroupConfiguration.Count,

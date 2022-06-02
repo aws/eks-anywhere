@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -608,6 +609,7 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 }
 
 func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
+	var err error
 	csSpec := &anywherev1.CloudStackMachineConfig{}
 	csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{
 		Id:   csMachineTemplate.Spec.Spec.Spec.Offering.ID,
@@ -617,18 +619,14 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
-		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
-			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
-			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
-		},
-		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
+	csSpec.Spec.DiskOffering, err = parseDiskOffering(csMachineTemplate)
+	if err != nil {
+		return nil, err
 	}
-	csSpec.Spec.ISOAttachment = parseISOAttachment(csMachineTemplate)
+	csSpec.Spec.ISOAttachment, err = parseISOAttachment(csMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
@@ -639,45 +637,50 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
 	}
-	if csSpec.Spec.Symlinks == nil {
-		csSpec.Spec.Symlinks = map[string]string{}
-	}
-	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix], ",") {
-		keyValueStr = strings.TrimSpace(keyValueStr)
-		if len(keyValueStr) == 0 {
-			continue
-		}
-		key, value, err := parseKeyValue(keyValueStr)
-		if err != nil {
-			return nil, err
-		}
-
-		csSpec.Spec.Symlinks[key] = value
+	csSpec.Spec.Symlinks, err = parseSymlinks(csMachineTemplate)
+	if err != nil {
+		return nil, err
 	}
 	return csSpec, nil
 }
 
-func parseISOAttachment(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (ISOAttachment anywherev1.CloudStackISOAttachment) {
-	var preKubeadmCommandArgs []string
-	var postKubeadmCommandArgs []string
-	if len(csMachineTemplate.Annotations["preKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix]) > 0 {
-		preKubeadmCommandArgs = strings.Split(csMachineTemplate.Annotations["preKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix], ",")
+func parseDiskOffering(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (diskOffering anywherev1.CloudStackResourceDiskOffering, err error) {
+	diskOffering = anywherev1.CloudStackResourceDiskOffering{}
+	diskOfferingAnnotation, exists := csMachineTemplate.Annotations["diskoffering."+constants.CloudstackAnnotationSuffix]
+	if !exists || len(diskOfferingAnnotation) == 0 {
+		return diskOffering, nil
 	}
-	if len(csMachineTemplate.Annotations["postKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix]) > 0 {
-		postKubeadmCommandArgs = strings.Split(csMachineTemplate.Annotations["postKubeadmCommandArgs.ISOAttachment"+constants.CloudstackAnnotationSuffix], ",")
+
+	err = json.Unmarshal([]byte(diskOfferingAnnotation), &diskOffering)
+	if err == nil {
+		diskOffering.Id = csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID
+		diskOffering.Name = csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name
 	}
-	return anywherev1.CloudStackISOAttachment{
-		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
-			Id:   csMachineTemplate.Spec.Spec.Spec.ISOAttachment.ID,
-			Name: csMachineTemplate.Spec.Spec.Spec.ISOAttachment.Name,
-		},
-		Device:                 csMachineTemplate.Annotations["device.ISOAttachment"+constants.CloudstackAnnotationSuffix],
-		MountPath:              csMachineTemplate.Annotations["mountPath.ISOAttachment"+constants.CloudstackAnnotationSuffix],
-		RunPreKubeadmCommand:   csMachineTemplate.Annotations["runPreKubeadmCommand.ISOAttachment"+constants.CloudstackAnnotationSuffix] == "true",
-		RunPostKubeadmCommand:  csMachineTemplate.Annotations["runPostKubeadmCommand.ISOAttachment"+constants.CloudstackAnnotationSuffix] == "true",
-		PreKubeadmCommandArgs:  preKubeadmCommandArgs,
-		PostKubeadmCommandArgs: postKubeadmCommandArgs,
+	return diskOffering, err
+}
+
+func parseISOAttachment(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (ISOAttachment anywherev1.CloudStackISOAttachment, err error) {
+	ISOAttachment = anywherev1.CloudStackISOAttachment{}
+	ISOAttachmentAnnotation, exists := csMachineTemplate.Annotations["ISOAttachment."+constants.CloudstackAnnotationSuffix]
+	if !exists || len(ISOAttachmentAnnotation) == 0 {
+		return ISOAttachment, nil
 	}
+	err = json.Unmarshal([]byte(ISOAttachmentAnnotation), &ISOAttachment)
+	if err == nil {
+		ISOAttachment.Id = csMachineTemplate.Spec.Spec.Spec.ISOAttachment.ID
+		ISOAttachment.Name = csMachineTemplate.Spec.Spec.Spec.ISOAttachment.Name
+	}
+	return ISOAttachment, err
+}
+
+func parseSymlinks(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (symlinks anywherev1.SymlinkMaps, err error) {
+	symlinks = anywherev1.SymlinkMaps{}
+	symlinksAnnotation, exists := csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix]
+	if !exists || len(symlinksAnnotation) == 0 {
+		return symlinks, nil
+	}
+	err = json.Unmarshal([]byte(symlinksAnnotation), &symlinks)
+	return symlinks, err
 }
 
 func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
@@ -698,12 +701,4 @@ func convertStringToLabelsMap(labels string) map[string]string {
 		labelsMap[pair[0]] = pair[1]
 	}
 	return labelsMap
-}
-
-func parseKeyValue(keyValueStr string) (key string, value string, err error) {
-	keyV := strings.Split(keyValueStr, ":")
-	if len(keyV) != 2 {
-		return "", "", fmt.Errorf("symlinks: %s is not key:value format", keyV)
-	}
-	return keyV[0], keyV[1], nil
 }
