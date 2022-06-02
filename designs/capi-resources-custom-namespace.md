@@ -35,10 +35,10 @@ As a EKS-A cluster administrator I want to organize/partition each cluster into 
 
 ## Implementation
 
-Currently, the `eksa-system` namespace is hardcoded throughout the entire codebase for underlying. It's used in
+Currently, the `eksa-system` namespace is hardcoded throughout the entire codebase for underlying resources. It's used in
 1. providers' template generation logic, both by the CLI and the EKS-A controller
 2. kubectl and clusterctl executables for interacting with the cluster and moving resources between clusters
-3. ???
+3. eks-a controller for retrieving capi resources with FetchObjectByName method
 
 We would need to implement the ability to make namespace configurable in all of these usages, to be extracted from the top level EKS-A Cluster object and checked against the boolean
 
