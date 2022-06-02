@@ -97,6 +97,18 @@ spec:
   symlinks:
     /var/log/containers: /data-small/var/log/containers
     /var/log/pods: /data-small/var/log/pods
+  ISOAttachment:
+    name: cloudstack-scripts.iso
+    device: /dev/sr0
+    mountPath: /mnt/cloudstack-scripts
+    runPreKubeadmCommand: true
+    preKubeadmCommandArgs:
+      - --dryrun=true
+      - --env=prod
+    runPostKubeadmCommand: true
+    postKubeadmCommandArgs:
+      - --dryrun=true
+      - --env=prod
   affinityGroupIds:
   - worker-affinity
   userCustomDetails:

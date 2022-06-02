@@ -90,12 +90,6 @@ spec:
           else echo "{{$dir}} already symlink" ;
         fi
 {{- end}}
-{{- if $isoConfigured }}
-      - >-
-        mkdir -p {{ $iso.MountPath }} &&
-        echo {{ $iso.Device }} {{ $iso.MountPath }} auto ro 0 0 >> /etc/fstab &&
-        mount {{ $iso.MountPath }}
-{{- end }}
 {{- if and $isoConfigured $iso.RunPreKubeadmCommand}}
       - {{ $iso.MountPath}}/preKubeadmCommands.sh {{- range $iso.PreKubeadmCommandArgs}} {{.}}{{- end}}
 {{- end}}

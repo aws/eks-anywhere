@@ -37,6 +37,9 @@ spec:
             mkdir -p /data-small/var/log/pods && ln -s /data-small/var/log/pods /var/log/pods ;
           else echo "/var/log/pods already symlink" ;
         fi
+      - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
+      postKubeadmCommands:
+      - /mnt/cloudstack-scripts/postKubeadmCommands.sh --dryrun=true --env=prod
       diskSetup:
         filesystems:
           - device: /dev/vdb1
@@ -54,6 +57,8 @@ spec:
       mounts:
         - - LABEL=data_disk
           - /data-small
+        - - /dev/sr0
+          - /mnt/cloudstack-scripts
       users:
       - name: mySshUsername
         sshAuthorizedKeys:
@@ -97,6 +102,7 @@ metadata:
   namespace: eksa-system
   annotations:
     diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
+    ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"cloudstack-scripts.iso\",\"device\":\"/dev/sr0\",\"mountPath\":\"/mnt/cloudstack-scripts\",\"runPreKubeadmCommand\":true,\"preKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"],\"runPostKubeadmCommand\":true,\"postKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"]}"
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"/var/log/containers\":\"/data-small/var/log/containers\",\"/var/log/pods\":\"/data-small/var/log/pods\"}"
 spec:
   template:
@@ -111,6 +117,8 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
+      ISOAttachment:
+        name: cloudstack-scripts.iso
       details:
         foo: bar
       affinitygroupids:

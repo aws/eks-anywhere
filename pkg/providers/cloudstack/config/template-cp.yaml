@@ -511,7 +511,7 @@ spec:
 {{- if $isoConfiguredEtcd }}
     - >-
       mkdir -p {{ $isoEtcd.MountPath }} &&
-      echo {{ $isoEtcd.Device }} {{ $isoEtcd.MountPath }} auto ro 0 0 >> /etc/fstab &&
+      echo {{ $isoEtcd.Device }} {{ $isoEtcd.MountPath }} auto ro 0 2 >> /etc/fstab &&
       mount {{ $isoEtcd.MountPath }}
 {{- end }}
 {{- if and $isoConfiguredEtcd $isoEtcd.RunPreKubeadmCommand}}

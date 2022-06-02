@@ -47,6 +47,7 @@ metadata:
   namespace: eksa-system
   annotations:
     diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
+    ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"cloudstack-scripts.iso\",\"device\":\"/dev/sr0\",\"mountPath\":\"/mnt/cloudstack-scripts\",\"runPreKubeadmCommand\":true,\"preKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"],\"runPostKubeadmCommand\":true,\"postKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"]}"
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"/var/log/kubernetes\":\"/data-small/var/log/kubernetes\"}"
 spec:
   template:
@@ -61,6 +62,8 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
+      ISOAttachment:
+        name: cloudstack-scripts.iso
       affinitygroupids:
       - control-plane-anti-affinity
 ---
@@ -365,6 +368,9 @@ spec:
         else
           echo "/var/log/kubernetes already symlink";
       fi
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
+    postKubeadmCommands:
+    - /mnt/cloudstack-scripts/postKubeadmCommands.sh --dryrun=true --env=prod
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -382,6 +388,8 @@ spec:
     mounts:
       - - LABEL=data_disk
         - /data-small
+      - - /dev/sr0
+        - /mnt/cloudstack-scripts
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -431,6 +439,11 @@ spec:
         else
           echo "/var/lib/ already symlink" ;
       fi
+    - >-
+      mkdir -p /mnt/cloudstack-scripts &&
+      echo /dev/sr0 /mnt/cloudstack-scripts auto ro 0 2 >> /etc/fstab &&
+      mount /mnt/cloudstack-scripts
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
@@ -449,6 +462,7 @@ metadata:
   namespace: 'eksa-system'
   annotations:
     diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
+    ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"cloudstack-scripts.iso\",\"device\":\"/dev/sr0\",\"mountPath\":\"/mnt/cloudstack-scripts\",\"runPreKubeadmCommand\":true,\"preKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"],\"postKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"]}"
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"/var/lib/\":\"/data-small/var/lib\"}"
 spec:
   template:
@@ -463,5 +477,7 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
+      ISOAttachment:
+        name: cloudstack-scripts.iso
       affinitygroupids:
       - etcd-affinity
