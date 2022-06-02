@@ -653,6 +653,19 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
+func (f *Factory) WithMaxWaitPerMachine(maxWaitPerMachine time.Duration) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.ClusterManager != nil {
+			return nil
+		}
+
+		f.dependencies.ClusterManager.SetMaxWaitPerMachine(maxWaitPerMachine)
+		return nil
+	})
+
+	return f
+}
+
 type eksdInstallerClient struct {
 	*executables.Kubectl
 }

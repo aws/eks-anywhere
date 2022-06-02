@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -21,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mocksdiagnostics "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -1233,33 +1231,4 @@ func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
 
 	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).ToNot(BeNil())
-}
-
-func TestGetMaxWaitPerMachineDefault(t *testing.T) {
-	tt := newTest(t)
-
-	maxWaitPerMachine := clustermanager.GetMaxWaitPerMachine()
-	tt.Expect(maxWaitPerMachine).To(Equal(10 * time.Minute))
-}
-
-func TestGetMaxWaitPerMachineFromValidEnv(t *testing.T) {
-	tt := newTest(t)
-
-	oldEnv := os.Getenv(config.EksaReplicasReadyTimeoutEnv)
-	os.Setenv(config.EksaReplicasReadyTimeoutEnv, "15m")
-	defer os.Setenv(config.EksaReplicasReadyTimeoutEnv, oldEnv)
-
-	maxWaitPerMachine := clustermanager.GetMaxWaitPerMachine()
-	tt.Expect(maxWaitPerMachine).To(Equal(15 * time.Minute))
-}
-
-func TestGetMaxWaitPerMachineFromInvalidEnv(t *testing.T) {
-	tt := newTest(t)
-
-	oldEnv := os.Getenv(config.EksaReplicasReadyTimeoutEnv)
-	os.Setenv(config.EksaReplicasReadyTimeoutEnv, "15x")
-	defer os.Setenv(config.EksaReplicasReadyTimeoutEnv, oldEnv)
-
-	maxWaitPerMachine := clustermanager.GetMaxWaitPerMachine()
-	tt.Expect(maxWaitPerMachine).To(Equal(10 * time.Minute))
 }

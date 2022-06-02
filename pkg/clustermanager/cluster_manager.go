@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -18,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -126,7 +124,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		networking:         networking,
 		Retrier:            retrier,
 		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     GetMaxWaitPerMachine(),
+		machineMaxWait:     machineMaxWait,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
 		awsIamAuth:         awsIamAuth,
@@ -137,18 +135,6 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 	}
 
 	return c
-}
-
-func GetMaxWaitPerMachine() time.Duration {
-	if env, found := os.LookupEnv(config.EksaReplicasReadyTimeoutEnv); found {
-		if duration, err := time.ParseDuration(env); err == nil {
-			return duration
-		} else {
-			logger.V(3).Info("Invalid EKSA_REPLICAS_READY_TIMEOUT value: " + env +
-				" Use the default timeout: " + machineMaxWait.String())
-		}
-	}
-	return machineMaxWait
 }
 
 func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Duration) ClusterManagerOpt {
@@ -164,6 +150,10 @@ func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 		c.clusterClient.Retrier = retrier
 		c.Retrier = retrier
 	}
+}
+
+func (c *ClusterManager) SetMaxWaitPerMachine(maxWaitPerMachine time.Duration) {
+	c.machineMaxWait = maxWaitPerMachine
 }
 
 func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
