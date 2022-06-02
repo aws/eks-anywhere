@@ -324,3 +324,36 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyLabel(t *testing.T) {
 	g.Expect(fieldValue == "").To(BeTrue())
 	g.Expect(err.Error() == "empty label").To(BeTrue())
 }
+
+func TestCloudStackMachineConfigSymlinksValid(t *testing.T) {
+	symlinks := v1alpha1.SymlinkMaps{
+		"/var/lib.a": "/data/-var/_log",
+	}
+	err, _, _ := symlinks.Validate()
+	g := NewWithT(t)
+	g.Expect(err == nil).To(BeTrue())
+}
+
+func TestCloudStackMachineConfigSymlinksInValidColon(t *testing.T) {
+	symlinks := v1alpha1.SymlinkMaps{
+		"/var/lib": "/data/var/log:d",
+	}
+	err, fieldName, fieldValue := symlinks.Validate()
+	g := NewWithT(t)
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "symlinks").To(BeTrue())
+	g.Expect(fieldValue == "/data/var/log:d").To(BeTrue())
+	g.Expect(err.Error() == "has char not in portable file name set").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigSymlinksInValidComma(t *testing.T) {
+	symlinks := v1alpha1.SymlinkMaps{
+		"/var/lib": "/data/var/log,d",
+	}
+	err, fieldName, fieldValue := symlinks.Validate()
+	g := NewWithT(t)
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "symlinks").To(BeTrue())
+	g.Expect(fieldValue == "/data/var/log,d").To(BeTrue())
+	g.Expect(err.Error() == "has char not in portable file name set").To(BeTrue())
+}

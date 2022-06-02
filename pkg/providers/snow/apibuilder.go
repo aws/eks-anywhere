@@ -28,7 +28,7 @@ func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, 
 func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1.KubeadmControlPlane, error) {
 	kcp, err := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
 	if err != nil {
-		return nil, fmt.Errorf("failed generating KubeadmControlPlane: %v", err)
+		return nil, fmt.Errorf("generating KubeadmControlPlane: %v", err)
 	}
 
 	// TODO: support unstacked etcd
@@ -50,13 +50,24 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	)
 
+	if err := clusterapi.SetRegistryMirrorInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+		return nil, err
+	}
+
+	if err := clusterapi.SetProxyConfigInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec); err != nil {
+		return nil, err
+	}
+
+	clusterapi.CreateContainerdConfigFileInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec)
+	clusterapi.RestartContainerdInKubeadmControlPlane(kcp, clusterSpec.Cluster.Spec)
+
 	return kcp, nil
 }
 
 func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
 	kct, err := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed generating KubeadmConfigTemplate: %v", err)
+		return nil, fmt.Errorf("generating KubeadmConfigTemplate: %v", err)
 	}
 
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
@@ -65,6 +76,18 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
 		"/etc/eks/bootstrap.sh",
 	)
+
+	if err := clusterapi.SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
+		return nil, err
+	}
+
+	if err := clusterapi.SetProxyConfigInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec); err != nil {
+		return nil, err
+	}
+
+	clusterapi.CreateContainerdConfigFileInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec)
+	clusterapi.RestartContainerdInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec)
+
 	return kct, nil
 }
 

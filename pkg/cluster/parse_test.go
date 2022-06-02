@@ -220,6 +220,7 @@ func TestParseConfig(t *testing.T) {
 						}},
 						Affinity:          "pro",
 						UserCustomDetails: map[string]string{"foo": "bar"},
+						Symlinks:          map[string]string{"/var/log/kubernetes": "/data/var/log/kubernetes"},
 					},
 				},
 			},

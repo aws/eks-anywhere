@@ -86,14 +86,6 @@ var registryMirrorTests = []struct {
 	},
 }
 
-func wantRegistryMirrorCommands() []string {
-	return []string{
-		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
-		"sudo systemctl daemon-reload",
-		"sudo systemctl restart containerd",
-	}
-}
-
 func TestSetRegistryMirrorInKubeadmControlPlane(t *testing.T) {
 	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -102,7 +94,6 @@ func TestSetRegistryMirrorInKubeadmControlPlane(t *testing.T) {
 			g.Expect(clusterapi.SetRegistryMirrorInKubeadmControlPlane(got, tt.registryMirrorConfig)).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
 			g.Expect(got).To(Equal(want))
 		})
 	}
@@ -116,7 +107,6 @@ func TestSetRegistryMirrorInKubeadmConfigTemplate(t *testing.T) {
 			g.Expect(clusterapi.SetRegistryMirrorInKubeadmConfigTemplate(got, tt.registryMirrorConfig)).To(Succeed())
 			want := wantKubeadmConfigTemplate()
 			want.Spec.Template.Spec.Files = tt.wantFiles
-			want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
 			g.Expect(got).To(Equal(want))
 		})
 	}

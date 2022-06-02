@@ -66,6 +66,7 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
+		c.provider.EXPECT().PreCAPIInstallOnBootstrap(c.ctx, c.bootstrapCluster, c.clusterSpec),
 		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
