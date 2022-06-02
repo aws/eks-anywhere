@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -53,13 +52,6 @@ func TestUniquenessAssertions(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"IDs": {
-			Assertion: hardware.UniqueIDs(),
-			Machines: []hardware.Machine{
-				{ID: "foo"},
-				{ID: "bar"},
-			},
-		},
 		"IPAddresses": {
 			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
@@ -104,13 +96,6 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 		Assertion hardware.MachineAssertion
 		Machines  []hardware.Machine
 	}{
-		"IDs": {
-			Assertion: hardware.UniqueIDs(),
-			Machines: []hardware.Machine{
-				{ID: "foo"},
-				{ID: "foo"},
-			},
-		},
 		"IPAddresses": {
 			Assertion: hardware.UniqueIPAddress(),
 			Machines: []hardware.Machine{
@@ -153,20 +138,7 @@ func TestUniquenessAssertionsWithDupes(t *testing.T) {
 func TestStaticMachineAssertions_ValidMachine(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	machine := hardware.Machine{
-		ID:           "unique string",
-		IPAddress:    "10.10.10.10",
-		Gateway:      "10.10.10.1",
-		Nameservers:  []string{"nameserver1"},
-		Netmask:      "255.255.255.255",
-		MACAddress:   "00:00:00:00:00:00",
-		Hostname:     "localhost",
-		Labels:       make(hardware.Labels),
-		BMCIPAddress: "10.10.10.11",
-		BMCUsername:  "username",
-		BMCPassword:  "password",
-		BMCVendor:    "dell",
-	}
+	machine := NewValidMachine()
 
 	validate := hardware.StaticMachineAssertions()
 	g.Expect(validate(machine)).ToNot(gomega.HaveOccurred())
@@ -176,9 +148,6 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	cases := map[string]func(*hardware.Machine){
-		"EmptyID": func(h *hardware.Machine) {
-			h.ID = ""
-		},
 		"EmptyIPAddress": func(h *hardware.Machine) {
 			h.IPAddress = ""
 		},
@@ -224,14 +193,17 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"EmptyBMCPassword": func(h *hardware.Machine) {
 			h.BMCPassword = ""
 		},
-		"EmptyBMCVendor": func(h *hardware.Machine) {
-			h.BMCVendor = ""
-		},
 		"InvalidLabelKey": func(h *hardware.Machine) {
 			h.Labels["?$?$?"] = "foo"
 		},
 		"InvalidLabelValue": func(h *hardware.Machine) {
 			h.Labels["foo"] = "\\/dsa"
+		},
+		"InvalidDisk": func(h *hardware.Machine) {
+			h.Disk = "*&!@#!%"
+		},
+		"InvalidWithJustDev": func(h *hardware.Machine) {
+			h.Disk = "/dev/"
 		},
 	}
 
@@ -247,7 +219,6 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 
 func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
-		ID:           uuid.NewString(),
 		IPAddress:    "10.10.10.10",
 		Gateway:      "10.10.10.1",
 		Nameservers:  []string{"ns1"},
@@ -255,9 +226,9 @@ func NewValidMachine() hardware.Machine {
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
 		Labels:       make(hardware.Labels),
+		Disk:         "/dev/sda",
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",
 		BMCPassword:  "password",
-		BMCVendor:    "dell",
 	}
 }

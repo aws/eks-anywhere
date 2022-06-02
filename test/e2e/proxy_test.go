@@ -57,3 +57,16 @@ func TestCloudStackKubernetes121RedhatProxyConfig(t *testing.T) {
 	)
 	runProxyConfigFlow(test)
 }
+
+func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithProxy(),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runProxyConfigFlow(test)
+}

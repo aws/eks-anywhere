@@ -702,3 +702,11 @@ func convertStringToLabelsMap(labels string) map[string]string {
 	}
 	return labelsMap
 }
+
+func parseKeyValue(keyValueStr string) (key string, value string, err error) {
+	keyV := strings.Split(keyValueStr, ":")
+	if len(keyV) != 2 {
+		return "", "", fmt.Errorf("symlinks: %s is not key:value format", keyV)
+	}
+	return keyV[0], keyV[1], nil
+}

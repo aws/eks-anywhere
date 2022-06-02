@@ -79,6 +79,10 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
+func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
@@ -687,7 +691,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
 		"auditPolicy":                                common.GetAuditPolicy(),
 	}
-
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
@@ -706,7 +709,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -771,7 +774,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"workerNodeGroupName":              fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":            workerNodeGroupConfiguration.Taints,
 	}
-
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
@@ -790,7 +792,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)

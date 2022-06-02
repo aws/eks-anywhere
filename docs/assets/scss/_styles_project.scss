@@ -1,0 +1,63 @@
+// used for landing page video banner
+// changes padding from td-box
+.td-vid-box {
+    .row.section {
+         padding-left: 5vw;
+         padding-right: 5vw;
+         flex-direction: column;
+  
+         > table {
+          @extend .table-striped;
+  
+          @extend .table-responsive;
+  
+          @extend .table;
+         }
+     }
+  
+    .row {
+         flex-direction: row;
+    }
+}
+
+.td-navbar-cover {
+    background: $primary;
+}
+
+.header {
+    &.row {
+        background: linear-gradient(263.24deg, #16191F -12.21%, #232F3E 94.57%);
+    }
+
+    .headline {
+        @include media-breakpoint-down(sm) {
+            font-size: 2rem;
+        }
+    }
+
+    &__content {
+        margin-top: $navbar-height;
+        color: $white;
+    
+        @include media-breakpoint-down(sm) {
+            margin-top: 0;
+        }
+    }
+    
+    .byline {
+        &__logo {
+            display: inline-block;
+            vertical-align: bottom;
+            height: 1rem;
+            width: 2rem;
+            border: 0;
+            background: transparent url(/images/aws_smile-header-desktop-en-white_59x35.png) no-repeat scroll 0 0;
+            background-size: contain;
+        }
+    }
+}
+
+.td-default main > section:first-of-type { // To override Bootstrap styles
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+}
