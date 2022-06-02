@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"sigs.k8s.io/yaml"
 )
@@ -84,6 +85,11 @@ func marshalSecretYAML(m Machine) ([]byte, error) {
 // os.Stdout is returned.
 func CreateOrStdout(path string) (*os.File, error) {
 	if path != "" {
+		dir := filepath.Dir(path)
+		err := os.MkdirAll(dir, 0o755)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create hardware yaml file: %v", err)
+		}
 		return os.Create(path)
 	}
 	return os.Stdout, nil

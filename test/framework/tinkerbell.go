@@ -44,15 +44,22 @@ type Tinkerbell struct {
 
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
+	cidr := os.Getenv(tinkerbellNetworkCidrEnvVar)
+
+	tinkIP, err := GenerateUniqueIp(cidr)
+	if err != nil {
+		t.Fatalf("failed to generate tinkerbell ip from cidr %s: %v", cidr, err)
+	}
+
 	tink := &Tinkerbell{
 		t: t,
 		fillers: []api.TinkerbellFiller{
-			api.WithStringFromEnvVarTinkerbell(tinkerbellServerEnvVar, api.WithTinkerbellServer),
+			api.WithTinkerbellServer(tinkIP),
 			api.WithStringFromEnvVarTinkerbell(tinkerbellSSHAuthorizedKey, api.WithSSHAuthorizedKeyForAllTinkerbellMachines),
 		},
 	}
 
-	tink.cidr = os.Getenv(tinkerbellNetworkCidrEnvVar)
+	tink.cidr = cidr
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
 
 	for _, opt := range opts {
@@ -87,7 +94,7 @@ func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.Tinkerb
 func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
 	clusterIP, err := GenerateUniqueIp(t.cidr)
 	if err != nil {
-		t.t.Fatalf("failed to generate ip for tinkerbell cidr %s: %v", t.cidr, err)
+		t.t.Fatalf("failed to generate cluster ip from cidr %s: %v", t.cidr, err)
 	}
 	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 

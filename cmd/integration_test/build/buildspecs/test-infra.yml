@@ -5,12 +5,12 @@ ec2:
   subnetId: subnet-0fd4b6ba7c9e17b5f
 
 vSphere:
-  url: https://10.61.250.74
+  url: https://vcenter.sddc-44-239-186-141.vmwarevmc.com
   insecure: True
   library: eks-a-templates
-  template: eks-a-admin-v0.0.0-8a498c1-20220511153117
-  datacenter: Datacenter
-  datastore: datastore2
-  resourcePool: TestResourcePool
-  network: VM Network
-  folder: gwesterf
+  template: eks-a-admin-ipmitool
+  datacenter: SDDC-Datacenter
+  datastore: WorkloadDatastore
+  resourcePool: Compute-ResourcePool
+  network: sddc-cgw-network-4
+  folder: gwest

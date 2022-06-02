@@ -31,10 +31,10 @@ func runHelmInstallSimpleFlow(test *framework.ClusterE2ETest) {
 func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
-	//test.PowerOffHardware()
-	//test.CreateCluster()
-	//test.DeleteCluster()
-	//test.ValidateHardwareDecommissioned()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce())
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
 }
 
 func runSimpleFlow(test *framework.ClusterE2ETest) {
@@ -244,61 +244,28 @@ func TestTinkerbellKubernetes121ExternalEtcdSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow(t *testing.T) {
+func TestTinkerbellKubernetes121ThreeReplicasSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell(), framework.WithTinkerbellExternalEtcdTopology(1)),
+		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
 		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithHardware(6),
+		framework.WithHardware(4),
 	)
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow(t *testing.T) {
+func TestTinkerbellKubernetes121ThreeWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
 		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithHardware(5),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes121SuperMicroSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
-		framework.WithHardware(2),
-		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes121DellSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
-		framework.WithHardware(2),
-		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes121HPSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
-		framework.WithHardware(2),
-		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithHardware(4),
 	)
 	runTinkerbellSimpleFlow(test)
 }
