@@ -1,0 +1,61 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: management-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig: {}
+    pods: {}
+    services: {}
+  controlPlaneConfiguration: {}
+  datacenterRef: {}
+  gitOpsRef:
+    kind: FluxConfig
+    name: test-gitops
+  kubernetesVersion: "1.19"
+  managementCluster:
+    name: management-cluster
+
+---
+kind: VSphereDatacenterConfig
+metadata:
+  name: management-cluster
+  namespace: default
+spec:
+  datacenter: SDDC-Datacenter
+  insecure: false
+  network: ""
+  server: ""
+  thumbprint: ""
+
+---
+kind: VSphereMachineConfig
+metadata:
+  name: management-cluster
+  namespace: default
+spec:
+  datastore: ""
+  folder: ""
+  memoryMiB: 0
+  numCPUs: 0
+  osFamily: ""
+  resourcePool: ""
+  template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: test-gitops
+  namespace: default
+spec:
+  branch: testBranch
+  clusterConfigPath: user/provided/path
+  github:
+    owner: mFolwer
+    personal: true
+    repository: testRepo
+  systemNamespace: flux-system
+
+---

@@ -132,6 +132,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		Owner:       owner,
 		Description: fmt.Sprintf("repository for use with E2E test job %v", e.jobId),
 		Personal:    true,
+		AutoInit:    true,
 	}
 
 	r, err := g.CreateRepo(ctx, o)

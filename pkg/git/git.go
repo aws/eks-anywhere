@@ -32,6 +32,7 @@ type CreateRepoOpts struct {
 	Description string
 	Personal    bool
 	Privacy     bool
+	AutoInit    bool
 }
 
 type GetRepoOpts struct {
