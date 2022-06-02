@@ -139,6 +139,125 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 	g.Expect(c.ValidateCreate()).NotTo(Succeed())
 }
 
+func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib.a": "/_data/var-redirect/log.d",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).To(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib:a": "/_data/var-redirect/log:d",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib:a": "/_data/var-redirect/log,d",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"var/lib": "/data/var/log",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRoot(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib": "data/var/log",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib/": "/data/var/log",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/lib": "/data/var/log/",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
@@ -313,6 +432,51 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *t
 		Device:     "/dev/vdb",
 		Filesystem: "ext4",
 		Label:      "",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCPCloudStackMachineValidateUpdateSymlinksMutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data/var/log",
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data_2/var/log",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestCPCloudStackMachineValidateUpdateSymlinksMutableInvalidComma(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data/var/log",
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data_2/var/log,d",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCPCloudStackMachineValidateUpdateSymlinksMutableColon(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data/var/log",
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
+		"/var/log": "/data_2/var/log:d",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
