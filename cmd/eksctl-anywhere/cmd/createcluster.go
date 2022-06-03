@@ -141,6 +141,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
@@ -233,7 +234,9 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{}
+	cliConfig := &config.CliConfig{
+		MaxWaitPerMachine: config.GetMaxWaitPerMachine(),
+	}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)

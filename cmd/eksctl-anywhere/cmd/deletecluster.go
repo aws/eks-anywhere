@@ -102,6 +102,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).

@@ -81,6 +81,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, uc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).

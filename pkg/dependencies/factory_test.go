@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 )
 
@@ -18,6 +19,7 @@ type factoryTest struct {
 	clusterSpec        *cluster.Spec
 	ctx                context.Context
 	hardwareConfigFile string
+	cliConfig          config.CliConfig
 }
 
 func newTest(t *testing.T) *factoryTest {
@@ -51,6 +53,18 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
+		WithCliConfig(&tt.cliConfig).
+		WithClusterManager(tt.clusterSpec.Cluster).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.ClusterManager).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
 		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
@@ -63,6 +77,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithBootstrapper().
+		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
 		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
