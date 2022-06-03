@@ -26,10 +26,8 @@ import (
 )
 
 const (
-	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
-	maxRetries                 = 30
-	backOffPeriod              = 5 * time.Second
+	maxRetries    = 30
+	backOffPeriod = 5 * time.Second
 )
 
 var (
