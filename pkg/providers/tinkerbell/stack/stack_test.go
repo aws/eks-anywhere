@@ -40,6 +40,13 @@ func getTinkBundle() releasev1alpha1.TinkerbellStackBundle {
 		Hegel: releasev1alpha1.TinkerbellServiceBundle{
 			Image: releasev1alpha1.Image{URI: "hegel:latest"},
 		},
+		Hook: releasev1alpha1.HookBundle{
+			Initramfs: releasev1alpha1.HookArch{
+				Amd: releasev1alpha1.Archive{
+					URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/initramfs-x86-64",
+				},
+			},
+		},
 	}
 }
 
@@ -83,10 +90,9 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, cluster.KubeconfigFile, overridesFileName)
 	docker.EXPECT().Run(ctx, "boots:latest",
 		boots,
-		[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67"},
+		[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-path-override", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook"},
 		"-v", gomock.Any(),
 		"--network", "host",
-		"-e", gomock.Any(),
 		"-e", gomock.Any(),
 		"-e", gomock.Any(),
 		"-e", gomock.Any(),
