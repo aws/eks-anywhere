@@ -27,8 +27,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
-const tinkerbellHardwareCSVFlag = "hardware-csv"
-
 type createClusterOptions struct {
 	clusterOptions
 	forceClean      bool
@@ -52,7 +50,7 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, tinkerbellHardwareCSVFlag, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
+		PopulateTinkerbelHardwareCSVFlag(&cc.hardwareCSVPath, createClusterCmd.Flags())
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -89,7 +87,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(tinkerbellHardwareCSVFlag)
+		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
 
 		// If no flag was returned there is a developer error as the flag has been removed
 		// from the program rendering it invalid.
@@ -97,8 +95,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			panic("'hardwarefile' flag not configured")
 		}
 
-		if !viper.IsSet(tinkerbellHardwareCSVFlag) || viper.GetString(tinkerbellHardwareCSVFlag) == "" {
-			return fmt.Errorf("required flag \"%v\" not set", tinkerbellHardwareCSVFlag)
+		if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
+			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
 		}
 
 		if !validations.FileExists(cc.hardwareCSVPath) {

@@ -78,7 +78,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, uc.forceClean).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, false, uc.hardwareCSVPath, uc.forceClean).
 		WithFluxAddonClient(newClusterSpec.Cluster, newClusterSpec.FluxConfig, nil).
 		WithCAPIManager().
 		Build(ctx)

@@ -20,9 +20,9 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceClean       bool
-	hardwareFileName string
+	wConfig         string
+	forceClean      bool
+	hardwareCSVPath string
 }
 
 var uc = &upgradeClusterOptions{}
@@ -58,8 +58,9 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	err := upgradeClusterCmd.MarkFlagRequired("filename")
-	if err != nil {
+	PopulateTinkerbelHardwareCSVFlag(&uc.hardwareCSVPath, upgradeClusterCmd.Flags())
+
+	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 }
@@ -82,7 +83,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, uc.forceClean).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
