@@ -8,7 +8,8 @@ import (
 // provider.
 const TinkerbellHardwareCSVFlagName = "hardware-csv"
 
-// PopulateTinkerbellHardwareCSVFlag populates set with the TinkerbellHardwareCSVFlagName.
+// PopulateTinkerbellHardwareCSVFlag populates s with the TinkerbellHardwareCSVFlagName.
+// The value provided to the CLI will be written to field.
 func PopulateTinkerbelHardwareCSVFlag(field *string, s *pflag.FlagSet) {
 	s.StringVar(field, TinkerbellHardwareCSVFlagName, "",
 		"A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning.")
