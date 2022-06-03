@@ -37,18 +37,12 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 		opts = append(opts, bootstrapper.WithEnv(env))
 	}
 
-	if p.setupTinkerbell {
-		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
-	}
+	opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
 
 	return opts, nil
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if !p.setupTinkerbell {
-		return nil
-	}
-
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
 	localIP, err := networkutils.GetLocalIP()
@@ -84,10 +78,6 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 }
 
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if !p.setupTinkerbell {
-		return nil
-	}
-
 	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
 	err := p.stackInstaller.Install(

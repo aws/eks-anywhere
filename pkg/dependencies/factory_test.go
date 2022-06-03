@@ -39,7 +39,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false, false).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -64,7 +64,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		UseExecutableImage("image:1").
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false, false).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
 		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().
