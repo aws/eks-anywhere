@@ -174,15 +174,6 @@ func WithUbuntu120() VSphereOpt {
 	}
 }
 
-func WithUbuntu119() VSphereOpt {
-	return func(v *VSphere) {
-		v.fillers = append(v.fillers,
-			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines),
-			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
 func WithUbuntu118() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
