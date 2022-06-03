@@ -54,7 +54,6 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		helm,
 		kubectl,
 		test.FakeNow,
-		true,
 		false,
 	)
 }
@@ -201,7 +200,6 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
 	provider.stackInstaller = stackInstaller
-	provider.setupTinkerbell = true
 
 	stackInstaller.EXPECT().Install(
 		ctx,
@@ -236,7 +234,6 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
 	provider.stackInstaller = stackInstaller
-	provider.setupTinkerbell = true
 
 	stackInstaller.EXPECT().Install(
 		ctx,

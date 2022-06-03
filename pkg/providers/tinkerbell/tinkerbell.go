@@ -58,9 +58,8 @@ type Provider struct {
 	// constructor call for constructing the validator in-line.
 	netClient networkutils.NetClient
 
-	skipIpCheck     bool
-	setupTinkerbell bool
-	retrier         *retrier.Retrier
+	skipIpCheck bool
+	retrier     *retrier.Retrier
 }
 
 type ProviderKubectlClient interface {
@@ -97,7 +96,6 @@ func NewProvider(
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
 	skipIpCheck bool,
-	setupTinkerbell bool,
 ) *Provider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -145,8 +143,7 @@ func NewProvider(
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
 		// Behavioral flags.
-		skipIpCheck:     skipIpCheck,
-		setupTinkerbell: setupTinkerbell,
+		skipIpCheck: skipIpCheck,
 	}
 }
 
