@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -54,9 +55,6 @@ type Installer struct {
 type InstallerOption func(s *Installer)
 
 type StackInstaller interface {
-	// WithNamespace(ns string, create bool) *Installer
-	// WithBootsOnDocker() *Installer
-	// WithBootsOnKubernetes() *Installer
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error
 	UninstallLocal(ctx context.Context) error
 }
@@ -88,22 +86,6 @@ func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm) St
 	}
 }
 
-// func (s *Installer) WithNamespace(ns string, create bool) *Installer {
-// 	s.namespace = ns
-// 	s.createNamespace = create
-// 	return s
-// }
-
-// func (s *Installer) WithBootsOnDocker() *Installer {
-// 	s.bootsOnDocker = true
-// 	return s
-// }
-
-// func (s *Installer) WithBootsOnKubernetes() *Installer {
-// 	s.bootsOnDocker = false
-// 	return s
-// }
-
 func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
@@ -117,6 +99,11 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			"name":  k,
 			"value": v,
 		})
+	}
+
+	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
+	if err != nil {
+		return fmt.Errorf("getting directory path from hook uri: %v", err)
 	}
 
 	valuesMap := map[string]interface{}{
@@ -140,6 +127,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: !s.bootsOnDocker,
 			image:  bundle.Boots.Image.URI,
 			env:    bootEnv,
+			args: []string{
+				"-dhcp-addr=0.0.0.0:67",
+				fmt.Sprintf("-osie-path-override=%s", osiePath),
+			},
 		},
 	}
 
@@ -179,7 +170,16 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		flags = append(flags, "-e", fmt.Sprintf("%s=%s", name, value))
 	}
 
-	cmd := []string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67"}
+	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
+	if err != nil {
+		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	cmd := []string{
+		"-kubeconfig", "/kubeconfig",
+		"-dhcp-addr", "0.0.0.0:67",
+		"-osie-path-override", osiePath,
+	}
 	if err := s.docker.Run(ctx, bundle.Boots.Image.URI, boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
@@ -193,8 +193,6 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 		"TINKERBELL_TLS":            "false",
 		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
 		"BOOTS_EXTRA_KERNEL_ARGS":   fmt.Sprintf("tink_worker_image=%s", bundle.Tink.TinkWorker.URI),
-		// TODO: Pull this from bundle instead
-		"MIRROR_BASE_URL": "https://tinkerbell-storage-for-eksa.s3.us-west-2.amazonaws.com",
 	}
 }
 
@@ -209,4 +207,12 @@ func (s *Installer) uninstallBootsFromDocker(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getURIDir(uri string) (string, error) {
+	index := strings.LastIndex(uri, "/")
+	if index == -1 {
+		return "", fmt.Errorf("uri is invalid: %s", uri)
+	}
+	return uri[:index], nil
 }
