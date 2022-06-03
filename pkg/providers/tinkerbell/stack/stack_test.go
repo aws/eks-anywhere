@@ -24,8 +24,8 @@ const (
 	testIP            = "1.2.3.4"
 
 	// TODO: remove this once the chart is added to bundle
-	helmChartOci     = "oci://public.ecr.aws/h6q6q4n4/tinkerbell"
-	helmChartName    = "tinkerbell"
+	helmChartOci     = "oci://public.ecr.aws/i7k6m1j7/tinkerbell/tinkerbell-chart"
+	helmChartName    = "tinkerbell-chart"
 	helmChartVersion = "0.1.0"
 )
 

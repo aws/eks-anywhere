@@ -2,6 +2,7 @@ package hardware
 
 import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -107,7 +108,8 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 			Labels:    m.Labels,
 		},
 		Spec: v1alpha1.HardwareSpec{
-			Disks: []v1alpha1.Disk{{Device: m.Disk}},
+			BMCRef: newBMCRefFromMachine(m),
+			Disks:  []v1alpha1.Disk{{Device: m.Disk}},
 			Metadata: &v1alpha1.HardwareMetadata{
 				Facility: &v1alpha1.MetadataFacility{
 					FacilityCode: "onprem",
@@ -161,4 +163,16 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 			},
 		},
 	}
+}
+
+// newBMCRefFromMachine returns a BMCRef pointer for Hardware.
+func newBMCRefFromMachine(m Machine) *corev1.TypedLocalObjectReference {
+	if m.HasBMC() {
+		return &corev1.TypedLocalObjectReference{
+			Name: formatBMCRef(m),
+			Kind: tinkerbellBMCKind,
+		}
+	}
+
+	return nil
 }
