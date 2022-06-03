@@ -1,7 +1,7 @@
 ---
 title: "etcd configuration"
 linkTitle: "etcd"
-weight: 20
+weight: 25
 description: >
   EKS Anywhere cluster yaml etcd specification reference
 ---
