@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"regexp"
@@ -230,4 +231,71 @@ func validateLabelValue(v string) error {
 		return fmt.Errorf("%v", strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// MachineSelector is a map of key-value pairs used to select Machine instances by label definition.
+type MachineSelector map[string]string
+
+func (m MachineSelector) String() string {
+	s, err := json.Marshal(m)
+	// We want to support fmt.Stringer so we have no choice but to panic here. In practice, this
+	// should never happen because we're merely stringifying a map.
+	if err != nil {
+		panic(err)
+	}
+
+	return string(s)
+}
+
+// MatchingDisksForSelectors returns an assertion that ensures all machines matching a given entry
+// in selectors specify the same Disk value.
+func MatchingDisksForSelectors(selectors []MachineSelector) MachineAssertion {
+	diskCaches := make([]struct {
+		Selector MachineSelector
+		Disk     string
+	}, 0, len(selectors))
+
+	for _, selector := range selectors {
+		diskCaches = append(diskCaches, struct {
+			Selector MachineSelector
+			Disk     string
+		}{Selector: selector})
+	}
+
+	// For each selector check if the machine matches the selector and whether it matches
+	// any previously observed disks erroring if not.
+	return func(machine Machine) error {
+		for i, cache := range diskCaches {
+			switch {
+			// If we don't match the selector do nothing.
+			case !labelsMatchSelector(cache.Selector, machine.Labels):
+
+			// If this is the first machine we've observed matching the selector, configure the
+			// disk cache.
+			case cache.Disk == "":
+				diskCaches[i].Disk = machine.Disk
+
+			// We have a machine that matches the selector and we've already cached a disk for
+			// the selector, so ensure the disk for this machine matches the cache.
+			case cache.Disk != machine.Disk:
+				return fmt.Errorf(
+					"disk value's must be the same for all machines matching selector: %v",
+					cache.Selector,
+				)
+			}
+		}
+
+		return nil
+	}
+}
+
+// labelsMatchSelector ensures all selector key-value pairs can be found in labels.
+func labelsMatchSelector(selector MachineSelector, labels Labels) bool {
+	for expectKey, expectValue := range selector {
+		labelValue, hasLabel := labels[expectKey]
+		if !hasLabel || labelValue != expectValue {
+			return false
+		}
+	}
+	return true
 }
