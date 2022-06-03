@@ -25,11 +25,12 @@ const (
 	hegel          = "hegel"
 	tinkController = "tinkController"
 	tinkServer     = "tinkServer"
+	rufio          = "rufio"
 	grpcPort       = "42113"
 
 	// TODO: remove this once the chart is added to bundle
-	helmChartOci     = "oci://public.ecr.aws/h6q6q4n4/tinkerbell"
-	helmChartName    = "tinkerbell"
+	helmChartOci     = "oci://public.ecr.aws/i7k6m1j7/tinkerbell/tinkerbell-chart"
+	helmChartName    = "tinkerbell-chart"
 	helmChartVersion = "0.1.0"
 )
 
@@ -140,6 +141,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: !s.bootsOnDocker,
 			image:  bundle.Boots.Image.URI,
 			env:    bootEnv,
+		},
+		rufio: map[string]interface{}{
+			deploy: true,
+			image:  bundle.Rufio.Image.URI,
 		},
 	}
 
