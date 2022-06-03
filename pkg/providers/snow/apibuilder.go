@@ -68,19 +68,6 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	return kct, nil
 }
 
-func KubeadmConfigTemplates(clusterSpec *cluster.Spec) (map[string]*bootstrapv1.KubeadmConfigTemplate, error) {
-	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-
-	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		template, err := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
-		if err != nil {
-			return nil, err
-		}
-		m[workerNodeGroupConfig.Name] = template
-	}
-	return m, nil
-}
-
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {
 	md := clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, snowMachineTemplate)
 	return md

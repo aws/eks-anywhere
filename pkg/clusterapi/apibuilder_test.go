@@ -66,6 +66,14 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 				},
 				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 					Count: 3,
+					Taints: []v1.Taint{
+						{
+							Key:       "key1",
+							Value:     "val1",
+							Effect:    v1.TaintEffectNoExecute,
+							TimeAdded: nil,
+						},
+					},
 				},
 				KubernetesVersion: "1.21",
 			},
@@ -91,6 +99,14 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	workerNodeGroupConfig := &v1alpha1.WorkerNodeGroupConfiguration{
 		Name:  "wng-1",
 		Count: 3,
+		Taints: []v1.Taint{
+			{
+				Key:       "key2",
+				Value:     "val2",
+				Effect:    v1.TaintEffectNoSchedule,
+				TimeAdded: nil,
+			},
+		},
 	}
 
 	kubeadmConfigTemplate := &bootstrapv1.KubeadmConfigTemplate{
@@ -228,11 +244,27 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{},
+						Taints: []v1.Taint{
+							{
+								Key:       "key1",
+								Value:     "val1",
+								Effect:    v1.TaintEffectNoExecute,
+								TimeAdded: nil,
+							},
+						},
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{},
+						Taints: []v1.Taint{
+							{
+								Key:       "key1",
+								Value:     "val1",
+								Effect:    v1.TaintEffectNoExecute,
+								TimeAdded: nil,
+							},
+						},
 					},
 				},
 				PreKubeadmCommands:  []string{},
@@ -295,6 +327,14 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 							KubeletExtraArgs: map[string]string{},
+							Taints: []v1.Taint{
+								{
+									Key:       "key2",
+									Value:     "val2",
+									Effect:    v1.TaintEffectNoSchedule,
+									TimeAdded: nil,
+								},
+							},
 						},
 					},
 					PreKubeadmCommands:  []string{},

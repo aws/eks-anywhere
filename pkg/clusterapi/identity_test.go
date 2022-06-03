@@ -111,11 +111,27 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						PreKubeadmCommands:  []string{},
@@ -279,11 +295,27 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						PreKubeadmCommands:  []string{},
@@ -374,11 +406,27 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 								KubeletExtraArgs: map[string]string{},
+								Taints: []v1.Taint{
+									{
+										Key:       "key1",
+										Value:     "val1",
+										Effect:    v1.TaintEffectNoExecute,
+										TimeAdded: nil,
+									},
+								},
 							},
 						},
 						PreKubeadmCommands:  []string{},

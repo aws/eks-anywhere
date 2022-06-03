@@ -280,17 +280,6 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	}
 }
 
-func TestKubeadmConfigTemplates(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-		"md-0": wantKubeadmConfigTemplate(),
-	}
-	tt.Expect(got).To(Equal(want))
-}
-
 func wantMachineDeployment() *clusterv1.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
@@ -337,20 +326,6 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Replicas: &wantReplicas,
 		},
 	}
-}
-
-func TestMachineDeployments(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	kubeadmConfigTemplates, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	workerMachineTemplates := snow.SnowMachineTemplates(tt.clusterSpec)
-	got := snow.MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-
-	want := map[string]*clusterv1.MachineDeployment{
-		"md-0": wantMachineDeployment(),
-	}
-	tt.Expect(got).To(Equal(want))
 }
 
 func wantSnowCluster() *snowv1.AWSSnowCluster {

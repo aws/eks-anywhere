@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -344,9 +345,9 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"snow-test-md-0",
-			constants.EksaSystemNamespace,
-			&clusterv1.MachineDeployment{},
+			"snow-test",
+			constants.DefaultNamespace,
+			&v1alpha1.Cluster{},
 		).
 		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
@@ -387,12 +388,37 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
+			"snow-test",
+			constants.DefaultNamespace,
+			&v1alpha1.Cluster{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *v1alpha1.Cluster) error {
+			tt.clusterSpec.Cluster.DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
 			clusterapi.MachineDeploymentName(tt.clusterSpec, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			wantMachineDeployment().DeepCopyInto(obj)
 			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
+			return nil
+		}).
+		Times(2)
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
