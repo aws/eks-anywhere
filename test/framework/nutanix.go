@@ -7,13 +7,22 @@ import (
 )
 
 const (
-	nutanixEndpoint = "NUTANIX_ENDPOINT"
-	nutanixPort     = "NUTANIX_PORT"
-	nutanixUser     = "NUTANIX_USER"
-	nutanixPwd      = "NUTANIX_PASSWORD"
-	nutanixInsecure = "NUTANIX_INSECURE"
+	nutanixEndpoint = "T_NUTANIX_ENDPOINT"
+	nutanixPort     = "T_NUTANIX_PORT"
+	nutanixUser     = "T_NUTANIX_USER"
+	nutanixPwd      = "T_NUTANIX_PASSWORD"
+	nutanixInsecure = "T_NUTANIX_INSECURE"
 
-	nutanixVCPUsPerSocket = "NUTANIX_VCPUS_PER_SOCKET"
+	nutanixMachineBootType       = "T_NUTANIX_MACHINE_BOOT_TYPE"
+	nutanixMachineMemorySize     = "T_NUTANIX_MACHINE_MEMORY_SIZE"
+	nutanixSystemDiskSize        = "T_NUTANIX_SYSTEMDISK_SIZE"
+	nutanixMachineVCPUsPerSocket = "T_NUTANIX_MACHINE_VCPU_PER_SOCKET"
+	nutanixMachineVCPUSocket     = "T_NUTANIX_MACHINE_VCPU_SOCKET"
+
+	nutanixMachineTemplateImageName = "T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME"
+	nutanixPrismElementClusterName  = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
+	nutanixSSHAuthorizedKey         = "T_NUTANIX_SSH_AUTHORIZED_KEY"
+	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -23,7 +32,16 @@ var requiredNutanixEnvVars = []string{
 	nutanixPwd,
 	nutanixInsecure,
 
-	nutanixVCPUsPerSocket,
+	nutanixMachineBootType,
+	nutanixMachineMemorySize,
+	nutanixSystemDiskSize,
+	nutanixMachineVCPUsPerSocket,
+	nutanixMachineVCPUSocket,
+	nutanixMachineTemplateImageName,
+
+	nutanixPrismElementClusterName,
+	nutanixSSHAuthorizedKey,
+	nutanixSubnetName,
 }
 
 type Nutanix struct {
@@ -45,8 +63,18 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 			api.WithNutanixIntFromEnvVar(nutanixPort, api.WithNutanixPort),
 			api.WithNutanixStringFromEnvVar(nutanixUser, api.WithNutanixUser),
 			api.WithNutanixStringFromEnvVar(nutanixPwd, api.WithNutanixPwd),
-			// api.WithNutanixStringFromEnvVar(nutanixInsecure, api.WithNutanixInsure),
-			api.WithNutanixInt32FromEnvVar(nutanixVCPUsPerSocket, api.WithNutanixVCPUsPerSocket),
+			api.WithNutanixBoolFromEnvVar(nutanixInsecure, api.WithNutanixInsure),
+
+			// api.WithNutanixStringFromEnvVar(nutanixMachineBootType, api.WithNutanixMachineBootType),
+			api.WithNutanixStringFromEnvVar(nutanixMachineMemorySize, api.WithNutanixMachineMemorySize),
+			api.WithNutanixStringFromEnvVar(nutanixSystemDiskSize, api.WithNutanixMachineSystemDiskSize),
+			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUsPerSocket, api.WithNutanixMachineVCPUsPerSocket),
+			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUSocket, api.WithNutanixMachineVCPUSocket),
+			api.WithNutanixStringFromEnvVar(nutanixMachineTemplateImageName, api.WithNutanixMachineTemplateImageName),
+
+			api.WithNutanixStringFromEnvVar(nutanixPrismElementClusterName, api.WithNutanixPrismElementClusterName),
+			api.WithNutanixStringFromEnvVar(nutanixSSHAuthorizedKey, api.WithNutanixSSHAuthorizedKey),
+			api.WithNutanixStringFromEnvVar(nutanixSubnetName, api.WithNutanixSubnetName),
 		},
 	}
 
@@ -95,7 +123,7 @@ func (s *Nutanix) customizeProviderConfig(file string, fillers ...api.NutanixFil
 func WithNutanixUbuntu121() NutanixOpt {
 	return func(v *Nutanix) {
 		v.fillers = append(v.fillers,
-			api.WithNutanixInt32FromEnvVar(nutanixVCPUsPerSocket, api.WithNutanixVCPUsPerSocket),
+			api.WithNutanixInt32FromEnvVar(nutanixMachineVCPUsPerSocket, api.WithNutanixMachineVCPUsPerSocket),
 		)
 	}
 }

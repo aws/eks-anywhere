@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -94,16 +95,76 @@ func WithNutanixPwd(value string) NutanixFiller {
 	}
 }
 
-// func WithNutanixInsure(value bool) NutanixFiller {
-// 	return func(config NutanixConfig) {
-// 		config.datacenterConfig.Spec.NutanixEndpoint = value
-// 	}
-// }
+func WithNutanixInsure(value bool) NutanixFiller {
+	return func(config NutanixConfig) {
+		config.datacenterConfig.Spec.NutanixInsecure = value
+	}
+}
 
-func WithNutanixVCPUsPerSocket(vcpusPerSocket int32) NutanixFiller {
+func WithNutanixMachineBootType(value int32) NutanixFiller {
+	return func(config NutanixConfig) {
+		// for _, m := range config.machineConfigs {
+		// 	m.Spec. = value
+		// }
+	}
+}
+
+func WithNutanixMachineMemorySize(value string) NutanixFiller {
 	return func(config NutanixConfig) {
 		for _, m := range config.machineConfigs {
-			m.Spec.VCPUsPerSocket = vcpusPerSocket
+			m.Spec.MemorySize = resource.MustParse(value)
 		}
+	}
+}
+
+func WithNutanixMachineSystemDiskSize(value string) NutanixFiller {
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.SystemDiskSize = resource.MustParse(value)
+		}
+	}
+}
+
+func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.VCPUsPerSocket = value
+		}
+	}
+}
+
+func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.VCPUSockets = value
+		}
+	}
+}
+
+func WithNutanixMachineTemplateImageName(value string) NutanixFiller {
+	// TODO Handle Type uuid as well
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.Image = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
+		}
+	}
+}
+
+func WithNutanixSubnetName(value string) NutanixFiller {
+	// TODO Handle Type uuid as well
+	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.Subnet = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
+		}
+	}
+}
+
+func WithNutanixPrismElementClusterName(value string) NutanixFiller {
+	return func(config NutanixConfig) {
+	}
+}
+
+func WithNutanixSSHAuthorizedKey(value string) NutanixFiller {
+	return func(config NutanixConfig) {
 	}
 }
