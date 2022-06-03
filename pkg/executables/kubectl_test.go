@@ -1891,11 +1891,7 @@ func TestGetTinkerbellDatacenterConfig(t *testing.T) {
 			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
 		},
 		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
-			TinkerbellCertURL:      "http://1.2.3.4:42114/cert",
-			TinkerbellGRPCAuth:     "1.2.3.4:42113",
-			TinkerbellHegelURL:     "http://1.2.3.4:50061",
-			TinkerbellIP:           "1.2.3.4",
-			TinkerbellPBnJGRPCAuth: "1.2.3.4:50051",
+			TinkerbellIP: "1.2.3.4",
 		},
 	}
 
