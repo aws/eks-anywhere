@@ -12,6 +12,7 @@ description: >
 
 You can now leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
 by following the [IRSA reference]({{< relref "../../reference/clusterspec/irsa.md" >}}) guide for details.
+This is currently only supported on the vSphere provider.
 
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
@@ -20,6 +21,7 @@ Yes, EKS Anywhere can create clusters that support API server OIDC authenticatio
 This means you can federate authentication through AD FS locally or through Azure AD, along with other IDPs that support the OIDC standard.
 In order to add OIDC support to your EKS Anywhere clusters, you need to configure your cluster by updating the configuration file before creating the cluster.
 Please see the [OIDC reference]({{< relref "../../reference/clusterspec/oidc.md" >}}) for details.
+This is currently only supported on the vSphere provider.
 
 ### Does EKS Anywhere support LDAP?
 EKS Anywhere does not support LDAP out of the box.
@@ -64,13 +66,14 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 ### Can I deploy EKS Anywhere on other clouds?
 
 EKS Anywhere can be installed on any infrastructure with the required Bare Metal or VMware vSphere specifications.
-See EKS Anywhere [Bare Metal]({{< relref "../vsphere/" >}}) and [vSphere]({{< relref "../vsphere/" >}}) requirements documentation.
+See EKS Anywhere [Production Environment]({{< relref "../../getting-started/production-environment/" >}}) documentation.
 
 ### How can I manage EKS Anywhere at scale?
 
 You can perform cluster life cycle and configuration management at scale through GitOps-based tools.
 EKS Anywhere offers git-driven cluster management through the integrated Flux Controller.
 See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md" >}}) documentation for details.
+This is currently only supported on the vSphere provider.
 
 ### Can I run EKS Anywhere on ESXi?
 
