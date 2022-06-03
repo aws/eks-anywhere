@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1932,6 +1933,75 @@ func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
 	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("datacenterconfig not found"))
 
 	_, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetUnprovisionedTinkerbellHardware(t *testing.T) {
+	tt := newKubectlTest(t)
+	hardwareJSON := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
+	kubeconfig := "foo/bar"
+
+	var expect []tinkv1alpha1.Hardware
+	for _, h := range []string{"hw1", "hw2"} {
+		expect = append(expect, tinkv1alpha1.Hardware{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Hardware",
+				APIVersion: "tinkerbell.org/v1alpha1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: h,
+			},
+		})
+	}
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwareJSON), nil)
+
+	hardware, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(hardware).To(Equal(expect))
+}
+
+func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
+	tt := newKubectlTest(t)
+	kubeconfig := "foo/bar"
+	var buf bytes.Buffer
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(buf, nil)
+
+	_, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
+	tt := newKubectlTest(t)
+	kubeconfig := "foo/bar"
+	var buf bytes.Buffer
+	expect := errors.New("foo bar")
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(buf, expect)
+
+	_, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
 	tt.Expect(err).NotTo(BeNil())
 }
 
