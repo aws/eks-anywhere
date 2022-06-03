@@ -333,6 +333,16 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+    - content: |
+        --dryrun=true
+        --env=prod
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - content: |
+        --dryrun=true
+        --env=prod
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-postkubeadmcommands-input
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -368,9 +378,9 @@ spec:
         else
           echo "/var/log/kubernetes already symlink";
       fi
-    - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh < /var/run/cloud-init/customer-provided-prekubeadmcommands-input
     postKubeadmCommands:
-    - /mnt/cloudstack-scripts/postKubeadmCommands.sh --dryrun=true --env=prod
+    - /mnt/cloudstack-scripts/postKubeadmCommands.sh < /var/run/cloud-init/customer-provided-postkubeadmcommands-input
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -443,7 +453,9 @@ spec:
       mkdir -p /mnt/cloudstack-scripts &&
       echo /dev/sr0 /mnt/cloudstack-scripts auto ro 0 2 >> /etc/fstab &&
       mount /mnt/cloudstack-scripts
-    - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
+    - echo --dryrun=true >> /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - echo --env=prod >> /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh < /var/run/cloud-init/customer-provided-prekubeadmcommands-input
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername

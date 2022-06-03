@@ -88,6 +88,42 @@ type CloudStackISOAttachment struct {
 	PostKubeadmCommandArgs []string `json:"postKubeadmCommandArgs,omitempty"`
 }
 
+func (r *CloudStackISOAttachment) Equal(o *CloudStackISOAttachment) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id || r.Name != o.Name {
+		return false
+	}
+
+	if r.MountPath != o.MountPath ||
+		r.Device != o.Device ||
+		r.RunPreKubeadmCommand != o.RunPreKubeadmCommand ||
+		r.RunPostKubeadmCommand != o.RunPostKubeadmCommand {
+		return false
+	}
+	if len(r.PreKubeadmCommandArgs) != len(o.PreKubeadmCommandArgs) {
+		return false
+	}
+	if len(r.PostKubeadmCommandArgs) != len(o.PostKubeadmCommandArgs) {
+		return false
+	}
+	for i, v := range r.PreKubeadmCommandArgs {
+		if v != o.PreKubeadmCommandArgs[i] {
+			return false
+		}
+	}
+	for i, v := range r.PostKubeadmCommandArgs {
+		if v != o.PostKubeadmCommandArgs[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
 	if r == o {
 		return true
@@ -147,6 +183,22 @@ func (r SymlinkMaps) Validate() (err error, field string, value string) {
 		match = isPortableFileNameSet.Match([]byte(value))
 		if !match {
 			return errors.New("has char not in portable file name set"), "symlinks", value
+		}
+	}
+	return nil, "", ""
+}
+
+func (r *CloudStackISOAttachment) Validate() (err error, field string, value string) {
+	if len(r.Id) > 0 || len(r.Name) > 0 {
+		if strings.HasSuffix(r.MountPath, "/") || !strings.HasPrefix(r.MountPath, "/") {
+			return errors.New("must start with / and NOT end with /"), "mountPath", r.MountPath
+		}
+		if len(r.Device) < 1 {
+			return errors.New("empty device"), "device", r.Device
+		}
+	} else {
+		if len(r.MountPath)+len(r.Device) > 0 {
+			return errors.New("empty id/name"), "id or name", r.Id
 		}
 	}
 	return nil, "", ""
@@ -242,7 +294,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 	}
 	if !c.Template.Equal(&o.Template) ||
 		!c.ComputeOffering.Equal(&o.ComputeOffering) ||
-		!c.DiskOffering.Equal(&o.DiskOffering) {
+		!c.DiskOffering.Equal(&o.DiskOffering) ||
+		!c.ISOAttachment.Equal(&o.ISOAttachment) {
 		return false
 	}
 	if c.Affinity != o.Affinity {
@@ -258,7 +311,7 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	for detail, value := range c.UserCustomDetails {
-		if value != o.UserCustomDetails[detail] {
+		if v, ok := o.UserCustomDetails[detail]; !ok || v != value {
 			return false
 		}
 	}
@@ -266,10 +319,11 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	for detail, value := range c.Symlinks {
-		if value != o.Symlinks[detail] {
+		if v, ok := o.Symlinks[detail]; !ok || v != value {
 			return false
 		}
 	}
+
 	return true
 }
 

@@ -348,6 +348,22 @@ spec:
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
+{{- if $isoCP.PreKubeadmCommandArgs}}
+    - content: |
+{{- range $isoCP.PreKubeadmCommandArgs}}
+        {{.}}
+{{- end}}
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+{{- end}}
+{{- if $isoCP.PostKubeadmCommandArgs}}
+    - content: |
+{{- range $isoCP.PostKubeadmCommandArgs}}
+        {{.}}
+{{- end}}
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-postkubeadmcommands-input
+{{- end}}
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -421,11 +437,11 @@ spec:
       fi
 {{- end}}
 {{- if and $isoConfiguredCP $isoCP.RunPreKubeadmCommand}}
-    - {{ $isoCP.MountPath}}/preKubeadmCommands.sh {{- range $isoCP.PreKubeadmCommandArgs}} {{ .}}{{- end}}
+    - {{ $isoCP.MountPath}}/preKubeadmCommands.sh {{- if $isoCP.PreKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-prekubeadmcommands-input {{- end}}
 {{- end}}
 {{- if and $isoConfiguredCP $isoCP.RunPostKubeadmCommand}}
     postKubeadmCommands:
-    - {{ $isoCP.MountPath}}/postKubeadmCommands.sh {{- range $isoCP.PostKubeadmCommandArgs}} {{ .}}{{- end}}
+    - {{ $isoCP.MountPath}}/postKubeadmCommands.sh {{- if $isoCP.PostKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-postkubeadmcommands-input {{- end}}
 {{- end}}
 {{- if $diskConfiguredCP }}
     diskSetup:
@@ -515,7 +531,12 @@ spec:
       mount {{ $isoEtcd.MountPath }}
 {{- end }}
 {{- if and $isoConfiguredEtcd $isoEtcd.RunPreKubeadmCommand}}
-    - {{ $isoEtcd.MountPath}}/preKubeadmCommands.sh {{- range $isoEtcd.PreKubeadmCommandArgs}} {{ .}}{{- end}}
+{{- if $isoEtcd.PreKubeadmCommandArgs}}
+{{- range $isoEtcd.PreKubeadmCommandArgs }}
+    - echo {{.}} >> /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+{{- end}}
+{{- end}}
+    - {{ $isoEtcd.MountPath}}/preKubeadmCommands.sh {{- if $isoEtcd.PreKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-prekubeadmcommands-input {{- end}}
 {{- end}}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}

@@ -534,6 +534,11 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 		return true
 	}
 	if !oldCsmc.Spec.DiskOffering.Equal(&newCsmc.Spec.DiskOffering) {
+		logger.Info(fmt.Sprintf("disk diff detected: %v -> %v", oldCsmc.Spec.DiskOffering, newCsmc.Spec.DiskOffering))
+		return true
+	}
+	if !oldCsmc.Spec.ISOAttachment.Equal(&newCsmc.Spec.ISOAttachment) {
+		logger.Info(fmt.Sprintf("iso attachment diff detected: %v -> %v", oldCsmc.Spec.ISOAttachment, newCsmc.Spec.ISOAttachment))
 		return true
 	}
 	if len(oldCsmc.Spec.UserCustomDetails) != len(newCsmc.Spec.UserCustomDetails) {
@@ -548,7 +553,8 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 		return true
 	}
 	for key, value := range oldCsmc.Spec.Symlinks {
-		if value != newCsmc.Spec.Symlinks[key] {
+		if v, exists := newCsmc.Spec.Symlinks[key]; !exists || v != value {
+			logger.Info(fmt.Sprintf("symlinks diff detected: %s:%s -> %s", key, value, v))
 			return true
 		}
 	}

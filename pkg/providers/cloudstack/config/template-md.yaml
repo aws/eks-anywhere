@@ -37,7 +37,7 @@ spec:
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{`{{ ds.meta_data.local_hostname }}`}}'
-{{- if or .proxyConfig .registryMirrorConfiguration }}
+{{- if or .proxyConfig .registryMirrorConfiguration $iso.PreKubeadmCommandArgs $iso.PostKubeadmCommandArgs}}
       files:
 {{- end }}
 {{- if .proxyConfig }}
@@ -67,6 +67,22 @@ spec:
         owner: root:root
         path: "/etc/containerd/config_append.toml"
 {{- end }}
+{{- if $iso.PreKubeadmCommandArgs}}
+      - content: |
+{{- range $iso.PreKubeadmCommandArgs}}
+          {{.}}
+{{- end}}
+        owner: root:root
+        path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+{{- end}}
+{{- if $iso.PostKubeadmCommandArgs}}
+      - content: |
+{{- range $iso.PostKubeadmCommandArgs}}
+          {{.}}
+{{- end}}
+        owner: root:root
+        path: /var/run/cloud-init/customer-provided-postkubeadmcommands-input
+{{- end}}
       preKubeadmCommands:
       - swapoff -a
 {{- if .registryMirrorConfiguration }}
@@ -91,11 +107,11 @@ spec:
         fi
 {{- end}}
 {{- if and $isoConfigured $iso.RunPreKubeadmCommand}}
-      - {{ $iso.MountPath}}/preKubeadmCommands.sh {{- range $iso.PreKubeadmCommandArgs}} {{.}}{{- end}}
+      - {{ $iso.MountPath}}/preKubeadmCommands.sh {{- if $iso.PreKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-prekubeadmcommands-input {{- end}}
 {{- end}}
 {{- if and $isoConfigured $iso.RunPostKubeadmCommand}}
       postKubeadmCommands:
-      - {{ $iso.MountPath}}/postKubeadmCommands.sh {{- range $iso.PostKubeadmCommandArgs}} {{.}}{{- end}}
+      - {{ $iso.MountPath}}/postKubeadmCommands.sh {{- if $iso.PostKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-postkubeadmcommands-input {{- end}}
 {{- end}}
 {{- if $diskConfigured }}
       diskSetup:

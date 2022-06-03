@@ -43,6 +43,9 @@ func (r *CloudStackMachineConfig) ValidateCreate() error {
 	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
 		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
 	}
+	if err, fieldName, fieldValue := r.Spec.ISOAttachment.Validate(); err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("ISOAttachment %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+	}
 
 	return nil
 }
@@ -79,6 +82,12 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
+		)
+	}
+	if err, fieldName, fieldValue := r.Spec.ISOAttachment.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "ISOAttachment", fieldName), fieldValue, err.Error()),
 		)
 	}
 

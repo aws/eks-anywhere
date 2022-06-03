@@ -17,6 +17,17 @@ spec:
             node-labels: label1=foo,label2=bar
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.local_hostname }}'
+      files:
+      - content: |
+          --dryrun=true
+          --env=prod
+        owner: root:root
+        path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+      - content: |
+          --dryrun=true
+          --env=prod
+        owner: root:root
+        path: /var/run/cloud-init/customer-provided-postkubeadmcommands-input
       preKubeadmCommands:
       - swapoff -a
       - hostname "{{ ds.meta_data.local_hostname }}"
@@ -38,9 +49,9 @@ spec:
             mkdir -p /data/var/log/pods && ln -s /data/var/log/pods /var/log/pods ;
           else echo "/var/log/pods already symlink" ;
         fi
-      - /mnt/cloudstack-scripts/preKubeadmCommands.sh --dryrun=true --env=prod
+      - /mnt/cloudstack-scripts/preKubeadmCommands.sh < /var/run/cloud-init/customer-provided-prekubeadmcommands-input
       postKubeadmCommands:
-      - /mnt/cloudstack-scripts/postKubeadmCommands.sh --dryrun=true --env=prod
+      - /mnt/cloudstack-scripts/postKubeadmCommands.sh < /var/run/cloud-init/customer-provided-postkubeadmcommands-input
       diskSetup:
         filesystems:
           - device: /dev/vdb1
