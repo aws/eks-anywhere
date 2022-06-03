@@ -148,3 +148,19 @@ func TestVSphereKubernetes122BottlerocketAutoimport(t *testing.T) {
 	)
 	runAutoImportFlow(test, provider)
 }
+
+func TestVSphereKubernetes123BottlerocketAutoimport(t *testing.T) {
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithTemplateForAllMachines(""),
+			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
+		),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+	runAutoImportFlow(test, provider)
+}
