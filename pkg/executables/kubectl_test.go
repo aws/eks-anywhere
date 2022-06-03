@@ -11,7 +11,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1743,63 +1742,6 @@ func TestApplyTolerationsFromTaints(t *testing.T) {
 		tt.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, nil)
 	var taints []corev1.Taint
 	tt.Expect(tt.k.ApplyTolerationsFromTaints(tt.ctx, taints, taints, "ds", "test", tt.cluster.KubeconfigFile, "testNs", "/test")).To(Succeed())
-}
-
-func TestGetBmcsPowerState(t *testing.T) {
-	tt := newKubectlTest(t)
-	bmcNames := []string{"bmc-1", "bmc-2"}
-	params := []string{
-		"get", "bmc.tinkerbell.org", "bmc-1", "bmc-2",
-		"-o", "jsonpath={.items[*].status.powerState}",
-		"--kubeconfig", tt.cluster.KubeconfigFile, "-n", tt.namespace,
-	}
-	want := []string{"POWER_ACTION_HARDOFF", "POWER_ACTION_HARDOFF"}
-	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString("POWER_ACTION_HARDOFF POWER_ACTION_HARDOFF"), nil)
-	got, err := tt.k.GetBmcsPowerState(tt.ctx, bmcNames, tt.cluster.KubeconfigFile, tt.namespace)
-	tt.Expect(err).To(BeNil())
-	tt.Expect(got).To(Equal(want))
-}
-
-func TestGetHardwareWithLabel(t *testing.T) {
-	tt := newKubectlTest(t)
-	ownerNameLabel := "v1alpha1.tinkerbell.org/ownerName"
-	hardwaresJson := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
-	wantHardwares := []tinkv1alpha1.Hardware{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hw1",
-				Labels: map[string]string{
-					ownerNameLabel: "tink-test-md-0-clc85",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Hardware",
-				APIVersion: "tinkerbell.org/v1alpha1",
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hw2",
-				Labels: map[string]string{
-					ownerNameLabel: "tink-test-controlplane-0-ccl90",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Hardware",
-				APIVersion: "tinkerbell.org/v1alpha1",
-			},
-		},
-	}
-
-	params := []string{
-		"get", "hardware.tinkerbell.org", "-o", "json", "--kubeconfig",
-		tt.cluster.KubeconfigFile, "--namespace", tt.namespace, fmt.Sprintf("--selector=%s", ownerNameLabel),
-	}
-	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwaresJson), nil)
-
-	got, err := tt.k.GetHardwareWithLabel(tt.ctx, ownerNameLabel, tt.cluster.KubeconfigFile, tt.namespace)
-	tt.Expect(err).To(BeNil())
-	tt.Expect(got).To(Equal(wantHardwares))
 }
 
 func TestKubectlGetObjectNotFound(t *testing.T) {

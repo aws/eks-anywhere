@@ -12,8 +12,6 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -58,8 +56,6 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
-	captHardwareResourceType             = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
-	captBmcResourceType                  = fmt.Sprintf("bmc.%s", pbnjv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -1488,40 +1484,6 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	}
 
 	return obj, nil
-}
-
-// GetHardwareWithLabel gets the hardwares with given label.
-func (k *Kubectl) GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
-	params := []string{
-		"get", captHardwareResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, fmt.Sprintf("--selector=%s", label),
-	}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("getting hardware with selector: %v", err)
-	}
-
-	response := &tinkv1alpha1.HardwareList{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("parsing get hardware response: %v", err)
-	}
-
-	return response.Items, nil
-}
-
-// GetBmcsPowerState gets the .status.powerState for the Bmcs.
-func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error) {
-	params := []string{"get", captBmcResourceType}
-	params = append(params, bmcNames...)
-	params = append(params, "-o", "jsonpath={.items[*].status.powerState}", "--kubeconfig", kubeconfigFile, "-n", namespace)
-
-	buffer, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("executing get: %v", err)
-	}
-
-	return strings.Fields(buffer.String()), nil
 }
 
 func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
