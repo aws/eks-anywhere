@@ -50,7 +50,13 @@ func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
-		PopulateTinkerbelHardwareCSVFlag(&cc.hardwareCSVPath, createClusterCmd.Flags())
+		createClusterCmd.Flags().StringVarP(
+			&cc.hardwareCSVPath,
+			TinkerbellHardwareCSVFlagName,
+			TinkerbellHardwareCSVFlagAlias,
+			"",
+			TinkerbellHardwareCSVFlagDescription,
+		)
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")

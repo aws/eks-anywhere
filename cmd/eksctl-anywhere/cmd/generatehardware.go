@@ -31,7 +31,13 @@ func init() {
 
 	flags := generateHardwareCmd.Flags()
 	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
-	PopulateTinkerbelHardwareCSVFlag(&hOpts.csvPath, flags)
+	flags.StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
 
 	if err := generateHardwareCmd.MarkFlagRequired(TinkerbellHardwareCSVFlagName); err != nil {
 		panic(err)
