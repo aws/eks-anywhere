@@ -292,6 +292,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
 		eksAArtifactsFuncs["rufio"] = r.GetRufioAssets
+		eksAArtifactsFuncs["tinkerbell-chart"] = r.GetTinkerbellChartAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -408,6 +409,12 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				tagOptions["eksDReleaseChannel"],
 				tagOptions["eksDReleaseNumber"],
 				latestTag,
+			)
+		} else if name == "tinkerbell-chart" {
+			sourceImageUri = fmt.Sprintf("%s/%s:%s",
+				r.SourceContainerRegistry,
+				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s",
