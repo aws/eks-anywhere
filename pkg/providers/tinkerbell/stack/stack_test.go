@@ -23,11 +23,12 @@ const (
 	boots             = "boots"
 	testIP            = "1.2.3.4"
 
-	// TODO: remove this once the chart is added to bundle
-	helmChartOci     = "oci://public.ecr.aws/i7k6m1j7/tinkerbell/tinkerbell-chart"
+	helmChartPath    = "public.ecr.aws/eks-anywhere/tinkerbell/tinkerbell-chart"
 	helmChartName    = "tinkerbell-chart"
 	helmChartVersion = "0.1.0"
 )
+
+var helmChartURI = fmt.Sprintf("%s:%s", helmChartPath, helmChartVersion)
 
 func getTinkBundle() releasev1alpha1.TinkerbellStackBundle {
 	return releasev1alpha1.TinkerbellStackBundle{
@@ -47,6 +48,10 @@ func getTinkBundle() releasev1alpha1.TinkerbellStackBundle {
 				},
 			},
 		},
+		TinkebellChart: releasev1alpha1.Image{
+			Name: helmChartName,
+			URI:  helmChartURI,
+		},
 	}
 }
 
@@ -63,7 +68,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 
-	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, cluster.KubeconfigFile, overridesFileName)
+	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
 
 	if err := s.Install(ctx,
 		getTinkBundle(),
@@ -87,7 +92,7 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 	s := stack.NewInstaller(docker, writer, helm)
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
-	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, cluster.KubeconfigFile, overridesFileName)
+	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
 	docker.EXPECT().Run(ctx, "boots:latest",
 		boots,
 		[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-path-override", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook"},
