@@ -54,21 +54,20 @@ func preRunUpgradeCluster(cmd *cobra.Command, args []string) error {
 
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
-	if features.IsActive(features.TinkerbellProvider()) {
-		upgradeClusterCmd.Flags().StringVar(&uc.hardwareCSVPath, TinkerbellHardwareCSVFlagName, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
-	}
 	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	upgradeClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
-		TinkerbellHardwareCSVFlagName,
-		TinkerbellHardwareCSVFlagAlias,
-		"",
-		TinkerbellHardwareCSVFlagDescription,
-	)
+	if features.IsActive(features.TinkerbellProvider()) {
+		upgradeClusterCmd.Flags().StringVarP(
+			&cc.hardwareCSVPath,
+			TinkerbellHardwareCSVFlagName,
+			TinkerbellHardwareCSVFlagAlias,
+			"",
+			TinkerbellHardwareCSVFlagDescription,
+		)
+	}
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
