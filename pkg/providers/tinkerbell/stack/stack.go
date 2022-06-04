@@ -28,11 +28,6 @@ const (
 	tinkServer     = "tinkServer"
 	rufio          = "rufio"
 	grpcPort       = "42113"
-
-	// TODO: remove this once the chart is added to bundle
-	helmChartOci     = "oci://public.ecr.aws/i7k6m1j7/tinkerbell/tinkerbell-chart"
-	helmChartName    = "tinkerbell-chart"
-	helmChartVersion = "0.1.0"
 )
 
 type Docker interface {
@@ -149,7 +144,15 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
-	if err := s.helm.InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, kubeconfig, valuesPath); err != nil {
+	err = s.helm.InstallChartWithValuesFile(
+		ctx,
+		bundle.TinkebellChart.Name,
+		fmt.Sprintf("oci://%s", bundle.TinkebellChart.Image()),
+		bundle.TinkebellChart.Tag(),
+		kubeconfig,
+		valuesPath,
+	)
+	if err != nil {
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
