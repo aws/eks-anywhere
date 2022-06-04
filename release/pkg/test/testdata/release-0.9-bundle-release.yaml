@@ -493,6 +493,7 @@ spec:
           tinkManifest: {}
           tinkServer: {}
           tinkWorker: {}
+        tinkerbellChart: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -1036,6 +1037,7 @@ spec:
           tinkManifest: {}
           tinkServer: {}
           tinkWorker: {}
+        tinkerbellChart: {}
       version: ""
     vSphere:
       clusterAPIController:
@@ -1579,6 +1581,7 @@ spec:
           tinkManifest: {}
           tinkServer: {}
           tinkWorker: {}
+        tinkerbellChart: {}
       version: ""
     vSphere:
       clusterAPIController:

@@ -663,6 +663,14 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -1376,6 +1384,14 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -2089,6 +2105,14 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -2793,6 +2817,14 @@ spec:
             name: tink-worker
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
