@@ -294,6 +294,18 @@ func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &deleteBootstrapClusterTask{}
 	}
 
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
+	logger.Info("Provider specific post-setup")
+	if err = commandContext.Provider.PostBootstrapSetupUpgrade(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	return &installCAPITask{}
 }
 

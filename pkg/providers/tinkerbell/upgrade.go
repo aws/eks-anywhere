@@ -2,10 +2,12 @@ package tinkerbell
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -63,19 +65,56 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
 
+	if len(p.hardwareCSVFile) == 0 {
+		return nil
+	}
+
+	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
 	// TODO(chrisdoherty4) Look to inject the validator.
 	validator := NewClusterSpecValidator()
+	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
+	machineValidator := hardware.NewDefaultMachineValidator()
+
+	// Translate all Machine instances from the p.machines source into Kubernetes object types.
+	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
+	// and submits it to the clsuter.
+	machines, err := hardware.NewCSVReaderFromFile(p.hardwareCSVFile)
+	if err != nil {
+		return err
+	}
+
+	if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
+		return err
+	}
+
+	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
 	if err := validator.Validate(tinkerbellClusterSpec); err != nil {
 		return err
 	}
 
 	// TODO: Add validations when this is supported
+	return nil
+}
+
+func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	allHardware := p.catalogue.AllHardware()
+	if len(allHardware) == 0 {
+		return nil
+	}
+
+	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
+	if err != nil {
+		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
+	if err != nil {
+		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
 	return nil
 }
 
@@ -102,4 +141,11 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
+}
+
+func (p *Provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+	return nil
 }

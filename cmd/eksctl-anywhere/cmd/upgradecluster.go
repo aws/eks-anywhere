@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -34,7 +35,7 @@ var upgradeClusterCmd = &cobra.Command{
 	PreRunE:      preRunUpgradeCluster,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := uc.upgradeCluster(cmd.Context()); err != nil {
+		if err := uc.upgradeCluster(cmd); err != nil {
 			return fmt.Errorf("failed to upgrade cluster: %v", err)
 		}
 		return nil
@@ -53,6 +54,9 @@ func preRunUpgradeCluster(cmd *cobra.Command, args []string) error {
 
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
+	if features.IsActive(features.TinkerbellProvider()) {
+		upgradeClusterCmd.Flags().StringVar(&uc.hardwareCSVPath, TinkerbellHardwareCSVFlagName, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
+	}
 	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
@@ -71,7 +75,33 @@ func init() {
 	}
 }
 
-func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
+func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
+	ctx := cmd.Context()
+
+	clusterConfigFileExist := validations.FileExists(uc.fileName)
+	if !clusterConfigFileExist {
+		return fmt.Errorf("the cluster config file %s does not exist", uc.fileName)
+	}
+
+	clusterConfig, err := v1alpha1.GetAndValidateClusterConfig(uc.fileName)
+	if err != nil {
+		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
+	}
+
+	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
+
+		// If no flag was returned there is a developer error as the flag has been removed
+		// from the program rendering it invalid.
+		if flag == nil {
+			panic("'hardwarefile' flag not configured")
+		}
+
+		if len(uc.hardwareCSVPath) != 0 && !validations.FileExists(uc.hardwareCSVPath) {
+			return fmt.Errorf("hardware config file %s does not exist", uc.hardwareCSVPath)
+		}
+	}
+
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
