@@ -6,7 +6,6 @@ import (
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -27,10 +26,8 @@ import (
 )
 
 const (
-	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
-	maxRetries                 = 30
-	backOffPeriod              = 5 * time.Second
+	maxRetries    = 30
+	backOffPeriod = 5 * time.Second
 )
 
 var (
@@ -43,7 +40,6 @@ type Provider struct {
 	clusterConfig         *v1alpha1.Cluster
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
-	hardwares             []tinkv1alpha1.Hardware
 	stackInstaller        stack.StackInstaller
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TemplateBuilder
@@ -68,8 +64,6 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
-	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error)
 	GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error)

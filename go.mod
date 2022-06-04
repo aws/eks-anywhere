@@ -25,7 +25,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.7.0
-	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
 	github.com/tinkerbell/rufio v0.0.0-20220525183727-7ab74dd6173a
 	github.com/tinkerbell/tink v0.6.1-0.20220509141453-30fe9e015575
 	go.uber.org/zap v1.19.1
@@ -109,6 +108,7 @@ require (
 	github.com/kevinburke/ssh_config v1.1.0 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/matryer/is v1.4.0 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
@@ -167,7 +167,6 @@ replace (
 	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
-	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.1.3-custom
