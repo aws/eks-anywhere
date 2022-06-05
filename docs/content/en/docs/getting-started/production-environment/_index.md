@@ -55,7 +55,7 @@ Follow these steps to create an EKS Anywhere cluster that can be used either as 
 
    * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) for information on configuring this cluster config for a vSphere provider.
    * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
-   * Optionally, configure the cluster for [OIDC]({{< relref "/docs/reference/clusterspec/oidc" >}}), [etcd]({{< relref "/docs/reference/clusterspec/etcd" >}}), [proxy]({{< relref "/docs/reference/clusterspec/proxy" >}}), [gitops]({{< relref "/docs/reference/clusterspec/gitops" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/registrymirror" >}}).
+   * Optionally, configure the cluster for [OIDC]({{< relref "/docs/reference/clusterspec/optional/oidc" >}}), [etcd]({{< relref "/docs/reference/clusterspec/optional/etcd" >}}), [proxy]({{< relref "/docs/reference/clusterspec/optional/proxy" >}}), [gitops]({{< relref "/docs/reference/clusterspec/optional/gitops" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/optional/registrymirror" >}}).
 
 1. Set Credential Environment Variables
 
