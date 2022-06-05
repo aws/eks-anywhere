@@ -109,7 +109,7 @@ Using the generated cluster config file, make modifications to suit your situati
 Details about this config file are contained in the [vSphere Config]({{< relref "../reference/clusterspec/vsphere.md" >}})
 There are several things to consider when modifying the cluster config file:
 
-* [vSphere configuration]({{< relref "../reference/clusterspec/optional/vsphere" >}}) describes general vSphere cluster configuration information.
+* [vSphere configuration]({{< relref "../reference/clusterspec/vsphere" >}}) describes general vSphere cluster configuration information.
 * [etcd configuration]({{< relref "../reference/clusterspec/optional/etcd" >}}) describes different etcd topologies.
 * [OIDC configuration]({{< relref "../reference/clusterspec/optional/oidc" >}}) describes choices for identity providers.
 * [GitOps configuration]({{< relref "../reference/clusterspec/optional/gitops" >}}) describes how to manage your cluster using GitOps.
@@ -323,7 +323,7 @@ Networking for the cluster itself has the following attributes:
 
 * **Cilium CNI**: The [Cilium](https://cilium.io/) Kubernetes CNI is used to provide networking between components of the control plane and data plane components.
 No other CNI plugins, including Cilium Enterprise, is supported at this time.
-* **Pod/Service IP ranges**: Separate IP address blocks were assigned from the [configuration file]({{< relref "../reference/clusterspec/optional/vsphere" >}}) during cluster creation for the Pods network and Services network managed by Cilium.
+* **Pod/Service IP ranges**: Separate IP address blocks were assigned from the [configuration file]({{< relref "../reference/clusterspec/vsphere" >}}) during cluster creation for the Pods network and Services network managed by Cilium.
 Refer to the clusterNetwork section of your configuration file to see how the cidrBlocks for pods and services were set.
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
