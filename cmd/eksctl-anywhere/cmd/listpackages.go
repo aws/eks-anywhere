@@ -58,7 +58,7 @@ func listPackages(ctx context.Context) error {
 
 	bm := curatedpackages.CreateBundleManager(lpo.kubeVersion)
 	username, password, err := config.ReadCredentials()
-	if err != nil && gpOptions.registry != "" {
+	if err != nil && lpo.registry != "" {
 		return err
 	}
 	registry, err := curatedpackages.NewRegistry(deps, lpo.registry, lpo.kubeVersion, username, password)
