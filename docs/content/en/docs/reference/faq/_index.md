@@ -1,7 +1,7 @@
 ---
 title: "Frequently Asked Questions"
 linkTitle: "FAQ"
-weight: 10
+weight: 40
 description: >
   Frequently asked questions about EKS Anywhere
 ---
