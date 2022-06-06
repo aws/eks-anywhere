@@ -48,41 +48,46 @@ type Installer struct {
 	bootsOnDocker   bool
 }
 
-type InstallerOption func(s *Installer)
+type InstallOption func(s *Installer)
 
 type StackInstaller interface {
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
 
-func WithNamespace(ns string, create bool) InstallerOption {
+// WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack
+func WithNamespaceCreate(create bool) InstallOption {
 	return func(s *Installer) {
-		s.namespace = ns
 		s.createNamespace = create
 	}
 }
 
-func WithBootsOnDocker() InstallerOption {
+// WithBootsOnDocker is an InstallOption to run Boots as a Docker container
+func WithBootsOnDocker() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = true
 	}
 }
 
-func WithBootsOnKubernetes() InstallerOption {
+// WithBootsOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment
+func WithBootsOnKubernetes() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = false
 	}
 }
 
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm) StackInstaller {
+// NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string) StackInstaller {
 	return &Installer{
 		docker:     docker,
 		filewriter: filewriter,
 		helm:       helm,
+		namespace:  namespace,
 	}
 }
 
-func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error {
+// Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides
+func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -204,6 +209,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	}
 }
 
+// UninstallLocal currently removes local docker container running Boots
 func (s *Installer) UninstallLocal(ctx context.Context) error {
 	return s.uninstallBootsFromDocker(ctx)
 }
