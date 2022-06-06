@@ -102,8 +102,6 @@ func baseboardManagementComputerFromMachine(m Machine) *v1alpha1.BaseboardManage
 				},
 				InsecureTLS: true,
 			},
-			// TODO(pokearu) remove this field once upstream API is changed.
-			Power: v1alpha1.Off,
 		},
 	}
 }

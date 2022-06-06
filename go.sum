@@ -1623,8 +1623,8 @@ github.com/tetafro/godot v1.4.7/go.mod h1:LR3CJpxDVGlYOWn3ZZg1PgNZdTUvzsZWu8xaEo
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/timakin/bodyclose v0.0.0-20200424151742-cb6215831a94/go.mod h1:Qimiffbc6q9tBWlVV6x0P9sat/ao1xEkREYPPj9hphk=
 github.com/tinkerbell/lint-install v0.0.0-20220502172532-2fdfa62596af/go.mod h1:xW1I8Nqsc88qG0zmPLcbQqHE1Co8eo628OJMRerLHFM=
-github.com/tinkerbell/rufio v0.0.0-20220525183727-7ab74dd6173a h1:UzeACCIsFzUvYQETOmmT+uDawtKjlTmYYvNuwXydyGo=
-github.com/tinkerbell/rufio v0.0.0-20220525183727-7ab74dd6173a/go.mod h1:2b7/OCatuqXr3SR7lns/7iKoV4XiXYdUnqwqiUGOsr0=
+github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc h1:aiF/Ieu+HblpMQtHL4mQUbc9VvdIP/i5Ud6kISZjflk=
+github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc/go.mod h1:2b7/OCatuqXr3SR7lns/7iKoV4XiXYdUnqwqiUGOsr0=
 github.com/tinkerbell/tink v0.6.1-0.20220509141453-30fe9e015575 h1:QcZJqLy9a8jmfNRyC8uXWdia3NJgkCV/tDtidq8WEdI=
 github.com/tinkerbell/tink v0.6.1-0.20220509141453-30fe9e015575/go.mod h1:px5E+SccP2xvZRnHHf8smb8vtKnroXXwx7lGg30igS8=
 github.com/tj/assert v0.0.0-20171129193455-018094318fb0/go.mod h1:mZ9/Rh9oLWpLLDRpvE+3b7gP/C2YyLFYxNmcLnPTMe0=

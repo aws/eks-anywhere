@@ -3,6 +3,7 @@ package hardware
 import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -88,6 +89,9 @@ func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
 		ObjectMeta: v1.ObjectMeta{
 			Name:      formatBMCSecretRef(m),
 			Namespace: constants.EksaSystemNamespace,
+			Labels: map[string]string{
+				v1alpha3.ClusterctlMoveLabelName: "true",
+			},
 		},
 		Type: "kubernetes.io/basic-auth",
 		Data: map[string][]byte{
