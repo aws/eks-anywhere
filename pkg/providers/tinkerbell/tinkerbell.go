@@ -111,7 +111,7 @@ func NewProvider(
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,

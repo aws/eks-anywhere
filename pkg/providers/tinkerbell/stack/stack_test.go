@@ -64,7 +64,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 
@@ -74,7 +74,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 		getTinkBundle(),
 		testIP,
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 	); err != nil {
 		t.Fatalf("failed to install Tinkerbell stack: %v", err)
@@ -89,7 +89,7 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
@@ -117,7 +117,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
 	docker.EXPECT().ForceRemove(ctx, boots)
 
@@ -134,7 +134,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)

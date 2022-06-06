@@ -130,7 +130,7 @@ func (m *MockStackInstaller) EXPECT() *MockStackInstallerMockRecorder {
 }
 
 // Install mocks base method.
-func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...stack.InstallerOption) error {
+func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...stack.InstallOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, bundle, tinkServerIP, kubeconfig}
 	for _, a := range opts {

@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -55,7 +54,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		localIP.String(),
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, false),
+		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
 	)
 	if err != nil {
@@ -85,7 +84,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 	)
 	if err != nil {
