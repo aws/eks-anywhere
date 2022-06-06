@@ -141,6 +141,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		return nil, fmt.Errorf("creating repository in Github for test: %v", err)
 	}
 
+	// Wait for eventual consistency in the GitHub API when creating a repository
 	time.Sleep(time.Second * 5)
 
 	pk, pub, err := e.generateKeyPairForGitTest()
