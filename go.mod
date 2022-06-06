@@ -166,7 +166,7 @@ replace (
 	// It has already been patched upstream (https://github.com/kubernetes-sigs/cluster-api/pull/6199)
 	// Once capi 1.2 is released and we bump that dependency, we should remove this replace
 	github.com/docker/distribution => github.com/docker/distribution v2.8.1+incompatible
-	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.1.2
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.1.3-custom

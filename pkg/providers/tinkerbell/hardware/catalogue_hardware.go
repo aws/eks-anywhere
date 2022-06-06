@@ -1,6 +1,8 @@
 package hardware
 
 import (
+	"time"
+
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -154,7 +156,8 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 							Gateway: m.Gateway,
 							Family:  4,
 						},
-						LeaseTime:   86400,
+						// set LeaseTime to 1 month while we figure out how to set static IPs
+						LeaseTime:   int64(time.Hour * 24 * 30 / time.Second),
 						Hostname:    m.Hostname,
 						NameServers: m.Nameservers,
 						UEFI:        true,
