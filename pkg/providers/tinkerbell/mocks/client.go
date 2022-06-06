@@ -14,6 +14,7 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	v1alpha10 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -221,6 +222,21 @@ func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
+}
+
+// GetUnprovisionedTinkerbellHardware mocks base method.
+func (m *MockProviderKubectlClient) GetUnprovisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha10.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnprovisionedTinkerbellHardware", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnprovisionedTinkerbellHardware indicates an expected call of GetUnprovisionedTinkerbellHardware.
+func (mr *MockProviderKubectlClientMockRecorder) GetUnprovisionedTinkerbellHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnprovisionedTinkerbellHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetUnprovisionedTinkerbellHardware), arg0, arg1, arg2)
 }
 
 // UpdateAnnotation mocks base method.
