@@ -193,6 +193,14 @@ func bar(i int) error {
 }
 ```
 
+#### Panic
+
+The use of `panic` should be avoided and returning an error should always be favored.
+
+Panics should only be used when the error is not recoverable.
+In general, this means some kind of problem in the program itself, mostly due to a programmer error.
+One example is the CLI initialization: if the command is not able to set itself up (imagine a required flag hasn't been declared in the program), it should `panic`.
+
 ### Boolean parameters
 
 Boolean parameters are widely considered an anti-pattern. Context is hugely important when assessing a boolean parameter but in general they represent an on/off switch for behavior. The behavioral on/off switch creates hard to understand and maintain logic that often has poor re-use and is an indicator that a piece of code violates the SRP. 
