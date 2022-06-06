@@ -66,6 +66,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 
@@ -75,6 +76,10 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	ctx := context.Background()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -95,6 +100,7 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	keyGenerator := mocks.NewMockSSHAuthKeyGenerator(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
@@ -109,8 +115,11 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
 
-	// Hack: monkey patch the key generator directly for determinism.
+	// Hack: monkey patch the key generator and the stack installer directly for determinism.
 	provider.keyGenerator = keyGenerator
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -131,6 +140,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 
@@ -140,6 +150,10 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	ctx := context.Background()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -160,6 +174,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 
@@ -169,6 +184,10 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	ctx := context.Background()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider.stackInstaller = stackInstaller
+
+	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -186,10 +205,10 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
-	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
 	ctx := context.Background()

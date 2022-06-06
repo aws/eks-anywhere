@@ -36,6 +36,21 @@ func (m *MockDocker) EXPECT() *MockDockerMockRecorder {
 	return m.recorder
 }
 
+// CheckContainerExistence mocks base method.
+func (m *MockDocker) CheckContainerExistence(ctx context.Context, name string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckContainerExistence", ctx, name)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckContainerExistence indicates an expected call of CheckContainerExistence.
+func (mr *MockDockerMockRecorder) CheckContainerExistence(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckContainerExistence", reflect.TypeOf((*MockDocker)(nil).CheckContainerExistence), ctx, name)
+}
+
 // ForceRemove mocks base method.
 func (m *MockDocker) ForceRemove(ctx context.Context, name string) error {
 	m.ctrl.T.Helper()
@@ -127,6 +142,20 @@ func NewMockStackInstaller(ctrl *gomock.Controller) *MockStackInstaller {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockStackInstaller) EXPECT() *MockStackInstallerMockRecorder {
 	return m.recorder
+}
+
+// CheckLocalBootsExistence mocks base method.
+func (m *MockStackInstaller) CheckLocalBootsExistence(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckLocalBootsExistence", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckLocalBootsExistence indicates an expected call of CheckLocalBootsExistence.
+func (mr *MockStackInstallerMockRecorder) CheckLocalBootsExistence(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckLocalBootsExistence", reflect.TypeOf((*MockStackInstaller)(nil).CheckLocalBootsExistence), ctx)
 }
 
 // Install mocks base method.
