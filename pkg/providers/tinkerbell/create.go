@@ -99,6 +99,10 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.stackInstaller.CheckLocalBootsExistence(ctx); err != nil {
+		return err
+	}
+
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
 	if err := p.configureSshKeys(); err != nil {

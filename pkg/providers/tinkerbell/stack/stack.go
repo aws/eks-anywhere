@@ -2,6 +2,7 @@ package stack
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -31,6 +32,7 @@ const (
 )
 
 type Docker interface {
+	CheckContainerExistence(ctx context.Context, name string) (bool, error)
 	ForceRemove(ctx context.Context, name string) error
 	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
 }
@@ -51,6 +53,7 @@ type Installer struct {
 type InstallOption func(s *Installer)
 
 type StackInstaller interface {
+	CheckLocalBootsExistence(ctx context.Context) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
@@ -229,4 +232,17 @@ func getURIDir(uri string) (string, error) {
 		return "", fmt.Errorf("uri is invalid: %s", uri)
 	}
 	return uri[:index], nil
+}
+
+// CheckLocalBootsExistence determines whether Boots is already running locally on a Docker container
+// Returns nil if the container is not found and an error otherwise
+func (s *Installer) CheckLocalBootsExistence(ctx context.Context) error {
+	exists, err := s.docker.CheckContainerExistence(ctx, boots)
+	if err != nil {
+		return fmt.Errorf("checking boots container existence: %v", err)
+	}
+	if exists {
+		return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
+	}
+	return nil
 }

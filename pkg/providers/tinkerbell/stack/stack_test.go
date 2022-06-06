@@ -143,3 +143,52 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 	err := s.UninstallLocal(ctx)
 	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
 }
+
+func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
+	t.Setenv(features.TinkerbellProviderEnvVar, "true")
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+
+	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
+
+	err := s.CheckLocalBootsExistence(ctx)
+	assert.NoError(t, err)
+}
+
+func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
+	t.Setenv(features.TinkerbellProviderEnvVar, "true")
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	expectedErrorMsg := "boots container already exists, delete the container manually or re-run the command with --force-cleanup"
+
+	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
+
+	err := s.CheckLocalBootsExistence(ctx)
+	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
+}
+
+func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
+	t.Setenv(features.TinkerbellProviderEnvVar, "true")
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	ctx := context.Background()
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+
+	dockerErr := "docker error"
+	expectedErrorMsg := fmt.Sprintf("checking boots container existence: %s", dockerErr)
+
+	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, errors.New(dockerErr))
+
+	err := s.CheckLocalBootsExistence(ctx)
+	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
+}
