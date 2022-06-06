@@ -38,6 +38,7 @@ type E2ESession struct {
 	ipPool              networkutils.IPPool
 	testEnvVars         map[string]string
 	bundlesOverride     bool
+	cleanupVms          bool
 	requiredFiles       []string
 	branchName          string
 }
@@ -58,6 +59,7 @@ func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
 		ipPool:              conf.ipPool,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     conf.bundlesOverride,
+		cleanupVms:          conf.cleanupVms,
 		requiredFiles:       requiredFiles,
 		branchName:          conf.branchName,
 	}
@@ -141,6 +143,7 @@ func (e *E2ESession) setup(regex string) error {
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
+	e.testEnvVars[e2etests.CleanupVmsVar] = strconv.FormatBool(e.cleanupVms)
 
 	if e.branchName != "" {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName
