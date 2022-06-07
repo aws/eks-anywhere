@@ -625,9 +625,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -670,7 +670,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -1346,9 +1346,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -1391,7 +1391,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -2067,9 +2067,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -2112,7 +2112,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -2779,9 +2779,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:4dc2085adc8eec03b73e51515515fa8966beba04-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/4dc2085adc8eec03b73e51515515fa8966beba04/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -2824,7 +2824,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.0-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
