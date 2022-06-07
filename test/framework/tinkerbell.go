@@ -10,7 +10,7 @@ import (
 
 const (
 	TinkerbellProviderName               = "tinkerbell"
-	tinkerbellServerEnvVar               = "T_TINKERBELL_IP"
+	tinkerbellBootstrapIPEnvVar          = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellNetworkCidrEnvVar          = "T_TINKERBELL_NETWORK_CIDR"
 	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
@@ -20,7 +20,6 @@ const (
 )
 
 var requiredTinkerbellEnvVars = []string{
-	tinkerbellServerEnvVar,
 	tinkerbellNetworkCidrEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
@@ -38,6 +37,8 @@ type Tinkerbell struct {
 	t                    *testing.T
 	fillers              []api.TinkerbellFiller
 	clusterFillers       []api.ClusterFiller
+	serverIP             string
+	bootstrapIP          string
 	cidr                 string
 	inventoryCsvFilePath string
 }
@@ -46,7 +47,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	cidr := os.Getenv(tinkerbellNetworkCidrEnvVar)
 
-	tinkIP, err := GenerateUniqueIp(cidr)
+	serverIP, err := GenerateUniqueIp(cidr)
 	if err != nil {
 		t.Fatalf("failed to generate tinkerbell ip from cidr %s: %v", cidr, err)
 	}
@@ -54,9 +55,15 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	tink := &Tinkerbell{
 		t: t,
 		fillers: []api.TinkerbellFiller{
-			api.WithTinkerbellServer(tinkIP),
+			api.WithTinkerbellServer(serverIP),
 			api.WithStringFromEnvVarTinkerbell(tinkerbellSSHAuthorizedKey, api.WithSSHAuthorizedKeyForAllTinkerbellMachines),
 		},
+	}
+
+	tink.serverIP = serverIP
+	tink.bootstrapIP = os.Getenv(tinkerbellBootstrapIPEnvVar)
+	if tink.bootstrapIP == "" {
+		t.Fatalf("tinkerbell bootstrap ip is required!")
 	}
 
 	tink.cidr = cidr

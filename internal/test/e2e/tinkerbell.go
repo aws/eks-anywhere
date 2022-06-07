@@ -17,6 +17,7 @@ const (
 	tinkerbellTestsRe                    = `^.*Tinkerbell.*$`
 	e2eHardwareCsvFilePath               = "e2e-inventory.csv"
 	MaxHardwarePerE2ETestEnvVar          = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
+	tinkerbellBootstrapInterfaceEnvVar   = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
 )
 
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
@@ -58,7 +59,11 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 		return fmt.Errorf("failed to download tinkerbell inventory file (%s) to test instance : %v", inventoryFileName, err)
 	}
 
-	tinkInterface := "ens192"
+	tinkInterface := os.Getenv(tinkerbellBootstrapInterfaceEnvVar)
+	if tinkInterface == "" {
+		return fmt.Errorf("tinkerbell bootstrap interface env var is required: %s", tinkerbellBootstrapInterfaceEnvVar)
+	}
+
 	err = e.setTinkerbellBootstrapIPInInstance(tinkInterface)
 	if err != nil {
 		return fmt.Errorf("failed to set tinkerbell boostrap ip on interface (%s) in test instance : %v", tinkInterface, err)
@@ -72,7 +77,7 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 func (e *E2ESession) setTinkerbellBootstrapIPInInstance(tinkInterface string) error {
 	logger.V(1).Info("Setting Tinkerbell Bootstrap IP in instance")
 
-	command := fmt.Sprintf("export TINKERBELL_BOOSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo TINKERBELL_BOOTSTRAP_IP=$TINKERBELL_BOOSTRAP_IP | tee -a /etc/environment", tinkInterface)
+	command := fmt.Sprintf("export T_TINKERBELL_BOOTSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo T_TINKERBELL_BOOTSTRAP_IP=$T_TINKERBELL_BOOTSTRAP_IP | tee -a /etc/environment", tinkInterface)
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("setting tinkerbell boostrap ip: %v", err)
 	}
