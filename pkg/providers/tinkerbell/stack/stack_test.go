@@ -147,9 +147,10 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 	ctx := context.Background()
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
+	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
+	docker.EXPECT().ForceRemove(ctx, "boots")
 
-	err := s.CheckLocalBootsExistence(ctx)
+	err := s.CleanupLocalBoots(ctx, true)
 	assert.NoError(t, err)
 }
 
@@ -164,7 +165,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
 
-	err := s.CheckLocalBootsExistence(ctx)
+	err := s.CleanupLocalBoots(ctx, false)
 	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
 }
 
@@ -176,11 +177,8 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 	ctx := context.Background()
 	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
 
-	dockerErr := "docker error"
-	expectedErrorMsg := fmt.Sprintf("checking boots container existence: %s", dockerErr)
+	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
 
-	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, errors.New(dockerErr))
-
-	err := s.CheckLocalBootsExistence(ctx)
-	assert.EqualError(t, err, expectedErrorMsg, "Error should be: %v, got: %v", expectedErrorMsg, err)
+	err := s.CleanupLocalBoots(ctx, true)
+	assert.NoError(t, err)
 }

@@ -144,18 +144,18 @@ func (m *MockStackInstaller) EXPECT() *MockStackInstallerMockRecorder {
 	return m.recorder
 }
 
-// CheckLocalBootsExistence mocks base method.
-func (m *MockStackInstaller) CheckLocalBootsExistence(ctx context.Context) error {
+// CleanupLocalBoots mocks base method.
+func (m *MockStackInstaller) CleanupLocalBoots(ctx context.Context, forceCleanup bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckLocalBootsExistence", ctx)
+	ret := m.ctrl.Call(m, "CleanupLocalBoots", ctx, forceCleanup)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CheckLocalBootsExistence indicates an expected call of CheckLocalBootsExistence.
-func (mr *MockStackInstallerMockRecorder) CheckLocalBootsExistence(ctx interface{}) *gomock.Call {
+// CleanupLocalBoots indicates an expected call of CleanupLocalBoots.
+func (mr *MockStackInstallerMockRecorder) CleanupLocalBoots(ctx, forceCleanup interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckLocalBootsExistence", reflect.TypeOf((*MockStackInstaller)(nil).CheckLocalBootsExistence), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupLocalBoots", reflect.TypeOf((*MockStackInstaller)(nil).CleanupLocalBoots), ctx, forceCleanup)
 }
 
 // Install mocks base method.

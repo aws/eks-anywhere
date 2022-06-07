@@ -299,6 +299,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				time.Now,
+				force,
 				skipIpCheck,
 			)
 

@@ -99,7 +99,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := p.stackInstaller.CheckLocalBootsExistence(ctx); err != nil {
+	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {
 		return err
 	}
 
