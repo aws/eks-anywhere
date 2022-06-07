@@ -1,7 +1,7 @@
 ---
 title: "What's New?"
 linkTitle: "What's New?"
-weight: 55
+weight: 35
 ---
 
 ## Unreleased
