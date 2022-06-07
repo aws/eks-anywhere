@@ -8,12 +8,13 @@ import (
 	"time"
 
 	aws_ssm "github.com/aws/aws-sdk-go/service/ssm"
+	"gopkg.in/yaml.v2"
+
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/internal/pkg/vsphere"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
-	"gopkg.in/yaml.v2"
 )
 
 const (

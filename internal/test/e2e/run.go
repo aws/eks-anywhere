@@ -9,6 +9,7 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"

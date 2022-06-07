@@ -389,7 +389,7 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 
 	e.buildClusterConfigFile()
 	e.cleanup(func() {
-		//os.Remove(e.ClusterConfigLocation)
+		os.Remove(e.ClusterConfigLocation)
 	})
 }
 
