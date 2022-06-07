@@ -4466,6 +4466,10 @@ spec:
             description: TinkerbellMachineConfigSpec defines the desired state of
               TinkerbellMachineConfig
             properties:
+              hardwareSelector:
+                additionalProperties:
+                  type: string
+                type: object
               osFamily:
                 type: string
               templateRef:
@@ -4492,6 +4496,7 @@ spec:
                   type: object
                 type: array
             required:
+            - hardwareSelector
             - osFamily
             type: object
           status:

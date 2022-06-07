@@ -130,6 +130,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: cp
       templateOverride: |
         global_timeout: 6000
         id: ""

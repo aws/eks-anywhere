@@ -47,6 +47,8 @@ metadata:
   name: test-cp
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "cp"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
@@ -61,6 +63,8 @@ metadata:
   name: test-md
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "worker"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig

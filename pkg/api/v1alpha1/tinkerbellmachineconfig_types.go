@@ -8,10 +8,13 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
-	TemplateRef Ref                 `json:"templateRef,omitempty"`
-	OSFamily    OSFamily            `json:"osFamily"`
-	Users       []UserConfiguration `json:"users,omitempty"`
+	HardwareSelector HardwareSelector    `json:"hardwareSelector"`
+	TemplateRef      Ref                 `json:"templateRef,omitempty"`
+	OSFamily         OSFamily            `json:"osFamily"`
+	Users            []UserConfiguration `json:"users,omitempty"`
 }
+
+type HardwareSelector map[string]string
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
