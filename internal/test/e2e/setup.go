@@ -25,6 +25,7 @@ const (
 	bundlesReleaseManifestFile = "local-bundle-release.yaml"
 	eksAComponentsManifestFile = "local-eksa-components.yaml"
 	testNameFile               = "e2e-test-name"
+	jobIdTagKey                = "codebuildJobId"
 )
 
 type E2ESession struct {
@@ -33,6 +34,7 @@ type E2ESession struct {
 	instanceProfileName string
 	storageBucket       string
 	jobId               string
+	parentJobId         string
 	subnetId            string
 	instanceId          string
 	ipPool              networkutils.IPPool
@@ -54,6 +56,7 @@ func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
 		instanceProfileName: conf.instanceProfileName,
 		storageBucket:       conf.storageBucket,
 		jobId:               conf.jobId,
+		parentJobId:         conf.parentJobId,
 		subnetId:            conf.subnetId,
 		ipPool:              conf.ipPool,
 		testEnvVars:         make(map[string]string),
@@ -81,6 +84,11 @@ func (e *E2ESession) setup(regex string) error {
 	}
 	logger.V(1).Info("Instance created", "instance-id", instanceId)
 	e.instanceId = instanceId
+
+	err = ec2.TagInstance(e.session, instanceId, jobIdTagKey, e.parentJobId)
+	if err != nil {
+		return fmt.Errorf("error tagging ec2 instance with parent job ID during setup: %v", err)
+	}
 
 	logger.V(1).Info("Waiting until SSM is ready")
 	err = ssm.WaitForSSMReady(e.session, instanceId)

@@ -115,6 +115,12 @@ phases:
         "amd64"
         false
       - >
+        ./bin/test e2e cleanup aws
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -t EKSA-E2E
+        -b ${CODEBUILD_BUILD_ID}
+        -v 4
+      - >
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}
         -v 4

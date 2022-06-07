@@ -16,19 +16,29 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) error {
+const (
+	integrationTestTagKey = "Integration-Test"
+	codebuildIdTagKey     = "CodeBuildId"
+)
+
+func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string, codebuildId string) error {
 	session, err := session.NewSession()
 	if err != nil {
 		return fmt.Errorf("creating session: %v", err)
 	}
 	logger.V(1).Info("Fetching list of EC2 instances")
-	key := "Integration-Test"
-	value := tag
+	tags := make(map[string]string)
+	tags[integrationTestTagKey] = tag
+	if codebuildId != "" {
+		tags[codebuildIdTagKey] = codebuildId
+	}
+
 	maxAgeFloat, err := strconv.ParseFloat(maxAge, 64)
 	if err != nil {
 		return fmt.Errorf("parsing max age: %v", err)
 	}
-	results, err := ec2.ListInstances(session, key, value, maxAgeFloat)
+
+	results, err := ec2.ListInstances(session, tags, maxAgeFloat)
 	if err != nil {
 		return fmt.Errorf("listing EC2 instances: %v", err)
 	}
