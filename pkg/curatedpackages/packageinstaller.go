@@ -28,7 +28,6 @@ func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.
 	pcc := newPackageController(installer, runner, spec)
 
 	pc := NewPackageClient(
-		nil,
 		runner,
 	)
 

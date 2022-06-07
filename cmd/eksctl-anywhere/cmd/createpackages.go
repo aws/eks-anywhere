@@ -48,7 +48,6 @@ func createPackages(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	packages := curatedpackages.NewPackageClient(
-		nil,
 		deps.Kubectl,
 	)
 
