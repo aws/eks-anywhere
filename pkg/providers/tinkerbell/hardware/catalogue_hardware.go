@@ -1,14 +1,63 @@
 package hardware
 
 import (
+	"fmt"
 	"time"
 
-	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
+
+// DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file
+type DiskExtractor struct {
+	Selector map[string]eksav1alpha1.HardwareSelector
+	Disks    map[string]string
+}
+
+func NewDiskExtractor() *DiskExtractor {
+	return &DiskExtractor{
+		Selector: make(map[string]eksav1alpha1.HardwareSelector),
+		Disks:    make(map[string]string),
+	}
+}
+
+func (d *DiskExtractor) Write(m Machine) error {
+	labelKey := m.Labels.String()
+	if _, ok := d.Selector[labelKey]; ok {
+		d.Disks[labelKey] = m.Disk
+	}
+	return nil
+}
+
+// RegisterHardwareSelector adds the key into DiskExtractor for each machine config type
+func (d *DiskExtractor) RegisterHardwareSelector(hardwareSelector eksav1alpha1.HardwareSelector) {
+	key := serializedHardwareSelector(hardwareSelector)
+	if _, ok := d.Selector[key]; !ok {
+		d.Selector[key] = hardwareSelector
+	}
+}
+
+// serializedHardwareSelector returns a string by serializing all the hardware selectors given per machine config
+func serializedHardwareSelector(hardwareSelector eksav1alpha1.HardwareSelector) string {
+	selectorKey := make(Labels)
+	for key, val := range hardwareSelector {
+		selectorKey[key] = val
+	}
+	return selectorKey.String()
+}
+
+// GetDisk returns a disk associated with hardwareSelector of the machine config
+func (d *DiskExtractor) GetDisk(hardwareSelector eksav1alpha1.HardwareSelector) (string, error) {
+	key := serializedHardwareSelector(hardwareSelector)
+	if _, ok := d.Disks[key]; !ok {
+		return "", fmt.Errorf("hardware selector does not match with any given hardware machines: %v", hardwareSelector)
+	}
+	return d.Disks[key], nil
+}
 
 // IndexHardware indexes Hardware instances on index by extracfting the key using fn.
 func (c *Catalogue) IndexHardware(index string, fn KeyExtractorFunc) {
@@ -17,7 +66,7 @@ func (c *Catalogue) IndexHardware(index string, fn KeyExtractorFunc) {
 
 // InsertHardware inserts Hardware into the catalogue. If any indexes exist, the hardware is
 // indexed.
-func (c *Catalogue) InsertHardware(hardware *v1alpha1.Hardware) error {
+func (c *Catalogue) InsertHardware(hardware *tinkv1alpha1.Hardware) error {
 	if err := c.hardwareIndex.Insert(hardware); err != nil {
 		return err
 	}
@@ -26,23 +75,23 @@ func (c *Catalogue) InsertHardware(hardware *v1alpha1.Hardware) error {
 }
 
 // AllHardware retrieves a copy of the catalogued Hardware instances.
-func (c *Catalogue) AllHardware() []*v1alpha1.Hardware {
-	hardware := make([]*v1alpha1.Hardware, len(c.hardware))
+func (c *Catalogue) AllHardware() []*tinkv1alpha1.Hardware {
+	hardware := make([]*tinkv1alpha1.Hardware, len(c.hardware))
 	copy(hardware, c.hardware)
 	return hardware
 }
 
 // LookupHardware retrieves Hardware instances on index with a key of key. Multiple hardware _may_
 // have the same key hence it can return multiple Hardware.
-func (c *Catalogue) LookupHardware(index, key string) ([]*v1alpha1.Hardware, error) {
+func (c *Catalogue) LookupHardware(index, key string) ([]*tinkv1alpha1.Hardware, error) {
 	untyped, err := c.hardwareIndex.Lookup(index, key)
 	if err != nil {
 		return nil, err
 	}
 
-	hardware := make([]*v1alpha1.Hardware, len(untyped))
+	hardware := make([]*tinkv1alpha1.Hardware, len(untyped))
 	for i, v := range untyped {
-		hardware[i] = v.(*v1alpha1.Hardware)
+		hardware[i] = v.(*tinkv1alpha1.Hardware)
 	}
 
 	return hardware, nil
@@ -60,7 +109,7 @@ const HardwareIDIndex = ".Spec.Metadata.Instance.ID"
 func WithHardwareIDIndex() CatalogueOption {
 	return func(c *Catalogue) {
 		c.IndexHardware(HardwareIDIndex, func(o interface{}) string {
-			hardware := o.(*v1alpha1.Hardware)
+			hardware := o.(*tinkv1alpha1.Hardware)
 			return hardware.Spec.Metadata.Instance.ID
 		})
 	}
@@ -72,7 +121,7 @@ const HardwareBMCRefIndex = ".Spec.BmcRef"
 func WithHardwareBMCRefIndex() CatalogueOption {
 	return func(c *Catalogue) {
 		c.IndexHardware(HardwareBMCRefIndex, func(o interface{}) string {
-			hardware := o.(*v1alpha1.Hardware)
+			hardware := o.(*tinkv1alpha1.Hardware)
 			return hardware.Spec.BMCRef.String()
 		})
 	}
@@ -96,31 +145,31 @@ func (w *HardwareCatalogueWriter) Write(m Machine) error {
 	return w.catalogue.InsertHardware(hardwareFromMachine(m))
 }
 
-func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
+func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 	// allow is necessary to allocate memory so we can get a bool pointer required by
 	// the hardware.
 	allow := true
 
 	// TODO(chrisdoherty4) Set the namespace to the CAPT namespace.
-	return &v1alpha1.Hardware{
+	return &tinkv1alpha1.Hardware{
 		TypeMeta: newHardwareTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
 			Name:      m.Hostname,
 			Namespace: constants.EksaSystemNamespace,
 			Labels:    m.Labels,
 		},
-		Spec: v1alpha1.HardwareSpec{
+		Spec: tinkv1alpha1.HardwareSpec{
 			BMCRef: newBMCRefFromMachine(m),
-			Disks:  []v1alpha1.Disk{{Device: m.Disk}},
-			Metadata: &v1alpha1.HardwareMetadata{
-				Facility: &v1alpha1.MetadataFacility{
+			Disks:  []tinkv1alpha1.Disk{{Device: m.Disk}},
+			Metadata: &tinkv1alpha1.HardwareMetadata{
+				Facility: &tinkv1alpha1.MetadataFacility{
 					FacilityCode: "onprem",
 					PlanSlug:     "c2.medium.x86",
 				},
-				Instance: &v1alpha1.MetadataInstance{
+				Instance: &tinkv1alpha1.MetadataInstance{
 					ID:       m.MACAddress,
 					Hostname: m.Hostname,
-					Ips: []*v1alpha1.MetadataInstanceIP{
+					Ips: []*tinkv1alpha1.MetadataInstanceIP{
 						{
 							Address: m.IPAddress,
 							Netmask: m.Netmask,
@@ -135,22 +184,22 @@ func hardwareFromMachine(m Machine) *v1alpha1.Hardware {
 					// for nil resulting in a segfault.
 					//
 					// Upstream needs patching but this will suffice for now.
-					OperatingSystem: &v1alpha1.MetadataInstanceOperatingSystem{},
+					OperatingSystem: &tinkv1alpha1.MetadataInstanceOperatingSystem{},
 					AllowPxe:        true,
 					AlwaysPxe:       true,
 				},
 				State: "provisioning",
 			},
-			Interfaces: []v1alpha1.Interface{
+			Interfaces: []tinkv1alpha1.Interface{
 				{
-					Netboot: &v1alpha1.Netboot{
+					Netboot: &tinkv1alpha1.Netboot{
 						AllowPXE:      &allow,
 						AllowWorkflow: &allow,
 					},
-					DHCP: &v1alpha1.DHCP{
+					DHCP: &tinkv1alpha1.DHCP{
 						Arch: "x86_64",
 						MAC:  m.MACAddress,
-						IP: &v1alpha1.IP{
+						IP: &tinkv1alpha1.IP{
 							Address: m.IPAddress,
 							Netmask: m.Netmask,
 							Gateway: m.Gateway,

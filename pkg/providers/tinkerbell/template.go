@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -33,15 +34,17 @@ type TemplateBuilder struct {
 	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
 	WorkerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
+	diskExtractor               *hardware.DiskExtractor
 	now                         types.NowFunc
 }
 
-func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, diskExtractor *hardware.DiskExtractor, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &TemplateBuilder{
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		datacenterSpec:              datacenterSpec,
 		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
+		diskExtractor:               diskExtractor,
 		now:                         now,
 	}
 }
@@ -53,7 +56,11 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		if err != nil {
 			return nil, fmt.Errorf("creating control plane template config: %v", err)
 		}
-		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle)
+		disk, err := tb.diskExtractor.GetDisk(tb.controlPlaneMachineSpec.HardwareSelector)
+		if err != nil {
+			return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+		}
+		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
 	}
 
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
@@ -66,6 +73,17 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *tb.etcdMachineSpec
 		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
+		if etcdTemplateConfig == nil {
+			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
+			if err != nil {
+				return nil, fmt.Errorf("creating etcd template config: %v", err)
+			}
+			disk, err := tb.diskExtractor.GetDisk(tb.etcdMachineSpec.HardwareSelector)
+			if err != nil {
+				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+			}
+			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
+		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
@@ -92,8 +110,13 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			if err != nil {
 				return nil, fmt.Errorf("creating worker node template config: %v", err)
 			}
-			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle)
+			disk, err := tb.diskExtractor.GetDisk(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
+			if err != nil {
+				return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
+			}
+			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
 		}
+
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
@@ -361,12 +384,14 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"controlPlanetemplateOverride": cpTemplateOverride,
+		"hardwareSelector":             controlPlaneMachineSpec.HardwareSelector,
 	}
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
+		values["etcdHardwareSelector"] = etcdMachineSpec.HardwareSelector
 	}
 
 	return values
@@ -385,6 +410,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"workertemplateOverride": workerTemplateOverride,
+		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
 	}
 	return values
 }

@@ -25,7 +25,7 @@ spec:
   externalEtcdConfiguration:
     count: 1
     machineGroupRef:
-      name: test-cp
+      name: test-etcd
       kind: TinkerbellMachineConfig
   kubernetesVersion: "1.21"
   managementCluster:
@@ -58,6 +58,8 @@ metadata:
   name: test-cp
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "cp"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
@@ -73,6 +75,8 @@ metadata:
   name: test-md
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "worker"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
@@ -88,6 +92,8 @@ metadata:
   name: test-etcd
   namespace: test-namespace
 spec:
+  hardwareSelector:
+    type: "etcd"
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig

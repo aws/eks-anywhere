@@ -38,6 +38,12 @@ spec:
   template:
     {{- if and .workertemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .hardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.workertemplateOverride | indent 8}}
     {{- end}}

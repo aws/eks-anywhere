@@ -121,7 +121,10 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		validator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
-	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
+	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
+
 	machineValidator := hardware.NewDefaultMachineValidator()
 
 	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's

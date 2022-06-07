@@ -333,7 +333,7 @@ func NewValidMachine() hardware.Machine {
 		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
-		Labels:       make(hardware.Labels),
+		Labels:       hardware.Labels{"type": "cp"},
 		Disk:         "/dev/sda",
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",
