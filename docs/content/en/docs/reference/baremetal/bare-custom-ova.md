@@ -1,8 +1,8 @@
 ---
 title: "Customize OVAs for EKS Anywhere on Bare Metal"
-linkTitle: "Customize OVAs for EKS Anywhere on Bare Metal"
+linkTitle: "Customize OS"
 weight: 30
 description: >
-  Customizing Imported OVAs to use with EKS Anywhere on Bare Metal
+  Customizing operating systems to use with EKS Anywhere on Bare Metal
 ---
 
