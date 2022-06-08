@@ -2,6 +2,7 @@ package templater
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"text/template"
@@ -49,6 +50,10 @@ func Execute(templateContent string, data interface{}) ([]byte, error) {
 			return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 		},
 		"stringsJoin": strings.Join,
+		"marshal": func(v interface{}) (string, error) {
+			a, err := json.Marshal(v)
+			return string(a), err
+		},
 	}
 	temp = temp.Funcs(funcMap)
 

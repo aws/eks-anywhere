@@ -68,13 +68,13 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfiguredCP}}
-    diskoffering.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackControlPlaneDiskOfferingJsonStr | js}}"
+    diskoffering.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackControlPlaneDiskOffering | js}}"
 {{- end }}
 {{- if $isoConfiguredCP}}
-    ISOAttachment.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackControlPlaneISOAttachmentJsonStr | js}}"
+    ISOAttachment.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackControlPlaneISOAttachment | js}}"
 {{- end }}
 {{- if .cloudstackControlPlaneSymlinks }}
-    symlinks.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackControlPlaneSymlinksJsonStr | js}}"
+    symlinks.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackControlPlaneSymlinks | js}}"
 {{- end}}
 spec:
   template:
@@ -566,13 +566,13 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfiguredEtcd}}
-    diskoffering.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackEtcdDiskOfferingJsonStr | js}}"
+    diskoffering.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackEtcdDiskOffering | js}}"
 {{- end }}
 {{- if $isoConfiguredEtcd}}
-    ISOAttachment.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackEtcdISOAttachmentJsonStr | js}}"
+    ISOAttachment.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackEtcdISOAttachment | js}}"
 {{- end }}
 {{- if .cloudstackEtcdSymlinks }}
-    symlinks.{{.cloudstackAnnotationSuffix}}: "{{.cloudstackEtcdSymlinksJsonStr | js}}"
+    symlinks.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackEtcdSymlinks | js}}"
 {{- end}}
 spec:
   template:

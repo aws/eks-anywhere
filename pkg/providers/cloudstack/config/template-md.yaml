@@ -1,10 +1,5 @@
-{{- $suffix := .cloudstackAnnotationSuffix -}}
-{{- $template := .cloudstackTemplate -}}
-{{- $offering := .cloudstackOffering -}}
-{{- $disk := .cloudstackDiskOffering -}}
-{{- $iso := .cloudstackISOAttachment -}}
-{{- $diskConfigured := or (gt (len $disk.Id) 0) (gt (len $disk.Name) 0) -}}
-{{- $isoConfigured := or (gt (len $iso.Id) 0) (gt (len $iso.Name) 0) -}}
+{{- $diskConfigured := or (gt (len .cloudstackDiskOffering.Id) 0) (gt (len .cloudstackDiskOffering.Name) 0) -}}
+{{- $isoConfigured := or (gt (len .cloudstackISOAttachment.Id) 0) (gt (len .cloudstackISOAttachment.Name) 0) -}}
 {{- $annotations := or $diskConfigured $isoConfigured .cloudstackSymlinks -}}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
@@ -37,7 +32,7 @@ spec:
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{`{{ ds.meta_data.local_hostname }}`}}'
-{{- if or .proxyConfig .registryMirrorConfiguration $iso.PreKubeadmCommandArgs $iso.PostKubeadmCommandArgs}}
+{{- if or .proxyConfig .registryMirrorConfiguration .cloudstackISOAttachment.PreKubeadmCommandArgs .cloudstackISOAttachment.PostKubeadmCommandArgs}}
       files:
 {{- end }}
 {{- if .proxyConfig }}
@@ -67,17 +62,17 @@ spec:
         owner: root:root
         path: "/etc/containerd/config_append.toml"
 {{- end }}
-{{- if $iso.PreKubeadmCommandArgs}}
+{{- if .cloudstackISOAttachment.PreKubeadmCommandArgs}}
       - content: |
-{{- range $iso.PreKubeadmCommandArgs}}
+{{- range .cloudstackISOAttachment.PreKubeadmCommandArgs}}
           {{.}}
 {{- end}}
         owner: root:root
         path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
 {{- end}}
-{{- if $iso.PostKubeadmCommandArgs}}
+{{- if .cloudstackISOAttachment.PostKubeadmCommandArgs}}
       - content: |
-{{- range $iso.PostKubeadmCommandArgs}}
+{{- range .cloudstackISOAttachment.PostKubeadmCommandArgs}}
           {{.}}
 {{- end}}
         owner: root:root
@@ -106,25 +101,25 @@ spec:
           else echo "{{$dir}} already symlink" ;
         fi
 {{- end}}
-{{- if and $isoConfigured $iso.RunPreKubeadmCommand}}
-      - {{ $iso.MountPath}}/preKubeadmCommands.sh {{- if $iso.PreKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-prekubeadmcommands-input {{- end}}
+{{- if and $isoConfigured .cloudstackISOAttachment.RunPreKubeadmCommand}}
+      - {{ .cloudstackISOAttachment.MountPath}}/preKubeadmCommands.sh {{- if .cloudstackISOAttachment.PreKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-prekubeadmcommands-input {{- end}}
 {{- end}}
-{{- if and $isoConfigured $iso.RunPostKubeadmCommand}}
+{{- if and $isoConfigured .cloudstackISOAttachment.RunPostKubeadmCommand}}
       postKubeadmCommands:
-      - {{ $iso.MountPath}}/postKubeadmCommands.sh {{- if $iso.PostKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-postkubeadmcommands-input {{- end}}
+      - {{ .cloudstackISOAttachment.MountPath}}/postKubeadmCommands.sh {{- if .cloudstackISOAttachment.PostKubeadmCommandArgs}} < /var/run/cloud-init/customer-provided-postkubeadmcommands-input {{- end}}
 {{- end}}
 {{- if $diskConfigured }}
       diskSetup:
         filesystems:
-          - device: {{ $disk.Device }}1
+          - device: {{ .cloudstackDiskOffering.Device }}1
             overwrite: false
             extraOpts:
               - -E
               - lazy_itable_init=1,lazy_journal_init=1
-            filesystem: {{ $disk.Filesystem }}
-            label: {{ $disk.Label }}
+            filesystem: {{ .cloudstackDiskOffering.Filesystem }}
+            label: {{ .cloudstackDiskOffering.Label }}
         partitions:
-          - device: {{ $disk.Device }}
+          - device: {{ .cloudstackDiskOffering.Device }}
             layout: true
             overwrite: false
             tableType: gpt
@@ -133,12 +128,12 @@ spec:
 {{- if or $diskConfigured $isoConfigured }}
       mounts:
 {{- if $diskConfigured }}
-        - - LABEL={{ $disk.Label }}
-          - {{ $disk.MountPath }}
+        - - LABEL={{ .cloudstackDiskOffering.Label }}
+          - {{ .cloudstackDiskOffering.MountPath }}
 {{- end}}
 {{- if $isoConfigured }}
-        - - {{ $iso.Device }}
-          - {{ $iso.MountPath }}
+        - - {{ .cloudstackISOAttachment.Device }}
+          - {{ .cloudstackISOAttachment.MountPath }}
 {{- end}}
 {{- end}}
       users:
@@ -186,54 +181,54 @@ metadata:
   annotations:
 {{- end }}
 {{- if $diskConfigured}}
-    diskoffering.{{$suffix}}: "{{.cloudstackDiskOfferingJsonStr | js}}"
+    diskoffering.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackDiskOffering | js}}"
 {{- end }}
 {{- if $isoConfigured}}
-    ISOAttachment.{{$suffix}}: "{{.cloudstackISOAttachmentJsonStr | js}}"
+    ISOAttachment.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackISOAttachment | js}}"
 {{- end }}
 {{- if .cloudstackSymlinks }}
-    symlinks.{{$suffix}}: "{{.cloudstackSymlinksJsonStr | js}}"
+    symlinks.{{.cloudstackAnnotationSuffix}}: "{{- marshal .cloudstackSymlinks | js}}"
 {{- end}}
 spec:
   template:
     spec:
       offering:
-{{- if $offering.Id }}
-        id: {{$offering.Id}}
+{{- if .cloudstackOffering.Id }}
+        id: {{.cloudstackOffering.Id}}
 {{- end}}
-{{- if $offering.Name }}
-        name: {{$offering.Name}}
+{{- if .cloudstackOffering.Name }}
+        name: {{.cloudstackOffering.Name}}
 {{- end}}
       template:
-{{- if $template.Id }}
-        id: {{$template.Id}}
+{{- if .cloudstackTemplate.Id }}
+        id: {{.cloudstackTemplate.Id}}
 {{- end}}
-{{- if $template.Name }}
-        name: {{$template.Name}}
+{{- if .cloudstackTemplate.Name }}
+        name: {{.cloudstackTemplate.Name}}
 {{- end}}
 {{- if $diskConfigured}}
       diskOffering:
-{{- if $disk.Id }}
-        id: {{$disk.Id}}
+{{- if .cloudstackDiskOffering.Id }}
+        id: {{.cloudstackDiskOffering.Id}}
 {{- end}}
-{{- if $disk.Name }}
-        name: {{$disk.Name}}
+{{- if .cloudstackDiskOffering.Name }}
+        name: {{.cloudstackDiskOffering.Name}}
 {{- end}}
-{{- if gt $disk.CustomSize 0}}
-        customSizeInGB: {{$disk.CustomSize}}
+{{- if gt .cloudstackDiskOffering.CustomSize 0}}
+        customSizeInGB: {{.cloudstackDiskOffering.CustomSize}}
 {{- end}}
-        mountPath: {{$disk.MountPath}}
-        device: {{$disk.Device}}
-        filesystem: {{$disk.Filesystem}}
-        label: {{$disk.Label}}
+        mountPath: {{.cloudstackDiskOffering.MountPath}}
+        device: {{.cloudstackDiskOffering.Device}}
+        filesystem: {{.cloudstackDiskOffering.Filesystem}}
+        label: {{.cloudstackDiskOffering.Label}}
 {{- end}}
 {{- if $isoConfigured}}
       ISOAttachment:
-{{- if $iso.Id}}
-        id: {{$iso.Id}}
+{{- if .cloudstackISOAttachment.Id}}
+        id: {{.cloudstackISOAttachment.Id}}
 {{- end}}
-{{- if $iso.Name}}
-        name: {{$iso.Name}}
+{{- if .cloudstackISOAttachment.Name}}
+        name: {{.cloudstackISOAttachment.Name}}
 {{- end}}
 {{- end}}
 {{- if .cloudstackCustomDetails }}
