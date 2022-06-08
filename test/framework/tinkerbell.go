@@ -41,7 +41,6 @@ type Tinkerbell struct {
 	fillers              []api.TinkerbellFiller
 	clusterFillers       []api.ClusterFiller
 	serverIP             string
-	bootstrapIP          string
 	cidr                 string
 	inventoryCsvFilePath string
 }
@@ -64,10 +63,6 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	}
 
 	tink.serverIP = serverIP
-	tink.bootstrapIP = os.Getenv(tinkerbellBootstrapIPEnvVar)
-	if tink.bootstrapIP == "" {
-		t.Fatalf("tinkerbell bootstrap ip is required!")
-	}
 
 	tink.cidr = cidr
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
