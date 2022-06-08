@@ -35,14 +35,25 @@ func (s *ClusterSpec) ControlPlaneMachineConfig() *v1alpha1.TinkerbellMachineCon
 	return s.MachineConfigs[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 }
 
+// ControlPlaneConfiguration retrieves the control plane configuration from s.
+func (s *ClusterSpec) ControlPlaneConfiguration() *v1alpha1.ControlPlaneConfiguration {
+	return &s.Cluster.Spec.ControlPlaneConfiguration
+}
+
 // HasExternalEtcd returns true if there is an external etcd configuration.
 func (s *ClusterSpec) HasExternalEtcd() bool {
 	return s.Spec.Cluster.Spec.ExternalEtcdConfiguration != nil
 }
 
-// EtcdMachineConfig retrieves the TinkerbellMachineConfig referenced by the cluster etcd machine
+// ExternalEtcdConfiguration returns the etcd configuration. The configuration may be nil. Consumers
+// should check if external etcd configuration is present using HasExternalEtcd().
+func (s *ClusterSpec) ExternalEtcdConfiguration() *v1alpha1.ExternalEtcdConfiguration {
+	return s.Cluster.Spec.ExternalEtcdConfiguration
+}
+
+// ExternalEtcdMachineConfig retrieves the TinkerbellMachineConfig referenced by the cluster etcd machine
 // reference.
-func (s *ClusterSpec) EtcdMachineConfig() *v1alpha1.TinkerbellMachineConfig {
+func (s *ClusterSpec) ExternalEtcdMachineConfig() *v1alpha1.TinkerbellMachineConfig {
 	if !s.HasExternalEtcd() {
 		return nil
 	}
@@ -50,10 +61,14 @@ func (s *ClusterSpec) EtcdMachineConfig() *v1alpha1.TinkerbellMachineConfig {
 	return s.MachineConfigs[s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 }
 
-// FirstWorkerMachineConfig retrieves the TinkerbellMachineConfig referenced by the first node
-// group machine reference.
-func (s *ClusterSpec) FirstWorkerMachineConfig() *v1alpha1.TinkerbellMachineConfig {
-	return s.MachineConfigs[s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+// WorkerNodeGroupConfigurations retrieves all worker node group configurations in s.
+func (s *ClusterSpec) WorkerNodeGroupConfigurations() []v1alpha1.WorkerNodeGroupConfiguration {
+	return s.Cluster.Spec.WorkerNodeGroupConfigurations
+}
+
+// WorkerNodeGroupMachineConfig retrieves the machine group associated with conf.
+func (s *ClusterSpec) WorkerNodeGroupMachineConfig(conf v1alpha1.WorkerNodeGroupConfiguration) *v1alpha1.TinkerbellMachineConfig {
+	return s.MachineConfigs[conf.MachineGroupRef.Name]
 }
 
 // ClusterSpecAssertion makes an assertion on spec.

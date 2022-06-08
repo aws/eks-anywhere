@@ -84,7 +84,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 		// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
 		// Enabled Management Cluster that we're upgrading.
-		var selectors []hardware.MachineSelector
+		var selectors []v1alpha1.HardwareSelector
 
 		machineValidator := hardware.NewDefaultMachineValidator()
 		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))

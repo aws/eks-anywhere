@@ -3,6 +3,8 @@ package tinkerbell
 import (
 	"fmt"
 
+	"go.uber.org/multierr"
+
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -82,12 +84,45 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-// NewMinHardwareAvailableAssertion creates a ClusterSpecAssertion that ensures there is sufficient
-// hardware in catalogue for creating the ClusterSpec. The minimum expeced hardware is the sum sum
-// of requested control plane, etcd and worker node counts. The system requires hardware >= to
-// requested provisioning.
-func NewMinimumHardwareAvailableAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+// NewCreateMinimumHardwareAvailableAssertion asserts that catalogue has sufficient hardware to
+// support the ClusterSpec during a create workflow. It ensures the following:
+// 	- catalogue has sufficient total hardware to accommodate the cluster spec.
+//	- catalogue has sufficient hardware per hardware selector registered in catalogue
+//
+// It does not protect against situations where a selector (A) is a subset of a selector (B)
+// and all hardware in (A) is acquired by (B) leaving no hardware for (A) at the time of hardware
+// acquisition. Performing that type of check implies we know whether all hardware in (A) would
+// be acquired for (B) which is implementation dependent. Instead, we rely on Kubernetes controllers
+// to provide sufficient logging to alert us to insufficient resources.
+func NewCreateMinimumHardwareAvailableAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
-		return validateMinimumExpectedHardware(spec.Cluster.Spec, catalogue)
+		var requirements minimumHardwareRequirements
+
+		requirements.New(
+			spec.ControlPlaneConfiguration().MachineGroupRef.Name,
+			spec.ControlPlaneConfiguration().Count,
+			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		)
+
+		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+			requirements.New(
+				nodeGroup.MachineGroupRef.Name,
+				nodeGroup.Count,
+				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
+			)
+		}
+
+		if spec.HasExternalEtcd() {
+			requirements.New(
+				spec.ExternalEtcdConfiguration().MachineGroupRef.Name,
+				spec.ExternalEtcdConfiguration().Count,
+				spec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+			)
+		}
+
+		return multierr.Combine(
+			validateTotalHardwareRequestedAvailable(spec.Cluster.Spec, catalogue),
+			validateMinimumHardwareRequirements(requirements, catalogue),
+		)
 	}
 }
