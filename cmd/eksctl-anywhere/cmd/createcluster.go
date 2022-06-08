@@ -49,15 +49,13 @@ var createClusterCmd = &cobra.Command{
 func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVarP(
-			&cc.hardwareCSVPath,
-			TinkerbellHardwareCSVFlagName,
-			TinkerbellHardwareCSVFlagAlias,
-			"",
-			TinkerbellHardwareCSVFlagDescription,
-		)
-	}
+	createClusterCmd.Flags().StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
@@ -156,10 +154,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 	defer close(ctx, deps)
-
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
-		return fmt.Errorf("provider tinkerbell is not supported in this release")
-	}
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("provider cloudstack is not supported in this release")

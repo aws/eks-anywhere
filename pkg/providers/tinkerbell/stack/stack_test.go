@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
@@ -56,7 +55,6 @@ func getTinkBundle() releasev1alpha1.TinkerbellStackBundle {
 }
 
 func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -82,7 +80,6 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 }
 
 func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -111,7 +108,6 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 }
 
 func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -128,7 +124,6 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 }
 
 func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -145,7 +140,6 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 }
 
 func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -160,7 +154,6 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 }
 
 func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)
@@ -176,7 +169,6 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 }
 
 func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	mockCtrl := gomock.NewController(t)
 	docker := mocks.NewMockDocker(mockCtrl)
 	helm := mocks.NewMockHelm(mockCtrl)

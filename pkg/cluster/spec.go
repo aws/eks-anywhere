@@ -10,7 +10,6 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -226,15 +225,11 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 
 	switch s.Cluster.Spec.DatacenterRef.Kind {
 	case eksav1alpha1.TinkerbellDatacenterKind:
-		if features.IsActive(features.TinkerbellProvider()) {
-			templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
-			if err != nil {
-				return nil, err
-			}
-			s.TinkerbellTemplateConfigs = templateConfigs
-		} else {
-			return nil, fmt.Errorf("unsupported DatacenterRef.Kind: %s", eksav1alpha1.TinkerbellDatacenterKind)
+		templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
 		}
+		s.TinkerbellTemplateConfigs = templateConfigs
 	}
 
 	if s.ManagementCluster != nil {

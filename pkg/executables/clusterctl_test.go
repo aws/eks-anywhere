@@ -484,6 +484,12 @@ var versionBundle = &cluster.VersionsBundle{
 			},
 			KubeProxy: kubeProxyVersion08,
 		},
+		Tinkerbell: v1alpha1.TinkerbellBundle{
+			Version: "v0.1.0",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-0.0.1.build.38",
+			},
+		},
 		CloudStack: v1alpha1.CloudStackBundle{
 			Version: "v0.7.8",
 			ClusterAPIController: v1alpha1.Image{

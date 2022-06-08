@@ -11,7 +11,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -59,15 +58,13 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	if features.IsActive(features.TinkerbellProvider()) {
-		upgradeClusterCmd.Flags().StringVarP(
-			&cc.hardwareCSVPath,
-			TinkerbellHardwareCSVFlagName,
-			TinkerbellHardwareCSVFlagAlias,
-			"",
-			TinkerbellHardwareCSVFlagDescription,
-		)
-	}
+	upgradeClusterCmd.Flags().StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)

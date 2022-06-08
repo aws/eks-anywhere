@@ -1,7 +1,6 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
 	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
@@ -33,13 +32,6 @@ func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
-}
-
-func TinkerbellProvider() Feature {
-	return Feature{
-		Name:     "Tinkerbell provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
 	}
 }
 
