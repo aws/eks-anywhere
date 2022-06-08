@@ -34,7 +34,10 @@ func (pi *PackageInstaller) InstallCuratedPackages(ctx context.Context) error {
 		return nil
 	}
 
-	err = pi.installPackages(ctx)
+	if pi.packagesLocation != "" {
+		err = pi.installPackages(ctx)
+	}
+
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
 	}

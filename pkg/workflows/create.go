@@ -3,7 +3,6 @@ package workflows
 import (
 	"context"
 	"fmt"
-
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -61,7 +60,8 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
+	err := task.NewTaskRunner(&SetAndValidateTask{}, c.writer).RunTask(ctx, commandContext)
+
 	return err
 }
 
