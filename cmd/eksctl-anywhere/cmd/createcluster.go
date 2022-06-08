@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -165,10 +166,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
-	if !features.IsActive(features.CuratedPackagesSupport()) && cc.installPackages != "" {
-		return fmt.Errorf("curated packages installation is not supported in this release")
-	}
-
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,
@@ -176,8 +173,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.FluxAddonClient,
 		deps.Writer,
 		deps.EksdInstaller,
-		deps.Helm,
-		deps.Kubectl,
 	)
 
 	var cluster *types.Cluster
@@ -206,7 +201,21 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean, cc.installPackages)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+
+	if err != nil {
+		return err
+	}
+	if features.IsActive(features.CuratedPackagesSupport()) {
+		packageInstaller := curatedpackages.NewPackageInstaller(
+			deps.Helm,
+			deps.Kubectl,
+			clusterSpec,
+			cc.installPackages,
+		)
+		err = packageInstaller.InstallCuratedPackages(ctx)
+	}
+
 	cleanup(deps, &err)
 	return err
 }

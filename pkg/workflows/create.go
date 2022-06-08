@@ -3,13 +3,10 @@ package workflows
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -19,34 +16,29 @@ import (
 )
 
 type Create struct {
-	bootstrapper     interfaces.Bootstrapper
-	provider         providers.Provider
-	clusterManager   interfaces.ClusterManager
-	addonManager     interfaces.AddonManager
-	writer           filewriter.FileWriter
-	eksdInstaller    interfaces.EksdInstaller
-	packageInstaller curatedpackages.ChartInstaller
-	kubectlRunner    curatedpackages.KubectlRunner
+	bootstrapper   interfaces.Bootstrapper
+	provider       providers.Provider
+	clusterManager interfaces.ClusterManager
+	addonManager   interfaces.AddonManager
+	writer         filewriter.FileWriter
+	eksdInstaller  interfaces.EksdInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
-	packageInstaller curatedpackages.ChartInstaller, kubectlRunner curatedpackages.KubectlRunner,
 ) *Create {
 	return &Create{
-		bootstrapper:     bootstrapper,
-		provider:         provider,
-		clusterManager:   clusterManager,
-		addonManager:     addonManager,
-		writer:           writer,
-		eksdInstaller:    eksdInstaller,
-		packageInstaller: packageInstaller,
-		kubectlRunner:    kubectlRunner,
+		bootstrapper:   bootstrapper,
+		provider:       provider,
+		clusterManager: clusterManager,
+		addonManager:   addonManager,
+		writer:         writer,
+		eksdInstaller:  eksdInstaller,
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool, packagesLocation string) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Cluster.Name,
@@ -69,15 +61,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	err := task.NewTaskRunner(&SetAndValidateTask{}, c.writer).RunTask(ctx, commandContext)
-	if err != nil {
-		return err
-	}
-
-	if packagesLocation != "" {
-		curatedpackages.PrintLicense()
-		err = c.installCuratedPackages(ctx, clusterSpec, packagesLocation)
-	}
+	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 	return err
 }
 
@@ -466,49 +450,4 @@ func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
-}
-
-func (c *Create) installCuratedPackages(ctx context.Context, spec *cluster.Spec, packagesLocation string) error {
-	err := c.installPackagesController(ctx, spec)
-	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
-		return nil
-	}
-
-	err = installPackages(ctx, spec.Cluster.Name, packagesLocation)
-	if err != nil {
-		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
-	}
-	return nil
-}
-
-func (c *Create) installPackagesController(ctx context.Context, spec *cluster.Spec) error {
-	logger.Info("Installing curated packages controller on workload cluster")
-	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
-
-	chart := spec.VersionsBundle.VersionsBundle.PackageController.HelmChart
-	imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
-	pc := curatedpackages.NewPackageControllerClient(c.packageInstaller, c.kubectlRunner, kubeConfig, imageUrl, chart.Name, chart.Tag())
-	err := pc.InstallController(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func installPackages(ctx context.Context, clusterName, packagesLocation string) error {
-	kubeConfig := kubeconfig.FromClusterName(clusterName)
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig, packagesLocation)
-	if err != nil {
-		return err
-	}
-	packageClient := curatedpackages.NewPackageClient(
-		nil,
-		deps.Kubectl,
-	)
-	err = packageClient.CreatePackages(ctx, packagesLocation, kubeConfig)
-	if err != nil {
-		return err
-	}
-	return nil
 }

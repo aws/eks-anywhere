@@ -45,7 +45,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
-	
+
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer, eksd)
@@ -231,7 +231,7 @@ func (c *createTestSetup) expectInstallMHC() {
 }
 
 func (c *createTestSetup) run() error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.validator, c.forceCleanup, "")
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.validator, c.forceCleanup)
 }
 
 func (c *createTestSetup) expectPreflightValidationsToPass() {
