@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        cluster.x-k8s.io/cluster-nameCI: {{.clusterName}}
+        cluster.x-k8s.io/cluster-name: {{.clusterName}}
         pool: {{.workerNodeGroupName}}
     spec:
       bootstrap:
