@@ -1,7 +1,7 @@
 ---
 title: "eksctl anywhere CLI reference"
 linkTitle: "eksctl command"
-weight: 12
+weight: 65
 description: >
   Details on the options and parameters for eksctl anywhere CLI
 ---

@@ -1,6 +1,8 @@
 # Developer
 
-[Development Best Practice Guidlines](best-practice.md)
+[Development Best Practice Guidelines](best-practice.md)
+
+[Development Lifecycle](development-lifecycle.md)
 
 [Pull Request Guidelines](pull-request.md)
 

@@ -62,7 +62,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
+	err := task.NewTaskRunner(&SetAndValidateTask{}, c.writer).RunTask(ctx, commandContext)
 	if err != nil {
 		return err
 	}
@@ -150,6 +150,14 @@ func (s *CreateBootStrapClusterTask) Name() string {
 	return "bootstrap-cluster-init"
 }
 
+func (s *CreateBootStrapClusterTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *CreateBootStrapClusterTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // SetAndValidateTask implementation
 
 func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -191,6 +199,14 @@ func (s *SetAndValidateTask) providerValidation(ctx context.Context, commandCont
 
 func (s *SetAndValidateTask) Name() string {
 	return "setup-validate"
+}
+
+func (s *SetAndValidateTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *SetAndValidateTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 // CreateWorkloadClusterTask implementation
@@ -256,6 +272,14 @@ func (s *CreateWorkloadClusterTask) Name() string {
 	return "workload-cluster-init"
 }
 
+func (s *CreateWorkloadClusterTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *CreateWorkloadClusterTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // InstallResourcesOnManagement implementation
 func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.BootstrapCluster.ExistingManagement {
@@ -272,6 +296,14 @@ func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandConte
 
 func (s *InstallResourcesOnManagementTask) Name() string {
 	return "install-resources-on-management-cluster"
+}
+
+func (s *InstallResourcesOnManagementTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallResourcesOnManagementTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 // MoveClusterManagementTask implementation
@@ -292,6 +324,14 @@ func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 
 func (s *MoveClusterManagementTask) Name() string {
 	return "capi-management-move"
+}
+
+func (s *MoveClusterManagementTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *MoveClusterManagementTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 // InstallEksaComponentsTask implementation
@@ -346,6 +386,14 @@ func (s *InstallEksaComponentsTask) Name() string {
 	return "eksa-components-install"
 }
 
+func (s *InstallEksaComponentsTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallEksaComponentsTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // InstallAddonManagerTask implementation
 
 func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -363,6 +411,14 @@ func (s *InstallAddonManagerTask) Name() string {
 	return "addon-manager-install"
 }
 
+func (s *InstallAddonManagerTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallAddonManagerTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func (s *WriteClusterConfigTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Writing cluster config file")
 	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
@@ -375,6 +431,14 @@ func (s *WriteClusterConfigTask) Run(ctx context.Context, commandContext *task.C
 
 func (s *WriteClusterConfigTask) Name() string {
 	return "write-cluster-config"
+}
+
+func (s *WriteClusterConfigTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *WriteClusterConfigTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 // DeleteBootstrapClusterTask implementation

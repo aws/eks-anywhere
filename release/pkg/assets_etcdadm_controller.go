@@ -24,7 +24,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const etcdadmControllerProjectPath = "projects/mrajashree/etcdadm-controller"
+const etcdadmControllerProjectPath = "projects/aws/etcdadm-controller"
 
 // GetEtcdadmControllerAssets returns the eks-a artifacts for etcdadm controller
 func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
@@ -34,7 +34,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	}
 
 	name := "etcdadm-controller"
-	repoName := fmt.Sprintf("mrajashree/%s", name)
+	repoName := fmt.Sprintf("aws/%s", name)
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": etcdadmControllerProjectPath,

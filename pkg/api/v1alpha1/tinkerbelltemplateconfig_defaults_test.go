@@ -10,6 +10,7 @@ import (
 
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
+	diskType := "/dev/sda"
 	givenActions := []tinkerbell.Action{}
 	wantActions := []tinkerbell.Action{
 		{
@@ -79,7 +80,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 	}
 
-	opts := GetDefaultActionsFromBundle(vBundle)
+	opts := GetDefaultActionsFromBundle(vBundle, diskType)
 	for _, opt := range opts {
 		opt(&givenActions)
 	}

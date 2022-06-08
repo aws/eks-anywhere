@@ -37,6 +37,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: worker
       templateOverride: |
         global_timeout: 6000
         id: ""

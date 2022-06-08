@@ -8,7 +8,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -37,18 +36,12 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 		opts = append(opts, bootstrapper.WithEnv(env))
 	}
 
-	if p.setupTinkerbell {
-		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
-	}
+	opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
 
 	return opts, nil
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if !p.setupTinkerbell {
-		return nil
-	}
-
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
 	localIP, err := networkutils.GetLocalIP()
@@ -61,7 +54,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		localIP.String(),
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, false),
+		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
 	)
 	if err != nil {
@@ -84,10 +77,6 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 }
 
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if !p.setupTinkerbell {
-		return nil
-	}
-
 	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
 	err := p.stackInstaller.Install(
@@ -95,7 +84,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 	)
 	if err != nil {
@@ -110,6 +99,10 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {
+		return err
+	}
+
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
 	if err := p.configureSshKeys(); err != nil {
@@ -128,8 +121,15 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		validator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
-	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
+	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
+
 	machineValidator := hardware.NewDefaultMachineValidator()
+
+	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's
+	var selectors []hardware.MachineSelector
+	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
 	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue

@@ -1,7 +1,7 @@
 ---
 title: "Artifacts"
 linkTitle: "Artifacts"
-weight: 60
+weight: 55
 description: >
   Artifacts associated with this release: OVAs and container images.
 ---

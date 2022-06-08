@@ -6,7 +6,7 @@ import (
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -27,10 +27,8 @@ import (
 )
 
 const (
-	bmcStatePowerActionHardoff = "POWER_ACTION_HARDOFF"
-	tinkerbellOwnerNameLabel   = "v1alpha1.tinkerbell.org/ownerName"
-	maxRetries                 = 30
-	backOffPeriod              = 5 * time.Second
+	maxRetries    = 30
+	backOffPeriod = 5 * time.Second
 )
 
 var (
@@ -43,7 +41,6 @@ type Provider struct {
 	clusterConfig         *v1alpha1.Cluster
 	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
-	hardwares             []tinkv1alpha1.Hardware
 	stackInstaller        stack.StackInstaller
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TemplateBuilder
@@ -52,15 +49,16 @@ type Provider struct {
 
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
+	diskExtractor   hardware.DiskExtractor
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
 	// constructor call for constructing the validator in-line.
 	netClient networkutils.NetClient
 
-	skipIpCheck     bool
-	setupTinkerbell bool
-	retrier         *retrier.Retrier
+	forceCleanup bool
+	skipIpCheck  bool
+	retrier      *retrier.Retrier
 }
 
 type ProviderKubectlClient interface {
@@ -69,8 +67,6 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
-	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error)
 	GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error)
@@ -79,6 +75,7 @@ type ProviderKubectlClient interface {
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
+	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -96,36 +93,42 @@ func NewProvider(
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
+	forceCleanup bool,
 	skipIpCheck bool,
-	setupTinkerbell bool,
 ) *Provider {
+	diskExtractor := hardware.NewDiskExtractor()
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+		diskExtractor.RegisterHardwareSelector(controlPlaneMachineSpec.HardwareSelector)
 	}
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
 	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
 			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
 			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
+			diskExtractor.RegisterHardwareSelector(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
 		}
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+			diskExtractor.RegisterHardwareSelector(etcdMachineSpec.HardwareSelector)
 		}
 	}
+
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
+			diskExtractor:               diskExtractor,
 			now:                         now,
 		},
 		writer:          writer,
@@ -138,15 +141,16 @@ func NewProvider(
 			hardware.WithBMCNameIndex(),
 			hardware.WithSecretNameIndex(),
 		),
-		netClient: &networkutils.DefaultNetClient{},
-		retrier:   retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		diskExtractor: *diskExtractor,
+		netClient:     &networkutils.DefaultNetClient{},
+		retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
 		// Behavioral flags.
-		skipIpCheck:     skipIpCheck,
-		setupTinkerbell: setupTinkerbell,
+		forceCleanup: forceCleanup,
+		skipIpCheck:  skipIpCheck,
 	}
 }
 
@@ -186,10 +190,10 @@ func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
 		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/config/manager/manager.yaml#L23
 		//
 		// Template override
-		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L182
+		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L182
 		//
 		// Env read having set TINKERBELL_IP in the deployment manifest.
-		// https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
+		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
 		"TINKERBELL_IP": "<set in eks-a tinkerbell provider>",
 	}, nil
 }
