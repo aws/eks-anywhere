@@ -8,3 +8,6 @@ coverage:
         target: auto
         threshold: 0.5%
         informational: true
+
+ignore:
+  - internal/test/e2e
