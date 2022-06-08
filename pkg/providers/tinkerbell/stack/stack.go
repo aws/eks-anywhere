@@ -53,7 +53,7 @@ type Installer struct {
 type InstallOption func(s *Installer)
 
 type StackInstaller interface {
-	CheckLocalBootsExistence(ctx context.Context) error
+	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
 	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
@@ -234,15 +234,25 @@ func getURIDir(uri string) (string, error) {
 	return uri[:index], nil
 }
 
-// CheckLocalBootsExistence determines whether Boots is already running locally on a Docker container
-// Returns nil if the container is not found and an error otherwise
-func (s *Installer) CheckLocalBootsExistence(ctx context.Context) error {
+// CleanupLocalBoots determines whether Boots is already running locally
+// and either cleans it up or errors out depending on the `remove` flag
+func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 	exists, err := s.docker.CheckContainerExistence(ctx, boots)
+	// return error if the docker call failed
 	if err != nil {
 		return fmt.Errorf("checking boots container existence: %v", err)
 	}
-	if exists {
-		return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
+
+	// return nil if boots container doesn't exist
+	if !exists {
+		return nil
 	}
-	return nil
+
+	// if remove is set, try to delete boots
+	if remove {
+		return s.uninstallBootsFromDocker(ctx)
+	}
+
+	// finally, return an "already exists" error if boots exists and forceCleanup is not set
+	return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
 }

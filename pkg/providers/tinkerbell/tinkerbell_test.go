@@ -41,7 +41,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient) *Provider {
+func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
 	return NewProvider(
 		datacenterConfig,
@@ -53,6 +53,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		helm,
 		kubectl,
 		test.FakeNow,
+		forceCleanup,
 		false,
 	)
 }
@@ -66,16 +67,17 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
-	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -100,6 +102,7 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	keyGenerator := mocks.NewMockSSHAuthKeyGenerator(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -109,13 +112,13 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	const sshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="
 	keyGenerator.EXPECT().GenerateSSHAuthKey(gomock.Any()).Return(sshKey, nil)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 
 	// Hack: monkey patch the key generator and the stack installer directly for determinism.
 	provider.keyGenerator = keyGenerator
 	provider.stackInstaller = stackInstaller
 
-	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -138,16 +141,17 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
-	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -171,16 +175,17 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
-	stackInstaller.EXPECT().CheckLocalBootsExistence(ctx)
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -205,12 +210,13 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
 	ctx := context.Background()
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().Install(
@@ -238,12 +244,13 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
 	ctx := context.Background()
+	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl)
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	provider.stackInstaller = stackInstaller
 
 	stackInstaller.EXPECT().Install(

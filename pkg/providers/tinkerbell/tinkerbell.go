@@ -56,8 +56,9 @@ type Provider struct {
 	// constructor call for constructing the validator in-line.
 	netClient networkutils.NetClient
 
-	skipIpCheck bool
-	retrier     *retrier.Retrier
+	forceCleanup bool
+	skipIpCheck  bool
+	retrier      *retrier.Retrier
 }
 
 type ProviderKubectlClient interface {
@@ -92,6 +93,7 @@ func NewProvider(
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
+	forceCleanup bool,
 	skipIpCheck bool,
 ) *Provider {
 	diskExtractor := hardware.NewDiskExtractor()
@@ -147,7 +149,8 @@ func NewProvider(
 		// directly. This is very much a hack for testability.
 		keyGenerator: common.SshAuthKeyGenerator{},
 		// Behavioral flags.
-		skipIpCheck: skipIpCheck,
+		forceCleanup: forceCleanup,
+		skipIpCheck:  skipIpCheck,
 	}
 }
 
