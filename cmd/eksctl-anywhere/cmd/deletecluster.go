@@ -116,9 +116,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
 	}
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
-	}
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,

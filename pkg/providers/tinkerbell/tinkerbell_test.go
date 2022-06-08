@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
@@ -59,8 +58,6 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
-
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -94,7 +91,6 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 }
 
 func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_missing_ssh_keys.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -134,7 +130,6 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -168,7 +163,6 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_multiple_node_groups.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -202,7 +196,6 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 }
 
 func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -236,7 +229,6 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 }
 
 func TestPostWorkloadInitSuccess(t *testing.T) {
-	t.Setenv(features.TinkerbellProviderEnvVar, "true")
 	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
