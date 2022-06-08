@@ -587,8 +587,10 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
-
+	values, err := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
+	if err != nil {
+		return nil, err
+	}
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -604,7 +606,10 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values, err := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -618,7 +623,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -632,12 +637,30 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
 
-	diskOfferingJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.DiskOffering)
-	isoAttachementJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.ISOAttachment)
-	symLinksJsonStrCP, _ := json.Marshal(controlPlaneMachineSpec.Symlinks)
-	diskOfferingJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.DiskOffering)
-	isoAttachementJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.ISOAttachment)
-	symLinksJsonStrEtcd, _ := json.Marshal(etcdMachineSpec.Symlinks)
+	diskOfferingJsonStrCP, err := json.Marshal(controlPlaneMachineSpec.DiskOffering)
+	if err != nil {
+		return nil, err
+	}
+	isoAttachementJsonStrCP, err := json.Marshal(controlPlaneMachineSpec.ISOAttachment)
+	if err != nil {
+		return nil, err
+	}
+	symLinksJsonStrCP, err := json.Marshal(controlPlaneMachineSpec.Symlinks)
+	if err != nil {
+		return nil, err
+	}
+	diskOfferingJsonStrEtcd, err := json.Marshal(etcdMachineSpec.DiskOffering)
+	if err != nil {
+		return nil, err
+	}
+	isoAttachementJsonStrEtcd, err := json.Marshal(etcdMachineSpec.ISOAttachment)
+	if err != nil {
+		return nil, err
+	}
+	symLinksJsonStrEtcd, err := json.Marshal(etcdMachineSpec.Symlinks)
+	if err != nil {
+		return nil, err
+	}
 	values := map[string]interface{}{
 		"clusterName":                                clusterSpec.Cluster.Name,
 		"controlPlaneEndpointHost":                   host,
@@ -743,19 +766,28 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		values["awsIamAuth"] = true
 	}
 
-	return values
+	return values, nil
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
-	diskOfferingJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.DiskOffering)
-	isoAttachementJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.ISOAttachment)
-	symLinksJsonStr, _ := json.Marshal(workerNodeGroupMachineSpec.Symlinks)
+	diskOfferingJsonStr, err := json.Marshal(workerNodeGroupMachineSpec.DiskOffering)
+	if err != nil {
+		return nil, err
+	}
+	isoAttachementJsonStr, err := json.Marshal(workerNodeGroupMachineSpec.ISOAttachment)
+	if err != nil {
+		return nil, err
+	}
+	symLinksJsonStr, err := json.Marshal(workerNodeGroupMachineSpec.Symlinks)
+	if err != nil {
+		return nil, err
+	}
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
@@ -812,7 +844,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		values["noProxy"] = noProxyList
 	}
 
-	return values
+	return values, nil
 }
 
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {

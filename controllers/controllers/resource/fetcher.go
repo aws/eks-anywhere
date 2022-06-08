@@ -619,11 +619,11 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering, err = parseDiskOffering(csMachineTemplate)
+	err = parseAnnotation(csMachineTemplate, "diskoffering.", &csSpec.Spec.DiskOffering)
 	if err != nil {
 		return nil, err
 	}
-	csSpec.Spec.ISOAttachment, err = parseISOAttachment(csMachineTemplate)
+	err = parseAnnotation(csMachineTemplate, "ISOAttachment.", &csSpec.Spec.ISOAttachment)
 	if err != nil {
 		return nil, err
 	}
@@ -637,50 +637,20 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
 	}
-	csSpec.Spec.Symlinks, err = parseSymlinks(csMachineTemplate)
+	csSpec.Spec.Symlinks = anywherev1.SymlinkMaps{}
+	err = parseAnnotation(csMachineTemplate, "symlinks.", &csSpec.Spec.Symlinks)
 	if err != nil {
 		return nil, err
 	}
 	return csSpec, nil
 }
 
-func parseDiskOffering(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (diskOffering anywherev1.CloudStackResourceDiskOffering, err error) {
-	diskOffering = anywherev1.CloudStackResourceDiskOffering{}
-	diskOfferingAnnotation, exists := csMachineTemplate.Annotations["diskoffering."+constants.CloudstackAnnotationSuffix]
-	if !exists || len(diskOfferingAnnotation) == 0 {
-		return diskOffering, nil
+func parseAnnotation(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate, key string, v interface{}) (err error) {
+	annotation, exists := csMachineTemplate.Annotations[key+constants.CloudstackAnnotationSuffix]
+	if !exists || len(annotation) == 0 {
+		return nil
 	}
-
-	err = json.Unmarshal([]byte(diskOfferingAnnotation), &diskOffering)
-	if err == nil {
-		diskOffering.Id = csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID
-		diskOffering.Name = csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name
-	}
-	return diskOffering, err
-}
-
-func parseISOAttachment(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (ISOAttachment anywherev1.CloudStackISOAttachment, err error) {
-	ISOAttachment = anywherev1.CloudStackISOAttachment{}
-	ISOAttachmentAnnotation, exists := csMachineTemplate.Annotations["ISOAttachment."+constants.CloudstackAnnotationSuffix]
-	if !exists || len(ISOAttachmentAnnotation) == 0 {
-		return ISOAttachment, nil
-	}
-	err = json.Unmarshal([]byte(ISOAttachmentAnnotation), &ISOAttachment)
-	if err == nil {
-		ISOAttachment.Id = csMachineTemplate.Spec.Spec.Spec.ISOAttachment.ID
-		ISOAttachment.Name = csMachineTemplate.Spec.Spec.Spec.ISOAttachment.Name
-	}
-	return ISOAttachment, err
-}
-
-func parseSymlinks(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (symlinks anywherev1.SymlinkMaps, err error) {
-	symlinks = anywherev1.SymlinkMaps{}
-	symlinksAnnotation, exists := csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix]
-	if !exists || len(symlinksAnnotation) == 0 {
-		return symlinks, nil
-	}
-	err = json.Unmarshal([]byte(symlinksAnnotation), &symlinks)
-	return symlinks, err
+	return json.Unmarshal([]byte(annotation), v)
 }
 
 func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
