@@ -233,6 +233,28 @@ func TestTinkerbellKubernetes121SimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithHardware(2),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes123SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu123Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithHardware(2),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes121ExternalEtcdSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

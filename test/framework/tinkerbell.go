@@ -15,6 +15,7 @@ const (
 	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
 	tinkerbellImageUbuntu122EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
+	tinkerbellImageUbuntu123EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
 	tinkerbellInventoryCsvFilePathEnvVar = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey           = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 )
@@ -23,6 +24,8 @@ var requiredTinkerbellEnvVars = []string{
 	tinkerbellNetworkCidrEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
+	tinkerbellImageUbuntu122EnvVar,
+	tinkerbellImageUbuntu123EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 }
@@ -130,6 +133,15 @@ func WithUbuntu122Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+func WithUbuntu123Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithImageUrlForAllTinkerbellMachines),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}
