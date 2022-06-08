@@ -2,6 +2,7 @@ package curatedpackages_test
 
 import (
 	"errors"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"testing"
 
 	"github.com/golang/mock/gomock"

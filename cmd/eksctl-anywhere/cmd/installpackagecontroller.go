@@ -64,12 +64,10 @@ func installPackageController(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-
 	registryEndpoint := ""
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		registryEndpoint = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
 	}
-
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
 	ctrlClient := curatedpackages.NewPackageControllerClient(

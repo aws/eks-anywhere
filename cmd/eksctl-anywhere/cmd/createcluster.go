@@ -176,6 +176,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.FluxAddonClient,
 		deps.Writer,
 		deps.EksdInstaller,
+		deps.Helm,
+		deps.Kubectl,
 	)
 
 	var cluster *types.Cluster

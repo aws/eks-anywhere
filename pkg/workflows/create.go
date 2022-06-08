@@ -3,6 +3,7 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
@@ -18,24 +19,30 @@ import (
 )
 
 type Create struct {
-	bootstrapper   interfaces.Bootstrapper
-	provider       providers.Provider
-	clusterManager interfaces.ClusterManager
-	addonManager   interfaces.AddonManager
-	writer         filewriter.FileWriter
-	eksdInstaller  interfaces.EksdInstaller
+	bootstrapper     interfaces.Bootstrapper
+	provider         providers.Provider
+	clusterManager   interfaces.ClusterManager
+	addonManager     interfaces.AddonManager
+	writer           filewriter.FileWriter
+	eksdInstaller    interfaces.EksdInstaller
+	packageInstaller curatedpackages.ChartInstaller
+	kubectlRunner    curatedpackages.KubectlRunner
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
+	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
+	packageInstaller curatedpackages.ChartInstaller, kubectlRunner curatedpackages.KubectlRunner,
 ) *Create {
 	return &Create{
-		bootstrapper:   bootstrapper,
-		provider:       provider,
-		clusterManager: clusterManager,
-		addonManager:   addonManager,
-		writer:         writer,
-		eksdInstaller:  eksdInstaller,
+		bootstrapper:     bootstrapper,
+		provider:         provider,
+		clusterManager:   clusterManager,
+		addonManager:     addonManager,
+		writer:           writer,
+		eksdInstaller:    eksdInstaller,
+		packageInstaller: packageInstaller,
+		kubectlRunner:    kubectlRunner,
 	}
 }
 
@@ -69,7 +76,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 
 	if packagesLocation != "" {
 		curatedpackages.PrintLicense()
-		err = installCuratedPackages(ctx, clusterSpec, packagesLocation)
+		err = c.installCuratedPackages(ctx, clusterSpec, packagesLocation)
 	}
 	return err
 }
@@ -461,8 +468,8 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
 }
 
-func installCuratedPackages(ctx context.Context, spec *cluster.Spec, packagesLocation string) error {
-	err := installPackagesController(ctx, spec)
+func (c *Create) installCuratedPackages(ctx context.Context, spec *cluster.Spec, packagesLocation string) error {
+	err := c.installPackagesController(ctx, spec)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return nil
@@ -475,16 +482,14 @@ func installCuratedPackages(ctx context.Context, spec *cluster.Spec, packagesLoc
 	return nil
 }
 
-func installPackagesController(ctx context.Context, spec *cluster.Spec) error {
+func (c *Create) installPackagesController(ctx context.Context, spec *cluster.Spec) error {
 	logger.Info("Installing curated packages controller on workload cluster")
 	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
-	if err != nil {
-		return err
-	}
+
 	chart := spec.VersionsBundle.VersionsBundle.PackageController.HelmChart
-	pc := curatedpackages.NewPackageControllerClient(deps.Helm, deps.Kubectl, kubeConfig, chart.Image(), chart.Name, chart.Tag())
-	err = pc.InstallController(ctx)
+	imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+	pc := curatedpackages.NewPackageControllerClient(c.packageInstaller, c.kubectlRunner, kubeConfig, imageUrl, chart.Name, chart.Tag())
+	err := pc.InstallController(ctx)
 	if err != nil {
 		return err
 	}

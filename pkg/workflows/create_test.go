@@ -45,6 +45,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
+	
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer, eksd)
