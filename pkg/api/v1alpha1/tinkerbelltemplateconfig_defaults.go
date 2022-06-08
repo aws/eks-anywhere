@@ -8,13 +8,6 @@ import (
 )
 
 const (
-	netplan = `network:
-  version: 2
-  renderer: networkd
-  ethernets:
-      eno1:
-          dhcp4: true
-`
 	cloudInit = `datasource:
   Ec2:
     metadata_urls: []
@@ -35,6 +28,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string) []Actio
 	return []ActionOpt{
 		withStreamImageAction(b, disk),
 		withNetplanAction(b, disk),
+		withDisableCloudInitNetworkCapabilities(b, disk),
 		withTinkCloudInitAction(b, disk),
 		withDsCloudInitAction(b, disk),
 		withKexecAction(b, disk),
@@ -63,14 +57,35 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
+				"DEST_DISK":      fmt.Sprintf("%s2", disk),
+				"DEST_PATH":      "/etc/netplan/config.yaml",
+				"DIRMODE":        "0755",
+				"FS_TYPE":        "ext4",
+				"GID":            "0",
+				"MODE":           "0644",
+				"STATIC_NETPLAN": "true",
+				"UID":            "0",
+			},
+			Pid: "host",
+		})
+	}
+}
+
+func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+	return func(a *[]tinkerbell.Action) {
+		*a = append(*a, tinkerbell.Action{
+			Name:    "disable-cloud-init-network-capabilities",
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Timeout: 90,
+			Environment: map[string]string{
+				"CONTENTS":  "network: {config: disabled}",
 				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
+				"DIRMODE":   "0700",
 				"FS_TYPE":   "ext4",
-				"DEST_PATH": "/etc/netplan/config.yaml",
-				"CONTENTS":  netplan,
-				"UID":       "0",
 				"GID":       "0",
-				"MODE":      "0644",
-				"DIRMODE":   "0755",
+				"MODE":      "0600",
+				"UID":       "0",
 			},
 		})
 	}
