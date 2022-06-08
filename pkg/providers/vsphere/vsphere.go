@@ -1116,6 +1116,10 @@ func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *vsphereProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -1389,5 +1393,9 @@ func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 }
 
 func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func (p *vsphereProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

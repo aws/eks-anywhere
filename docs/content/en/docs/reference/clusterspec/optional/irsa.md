@@ -76,7 +76,7 @@ The steps below are based on the [guide for configuring IRSA for DIY Kubernetes]
         serviceAccountIssuer: https://$ISSUER_HOSTPATH
     ```
 
-Set the remaining fields in [cluster spec](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/) as required and create the cluster using the `eksctl anywhere create cluster` command. 
+Set the remaining fields in [cluster spec]({{< relref "../vsphere/" >}}) as required and create the cluster using the `eksctl anywhere create cluster` command. 
 
 #### Generate keys.json and make it publicly accessible
 

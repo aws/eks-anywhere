@@ -1,7 +1,7 @@
 ---
 title: "Troubleshooting"
 linkTitle: "Troubleshooting"
-weight: 40
+weight: 20
 description: >
   Troubleshooting EKS Anywhere clusters
 aliases:

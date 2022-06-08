@@ -809,6 +809,7 @@ func (in *TinkerbellStackBundle) DeepCopyInto(out *TinkerbellStackBundle) {
 	in.Boots.DeepCopyInto(&out.Boots)
 	in.Cfssl.DeepCopyInto(&out.Cfssl)
 	in.Hegel.DeepCopyInto(&out.Hegel)
+	in.TinkebellChart.DeepCopyInto(&out.TinkebellChart)
 	in.Hook.DeepCopyInto(&out.Hook)
 	in.Pbnj.DeepCopyInto(&out.Pbnj)
 	in.Rufio.DeepCopyInto(&out.Rufio)

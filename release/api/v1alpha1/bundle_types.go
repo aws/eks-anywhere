@@ -263,14 +263,15 @@ type EtcdadmControllerBundle struct {
 }
 
 type TinkerbellStackBundle struct {
-	Actions ActionsBundle           `json:"actions"`
-	Boots   TinkerbellServiceBundle `json:"boots"`
-	Cfssl   Image                   `json:"cfssl"`
-	Hegel   TinkerbellServiceBundle `json:"hegel"`
-	Hook    HookBundle              `json:"hook"`
-	Pbnj    TinkerbellServiceBundle `json:"pbnj"`
-	Rufio   TinkerbellServiceBundle `json:"rufio"`
-	Tink    TinkBundle              `json:"tink"`
+	Actions        ActionsBundle           `json:"actions"`
+	Boots          TinkerbellServiceBundle `json:"boots"`
+	Cfssl          Image                   `json:"cfssl"`
+	Hegel          TinkerbellServiceBundle `json:"hegel"`
+	TinkebellChart Image                   `json:"tinkerbellChart"`
+	Hook           HookBundle              `json:"hook"`
+	Pbnj           TinkerbellServiceBundle `json:"pbnj"`
+	Rufio          TinkerbellServiceBundle `json:"rufio"`
+	Tink           TinkBundle              `json:"tink"`
 }
 
 // Tinkerbell Template Actions

@@ -250,3 +250,53 @@ func TestDockerForceRemoveFailure(t *testing.T) {
 	err := d.ForceRemove(ctx, name)
 	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
 }
+
+func TestDockerCheckContainerExistenceExists(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	name := "basic_test"
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "container", "inspect", name).Return(bytes.Buffer{}, nil)
+
+	exists, err := d.CheckContainerExistence(ctx, name)
+	assert.True(t, exists)
+	assert.Nil(t, err)
+}
+
+func TestDockerCheckContainerExistenceDoesNotExists(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	name := "basic_test"
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "container", "inspect", name).Return(bytes.Buffer{}, fmt.Errorf("Error: No such container: %s", name))
+
+	exists, err := d.CheckContainerExistence(ctx, name)
+	assert.False(t, exists)
+	assert.Nil(t, err)
+}
+
+func TestDockerCheckContainerExistenceOtherError(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	name := "basic_test"
+	dockerError := "An unexpected error occured"
+	expectedError := fmt.Sprintf("checking if a docker container with name %s exists: %s", name, dockerError)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	d := executables.NewDocker(executable)
+
+	executable.EXPECT().Execute(ctx, "container", "inspect", name).Return(bytes.Buffer{}, errors.New(dockerError))
+
+	exists, err := d.CheckContainerExistence(ctx, name)
+	assert.False(t, exists)
+	assert.EqualError(t, err, expectedError, "Error should be: %v, got: %v", expectedError, err)
+}

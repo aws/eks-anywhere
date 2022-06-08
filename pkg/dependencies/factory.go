@@ -72,6 +72,7 @@ type Dependencies struct {
 	FileReader                *files.Reader
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
+	CliConfig                 *config.CliConfig
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -205,7 +206,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, skipPowerActions, setupTinkerbell, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -298,8 +299,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				time.Now,
+				force,
 				skipIpCheck,
-				setupTinkerbell,
 			)
 
 		case v1alpha1.DockerDatacenterKind:
@@ -637,6 +638,10 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
+		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
+		if f.dependencies.CliConfig != nil {
+			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
+		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			&clusterManagerClient{
@@ -647,10 +652,16 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			maxWaitPerMachine,
 		)
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
+	f.dependencies.CliConfig = cliConfig
 	return f
 }
 

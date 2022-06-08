@@ -33,7 +33,6 @@ import (
 const (
 	maxRetries             = 30
 	backOffPeriod          = 5 * time.Second
-	machineMaxWait         = 10 * time.Minute
 	machineBackoff         = 1 * time.Second
 	machinesMinWait        = 30 * time.Minute
 	moveCAPIWait           = 15 * time.Minute
@@ -114,7 +113,7 @@ type AwsIamAuth interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, maxWaitPerMachine time.Duration, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -124,7 +123,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		networking:         networking,
 		Retrier:            retrier,
 		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     machineMaxWait,
+		machineMaxWait:     maxWaitPerMachine,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
 		awsIamAuth:         awsIamAuth,

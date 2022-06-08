@@ -14,7 +14,7 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	v1alpha10 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	v1alpha10 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	v1beta10 "sigs.k8s.io/cluster-api/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -99,21 +99,6 @@ func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
-// GetBmcsPowerState mocks base method.
-func (m *MockProviderKubectlClient) GetBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3 string) ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBmcsPowerState", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBmcsPowerState indicates an expected call of GetBmcsPowerState.
-func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
-}
-
 // GetEksaCluster mocks base method.
 func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -179,21 +164,6 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEtcdadmCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEtcdadmCluster), varargs...)
 }
 
-// GetHardwareWithLabel mocks base method.
-func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha10.Hardware, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHardwareWithLabel", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].([]v1alpha10.Hardware)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetHardwareWithLabel indicates an expected call of GetHardwareWithLabel.
-func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithLabel(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithLabel", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithLabel), arg0, arg1, arg2, arg3)
-}
-
 // GetKubeadmControlPlane mocks base method.
 func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1beta11.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
@@ -252,6 +222,21 @@ func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
+}
+
+// GetUnprovisionedTinkerbellHardware mocks base method.
+func (m *MockProviderKubectlClient) GetUnprovisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha10.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnprovisionedTinkerbellHardware", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnprovisionedTinkerbellHardware indicates an expected call of GetUnprovisionedTinkerbellHardware.
+func (mr *MockProviderKubectlClientMockRecorder) GetUnprovisionedTinkerbellHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnprovisionedTinkerbellHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetUnprovisionedTinkerbellHardware), arg0, arg1, arg2)
 }
 
 // UpdateAnnotation mocks base method.
