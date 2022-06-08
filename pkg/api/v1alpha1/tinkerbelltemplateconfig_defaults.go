@@ -94,14 +94,13 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK":      fmt.Sprintf("%s2", disk),
-				"DEST_PATH":      "/etc/netplan/config.yaml",
-				"DIRMODE":        "0755",
-				"FS_TYPE":        "ext4",
-				"GID":            "0",
-				"MODE":           "0644",
-				"STATIC_NETPLAN": "true",
-				"UID":            "0",
+				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_PATH": "/etc/netplan/config.yaml",
+				"DIRMODE":   "0755",
+				"FS_TYPE":   "ext4",
+				"GID":       "0",
+				"MODE":      "0644",
+				"UID":       "0",
 			},
 			Pid: "host",
 		}
@@ -111,6 +110,8 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 			netplanAction.Environment["DEST_DISK"] = fmt.Sprintf("%s12", disk)
 			netplanAction.Environment["DEST_PATH"] = "/net.toml"
 			netplanAction.Environment["CONTENTS"] = bottlerocketNetplan
+		} else {
+			netplanAction.Environment["STATIC_NETPLAN"] = "true"
 		}
 		*a = append(*a, netplanAction)
 	}

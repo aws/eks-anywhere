@@ -35,11 +35,6 @@ metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
-  machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: TinkerbellMachineTemplate
-      name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
@@ -155,6 +150,11 @@ spec:
       - '{{.controlPlaneSshAuthorizedKey}}'
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: {{.format}}
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: TinkerbellMachineTemplate
+      name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
 ---
