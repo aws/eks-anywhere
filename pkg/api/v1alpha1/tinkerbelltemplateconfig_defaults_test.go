@@ -351,7 +351,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(givenActions, tt.wantActions) {
-				t.Fatalf("Got default actions = %+v,\n\n*****************\n\n want %+v", givenActions, tt.wantActions)
+				t.Fatalf("Got default actions = %+v, want %+v", givenActions, tt.wantActions)
 			}
 		})
 	}
