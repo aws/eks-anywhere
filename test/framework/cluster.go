@@ -440,13 +440,10 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 
 	if e.Provider.Name() == TinkerbellProviderName {
 		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
-
 		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
-		if tinkBootstrapIP == "" {
-			e.T.Fatalf("tinkerbell bootstrap ip is required!")
+		if tinkBootstrapIP != "" {
+			createClusterArgs = append(createClusterArgs, "--tinkerbell-bootstrap-ip", tinkBootstrapIP)
 		}
-		// TODO: uncomment once boostrap ip arg is introduced into the CLI
-		//createClusterArgs = append(createClusterArgs, "-tbd")
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
