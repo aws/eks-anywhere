@@ -109,18 +109,31 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
+	if err := p.readCSVToCatalogue(); err != nil {
+		return err
+	}
+
 	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
-	validator := NewClusterSpecValidator(
-		NewMinimumHardwareAvailableAssertion(p.catalogue),
+	clusterSpecValidator := NewClusterSpecValidator(
+		NewCreateMinimumHardwareAvailableAssertion(p.catalogue),
 	)
 
 	if !p.skipIpCheck {
-		validator.Register(NewIPNotInUseAssertion(p.netClient))
+		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
+	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
+	if err := clusterSpecValidator.Validate(spec); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) readCSVToCatalogue() error {
 	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
 	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
@@ -128,7 +141,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	machineValidator := hardware.NewDefaultMachineValidator()
 
 	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's
-	var selectors []hardware.MachineSelector
+	var selectors []v1alpha1.HardwareSelector
 	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
@@ -139,14 +152,5 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
-	if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
-		return err
-	}
-
-	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
-	if err := validator.Validate(spec); err != nil {
-		return err
-	}
-
-	return nil
+	return hardware.TranslateAll(machines, writer, machineValidator)
 }
