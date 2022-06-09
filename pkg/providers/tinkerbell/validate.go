@@ -31,7 +31,9 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 	if err := validateObjectMeta(config.ObjectMeta); err != nil {
 		return fmt.Errorf("TinkerbellMachineConfig: %v", err)
 	}
-
+	if config.Spec.HardwareSelector == nil {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.hardwareSelector: %v", config.Name)
+	}
 	if config.Spec.OSFamily == "" {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.osFamily: %v", config.Name)
 	}

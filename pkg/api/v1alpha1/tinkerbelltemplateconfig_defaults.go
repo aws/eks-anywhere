@@ -1,18 +1,13 @@
 package v1alpha1
 
 import (
+	"fmt"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	netplan = `network:
-  version: 2
-  renderer: networkd
-  ethernets:
-      eno1:
-          dhcp4: true
-`
 	cloudInit = `datasource:
   Ec2:
     metadata_urls: []
@@ -29,17 +24,18 @@ warnings:
 `
 )
 
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle) []ActionOpt {
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string) []ActionOpt {
 	return []ActionOpt{
-		withStreamImageAction(b),
-		withNetplanAction(b),
-		withTinkCloudInitAction(b),
-		withDsCloudInitAction(b),
-		withKexecAction(b),
+		withStreamImageAction(b, disk),
+		withNetplanAction(b, disk),
+		withDisableCloudInitNetworkCapabilities(b, disk),
+		withTinkCloudInitAction(b, disk),
+		withDsCloudInitAction(b, disk),
+		withKexecAction(b, disk),
 	}
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withStreamImageAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "stream-image",
@@ -47,41 +43,62 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Timeout: 360,
 			Environment: map[string]string{
 				"IMG_URL":    b.EksD.Raw.Ubuntu.URI,
-				"DEST_DISK":  "/dev/sda",
+				"DEST_DISK":  disk,
 				"COMPRESSED": "true",
 			},
 		})
 	}
 }
 
-func withNetplanAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withNetplanAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "write-netplan",
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda2",
+				"DEST_DISK":      fmt.Sprintf("%s2", disk),
+				"DEST_PATH":      "/etc/netplan/config.yaml",
+				"DIRMODE":        "0755",
+				"FS_TYPE":        "ext4",
+				"GID":            "0",
+				"MODE":           "0644",
+				"STATIC_NETPLAN": "true",
+				"UID":            "0",
+			},
+			Pid: "host",
+		})
+	}
+}
+
+func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+	return func(a *[]tinkerbell.Action) {
+		*a = append(*a, tinkerbell.Action{
+			Name:    "disable-cloud-init-network-capabilities",
+			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
+			Timeout: 90,
+			Environment: map[string]string{
+				"CONTENTS":  "network: {config: disabled}",
+				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
+				"DIRMODE":   "0700",
 				"FS_TYPE":   "ext4",
-				"DEST_PATH": "/etc/netplan/config.yaml",
-				"CONTENTS":  netplan,
-				"UID":       "0",
 				"GID":       "0",
-				"MODE":      "0644",
-				"DIRMODE":   "0755",
+				"MODE":      "0600",
+				"UID":       "0",
 			},
 		})
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda2",
+				"DEST_DISK": fmt.Sprintf("%s2", disk),
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  cloudInit,
@@ -94,14 +111,14 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	}
 }
 
-func withDsCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withDsCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-ds-config",
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda2",
+				"DEST_DISK": fmt.Sprintf("%s2", disk),
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 				"CONTENTS":  "datasource: Ec2\n",
@@ -114,7 +131,7 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	}
 }
 
-func withKexecAction(b v1alpha1.VersionsBundle) ActionOpt {
+func withKexecAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "kexec-image",
@@ -122,7 +139,7 @@ func withKexecAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"BLOCK_DEVICE": "/dev/sda2",
+				"BLOCK_DEVICE": fmt.Sprintf("%s2", disk),
 				"FS_TYPE":      "ext4",
 			},
 		})

@@ -78,6 +78,10 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
+func (p *cloudstackProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -543,6 +547,14 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 			return true
 		}
 	}
+	if len(oldCsmc.Spec.Symlinks) != len(newCsmc.Spec.Symlinks) {
+		return true
+	}
+	for key, value := range oldCsmc.Spec.Symlinks {
+		if value != newCsmc.Spec.Symlinks[key] {
+			return true
+		}
+	}
 	return false
 }
 
@@ -638,6 +650,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDomain":                             datacenterConfigSpec.Domain,
 		"cloudstackZones":                              datacenterConfigSpec.Zones,
 		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
 		"cloudstackControlPlaneDiskOfferingName":       controlPlaneMachineSpec.DiskOffering.Name,
@@ -651,6 +664,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackControlPlaneTemplateOfferingId":     controlPlaneMachineSpec.Template.Id,
 		"cloudstackControlPlaneTemplateOfferingName":   controlPlaneMachineSpec.Template.Name,
 		"cloudstackControlPlaneCustomDetails":          controlPlaneMachineSpec.UserCustomDetails,
+		"cloudstackControlPlaneSymlinks":               controlPlaneMachineSpec.Symlinks,
 		"cloudstackControlPlaneAffinity":               controlPlaneMachineSpec.Affinity,
 		"cloudstackControlPlaneAffinityGroupIds":       controlPlaneMachineSpec.AffinityGroupIds,
 		"cloudstackEtcdDiskOfferingProvided":           len(etcdMachineSpec.DiskOffering.Id) > 0 || len(etcdMachineSpec.DiskOffering.Name) > 0,
@@ -666,6 +680,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackEtcdTemplateOfferingId":             etcdMachineSpec.Template.Id,
 		"cloudstackEtcdTemplateOfferingName":           etcdMachineSpec.Template.Name,
 		"cloudstackEtcdCustomDetails":                  etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdSymlinks":                       etcdMachineSpec.Symlinks,
 		"cloudstackEtcdAffinity":                       etcdMachineSpec.Affinity,
 		"cloudstackEtcdAffinityGroupIds":               etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                      controlPlaneMachineSpec.Users[0].Name,
@@ -683,6 +698,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"eksaSystemNamespace":                          constants.EksaSystemNamespace,
 		"auditPolicy":                                  common.GetAuditPolicy(),
 	}
+	values["cloudstackControlPlaneAnnotations"] = values["cloudstackControlPlaneDiskOfferingProvided"].(bool) || len(controlPlaneMachineSpec.Symlinks) > 0
+	values["cloudstackEtcdAnnotations"] = values["cloudstackEtcdDiskOfferingProvided"].(bool) || len(etcdMachineSpec.Symlinks) > 0
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -702,7 +719,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -743,6 +760,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
+		"cloudstackAnnotationSuffix":       constants.CloudstackAnnotationSuffix,
 		"cloudstackTemplateId":             workerNodeGroupMachineSpec.Template.Id,
 		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
@@ -756,6 +774,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDiskOfferingFilesystem": workerNodeGroupMachineSpec.DiskOffering.Filesystem,
 		"cloudstackDiskOfferingLabel":      workerNodeGroupMachineSpec.DiskOffering.Label,
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
+		"cloudstackSymlinks":               workerNodeGroupMachineSpec.Symlinks,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   workerNodeGroupConfiguration.Count,
@@ -767,6 +786,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"workerNodeGroupName":              fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":            workerNodeGroupConfiguration.Taints,
 	}
+	values["cloudstackAnnotations"] = values["cloudstackDiskOfferingProvided"].(bool) || len(workerNodeGroupMachineSpec.Symlinks) > 0
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -786,7 +806,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -1227,4 +1247,8 @@ func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func (p *cloudstackProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	return nil
 }

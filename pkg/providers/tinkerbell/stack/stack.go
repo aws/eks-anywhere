@@ -2,8 +2,10 @@ package stack
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -25,15 +27,12 @@ const (
 	hegel          = "hegel"
 	tinkController = "tinkController"
 	tinkServer     = "tinkServer"
+	rufio          = "rufio"
 	grpcPort       = "42113"
-
-	// TODO: remove this once the chart is added to bundle
-	helmChartOci     = "oci://public.ecr.aws/h6q6q4n4/tinkerbell"
-	helmChartName    = "tinkerbell"
-	helmChartVersion = "0.1.0"
 )
 
 type Docker interface {
+	CheckContainerExistence(ctx context.Context, name string) (bool, error)
 	ForceRemove(ctx context.Context, name string) error
 	Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error
 }
@@ -51,60 +50,47 @@ type Installer struct {
 	bootsOnDocker   bool
 }
 
-type InstallerOption func(s *Installer)
+type InstallOption func(s *Installer)
 
 type StackInstaller interface {
-	// WithNamespace(ns string, create bool) *Installer
-	// WithBootsOnDocker() *Installer
-	// WithBootsOnKubernetes() *Installer
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error
+	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
 
-func WithNamespace(ns string, create bool) InstallerOption {
+// WithNamespaceCreate is an InstallOption is lets you specify whether to create the namespace needed for Tinkerbell stack
+func WithNamespaceCreate(create bool) InstallOption {
 	return func(s *Installer) {
-		s.namespace = ns
 		s.createNamespace = create
 	}
 }
 
-func WithBootsOnDocker() InstallerOption {
+// WithBootsOnDocker is an InstallOption to run Boots as a Docker container
+func WithBootsOnDocker() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = true
 	}
 }
 
-func WithBootsOnKubernetes() InstallerOption {
+// WithBootsOnKubernetes is an InstallOption to run Boots as a Kubernetes deployment
+func WithBootsOnKubernetes() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = false
 	}
 }
 
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm) StackInstaller {
+// NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string) StackInstaller {
 	return &Installer{
 		docker:     docker,
 		filewriter: filewriter,
 		helm:       helm,
+		namespace:  namespace,
 	}
 }
 
-// func (s *Installer) WithNamespace(ns string, create bool) *Installer {
-// 	s.namespace = ns
-// 	s.createNamespace = create
-// 	return s
-// }
-
-// func (s *Installer) WithBootsOnDocker() *Installer {
-// 	s.bootsOnDocker = true
-// 	return s
-// }
-
-// func (s *Installer) WithBootsOnKubernetes() *Installer {
-// 	s.bootsOnDocker = false
-// 	return s
-// }
-
-func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallerOption) error {
+// Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides
+func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -117,6 +103,11 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			"name":  k,
 			"value": v,
 		})
+	}
+
+	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
+	if err != nil {
+		return fmt.Errorf("getting directory path from hook uri: %v", err)
 	}
 
 	valuesMap := map[string]interface{}{
@@ -140,6 +131,14 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: !s.bootsOnDocker,
 			image:  bundle.Boots.Image.URI,
 			env:    bootEnv,
+			args: []string{
+				"-dhcp-addr=0.0.0.0:67",
+				fmt.Sprintf("-osie-path-override=%s", osiePath),
+			},
+		},
+		rufio: map[string]interface{}{
+			deploy: true,
+			image:  bundle.Rufio.Image.URI,
 		},
 	}
 
@@ -153,7 +152,15 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
-	if err := s.helm.InstallChartWithValuesFile(ctx, helmChartName, helmChartOci, helmChartVersion, kubeconfig, valuesPath); err != nil {
+	err = s.helm.InstallChartWithValuesFile(
+		ctx,
+		bundle.TinkebellChart.Name,
+		fmt.Sprintf("oci://%s", bundle.TinkebellChart.Image()),
+		bundle.TinkebellChart.Tag(),
+		kubeconfig,
+		valuesPath,
+	)
+	if err != nil {
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
@@ -179,7 +186,16 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		flags = append(flags, "-e", fmt.Sprintf("%s=%s", name, value))
 	}
 
-	cmd := []string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67"}
+	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
+	if err != nil {
+		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	cmd := []string{
+		"-kubeconfig", "/kubeconfig",
+		"-dhcp-addr", "0.0.0.0:67",
+		"-osie-path-override", osiePath,
+	}
 	if err := s.docker.Run(ctx, bundle.Boots.Image.URI, boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
@@ -193,11 +209,10 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 		"TINKERBELL_TLS":            "false",
 		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
 		"BOOTS_EXTRA_KERNEL_ARGS":   fmt.Sprintf("tink_worker_image=%s", bundle.Tink.TinkWorker.URI),
-		// TODO: Pull this from bundle instead
-		"MIRROR_BASE_URL": "https://tinkerbell-storage-for-eksa.s3.us-west-2.amazonaws.com",
 	}
 }
 
+// UninstallLocal currently removes local docker container running Boots
 func (s *Installer) UninstallLocal(ctx context.Context) error {
 	return s.uninstallBootsFromDocker(ctx)
 }
@@ -209,4 +224,35 @@ func (s *Installer) uninstallBootsFromDocker(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getURIDir(uri string) (string, error) {
+	index := strings.LastIndex(uri, "/")
+	if index == -1 {
+		return "", fmt.Errorf("uri is invalid: %s", uri)
+	}
+	return uri[:index], nil
+}
+
+// CleanupLocalBoots determines whether Boots is already running locally
+// and either cleans it up or errors out depending on the `remove` flag
+func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
+	exists, err := s.docker.CheckContainerExistence(ctx, boots)
+	// return error if the docker call failed
+	if err != nil {
+		return fmt.Errorf("checking boots container existence: %v", err)
+	}
+
+	// return nil if boots container doesn't exist
+	if !exists {
+		return nil
+	}
+
+	// if remove is set, try to delete boots
+	if remove {
+		return s.uninstallBootsFromDocker(ctx)
+	}
+
+	// finally, return an "already exists" error if boots exists and forceCleanup is not set
+	return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
 }

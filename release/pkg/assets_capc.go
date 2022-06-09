@@ -24,7 +24,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const capcProjectPath = "projects/aws/cluster-api-provider-cloudstack"
+const capcProjectPath = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 
 // GetCapcAssets returns the eks-a artifacts for CAPC
 func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
@@ -34,7 +34,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 	}
 
 	name := "cluster-api-cloudstack-controller"
-	repoName := "aws/cluster-api-provider-cloudstack/release/manager"
+	repoName := "kubernetes-sigs/cluster-api-provider-cloudstack/release/manager"
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": capcProjectPath,
@@ -92,7 +92,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/aws/cluster-api-provider-cloudstack/%s/manifests/infrastructure-cloudstack/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-cloudstack/%s/manifests/infrastructure-cloudstack/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/%s", r.BundleNumber, gitTag)
 		}

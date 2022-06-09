@@ -2925,6 +2925,35 @@ spec:
                               - tinkServer
                               - tinkWorker
                               type: object
+                            tinkerbellChart:
+                              properties:
+                                arch:
+                                  description: Architectures of the asset
+                                  items:
+                                    type: string
+                                  type: array
+                                description:
+                                  type: string
+                                imageDigest:
+                                  description: The SHA256 digest of the image manifest
+                                  type: string
+                                name:
+                                  description: The asset name
+                                  type: string
+                                os:
+                                  description: Operating system of the asset
+                                  enum:
+                                  - linux
+                                  - darwin
+                                  - windows
+                                  type: string
+                                osName:
+                                  description: Name of the OS like ubuntu, bottlerocket
+                                  type: string
+                                uri:
+                                  description: The image repository, name, and tag
+                                  type: string
+                              type: object
                           required:
                           - actions
                           - boots
@@ -2934,6 +2963,7 @@ spec:
                           - pbnj
                           - rufio
                           - tink
+                          - tinkerbellChart
                           type: object
                         version:
                           type: string
@@ -3421,6 +3451,12 @@ spec:
                 - filesystem
                 - label
                 - mountPath
+                type: object
+              symlinks:
+                additionalProperties:
+                  type: string
+                description: Symlinks create soft symbolic links folders. One use
+                  case is to use data disk to store logs
                 type: object
               template:
                 description: Template refers to a VM image template which has been
@@ -4364,31 +4400,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: TinkerbellDatacenterConfigSpec defines the desired state
-              of TinkerbellDatacenterConfig
+            description: "TinkerbellDatacenterConfigSpec defines the desired state
+              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
+              regenerate code after modifying this file"
             properties:
-              tinkerbellCertURL:
-                type: string
-              tinkerbellGRPCAuth:
-                type: string
-              tinkerbellHegelURL:
-                type: string
               tinkerbellIP:
-                description: 'Important: Run "make generate" to regenerate code after
-                  modifying this file'
-                type: string
-              tinkerbellPBnJGRPCAuth:
+                description: TinkerbellIP is used to configure a VIP for hosting the
+                  Tinkerbell servies.
                 type: string
             required:
-            - tinkerbellCertURL
-            - tinkerbellGRPCAuth
-            - tinkerbellHegelURL
             - tinkerbellIP
-            - tinkerbellPBnJGRPCAuth
             type: object
           status:
-            description: TinkerbellDatacenterConfigStatus defines the observed state
-              of TinkerbellDatacenterConfig
+            description: "TinkerbellDatacenterConfigStatus defines the observed state
+              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
+              regenerate code after modifying this file"
             type: object
         type: object
     served: true
@@ -4440,6 +4466,10 @@ spec:
             description: TinkerbellMachineConfigSpec defines the desired state of
               TinkerbellMachineConfig
             properties:
+              hardwareSelector:
+                additionalProperties:
+                  type: string
+                type: object
               osFamily:
                 type: string
               templateRef:
@@ -4466,6 +4496,7 @@ spec:
                   type: object
                 type: array
             required:
+            - hardwareSelector
             - osFamily
             type: object
           status:

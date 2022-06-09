@@ -1,6 +1,6 @@
 ---
 title: "Cluster troubleshooting"
-weight: 20
+weight: 30
 description: >
   Troubleshooting your EKS Anywhere Cluster
 ---

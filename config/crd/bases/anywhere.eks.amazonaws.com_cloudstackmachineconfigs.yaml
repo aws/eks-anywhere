@@ -108,6 +108,12 @@ spec:
                 - label
                 - mountPath
                 type: object
+              symlinks:
+                additionalProperties:
+                  type: string
+                description: Symlinks create soft symbolic links folders. One use
+                  case is to use data disk to store logs
+                type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified

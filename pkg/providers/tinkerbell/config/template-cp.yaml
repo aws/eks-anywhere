@@ -178,6 +178,12 @@ spec:
   template:
     {{- if and .etcdTemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .etcdHardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.etcdTemplateOverride | indent 8}}
     {{- end }}
@@ -195,6 +201,12 @@ spec:
   template:
     {{- if and .controlPlanetemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .hardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.controlPlanetemplateOverride | indent 8}}
     {{- end }}

@@ -10,6 +10,7 @@ import (
 
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
+	diskType := "/dev/sda"
 	givenActions := []tinkerbell.Action{}
 	wantActions := []tinkerbell.Action{
 		{
@@ -26,15 +27,31 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			Name:    "write-netplan",
 			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
+			Pid:     "host",
 			Environment: map[string]string{
+				"DEST_DISK":      "/dev/sda2",
+				"DEST_PATH":      "/etc/netplan/config.yaml",
+				"DIRMODE":        "0755",
+				"FS_TYPE":        "ext4",
+				"GID":            "0",
+				"MODE":           "0644",
+				"STATIC_NETPLAN": "true",
+				"UID":            "0",
+			},
+		},
+		{
+			Name:    "disable-cloud-init-network-capabilities",
+			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
+			Timeout: 90,
+			Environment: map[string]string{
+				"CONTENTS":  "network: {config: disabled}",
 				"DEST_DISK": "/dev/sda2",
+				"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
+				"DIRMODE":   "0700",
 				"FS_TYPE":   "ext4",
-				"DEST_PATH": "/etc/netplan/config.yaml",
-				"CONTENTS":  netplan,
-				"UID":       "0",
 				"GID":       "0",
-				"MODE":      "0644",
-				"DIRMODE":   "0755",
+				"MODE":      "0600",
+				"UID":       "0",
 			},
 		},
 		{
@@ -79,7 +96,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 	}
 
-	opts := GetDefaultActionsFromBundle(vBundle)
+	opts := GetDefaultActionsFromBundle(vBundle, diskType)
 	for _, opt := range opts {
 		opt(&givenActions)
 	}

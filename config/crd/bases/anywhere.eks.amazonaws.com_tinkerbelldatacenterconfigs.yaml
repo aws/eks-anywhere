@@ -35,31 +35,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: TinkerbellDatacenterConfigSpec defines the desired state
-              of TinkerbellDatacenterConfig
+            description: "TinkerbellDatacenterConfigSpec defines the desired state
+              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
+              regenerate code after modifying this file"
             properties:
-              tinkerbellCertURL:
-                type: string
-              tinkerbellGRPCAuth:
-                type: string
-              tinkerbellHegelURL:
-                type: string
               tinkerbellIP:
-                description: 'Important: Run "make generate" to regenerate code after
-                  modifying this file'
-                type: string
-              tinkerbellPBnJGRPCAuth:
+                description: TinkerbellIP is used to configure a VIP for hosting the
+                  Tinkerbell servies.
                 type: string
             required:
-            - tinkerbellCertURL
-            - tinkerbellGRPCAuth
-            - tinkerbellHegelURL
             - tinkerbellIP
-            - tinkerbellPBnJGRPCAuth
             type: object
           status:
-            description: TinkerbellDatacenterConfigStatus defines the observed state
-              of TinkerbellDatacenterConfig
+            description: "TinkerbellDatacenterConfigStatus defines the observed state
+              of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
+              regenerate code after modifying this file"
             type: object
         type: object
     served: true

@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -1745,63 +1745,6 @@ func TestApplyTolerationsFromTaints(t *testing.T) {
 	tt.Expect(tt.k.ApplyTolerationsFromTaints(tt.ctx, taints, taints, "ds", "test", tt.cluster.KubeconfigFile, "testNs", "/test")).To(Succeed())
 }
 
-func TestGetBmcsPowerState(t *testing.T) {
-	tt := newKubectlTest(t)
-	bmcNames := []string{"bmc-1", "bmc-2"}
-	params := []string{
-		"get", "bmc.tinkerbell.org", "bmc-1", "bmc-2",
-		"-o", "jsonpath={.items[*].status.powerState}",
-		"--kubeconfig", tt.cluster.KubeconfigFile, "-n", tt.namespace,
-	}
-	want := []string{"POWER_ACTION_HARDOFF", "POWER_ACTION_HARDOFF"}
-	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString("POWER_ACTION_HARDOFF POWER_ACTION_HARDOFF"), nil)
-	got, err := tt.k.GetBmcsPowerState(tt.ctx, bmcNames, tt.cluster.KubeconfigFile, tt.namespace)
-	tt.Expect(err).To(BeNil())
-	tt.Expect(got).To(Equal(want))
-}
-
-func TestGetHardwareWithLabel(t *testing.T) {
-	tt := newKubectlTest(t)
-	ownerNameLabel := "v1alpha1.tinkerbell.org/ownerName"
-	hardwaresJson := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
-	wantHardwares := []tinkv1alpha1.Hardware{
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hw1",
-				Labels: map[string]string{
-					ownerNameLabel: "tink-test-md-0-clc85",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Hardware",
-				APIVersion: "tinkerbell.org/v1alpha1",
-			},
-		},
-		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "hw2",
-				Labels: map[string]string{
-					ownerNameLabel: "tink-test-controlplane-0-ccl90",
-				},
-			},
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Hardware",
-				APIVersion: "tinkerbell.org/v1alpha1",
-			},
-		},
-	}
-
-	params := []string{
-		"get", "hardware.tinkerbell.org", "-o", "json", "--kubeconfig",
-		tt.cluster.KubeconfigFile, "--namespace", tt.namespace, fmt.Sprintf("--selector=%s", ownerNameLabel),
-	}
-	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwaresJson), nil)
-
-	got, err := tt.k.GetHardwareWithLabel(tt.ctx, ownerNameLabel, tt.cluster.KubeconfigFile, tt.namespace)
-	tt.Expect(err).To(BeNil())
-	tt.Expect(got).To(Equal(wantHardwares))
-}
-
 func TestKubectlGetObjectNotFound(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -1891,11 +1834,7 @@ func TestGetTinkerbellDatacenterConfig(t *testing.T) {
 			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
 		},
 		Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
-			TinkerbellCertURL:      "http://1.2.3.4:42114/cert",
-			TinkerbellGRPCAuth:     "1.2.3.4:42113",
-			TinkerbellHegelURL:     "http://1.2.3.4:50061",
-			TinkerbellIP:           "1.2.3.4",
-			TinkerbellPBnJGRPCAuth: "1.2.3.4:50051",
+			TinkerbellIP: "1.2.3.4",
 		},
 	}
 
@@ -1994,6 +1933,75 @@ func TestGetTinkerbellDatacenterConfigNotFound(t *testing.T) {
 	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(""), errors.New("datacenterconfig not found"))
 
 	_, err := tt.k.GetEksaTinkerbellDatacenterConfig(tt.ctx, "test", kubeconfigfile, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetUnprovisionedTinkerbellHardware(t *testing.T) {
+	tt := newKubectlTest(t)
+	hardwareJSON := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
+	kubeconfig := "foo/bar"
+
+	var expect []tinkv1alpha1.Hardware
+	for _, h := range []string{"hw1", "hw2"} {
+		expect = append(expect, tinkv1alpha1.Hardware{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Hardware",
+				APIVersion: "tinkerbell.org/v1alpha1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: h,
+			},
+		})
+	}
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwareJSON), nil)
+
+	hardware, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(hardware).To(Equal(expect))
+}
+
+func TestGetUnprovisionedTinkerbellHardware_MarshallingError(t *testing.T) {
+	tt := newKubectlTest(t)
+	kubeconfig := "foo/bar"
+	var buf bytes.Buffer
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(buf, nil)
+
+	_, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestGetUnprovisionedTinkerbellHardware_ExecutableErrors(t *testing.T) {
+	tt := newKubectlTest(t)
+	kubeconfig := "foo/bar"
+	var buf bytes.Buffer
+	expect := errors.New("foo bar")
+
+	params := []string{
+		"get", executables.TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", tt.namespace,
+	}
+	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(buf, expect)
+
+	_, err := tt.k.GetUnprovisionedTinkerbellHardware(tt.ctx, kubeconfig, tt.namespace)
 	tt.Expect(err).NotTo(BeNil())
 }
 

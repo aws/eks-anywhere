@@ -144,3 +144,18 @@ func (d *Docker) ForceRemove(ctx context.Context, name string) error {
 	}
 	return nil
 }
+
+// CheckContainerExistence checks whether a Docker container with the provided name exists
+// It returns true if a container with the name exists, false if it doesn't and an error if it encounters some other error
+func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool, error) {
+	params := []string{"container", "inspect", name}
+
+	_, err := d.Execute(ctx, params...)
+	if err == nil {
+		return true, nil
+	} else if strings.Contains(err.Error(), "No such container") {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
+}

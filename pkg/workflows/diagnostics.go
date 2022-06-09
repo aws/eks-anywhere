@@ -29,6 +29,14 @@ func (s *CollectDiagnosticsTask) Name() string {
 	return "collect-cluster-diagnostics"
 }
 
+func (s *CollectDiagnosticsTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return s.Run(ctx, commandContext), nil
+}
+
+func (s *CollectDiagnosticsTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // CollectWorkloadClusterDiagnosticsTask implementation
 
 func (s *CollectWorkloadClusterDiagnosticsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -51,4 +59,12 @@ func (s *CollectMgmtClusterDiagnosticsTask) Run(ctx context.Context, commandCont
 
 func (s *CollectMgmtClusterDiagnosticsTask) Name() string {
 	return "collect-management-cluster-diagnostics"
+}
+
+func (s *CollectMgmtClusterDiagnosticsTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *CollectMgmtClusterDiagnosticsTask) Checkpoint() *task.CompletedTask {
+	return nil
 }

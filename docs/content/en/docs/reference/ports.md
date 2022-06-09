@@ -1,6 +1,6 @@
 ---
 title: "Ports and protocols"
-weight: 55
+weight: 60
 description: >
   Ports used with an EKS Anywhere cluster
 ---
