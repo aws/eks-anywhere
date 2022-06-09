@@ -870,8 +870,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	clusterSpec.Bundles.Name = clusterSpec.Cluster.Name
-	clusterSpec.Bundles.Namespace = clusterSpec.Cluster.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("outputting bundle yaml: %v", err)
