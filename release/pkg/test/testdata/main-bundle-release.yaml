@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Bundles
 metadata:
   creationTimestamp: "1970-01-01T00:00:00Z"
+  name: bundles-1
 spec:
   cliMaxVersion: v0.7.2
   cliMinVersion: v0.7.2
@@ -435,7 +436,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.11-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -443,8 +444,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.11-eks-a-v0.0.0-dev-build.1
+      version: v0.1.11+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -670,7 +671,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.2-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -1156,7 +1157,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.11-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1164,8 +1165,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.11-eks-a-v0.0.0-dev-build.1
+      version: v0.1.11+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -1391,7 +1392,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.2-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -1877,7 +1878,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.11-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1885,8 +1886,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.11-eks-a-v0.0.0-dev-build.1
+      version: v0.1.11+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -2112,7 +2113,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.2-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
@@ -2233,7 +2234,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-1-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
@@ -2396,10 +2397,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.23.6
-      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-2.yaml
-      name: kubernetes-1-23-eks-2
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-1.yaml
+      name: kubernetes-1-23-eks-1
       ova:
         bottlerocket:
           crictl: {}
@@ -2416,7 +2417,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-2 release
+          description: Ubuntu OVA for EKS-D 1-23-1 release
           etcdadm:
             arch:
             - amd64
@@ -2426,12 +2427,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-1/ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -2448,7 +2449,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-2 release
+          description: Ubuntu OVA for EKS-D 1-23-1 release
           etcdadm:
             arch:
             - amd64
@@ -2458,12 +2459,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-1/ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -2589,7 +2590,7 @@ spec:
         description: 'Helm chart: eks-anywhere-packages-helm'
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.11-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2597,8 +2598,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.11-eks-a-v0.0.0-dev-build.1
+      version: v0.1.11+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
@@ -2824,7 +2825,7 @@ spec:
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
           os: linux
-          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.1-eks-a-v0.0.0-dev-build.1
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.2-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:

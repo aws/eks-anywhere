@@ -154,16 +154,9 @@ var releaseCmd = &cobra.Command{
 		releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
 		if devRelease || bundleRelease {
-			bundle := &anywherev1alpha1.Bundles{
-				Spec: anywherev1alpha1.BundlesSpec{
-					Number:        bundleNumber,
-					CliMinVersion: cliMinVersion,
-					CliMaxVersion: cliMaxVersion,
-				},
-			}
-			bundle.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			bundle.Kind = anywherev1alpha1.BundlesKind
-			bundle.CreationTimestamp = v1.Time{Time: releaseTime}
+			bundle := releaseConfig.NewBaseBundles()
+			bundle.Spec.CliMinVersion = cliMinVersion
+			bundle.Spec.CliMaxVersion = cliMaxVersion
 
 			bundleArtifactsTable, err := releaseConfig.GenerateBundleArtifactsTable()
 			if err != nil {
