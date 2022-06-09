@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/internal/pkg/vsphere"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -209,7 +210,7 @@ func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error 
 func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 	_, deregisterError := ssm.DeregisterInstance(c.session, v.InstanceID)
 	_, deactivateError := ssm.DeleteActivation(c.session, v.ActivationId)
-	deleteError := vsphereRmVms(context.Background(), getTestRunnerName(c.jobId))
+	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(c.jobId))
 
 	if deregisterError != nil {
 		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deregisterError)
