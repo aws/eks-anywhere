@@ -19,12 +19,13 @@ import (
 )
 
 type createSupportBundleOptions struct {
-	fileName         string
-	wConfig          string
-	since            string
-	sinceTime        string
-	bundleConfig     string
-	hardwareFileName string
+	fileName              string
+	wConfig               string
+	since                 string
+	sinceTime             string
+	bundleConfig          string
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var csbo = &createSupportBundleOptions{}
@@ -90,7 +91,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, false).
+		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck, csbo.hardwareFileName, false, csbo.tinkerbellBootstrapIP).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {

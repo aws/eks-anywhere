@@ -25,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
@@ -207,7 +208,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -290,10 +291,16 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			tinkerbellIp, err := networkutils.GetLocalIP()
-			if err != nil {
-				return fmt.Errorf("unable to get local IP of the machine %v", err)
+			tinkerbellIp := tinkerbellBootstrapIp
+			if tinkerbellIp == "" {
+				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
+				localIp, err := networkutils.GetLocalIP()
+				if err != nil {
+					return err
+				}
+				tinkerbellIp = localIp.String()
 			}
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
 
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
@@ -304,7 +311,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.DockerClient,
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
-				tinkerbellIp.String(),
+				tinkerbellIp,
 				time.Now,
 				force,
 				skipIpCheck,
