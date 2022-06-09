@@ -8,6 +8,173 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+func TestCloudStackMachineConfigISOAttachmentEqual(t *testing.T) {
+	isoAttachment1 := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	isoAttachment2 := &v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment1.Equal(isoAttachment2)).To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentEqualSelf(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment.Equal(&isoAttachment)).To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentNotEqualNil(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment.Equal(nil)).To(BeFalse())
+}
+
+func TestCloudStackMachineConfigISOAttachmentNotEqualName(t *testing.T) {
+	isoAttachment1 := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	isoAttachment2 := &v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script-2.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment1.Equal(isoAttachment2)).To(BeFalse())
+}
+
+func TestCloudStackMachineConfigISOAttachmentNotEqualPreKubeadmCommandArgs(t *testing.T) {
+	isoAttachment1 := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	isoAttachment2 := &v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env dev"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment1.Equal(isoAttachment2)).To(BeFalse())
+}
+
+func TestCloudStackMachineConfigISOAttachmentNotEqualPostKubeadmCommandArgs(t *testing.T) {
+	isoAttachment1 := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	isoAttachment2 := &v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env dev"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment1.Equal(isoAttachment2)).To(BeFalse())
+}
+
+func TestCloudStackMachineConfigISOAttachmentNotEqualPostArgsLengthNotEqual(t *testing.T) {
+	isoAttachment1 := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	isoAttachment2 := &v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true"},
+	}
+	g := NewWithT(t)
+	g.Expect(isoAttachment1.Equal(isoAttachment2)).To(BeFalse())
+}
+
 func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
 	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -323,6 +490,82 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyLabel(t *testing.T) {
 	g.Expect(fieldName == "label").To(BeTrue())
 	g.Expect(fieldValue == "").To(BeTrue())
 	g.Expect(err.Error() == "empty label").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentValid(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	err, fieldName, fieldValue := isoAttachment.Validate()
+	g.Expect(err == nil).To(BeTrue())
+	g.Expect(fieldName == "").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentInValidEmptyDevice(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	err, fieldName, fieldValue := isoAttachment.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "device").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty device").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentInValidMountPath(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data/",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	err, fieldName, fieldValue := isoAttachment.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "mountPath").To(BeTrue())
+	g.Expect(fieldValue == "/data/").To(BeTrue())
+	g.Expect(err.Error() == "must start with / and NOT end with /").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigISOAttachmentEmptyIDAndNameWithMountPath(t *testing.T) {
+	isoAttachment := v1alpha1.CloudStackISOAttachment{
+		MountPath:              "/data/",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	err, fieldName, fieldValue := isoAttachment.Validate()
+	g.Expect(err != nil).To(BeTrue())
+	g.Expect(fieldName == "id or name").To(BeTrue())
+	g.Expect(fieldValue == "").To(BeTrue())
+	g.Expect(err.Error() == "empty id/name").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigSymlinksValid(t *testing.T) {

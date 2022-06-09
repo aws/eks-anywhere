@@ -139,6 +139,31 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 	g.Expect(c.ValidateCreate()).NotTo(Succeed())
 }
 
+func TestCloudStackMachineConfigValidateCreateInvalidISOAttachment(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	features.ClearCache()
+	c := cloudstackMachineConfig()
+	c.Spec.ISOAttachment = v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data/",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
 	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
 	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
@@ -432,6 +457,68 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *t
 		Device:     "/dev/vdb",
 		Filesystem: "ext4",
 		Label:      "",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCPCloudStackMachineValidateUpdateISOAttachementMutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.ISOAttachment = v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.ISOAttachment = v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script-2.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestCPCloudStackMachineValidateUpdateISOAttachmentMutableFailInvalidMountPath(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.ISOAttachment = v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.ISOAttachment = v1alpha1.CloudStackISOAttachment{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "cloudstack-script.iso",
+		},
+		MountPath:              "/data/",
+		Device:                 "/dev/sr0",
+		RunPreKubeadmCommand:   true,
+		RunPostKubeadmCommand:  false,
+		PreKubeadmCommandArgs:  []string{"--dry-run true", "--env prod"},
+		PostKubeadmCommandArgs: []string{"--dry-run true", "--env prod"},
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())

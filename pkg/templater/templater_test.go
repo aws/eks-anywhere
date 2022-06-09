@@ -63,6 +63,19 @@ func TestTemplaterWriteToFileSuccess(t *testing.T) {
 			wantFilePath: "testdata/test_indent_want.yaml",
 			wantErr:      false,
 		},
+		{
+			testName:     "with marshal",
+			templateFile: "testdata/test_marshal_template.yaml",
+			data: dataStruct{
+				Key1:         "value_1",
+				Key2:         "value_2",
+				KeyAndValue3: "key3: value_3",
+				Conditional:  true,
+			},
+			fileName:     "file_tmp.yaml",
+			wantFilePath: "testdata/test_marshal_want.yaml",
+			wantErr:      false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {

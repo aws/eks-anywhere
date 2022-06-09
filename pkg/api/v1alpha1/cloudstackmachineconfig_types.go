@@ -95,20 +95,15 @@ func (r *CloudStackISOAttachment) Equal(o *CloudStackISOAttachment) bool {
 	if r == nil || o == nil {
 		return false
 	}
-	if r.Id != o.Id || r.Name != o.Name {
-		return false
-	}
-
-	if r.MountPath != o.MountPath ||
+	if r.Id != o.Id || r.Name != o.Name ||
+		r.MountPath != o.MountPath ||
 		r.Device != o.Device ||
 		r.RunPreKubeadmCommand != o.RunPreKubeadmCommand ||
 		r.RunPostKubeadmCommand != o.RunPostKubeadmCommand {
 		return false
 	}
-	if len(r.PreKubeadmCommandArgs) != len(o.PreKubeadmCommandArgs) {
-		return false
-	}
-	if len(r.PostKubeadmCommandArgs) != len(o.PostKubeadmCommandArgs) {
+	if len(r.PreKubeadmCommandArgs) != len(o.PreKubeadmCommandArgs) ||
+		len(r.PostKubeadmCommandArgs) != len(o.PostKubeadmCommandArgs) {
 		return false
 	}
 	for i, v := range r.PreKubeadmCommandArgs {

@@ -1,0 +1,5 @@
+key1: {{ marshal .Key1 }}
+key2: {{ marshal .Key2 }}
+{{ if .Conditional }}
+{{ marshal .KeyAndValue3 | js }}
+{{ end }}
