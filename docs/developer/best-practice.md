@@ -147,6 +147,12 @@ package foo_test
 
 The compiler will build files that declare a package with the suffix "_test" as a separate package, then link and run with the main test binary. This ensures tests cases only have access to the public API of a package.
 
+Test one scenario per test. This makes reading and debugging tests easier plus it keeps the test name simple (remember that the last part of the test function name describes the scenario you are testing).
+
+Avoid having logic in tests. If you need to make your assertions conditional, that's a good indicator that the test should be split.
+
+When testing the same scenario with multiple combinations of input/output, prefer table tests. This is not only common practice in `go` but it facilitates adding more cases when the tested code is changed.
+
 ##### Necessarily complex and unexported functions
 
 If you have attempted to break a function down into singular responsibilities and found its best to maintain the necessary complexity as a single unexported function it may be appropriate to white box test.

@@ -19,12 +19,6 @@ import (
 //go:embed config/audit-policy.yaml
 var auditPolicy string
 
-var NoProxyDefaults = []string{
-	"localhost",
-	"127.0.0.1",
-	".svc",
-}
-
 // TODO: Split out common into separate packages to avoid becoming a dumping ground
 
 const (

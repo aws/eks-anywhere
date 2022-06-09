@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 
+	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/task"
 	mocktasks "github.com/aws/eks-anywhere/pkg/task/mocks"
 )
@@ -43,7 +44,7 @@ func TestTaskRunnerRunTask(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			runner := task.NewTaskRunner(tt.fields.tasks[0])
+			runner := task.NewTaskRunner(tt.fields.tasks[0], writermocks.NewMockFileWriter(ctrl))
 			if err := runner.RunTask(ctx, cmdContext); err != nil {
 				t.Fatal(err)
 			}

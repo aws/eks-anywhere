@@ -87,27 +87,6 @@ func WithTinkerbellServer(value string) TinkerbellFiller {
 	}
 }
 
-func WithTinkerbellCertURL(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellCertURL = value
-		return nil
-	}
-}
-
-func WithTinkerbellGRPCAuthEndpoint(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellGRPCAuth = value
-		return nil
-	}
-}
-
-func WithTinkerbellPBnJGRPCAuthEndpoint(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellPBnJGRPCAuth = value
-		return nil
-	}
-}
-
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }
@@ -117,13 +96,6 @@ func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellF
 		for _, m := range config.machineConfigs {
 			m.Spec.OSFamily = value
 		}
-		return nil
-	}
-}
-
-func WithTinkerbellHegelURL(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellHegelURL = value
 		return nil
 	}
 }

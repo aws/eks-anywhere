@@ -2,6 +2,7 @@
 [![Release](https://img.shields.io/github/v/release/aws/eks-anywhere.svg?logo=github&color=green)](https://github.com/aws/eks-anywhere/releases)
 [![Downloads](https://img.shields.io/github/downloads/aws/eks-anywhere/total.svg?color=brown)](https://github.com/aws/eks-anywhere/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aws/eks-anywhere)](https://goreportcard.com/report/github.com/aws/eks-anywhere)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/6109/badge)](https://bestpractices.coreinfrastructure.org/projects/6109)
 [![Contributors](https://img.shields.io/github/contributors/aws/eks-anywhere?color=purple)](CONTRIBUTING.md)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 

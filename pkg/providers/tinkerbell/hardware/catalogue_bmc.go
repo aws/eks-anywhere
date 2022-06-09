@@ -97,7 +97,8 @@ func baseboardManagementComputerFromMachine(m Machine) *v1alpha1.BaseboardManage
 			Connection: v1alpha1.Connection{
 				Host: m.BMCIPAddress,
 				AuthSecretRef: corev1.SecretReference{
-					Name: formatBMCSecretRef(m),
+					Name:      formatBMCSecretRef(m),
+					Namespace: constants.EksaSystemNamespace,
 				},
 				InsecureTLS: true,
 			},

@@ -1,7 +1,7 @@
 ---
 title: "etcd configuration"
 linkTitle: "etcd"
-weight: 20
+weight: 25
 description: >
   EKS Anywhere cluster yaml etcd specification reference
 ---
@@ -69,5 +69,4 @@ This determines the number of etcd members in the cluster.
 The recommended number is 3.
 
 #### machineGroupRef (required)
-Refers to the Kubernetes object with vsphere specific configuration for your etcd members. See [VSphereMachineConfig Fields]({{< relref "vsphere.md#vspheredatacenterconfig-fields" >}})
 

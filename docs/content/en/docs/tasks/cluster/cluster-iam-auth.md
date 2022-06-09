@@ -21,7 +21,7 @@ Enabling IAM Authenticator needs to be done during cluster creation.
 {{% /alert %}}
 
 ### Create IAM Authenticator enabled cluster
-Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../reference/clusterspec/iamauth" >}}).
+Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../reference/clusterspec/optional/iamauth" >}}).
 
 Create an EKS Anywhere cluster as follows:
 

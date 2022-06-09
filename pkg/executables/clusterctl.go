@@ -12,7 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -222,11 +221,6 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		return nil, err
 	}
 
-	tinkerbellProvider := "false"
-	if features.IsActive(features.TinkerbellProvider()) {
-		tinkerbellProvider = "true"
-	}
-
 	data := map[string]string{
 		"CertManagerInjectorRepository":                   imageRepository(bundle.CertManager.Cainjector),
 		"CertManagerInjectorTag":                          bundle.CertManager.Cainjector.Tag(),
@@ -275,7 +269,6 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"AwsProviderVersion":                              bundle.Aws.Version,
 		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
-		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
 		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
 		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,

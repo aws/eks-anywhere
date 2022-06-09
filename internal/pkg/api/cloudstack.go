@@ -83,6 +83,14 @@ func WithUserCustomDetails(value map[string]string) CloudStackFiller {
 	}
 }
 
+func WithSymlinks(value map[string]string) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.Symlinks = value
+		}
+	}
+}
+
 func WithCloudStackTemplateForAllMachines(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for _, m := range config.machineConfigs {

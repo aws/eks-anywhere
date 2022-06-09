@@ -36,6 +36,21 @@ func (m *MockDocker) EXPECT() *MockDockerMockRecorder {
 	return m.recorder
 }
 
+// CheckContainerExistence mocks base method.
+func (m *MockDocker) CheckContainerExistence(ctx context.Context, name string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckContainerExistence", ctx, name)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckContainerExistence indicates an expected call of CheckContainerExistence.
+func (mr *MockDockerMockRecorder) CheckContainerExistence(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckContainerExistence", reflect.TypeOf((*MockDocker)(nil).CheckContainerExistence), ctx, name)
+}
+
 // ForceRemove mocks base method.
 func (m *MockDocker) ForceRemove(ctx context.Context, name string) error {
 	m.ctrl.T.Helper()
@@ -129,8 +144,22 @@ func (m *MockStackInstaller) EXPECT() *MockStackInstallerMockRecorder {
 	return m.recorder
 }
 
+// CleanupLocalBoots mocks base method.
+func (m *MockStackInstaller) CleanupLocalBoots(ctx context.Context, forceCleanup bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanupLocalBoots", ctx, forceCleanup)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanupLocalBoots indicates an expected call of CleanupLocalBoots.
+func (mr *MockStackInstallerMockRecorder) CleanupLocalBoots(ctx, forceCleanup interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupLocalBoots", reflect.TypeOf((*MockStackInstaller)(nil).CleanupLocalBoots), ctx, forceCleanup)
+}
+
 // Install mocks base method.
-func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...stack.InstallerOption) error {
+func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...stack.InstallOption) error {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx, bundle, tinkServerIP, kubeconfig}
 	for _, a := range opts {
