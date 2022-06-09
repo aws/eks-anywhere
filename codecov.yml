@@ -11,5 +11,5 @@ coverage:
 
 ignore:
   - internal/test/e2e
-  - **/zz_generated.deepcopy.go
+  - "**/zz_generated.deepcopy.go"
   
