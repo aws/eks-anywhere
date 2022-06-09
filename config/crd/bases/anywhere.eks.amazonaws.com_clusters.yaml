@@ -67,6 +67,14 @@ spec:
                             type: string
                         type: object
                     type: object
+                  nodes:
+                    properties:
+                      cidrMaskSize:
+                        description: CIDRMaskSize defines the mask size for node cidr
+                          in the cluster, default for ipv4 is 24. This is an optional
+                          field
+                        type: integer
+                    type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod
                       and service subnets. Defaults to 192.168.0.0/16 for pod subnet.

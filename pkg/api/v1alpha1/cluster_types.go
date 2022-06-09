@@ -321,6 +321,7 @@ type ClusterNetwork struct {
 	// CNIConfig specifies the CNI plugin to be installed in the cluster
 	CNIConfig *CNIConfig `json:"cniConfig,omitempty"`
 	DNS       DNS        `json:"dns,omitempty"`
+	Nodes     *Nodes     `json:"nodes,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -524,6 +525,11 @@ type DNS struct {
 type ResolvConf struct {
 	// Path defines the path to the file that contains the DNS resolver configuration
 	Path string `json:"path,omitempty"`
+}
+
+type Nodes struct {
+	// CIDRMaskSize defines the mask size for node cidr in the cluster, default for ipv4 is 24. This is an optional field
+	CIDRMaskSize *int `json:"cidrMaskSize,omitempty"`
 }
 
 func (n *ResolvConf) Equal(o *ResolvConf) bool {

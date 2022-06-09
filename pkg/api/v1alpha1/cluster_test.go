@@ -1811,7 +1811,9 @@ func TestRefEquals(t *testing.T) {
 	}
 }
 
-func TestValidateNetworkingCNIPlugin(t *testing.T) {
+func TestValidateNetworking(t *testing.T) {
+	nodeCidrMaskSize := new(int)
+	*nodeCidrMaskSize = 28
 	tests := []struct {
 		name    string
 		wantErr error
@@ -1878,6 +1880,131 @@ func TestValidateNetworkingCNIPlugin(t *testing.T) {
 							},
 						},
 						CNI:       "",
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size valid",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/24",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid",
+			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than the size of node subnet with mask 28"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/30",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid diff",
+			wantErr: fmt.Errorf("pod subnet mask (6) and node-mask (28) difference is greater than 16"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid pods CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block format for Pods: {[1.2.3]}. Please specify a valid CIDR block for pod subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid services CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block for Services: {[1.2.3]}. Please specify a valid CIDR block for service subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
 						CNIConfig: nil,
 					},
 				},
