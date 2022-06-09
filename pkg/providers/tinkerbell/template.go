@@ -35,16 +35,18 @@ type TemplateBuilder struct {
 	WorkerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
 	diskExtractor               *hardware.DiskExtractor
+	tinkerbellIp                string
 	now                         types.NowFunc
 }
 
-func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, diskExtractor *hardware.DiskExtractor, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, diskExtractor *hardware.DiskExtractor, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, tinkerbellIp string, now types.NowFunc) providers.TemplateBuilder {
 	return &TemplateBuilder{
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		datacenterSpec:              datacenterSpec,
 		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
 		diskExtractor:               diskExtractor,
+		tinkerbellIp:                tinkerbellIp,
 		now:                         now,
 	}
 }
@@ -60,7 +62,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		if err != nil {
 			return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 		}
-		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
+		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp)
 	}
 
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
@@ -82,7 +84,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			if err != nil {
 				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 			}
-			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
+			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp)
 		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
 		if err != nil {
@@ -114,7 +116,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			if err != nil {
 				return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
 			}
-			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk)
+			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp)
 		}
 
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
