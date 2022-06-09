@@ -3,7 +3,6 @@ package dependencies
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
