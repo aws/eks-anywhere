@@ -105,7 +105,6 @@ func TestVSphereKubernetes123AWSIamAuth(t *testing.T) {
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
-
 	)
 	runAWSIamAuthFlow(test)
 }

@@ -68,6 +68,10 @@ func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
 }
 
+func (t *Tinkerbell) CleanupVMs(_ string) error {
+	return nil
+}
+
 func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {
 	providerOutput, err := api.AutoFillTinkerbellProvider(file, fillers...)
 	if err != nil {
