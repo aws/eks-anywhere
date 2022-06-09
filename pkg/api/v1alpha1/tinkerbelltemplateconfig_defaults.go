@@ -7,10 +7,9 @@ import (
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const (
-	cloudInit = `datasource:
+var cloudInit = `datasource:
   Ec2:
-    metadata_urls: []
+    metadata_urls: [%s]
     strict_id: false
 system_info:
   default_user:
@@ -22,14 +21,13 @@ manage_etc_hosts: localhost
 warnings:
   dsid_missing_source: off
 `
-)
 
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string) []ActionOpt {
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string) []ActionOpt {
 	return []ActionOpt{
 		withStreamImageAction(b, disk),
 		withNetplanAction(b, disk),
 		withDisableCloudInitNetworkCapabilities(b, disk),
-		withTinkCloudInitAction(b, disk),
+		withTinkCloudInitAction(b, disk, tinkerbellIp),
 		withDsCloudInitAction(b, disk),
 		withKexecAction(b, disk),
 	}
@@ -91,7 +89,9 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
+func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string) ActionOpt {
+	metadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellIp)
+
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
@@ -101,7 +101,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 				"DEST_DISK": fmt.Sprintf("%s2", disk),
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-				"CONTENTS":  cloudInit,
+				"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
 				"UID":       "0",
 				"GID":       "0",
 				"MODE":      "0600",

@@ -50,7 +50,7 @@ type Provider struct {
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
 	diskExtractor   hardware.DiskExtractor
-
+	tinkerbellIp    string
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
 	// constructor call for constructing the validator in-line.
@@ -92,6 +92,7 @@ func NewProvider(
 	docker stack.Docker,
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
+	tinkerbellIp string,
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
@@ -129,6 +130,7 @@ func NewProvider(
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
 			diskExtractor:               diskExtractor,
+			tinkerbellIp:                tinkerbellIp,
 			now:                         now,
 		},
 		writer:          writer,
@@ -142,6 +144,7 @@ func NewProvider(
 			hardware.WithSecretNameIndex(),
 		),
 		diskExtractor: *diskExtractor,
+		tinkerbellIp:  tinkerbellIp,
 		netClient:     &networkutils.DefaultNetClient{},
 		retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider

@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -11,6 +12,8 @@ import (
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
 	diskType := "/dev/sda"
+	tinkerbellIp := "0.0.0.0"
+	metadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellIp)
 	givenActions := []tinkerbell.Action{}
 	wantActions := []tinkerbell.Action{
 		{
@@ -62,7 +65,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-				"CONTENTS":  cloudInit,
+				"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
 				"UID":       "0",
 				"GID":       "0",
 				"MODE":      "0600",
@@ -96,7 +99,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 	}
 
-	opts := GetDefaultActionsFromBundle(vBundle, diskType)
+	opts := GetDefaultActionsFromBundle(vBundle, diskType, tinkerbellIp)
 	for _, opt := range opts {
 		opt(&givenActions)
 	}

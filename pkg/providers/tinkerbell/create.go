@@ -9,7 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -44,15 +43,10 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
-	localIP, err := networkutils.GetLocalIP()
-	if err != nil {
-		return err
-	}
-
-	err = p.stackInstaller.Install(
+	err := p.stackInstaller.Install(
 		ctx,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
-		localIP.String(),
+		p.tinkerbellIp,
 		cluster.KubeconfigFile,
 		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
