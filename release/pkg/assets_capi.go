@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 	"sort"
 
@@ -200,11 +199,10 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 				}
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.CoreClusterAPI{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
@@ -281,11 +279,10 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 				}
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.KubeadmBootstrapBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
@@ -362,11 +359,10 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 				}
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.KubeadmControlPlaneBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}

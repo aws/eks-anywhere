@@ -16,8 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -74,11 +72,10 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.TinkerbellBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 

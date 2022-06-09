@@ -14,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecr"
 	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
