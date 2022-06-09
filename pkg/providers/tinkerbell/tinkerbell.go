@@ -194,7 +194,8 @@ func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
 		//
 		// Env read having set TINKERBELL_IP in the deployment manifest.
 		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
-		"TINKERBELL_IP": "<set in eks-a tinkerbell provider>",
+		"TINKERBELL_IP":               "IGNORED",
+		"KUBEADM_BOOTSTRAP_TOKEN_TTL": "120m",
 	}, nil
 }
 
