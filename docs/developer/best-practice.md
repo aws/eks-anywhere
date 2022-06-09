@@ -251,6 +251,20 @@ In general, avoid panics. Panicking from a package implies the package understan
 
 Herein lies an exception. When code is aware it is executing under a `main` func, or a derivative of `main` such as a `Command` object, it may have grounds for panicking if it identifies the program is invalid. Program invalidity is typically representative of a programmer error. For example, consider a `Command` object that requires, under certain circumstances, a `foo` flag to be configured as part of CLI argument parsing. If the program finds that flag doesn't exist (not to be confused with "wasn't set by the user"), the program is invalid. This is indicative of a programmer error as they _forgot_ to add the CLI flag. In this instance it is impossible for a user to fix the problem, because the program is invalid. Consequently, the program has grounds to panic. It is important to recognize that the panicking code is _fully aware_ of its execution context.
 
+### `replace` directive
+
+> A replace directive replaces the contents of a specific version of a module, or all versions of a module, with contents found elsewhere. The replacement may be specified with either another module path and version, or a platform-specific file path.
+
+In general, avoid using `replace`.
+These directives are not inherited by importing modules, making dependant modules have to replicate them and keep them in sync.
+This pollutes the `go` ecosystem.
+
+You need a good reason to use it (mostly if this is your last alternative) and you need an exit plan.
+If you do, add a comment in `go.mod` explaining why that `replace` instance is needed and when (or under what conditions) it can be removed.
+
+Some examples of situations where you might need a `replace`:
+* Fixing CVE's in indirect dependencies. Make sure you specify the transient dependency/dependencies so we can track when it gets updates upstream.
+
 ## Style
 
 ### Variable declaration
