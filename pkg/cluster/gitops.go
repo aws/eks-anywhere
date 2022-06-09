@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"context"
 	"path"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -83,5 +84,20 @@ func SetDefaultFluxGitHubConfigPath(c *Config) error {
 	} else {
 		gitops.Spec.Flux.Github.ClusterConfigPath = path.Join("clusters", c.Cluster.ManagedBy())
 	}
+	return nil
+}
+
+func getGitOps(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.GitOpsRef == nil || c.Cluster.Spec.GitOpsRef.Kind != anywherev1.GitOpsConfigKind {
+		return nil
+	}
+
+	gitOps := &anywherev1.GitOpsConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.GitOpsRef.Name, c.Cluster.Namespace, gitOps); err != nil {
+		return err
+	}
+
+	c.GitOpsConfig = gitOps
+
 	return nil
 }
