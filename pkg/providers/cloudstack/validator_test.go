@@ -799,6 +799,32 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	}
 }
 
+func TestValidateCloudStackMachineConfigInvalidISOAttachment(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
+	}
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	validator := NewValidator(cmk)
+
+	for _, machineConfig := range machineConfigs {
+		cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
+		cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), "admin", machineConfig.Spec.Template).Return(nil)
+		cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), machineConfig.Spec.ComputeOffering).Return(nil)
+		cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+		cmk.EXPECT().ValidateISOAttachmentPresent(gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("match me"))
+		err := validator.validateMachineConfig(ctx, datacenterConfig, machineConfig)
+
+		wantErrMsg := "validating iso attachment: match me"
+		assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
+	}
+}
+
 func TestValidateMachineConfigsWithAffinity(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))

@@ -372,6 +372,93 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			},
 		},
 		{
+			name:    "Symlink in wrong format",
+			wantErr: true,
+			args: args{
+				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "/var/log/kubernetes,/data/var/log/kubernetes",
+						},
+					},
+					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
+						Spec: cloudstackv1.CloudStackMachineTemplateResource{
+							Spec: cloudstackv1.CloudStackMachineSpec{
+								Offering: cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template: cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
+									CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
+										Name: "Small",
+									},
+								},
+								Affinity:         "anti",
+								AffinityGroupIDs: []string{"c", "d"},
+								Details:          map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "diskoffering in wrong format",
+			wantErr: true,
+			args: args{
+				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "name:Small,CustomSizeInGB:0,mountPath:/data",
+						},
+					},
+					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
+						Spec: cloudstackv1.CloudStackMachineTemplateResource{
+							Spec: cloudstackv1.CloudStackMachineSpec{
+								Offering: cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template: cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
+									CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
+										Name: "Small",
+									},
+								},
+								Affinity:         "anti",
+								AffinityGroupIDs: []string{"c", "d"},
+								Details:          map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "isoAttachment in wrong format",
+			wantErr: true,
+			args: args{
+				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "name:cloudstack-scripts.iso,device:/dev/sr0",
+						},
+					},
+					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
+						Spec: cloudstackv1.CloudStackMachineTemplateResource{
+							Spec: cloudstackv1.CloudStackMachineSpec{
+								Offering: cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template: cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
+									CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
+										Name: "Small",
+									},
+								},
+								Affinity:         "anti",
+								AffinityGroupIDs: []string{"c", "d"},
+								Details:          map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "Symlink empty",
 			wantErr: false,
 			args: args{

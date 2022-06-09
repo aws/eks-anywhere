@@ -852,6 +852,21 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       0,
 		},
 		{
+			testName:         "list isos empty results",
+			jsonResponseFile: "testdata/cmk_list_iso_empty.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("id=\"%s\"", isoAttachmentResourceID.Id), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceID)
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: true,
+			wantResultCount:       0,
+		},
+		{
 			testName:         "list isos json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
 			argumentsExecCall: []string{
@@ -864,6 +879,21 @@ func TestCmkListOperations(t *testing.T) {
 			cmkResponseError:      nil,
 			wantErr:               true,
 			shouldSecondCallOccur: false,
+			wantResultCount:       0,
+		},
+		{
+			testName:         "list isos throw exception",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall: []string{
+				"-c", configFilePath,
+				"list", "isos", fmt.Sprintf("name=\"%s\"", isoAttachmentResourceName.Name), fmt.Sprintf("zoneid=\"%s\"", zoneId),
+			},
+			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
+				return cmk.ValidateISOAttachmentPresent(ctx, zoneId, isoAttachmentResourceName)
+			},
+			cmkResponseError:      errors.New("cmk calling return exception"),
+			wantErr:               true,
+			shouldSecondCallOccur: true,
 			wantResultCount:       0,
 		},
 		{
