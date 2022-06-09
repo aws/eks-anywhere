@@ -3,6 +3,7 @@ module github.com/aws/eks-anywhere
 go 1.17
 
 require (
+	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3

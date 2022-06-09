@@ -5,13 +5,13 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/Masterminds/sprig"
 	"net"
 	"os"
 	"reflect"
 	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -1092,7 +1092,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 		}
 	}
 	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
-
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}
