@@ -29,7 +29,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Cluster updates        | Manual CLI updates for control plane. Flux supported rolling updates for data plane. | Manual CLI updates for control plane.                | Managed in-place updates for control plane and managed rolling updates for data plane.                       |
 ||||
 | **Compute** |||
-| Compute options | Bare metal machines | VMware vSphere | Amazon EC2, AWS Fargate | 
+| Compute options | VMware vSphere | Bare metal machines | Amazon EC2, AWS Fargate | 
 | Supported node operating systems   | BottleRocket, Ubuntu         | Ubuntu           | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
 | Physical hardware (servers, network equipment, storage, etc.) | Managed by customer | Managed by customer | Managed by AWS |
 | Serverless | Not supported | Not supported | Amazon EKS on AWS Fargate |
