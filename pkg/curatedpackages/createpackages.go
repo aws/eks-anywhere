@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
-type PackageInstaller struct {
+type Installer struct {
 	chartInstaller   ChartInstaller
 	kubectlRunner    KubectlRunner
 	spec             *cluster.Spec
@@ -17,8 +17,8 @@ type PackageInstaller struct {
 }
 
 func NewPackageInstaller(installer ChartInstaller, runner KubectlRunner,
-	spec *cluster.Spec, packagesLocation string) *PackageInstaller {
-	return &PackageInstaller{
+	spec *cluster.Spec, packagesLocation string) *Installer {
+	return &Installer{
 		chartInstaller:   installer,
 		kubectlRunner:    runner,
 		spec:             spec,
@@ -26,25 +26,20 @@ func NewPackageInstaller(installer ChartInstaller, runner KubectlRunner,
 	}
 }
 
-func (pi *PackageInstaller) InstallCuratedPackages(ctx context.Context) error {
+func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
-		return nil
 	}
 
-	if pi.packagesLocation != "" {
-		err = pi.installPackages(ctx)
-	}
-
+	err = pi.installPackages(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
 	}
-	return nil
 }
 
-func (pi *PackageInstaller) installPackagesController(ctx context.Context) error {
+func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Installing curated packages controller on workload cluster")
 	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
 
@@ -58,7 +53,10 @@ func (pi *PackageInstaller) installPackagesController(ctx context.Context) error
 	return nil
 }
 
-func (pi *PackageInstaller) installPackages(ctx context.Context) error {
+func (pi *Installer) installPackages(ctx context.Context) error {
+	if pi.packagesLocation == "" {
+		return nil
+	}
 	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
 	packageClient := NewPackageClient(
 		nil,

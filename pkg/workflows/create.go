@@ -3,6 +3,8 @@ package workflows
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/features"
+
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -15,25 +17,28 @@ import (
 )
 
 type Create struct {
-	bootstrapper   interfaces.Bootstrapper
-	provider       providers.Provider
-	clusterManager interfaces.ClusterManager
-	addonManager   interfaces.AddonManager
-	writer         filewriter.FileWriter
-	eksdInstaller  interfaces.EksdInstaller
+	bootstrapper     interfaces.Bootstrapper
+	provider         providers.Provider
+	clusterManager   interfaces.ClusterManager
+	addonManager     interfaces.AddonManager
+	writer           filewriter.FileWriter
+	eksdInstaller    interfaces.EksdInstaller
+	packageInstaller interfaces.PackageInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
+	packageInstaller interfaces.PackageInstaller,
 ) *Create {
 	return &Create{
-		bootstrapper:   bootstrapper,
-		provider:       provider,
-		clusterManager: clusterManager,
-		addonManager:   addonManager,
-		writer:         writer,
-		eksdInstaller:  eksdInstaller,
+		bootstrapper:     bootstrapper,
+		provider:         provider,
+		clusterManager:   clusterManager,
+		addonManager:     addonManager,
+		writer:           writer,
+		eksdInstaller:    eksdInstaller,
+		packageInstaller: packageInstaller,
 	}
 }
 
@@ -46,14 +51,15 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		}
 	}
 	commandContext := &task.CommandContext{
-		Bootstrapper:   c.bootstrapper,
-		Provider:       c.provider,
-		ClusterManager: c.clusterManager,
-		AddonManager:   c.addonManager,
-		ClusterSpec:    clusterSpec,
-		Writer:         c.writer,
-		Validations:    validator,
-		EksdInstaller:  c.eksdInstaller,
+		Bootstrapper:     c.bootstrapper,
+		Provider:         c.provider,
+		ClusterManager:   c.clusterManager,
+		AddonManager:     c.addonManager,
+		ClusterSpec:      clusterSpec,
+		Writer:           c.writer,
+		Validations:      validator,
+		EksdInstaller:    c.eksdInstaller,
+		PackageInstaller: c.packageInstaller,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
@@ -86,6 +92,8 @@ type WriteClusterConfigTask struct{}
 type DeleteBootstrapClusterTask struct {
 	*CollectDiagnosticsTask
 }
+
+type InstallCuratedPackagesTask struct{}
 
 // CreateBootStrapClusterTask implementation
 
@@ -445,9 +453,28 @@ func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess("Cluster created!")
 	}
-	return nil
+	return &InstallCuratedPackagesTask{}
 }
 
 func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
+}
+
+func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if features.IsActive(features.CuratedPackagesSupport()) {
+		commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+	}
+	return nil
+}
+
+func (cp *InstallCuratedPackagesTask) Name() string {
+	return "install-curated-packages"
+}
+
+func (s *InstallCuratedPackagesTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallCuratedPackagesTask) Checkpoint() *task.CompletedTask {
+	return nil
 }

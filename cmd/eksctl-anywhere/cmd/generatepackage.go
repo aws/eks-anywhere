@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -51,19 +50,11 @@ func runGeneratePackages(cmd *cobra.Command, args []string) error {
 
 func generatePackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
+	deps, err := NewDependenciesForPackages(ctx, kubeConfig, gpOptions.registry, gpOptions.kubeVersion)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	bm := curatedpackages.CreateBundleManager(gpOptions.kubeVersion)
-	username, password, err := config.ReadCredentials()
-	if err != nil && gpOptions.registry != "" {
-		return err
-	}
-	registry, err := curatedpackages.NewRegistry(deps, gpOptions.registry, gpOptions.kubeVersion, username, password)
-	if err != nil {
-		return err
-	}
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
@@ -72,7 +63,7 @@ func generatePackages(ctx context.Context, args []string) error {
 		deps.Kubectl,
 		bm,
 		version.Get(),
-		registry,
+		deps.BundleRegistry,
 	)
 
 	bundle, err := b.GetLatestBundle(ctx)
