@@ -4,7 +4,11 @@ import (
 	"embed"
 	"testing"
 
+	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -208,4 +212,74 @@ func TestSpecLoadManifestSuccess(t *testing.T) {
 	}
 
 	test.AssertContentToFile(t, string(m.Content), filename)
+}
+
+func TestBundlesRefDefaulter(t *testing.T) {
+	tests := []struct {
+		name         string
+		bundles      *v1alpha1.Bundles
+		config, want *cluster.Config
+	}{
+		{
+			name: "no bundles ref",
+			bundles: &v1alpha1.Bundles{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "bundles-1",
+					Namespace: "eksa-system",
+				},
+			},
+			config: &cluster.Config{
+				Cluster: &anywherev1.Cluster{},
+			},
+			want: &cluster.Config{
+				Cluster: &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						BundlesRef: &anywherev1.BundlesRef{
+							Name:       "bundles-1",
+							Namespace:  "eksa-system",
+							APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "with previous bundles ref",
+			bundles: &v1alpha1.Bundles{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "bundles-1",
+				},
+			},
+			config: &cluster.Config{
+				Cluster: &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						BundlesRef: &anywherev1.BundlesRef{
+							Name:       "bundles-2",
+							Namespace:  "default",
+							APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+						},
+					},
+				},
+			},
+			want: &cluster.Config{
+				Cluster: &anywherev1.Cluster{
+					Spec: anywherev1.ClusterSpec{
+						BundlesRef: &anywherev1.BundlesRef{
+							Name:       "bundles-2",
+							Namespace:  "default",
+							APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			defaulter := cluster.BundlesRefDefaulter(tt.bundles)
+			g.Expect(defaulter(tt.config)).To(Succeed())
+			g.Expect(tt.config).To(Equal(tt.want))
+		})
+	}
 }

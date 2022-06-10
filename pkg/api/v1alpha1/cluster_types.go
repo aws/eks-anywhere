@@ -51,6 +51,8 @@ type ClusterSpec struct {
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
+	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
 
 func (n *Cluster) Equal(o *Cluster) bool {
@@ -93,6 +95,10 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if !n.ManagementClusterEqual(o) {
 		return false
 	}
+	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+
 	return true
 }
 
@@ -612,6 +618,23 @@ type EksdReleaseRef struct {
 	Name string `json:"name"`
 	// Namespace refers to the namespace for the EKS-D release resources
 	Namespace string `json:"namespace"`
+}
+
+type BundlesRef struct {
+	// APIVersion refers to the Bundles APIVersion
+	APIVersion string `json:"apiVersion"`
+	// Name refers to the name of the Bundles object in the cluster
+	Name string `json:"name"`
+	// Namespace refers to the Bundles's namespace
+	Namespace string `json:"namespace"`
+}
+
+func (b *BundlesRef) Equal(o *BundlesRef) bool {
+	if b == nil || o == nil {
+		return b == o
+	}
+
+	return b.APIVersion == o.APIVersion && b.Name == o.Name && b.Namespace == o.Namespace
 }
 
 type Ref struct {
