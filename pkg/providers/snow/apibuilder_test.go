@@ -128,20 +128,22 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: tlsCipherSuitesArgs(),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{
-							"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{
-							"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},
 				},
@@ -556,4 +558,8 @@ func TestSnowMachineTemplates(t *testing.T) {
 		"test-wn": wantSnowMachineTemplate(),
 	}
 	tt.Expect(got).To(Equal(want))
+}
+
+func tlsCipherSuitesArgs() map[string]string {
+	return map[string]string{"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"}
 }
