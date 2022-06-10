@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aws/eks-anywhere-packages/pkg/bundle"
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
@@ -19,7 +19,7 @@ type PackageControllerClient struct {
 }
 
 type ChartInstaller interface {
-	InstallChartFromName(ctx context.Context, ociURI, kubeConfig, name, version string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
 }
 
 func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string) *PackageControllerClient {
@@ -35,11 +35,14 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
-	return pc.chartInstaller.InstallChartFromName(ctx, ociUri, pc.kubeConfig, pc.chartName, pc.chartVersion)
+	registry := GetRegistry(pc.uri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
+	return pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
 }
 
 func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Context) error {
-	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", bundle.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
+	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
 	if found {
 		return errors.New("curated Packages controller exists in the current cluster")
 	}

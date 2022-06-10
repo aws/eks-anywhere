@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
-	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -96,7 +95,7 @@ func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string
 }
 
 func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
-	params := []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
+	params := []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, packagesv1.PackageBundleControllerName}
 	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
 		return nil, err
