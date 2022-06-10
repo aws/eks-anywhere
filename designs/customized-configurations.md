@@ -2,7 +2,7 @@
 
 ## Problem
 
-Currently, the eks anywhere CLI provides generate and install commands. Both these commands’ aim is to provide the ability for users to install a curated package in the cluster. Currently, both commands do not support the ability to override any configurations that would enable the user to customize the curated package.
+Currently, the eks anywhere CLI provides `generate` and `install` commands. Both these commands aim is to provide the ability for users to install a curated package in the cluster. Currently, both commands do not support the ability to override any configurations that would enable the user to customize the curated package.
 
 ## Tenets
 
