@@ -51,6 +51,7 @@ type Provider struct {
 	catalogue       *hardware.Catalogue
 	diskExtractor   hardware.DiskExtractor
 	tinkerbellIp    string
+
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
 	// constructor call for constructing the validator in-line.
