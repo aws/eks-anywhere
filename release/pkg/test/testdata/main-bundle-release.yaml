@@ -525,6 +525,7 @@ spec:
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot: {}
           writeFile:
             arch:
             - amd64
@@ -626,9 +627,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -1246,6 +1247,7 @@ spec:
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot: {}
           writeFile:
             arch:
             - amd64
@@ -1347,9 +1349,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -1967,6 +1969,7 @@ spec:
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot: {}
           writeFile:
             arch:
             - amd64
@@ -2068,9 +2071,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
         tink:
           tinkCli:
             arch:
@@ -2679,6 +2682,7 @@ spec:
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot: {}
           writeFile:
             arch:
             - amd64
@@ -2780,9 +2784,9 @@ spec:
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: rufio
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:599b7401b5ccda2cfacf004668006562cb3e541a-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
           manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/599b7401b5ccda2cfacf004668006562cb3e541a/manifest.yaml
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
         tink:
           tinkCli:
             arch:

@@ -281,6 +281,7 @@ type ActionsBundle struct {
 	ImageToDisk Image `json:"imageToDisk"`
 	OciToDisk   Image `json:"ociToDisk"`
 	WriteFile   Image `json:"writeFile"`
+	Reboot      Image `json:"reboot"`
 }
 
 type TinkerbellServiceBundle struct {

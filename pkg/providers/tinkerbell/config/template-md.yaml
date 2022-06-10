@@ -60,6 +60,14 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if (eq .format "bottlerocket") }}
+        pause:
+          imageRepository: {{.pauseRepository}}
+          imageTag: {{.pauseVersion}}
+        bottlerocketBootstrap:
+          imageRepository: {{.bottlerocketBootstrapRepository}}
+          imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: PROVIDER_ID

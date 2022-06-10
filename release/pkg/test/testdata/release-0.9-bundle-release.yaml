@@ -464,6 +464,7 @@ spec:
           imageToDisk: {}
           kexec: {}
           ociToDisk: {}
+          reboot: {}
           writeFile: {}
         boots:
           image: {}
@@ -1008,6 +1009,7 @@ spec:
           imageToDisk: {}
           kexec: {}
           ociToDisk: {}
+          reboot: {}
           writeFile: {}
         boots:
           image: {}
@@ -1552,6 +1554,7 @@ spec:
           imageToDisk: {}
           kexec: {}
           ociToDisk: {}
+          reboot: {}
           writeFile: {}
         boots:
           image: {}
