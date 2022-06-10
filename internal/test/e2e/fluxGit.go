@@ -3,6 +3,11 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"regexp"
+	"time"
+
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -10,10 +15,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
-	"log"
-	"os"
-	"regexp"
-	"time"
 )
 
 type s3Files struct {
@@ -155,7 +156,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		ReadOnly:   false,
 	}
 
-	//Newly generated repositories may take some time to show up in the GitHub API; retry a few times to get around this
+	// Newly generated repositories may take some time to show up in the GitHub API; retry a few times to get around this
 	err = retrier.Retry(6, time.Second*10, func() error {
 		err = g.AddDeployKeyToRepo(ctx, ko)
 		if err != nil {
