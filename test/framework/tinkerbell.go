@@ -59,6 +59,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 		fillers: []api.TinkerbellFiller{
 			api.WithTinkerbellServer(serverIP),
 			api.WithStringFromEnvVarTinkerbell(tinkerbellSSHAuthorizedKey, api.WithSSHAuthorizedKeyForAllTinkerbellMachines),
+			api.WithHardwareSelectorLabels(),
 		},
 	}
 

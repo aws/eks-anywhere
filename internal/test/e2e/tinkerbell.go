@@ -77,7 +77,7 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 func (e *E2ESession) setTinkerbellBootstrapIPInInstance(tinkInterface string) error {
 	logger.V(1).Info("Setting Tinkerbell Bootstrap IP in instance")
 
-	command := fmt.Sprintf("export T_TINKERBELL_BOOTSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo T_TINKERBELL_BOOTSTRAP_IP=$T_TINKERBELL_BOOTSTRAP_IP | tee -a /etc/environment", tinkInterface)
+	command := fmt.Sprintf("export T_TINKERBELL_BOOTSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo T_TINKERBELL_BOOTSTRAP_IP=\"$T_TINKERBELL_BOOTSTRAP_IP\" | tee -a /etc/environment", tinkInterface)
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("setting tinkerbell boostrap ip: %v", err)
 	}

@@ -16,6 +16,10 @@ const (
 	HardwareVendorHP          = "hp"
 	HardwareVendorSuperMicro  = "supermicro"
 	HardwareVendorUnspecified = "unspecified"
+	HardwareLabelTypeKeyName  = "type"
+	ControlPlane              = "control-plane"
+	Worker                    = "worker"
+	ExternalEtcd              = "etcd"
 )
 
 // Alias for backwards compatibility.

@@ -129,6 +129,24 @@ func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
 	}
 }
 
+func WithHardwareSelectorLabels() TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		clusterName := config.clusterConfig.Name
+		cpName := providers.GetControlPlaneNodeName(clusterName)
+		workerName := clusterName
+
+		cpMachineConfig := config.machineConfigs[cpName]
+		cpMachineConfig.Spec.HardwareSelector = map[string]string{HardwareLabelTypeKeyName: ControlPlane}
+		config.machineConfigs[cpName] = cpMachineConfig
+
+		workerMachineConfig := config.machineConfigs[workerName]
+		workerMachineConfig.Spec.HardwareSelector = map[string]string{HardwareLabelTypeKeyName: Worker}
+		config.machineConfigs[workerName] = workerMachineConfig
+
+		return nil
+	}
+}
+
 func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 	return func(config TinkerbellConfig) error {
 		clusterName := config.clusterConfig.Name
@@ -145,6 +163,7 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 					Name: name,
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: ExternalEtcd},
 					TemplateRef: anywherev1.Ref{
 						Name: clusterName,
 						Kind: anywherev1.TinkerbellTemplateConfigKind,

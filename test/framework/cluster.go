@@ -106,7 +106,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithHardware(requiredCount int) ClusterE2ETestOpt {
+func withHardware(requiredCount int, hardareType string, labels map[string]string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
 
@@ -118,6 +118,7 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		for id, h := range hardwarePool {
 			if _, exists := e.TestHardware[id]; !exists {
 				count++
+				h.Labels = labels
 				e.TestHardware[id] = h
 			}
 
@@ -127,9 +128,21 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		}
 
 		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of hardware", requiredCount)
+			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, hardareType)
 		}
 	}
+}
+
+func WithControlPlaneHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ControlPlane, map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane})
+}
+
+func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: api.Worker})
+}
+
+func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -253,32 +266,6 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
-func (e *ClusterE2ETest) PXEBootHardware() {
-	// Initializing BMC Client
-	ctx := context.Background()
-	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
-
-	for _, h := range e.TestHardware {
-		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
-		if err != nil {
-			e.T.Fatalf("failed to create bmc client: %v", err)
-		}
-
-		defer func() {
-			// Close BMC connection after reconcilation
-			err = bmcClient.Close(ctx)
-			if err != nil {
-				e.T.Fatalf("BMC close connection failed: %v", err)
-			}
-		}()
-
-		_, err = bmcClient.SetBootDevice(ctx, string(rapi.PXE), false, true)
-		if err != nil {
-			e.T.Fatalf("failed to set boot device to PXE on hardware: %v", err)
-		}
-	}
-}
-
 func (e *ClusterE2ETest) PowerOnHardware() {
 	// Initializing BMC Client
 	ctx := context.Background()
@@ -328,16 +315,17 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		powerState, err := bmcClient.GetPowerState(ctx)
 		// add sleep retries to give the machine time to power off
 		timeout := 15
-		for powerState != string(rapi.Off) && timeout > 0 {
+		for strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
 			if err != nil {
 				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
 			}
 			time.Sleep(5 * time.Second)
 			timeout = timeout - 5
 			powerState, err = bmcClient.GetPowerState(ctx)
+			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
 		}
 
-		if powerState != string(rapi.Off) {
+		if !strings.EqualFold(powerState, string(rapi.Off)) {
 			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
 			failedToDecomm = append(failedToDecomm, h)
 		} else {
@@ -441,6 +429,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	if e.Provider.Name() == TinkerbellProviderName {
 		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
 		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
+		e.T.Logf("tinkBootstrapIP: %s", tinkBootstrapIP)
 		if tinkBootstrapIP != "" {
 			createClusterArgs = append(createClusterArgs, "--tinkerbell-bootstrap-ip", tinkBootstrapIP)
 		}
