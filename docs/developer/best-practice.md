@@ -263,7 +263,7 @@ You need a good reason to use it (mostly if this is your last alternative) and y
 If you do, add a comment in `go.mod` explaining why that `replace` instance is needed and when (or under what conditions) it can be removed.
 
 Some examples of situations where you might need a `replace`:
-* Fixing CVE's in indirect dependencies. Make sure you specify the transient dependency/dependencies so we can track when it gets updates upstream.
+* Fixing CVE's in indirect dependencies. Make sure you specify the transitive dependency/dependencies so we can track when it gets updates upstream.
 
 ## Style
 
