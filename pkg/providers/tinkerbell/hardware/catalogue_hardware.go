@@ -2,7 +2,7 @@ package hardware
 
 import (
 	"fmt"
-	"time"
+	"math"
 
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -205,8 +205,10 @@ func hardwareFromMachine(m Machine) *tinkv1alpha1.Hardware {
 							Gateway: m.Gateway,
 							Family:  4,
 						},
-						// set LeaseTime to 1 month while we figure out how to set static IPs
-						LeaseTime:   int64(time.Hour * 24 * 30 / time.Second),
+						// set LeaseTime to the max value so it effectively hands out max duration leases (~136 years)
+						// This value gets ignored for Ubuntu because we set static IPs for it
+						// It's only temporarily needed for Bottlerocket until Bottlerocket supports static IPs
+						LeaseTime:   int64(math.Pow(2, 32) - 2),
 						Hostname:    m.Hostname,
 						NameServers: m.Nameservers,
 						UEFI:        true,
