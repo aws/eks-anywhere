@@ -72,7 +72,7 @@ Pros:
 2. It lets the user reuse the same file.
 
 ## Proposed Solution
-Since the amount of configurations required for curated packages is a limited set, we will be implementing [Provide separate key value pairs from the CLI](#Provide-separate-key-value-pairs-from-the-CLI) option. In the future, we will include the [Provide key value pair through a file and pass the file to the CLI](#Provide key value pair through a file and pass the file to the CLI)
+Since the amount of configurations required for curated packages is a limited set, we will be implementing [Provide separate key value pairs from the CLI](#Provide-separate-key-value-pairs-from-the-CLI) option. In the future, we will include the [Provide key value pair through a file and pass the file to the CLI](#Provide-key-value-pair-through-a-file-and-pass-the-file-to-the-CLI)
 
 ## Customized Configuration Discovery
 
