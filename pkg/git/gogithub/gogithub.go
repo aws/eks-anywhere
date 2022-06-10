@@ -212,7 +212,7 @@ func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path str
 }
 
 func (g *GoGithub) AddDeployKeyToRepo(ctx context.Context, opts git.AddDeployKeyOpts) error {
-	logger.V(3).Info("Adding deploy key to repository", "repository", opts.Repository)
+	logger.V(3).Info("Adding deploy key to repository", "repository", opts.Repository, "owner", opts.Owner)
 	k := &goGithub.Key{
 		Key:      &opts.Key,
 		Title:    &opts.Title,
