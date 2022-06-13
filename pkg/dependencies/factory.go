@@ -25,9 +25,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -72,6 +74,7 @@ type Dependencies struct {
 	FileReader                *files.Reader
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
+	CliConfig                 *config.CliConfig
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -205,7 +208,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -288,6 +291,17 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			tinkerbellIp := tinkerbellBootstrapIp
+			if tinkerbellIp == "" {
+				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
+				localIp, err := networkutils.GetLocalIP()
+				if err != nil {
+					return err
+				}
+				tinkerbellIp = localIp.String()
+			}
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
+
 			f.dependencies.Provider = tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
@@ -297,7 +311,9 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.DockerClient,
 				f.dependencies.Helm,
 				f.dependencies.Kubectl,
+				tinkerbellIp,
 				time.Now,
+				force,
 				skipIpCheck,
 			)
 
@@ -636,6 +652,10 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
+		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
+		if f.dependencies.CliConfig != nil {
+			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
+		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			&clusterManagerClient{
@@ -646,10 +666,16 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			maxWaitPerMachine,
 		)
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
+	f.dependencies.CliConfig = cliConfig
 	return f
 }
 

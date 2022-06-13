@@ -13,24 +13,58 @@ import (
 )
 
 func TestGetBundlesForCluster(t *testing.T) {
-	g := NewWithT(t)
-	c := &v1alpha1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eksa-cluster",
-			Namespace: "eksa",
+	testCases := []struct {
+		testName                string
+		cluster                 *v1alpha1.Cluster
+		wantName, wantNamespace string
+	}{
+		{
+			testName: "no bundles ref",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "eksa-cluster",
+					Namespace: "eksa",
+				},
+				Spec: v1alpha1.ClusterSpec{},
+			},
+			wantName:      "eksa-cluster",
+			wantNamespace: "eksa",
+		},
+		{
+			testName: "bundles ref",
+			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "eksa-cluster",
+					Namespace: "eksa",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					BundlesRef: &v1alpha1.BundlesRef{
+						Name:       "bundles-1",
+						Namespace:  "eksa-system",
+						APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+					},
+				},
+			},
+			wantName:      "bundles-1",
+			wantNamespace: "eksa-system",
 		},
 	}
-	wantBundles := &v1alpha1release.Bundles{}
-	mockFetch := func(ctx context.Context, name, namespace string) (*v1alpha1release.Bundles, error) {
-		g.Expect(name).To(Equal(c.Name))
-		g.Expect(namespace).To(Equal(c.Namespace))
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			wantBundles := &v1alpha1release.Bundles{}
+			mockFetch := func(ctx context.Context, name, namespace string) (*v1alpha1release.Bundles, error) {
+				g.Expect(name).To(Equal(tt.wantName))
+				g.Expect(namespace).To(Equal(tt.wantNamespace))
 
-		return wantBundles, nil
+				return wantBundles, nil
+			}
+
+			gotBundles, err := cluster.GetBundlesForCluster(context.Background(), tt.cluster, mockFetch)
+			g.Expect(err).To(BeNil())
+			g.Expect(gotBundles).To(Equal(wantBundles))
+		})
 	}
-
-	gotBundles, err := cluster.GetBundlesForCluster(context.Background(), c, mockFetch)
-	g.Expect(err).To(BeNil())
-	g.Expect(gotBundles).To(Equal(wantBundles))
 }
 
 func TestGetFluxConfigForClusterIsNil(t *testing.T) {

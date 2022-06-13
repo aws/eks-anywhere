@@ -12,10 +12,6 @@ const (
 	TinkerbellProviderName               = "tinkerbell"
 	tinkerbellServerEnvVar               = "T_TINKERBELL_IP"
 	tinkerbellNetworkCidrEnvVar          = "T_TINKERBELL_NETWORK_CIDR"
-	tinkerbellCertURLEnvVar              = "T_TINKERBELL_CERT_URL"
-	tinkerbellHegelURLEnvVar             = "T_TINKERBELL_HEGEL_URL"
-	tinkerbellGRPCAuthEnvVar             = "T_TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellPBnJGRPCAuthEnvVar         = "T_TINKERBELL_PBNJ_GRPC_AUTHORITY"
 	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
 	tinkerbellImageUbuntu122EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
@@ -26,9 +22,6 @@ const (
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellServerEnvVar,
 	tinkerbellNetworkCidrEnvVar,
-	tinkerbellCertURLEnvVar,
-	tinkerbellHegelURLEnvVar,
-	tinkerbellGRPCAuthEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
@@ -51,10 +44,6 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 		t: t,
 		fillers: []api.TinkerbellFiller{
 			api.WithStringFromEnvVarTinkerbell(tinkerbellServerEnvVar, api.WithTinkerbellServer),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellHegelURLEnvVar, api.WithTinkerbellHegelURL),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellCertURLEnvVar, api.WithTinkerbellCertURL),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellGRPCAuthEnvVar, api.WithTinkerbellGRPCAuthEndpoint),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellPBnJGRPCAuthEnvVar, api.WithTinkerbellPBnJGRPCAuthEndpoint),
 			api.WithStringFromEnvVarTinkerbell(tinkerbellSSHAuthorizedKey, api.WithSSHAuthorizedKeyForAllTinkerbellMachines),
 		},
 	}
@@ -77,6 +66,10 @@ func (t *Tinkerbell) Setup() {}
 
 func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
+}
+
+func (t *Tinkerbell) CleanupVMs(_ string) error {
+	return nil
 }
 
 func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {

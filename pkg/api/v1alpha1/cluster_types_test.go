@@ -1147,6 +1147,27 @@ func TestClusterEqualManagement(t *testing.T) {
 	}
 }
 
+func TestClusterEqualDifferentBundlesRef(t *testing.T) {
+	cluster1 := &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-1",
+		},
+		Spec: v1alpha1.ClusterSpec{
+			BundlesRef: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+		},
+	}
+
+	cluster2 := cluster1.DeepCopy()
+	cluster2.Spec.BundlesRef.Name = "bundles-2"
+
+	g := NewWithT(t)
+	g.Expect(cluster1.Equal(cluster2)).To(BeFalse())
+}
+
 func TestControlPlaneConfigurationEqual(t *testing.T) {
 	var emptyTaints []corev1.Taint
 	taint1 := corev1.Taint{Key: "key1"}
@@ -1445,6 +1466,110 @@ func TestPodIAMServiceAccountIssuerHasNotChanged(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			g := NewWithT(t)
 			g.Expect(tt.cluster1PodIAMConfig.Equal(tt.cluster2PodIAMConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestBundlesRefEqual(t *testing.T) {
+	testCases := []struct {
+		testName                 string
+		bundlesRef1, bundlesRef2 *v1alpha1.BundlesRef
+		want                     bool
+	}{
+		{
+			testName:    "both nil",
+			bundlesRef1: nil,
+			bundlesRef2: nil,
+			want:        true,
+		},
+		{
+			testName:    "1 nil, 2 not nil",
+			bundlesRef1: nil,
+			bundlesRef2: &v1alpha1.BundlesRef{},
+			want:        false,
+		},
+		{
+			testName:    "1 not nil, 2 nil",
+			bundlesRef1: &v1alpha1.BundlesRef{},
+			bundlesRef2: nil,
+			want:        false,
+		},
+		{
+			testName: "diff APIVersion",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v2",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			want: false,
+		},
+		{
+			testName: "diff Name",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-2",
+				Namespace:  "eksa-system",
+			},
+			want: false,
+		},
+		{
+			testName: "diff Namespace",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "default",
+			},
+			want: false,
+		},
+		{
+			testName: "everything different",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v2",
+				Name:       "bundles-2",
+				Namespace:  "default",
+			},
+			want: false,
+		},
+		{
+			testName: "equal",
+			bundlesRef1: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			bundlesRef2: &v1alpha1.BundlesRef{
+				APIVersion: "v1",
+				Name:       "bundles-1",
+				Namespace:  "eksa-system",
+			},
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.bundlesRef1.Equal(tt.bundlesRef2)).To(Equal(tt.want))
 		})
 	}
 }

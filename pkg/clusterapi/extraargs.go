@@ -3,6 +3,7 @@ package clusterapi
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -48,6 +49,15 @@ func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	}
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("service-account-issuer", podIAMConfig.ServiceAccountIssuer)
+	return args
+}
+
+func NodeCIDRMaskExtraArgs(clusterNetwork *v1alpha1.ClusterNetwork) ExtraArgs {
+	if clusterNetwork == nil || clusterNetwork.Nodes == nil || clusterNetwork.Nodes.CIDRMaskSize == nil {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("node-cidr-mask-size", strconv.Itoa(*clusterNetwork.Nodes.CIDRMaskSize))
 	return args
 }
 

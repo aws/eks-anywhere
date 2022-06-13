@@ -38,6 +38,12 @@ spec:
   template:
     {{- if and .workertemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .hardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.workertemplateOverride | indent 8}}
     {{- end}}
@@ -54,6 +60,14 @@ spec:
   template:
     spec:
       joinConfiguration:
+{{- if (eq .format "bottlerocket") }}
+        pause:
+          imageRepository: {{.pauseRepository}}
+          imageTag: {{.pauseVersion}}
+        bottlerocketBootstrap:
+          imageRepository: {{.bottlerocketBootstrapRepository}}
+          imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: PROVIDER_ID

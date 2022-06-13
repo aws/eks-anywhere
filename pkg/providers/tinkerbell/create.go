@@ -8,9 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -45,18 +43,14 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
 
-	localIP, err := networkutils.GetLocalIP()
-	if err != nil {
-		return err
-	}
-
-	err = p.stackInstaller.Install(
+	err := p.stackInstaller.Install(
 		ctx,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
-		localIP.String(),
+		p.tinkerbellIp,
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, false),
+		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
+		stack.WithHostPortEnabled(true),
 	)
 	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
@@ -85,8 +79,9 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
-		stack.WithNamespace(constants.EksaSystemNamespace, true),
+		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
+		stack.WithHostPortEnabled(false),
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)
@@ -100,9 +95,17 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {
+		return err
+	}
+
 	// TODO(chrisdoherty4) Extract to a defaulting construct and add associated validations to ensure
 	// there is always a user with ssh key configured.
 	if err := p.configureSshKeys(); err != nil {
+		return err
+	}
+
+	if err := p.readCSVToCatalogue(); err != nil {
 		return err
 	}
 
@@ -110,33 +113,40 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
-	validator := NewClusterSpecValidator(
-		NewMinimumHardwareAvailableAssertion(p.catalogue),
+	clusterSpecValidator := NewClusterSpecValidator(
+		NewCreateMinimumHardwareAvailableAssertion(p.catalogue),
 	)
 
 	if !p.skipIpCheck {
-		validator.Register(NewIPNotInUseAssertion(p.netClient))
-	}
-
-	writer := hardware.NewMachineCatalogueWriter(p.catalogue)
-	machineValidator := hardware.NewDefaultMachineValidator()
-
-	// Translate all Machine instances from the p.machines source into Kubernetes object types.
-	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
-	// and submits it to the clsuter.
-	machines, err := hardware.NewCSVReaderFromFile(p.hardwareCSVFile)
-	if err != nil {
-		return err
-	}
-
-	if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
-		return err
+		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
 	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
-	if err := validator.Validate(spec); err != nil {
+	if err := clusterSpecValidator.Validate(spec); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (p *Provider) readCSVToCatalogue() error {
+	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
+
+	machineValidator := hardware.NewDefaultMachineValidator()
+
+	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's
+	var selectors []v1alpha1.HardwareSelector
+	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
+
+	// Translate all Machine instances from the p.machines source into Kubernetes object types.
+	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
+	// and submits it to the clsuter.
+	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	if err != nil {
+		return err
+	}
+
+	return hardware.TranslateAll(machines, writer, machineValidator)
 }

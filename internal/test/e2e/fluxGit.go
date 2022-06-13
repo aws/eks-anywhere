@@ -6,12 +6,14 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -154,9 +156,16 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		ReadOnly:   false,
 	}
 
-	err = g.AddDeployKeyToRepo(ctx, ko)
+	// Newly generated repositories may take some time to show up in the GitHub API; retry a few times to get around this
+	err = retrier.Retry(6, time.Second*10, func() error {
+		err = g.AddDeployKeyToRepo(ctx, ko)
+		if err != nil {
+			return fmt.Errorf("couldn't add deploy key to repo: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return r, fmt.Errorf("couldn't add deploy key to repo: %v", err)
+		return r, err
 	}
 
 	// Generate a PEM file from the private key and write it instance at the user-provided path

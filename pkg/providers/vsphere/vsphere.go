@@ -693,6 +693,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
 	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
@@ -750,7 +752,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"controllerManagerExtraArgs":           controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
 		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
 		"format":                               format,
@@ -1116,6 +1118,10 @@ func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *vsphereProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *vsphereProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -1389,5 +1395,9 @@ func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 }
 
 func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
+func (p *vsphereProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

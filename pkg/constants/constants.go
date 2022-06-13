@@ -12,7 +12,6 @@ const (
 	CapiWebhookSystemNamespace              = "capi-webhook-system"
 	CapvSystemNamespace                     = "capv-system"
 	CapaSystemNamespace                     = "capa-system"
-	CapasSystemNamespace                    = "capas-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"
 	EtcdAdmBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"

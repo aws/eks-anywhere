@@ -78,6 +78,10 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
+func (p *cloudstackProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -624,6 +628,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	values := map[string]interface{}{
 		"clusterName":                                  clusterSpec.Cluster.Name,
@@ -686,7 +692,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"kubeletExtraArgs":                             kubeletExtraArgs.ToPartialYaml(),
 		"etcdExtraArgs":                                etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":                             crypto.SecureCipherSuitesString(),
-		"controllermanagerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs":                   controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                           sharedExtraArgs.ToPartialYaml(),
 		"format":                                       format,
 		"externalEtcdVersion":                          bundle.KubeDistro.EtcdVersion,
@@ -1243,4 +1249,8 @@ func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func (p *cloudstackProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	return nil
 }

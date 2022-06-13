@@ -147,6 +147,12 @@ package foo_test
 
 The compiler will build files that declare a package with the suffix "_test" as a separate package, then link and run with the main test binary. This ensures tests cases only have access to the public API of a package.
 
+Test one scenario per test. This makes reading and debugging tests easier plus it keeps the test name simple (remember that the last part of the test function name describes the scenario you are testing).
+
+Avoid having logic in tests. If you need to make your assertions conditional, that's a good indicator that the test should be split.
+
+When testing the same scenario with multiple combinations of input/output, prefer table tests. This is not only common practice in `go` but it facilitates adding more cases when the tested code is changed.
+
 ##### Necessarily complex and unexported functions
 
 If you have attempted to break a function down into singular responsibilities and found its best to maintain the necessary complexity as a single unexported function it may be appropriate to white box test.
@@ -244,6 +250,20 @@ Use named returns only if strictly necessary for disambiguation (for example, a 
 In general, avoid panics. Panicking from a package implies the package understands the complete context of execution which is rarely the case. Instead, return errors wrapped with appropriate context describing the problem.
 
 Herein lies an exception. When code is aware it is executing under a `main` func, or a derivative of `main` such as a `Command` object, it may have grounds for panicking if it identifies the program is invalid. Program invalidity is typically representative of a programmer error. For example, consider a `Command` object that requires, under certain circumstances, a `foo` flag to be configured as part of CLI argument parsing. If the program finds that flag doesn't exist (not to be confused with "wasn't set by the user"), the program is invalid. This is indicative of a programmer error as they _forgot_ to add the CLI flag. In this instance it is impossible for a user to fix the problem, because the program is invalid. Consequently, the program has grounds to panic. It is important to recognize that the panicking code is _fully aware_ of its execution context.
+
+### `replace` directive
+
+> A replace directive replaces the contents of a specific version of a module, or all versions of a module, with contents found elsewhere. The replacement may be specified with either another module path and version, or a platform-specific file path.
+
+In general, avoid using `replace`.
+These directives are not inherited by importing modules, making dependant modules have to replicate them and keep them in sync.
+This pollutes the `go` ecosystem.
+
+You need a good reason to use it (mostly if this is your last alternative) and you need an exit plan.
+If you do, add a comment in `go.mod` explaining why that `replace` instance is needed and when (or under what conditions) it can be removed.
+
+Some examples of situations where you might need a `replace`:
+* Fixing CVE's in indirect dependencies. Make sure you specify the transitive dependency/dependencies so we can track when it gets updates upstream.
 
 ## Style
 

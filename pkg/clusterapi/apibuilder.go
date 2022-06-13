@@ -140,18 +140,18 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: ControllerManagerArgs(clusterSpec),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs(),
 						Taints:           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs(),
 						Taints:           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},

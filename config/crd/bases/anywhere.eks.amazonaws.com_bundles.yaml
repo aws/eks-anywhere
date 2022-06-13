@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
   name: bundles.anywhere.eks.amazonaws.com
 spec:
@@ -2115,6 +2115,37 @@ spec:
                                         tag
                                       type: string
                                   type: object
+                                reboot:
+                                  properties:
+                                    arch:
+                                      description: Architectures of the asset
+                                      items:
+                                        type: string
+                                      type: array
+                                    description:
+                                      type: string
+                                    imageDigest:
+                                      description: The SHA256 digest of the image
+                                        manifest
+                                      type: string
+                                    name:
+                                      description: The asset name
+                                      type: string
+                                    os:
+                                      description: Operating system of the asset
+                                      enum:
+                                      - linux
+                                      - darwin
+                                      - windows
+                                      type: string
+                                    osName:
+                                      description: Name of the OS like ubuntu, bottlerocket
+                                      type: string
+                                    uri:
+                                      description: The image repository, name, and
+                                        tag
+                                      type: string
+                                  type: object
                                 writeFile:
                                   properties:
                                     arch:
@@ -2151,6 +2182,7 @@ spec:
                               - imageToDisk
                               - kexec
                               - ociToDisk
+                              - reboot
                               - writeFile
                               type: object
                             boots:
@@ -2757,6 +2789,35 @@ spec:
                               - tinkServer
                               - tinkWorker
                               type: object
+                            tinkerbellChart:
+                              properties:
+                                arch:
+                                  description: Architectures of the asset
+                                  items:
+                                    type: string
+                                  type: array
+                                description:
+                                  type: string
+                                imageDigest:
+                                  description: The SHA256 digest of the image manifest
+                                  type: string
+                                name:
+                                  description: The asset name
+                                  type: string
+                                os:
+                                  description: Operating system of the asset
+                                  enum:
+                                  - linux
+                                  - darwin
+                                  - windows
+                                  type: string
+                                osName:
+                                  description: Name of the OS like ubuntu, bottlerocket
+                                  type: string
+                                uri:
+                                  description: The image repository, name, and tag
+                                  type: string
+                              type: object
                           required:
                           - actions
                           - boots
@@ -2766,6 +2827,7 @@ spec:
                           - pbnj
                           - rufio
                           - tink
+                          - tinkerbellChart
                           type: object
                         version:
                           type: string

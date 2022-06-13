@@ -7,6 +7,7 @@ import (
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 
+	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -122,4 +123,41 @@ func TestHardwareCatalogueWriter_Write(t *testing.T) {
 	hardware := catalogue.AllHardware()
 	g.Expect(hardware).To(gomega.HaveLen(1))
 	g.Expect(hardware[0].Name).To(gomega.Equal(machine.Hostname))
+}
+
+func TestDiskExtractorWithValidHardwareSelectors(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	diskExtractor := hardware.NewDiskExtractor()
+	machine := NewValidMachine()
+
+	hardwareSelector := eksav1alpha1.HardwareSelector{"type": "cp"}
+	diskExtractor.RegisterHardwareSelector(hardwareSelector)
+
+	err := diskExtractor.Write(machine)
+
+	g.Expect(err).To(gomega.Succeed())
+
+	disk, err := diskExtractor.GetDisk(hardwareSelector)
+
+	g.Expect(err).To(gomega.Succeed())
+	g.Expect(disk).To(gomega.Equal(machine.Disk))
+}
+
+func TestDiskExtractorWithInvalidHardwareSelectors(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	diskExtractor := hardware.NewDiskExtractor()
+	machine := NewValidMachine()
+
+	hardwareSelector := eksav1alpha1.HardwareSelector{"type": "cp1"}
+	diskExtractor.RegisterHardwareSelector(hardwareSelector)
+
+	err := diskExtractor.Write(machine)
+
+	g.Expect(err).To(gomega.Succeed())
+
+	_, err = diskExtractor.GetDisk(hardwareSelector)
+
+	g.Expect(err).To(gomega.HaveOccurred())
 }

@@ -2,10 +2,13 @@ package tinkerbell
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -63,19 +66,77 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
 
-	// TODO(chrisdoherty4) Look to inject the validator.
-	validator := NewClusterSpecValidator()
-	if err := validator.Validate(tinkerbellClusterSpec); err != nil {
+	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	// If we've been given a CSV with additional hardware for the cluster, validate it and
+	// write it to the catalogue so it can be used for further processing.
+	if p.hardareCSVIsProvided() {
+		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+		if err != nil {
+			return err
+		}
+
+		// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
+		// Enabled Management Cluster that we're upgrading.
+		var selectors []v1alpha1.HardwareSelector
+
+		machineValidator := hardware.NewDefaultMachineValidator()
+		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
+
+		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+			return err
+		}
+	}
+
+	// Retrieve all unprovisioned hardware from the existing cluster and populate the catalogue so
+	// it can be considered for the upgrade.
+	hardware, err := p.providerKubectlClient.GetUnprovisionedTinkerbellHardware(
+		ctx,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving unprovisioned hardware: %v", err)
+	}
+	for i := range hardware {
+		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
+			return err
+		}
+	}
+
+	// Construct a spec validator and apply assertions specific to upgrade. The validation
+	// must take place last so as to ensure the catalogue is populated with available hardware.
+	clusterSpecValidator := NewClusterSpecValidator()
+
+	// TODO(chrisdoherty4) Apply assertions specific to upgrade.
+
+	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
 		return err
 	}
 
-	// TODO: Add validations when this is supported
+	return nil
+}
+
+func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	allHardware := p.catalogue.AllHardware()
+	if len(allHardware) == 0 {
+		return nil
+	}
+
+	hardwareSpec, err := hardware.MarshalCatalogue(p.catalogue)
+	if err != nil {
+		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
+	if err != nil {
+		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
 	return nil
 }
 
@@ -102,4 +163,15 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
+}
+
+func (p *Provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Provider) hardareCSVIsProvided() bool {
+	return p.hardwareCSVFile != ""
 }

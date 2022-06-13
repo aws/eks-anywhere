@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -38,6 +39,7 @@ const (
 	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
+	CleanupVmsVar                    = "T_CLEANUP_VMS"
 	hardwareYamlPath                 = "hardware.yaml"
 	hardwareCsvPath                  = "hardware.csv"
 )
@@ -94,6 +96,10 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	}
 
 	provider.Setup()
+
+	e.T.Cleanup(func() {
+		e.CleanupVms()
+	})
 
 	return e
 }
@@ -212,6 +218,7 @@ type Provider interface {
 	CustomizeProviderConfig(file string) []byte
 	ClusterConfigFillers() []api.ClusterFiller
 	Setup()
+	CleanupVMs(clusterName string) error
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
@@ -433,6 +440,22 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 	e.deleteCluster(opts...)
 }
 
+func (e *ClusterE2ETest) CleanupVms() {
+	if !shouldCleanUpVms() {
+		e.T.Logf("Skipping VM cleanup")
+		return
+	}
+
+	if err := e.Provider.CleanupVMs(e.ClusterName); err != nil {
+		e.T.Logf("failed to clean up VMs: %v", err)
+	}
+}
+
+func shouldCleanUpVms() bool {
+	shouldCleanupVms, err := getCleanupVmsVar()
+	return err == nil && shouldCleanupVms
+}
+
 func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
 	deleteClusterArgs := []string{"delete", "cluster", e.ClusterName, "-v", "4"}
 	if getBundlesOverride() == "true" {
@@ -596,6 +619,10 @@ func getClusterName(t *testing.T) string {
 
 func getBundlesOverride() string {
 	return os.Getenv(BundlesOverrideVar)
+}
+
+func getCleanupVmsVar() (bool, error) {
+	return strconv.ParseBool(os.Getenv(CleanupVmsVar))
 }
 
 func setEksctlVersionEnvVar() error {

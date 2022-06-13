@@ -105,12 +105,12 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
+								ExtraArgs: tlsCipherSuitesArgs(),
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -123,7 +123,7 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -289,12 +289,12 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
+								ExtraArgs: tlsCipherSuitesArgs(),
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -307,7 +307,7 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -400,12 +400,12 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 								},
 							},
 							ControllerManager: bootstrapv1.ControlPlaneComponent{
-								ExtraArgs: map[string]string{},
+								ExtraArgs: tlsCipherSuitesArgs(),
 							},
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -418,7 +418,7 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: map[string]string{},
+								KubeletExtraArgs: tlsCipherSuitesArgs(),
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",

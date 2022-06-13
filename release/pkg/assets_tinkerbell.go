@@ -36,6 +36,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
 		"rufio":                           r.BundleArtifactsTable["rufio"],
+		"tinkerbell-chart":                r.BundleArtifactsTable["tinkerbell-chart"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -163,6 +164,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 				TinkWorker:     bundleImageArtifacts["tink-worker"],
 				Manifest:       bundleManifestArtifacts["tink.yaml"],
 			},
+			TinkebellChart: bundleImageArtifacts["tinkerbell-chart"],
 		},
 	}
 

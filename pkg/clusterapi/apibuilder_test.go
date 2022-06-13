@@ -241,12 +241,12 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: tlsCipherSuitesArgs(),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: tlsCipherSuitesArgs(),
 						Taints: []v1.Taint{
 							{
 								Key:       "key1",
@@ -259,7 +259,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: tlsCipherSuitesArgs(),
 						Taints: []v1.Taint{
 							{
 								Key:       "key1",

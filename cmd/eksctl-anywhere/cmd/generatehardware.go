@@ -30,13 +30,18 @@ func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
 
 	flags := generateHardwareCmd.Flags()
+	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
+	flags.StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
 
-	flags.StringVarP(&hOpts.csvPath, tinkerbellHardwareCSVFlag, "w", "", "CSV file path")
-	if err := generateHardwareCmd.MarkFlagRequired(tinkerbellHardwareCSVFlag); err != nil {
+	if err := generateHardwareCmd.MarkFlagRequired(TinkerbellHardwareCSVFlagName); err != nil {
 		panic(err)
 	}
-
-	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware YAML")
 }
 
 func (hOpts *hardwareOptions) generateHardware(cmd *cobra.Command, args []string) error {

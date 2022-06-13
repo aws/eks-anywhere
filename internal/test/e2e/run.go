@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -102,13 +101,6 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
 			logResult(r.testCommandResult)
 		}
-		clusterName := clusterName(r.conf.branchName, r.conf.instanceId)
-		if conf.CleanupVms {
-			err = CleanUpVsphereTestResources(context.Background(), clusterName)
-			if err != nil {
-				logger.Error(err, "Failed to clean up VSphere cluster VMs", "clusterName", r.conf.instanceId)
-			}
-		}
 	}
 
 	if failedInstances > 0 {
@@ -123,6 +115,7 @@ type instanceRunConf struct {
 	testReportFolder, branchName                                                               string
 	ipPool                                                                                     networkutils.IPPool
 	bundlesOverride                                                                            bool
+	cleanupVms                                                                                 bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
@@ -249,6 +242,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
+				cleanupVms:          conf.CleanupVms,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,
 				ipPool:              ips,

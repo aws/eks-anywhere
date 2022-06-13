@@ -8,9 +8,18 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
-	TemplateRef Ref                 `json:"templateRef,omitempty"`
-	OSFamily    OSFamily            `json:"osFamily"`
-	Users       []UserConfiguration `json:"users,omitempty"`
+	HardwareSelector HardwareSelector    `json:"hardwareSelector"`
+	TemplateRef      Ref                 `json:"templateRef,omitempty"`
+	OSFamily         OSFamily            `json:"osFamily"`
+	Users            []UserConfiguration `json:"users,omitempty"`
+}
+
+// HardwareSelector models a simple key-value selector used in Tinkerbell providioning.
+type HardwareSelector map[string]string
+
+// IsEmpty returns true if s has no key-value pairs.
+func (s HardwareSelector) IsEmpty() bool {
+	return len(s) == 0
 }
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {

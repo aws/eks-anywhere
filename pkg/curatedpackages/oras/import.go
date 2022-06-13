@@ -2,13 +2,13 @@ package oras
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -30,7 +30,7 @@ func NewFileRegistryImporter(registry, username, password, srcFolder string) *Fi
 func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		chartName := filepath.Base(a)
+		updatedChartURL := urls.ReplaceHost(a, fr.registry)
 		fileName := ChartFileName(a)
 		chartFilepath := filepath.Join(fr.srcFolder, fileName)
 		data, err := os.ReadFile(chartFilepath)
@@ -38,8 +38,7 @@ func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bun
 			logger.Info("Warning: reading file", "error", err)
 			continue
 		}
-		ref := fmt.Sprintf("%s/%s", fr.registry, chartName)
-		err = curatedpackages.Push(ctx, ref, fileName, data)
+		err = curatedpackages.Push(ctx, updatedChartURL, fileName, data)
 		if err != nil {
 			logger.Info("Warning: Failed  to push to registry", "error", err)
 		}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -16,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"

@@ -33,7 +33,6 @@ import (
 const (
 	maxRetries             = 30
 	backOffPeriod          = 5 * time.Second
-	machineMaxWait         = 10 * time.Minute
 	machineBackoff         = 1 * time.Second
 	machinesMinWait        = 30 * time.Minute
 	moveCAPIWait           = 15 * time.Minute
@@ -91,6 +90,7 @@ type ClusterClient interface {
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
+	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
@@ -114,7 +114,7 @@ type AwsIamAuth interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, maxWaitPerMachine time.Duration, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -124,7 +124,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		networking:         networking,
 		Retrier:            retrier,
 		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     machineMaxWait,
+		machineMaxWait:     maxWaitPerMachine,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
 		awsIamAuth:         awsIamAuth,
@@ -708,17 +708,25 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 }
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	ready, total := 0, 0
+	policy := func(_ int, _ error) (bool, time.Duration) {
+		return true, c.machineBackoff * time.Duration(total-ready)
+	}
+
 	var machineDeploymentReplicasCount int
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
 	}
 
-	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
-	}
-
-	err := isMdReady()
-	if err == nil {
+	areMdReplicasReady := func() error {
+		var err error
+		ready, total, err = c.clusterClient.CountMachineDeploymentReplicasReady(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		if ready != total {
+			return fmt.Errorf("%d machine deployment replicas are not ready", total-ready)
+		}
 		return nil
 	}
 
@@ -727,8 +735,8 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.New(timeout)
-	if err := r.Retry(isMdReady); err != nil {
+	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
+	if err := r.Retry(areMdReplicasReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
@@ -871,8 +879,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	clusterSpec.Bundles.Name = clusterSpec.Cluster.Name
-	clusterSpec.Bundles.Namespace = clusterSpec.Cluster.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("outputting bundle yaml: %v", err)
