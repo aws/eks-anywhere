@@ -2,6 +2,7 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -30,6 +31,10 @@ const (
 	maxRetries    = 30
 	backOffPeriod = 5 * time.Second
 )
+
+// ErrExternalEtcdUnsupported is returned from create or update when the user attempts to create
+// or upgrade a cluster with an external etcd configuration.
+var ErrExternalEtcdUnsupported = errors.New("external etcd configuration is unsupported")
 
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
