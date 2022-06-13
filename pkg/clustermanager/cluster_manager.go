@@ -90,6 +90,7 @@ type ClusterClient interface {
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
+	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
@@ -707,17 +708,25 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 }
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	ready, total := 0, 0
+	policy := func(_ int, _ error) (bool, time.Duration) {
+		return true, c.machineBackoff * time.Duration(total-ready)
+	}
+
 	var machineDeploymentReplicasCount int
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
 	}
 
-	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
-	}
-
-	err := isMdReady()
-	if err == nil {
+	areMdReplicasReady := func() error {
+		var err error
+		ready, total, err = c.clusterClient.CountMachineDeploymentReplicasReady(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		if ready != total {
+			return fmt.Errorf("%d machine deployment replicas are not ready", total-ready)
+		}
 		return nil
 	}
 
@@ -726,8 +735,8 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.New(timeout)
-	if err := r.Retry(isMdReady); err != nil {
+	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
+	if err := r.Retry(areMdReplicasReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
