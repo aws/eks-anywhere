@@ -137,3 +137,39 @@ func TestDefaultKubeadmConfigTemplateName(t *testing.T) {
 		})
 	}
 }
+
+func TestControlPlaneMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "test cluster",
+			want: "test-cluster-control-plane-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.ControlPlaneMachineTemplateName(g.clusterSpec)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestWorkerMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "wng 1",
+			want: "test-cluster-wng-1-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.WorkerMachineTemplateName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+		})
+	}
+}

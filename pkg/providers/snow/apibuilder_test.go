@@ -73,7 +73,7 @@ func wantCAPICluster() *clusterv1.Cluster {
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := snow.SnowCluster(tt.clusterSpec)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -97,7 +97,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					Kind:       "AWSSnowMachineTemplate",
-					Name:       "test-cp-1",
+					Name:       "snow-test-control-plane-1",
 				},
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
@@ -169,7 +169,7 @@ func wantRegistryMirrorCommands() []string {
 
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	got, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -274,7 +274,7 @@ func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate(g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 			got, err := snow.KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -325,7 +325,7 @@ func TestKubeadmControlPlaneWithProxyConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate(g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 			got, err := snow.KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
@@ -377,51 +377,6 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	}
 }
 
-func TestKubeadmConfigTemplates(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-		"md-0": wantKubeadmConfigTemplate(),
-	}
-	tt.Expect(got).To(Equal(want))
-}
-
-func TestKubeadmConfigTemplatesWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := snow.KubeadmConfigTemplates(g.clusterSpec)
-			g.Expect(err).To(Succeed())
-			want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-				"md-0": wantKubeadmConfigTemplate(),
-			}
-			want["md-0"].Spec.Template.Spec.Files = tt.wantFiles
-			want["md-0"].Spec.Template.Spec.PreKubeadmCommands = append(want["md-0"].Spec.Template.Spec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
-func TestKubeadmConfigTemplatesWithProxyConfig(t *testing.T) {
-	for _, tt := range proxyTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
-			got, err := snow.KubeadmConfigTemplates(g.clusterSpec)
-			g.Expect(err).To(Succeed())
-			want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-				"md-0": wantKubeadmConfigTemplate(),
-			}
-			want["md-0"].Spec.Template.Spec.Files = tt.wantFiles
-			want["md-0"].Spec.Template.Spec.PreKubeadmCommands = append(want["md-0"].Spec.Template.Spec.PreKubeadmCommands, wantProxyConfigCommands()...)
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
 func wantMachineDeployment() *clusterv1.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
@@ -460,7 +415,7 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 					InfrastructureRef: v1.ObjectReference{
 						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 						Kind:       "AWSSnowMachineTemplate",
-						Name:       "test-wn-1",
+						Name:       "snow-test-md-0-1",
 					},
 					Version: &wantVersion,
 				},
@@ -468,20 +423,6 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Replicas: &wantReplicas,
 		},
 	}
-}
-
-func TestMachineDeployments(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	kubeadmConfigTemplates, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	workerMachineTemplates := snow.SnowMachineTemplates(tt.clusterSpec)
-	got := snow.MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-
-	want := map[string]*clusterv1.MachineDeployment{
-		"md-0": wantMachineDeployment(),
-	}
-	tt.Expect(got).To(Equal(want))
 }
 
 func wantSnowCluster() *snowv1.AWSSnowCluster {
@@ -520,7 +461,7 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 			Kind:       "AWSSnowMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-wn-1",
+			Name:      "snow-test-md-0-1",
 			Namespace: "eksa-system",
 		},
 		Spec: snowv1.AWSSnowMachineTemplateSpec{
@@ -544,16 +485,9 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 
 func TestSnowMachineTemplate(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplate(tt.machineConfigs["test-wn"])
+	got := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"])
 	want := wantSnowMachineTemplate()
-	tt.Expect(got).To(Equal(want))
-}
-
-func TestSnowMachineTemplates(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplates(tt.clusterSpec)
-	want := map[string]*snowv1.AWSSnowMachineTemplate{
-		"test-wn": wantSnowMachineTemplate(),
-	}
+	want.SetName("snow-test-control-plane-1")
+	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	tt.Expect(got).To(Equal(want))
 }

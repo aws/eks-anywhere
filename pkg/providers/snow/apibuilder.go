@@ -91,19 +91,6 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	return kct, nil
 }
 
-func KubeadmConfigTemplates(clusterSpec *cluster.Spec) (map[string]*bootstrapv1.KubeadmConfigTemplate, error) {
-	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-
-	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		template, err := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
-		if err != nil {
-			return nil, err
-		}
-		m[workerNodeGroupConfig.Name] = template
-	}
-	return m, nil
-}
-
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {
 	md := clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, kubeadmConfigTemplate, snowMachineTemplate)
 	return md
@@ -115,7 +102,7 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		deployment := machineDeployment(clusterSpec, workerNodeGroupConfig,
 			kubeadmConfigTemplates[workerNodeGroupConfig.Name],
-			machineTemplates[workerNodeGroupConfig.MachineGroupRef.Name],
+			machineTemplates[workerNodeGroupConfig.Name],
 		)
 		m[workerNodeGroupConfig.Name] = &deployment
 	}
@@ -143,17 +130,7 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 	return cluster
 }
 
-func SnowMachineTemplates(clusterSpec *cluster.Spec) map[string]*snowv1.AWSSnowMachineTemplate {
-	m := map[string]*snowv1.AWSSnowMachineTemplate{}
-
-	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		smt := SnowMachineTemplate(clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
-		m[workerNodeGroupConfig.MachineGroupRef.Name] = smt
-	}
-	return m
-}
-
-func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
+func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
 	networkConnector := string(machineConfig.Spec.PhysicalNetworkConnector)
 	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
@@ -161,7 +138,7 @@ func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSS
 			Kind:       SnowMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterapi.DefaultObjectName(machineConfig.GetName()),
+			Name:      name,
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: snowv1.AWSSnowMachineTemplateSpec{
