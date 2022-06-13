@@ -77,7 +77,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if p.hardareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
-		machines, err := hardware.NewCSVReaderFromFile(p.hardwareCSVFile)
+		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
 			return err
 		}

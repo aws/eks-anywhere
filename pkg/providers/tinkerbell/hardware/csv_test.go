@@ -54,7 +54,7 @@ func TestCSVReaderWithMultipleLabels(t *testing.T) {
 func TestCSVReaderFromFile(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware.csv")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -89,7 +89,7 @@ func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 func TestCSVReaderWithoutBMCHeaders(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv")
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
