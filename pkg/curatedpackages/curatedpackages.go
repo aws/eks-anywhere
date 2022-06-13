@@ -156,3 +156,17 @@ func GetRegistry(uri string) string {
 	}
 	return uri[:lastInd]
 }
+
+func ParseConfigurations(configs []string) (map[string]string, error) {
+	var parsedConfigurations map[string]string
+
+	for _, c := range configs {
+		keyval := strings.Split(c, "=")
+		key, val := keyval[0], keyval[1]
+		if key == "" || val == "" {
+			return nil, fmt.Errorf("please specify %s as key=value", c)
+		}
+		parsedConfigurations[key] = val
+	}
+	return parsedConfigurations, nil
+}

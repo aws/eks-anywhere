@@ -18,6 +18,7 @@ type installPackageOptions struct {
 	kubeVersion string
 	packageName string
 	registry    string
+	set         []string
 }
 
 var ipo = &installPackageOptions{}
@@ -34,6 +35,7 @@ func init() {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
+	installPackageCommand.Flags().StringArrayVar(&ipo.set, "set", []string{}, "Provide custom configurations for curated packages. Format key:value")
 }
 
 var installPackageCommand = &cobra.Command{
