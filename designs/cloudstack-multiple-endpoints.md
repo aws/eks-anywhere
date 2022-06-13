@@ -140,6 +140,12 @@ be passed along to CAPC and used by the CAPC controller just like it is currentl
 
 ### Backwards Compatibility
 
+Our customer currently has clusters running with the old resource definition. In order to support backwards compatibility in the CloudstackDatacenterConfig resource, we can
+1. Make all the fields optional and see if customers have the old fields set or the new ones
+2. Introduce an eks-a version bump with conversion webhooks
+
+Between these two approaches, I would take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
+
 ## User Experience
 
 
@@ -159,3 +165,9 @@ simple flow cluster creation/deletion across multiple Cloudstack API endpoints:
 
 * create a management+workload cluster spanning multiple Cloudstack API endpoints
 * delete cluster
+
+## Other approaches explored
+
+Another direction we can go to support this feature is to refactor the entire EKS-A codebase so that instead of all the failure domains existing inside the CloudstackDatacenterConfig
+object, each CloudstackDatacenterConfig itself corresponds with a single failure domain. Then, the top level EKS-A Cluster object could be refactored to have a list of DatacenterRefs instead
+of a single one. However, this approach feels extremely invasive to the product and does not provide tangible value to the other providers.
