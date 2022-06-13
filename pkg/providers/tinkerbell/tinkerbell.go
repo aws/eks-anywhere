@@ -50,6 +50,7 @@ type Provider struct {
 	hardwareCSVFile string
 	catalogue       *hardware.Catalogue
 	diskExtractor   hardware.DiskExtractor
+	tinkerbellIp    string
 
 	// TODO(chrisdoheryt4) Temporarily depend on the netclient until the validator can be injected.
 	// This is already a dependency, just uncached, because we require it during the initializing
@@ -92,6 +93,7 @@ func NewProvider(
 	docker stack.Docker,
 	helm stack.Helm,
 	providerKubectlClient ProviderKubectlClient,
+	tinkerbellIp string,
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
@@ -129,6 +131,7 @@ func NewProvider(
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
 			diskExtractor:               diskExtractor,
+			tinkerbellIp:                tinkerbellIp,
 			now:                         now,
 		},
 		writer:          writer,
@@ -142,6 +145,7 @@ func NewProvider(
 			hardware.WithSecretNameIndex(),
 		),
 		diskExtractor: *diskExtractor,
+		tinkerbellIp:  tinkerbellIp,
 		netClient:     &networkutils.DefaultNetClient{},
 		retrier:       retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
@@ -194,7 +198,8 @@ func (p *Provider) EnvMap(spec *cluster.Spec) (map[string]string, error) {
 		//
 		// Env read having set TINKERBELL_IP in the deployment manifest.
 		// https://github.com/tinkerbell/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L192
-		"TINKERBELL_IP": "<set in eks-a tinkerbell provider>",
+		"TINKERBELL_IP":               "IGNORED",
+		"KUBEADM_BOOTSTRAP_TOKEN_TTL": "120m",
 	}, nil
 }
 

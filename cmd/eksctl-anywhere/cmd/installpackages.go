@@ -33,6 +33,7 @@ func init() {
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
+	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
 }
 
 var installPackageCommand = &cobra.Command{

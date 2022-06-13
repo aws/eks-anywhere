@@ -15,11 +15,12 @@ import (
 
 type factoryTest struct {
 	*WithT
-	clusterConfigFile  string
-	clusterSpec        *cluster.Spec
-	ctx                context.Context
-	hardwareConfigFile string
-	cliConfig          config.CliConfig
+	clusterConfigFile     string
+	clusterSpec           *cluster.Spec
+	ctx                   context.Context
+	hardwareConfigFile    string
+	tinkerbellBootstrapIP string
+	cliConfig             config.CliConfig
 }
 
 func newTest(t *testing.T) *factoryTest {
@@ -41,7 +42,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -79,7 +80,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().

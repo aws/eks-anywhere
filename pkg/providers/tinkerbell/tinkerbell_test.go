@@ -19,7 +19,10 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const testDataDir = "testdata"
+const (
+	testDataDir = "testdata"
+	testIP      = "1.2.3.4"
+)
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
@@ -52,6 +55,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		docker,
 		helm,
 		kubectl,
+		testIP,
 		test.FakeNow,
 		forceCleanup,
 		false,
@@ -222,8 +226,9 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	stackInstaller.EXPECT().Install(
 		ctx,
 		releasev1alpha1.TinkerbellStackBundle{},
-		gomock.Any(),
+		testIP,
 		"test.kubeconfig",
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)
@@ -256,8 +261,9 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	stackInstaller.EXPECT().Install(
 		ctx,
 		releasev1alpha1.TinkerbellStackBundle{},
-		gomock.Any(),
+		testIP,
 		"test.kubeconfig",
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)

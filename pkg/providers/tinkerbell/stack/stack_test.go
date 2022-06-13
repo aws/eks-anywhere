@@ -74,6 +74,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 		cluster.KubeconfigFile,
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
+		stack.WithHostPortEnabled(true),
 	); err != nil {
 		t.Fatalf("failed to install Tinkerbell stack: %v", err)
 	}

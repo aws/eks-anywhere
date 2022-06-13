@@ -10,6 +10,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
@@ -174,15 +175,22 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	if err != nil {
 		return nil, err
 	}
-	if err = SetConfigDefaults(clusterConfig); err != nil {
+	bundlesManifest, err := s.GetBundles(cliVersion)
+	if err != nil {
+		return nil, err
+	}
+	bundlesManifest.Namespace = constants.EksaSystemNamespace
+
+	configManager, err := NewDefaultConfigManager()
+	if err != nil {
+		return nil, err
+	}
+	configManager.RegisterDefaulters(BundlesRefDefaulter(bundlesManifest))
+
+	if err = configManager.SetDefaults(clusterConfig); err != nil {
 		return nil, err
 	}
 	if err = ValidateConfig(clusterConfig); err != nil {
-		return nil, err
-	}
-
-	bundlesManifest, err := s.GetBundles(cliVersion)
-	if err != nil {
 		return nil, err
 	}
 
@@ -429,4 +437,17 @@ func (vb *VersionsBundle) Images() []v1alpha1.Image {
 
 func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
+}
+
+func BundlesRefDefaulter(bundles *v1alpha1.Bundles) Defaulter {
+	return func(c *Config) error {
+		if c.Cluster.Spec.BundlesRef == nil {
+			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{
+				Name:       bundles.Name,
+				Namespace:  bundles.Namespace,
+				APIVersion: v1alpha1.GroupVersion.String(),
+			}
+		}
+		return nil
+	}
 }

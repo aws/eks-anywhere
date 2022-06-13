@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/internal/test/e2e"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -25,7 +25,7 @@ var cloudstackRmVmsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		err = e2e.CleanUpCloudstackTestResources(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
+		err = cleanup.CleanUpCloudstackTestResources(cmd.Context(), clusterName, viper.GetBool(dryRunFlag))
 		if err != nil {
 			log.Fatalf("Error removing vms: %v", err)
 		}

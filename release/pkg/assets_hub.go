@@ -35,6 +35,7 @@ func (r *ReleaseConfig) GetHubAssets() ([]Artifact, error) {
 		"image2disk",
 		"oci2disk",
 		"writefile",
+		"reboot",
 	}
 
 	artifacts := []Artifact{}

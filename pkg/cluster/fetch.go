@@ -59,7 +59,19 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
-	bundles, err := fetch(ctx, cluster.Name, cluster.Namespace)
+	var name, namespace string
+	if cluster.Spec.BundlesRef != nil {
+		name = cluster.Spec.BundlesRef.Name
+		namespace = cluster.Spec.BundlesRef.Namespace
+	} else {
+		// Handles old clusters that don't contain a reference yet to the Bundles
+		// For those clusters, the Bundles was created with the same name as the cluster
+		// and in the same namespace
+		name = cluster.Name
+		namespace = cluster.Namespace
+	}
+
+	bundles, err := fetch(ctx, name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching Bundles for cluster: %v", err)
 	}

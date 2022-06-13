@@ -77,14 +77,14 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if p.hardareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
-		machines, err := hardware.NewCSVReaderFromFile(p.hardwareCSVFile)
+		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
 			return err
 		}
 
 		// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
 		// Enabled Management Cluster that we're upgrading.
-		var selectors []hardware.MachineSelector
+		var selectors []v1alpha1.HardwareSelector
 
 		machineValidator := hardware.NewDefaultMachineValidator()
 		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))

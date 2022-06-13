@@ -12,8 +12,10 @@ import (
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -66,14 +68,14 @@ func parseKubeVersion(kubeVersion string) (string, string, error) {
 	return major, minor, nil
 }
 
-func GetVersionBundle(reader Reader, eksaVersion, kubeVersion string) (*releasev1.VersionsBundle, error) {
+func GetVersionBundle(reader Reader, eksaVersion string, spec *v1alpha1.Cluster) (*releasev1.VersionsBundle, error) {
 	b, err := reader.ReadBundlesForVersion(eksaVersion)
 	if err != nil {
 		return nil, err
 	}
-	versionsBundle := bundles.VersionsBundleForKubernetesVersion(b, kubeVersion)
-	if versionsBundle == nil {
-		return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", kubeVersion, b.Spec.Number)
+	versionsBundle, err := cluster.GetVersionsBundle(spec, b)
+	if err != nil {
+		return nil, err
 	}
 	return versionsBundle, nil
 }
@@ -123,7 +125,7 @@ func Push(ctx context.Context, ref, fileName string, fileContent []byte) error {
 		return fmt.Errorf("creating registry: %w", err)
 	}
 	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add(fileName, "", fileContent)
+	desc, err := memoryStore.Add("bundle.yaml", "", fileContent)
 	if err != nil {
 		return err
 	}
@@ -138,11 +140,19 @@ func Push(ctx context.Context, ref, fileName string, fileContent []byte) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pushing %s to %s...\n", fileName, ref)
+	logger.Info(fmt.Sprintf("Pushing %s to %s...", fileName, ref))
 	desc, err = oras.Copy(ctx, memoryStore, ref, registry, "")
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Pushed to %s with digest %s\n", ref, desc.Digest)
+	logger.Info(fmt.Sprintf("Pushed to %s with digest %s", ref, desc.Digest))
 	return nil
+}
+
+func GetRegistry(uri string) string {
+	lastInd := strings.LastIndex(uri, "/")
+	if lastInd == -1 {
+		return uri
+	}
+	return uri[:lastInd]
 }

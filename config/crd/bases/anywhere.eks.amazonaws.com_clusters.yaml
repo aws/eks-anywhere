@@ -36,6 +36,25 @@ spec:
           spec:
             description: ClusterSpec defines the desired state of Cluster
             properties:
+              bundlesRef:
+                description: BundlesRef contains a reference to the Bundles containing
+                  the desired dependencies for the cluster
+                properties:
+                  apiVersion:
+                    description: APIVersion refers to the Bundles APIVersion
+                    type: string
+                  name:
+                    description: Name refers to the name of the Bundles object in
+                      the cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the Bundles's namespace
+                    type: string
+                required:
+                - apiVersion
+                - name
+                - namespace
+                type: object
               clusterNetwork:
                 properties:
                   cni:
@@ -66,6 +85,14 @@ spec:
                               the DNS resolver configuration
                             type: string
                         type: object
+                    type: object
+                  nodes:
+                    properties:
+                      cidrMaskSize:
+                        description: CIDRMaskSize defines the mask size for node cidr
+                          in the cluster, default for ipv4 is 24. This is an optional
+                          field
+                        type: integer
                     type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod

@@ -19,9 +19,11 @@ const (
 	createNamespace   = "createNamespace"
 	deploy            = "deploy"
 	env               = "env"
+	hostPortEnabled   = "hostPortEnabled"
 	image             = "image"
 	namespace         = "namespace"
 	overridesFileName = "tinkerbell-chart-overrides.yaml"
+	port              = "port"
 
 	boots          = "boots"
 	hegel          = "hegel"
@@ -48,6 +50,7 @@ type Installer struct {
 	namespace       string
 	createNamespace bool
 	bootsOnDocker   bool
+	hostPort        bool
 }
 
 type InstallOption func(s *Installer)
@@ -76,6 +79,13 @@ func WithBootsOnDocker() InstallOption {
 func WithBootsOnKubernetes() InstallOption {
 	return func(s *Installer) {
 		s.bootsOnDocker = false
+	}
+}
+
+// WithHostPortEnabled is an InstallOption that allows you to enable/disable host port for Tinkerbell deployments
+func WithHostPortEnabled(enabled bool) InstallOption {
+	return func(s *Installer) {
+		s.hostPort = enabled
 	}
 }
 
@@ -121,11 +131,17 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: true,
 			image:  bundle.Tink.TinkServer.URI,
 			args:   []string{"--tls=false"},
+			port: map[string]bool{
+				hostPortEnabled: s.hostPort,
+			},
 		},
 		hegel: map[string]interface{}{
 			deploy: true,
 			image:  bundle.Hegel.Image.URI,
 			args:   []string{"--grpc-use-tls=false"},
+			port: map[string]bool{
+				hostPortEnabled: s.hostPort,
+			},
 		},
 		boots: map[string]interface{}{
 			deploy: !s.bootsOnDocker,

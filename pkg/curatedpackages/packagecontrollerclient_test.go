@@ -3,12 +3,13 @@ package curatedpackages_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere-packages/pkg/bundle"
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -50,7 +51,10 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 func TestInstallControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.chartInstaller.EXPECT().InstallChartFromName(tt.ctx, "oci://"+tt.ociUri, tt.kubeConfig, tt.chartName, tt.chartVersion).Return(nil)
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
 
 	err := tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -60,8 +64,11 @@ func TestInstallControllerSuccess(t *testing.T) {
 
 func TestInstallControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
 
-	tt.chartInstaller.EXPECT().InstallChartFromName(tt.ctx, "oci://"+tt.ociUri, tt.kubeConfig, tt.chartName, tt.chartVersion).Return(errors.New("login failed"))
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(errors.New("login failed"))
 
 	err := tt.command.InstallController(tt.ctx)
 	if err == nil {
@@ -72,7 +79,7 @@ func TestInstallControllerFail(t *testing.T) {
 func TestGetActiveControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", bundle.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
 
 	err := tt.command.ValidateControllerDoesNotExist(tt.ctx)
 	if err == nil {
@@ -83,7 +90,7 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 func TestGetActiveControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", bundle.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, errors.New("controller doesn't exist"))
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, errors.New("controller doesn't exist"))
 
 	err := tt.command.ValidateControllerDoesNotExist(tt.ctx)
 	if err != nil {

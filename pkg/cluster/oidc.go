@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func oidcEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -45,4 +49,22 @@ func processOIDC(c *Config, objects ObjectLookup) {
 			c.OIDCConfigs[idp.GetName()] = idp.(*anywherev1.OIDCConfig)
 		}
 	}
+}
+
+func getOIDC(ctx context.Context, client Client, c *Config) error {
+	if c.OIDCConfigs == nil {
+		c.OIDCConfigs = map[string]*anywherev1.OIDCConfig{}
+	}
+
+	for _, idr := range c.Cluster.Spec.IdentityProviderRefs {
+		if idr.Kind == anywherev1.OIDCConfigKind {
+			oidc := &anywherev1.OIDCConfig{}
+			if err := client.Get(ctx, idr.Name, c.Cluster.Namespace, oidc); err != nil {
+				return err
+			}
+			c.OIDCConfigs[oidc.Name] = oidc
+		}
+	}
+
+	return nil
 }
