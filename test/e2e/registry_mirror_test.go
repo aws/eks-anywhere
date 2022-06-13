@@ -34,15 +34,16 @@ func TestVSphereKubernetes123UbuntuRegistryMirrorAndCert(t *testing.T) {
 	runRegistryMirrorConfigFlow(test)
 }
 
-func TestVSphereKubernetes122BottlerocketRegistryMirrorAndCert(t *testing.T) {
+func TestVSphereKubernetes123BottlerocketRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket122(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithBottleRocket123(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithRegistryMirrorEndpointAndCert(),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
