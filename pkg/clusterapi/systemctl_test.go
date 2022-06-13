@@ -61,6 +61,7 @@ func TestRestartContainerdInKubeadmControlPlane(t *testing.T) {
 			clusterapi.RestartContainerdInKubeadmControlPlane(got, tt.cluster)
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = tt.want
+
 			g.Expect(got).To(Equal(want))
 		})
 	}
