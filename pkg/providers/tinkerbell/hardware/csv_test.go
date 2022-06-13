@@ -4,6 +4,8 @@ import (
 	"bytes"
 	stdcsv "encoding/csv"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"testing/iotest"
 
@@ -110,6 +112,36 @@ func TestCSVReaderWithoutBMCHeaders(t *testing.T) {
 			BMCPassword:  "",
 		},
 	))
+}
+
+func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
+	allHeaders := []string{
+		"hostname",
+		"ip_address",
+		"netmask",
+		"gateway",
+		"nameservers",
+		"mac",
+		"disk",
+		"labels",
+	}
+
+	for i, missing := range allHeaders {
+		t.Run(fmt.Sprintf("Missing_%v", missing), func(t *testing.T) {
+			// Create the set of included headers based on the current iteration.
+			included := make([]string, len(allHeaders))
+			copy(included, allHeaders)
+			included = append(included[0:i], included[i+1:]...)
+
+			// Create a buffer containing the included headers so the CSV reader can pull them.
+			buf := bytes.NewBufferString(fmt.Sprintf("%v", strings.Join(included, ",")))
+
+			g := gomega.NewWithT(t)
+			_, err := hardware.NewCSVReader(buf)
+			g.Expect(err).To(gomega.HaveOccurred())
+			g.Expect(err.Error()).To(gomega.ContainSubstring(missing))
+		})
+	}
 }
 
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.
