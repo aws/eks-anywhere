@@ -63,6 +63,10 @@ func (s *Snow) CustomizeProviderConfig(file string) []byte {
 	return s.customizeProviderConfig(file, s.fillers...)
 }
 
+func (s *Snow) CleanupVMs(_ string) error {
+	return nil
+}
+
 func (s *Snow) ClusterConfigFillers() []api.ClusterFiller {
 	ip, err := GenerateUniqueIp(s.cpCidr)
 	if err != nil {

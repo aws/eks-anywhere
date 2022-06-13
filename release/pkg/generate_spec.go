@@ -24,6 +24,8 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
 	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
@@ -684,4 +686,24 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 		}
 	}
 	return semver, nil
+}
+
+func (r *ReleaseConfig) NewBundlesName() string {
+	return fmt.Sprintf("bundles-%d", r.BundleNumber)
+}
+
+func (r *ReleaseConfig) NewBaseBundles() *anywherev1alpha1.Bundles {
+	return &anywherev1alpha1.Bundles{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: anywherev1alpha1.GroupVersion.String(),
+			Kind:       anywherev1alpha1.BundlesKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              r.NewBundlesName(),
+			CreationTimestamp: metav1.Time{Time: r.ReleaseDate},
+		},
+		Spec: anywherev1alpha1.BundlesSpec{
+			Number: r.BundleNumber,
+		},
+	}
 }

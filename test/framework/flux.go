@@ -56,6 +56,7 @@ var fluxGitCreateGenerateRepoEnvVars = []string{
 	GitKnownHosts,
 	GitPrivateKeyFile,
 	GithubUserVar,
+	GithubTokenVar,
 }
 
 func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {

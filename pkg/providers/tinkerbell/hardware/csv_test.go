@@ -54,7 +54,7 @@ func TestCSVReaderWithMultipleLabels(t *testing.T) {
 func TestCSVReaderFromFile(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	reader, err := hardware.NewCSVReaderFromFile("./testdata/hardware.csv")
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware.csv")
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -84,6 +84,32 @@ func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 	_, err := hardware.NewCSVReader(iotest.ErrReader(expect))
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
+}
+
+func TestCSVReaderWithoutBMCHeaders(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	g.Expect(machine).To(gomega.Equal(
+		hardware.Machine{
+			Labels:       map[string]string{"type": "cp"},
+			Nameservers:  []string{"1.1.1.1"},
+			Gateway:      "10.10.10.1",
+			Netmask:      "255.255.255.0",
+			IPAddress:    "10.10.10.10",
+			MACAddress:   "00:00:00:00:00:01",
+			Hostname:     "worker1",
+			Disk:         "/dev/sda",
+			BMCIPAddress: "",
+			BMCUsername:  "",
+			BMCPassword:  "",
+		},
+	))
 }
 
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.

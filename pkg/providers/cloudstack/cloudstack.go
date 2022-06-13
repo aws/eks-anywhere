@@ -633,6 +633,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	values := map[string]interface{}{
 		"clusterName":                            clusterSpec.Cluster.Name,
@@ -679,7 +681,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"kubeletExtraArgs":                       kubeletExtraArgs.ToPartialYaml(),
 		"etcdExtraArgs":                          etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":                       crypto.SecureCipherSuitesString(),
-		"controllermanagerExtraArgs":             sharedExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs":             controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                     sharedExtraArgs.ToPartialYaml(),
 		"format":                                 format,
 		"externalEtcdVersion":                    bundle.KubeDistro.EtcdVersion,

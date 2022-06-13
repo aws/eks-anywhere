@@ -6,6 +6,7 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -220,7 +221,7 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 func TestMatchingDisksForSelectors_SingleMachine_SingleLabelMatches(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	selectors := []hardware.MachineSelector{
+	selectors := []v1alpha1.HardwareSelector{
 		{"type": "cp"},
 	}
 
@@ -238,7 +239,7 @@ func TestMatchingDisksForSelectors_SingleMachine_SingleLabelMatches(t *testing.T
 func TestMatchingDisksForSelectors_SingleMachine_MultipleLabelsMatch(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	selectors := []hardware.MachineSelector{
+	selectors := []v1alpha1.HardwareSelector{
 		{"type": "cp"},
 	}
 
@@ -256,7 +257,7 @@ func TestMatchingDisksForSelectors_SingleMachine_MultipleLabelsMatch(t *testing.
 func TestMatchingDisksForSelectors_SingleMachine_NoMatches(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	selectors := []hardware.MachineSelector{
+	selectors := []v1alpha1.HardwareSelector{
 		{"type": "cp"},
 	}
 
@@ -274,7 +275,7 @@ func TestMatchingDisksForSelectors_SingleMachine_NoMatches(t *testing.T) {
 func TestMatchingDisksForSelectors_MultipleMachines_SameDisk(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	selectors := []hardware.MachineSelector{
+	selectors := []v1alpha1.HardwareSelector{
 		{"type": "cp"},
 	}
 
@@ -301,7 +302,7 @@ func TestMatchingDisksForSelectors_MultipleMachines_SameDisk(t *testing.T) {
 func TestMatchingDisksForSelectors_MultipleMachines_DifferentDisk(t *testing.T) {
 	g := gomega.NewWithT(t)
 
-	selectors := []hardware.MachineSelector{
+	selectors := []v1alpha1.HardwareSelector{
 		{"type": "cp"},
 	}
 

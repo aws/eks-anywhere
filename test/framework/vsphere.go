@@ -1,10 +1,12 @@
 package framework
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
@@ -241,6 +243,10 @@ func (v *VSphere) Setup() {}
 
 func (v *VSphere) CustomizeProviderConfig(file string) []byte {
 	return v.customizeProviderConfig(file, v.fillers...)
+}
+
+func (v *VSphere) CleanupVMs(clusterName string) error {
+	return cleanup.CleanUpVsphereTestResources(context.Background(), clusterName)
 }
 
 func (v *VSphere) customizeProviderConfig(file string, fillers ...api.VSphereFiller) []byte {

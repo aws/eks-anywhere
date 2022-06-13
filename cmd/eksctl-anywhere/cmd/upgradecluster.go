@@ -20,9 +20,10 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
-	wConfig         string
-	forceClean      bool
-	hardwareCSVPath string
+	wConfig               string
+	forceClean            bool
+	hardwareCSVPath       string
+	tinkerbellBootstrapIP string
 }
 
 var uc = &upgradeClusterOptions{}
@@ -116,7 +117,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().

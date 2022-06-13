@@ -20,9 +20,10 @@ import (
 
 type deleteClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceCleanup     bool
-	hardwareFileName string
+	wConfig               string
+	forceCleanup          bool
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var dc = &deleteClusterOptions{}
@@ -104,7 +105,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
