@@ -27,6 +27,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 	github.com/tinkerbell/tink v0.6.1-0.20220509141453-30fe9e015575
+	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
@@ -134,7 +135,6 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
