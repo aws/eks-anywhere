@@ -145,7 +145,7 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 					Name: name,
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
-					TemplateRef: anywherev1.Ref{
+					TemplateRef: &anywherev1.Ref{
 						Name: clusterName,
 						Kind: anywherev1.TinkerbellTemplateConfigKind,
 					},

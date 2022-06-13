@@ -82,7 +82,7 @@ func GetTinkerbellMachineConfigs(fileName string) (map[string]*TinkerbellMachine
 
 func WithTemplateRef(ref ProviderRefAccessor) TinkerbellMachineConfigGenerateOpt {
 	return func(c *TinkerbellMachineConfigGenerate) {
-		c.Spec.TemplateRef = Ref{
+		c.Spec.TemplateRef = &Ref{
 			Kind: ref.Kind(),
 			Name: ref.Name(),
 		}
