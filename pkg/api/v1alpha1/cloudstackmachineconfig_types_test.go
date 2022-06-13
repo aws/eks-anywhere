@@ -400,7 +400,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
 	g.Expect(err != nil).To(BeTrue())
 	g.Expect(fieldName == "mountPath").To(BeTrue())
 	g.Expect(fieldValue == "/").To(BeTrue())
-	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
+	g.Expect(err.Error() == "must start with / and NOT end with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.T) {
@@ -418,7 +418,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.
 	g.Expect(err != nil).To(BeTrue())
 	g.Expect(fieldName == "mountPath").To(BeTrue())
 	g.Expect(fieldValue == "data").To(BeTrue())
-	g.Expect(err.Error() == "must be non-empty and starts with /").To(BeTrue())
+	g.Expect(err.Error() == "must start with / and NOT end with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {
@@ -453,7 +453,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyDevice(t *testing.T) {
 	g.Expect(err != nil).To(BeTrue())
 	g.Expect(fieldName == "device").To(BeTrue())
 	g.Expect(fieldValue == "").To(BeTrue())
-	g.Expect(err.Error() == "empty device").To(BeTrue())
+	g.Expect(err.Error() == "must start with / and NOT end with /").To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyFilesystem(t *testing.T) {

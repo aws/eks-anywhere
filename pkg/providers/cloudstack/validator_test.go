@@ -329,7 +329,7 @@ func TestSetupAndValidateInValidDiskOfferingBadMountPath(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "machine config test validation failed: mountPath: / invalid, must be non-empty and starts with /"
+	wantErrMsg := "machine config test validation failed: mountPath: / invalid, must start with / and NOT end with /"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 
@@ -373,7 +373,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyDevice(t *testing.T) {
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	wantErrMsg := "machine config test validation failed: device:  invalid, empty device"
+	wantErrMsg := "machine config test validation failed: device:  invalid, must start with / and NOT end with /"
 	assert.Contains(t, err.Error(), wantErrMsg, "expected error containing %q, got %v", wantErrMsg, err)
 }
 

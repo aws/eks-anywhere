@@ -16,7 +16,6 @@ package v1alpha1
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -142,14 +141,14 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 
 func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
 	if len(r.Id) > 0 || len(r.Name) > 0 {
-		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
-			return errors.New("must be non-empty and starts with /"), "mountPath", r.MountPath
+		if !isValidAbsolutePath(r.MountPath) {
+			return errors.New("must start with / and NOT end with /"), "mountPath", r.MountPath
 		}
 		if len(r.Filesystem) < 1 {
 			return errors.New("empty filesystem"), "filesystem", r.Filesystem
 		}
-		if len(r.Device) < 1 {
-			return errors.New("empty device"), "device", r.Device
+		if !isValidAbsolutePath(r.Device) {
+			return errors.New("must start with / and NOT end with /"), "device", r.Device
 		}
 		if len(r.Label) < 1 {
 			return errors.New("empty label"), "label", r.Label
@@ -165,12 +164,6 @@ func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, va
 func (r SymlinkMaps) Validate() (err error, field string, value string) {
 	isPortableFileNameSet := regexp.MustCompile(`^[a-zA-Z0-9\.\-\_\/]+$`)
 	for key, value := range r {
-		if !strings.HasPrefix(key, "/") || strings.HasSuffix(key, "/") {
-			return errors.New("must start with / and NOT end with /"), "symlinks", key
-		}
-		if !strings.HasPrefix(value, "/") || strings.HasSuffix(value, "/") {
-			return errors.New("must start with / and NOT end with /"), "symlinks", value
-		}
 		match := isPortableFileNameSet.Match([]byte(key))
 		if !match {
 			return errors.New("has char not in portable file name set"), "symlinks", key
@@ -179,13 +172,19 @@ func (r SymlinkMaps) Validate() (err error, field string, value string) {
 		if !match {
 			return errors.New("has char not in portable file name set"), "symlinks", value
 		}
+		if !isValidAbsolutePath(key) {
+			return errors.New("must start with / and NOT end with /"), "symlinks", key
+		}
+		if !isValidAbsolutePath(value) {
+			return errors.New("must start with / and NOT end with /"), "symlinks", value
+		}
 	}
 	return nil, "", ""
 }
 
 func (r *CloudStackISOAttachment) Validate() (err error, field string, value string) {
 	if len(r.Id) > 0 || len(r.Name) > 0 {
-		if strings.HasSuffix(r.MountPath, "/") || !strings.HasPrefix(r.MountPath, "/") {
+		if !isValidAbsolutePath(r.MountPath) {
 			return errors.New("must start with / and NOT end with /"), "mountPath", r.MountPath
 		}
 		if len(r.Device) < 1 {
@@ -197,6 +196,11 @@ func (r *CloudStackISOAttachment) Validate() (err error, field string, value str
 		}
 	}
 	return nil, "", ""
+}
+
+func isValidAbsolutePath(path string) bool {
+	r := regexp.MustCompile(`^(\/[a-zA-Z_\-0-9\.]+)+$`)
+	return r.Match([]byte(path))
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
