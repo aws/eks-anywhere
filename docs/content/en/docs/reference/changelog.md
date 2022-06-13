@@ -4,6 +4,13 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
+## Unreleased
+
+### Added
+
+### Fixed
+- Fix issue using self-signed certificates for registry mirror [#1857](https://github.com/aws/eks-anywhere/issues/1857)
+
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
 ### Added
