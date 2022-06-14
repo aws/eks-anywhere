@@ -61,7 +61,7 @@ In the example above, a /23 subnet mask is used, allowing you to use up to 510 I
 ### gateway
 IP address of the interface that provides access (the gateway) to the Internet.
 ### nameservers
-The IP address of the DNS server that provides public DNS service to the cluster.
+The IP address of the server that you want to provide DNS service to the cluster.
 ### labels
 This optional field lets you set lables on each node that are added to any labels set on that node by the cluster.
 These labels consist of key/value pairs that can be used by Kubernetes to match workloads that request nodes with those lables.
