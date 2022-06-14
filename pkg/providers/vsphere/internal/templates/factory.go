@@ -20,6 +20,7 @@ type Factory struct {
 	client          GovcClient
 	datacenter      string
 	datastore       string
+	network         string
 	resourcePool    string
 	templateLibrary string
 	tagsFactory     *tags.Factory
@@ -27,7 +28,7 @@ type Factory struct {
 
 type GovcClient interface {
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeBRDisk bool) error
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
@@ -40,11 +41,12 @@ type GovcClient interface {
 	CreateCategoryForVM(ctx context.Context, name string) error
 }
 
-func NewFactory(client GovcClient, datacenter, datastore, resourcePool, templateLibrary string) *Factory {
+func NewFactory(client GovcClient, datacenter, datastore, network, resourcePool, templateLibrary string) *Factory {
 	return &Factory{
 		client:          client,
 		datacenter:      datacenter,
 		datastore:       datastore,
+		network:         network,
 		resourcePool:    resourcePool,
 		templateLibrary: templateLibrary,
 		tagsFactory:     tags.NewFactory(client),
@@ -92,7 +94,7 @@ func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFa
 	if strings.EqualFold(osFamily, string(v1alpha1.Bottlerocket)) {
 		resizeBRDisk = true
 	}
-	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.datacenter, f.datastore, f.resourcePool, resizeBRDisk); err != nil {
+	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.datacenter, f.datastore, f.network, f.resourcePool, resizeBRDisk); err != nil {
 		return fmt.Errorf("failed deploying template: %v", err)
 	}
 
