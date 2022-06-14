@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -16,9 +17,7 @@ type Installer struct {
 	packagesLocation string
 }
 
-func NewInstaller(installer ChartInstaller, runner KubectlRunner,
-	spec *cluster.Spec, packagesLocation string) *Installer {
-
+func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
 	return &Installer{
 		chartInstaller:   installer,
 		kubectlRunner:    runner,

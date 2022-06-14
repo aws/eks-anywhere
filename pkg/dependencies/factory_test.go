@@ -2,7 +2,6 @@ package dependencies_test
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"os"
 	"testing"
 
@@ -12,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type factoryTest struct {
@@ -138,7 +138,6 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 
 func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 	tt := newTest(t)
-	//registryName, kubeVersion string, version version.Info
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithHelm().
@@ -151,7 +150,6 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 
 func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 	tt := newTest(t)
-	//registryName, kubeVersion string, version version.Info
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithManifestReader().
