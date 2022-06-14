@@ -141,17 +141,17 @@ func (mr *MockProviderGovcClientMockRecorder) DeleteLibraryElement(arg0, arg1 in
 }
 
 // DeployTemplateFromLibrary mocks base method.
-func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5, arg6 string, arg7 bool) error {
+func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5, arg6, arg7 string, arg8 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployTemplateFromLibrary indicates an expected call of DeployTemplateFromLibrary.
-func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
+func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 }
 
 // GetCertThumbprint mocks base method.
