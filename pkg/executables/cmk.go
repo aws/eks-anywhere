@@ -37,14 +37,6 @@ type Cmk struct {
 	config     decoder.CloudStackExecConfig
 }
 
-type cmkExecConfig struct {
-	CloudStackApiKey        string
-	CloudStackSecretKey     string
-	CloudStackManagementUrl string
-	CloudMonkeyVerifyCert   string
-	CloudMonkeyTimeout      string
-}
-
 func (c *Cmk) Close(ctx context.Context) error {
 	return nil
 }
@@ -462,14 +454,8 @@ func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 		cloudstackPreflightTimeout = timeout
 	}
 
-	cmkConfig := &cmkExecConfig{
-		CloudStackApiKey:        c.config.ApiKey,
-		CloudStackSecretKey:     c.config.SecretKey,
-		CloudStackManagementUrl: c.config.ManagementUrl,
-		CloudMonkeyVerifyCert:   c.config.VerifySsl,
-		CloudMonkeyTimeout:      cloudstackPreflightTimeout,
-	}
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
+	c.config.Timeout = cloudstackPreflightTimeout
+	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, cmkConfigFileName)
 	if err != nil {
 		return "", fmt.Errorf("creating file for cmk config: %v", err)
 	}

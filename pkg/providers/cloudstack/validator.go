@@ -72,9 +72,18 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	if err != nil {
 		return fmt.Errorf("parsing cloudstack secret: %v", err)
 	}
-	if execConfig.ManagementUrl != datacenterConfig.Spec.ManagementApiEndpoint {
-		return fmt.Errorf("cloudstack secret management url (%s) differs from cluster spec management url (%s)",
-			execConfig.ManagementUrl, datacenterConfig.Spec.ManagementApiEndpoint)
+
+	found := false
+	for _, instance := range execConfig.Instances {
+		if instance.ManagementUrl == datacenterConfig.Spec.ManagementApiEndpoint {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return fmt.Errorf("cluster spec management url (%s) is not found in the cloudstack secret",
+			datacenterConfig.Spec.ManagementApiEndpoint)
 	}
 
 	if err := v.validateDomainAndAccount(ctx, datacenterConfig); err != nil {

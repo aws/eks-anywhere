@@ -157,7 +157,7 @@ func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
 	datacenterConfig.Spec.ManagementApiEndpoint = "abcefg.com"
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
-	thenErrorExpected(t, "cloudstack secret management url (http://127.16.0.1:8080/client/api) differs from cluster spec management url (abcefg.com)", err)
+	thenErrorExpected(t, "cluster spec management url (abcefg.com) is not found in the cloudstack secret", err)
 }
 
 func TestSetupAndValidateDiskOfferingEmpty(t *testing.T) {

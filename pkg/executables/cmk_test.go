@@ -33,9 +33,13 @@ const (
 )
 
 var execConfig = decoder.CloudStackExecConfig{
-	ApiKey:        "test",
-	SecretKey:     "test",
-	ManagementUrl: "http://1.1.1.1:8080/client/api",
+	Instances: []decoder.CloudStackInstanceConfig{
+		{
+			ApiKey:        "test",
+			SecretKey:     "test",
+			ManagementUrl: "http://1.1.1.1:8080/client/api",
+		},
+	},
 }
 
 var zones = []v1alpha1.CloudStackZone{
