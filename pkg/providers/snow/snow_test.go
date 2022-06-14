@@ -11,13 +11,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -336,7 +336,7 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			"snow-test",
 			constants.EksaSystemNamespace,
 			&controlplanev1.KubeadmControlPlane{},
 		).
@@ -359,52 +359,66 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 
 func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 	tt := newSnowTest(t)
+	mt := wantSnowMachineTemplate()
 	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			"snow-test",
 			constants.EksaSystemNamespace,
 			&controlplanev1.KubeadmControlPlane{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "snow-test-control-plane-1"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp-1",
+			"snow-test-control-plane-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
 			wantSnowMachineTemplate().DeepCopyInto(obj)
-			obj.SetName("test-cp-1")
+			obj.SetName("snow-test-control-plane-1")
 			obj.Spec.Template.Spec.InstanceType = "sbe-c.large"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.MachineDeploymentName(tt.clusterSpec, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			"snow-test-md-0",
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
-			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn-1"
+			wantMachineDeployment().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-wn-1",
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
-			wantSnowMachineTemplate().DeepCopyInto(obj)
-			obj.SetName("test-wn-1")
+			mt.DeepCopyInto(obj)
+			obj.SetName("snow-test-md-0-1")
 			return nil
 		})
 

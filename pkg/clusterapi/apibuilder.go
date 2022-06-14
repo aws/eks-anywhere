@@ -146,11 +146,13 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs(),
+						Taints:           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs(),
+						Taints:           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},
 				PreKubeadmCommands:  []string{},
@@ -193,6 +195,7 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 							KubeletExtraArgs: map[string]string{},
+							Taints:           workerNodeGroupConfig.Taints,
 						},
 					},
 					PreKubeadmCommands:  []string{},
