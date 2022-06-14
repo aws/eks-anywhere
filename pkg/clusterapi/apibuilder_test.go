@@ -77,6 +77,10 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 							TimeAdded: nil,
 						},
 					},
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
 				},
 				KubernetesVersion: "1.21",
 			},
@@ -109,6 +113,9 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 				Effect:    v1.TaintEffectNoSchedule,
 				TimeAdded: nil,
 			},
+		},
+		Labels: map[string]string{
+			"key3": "val3",
 		},
 	}
 
@@ -246,7 +253,10 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: tlsCipherSuitesArgs(),
+						KubeletExtraArgs: map[string]string{
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"node-labels":       "key1=val1,key2=val2",
+						},
 						Taints: []v1.Taint{
 							{
 								Key:       "key1",
@@ -259,7 +269,10 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: tlsCipherSuitesArgs(),
+						KubeletExtraArgs: map[string]string{
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"node-labels":       "key1=val1,key2=val2",
+						},
 						Taints: []v1.Taint{
 							{
 								Key:       "key1",
@@ -314,7 +327,9 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: map[string]string{},
+							KubeletExtraArgs: map[string]string{
+								"node-labels": "key3=val3",
+							},
 							Taints: []v1.Taint{
 								{
 									Key:       "key2",

@@ -110,7 +110,10 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -123,7 +126,10 @@ func TestConfigureAWSIAMAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -294,7 +300,10 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -307,7 +316,10 @@ func TestConfigureOIDCInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -405,7 +417,10 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						InitConfiguration: &bootstrapv1.InitConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
@@ -418,7 +433,10 @@ func TestConfigurePodIamAuthInKubeadmControlPlane(t *testing.T) {
 						},
 						JoinConfiguration: &bootstrapv1.JoinConfiguration{
 							NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-								KubeletExtraArgs: tlsCipherSuitesArgs(),
+								KubeletExtraArgs: map[string]string{
+									"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+									"node-labels":       "key1=val1,key2=val2",
+								},
 								Taints: []v1.Taint{
 									{
 										Key:       "key1",
