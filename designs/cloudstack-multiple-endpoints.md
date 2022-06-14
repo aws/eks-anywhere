@@ -105,7 +105,7 @@ for failureDomain in failureDomains:
 
 
 In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
-and mapped to a given failure domain by the API endpoint path. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
+only as a list corresponding to failure domains. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
 
 ```
 [Global]
@@ -145,6 +145,8 @@ Our customer currently has clusters running with the old resource definition. In
 2. Introduce an eks-a version bump with conversion webhooks
 
 Between these two approaches, I would take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
+
+However, given that the Cloudstack credentials are persisted in a write-once secret on the cluster, upgrading existing clusters may not be feasible unless CAPC supports overwriting that secret.
 
 ## User Experience
 
