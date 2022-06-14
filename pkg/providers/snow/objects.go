@@ -92,7 +92,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 		}
 
 		// fetch the existing kubeadmConfigTemplate from cluster
-		oldConfigTemplate, err := clusterapi.KubeadmConfigTemplateInCluster(ctx, kubeClient, clusterSpec, md)
+		oldConfigTemplate, err := clusterapi.KubeadmConfigTemplateInCluster(ctx, kubeClient, md)
 		if err != nil {
 			return nil, nil, err
 		}
