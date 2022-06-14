@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -128,6 +129,59 @@ func TestNewSpecValid(t *testing.T) {
 		t.Fatalf("NewSpec() error = %v, want err nil", err)
 	}
 
+	validateSpecFromSimpleBundle(t, gotSpec)
+}
+
+func TestNewSpecFromClusterConfigTinkerbellValid(t *testing.T) {
+	g := NewWithT(t)
+	v := version.Info{GitVersion: "v0.0.1"}
+	wantConfigs := map[string]*anywherev1.TinkerbellTemplateConfig{
+		"tink-test": {
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "TinkerbellTemplateConfig",
+				APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "tink-test",
+			},
+			Spec: anywherev1.TinkerbellTemplateConfigSpec{
+				Template: tinkerbell.Workflow{
+					Version:       "0.1",
+					Name:          "tink-test",
+					GlobalTimeout: 6000,
+					Tasks: []tinkerbell.Task{
+						{
+							Name:       "tink-test",
+							WorkerAddr: "{{.device_1}}",
+							Volumes: []string{
+								"/dev:/dev",
+								"/dev/console:/dev/console",
+								"/lib/firmware:/lib/firmware:ro",
+							},
+							Actions: []tinkerbell.Action{
+								{
+									Name:    "stream-image",
+									Image:   "image2disk:v1.0.0",
+									Timeout: 360,
+									Environment: map[string]string{
+										"IMG_URL":    "",
+										"DEST_DISK":  "/dev/sda",
+										"COMPRESSED": "true",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	gotSpec, err := cluster.NewSpecFromClusterConfig("testdata/cluster_tinkerbell_1_19.yaml", v,
+		cluster.WithReleasesManifest("testdata/simple_release.yaml"),
+	)
+
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(gotSpec.TinkerbellTemplateConfigs).To(Equal(wantConfigs))
 	validateSpecFromSimpleBundle(t, gotSpec)
 }
 
@@ -282,4 +336,47 @@ func TestBundlesRefDefaulter(t *testing.T) {
 			g.Expect(tt.config).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestBuildSpecFromBundles(t *testing.T) {
+	g := NewWithT(t)
+	clus := &anywherev1.Cluster{
+		Spec: anywherev1.ClusterSpec{
+			KubernetesVersion: anywherev1.Kube123,
+		},
+	}
+
+	bundles := &v1alpha1.Bundles{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "bundles-1",
+		},
+		Spec: v1alpha1.BundlesSpec{
+			VersionsBundles: []v1alpha1.VersionsBundle{
+				{
+					KubeVersion: "1.23",
+				},
+			},
+		},
+	}
+
+	eksdRelease, wantKubeDistro := wantKubeDistroForEksdRelease()
+
+	wantSpec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: clus,
+		},
+		VersionsBundle: &cluster.VersionsBundle{
+			VersionsBundle: &bundles.Spec.VersionsBundles[0],
+			KubeDistro:     wantKubeDistro,
+		},
+		Bundles: bundles,
+	}
+
+	spec, err := cluster.BuildSpecFromBundles(clus, bundles, cluster.WithEksdRelease(eksdRelease))
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(spec.Config).To(Equal(wantSpec.Config))
+	g.Expect(spec.AWSIamConfig).To(Equal(wantSpec.AWSIamConfig))
+	g.Expect(spec.OIDCConfig).To(Equal(wantSpec.OIDCConfig))
+	g.Expect(spec.Bundles).To(Equal(wantSpec.Bundles))
+	g.Expect(spec.VersionsBundle).To(Equal(wantSpec.VersionsBundle))
 }

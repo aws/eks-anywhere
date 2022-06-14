@@ -194,7 +194,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig.Cluster.Spec.KubernetesVersion, bundlesManifest)
+	versionsBundle, err := GetVersionsBundle(clusterConfig.Cluster, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -204,31 +204,8 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	kubeDistro, err := buildKubeDistro(eksd)
-	if err != nil {
+	if err = s.init(clusterConfig, bundlesManifest, versionsBundle, eksd); err != nil {
 		return nil, err
-	}
-
-	s.Bundles = bundlesManifest
-	s.Config = clusterConfig
-	s.VersionsBundle = &VersionsBundle{
-		VersionsBundle: versionsBundle,
-		KubeDistro:     kubeDistro,
-	}
-	s.eksdRelease = eksd
-
-	// Get first aws iam config if it exists
-	// Config supports multiple configs because Cluster references a slice
-	// But we validate that only one of each type is referenced
-	for _, ac := range s.Config.AWSIAMConfigs {
-		s.AWSIamConfig = ac
-		break
-	}
-
-	// Get first oidc config if it exists
-	for _, oc := range s.Config.OIDCConfigs {
-		s.OIDCConfig = oc
-		break
 	}
 
 	switch s.Cluster.Spec.DatacenterRef.Kind {
@@ -249,10 +226,42 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	return s, nil
 }
 
+// init does the basic initialization with the provided necessary api objects
+func (s *Spec) init(config *Config, bundles *v1alpha1.Bundles, versionsBundle *v1alpha1.VersionsBundle, eksdRelease *eksdv1alpha1.Release) error {
+	kubeDistro, err := buildKubeDistro(eksdRelease)
+	if err != nil {
+		return err
+	}
+
+	s.Bundles = bundles
+	s.Config = config
+	s.VersionsBundle = &VersionsBundle{
+		VersionsBundle: versionsBundle,
+		KubeDistro:     kubeDistro,
+	}
+	s.eksdRelease = eksdRelease
+
+	// Get first aws iam config if it exists
+	// Config supports multiple configs because Cluster references a slice
+	// But we validate that only one of each type is referenced
+	for _, ac := range s.Config.AWSIAMConfigs {
+		s.AWSIamConfig = ac
+		break
+	}
+
+	// Get first oidc config if it exists
+	for _, oc := range s.Config.OIDCConfigs {
+		s.OIDCConfig = oc
+		break
+	}
+
+	return nil
+}
+
 func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundlesManifest *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
-	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundlesManifest)
+	versionsBundle, err := GetVersionsBundle(cluster, bundlesManifest)
 	if err != nil {
 		return nil, err
 	}
