@@ -13,7 +13,6 @@ const (
 	EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	EksaCloudStackHostPathToMount         = "EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT"
-	defaultSectionName                    = "DEFAULT"
 )
 
 // ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
@@ -32,10 +31,10 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	}
 
 	verifySslValue := "true"
-	cloudstackInstances := []CloudStackInstanceConfig{}
+	cloudstackInstances := []CloudStackProfileConfig{}
 	sections := cfg.Sections()
 	for _, section := range sections {
-		if section.Name() == defaultSectionName {
+		if section.Name() == "DEFAULT" {
 			verifySsl, err := section.GetKey("verify-ssl")
 			if err == nil {
 				verifySslValue = verifySsl.Value()
@@ -58,7 +57,7 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
-		cloudstackInstances = append(cloudstackInstances, CloudStackInstanceConfig{
+		cloudstackInstances = append(cloudstackInstances, CloudStackProfileConfig{
 			Name:          section.Name(),
 			ApiKey:        apiKey.Value(),
 			SecretKey:     secretKey.Value(),
@@ -77,12 +76,12 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 }
 
 type CloudStackExecConfig struct {
-	Instances []CloudStackInstanceConfig
+	Instances []CloudStackProfileConfig
 	VerifySsl string
 	Timeout   string
 }
 
-type CloudStackInstanceConfig struct {
+type CloudStackProfileConfig struct {
 	Name          string
 	ApiKey        string
 	SecretKey     string

@@ -33,7 +33,7 @@ const (
 )
 
 var execConfig = decoder.CloudStackExecConfig{
-	Instances: []decoder.CloudStackInstanceConfig{
+	Instances: []decoder.CloudStackProfileConfig{
 		{
 			ApiKey:        "test",
 			SecretKey:     "test",

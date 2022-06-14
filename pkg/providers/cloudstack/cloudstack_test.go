@@ -32,7 +32,6 @@ const (
 	eksd119Release         = "kubernetes-1-19-eks-4"
 
 	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
-	[Global]
 	verify-ssl = false
 
 	[Instance1]
@@ -40,7 +39,7 @@ const (
 	secret-key = test-secret1
 	api-url = http://127.16.0.1:8080/client/api
 	*/
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCgpbSW5zdGFuY2UxXQphcGkta2V5ID0gdGVzdC1rZXkxCnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldDEKYXBpLXVybCA9IGh0dHA6Ly8xMjcuMTYuMC4xOjgwODAvY2xpZW50L2FwaQ=="
+	expectedCloudStackCloudConfig = "dmVyaWZ5LXNzbCA9IGZhbHNlCgpbSW5zdGFuY2UxXQphcGkta2V5ID0gdGVzdC1rZXkxCnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldDEKYXBpLXVybCA9IGh0dHA6Ly8xMjcuMTYuMC4xOjgwODAvY2xpZW50L2FwaQo="
 )
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {

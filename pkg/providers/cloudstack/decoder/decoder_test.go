@@ -40,7 +40,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			configFile: "../testdata/cloudstack_config_valid.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Instances: []decoder.CloudStackProfileConfig{
 					{
 						Name:          "Instance1",
 						ApiKey:        "test-key1",
@@ -57,7 +57,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			configFile: "../testdata/cloudstack_config_multiple_instances.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Instances: []decoder.CloudStackProfileConfig{
 					{
 						Name:          "Instance1",
 						ApiKey:        "test-key1",
@@ -95,7 +95,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			configFile: "../testdata/cloudstack_config_missing_verifyssl.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Instances: []decoder.CloudStackProfileConfig{
 					{
 						Name:          "Instance1",
 						ApiKey:        "test-key1",
@@ -132,7 +132,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			g := NewWithT(t)
 			configString := test.ReadFile(t, tc.configFile)
 			encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
-			os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
+			tt.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
 			gotConfig, err := decoder.ParseCloudStackSecret()
 			if tc.wantErr {
