@@ -251,6 +251,7 @@ func TestTinkerbellKubernetes123SimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
+		framework.WithEnvVar("K8S_1_23_SUPPORT", "true"),
 	)
 	runTinkerbellSimpleFlow(test)
 }
