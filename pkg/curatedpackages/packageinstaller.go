@@ -2,7 +2,7 @@ package curatedpackages
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -16,7 +16,7 @@ type Installer struct {
 	packagesLocation string
 }
 
-func NewPackageInstaller(installer ChartInstaller, runner KubectlRunner,
+func NewInstaller(installer ChartInstaller, runner KubectlRunner,
 	spec *cluster.Spec, packagesLocation string) *Installer {
 
 	return &Installer{
@@ -27,24 +27,31 @@ func NewPackageInstaller(installer ChartInstaller, runner KubectlRunner,
 	}
 }
 
-func (pi *Installer) InstallCuratedPackages(ctx context.Context) {
+func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
 	err := pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
+		return err
 	}
 
 	err = pi.installPackages(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
+		return err
 	}
+	return nil
 }
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
-	logger.Info("Installing curated packages controller on workload cluster")
+	logger.Info("Installing curated packages controller on management cluster")
 	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
 
-	chart := pi.spec.VersionsBundle.VersionsBundle.PackageController.HelmChart
+	versionsBundle := pi.spec.VersionsBundle
+	if versionsBundle == nil {
+		return fmt.Errorf("unknown release bundle")
+	}
+	chart := versionsBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(chart.Image(), pi.spec.Cluster.RegistryMirror())
 	pc := NewPackageControllerClient(pi.chartInstaller, pi.kubectlRunner, kubeConfig, imageUrl, chart.Name, chart.Tag())
 	err := pc.InstallController(ctx)

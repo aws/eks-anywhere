@@ -2,6 +2,7 @@ package dependencies_test
 
 import (
 	"context"
+	"github.com/aws/eks-anywhere/pkg/version"
 	"os"
 	"testing"
 
@@ -120,4 +121,43 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithPackageInstaller(t *testing.T) {
+	clusterSpec := &cluster.Spec{}
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithHelm().
+		WithKubectl().
+		WithPackageInstaller(clusterSpec, "/test/packages.yaml").
+		Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
+	tt := newTest(t)
+	//registryName, kubeVersion string, version version.Info
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithHelm().
+		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
+	tt := newTest(t)
+	//registryName, kubeVersion string, version version.Info
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
 }

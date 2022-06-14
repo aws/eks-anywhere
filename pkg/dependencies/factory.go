@@ -793,7 +793,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 			return nil
 		}
 
-		f.dependencies.PackageInstaller = curatedpackages.NewPackageInstaller(
+		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec,
