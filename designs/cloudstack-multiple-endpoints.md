@@ -6,7 +6,7 @@
 
 The mangement API endpoint for Apache Cloudstack (ACS) is a singe point of failure. If the endpoint goes down, then control of all of all VM's, networks, zones, accounts, domains, and everything else on Cloudstack goes down. So, we want to spread our clusters across many Cloudstack endpoints and hosts to protect against that.
 
-For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput for our customer. Just one cluster creation as many as a thousand API calls to ACS (estimated). There are many ways to support this scale, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
+For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput. Just one cluster creation triggers as many as a thousand API calls to ACS (estimated). There are many ways to support this scale, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
 
 In CAPC, we are considering addressing the problem by extending our use of the concept of [Failure Domains](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=failure%20domain#optional-support-failure-domains) and distributing a cluster across the given ones. However, instead of a failure domain consisting of a zone on a single Cloudstack endpoint, we will redefine it to consist of the unique combination of a Cloudstack zone, api endpoint, account, and domain. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
 
@@ -81,7 +81,7 @@ and we would parse these resources and pass them into CAPC by modifying the temp
 ### Failure Domain
 
 A failure domain is a CAPI concept which serves to improve HA and availability by destributing machines across "failure domains", as discussed [here](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=domain#optional-support-failure-domains). 
-CAPC currently utilizes them to distribute machines across CloudStack Zones. However, we now want to go a step further to support our customer and consider the following unique combination to be a failure domain:
+CAPC currently utilizes them to distribute machines across CloudStack Zones. However, we now want to go a step further and consider the following unique combination to be a failure domain:
 
 1. Cloudstack endpoint
 2. Cloudstack domain
@@ -92,7 +92,7 @@ You can find more information about these Cloudstack resources [here](http://doc
 
 ### `CloudstackDatacenterConfig` Validation
 
-With the multi-endpoint system for the Cloudstack provider, customers reference a CloudstackMachineConfig and it's created across multiple failure domains. The implication
+With the multi-endpoint system for the Cloudstack provider, users reference a CloudstackMachineConfig and it's created across multiple failure domains. The implication
 is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the failure domains, or all the Cloudstack endpoints,
 and these resources must be referenced by name, not unique ID. This would mean that for each CloudstackMachineConfig, we have to make sure that all the prerequisite
 Cloudstack resources are available in all the Cloudstack API endpoints. 
@@ -142,8 +142,8 @@ be passed along to CAPC and used by the CAPC controller just like it is currentl
 
 ### Backwards Compatibility
 
-Our customer currently has clusters running with the old resource definition. In order to support backwards compatibility in the CloudstackDatacenterConfig resource, we can
-1. Make all the fields optional and see if customers have the old fields set or the new ones
+In order to support backwards compatibility in the CloudstackDatacenterConfig resource for users with existing clusters, we can
+1. Make all the fields optional and see if the user has the old fields set or the new ones
 2. Introduce an eks-a version bump with conversion webhooks
 
 Between these two approaches, I would take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
