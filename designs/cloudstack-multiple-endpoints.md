@@ -143,7 +143,7 @@ be passed along to CAPC and used by the CAPC controller just like it is currentl
 ### Backwards Compatibility
 
 In order to support backwards compatibility in the CloudstackDatacenterConfig resource for users with existing clusters, we can
-1. Make all the fields optional and see if the user has the old fields set or the new ones
+1. Make all the fields optional and see if the user has the old fields set or the new ones, then write a transformer to set the new fields and clean up the old ones
 2. Introduce an eks-a version bump with conversion webhooks
 
 Between these two approaches, I would take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
