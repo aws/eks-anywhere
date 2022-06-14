@@ -361,12 +361,17 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.ManagementUrl) <= 0 {
-		return errors.New("cloudstack management api url is not set or is empty")
+	if len(execConfig.Instances) <= 0 {
+		return errors.New("cloudstack instances are not defined")
 	}
-	if err := p.validateManagementApiEndpoint(execConfig.ManagementUrl); err != nil {
-		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is invalid")
+
+	for _, instance := range execConfig.Instances {
+		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
+			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid",
+				instance.Name, instance.ManagementUrl)
+		}
 	}
+
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
