@@ -143,6 +143,14 @@ func WithUbuntu123Tinkerbell() TinkerbellOpt {
 	}
 }
 
+func WithBottleRocketTinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
 func WithTinkerbellExternalEtcdTopology(count int) TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append([]api.TinkerbellFiller{api.WithTinkerbellEtcdMachineConfig()}, t.fillers...)
