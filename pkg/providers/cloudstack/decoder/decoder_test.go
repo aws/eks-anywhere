@@ -109,12 +109,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 		},
 		{
 			name:       "Invalid verifyssl",
-			configFile: "../testdata/cloudstack_config_missing_global_section.ini",
-			wantErr:    true,
-		},
-		{
-			name:       "Missing global section",
-			configFile: "../testdata/cloudstack_config_missing_global_section.ini",
+			configFile: "../testdata/cloudstack_config_invalid_verifyssl.ini",
 			wantErr:    true,
 		},
 		{
@@ -148,6 +143,32 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 					t.Errorf("%v got = %v, want %v", tc.name, gotConfig, tc.wantConfig)
 				}
 			}
+			tctx.restoreContext()
 		})
 	}
+}
+
+func TestCloudStackConfigDecoderInvalidEncoding(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+	os.Clearenv()
+
+	g := NewWithT(t)
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, "xxx")
+
+	_, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).NotTo(BeNil())
+	tctx.restoreContext()
+}
+
+func TestCloudStackConfigDecoderNoEnvVariable(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+	os.Clearenv()
+
+	g := NewWithT(t)
+
+	_, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).NotTo(BeNil())
+	tctx.restoreContext()
 }

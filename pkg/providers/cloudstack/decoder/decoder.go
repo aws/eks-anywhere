@@ -13,7 +13,6 @@ const (
 	EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	EksaCloudStackHostPathToMount         = "EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT"
-	globalSectionName                     = "Global"
 	defaultSectionName                    = "DEFAULT"
 )
 
@@ -31,23 +30,19 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
-	globalSection, err := cfg.GetSection(globalSectionName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract section '%s' from %s: %v", globalSectionName, EksacloudStackCloudConfigB64SecretKey, err)
-	}
-	verifySsl, err := globalSection.GetKey("verify-ssl")
-	verifySslValue := "true"
-	if err == nil {
-		verifySslValue = verifySsl.Value()
-		if _, err := strconv.ParseBool(verifySslValue); err != nil {
-			return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
-		}
-	}
 
+	verifySslValue := "true"
 	cloudstackInstances := []CloudStackInstanceConfig{}
 	sections := cfg.Sections()
 	for _, section := range sections {
-		if section.Name() == globalSectionName || section.Name() == defaultSectionName {
+		if section.Name() == defaultSectionName {
+			verifySsl, err := section.GetKey("verify-ssl")
+			if err == nil {
+				verifySslValue = verifySsl.Value()
+				if _, err := strconv.ParseBool(verifySslValue); err != nil {
+					return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
+				}
+			}
 			continue
 		}
 
