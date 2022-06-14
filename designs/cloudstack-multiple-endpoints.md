@@ -4,7 +4,7 @@
 
 **Problem:** 
 
-The mangement API endpoint for Cloudstack is a potential points of failure. If one endpoint goes down, then control of all of everything goes down. So, we want to spread our services across many Cloudstack endpoints and hosts to protect against that.
+The mangement API endpoint for Apache Cloudstack (ACS) is a singe point of failure. If the endpoint goes down, then control of all of all VM's, networks, zones, accounts, domains, and everything else on Cloudstack goes down. So, we want to spread our clusters across many Cloudstack endpoints and hosts to protect against that.
 
 For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput for our customer. Just one cluster creation as many as a thousand API calls to ACS (estimated). There are many ways to support this scale, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
 
