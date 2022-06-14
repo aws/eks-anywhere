@@ -1358,6 +1358,132 @@ func TestKubectlGetMachineDeployments(t *testing.T) {
 	}
 }
 
+func TestKubectlCountMachineDeploymentReplicasReady(t *testing.T) {
+	tests := []struct {
+		testName         string
+		jsonResponseFile string
+		wantError        bool
+		wantTotal        int
+		wantReady        int
+		returnError      bool
+	}{
+		{
+			testName:         "no machine deployments",
+			jsonResponseFile: "testdata/kubectl_no_machine_deployments.json",
+			wantError:        false,
+			wantReady:        0,
+			wantTotal:        0,
+			returnError:      false,
+		},
+		{
+			testName:         "multiple machine deployments",
+			jsonResponseFile: "testdata/kubectl_machine_deployments.json",
+			wantError:        false,
+			wantReady:        2,
+			wantTotal:        2,
+			returnError:      false,
+		},
+		{
+			testName:         "multiple machine deployments with unready replicas",
+			jsonResponseFile: "testdata/kubectl_machine_deployments_unready.json",
+			wantError:        false,
+			wantReady:        2,
+			wantTotal:        3,
+			returnError:      false,
+		},
+		{
+			testName:         "non-running machine deployments",
+			jsonResponseFile: "testdata/kubectl_machine_deployments_provisioned.json",
+			wantError:        true,
+			wantReady:        0,
+			wantTotal:        0,
+			returnError:      false,
+		},
+		{
+			testName:         "unavailable replicas",
+			jsonResponseFile: "testdata/kubectl_machine_deployments_unavailable.json",
+			wantError:        true,
+			wantReady:        0,
+			wantTotal:        0,
+		},
+		{
+			testName:         "error response",
+			jsonResponseFile: "",
+			wantError:        true,
+			wantReady:        0,
+			wantTotal:        0,
+			returnError:      true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.testName, func(t *testing.T) {
+			k, ctx, cluster, e := newKubectl(t)
+			tt := newKubectlTest(t)
+			if tc.returnError {
+				e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(""), errors.New(""))
+			} else {
+				fileContent := test.ReadFile(t, tc.jsonResponseFile)
+				e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(fileContent), nil)
+			}
+
+			ready, total, err := k.CountMachineDeploymentReplicasReady(ctx, cluster.Name, cluster.KubeconfigFile)
+			if tc.wantError {
+				tt.Expect(err).NotTo(BeNil())
+			} else {
+				tt.Expect(err).To(BeNil())
+			}
+			tt.Expect(ready).To(Equal(tc.wantReady))
+			tt.Expect(total).To(Equal(tc.wantTotal))
+		})
+	}
+}
+
+func TestKubectlValidateWorkerNodes(t *testing.T) {
+	tests := []struct {
+		testName         string
+		jsonResponseFile string
+		wantError        bool
+	}{
+		{
+			testName:         "no machine deployments",
+			jsonResponseFile: "testdata/kubectl_no_machine_deployments.json",
+			wantError:        false,
+		},
+		{
+			testName:         "multiple machine deployments",
+			jsonResponseFile: "testdata/kubectl_machine_deployments.json",
+			wantError:        false,
+		},
+		{
+			testName:         "multiple machine deployments with unready replicas",
+			jsonResponseFile: "testdata/kubectl_machine_deployments_unready.json",
+			wantError:        true,
+		},
+		{
+			testName:         "non-running machine deployments",
+			jsonResponseFile: "testdata/kubectl_machine_deployments_provisioned.json",
+			wantError:        true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.testName, func(t *testing.T) {
+			k, ctx, cluster, e := newKubectl(t)
+			tt := newKubectlTest(t)
+			fileContent := test.ReadFile(t, tc.jsonResponseFile)
+			e.EXPECT().Execute(ctx, []string{"get", "machinedeployments.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "eksa-system"}).Return(*bytes.NewBufferString(fileContent), nil)
+
+			err := k.ValidateWorkerNodes(ctx, cluster.Name, cluster.KubeconfigFile)
+			if tc.wantError {
+				tt.Expect(err).NotTo(BeNil())
+			} else {
+				tt.Expect(err).To(BeNil())
+			}
+		})
+	}
+}
+
 func TestKubectlGetKubeAdmControlPlanes(t *testing.T) {
 	tests := []struct {
 		testName         string

@@ -480,24 +480,35 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	ready, total, err := k.CountMachineDeploymentReplicasReady(ctx, clusterName, kubeconfig)
 	if err != nil {
 		return err
 	}
+	if ready != total {
+		return fmt.Errorf("%d machine deployment replicas are not ready", total-ready)
+	}
+	return nil
+}
+
+func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfig string) (ready, total int, err error) {
+	logger.V(6).Info("counting ready machine deployment replicas", "cluster", clusterName)
+	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return 0, 0, err
+	}
 	for _, machineDeployment := range deployments {
 		if machineDeployment.Status.Phase != "Running" {
-			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
+			return 0, 0, fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
 		}
 
 		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
 		}
 
-		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
-			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
-		}
+		ready += int(machineDeployment.Status.ReadyReplicas)
+		total += int(machineDeployment.Status.Replicas)
 	}
-	return nil
+	return ready, total, nil
 }
 
 func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev1.VSphereMachineTemplate, error) {

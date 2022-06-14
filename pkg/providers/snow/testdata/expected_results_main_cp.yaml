@@ -59,7 +59,9 @@ spec:
       apiServer: {}
       bottlerocketBootstrap: {}
       bottlerocketControl: {}
-      controllerManager: {}
+      controllerManager:
+        extraArgs:
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.4-eks-1-21-9
@@ -81,6 +83,7 @@ spec:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       bottlerocketBootstrap: {}
       bottlerocketControl: {}
@@ -88,6 +91,7 @@ spec:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       pause: {}
       proxy: {}
       registryMirror: {}

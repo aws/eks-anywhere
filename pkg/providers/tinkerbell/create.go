@@ -50,6 +50,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		cluster.KubeconfigFile,
 		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
+		stack.WithHostPortEnabled(true),
 	)
 	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
@@ -80,6 +81,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		cluster.KubeconfigFile,
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
+		stack.WithHostPortEnabled(false),
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)

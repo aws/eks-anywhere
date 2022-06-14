@@ -23,9 +23,9 @@ type Machine struct {
 	// Labels to be applied to the Hardware resource.
 	Labels Labels `csv:"labels"`
 
-	BMCIPAddress string `csv:"bmc_ip"`
-	BMCUsername  string `csv:"bmc_username"`
-	BMCPassword  string `csv:"bmc_password"`
+	BMCIPAddress string `csv:"bmc_ip, omitempty"`
+	BMCUsername  string `csv:"bmc_username, omitempty"`
+	BMCPassword  string `csv:"bmc_password, omitempty"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

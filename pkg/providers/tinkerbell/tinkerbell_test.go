@@ -226,8 +226,9 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 	stackInstaller.EXPECT().Install(
 		ctx,
 		releasev1alpha1.TinkerbellStackBundle{},
-		gomock.Any(),
+		testIP,
 		"test.kubeconfig",
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)
@@ -260,8 +261,9 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	stackInstaller.EXPECT().Install(
 		ctx,
 		releasev1alpha1.TinkerbellStackBundle{},
-		gomock.Any(),
+		testIP,
 		"test.kubeconfig",
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 	)

@@ -3,8 +3,10 @@ package hardware
 import (
 	"bufio"
 	stdcsv "encoding/csv"
+	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	csv "github.com/gocarina/gocsv"
 )
@@ -22,6 +24,10 @@ func NewCSVReader(r io.Reader) (CSVReader, error) {
 
 	reader, err := csv.NewUnmarshaller(stdreader, Machine{})
 	if err != nil {
+		return CSVReader{}, err
+	}
+
+	if err := ensureRequiredColumnsInCSV(reader.MismatchedStructFields); err != nil {
 		return CSVReader{}, err
 	}
 
@@ -51,4 +57,33 @@ func NewNormalizedCSVReaderFromFile(path string) (MachineReader, error) {
 	}
 
 	return NewNormalizer(reader), nil
+}
+
+// requiredColumns matches the csv tags on the Machine struct. These must remain in sync with
+// the struct. We may consider an alternative that uses reflection to interpret whether a field
+// is required in the future.
+var requiredColumns = map[string]struct{}{
+	"hostname":    {},
+	"ip_address":  {},
+	"netmask":     {},
+	"gateway":     {},
+	"nameservers": {},
+	"mac":         {},
+	"disk":        {},
+	"labels":      {},
+}
+
+func ensureRequiredColumnsInCSV(unmatched []string) error {
+	var intersection []string
+	for _, column := range unmatched {
+		if _, ok := requiredColumns[column]; ok {
+			intersection = append(intersection, column)
+		}
+	}
+
+	if len(intersection) > 0 {
+		return fmt.Errorf("missing required columns in csv: %v", strings.Join(intersection, ", "))
+	}
+
+	return nil
 }
