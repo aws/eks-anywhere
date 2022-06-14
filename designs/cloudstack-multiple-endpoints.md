@@ -8,7 +8,7 @@ The mangement API endpoint for Cloudstack is a potential points of failure. If o
 
 For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput for our customer. Just one cluster creation generates probably a thousand API calls to ACS. There are many ways to mitigate this, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
 
-In CAPC, we are considering addressing the problem by relying on Failure Domains and distributing a cluster across the given ones. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
+In CAPC, we are considering addressing the problem by extending our use of the concept of [Failure Domains](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=failure%20domain#optional-support-failure-domains) and distributing a cluster across the given ones. However, instead of a failure domain consisting of a zone on a single Cloudstack endpoint, we will redefine it to consist of the unique combination of a Cloudstack zone, api endpoint, account, and domain. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
 
 ### Tenets
 
