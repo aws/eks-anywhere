@@ -129,7 +129,7 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      ISOAttachment:
+      isoAttachment:
         name: cloudstack-scripts.iso
       details:
         foo: bar

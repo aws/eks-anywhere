@@ -110,7 +110,7 @@ spec:
         label: {{.cloudstackControlPlaneDiskOffering.Label}}
 {{- end}}
 {{- if $isoConfiguredCP}}
-      ISOAttachment:
+      isoAttachment:
 {{- if .cloudstackControlPlaneISOAttachment.Id}}
         id: {{.cloudstackControlPlaneISOAttachment.Id}}
 {{- end}}
@@ -608,7 +608,7 @@ spec:
         label: {{.cloudstackEtcdDiskOffering.Label}}
 {{- end}}
 {{- if $isoConfiguredEtcd}}
-      ISOAttachment:
+      isoAttachment:
 {{- if .cloudstackEtcdISOAttachment.Id}}
         id: {{.cloudstackEtcdISOAttachment.Id}}
 {{- end}}

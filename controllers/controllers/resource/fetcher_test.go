@@ -436,7 +436,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							"ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "name:cloudstack-scripts.iso,device:/dev/sr0",
+							"isoAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "name:cloudstack-scripts.iso,device:/dev/sr0",
 						},
 					},
 					Spec: cloudstackv1.CloudStackMachineTemplateSpec{

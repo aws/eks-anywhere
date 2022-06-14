@@ -622,7 +622,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	if err != nil {
 		return nil, err
 	}
-	err = parseAnnotation(csMachineTemplate, "ISOAttachment.", &csSpec.Spec.ISOAttachment)
+	err = parseAnnotation(csMachineTemplate, "isoAttachment.", &csSpec.Spec.ISOAttachment)
 	if err != nil {
 		return nil, err
 	}

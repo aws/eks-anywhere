@@ -97,7 +97,7 @@ spec:
   symlinks:
     /var/log/containers: /data-small/var/log/containers
     /var/log/pods: /data-small/var/log/pods
-  ISOAttachment:
+  isoAttachment:
     name: cloudstack-scripts.iso
     device: /dev/sr0
     mountPath: /mnt/cloudstack-scripts

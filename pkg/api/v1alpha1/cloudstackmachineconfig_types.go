@@ -36,7 +36,7 @@ type CloudStackMachineConfigSpec struct {
 	// DiskOffering refers to a disk offering which has been previously registered in CloudStack. It represents a disk offering with pre-defined size or custom specified disk size. It can either be specified as a UUID or name
 	DiskOffering CloudStackResourceDiskOffering `json:"diskOffering,omitempty"`
 	// ISOAttachment attaches an ISO rom which has been previously registered in CloudStack. ISO rom will be attached before VM starts.
-	ISOAttachment CloudStackISOAttachment `json:"ISOAttachment,omitempty"`
+	ISOAttachment CloudStackISOAttachment `json:"isoAttachment,omitempty"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type

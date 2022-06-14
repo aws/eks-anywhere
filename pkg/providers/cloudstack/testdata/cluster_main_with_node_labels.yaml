@@ -73,7 +73,7 @@ spec:
     label: data_disk
   symlinks:
     /var/log/kubernetes: /data-small/var/log/kubernetes
-  ISOAttachment:
+  isoAttachment:
     name: cloudstack-scripts.iso
     device: /dev/sr0
     mountPath: /mnt/cloudstack-scripts
@@ -111,7 +111,7 @@ spec:
   symlinks:
     /var/log/pods: /data/var/log/pods
     /var/log/containers: /data/var/log/containers
-  ISOAttachment:
+  isoAttachment:
     name: cloudstack-scripts.iso
     device: /dev/sr0
     mountPath: /mnt/cloudstack-scripts
@@ -150,7 +150,7 @@ spec:
     label: data_disk
   symlinks:
     /var/lib/: /data-small/var/lib
-  ISOAttachment:
+  isoAttachment:
     name: cloudstack-scripts.iso
     device: /dev/sr0
     mountPath: /mnt/cloudstack-scripts

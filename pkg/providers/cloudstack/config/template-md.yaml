@@ -223,7 +223,7 @@ spec:
         label: {{.cloudstackDiskOffering.Label}}
 {{- end}}
 {{- if $isoConfigured}}
-      ISOAttachment:
+      isoAttachment:
 {{- if .cloudstackISOAttachment.Id}}
         id: {{.cloudstackISOAttachment.Id}}
 {{- end}}
