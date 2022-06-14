@@ -4,12 +4,11 @@
 
 **Problem:** 
 
-For High Availability, multi Cloudstack endpoints is almost a given since the Cloudstack endpoints themselves are potential points of failure. If one endpoint goes down, then control of all of everything goes down. So, we want to spread our services across many ACS hosts to protect against that.
+The mangement API endpoint for Cloudstack is a potential points of failure. If one endpoint goes down, then control of all of everything goes down. So, we want to spread our services across many Cloudstack endpoints and hosts to protect against that.
 
-For Scalability, multi ACS endpoints will likely be required for storage and API endpoint throughput. Just one cluster creation generates probably a thousand API calls to ACS. There are many ways to mitigate this, but adding more ACS hosts is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
+For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput for our customer. Just one cluster creation generates probably a thousand API calls to ACS. There are many ways to mitigate this, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
 
-In CAPC, we are considering addressing the problem by relying on Failure Domains and distributing a cluster across the given ones. In order to support this functionality in EKS-A,
-we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
+In CAPC, we are considering addressing the problem by relying on Failure Domains and distributing a cluster across the given ones. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
 
 ### Tenets
 
