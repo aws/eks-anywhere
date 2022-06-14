@@ -127,6 +127,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.EksD.KindNode,
 		vb.Eksa.CliTools,
 		vb.Eksa.ClusterController,
+		vb.Eksa.DiagnosticCollector,
 		vb.Flux.HelmController,
 		vb.Flux.KustomizeController,
 		vb.Flux.NotificationController,
