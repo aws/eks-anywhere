@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
 )

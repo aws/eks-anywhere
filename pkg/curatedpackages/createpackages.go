@@ -18,6 +18,7 @@ type Installer struct {
 
 func NewPackageInstaller(installer ChartInstaller, runner KubectlRunner,
 	spec *cluster.Spec, packagesLocation string) *Installer {
+
 	return &Installer{
 		chartInstaller:   installer,
 		kubectlRunner:    runner,
