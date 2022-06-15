@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
 // Client is a kubernetes API client
 type Client interface {
-	Get(ctx context.Context, name, namespace string, obj runtime.Object) error
+	Get(ctx context.Context, name, namespace string, obj kubernetes.Object) error
 }
 
 // ConfigClientProcessor updates a Config retrieving objects from
