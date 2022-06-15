@@ -8,7 +8,7 @@ The mangement API endpoint for Apache Cloudstack (ACS) is a singe point of failu
 
 For scalability, multiple Cloudstack endpoints will likely be required for storage and API endpoint throughput. Just one cluster creation triggers as many as a thousand API calls to ACS (estimated). There are many ways to support this scale, but adding more Cloudstack hosts and endpoints is a fairly foolproof way to do so. Then, there’s the size and performance of the underlying database that each Cloudstack instance runs on.
 
-In CAPC, we are considering addressing the problem by extending our use of the concept of [Failure Domains](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=failure%20domain#optional-support-failure-domains) and distributing a cluster across the given ones. However, instead of a failure domain consisting of a zone on a single Cloudstack endpoint, we will redefine it to consist of the unique combination of a Cloudstack zone, api endpoint, account, and domain. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints and Failure Domains.
+In CAPC, we are considering addressing the problem by extending our use of the concept of [Failure Domains](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=failure%20domain#optional-support-failure-domains) and distributing a cluster across the given ones. However, instead of a failure domain consisting of a zone on a single Cloudstack endpoint, we will redefine it to consist of the unique combination of a Cloudstack zone, api endpoint, account, and domain. In order to support this functionality in EKS-A, we need to have a similar breakdown where an EKS-A cluster can span across multiple endpoints, zones, accounts, and domains.
 
 ### Tenets
 
@@ -41,8 +41,8 @@ As a Kubernetes administrator I want to:
 
 ## Overview of Solution
 
-We propose to take the least invasive solution of repurposing the CloudstackDataCenterConfig to point to multiple failure domains, each of which contains the necessary
-information for interacting with a Cloudstack failure domain. The assumption is that the necessary Cloudstack resources (i.e. image, computeOffering, ISOAttachment, etc.)
+We propose to take the least invasive solution of repurposing the CloudstackDataCenterConfig to point to multiple Availability Zones, each of which contains the necessary
+information for interacting with a Cloudstack failure domain. The assumption is that the necessary Cloudstack resources (i.e. image, computeOffering, diskOffering, network, etc.)
 will be available on *all* the Cloudstack API endpoints. 
 
 ## Solution Details
@@ -60,7 +60,7 @@ Account string `json:"account,omitempty"`
 ManagementApiEndpoint string `json:"managementApiEndpoint"`
 ```
 
-We would instead propose to remove all the existing attributes and instead, simply include a list of FailureDomain objects, where each FailureDomain object looks like
+We would instead propose to remove all the existing attributes and instead, simply include a list of AvailabilityZone objects, where each AvailabilityZone object looks like
 ```
 // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
@@ -76,10 +76,10 @@ ManagementApiEndpoint string `json:"managementApiEndpoint"`
 
 and we would parse these resources and pass them into CAPC by modifying the templates we have currently implemented. We can then use this new model to read in credentials, perform pre-flight checks, plumb data to CAPC, and support upgrades in the controller. The goal would be to make these new resources backwards compatible via code
 
-### Failure Domain
+### AvailabilityZone
 
 A failure domain is a CAPI concept which serves to improve HA and availability by destributing machines across "failure domains", as discussed [here](https://cluster-api.sigs.k8s.io/developer/providers/v1alpha2-to-v1alpha3.html?highlight=domain#optional-support-failure-domains). 
-CAPC currently utilizes them to distribute machines across CloudStack Zones. However, we now want to go a step further and consider the following unique combination to be a failure domain:
+CAPC currently utilizes them to distribute machines across CloudStack Zones. However, we now want to go a step further and consider the following unique combination to be an AvailabilityZone:
 
 1. Cloudstack endpoint
 2. Cloudstack domain
@@ -90,8 +90,8 @@ You can find more information about these Cloudstack resources [here](http://doc
 
 ### `CloudstackDatacenterConfig` Validation
 
-With the multi-endpoint system for the Cloudstack provider, users reference a CloudstackMachineConfig and it's created across multiple failure domains. The implication
-is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the failure domains, or all the Cloudstack endpoints,
+With the multi-endpoint system for the Cloudstack provider, users reference a CloudstackMachineConfig and it's created across multiple AvailabilityZones. The implication
+is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the AvailabilityZones, or all the Cloudstack endpoints,
 and these resources must be referenced by name, not unique ID. This would mean that we need to check if there are multiple Cloudstack endpoints, and if so check the zones, networks, domains, accounts, and users. 
 
 ### `CloudstackMachineConfig` Validation
@@ -101,16 +101,16 @@ Cloudstack resources are available in all the Cloudstack API endpoints (DiskOffe
 
 In practice, the pseudocode would look like:
 
-for failureDomain in failureDomains:
+for availabilityZone in availabilityZones:
   for machineConfig in machineConfigs:
-    validate resource presence with the failureDomain's configuration of the CloudMonkey executable
+    validate resource presence with the availabilityZone's configuration of the CloudMonkey executable
     
 
 ### Cloudstack credentials
 
 
 In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
-only as a list corresponding to failure domains. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
+only as a list corresponding to AvailabilityZones. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
 
 ```
 [Global]
@@ -127,12 +127,12 @@ api-key    = redacted
 secret-key = redacted
 api-url    = http://172.16.0.1:8080/client/api
 
-[FailureDomain2]
+[AvailabilityZone2]
 api-key    = redacted
 secret-key = redacted
 api-url    = http://172.16.0.2:8080/client/api
 
-[FailureDomain3]
+[AvailabilityZone3]
 api-key    = redacted
 secret-key = redacted
 api-url    = http://172.16.0.3:8080/client/api
@@ -149,7 +149,7 @@ In order to support backwards compatibility in the CloudstackDatacenterConfig re
 1. Make all the fields optional and see if the user has the old fields set or the new ones, then write a transformer to set the new fields and clean up the old ones
 2. Introduce an eks-a version bump with conversion webhooks
 
-Between these two approaches, I would take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
+Between these two approaches, we propose to take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
 
 However, given that the Cloudstack credentials are persisted in a write-once secret on the cluster, upgrading existing clusters may not be feasible unless CAPC supports overwriting that secret.
 
@@ -168,7 +168,7 @@ The new code will be covered by unit and e2e tests, and the e2e framework will b
 
 The following e2e test will be added:
 
-simple flow cluster creation/scaleu/deletion across multiple Cloudstack API endpoints:
+simple flow cluster creation/scaling/deletion across multiple Cloudstack API endpoints:
 
 * create a management+workload cluster spanning multiple Cloudstack API endpoints
 * scale up the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
@@ -177,5 +177,5 @@ simple flow cluster creation/scaleu/deletion across multiple Cloudstack API endp
 
 ## Other approaches explored
 
-1. Another direction we can go to support this feature is to refactor the entire EKS-A codebase so that instead of all the failure domains existing inside the CloudstackDatacenterConfig object, each CloudstackDatacenterConfig itself corresponds with a single failure domain. Then, the top level EKS-A Cluster object could be refactored to have a list of DatacenterRefs instead of a single one. However, this approach feels extremely invasive to the product and does not provide tangible value to the other providers.
-2. Lastly, we can consider the option of introducing a new DatacenterConfig object which represents not one Cloudstack "Availability Zone", but multiple. However, the issue here is that the CloudstackDatacenterConfig already has a list of CloudstackZone objects, so we're essentially already supporting multiple of what could be interpreted as Availability Zones. Adding additional attributes to that concept is a more natural extension of the API, instead of defining a new type
+1. Another direction we can go to support this feature is to refactor the entire EKS-A codebase so that instead of all the AvailabilityZones existing inside the CloudstackDatacenterConfig object, each CloudstackDatacenterConfig itself corresponds with a single AvailabilityZone. Then, the top level EKS-A Cluster object could be refactored to have a list of DatacenterRefs instead of a single one. However, this approach feels extremely invasive to the product and does not provide tangible value to the other providers.
+2. Additionally, we can consider the option of introducing a new DatacenterConfig object which represents not one Cloudstack Availability Zone, but multiple. However, the issue here is that the CloudstackDatacenterConfig already has a list of CloudstackZone objects, so we're essentially already supporting multiple of what could be interpreted as Availability Zones. Adding additional attributes to that concept is a more natural extension of the API, instead of defining a new type
