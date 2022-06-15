@@ -130,14 +130,17 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 }
 
 func (p *Provider) readCSVToCatalogue() error {
+	// Create a catalogue writer used to write hardware to the catalogue.
 	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
+	// Combine disk extraction with catalogue writing. Disk extraction will be used for rendering
+	// templates.
 	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
 
 	machineValidator := hardware.NewDefaultMachineValidator()
 
-	// TODO(chrisdoherty4) Build the selectors slice using the selectors from TinkerbellMachineConfig's
-	var selectors []v1alpha1.HardwareSelector
+	// Build a set of selectors from machine configs.
+	selectors := selectorsFromMachineConfigs(p.machineConfigs)
 	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
 	// Translate all Machine instances from the p.machines source into Kubernetes object types.
@@ -149,4 +152,15 @@ func (p *Provider) readCSVToCatalogue() error {
 	}
 
 	return hardware.TranslateAll(machines, writer, machineValidator)
+}
+
+// selectorsFromMachineConfigs extracts all selectors from TinkerbellMachineConfigs returning them
+// as a slice. It doesn't need the map, it only accepts that for ease as that's how we manage them
+// in the provider construct.
+func selectorsFromMachineConfigs(configs map[string]*v1alpha1.TinkerbellMachineConfig) []v1alpha1.HardwareSelector {
+	selectors := make([]v1alpha1.HardwareSelector, 0, len(configs))
+	for _, s := range configs {
+		selectors = append(selectors, s.Spec.HardwareSelector)
+	}
+	return selectors
 }
