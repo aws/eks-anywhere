@@ -372,7 +372,6 @@ func (g *Govc) DeployTemplate(ctx context.Context, library, templateName, vmName
 	}
 
 	deployOptsPath, err := g.writer.Write(DeployOptsFile, deployOpts, filewriter.PersistentFile)
-
 	if err != nil {
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}

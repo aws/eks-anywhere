@@ -244,7 +244,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 
 	awsSession, err := session.NewSession()
 	if err != nil {
-		return nil, fmt.Errorf("creating aws session for test: %v", err)
+		return nil, fmt.Errorf("creating aws session for tests: %v", err)
 	}
 
 	testRunnerConfig, err := NewTestRunnerConfigFromFile(conf.TestInstanceConfigFile)
@@ -292,9 +292,13 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
 	}
 
-	maxHardwarePerE2ETest, err := strconv.Atoi(os.Getenv(MaxHardwarePerE2ETestEnvVar))
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Tinkerbell max hardware per test env var: %v", err)
+	maxHardwarePerE2ETest := TinkerbellDefaultMaxHardwarePerE2ETest
+	maxHardwareEnvValue := os.Getenv(MaxHardwarePerE2ETestEnvVar)
+	if len(maxHardwareEnvValue) > 0 {
+		maxHardwarePerE2ETest, err = strconv.Atoi(maxHardwareEnvValue)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Tinkerbell max hardware per test env var: %v", err)
+		}
 	}
 
 	logger.V(1).Info("INFO:", "totalHardware", len(hardware))

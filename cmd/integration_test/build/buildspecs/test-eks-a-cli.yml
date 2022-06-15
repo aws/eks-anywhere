@@ -12,6 +12,8 @@ env:
     T_TINKERBELL_MAX_HARDWARE_PER_TEST: 4
     T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
     T_TINKERBELL_BOOTSTRAP_INTERFACE: "ens192"
+    TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
+    TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
     INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
@@ -73,20 +75,17 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_21: "tinkerbell_ci:image_ubuntu_1_21"
     T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
     T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
-    T_TINKERBELL_SSH_AUTHORIZED_KEY: "tinkerbell_ci:ssh_key"
+    T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_TINKERBELL_NETWORK_CIDR: "tinkerbell_ci:network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
     TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci: govc_password"
     TEST_RUNNER_GOVC_URL: "tinkerbell_ci: govc_url"
-    TEST_RUNNER_GOVC_LIBRARY: "tinkerbell_ci: govc_library"
-    TEST_RUNNER_GOVC_TEMPLATE: "tinkerbell_ci: govc_template"
     TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci: govc_datacenter"
     TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci: govc_datastore"
     TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci: govc_resource_pool"
     TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci: govc_network"
     TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci: govc_folder"
-
 
 phases:
   pre_build:

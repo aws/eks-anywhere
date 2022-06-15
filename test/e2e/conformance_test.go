@@ -19,6 +19,15 @@ func runConformanceFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
+func runTinkerbellConformanceFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestDockerKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -160,4 +169,43 @@ func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runConformanceFlow(test)
+}
+
+func TestTinkerbellKubernetes120ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(2),
+	)
+	runTinkerbellConformanceFlow(test)
+}
+
+func TestTinkerbellKubernetes121ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(2),
+	)
+	runTinkerbellConformanceFlow(test)
+}
+
+func TestTinkerbellKubernetes122ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(2),
+	)
+	runTinkerbellConformanceFlow(test)
 }

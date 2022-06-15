@@ -43,6 +43,19 @@ role_arn=$TEST_ROLE_ARN
 region=${AWS_REGION:-${AWS_DEFAULT_REGION:-us-west-2}}
 source_profile=default
 EOF
+
+INTEGRATION_TEST_INFRA_CONFIG="/tmp/test-infra.yml"
+export T_TINKERBELL_S3_INVENTORY_CSV_KEY="inventory/den80/den80-hardware.csv"
+
+cat << EOF > ${INTEGRATION_TEST_INFRA_CONFIG}
+---
+
+ec2:
+  amiId: ${INTEGRATION_TEST_AL2_AMI_ID}
+  subnetId:
+
+EOF
+
 export AWS_SDK_LOAD_CONFIG=true
 export AWS_CONFIG_FILE=$(pwd)/config_file
 export AWS_PROFILE=e2e-docker-test
@@ -58,7 +71,7 @@ fi
 TEST_REPORT_FOLDER=/logs/artifacts
 
 $BIN_FOLDER/test e2e run \
-    -a ${INTEGRATION_TEST_AL2_AMI_ID} \
+    -c ${INTEGRATION_TEST_INFRA_CONFIG} \
     -s ${INTEGRATION_TEST_STORAGE_BUCKET} \
     -j ${JOB_ID} \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \

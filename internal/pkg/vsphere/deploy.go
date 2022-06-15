@@ -48,7 +48,7 @@ func DeployTemplate(library, templateName, vmName, deployFolder, datacenter, dat
 	}
 
 	// deploy template
-	if err := govc.DeployTemplate(context, library, templateName, vmName, deployFolder, datacenter, datastore, resourcePool, deployOptions); err != nil {
+	if err := govc.DeployTemplate(context, library, templateName, vmName, deployFolder, datacenter, datastore, opts.NetworkMappings[0].Network, resourcePool, deployOptions); err != nil {
 		return fmt.Errorf("failed to deploy vm from library template: %v", err)
 	}
 

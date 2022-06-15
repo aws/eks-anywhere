@@ -200,7 +200,7 @@ func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) er
 }
 
 func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error {
-	err := ec2.TagInstance(c.session, c.instanceId, key, value)
+	err := ec2.TagInstance(c.session, e.InstanceID, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to tag Ec2 test runner: %v", err)
 	}
