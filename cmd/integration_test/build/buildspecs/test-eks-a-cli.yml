@@ -2,19 +2,23 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 130
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 130
+    INTEGRATION_TEST_MAX_EC2_COUNT: 160
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 160
     T_CLOUDSTACK_CIDR: "10.11.255.0/24"
-    SKIPPED_TESTS: "TestVSphereKubernetes122BottlerocketAutoimport,TestTinkerbellKubernetes121ForceFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersForceFlow,TestTinkerbellKubernetes122ForceFlow,TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig"
+    SKIPPED_TESTS: "TestTinkerbellKubernetes121ThreeWorkersSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes123SimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
+    T_TINKERBELL_MAX_HARDWARE_PER_TEST: 4
+    T_TINKERBELL_INVENTORY_CSV: "hardware-manifests/inventory.csv"
+    T_TINKERBELL_BOOTSTRAP_INTERFACE: "ens192"
+    TEST_RUNNER_GOVC_LIBRARY: "eks-a-templates"
+    TEST_RUNNER_GOVC_TEMPLATE: "eks-a-admin-ci"
+    INTEGRATION_TEST_INFRA_CONFIG: "/tmp/test-infra.yml"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
-    GOVC_URL: "vsphere_ci_beta_connection:vsphere_url"
-    GOVC_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
-    GOVC_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
     T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
@@ -65,11 +69,28 @@ env:
     T_CLOUDSTACK_POD_CIDR: "cloudstack_ci_beta_connection:pod_cidr"
     T_CLOUDSTACK_SERVICE_CIDR: "cloudstack_ci_beta_connection:service_cidr"
     T_CLOUDSTACK_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_TINKERBELL_IMAGE_UBUNTU_1_20: "tinkerbell_ci:image_ubuntu_1_20"
+    T_TINKERBELL_IMAGE_UBUNTU_1_21: "tinkerbell_ci:image_ubuntu_1_21"
+    T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
+    T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
+    T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_TINKERBELL_NETWORK_CIDR: "tinkerbell_ci:network_cidr"
+    T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
+    T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
+    TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
+    TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
+    TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
+    TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci:govc_datacenter"
+    TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci:govc_datastore"
+    TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
+    TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
+    TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
 
 phases:
   pre_build:
     commands:
       - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/create_infra_config.sh
       - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
       - export CLUSTER_NAME_PREFIX="${BRANCH_NAME//./-}"
       - >
@@ -86,13 +107,12 @@ phases:
         fi
       - >
         ./bin/test e2e run
-        -a ${INTEGRATION_TEST_AL2_AMI_ID}
+        -c ${INTEGRATION_TEST_INFRA_CONFIG}
         -s ${INTEGRATION_TEST_STORAGE_BUCKET}
         -j ${JOB_ID}
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
-        -n ${INTEGRATION_TEST_SUBNET_ID}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
-        -c ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
+        -p ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
         -v 4
         --skip ${SKIPPED_TESTS}
@@ -122,6 +142,15 @@ phases:
       - >
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
+        -v 4
+      # Clean up test runner instances in EKS-A Baremetal lab
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
+      - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
+      - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n eksa-e2e-${JOB_ID}
         -v 4
 reports:
   e2e-reports:

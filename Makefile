@@ -118,6 +118,7 @@ ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_D
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
+E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
@@ -137,12 +138,12 @@ build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 release: eks-a-release unit-test ## Generate release binary and run unit tests
 
 .PHONY: eks-a-binary
-eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)
+eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
 eks-a-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
+	CGO_ENABLED=0 GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
@@ -415,7 +416,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader
+	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${GOPATH}/bin/mockgen -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
@@ -465,18 +466,19 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 		exit 1;\
 	fi
 
+.PHONY: e2e-cross-platform
+e2e-cross-platform: $(E2E_CROSS_PLATFORMS)
+
+.PHONY: e2e-cross-platform-%
+e2e-cross-platform-%: ## Generate binaries for Linux and MacOS
+e2e-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
+e2e-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
+e2e-cross-platform-%:
+	$(MAKE) e2e-tests-binary E2E_TAGS=e2e GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) E2E_OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/e2e.test
+
 .PHONY: e2e
 e2e: eks-a-e2e integration-test-binary ## Build integration tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
-
-.PHONY: conformance
-conformance:
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
-
-.PHONY: conformance-tests
-conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: eks-a-e2e
 eks-a-e2e:
@@ -496,12 +498,22 @@ eks-a-e2e:
 	fi
 
 .PHONY: e2e-tests-binary
+e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
-	$(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
-	$(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+
+.PHONY: conformance
+conformance:
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
+	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
+
+.PHONY: conformance-tests
+conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: check-eksa-components-override
 check-eksa-components-override:

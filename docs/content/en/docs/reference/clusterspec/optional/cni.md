@@ -53,7 +53,7 @@ Starting with release 0.8, the plugin should be specified using the new `cniConf
 > NOTE: EKS Anywhere allows specifying only 1 plugin for a cluster and does not allow switching the plugins
 after the cluster is created.
 
-### Configuration options for Cilium plugin
+### Policy Configuration options for Cilium plugin
 
 Cilium accepts policy enforcement modes from the users to determine the allowed traffic between pods.
 The allowed values for this mode are: `default`, `always` and `never`.
@@ -170,3 +170,39 @@ EKS Anywhere will create the required NetworkPolicy objects for its core compone
 2. Switching from `always` mode: When switching from `always` to `default` mode, EKS Anywhere
 will not delete any of the existing NetworkPolicy objects, including the ones required
    for EKS Anywhere components (listed above). The user must delete NetworkPolicy objects as needed.
+   
+### Node IPs configuration option
+
+Starting with release v0.10, the `node-cidr-mask-size` [flag](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/#options) 
+for Kubernetes controller manager (kube-controller-manager) is configurable via the EKS anywhere cluster spec. The `clusterNetwork.nodes` being an optional field, 
+is not generated in the EKS Anywhere spec using `generate clusterconfig` command. This block for `nodes` will need to be manually added to the cluster spec under the 
+`clusterNetwork` section:
+
+```yaml
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+    cniConfig:
+      cilium: {}
+    nodes:
+      cidrMaskSize: 24
+```
+
+If the user does not specify the `clusterNetwork.nodes` field in the cluster yaml spec, the value for this flag defaults to 24 for IPv4. 
+Please note that this mask size needs to be greater than the pods CIDR mask size. In the above spec, the pod CIDR mask size is `16`
+and the node CIDR mask size is `24`. This ensures the cluster 256 blocks of /24 networks. For example, node1 will get 
+192.168.0.0/24, node2 will get 192.168.1.0/24, node3 will get 192.168.2.0/24 and so on. 
+
+To support more than 256 nodes, the cluster CIDR block needs to be large, and the node CIDR mask size needs to be 
+small, to support that many IPs. 
+For instance, to support 1024 nodes, a user can do any of the following things
+- Set the pods cidr blocks to `192.168.0.0/16` and node cidr mask size to 26
+- Set the pods cidr blocks to `192.168.0.0/15` and node cidr mask size to 25
+
+Please note that the `node-cidr-mask-size` needs to be large enough to accommodate the number of pods you want to run on each node. 
+A size of 24 will give enough IP addresses for about 250 pods per node, however a size of 26 will only give you about 60 IPs.
+This is an immutable field, and the value can't be updated once the cluster has been created.

@@ -39,6 +39,14 @@ spec:
               of TinkerbellDatacenterConfig \n Important: Run \"make generate\" to
               regenerate code after modifying this file"
             properties:
+              hookImagesURLPath:
+                description: HookImagesURLPath can be used to override the default
+                  Hook images path to pull from a local server
+                type: string
+              osImageURL:
+                description: OSImageURL can be used to override the default OS image
+                  path to pull from a local server
+                type: string
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
                   Tinkerbell servies.

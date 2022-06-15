@@ -68,3 +68,7 @@ type EksdInstaller interface {
 type EksdUpgrader interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
+
+type PackageInstaller interface {
+	InstallCuratedPackages(ctx context.Context) error
+}

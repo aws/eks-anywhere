@@ -42,9 +42,7 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	// Deprecated: This field has no function and is going to be removed in a future release.
-	OverrideClusterSpecFile string         `json:"overrideClusterSpecFile,omitempty"`
-	ClusterNetwork          ClusterNetwork `json:"clusterNetwork,omitempty"`
+	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`

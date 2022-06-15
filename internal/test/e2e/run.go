@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/aws/eks-anywhere/internal/pkg/ec2"
+	"github.com/aws/aws-sdk-go/aws/session"
+
+	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -22,19 +26,18 @@ const (
 )
 
 type ParallelRunConf struct {
-	MaxInstances        int
-	MaxConcurrentTests  int
-	AmiId               string
-	InstanceProfileName string
-	StorageBucket       string
-	JobId               string
-	SubnetId            string
-	Regex               string
-	TestsToSkip         []string
-	BundlesOverride     bool
-	CleanupVms          bool
-	TestReportFolder    string
-	BranchName          string
+	TestInstanceConfigFile string
+	MaxInstances           int
+	MaxConcurrentTests     int
+	InstanceProfileName    string
+	StorageBucket          string
+	JobId                  string
+	Regex                  string
+	TestsToSkip            []string
+	BundlesOverride        bool
+	CleanupVms             bool
+	TestReportFolder       string
+	BranchName             string
 }
 
 type (
@@ -62,7 +65,11 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 	var wg sync.WaitGroup
 
-	instancesConf := splitTests(testsList, conf)
+	instancesConf, err := splitTests(testsList, conf)
+	if err != nil {
+		return fmt.Errorf("failed to split tests: %v", err)
+	}
+
 	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(instancesConf)
 	maxConcurrentTests := conf.MaxConcurrentTests
@@ -98,7 +105,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logResult(r.testCommandResult)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
+			logger.Info("Instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
 			logResult(r.testCommandResult)
 		}
 	}
@@ -111,15 +118,36 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
-	testReportFolder, branchName                                                               string
-	ipPool                                                                                     networkutils.IPPool
-	bundlesOverride                                                                            bool
-	cleanupVms                                                                                 bool
+	session                                                                   *session.Session
+	instanceProfileName, storageBucket, jobId, parentJobId, regex, instanceId string
+	testReportFolder, branchName                                              string
+	ipPool                                                                    networkutils.IPPool
+	hardware                                                                  []*api.Hardware
+	bundlesOverride                                                           bool
+	testRunnerType                                                            TestRunnerType
+	testRunnerConfig                                                          TestInfraConfig
+	cleanupVms                                                                bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
-	session, err := newSessionFromConf(conf)
+	testRunner, err := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
+	if err != nil {
+		return "", nil, err
+	}
+
+	instanceId, err := testRunner.createInstance(conf)
+	if err != nil {
+		return "", nil, err
+	}
+
+	defer func() {
+		err := testRunner.decommInstance(conf)
+		if err != nil {
+			logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+		}
+	}()
+
+	session, err := newE2ESession(instanceId, conf)
 	if err != nil {
 		return "", nil, err
 	}
@@ -138,6 +166,13 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 		return session.instanceId, nil, err
 	}
 
+	key := "Integration-Test-Done"
+	value := "TRUE"
+	err = testRunner.tagInstance(conf, key, value)
+	if err != nil {
+		return session.instanceId, nil, fmt.Errorf("tagging instance for e2e success: %v", err)
+	}
+
 	return session.instanceId, testCommandResult, nil
 }
 
@@ -146,7 +181,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
-		command = fmt.Sprintf("%s -test.run %s", command, regex)
+		command = fmt.Sprintf("%s -test.run \"%s\"", command, regex)
 	}
 
 	command = e.commandWithEnvVars(command)
@@ -167,23 +202,20 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	testName := strings.Trim(c.regex, "\"")
-	e.uploadJUnitReportFromInstance(testName)
-	if c.testReportFolder != "" {
-		e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
-	}
+	regex := strings.Trim(c.regex, "\"")
+	tests := strings.Split(regex, "|")
 
-	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(testName)
-		e.uploadDiagnosticArchiveFromInstance(testName)
-		return nil
-	}
+	for _, testName := range tests {
+		e.uploadJUnitReportFromInstance(testName)
+		if c.testReportFolder != "" {
+			e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
+		}
 
-	key := "Integration-Test-Done"
-	value := "TRUE"
-	err := ec2.TagInstance(e.session, e.instanceId, key, value)
-	if err != nil {
-		return fmt.Errorf("tagging instance for e2e success: %v", err)
+		if !testCommandResult.Successful() {
+			e.uploadGeneratedFilesFromInstance(testName)
+			e.uploadDiagnosticArchiveFromInstance(testName)
+			return nil
+		}
 	}
 
 	return nil
@@ -200,23 +232,39 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 	return strings.Join(fullCommand, "; ")
 }
 
-func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
+func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, error) {
 	testPerInstance := len(testsList) / conf.MaxInstances
 	if testPerInstance == 0 {
 		testPerInstance = 1
 	}
 
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
+	tinkerbellTestsRe := regexp.MustCompile(tinkerbellTestsRe)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
-	testsInCurrentInstance := make([]string, 0, testPerInstance)
+	awsSession, err := session.NewSession()
+	if err != nil {
+		return nil, fmt.Errorf("creating aws session for tests: %v", err)
+	}
+
+	testRunnerConfig, err := NewTestRunnerConfigFromFile(conf.TestInstanceConfigFile)
+	if err != nil {
+		return nil, fmt.Errorf("creating test runner config for tests: %v", err)
+	}
+
+	testsInEC2Instance := make([]string, 0, testPerInstance)
 	for i, testName := range testsList {
-		testsInCurrentInstance = append(testsInCurrentInstance, testName)
+		if tinkerbellTestsRe.MatchString(testName) {
+			continue
+		}
+
+		testsInEC2Instance = append(testsInEC2Instance, testName)
 		multiClusterTest := multiClusterTestsRe.MatchString(testName)
+
 		var ips networkutils.IPPool
 		if privateNetworkTestsRe.MatchString(testName) {
 			if multiClusterTest {
@@ -232,27 +280,115 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 			}
 		}
 
-		if len(testsInCurrentInstance) == testPerInstance || (len(testsList)-1) == i {
-			runConfs = append(runConfs, instanceRunConf{
-				amiId:               conf.AmiId,
-				instanceProfileName: conf.InstanceProfileName,
-				storageBucket:       conf.StorageBucket,
-				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
-				parentJobId:         conf.JobId,
-				subnetId:            conf.SubnetId,
-				regex:               strings.Join(testsInCurrentInstance, "|"),
-				bundlesOverride:     conf.BundlesOverride,
-				cleanupVms:          conf.CleanupVms,
-				testReportFolder:    conf.TestReportFolder,
-				branchName:          conf.BranchName,
-				ipPool:              ips,
-			})
-
-			testsInCurrentInstance = make([]string, 0, testPerInstance)
+		if len(testsInEC2Instance) == testPerInstance || (len(testsList)-1) == i {
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInEC2Instance, "|"), ips, []*api.Hardware{}, Ec2TestRunnerType, testRunnerConfig))
+			testsInEC2Instance = make([]string, 0, testPerInstance)
 		}
 	}
 
-	return runConfs
+	if strings.EqualFold(conf.BranchName, "main") {
+		runConfs, err = splitTinkerbellTests(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split Tinkerbell tests: %v", err)
+		}
+	}
+
+	return runConfs, nil
+}
+
+func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
+	}
+
+	hardware, err := api.NewHardwareSliceFromFile(e2eHardwareCsvFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Tinkerbell hardware: %v", err)
+	}
+
+	maxHardwarePerE2ETest := TinkerbellDefaultMaxHardwarePerE2ETest
+	maxHardwareEnvValue := os.Getenv(MaxHardwarePerE2ETestEnvVar)
+	if len(maxHardwareEnvValue) > 0 {
+		maxHardwarePerE2ETest, err = strconv.Atoi(maxHardwareEnvValue)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get Tinkerbell max hardware per test env var: %v", err)
+		}
+	}
+
+	logger.V(1).Info("INFO:", "totalHardware", len(hardware))
+
+	tinkerbellTests := getTinkerbellTests(testsList)
+	logger.V(1).Info("INFO:", "tinkerbellTests", len(tinkerbellTests))
+
+	tinkTestInstances := len(hardware) / maxHardwarePerE2ETest
+	logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
+
+	tinkTestsPerInstance := 1
+	var remainingTests int
+	overflowTests := false
+	if len(tinkerbellTests) > tinkTestInstances {
+		tinkTestsPerInstance = len(tinkerbellTests) / tinkTestInstances
+		remainingTests = len(tinkerbellTests) % tinkTestInstances
+		if remainingTests != 0 {
+			tinkTestsPerInstance++
+			overflowTests = true
+		}
+	}
+
+	logger.V(1).Info("INFO:", "tinkTestsPerInstance", tinkTestsPerInstance)
+	logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
+	logger.V(1).Info("INFO:", "remainingTests", remainingTests)
+
+	hardwareChunks := api.SplitHardware(hardware, maxHardwarePerE2ETest)
+
+	testsInVSphereInstance := make([]string, 0, tinkTestsPerInstance)
+	for i, testName := range tinkerbellTests {
+		testsInVSphereInstance = append(testsInVSphereInstance, testName)
+
+		if len(testsInVSphereInstance) == tinkTestsPerInstance || (len(testsList)-1) == i {
+			logger.V(1).Info("INFO:", "hardwareChunksSize", len(hardwareChunks))
+			logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
+
+			if len(hardwareChunks) > 0 {
+				hardware, hardwareChunks = hardwareChunks[0], hardwareChunks[1:]
+			}
+
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), networkutils.IPPool{}, hardware, VSphereTestRunnerType, testRunnerConfig))
+
+			if remainingTests > 0 {
+				remainingTests--
+			}
+
+			if remainingTests == 0 && overflowTests {
+				tinkTestsPerInstance--
+				overflowTests = false
+			}
+
+			testsInVSphereInstance = make([]string, 0, tinkTestsPerInstance)
+		}
+	}
+
+	return runConfs, nil
+}
+
+func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNumber int, testRegex string, ipPool networkutils.IPPool, hardware []*api.Hardware, testRunnerType TestRunnerType, testRunnerConfig *TestInfraConfig) instanceRunConf {
+	return instanceRunConf{
+		session:             awsSession,
+		instanceProfileName: conf.InstanceProfileName,
+		storageBucket:       conf.StorageBucket,
+		jobId:               fmt.Sprintf("%s-%d", conf.JobId, jobNumber),
+		parentJobId:         conf.JobId,
+		regex:               testRegex,
+		ipPool:              ipPool,
+		hardware:            hardware,
+		bundlesOverride:     conf.BundlesOverride,
+		testReportFolder:    conf.TestReportFolder,
+		branchName:          conf.BranchName,
+		cleanupVms:          conf.CleanupVms,
+		testRunnerType:      testRunnerType,
+		testRunnerConfig:    *testRunnerConfig,
+	}
 }
 
 func logTestGroups(instancesConf []instanceRunConf) {

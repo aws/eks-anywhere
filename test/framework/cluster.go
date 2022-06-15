@@ -6,20 +6,27 @@ import (
 	"context"
 	"crypto/sha1"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
+	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
+	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
@@ -36,7 +43,7 @@ const (
 	defaultClusterName               = "eksa-test"
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
-	ClusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 	CleanupVmsVar                    = "T_CLEANUP_VMS"
@@ -65,6 +72,7 @@ type ClusterE2ETest struct {
 	GitProvider            git.ProviderClient
 	GitClient              git.Client
 	HelmInstallConfig      *HelmInstallConfig
+	PackageConfig          *PackageConfig
 	GitWriter              filewriter.FileWriter
 	OIDCConfig             *v1alpha1.OIDCConfig
 	GitOpsConfig           *v1alpha1.GitOpsConfig
@@ -87,7 +95,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
-	e.ClusterConfigFolder = fmt.Sprintf("%s-config", e.ClusterName)
+	e.ClusterConfigFolder = e.ClusterName
 	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
 	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
 
@@ -104,7 +112,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithHardware(requiredCount int) ClusterE2ETestOpt {
+func withHardware(requiredCount int, hardareType string, labels map[string]string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
 
@@ -116,6 +124,7 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		for id, h := range hardwarePool {
 			if _, exists := e.TestHardware[id]; !exists {
 				count++
+				h.Labels = labels
 				e.TestHardware[id] = h
 			}
 
@@ -125,9 +134,21 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		}
 
 		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of hardware", requiredCount)
+			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, hardareType)
 		}
 	}
+}
+
+func WithControlPlaneHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ControlPlane, map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane})
+}
+
+func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: api.Worker})
+}
+
+func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -226,15 +247,101 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) PowerOffHardware() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		_, err = bmcClient.SetPowerState(ctx, string(rapi.Off))
+		if err != nil {
+			e.T.Fatalf("failed to power off hardware: %v", err)
+		}
+	}
 }
 
 func (e *ClusterE2ETest) PowerOnHardware() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		_, err = bmcClient.SetPowerState(ctx, string(rapi.On))
+		if err != nil {
+			e.T.Fatalf("failed to power on hardware: %v", err)
+		}
+	}
 }
 
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	var failedToDecomm []*api.Hardware
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "443", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		powerState, err := bmcClient.GetPowerState(ctx)
+		// add sleep retries to give the machine time to power off
+		timeout := 15
+		for !strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
+			if err != nil {
+				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+			}
+			time.Sleep(5 * time.Second)
+			timeout = timeout - 5
+			powerState, err = bmcClient.GetPowerState(ctx)
+			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
+		}
+
+		if !strings.EqualFold(powerState, string(rapi.Off)) {
+			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			failedToDecomm = append(failedToDecomm, h)
+		} else {
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+		}
+	}
+
+	if len(failedToDecomm) > 0 {
+		e.T.Fatalf("failed to decommision hardware during cluster deletion")
+	}
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
@@ -257,9 +364,8 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 
 	generateHardwareConfigArgs := []string{
 		"generate", "hardware",
-		"--skip-registration",
-		"-f", e.HardwareCsvLocation,
-		"-o", e.ClusterConfigFolder,
+		"-z", e.HardwareCsvLocation,
+		"-o", e.HardwareConfigLocation,
 	}
 
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
@@ -327,7 +433,12 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	if e.Provider.Name() == TinkerbellProviderName {
-		createClusterArgs = append(createClusterArgs, "-w", e.HardwareConfigLocation)
+		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
+		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
+		e.T.Logf("tinkBootstrapIP: %s", tinkBootstrapIP)
+		if tinkBootstrapIP != "" {
+			createClusterArgs = append(createClusterArgs, "--tinkerbell-bootstrap-ip", tinkBootstrapIP)
+		}
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
@@ -604,17 +715,22 @@ func (e *ClusterE2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
 }
 
+func GetTestNameHash(name string) string {
+	h := sha1.New()
+	h.Write([]byte(name))
+	testNameHash := fmt.Sprintf("%x", h.Sum(nil))
+	return testNameHash[:7]
+}
+
 func getClusterName(t *testing.T) string {
-	value := os.Getenv(ClusterNameVar)
+	value := os.Getenv(ClusterPrefixVar)
+	// Append hash to make each cluster name unique per test. Using the testname will be too long
+	// and would fail validations
 	if len(value) == 0 {
-		h := sha1.New()
-		h.Write([]byte(t.Name()))
-		testNameHash := fmt.Sprintf("%x", h.Sum(nil))
-		// Append hash to make each cluster name unique per test. Using the testname will be too long
-		// and would fail validations
-		return fmt.Sprintf("%s-%s", defaultClusterName, testNameHash[:7])
+		value = defaultClusterName
 	}
-	return value
+
+	return fmt.Sprintf("%s-%s", value, GetTestNameHash(t.Name()))
 }
 
 func getBundlesOverride() string {
@@ -644,4 +760,153 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	if err != nil {
 		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
 	}
+}
+
+func (e *ClusterE2ETest) InstallCuratedPackagesController() {
+	kubeconfig := e.kubeconfigFilePath()
+	// TODO Add a test that installs the controller via the CLI.
+	ctx := context.Background()
+	err := e.PackageConfig.HelmClient.InstallChart(ctx,
+		e.PackageConfig.chartName, e.PackageConfig.chartURI,
+		e.PackageConfig.chartVersion, kubeconfig, e.PackageConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Error installing %s helm chart on the cluster: %v",
+			e.PackageConfig.chartName, err)
+	}
+}
+
+func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string) {
+	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
+	// The package install command doesn't (yet?) have a --kubeconfig flag.
+	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	e.RunEKSA([]string{
+		"install", "package", packageName,
+		"--source=registry", "--registry=public.ecr.aws/l0g8r8j6",
+		"--package-name=" + packagePrefix, "-v=9", "--kube-version=1.21",
+	})
+}
+
+// WithCluster helps with bringing up and tearing down E2E test clusters.
+func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
+	e.GenerateClusterConfig()
+	e.CreateCluster()
+	defer e.DeleteCluster()
+	f(e)
+}
+
+func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
+	ctx := context.Background()
+
+	ns := constants.EksaPackagesName
+	err := e.KubectlClient.WaitForService(ctx,
+		e.cluster().KubeconfigFile, "5m", name, ns)
+	if err != nil {
+		e.T.Fatalf("waiting for service timed out: %s", err)
+	}
+
+	// Ensure that the pod is up before trying to port-forward. In some test
+	// environments, the pod might not be running when the port-forward is
+	// attempted, and that will cause the port-forward to fail.
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for hello-eks-anywhere pod timed out: %s", err)
+	}
+
+	timedCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+	defer cancel()
+	timedOut := timedCtx.Done()
+	// It's preferable to configure kubectl to use a random port, which
+	// it would write to stdout, indicating when the port-forward is
+	// active. However, the current Executable framework doesn't allow
+	// for reading stdout before the process exits. Polling provides a
+	// workable solution.
+	const port = 9980 // ...and hope it's available...
+	stopPF, pfErrCh := e.forwardPortToService(timedCtx, name, ns, port)
+	defer stopPF()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	var resp *http.Response
+outer:
+	for {
+		select {
+		case <-timedOut:
+			e.T.Fatalf("timed out: %s", timedCtx.Err())
+		case err := <-pfErrCh:
+			e.T.Fatalf("port forwarding error: %s", err)
+		case <-ticker.C:
+			url := fmt.Sprintf("http://localhost:%d/index.json", port)
+			resp, err = http.Get(url)
+			if err != nil {
+				e.T.Logf("service error, will retry: %s", err)
+				continue
+			}
+			if resp.StatusCode < http.StatusOK ||
+				resp.StatusCode >= http.StatusMultipleChoices {
+				resp.Body.Close()
+				e.T.Fatalf("expected a 2XX response, got: %d (%s)",
+					resp.StatusCode, http.StatusText(resp.StatusCode))
+			}
+			defer resp.Body.Close()
+			break outer
+		}
+	}
+
+	buf := &bytes.Buffer{}
+	// A TeeReader will let us log the entire body in case of an error.
+	tee := io.TeeReader(resp.Body, buf)
+	respData := map[string]interface{}{}
+	if err = json.NewDecoder(tee).Decode(&respData); err != nil {
+		_, debugErr := io.ReadAll(tee)
+		if debugErr != nil {
+			// Just log this, since the test is already a failure.
+			e.T.Logf("trying to read the entire response body: %s", debugErr)
+		}
+		e.T.Fatalf("unmarshaling JSON response: %s\n%s", err, buf.String())
+	}
+
+	title, ok := respData["title"].(string)
+	if !ok {
+		e.T.Fatalf("expected title to be a string, got %T", respData["title"])
+	}
+	expected := "Amazon EKS Anywhere"
+	if !strings.EqualFold(title, expected) {
+		e.T.Fatalf("expected title to be %q, got %q", expected, title)
+	}
+}
+
+func (e *ClusterE2ETest) forwardPortToService(ctx context.Context,
+	name, namespace string, port int,
+) (func(), <-chan error) {
+	// The current Executable framework doesn't allow reading stdout before
+	// the command completes, so there's no way to know when the port-forward
+	// is available, short of just trying it.
+	pfContext, pfCancel := context.WithCancel(ctx)
+	errCh := make(chan error, 1)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer close(errCh)
+		defer wg.Done()
+		_, err := e.KubectlClient.Execute(pfContext, "port-forward",
+			"--kubeconfig="+e.kubeconfigFilePath(), "--namespace="+namespace,
+			"service/"+name, fmt.Sprintf("%d:80", port))
+		if err != nil {
+			pfCtxErr := pfContext.Err()
+			// A canceled context indicates a controlled shutdown.
+			if errors.Is(pfCtxErr, context.Canceled) {
+				return
+			}
+			if pfCtxErr != nil {
+				e.T.Logf("port-forward context error: %s", err)
+			}
+			errCh <- err
+		}
+	}()
+
+	return func() {
+		pfCancel()
+		wg.Wait()
+	}, errCh
 }

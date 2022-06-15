@@ -3,7 +3,9 @@ package tinkerbell
 import (
 	"errors"
 	"fmt"
+	"strings"
 
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -34,6 +36,13 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 
 	if len(config.Spec.HardwareSelector) == 0 {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.hardwareSelector: %v", config.Name)
+	}
+
+	if len(config.Spec.HardwareSelector) != 1 {
+		return fmt.Errorf(
+			"TinkerbellMachineConfig: spec.hardwareSelector must contain only 1 key-value pair: %v",
+			config.Name,
+		)
 	}
 
 	if config.Spec.OSFamily == "" {
@@ -94,51 +103,56 @@ func validateIPUnused(client networkutils.NetClient, ip string) error {
 
 // minimumHardwareRequirement defines the minimum requirement for a hardware selector.
 type minimumHardwareRequirement struct {
-	// Name is a string that indicates what the minimum requirement is for.
-	Name string
 	// MinCount is the minimum number of hardware required to satisfy the requirement
 	MinCount int
 	// Selector defines what labels should be present on Hardware to consider it eligable for
 	// this requirement.
 	Selector v1alpha1.HardwareSelector
+	// count is used internally by validation to sum the actual available hardware.
+	count int
 }
 
 // minimumHardwareRequirements is a collection of minimumHardwareRequirement instances.
-type minimumHardwareRequirements []minimumHardwareRequirement
+// it stores requirements in a map where the key is derived from selectors. This ensures selectors
+// specifying the same key-value pairs are combined.
+type minimumHardwareRequirements map[string]*minimumHardwareRequirement
 
 // Add a minimumHardwareRequirement to r.
-func (r *minimumHardwareRequirements) New(name string, min int, selector v1alpha1.HardwareSelector) {
-	*r = append(*r, minimumHardwareRequirement{
-		Name:     name,
+func (r *minimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, min int) error {
+	name, err := selector.ToString()
+	if err != nil {
+		return err
+	}
+
+	(*r)[name] = &minimumHardwareRequirement{
 		MinCount: min,
 		Selector: selector,
-	})
+	}
+
+	return nil
 }
 
-// ValidateminimumHardwareRequirements validates all requirements can be satisfied using hardware
+// validateminimumHardwareRequirements validates all requirements can be satisfied using hardware
 // registered with catalogue.
 func validateMinimumHardwareRequirements(requirements minimumHardwareRequirements, catalogue *hardware.Catalogue) error {
-	requirementCounts := constructMinimumHardwareRequirementCounts(requirements)
-
 	// Count all hardware that meets the selector requirements for each requirement.
 	// This does not consider whether or not a piece of hardware is selectable by multiple
 	// selectors. That requires a different validation ideally run before this one.
 	for _, h := range catalogue.AllHardware() {
-		for i, r := range requirementCounts {
+		for _, r := range requirements {
 			if hardware.LabelsMatchSelector(r.Selector, h.Labels) {
-				requirementCounts[i].Count++
+				r.count++
 			}
 		}
 	}
 
 	// Validate counts of hardware meet the minimum required count.
-	for _, r := range requirementCounts {
-		if r.Count < r.MinCount {
+	for name, r := range requirements {
+		if r.count < r.MinCount {
 			return fmt.Errorf(
-				"minimum hardware count for '%v' not met (selector=%v): have %v, require %v",
-				r.Name,
-				r.Selector,
-				r.Count,
+				"minimum hardware count not met for selector '%v': have %v, require %v",
+				name,
+				r.count,
 				r.MinCount,
 			)
 		}
@@ -147,50 +161,67 @@ func validateMinimumHardwareRequirements(requirements minimumHardwareRequirement
 	return nil
 }
 
-// minimumHardwareRequirementCounts is a helper construct for summing the total hardware found
-// when validating minimum hardware requirements.
-type minimumHardwareRequirementCount struct {
-	minimumHardwareRequirement
-	Count int
-}
+// validateHardwareSatifiesOnlyOneSelector ensures hardware in allHardware meets one and only one
+// selector in selectors. selectors uses the selectorSet construct to ensure we don't
+// operate on duplicate selectors given a selector can be re-used among groups as they may reference
+// the same TinkerbellMachineConfig.
+func validateHardwareSatisfiesOnlyOneSelector(allHardware []*tinkv1alpha1.Hardware, selectors selectorSet) error {
+	for _, h := range allHardware {
+		if matches := getMatchingHardwareSelectors(h, selectors); len(matches) > 1 {
+			slctrStrs, err := getHardwareSelectorsAsStrings(matches)
+			if err != nil {
+				return err
+			}
 
-func constructMinimumHardwareRequirementCounts(requirements []minimumHardwareRequirement) []minimumHardwareRequirementCount {
-	var counts []minimumHardwareRequirementCount
-	for _, r := range requirements {
-		counts = append(counts, minimumHardwareRequirementCount{
-			minimumHardwareRequirement: r,
-		})
-	}
-	return counts
-}
-
-// validateTotalHardwareRequestedAvailable performs a simple check that sums the total requested
-// hardware and ensures at least that much is registered in the catalogue. It does not take
-// into consideration hardware groupings defined by selectors.
-func validateTotalHardwareRequestedAvailable(cluster v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
-	requestedNodesCount := cluster.ControlPlaneConfiguration.Count
-	requestedNodesCount += sumWorkerNodeCounts(cluster.WorkerNodeGroupConfigurations)
-
-	// Optional external etcd configuration.
-	if cluster.ExternalEtcdConfiguration != nil {
-		requestedNodesCount += cluster.ExternalEtcdConfiguration.Count
-	}
-
-	if catalogue.TotalHardware() < requestedNodesCount {
-		return fmt.Errorf(
-			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			catalogue.TotalHardware(),
-			requestedNodesCount,
-		)
+			return fmt.Errorf(
+				"hardware must only satisfy 1 selector: hardware name '%v'; selectors '%v'",
+				h.Name,
+				strings.Join(slctrStrs, ", "),
+			)
+		}
 	}
 
 	return nil
 }
 
-func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {
-	var requestedNodesCount int
-	for _, workerSpec := range nodes {
-		requestedNodesCount += workerSpec.Count
+// selectorSet defines a set of selectors. Selectors should be added using the Add method to ensure
+// deterministic key generation. The construct is useful to avoid treating selectors that are the
+// same as different.
+type selectorSet map[string]v1alpha1.HardwareSelector
+
+// Add adds selector to ss.
+func (ss *selectorSet) Add(selector v1alpha1.HardwareSelector) error {
+	slctrStr, err := selector.ToString()
+	if err != nil {
+		return err
 	}
-	return requestedNodesCount
+
+	(*ss)[slctrStr] = selector
+
+	return nil
+}
+
+func getMatchingHardwareSelectors(
+	hw *tinkv1alpha1.Hardware,
+	selectors selectorSet,
+) []v1alpha1.HardwareSelector {
+	var satisfies []v1alpha1.HardwareSelector
+	for _, selector := range selectors {
+		if hardware.LabelsMatchSelector(selector, hw.Labels) {
+			satisfies = append(satisfies, selector)
+		}
+	}
+	return satisfies
+}
+
+func getHardwareSelectorsAsStrings(selectors []v1alpha1.HardwareSelector) ([]string, error) {
+	var slctrs []string
+	for _, selector := range selectors {
+		s, err := selector.ToString()
+		if err != nil {
+			return nil, err
+		}
+		slctrs = append(slctrs, s)
+	}
+	return slctrs, nil
 }

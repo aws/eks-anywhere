@@ -11,7 +11,7 @@ import (
 type DefaultTlsValidator struct{}
 
 type TlsValidator interface {
-	ValidateCert(host, port, cert string) error
+	ValidateCert(host, port, caCertContent string) error
 	HasSelfSignedCert(host, port string) (bool, error)
 }
 
@@ -37,9 +37,9 @@ func (tv *DefaultTlsValidator) HasSelfSignedCert(host, port string) (bool, error
 }
 
 // ValidateCert parses the cert, ensures that the cert format is valid and verifies that the cert is valid for the url
-func (tv *DefaultTlsValidator) ValidateCert(host, port, cert string) error {
+func (tv *DefaultTlsValidator) ValidateCert(host, port, caCertContent string) error {
 	// Validates that the cert format is valid
-	block, _ := pem.Decode([]byte(cert))
+	block, _ := pem.Decode([]byte(caCertContent))
 	if block == nil {
 		return fmt.Errorf("failed to parse certificate PEM")
 	}
@@ -50,15 +50,18 @@ func (tv *DefaultTlsValidator) ValidateCert(host, port, cert string) error {
 
 	roots := x509.NewCertPool()
 	roots.AddCert(providedCert)
-	opts := x509.VerifyOptions{
-		DNSName: host,
-		Roots:   roots,
+	conf := &tls.Config{
+		InsecureSkipVerify: false,
+		RootCAs:            roots,
 	}
-
-	// Verifies that the cert is valid
-	_, err = providedCert.Verify(opts)
+	// Verifies that the cert is valid by making a connection to the endpoint
+	endpoint := net.JoinHostPort(host, port)
+	conn, err := tls.Dial("tcp", endpoint, conf)
 	if err != nil {
-		return fmt.Errorf("failed to verify certificate: %v", err)
+		return fmt.Errorf("verifying tls connection to host with custom CA: %v", err)
+	}
+	if err = conn.Close(); err != nil {
+		return fmt.Errorf("closing tls connection to %v: %v", endpoint, err)
 	}
 	return nil
 }

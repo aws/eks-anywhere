@@ -7,17 +7,18 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type installPackageOptions struct {
-	source      curatedpackages.BundleSource
-	kubeVersion string
-	packageName string
-	registry    string
+	source        curatedpackages.BundleSource
+	kubeVersion   string
+	packageName   string
+	registry      string
+	customConfigs []string
+	showOptions   bool
 }
 
 var ipo = &installPackageOptions{}
@@ -34,6 +35,8 @@ func init() {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
+	installPackageCommand.Flags().BoolVar(&ipo.showOptions, "show-options", false, "Used to specify the package options to be used for configuration")
+	installPackageCommand.Flags().StringArrayVar(&ipo.customConfigs, "set", []string{}, "Provide custom configurations for curated packages. Format key:value")
 }
 
 var installPackageCommand = &cobra.Command{
@@ -57,20 +60,12 @@ func runInstallPackages(cmd *cobra.Command, args []string) error {
 
 func installPackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
+	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(ipo.registry), WithKubeVersion(ipo.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
 	bm := curatedpackages.CreateBundleManager(ipo.kubeVersion)
-	username, password, err := config.ReadCredentials()
-	if err != nil && gpOptions.registry != "" {
-		return err
-	}
-	registry, err := curatedpackages.NewRegistry(deps, ipo.registry, ipo.kubeVersion, username, password)
-	if err != nil {
-		return err
-	}
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
@@ -79,7 +74,7 @@ func installPackages(ctx context.Context, args []string) error {
 		deps.Kubectl,
 		bm,
 		version.Get(),
-		registry,
+		deps.BundleRegistry,
 	)
 
 	bundle, err := b.GetLatestBundle(ctx)
@@ -88,13 +83,21 @@ func installPackages(ctx context.Context, args []string) error {
 	}
 
 	packages := curatedpackages.NewPackageClient(
-		bundle,
 		deps.Kubectl,
+		curatedpackages.WithBundle(bundle),
+		curatedpackages.WithCustomConfigs(ipo.customConfigs),
+		curatedpackages.WithShowOptions(ipo.showOptions),
 	)
 
 	p, err := packages.GetPackageFromBundle(args[0])
 	if err != nil {
 		return err
+	}
+
+	if ipo.showOptions {
+		configs := curatedpackages.GetConfigurationsFromBundle(p)
+		curatedpackages.DisplayConfigurationOptions(configs)
+		return nil
 	}
 
 	curatedpackages.PrintLicense()

@@ -23,7 +23,7 @@ var cmkConfigTemplate string
 
 const (
 	cmkPath                           = "cmk"
-	cmkConfigFileName                 = "cmk_tmp.ini"
+	cmkConfigFileNameTemplate         = "cmk_%s.ini"
 	Shared                            = "Shared"
 	defaultCloudStackPreflightTimeout = "30"
 	rootDomain                        = "ROOT"
@@ -34,15 +34,7 @@ const (
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
-	config     decoder.CloudStackExecConfig
-}
-
-type cmkExecConfig struct {
-	CloudStackApiKey        string
-	CloudStackSecretKey     string
-	CloudStackManagementUrl string
-	CloudMonkeyVerifyCert   string
-	CloudMonkeyTimeout      string
+	config     decoder.CloudStackProfileConfig
 }
 
 func (c *Cmk) Close(ctx context.Context) error {
@@ -195,39 +187,34 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 	return nil
 }
 
-func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZone) ([]v1alpha1.CloudStackResourceIdentifier, error) {
-	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
-	for _, zone := range zones {
-		command := newCmkCommand("list zones")
-		if len(zone.Id) > 0 {
-			applyCmkArgs(&command, withCloudStackId(zone.Id))
-		} else {
-			applyCmkArgs(&command, withCloudStackName(zone.Name))
-		}
-		result, err := c.exec(ctx, command...)
-		if err != nil {
-			return nil, fmt.Errorf("getting zones info - %s: %v", result.String(), err)
-		}
-		if result.Len() == 0 {
-			return nil, fmt.Errorf("zone %s not found", zone)
-		}
-
-		response := struct {
-			CmkZones []cmkResourceIdentifier `json:"zone"`
-		}{}
-		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return nil, fmt.Errorf("parsing response into json: %v", err)
-		}
-		cmkZones := response.CmkZones
-		if len(cmkZones) > 1 {
-			return nil, fmt.Errorf("duplicate zone %s found", zone)
-		} else if len(zones) == 0 {
-			return nil, fmt.Errorf("zone %s not found", zone)
-		} else {
-			zoneIdentifiers = append(zoneIdentifiers, v1alpha1.CloudStackResourceIdentifier{Name: cmkZones[0].Name, Id: cmkZones[0].Id})
-		}
+func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackZone) (string, error) {
+	command := newCmkCommand("list zones")
+	if len(zone.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(zone.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(zone.Name))
 	}
-	return zoneIdentifiers, nil
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return "", fmt.Errorf("getting zones info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return "", fmt.Errorf("zone %s not found", zone)
+	}
+
+	response := struct {
+		CmkZones []cmkResourceIdentifier `json:"zone"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return "", fmt.Errorf("parsing response into json: %v", err)
+	}
+	cmkZones := response.CmkZones
+	if len(cmkZones) > 1 {
+		return "", fmt.Errorf("duplicate zone %s found", zone)
+	} else if len(cmkZones) == 0 {
+		return "", fmt.Errorf("zone %s not found", zone)
+	}
+	return cmkZones[0].Id, nil
 }
 
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
@@ -273,10 +260,10 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 	return domainIdentifier, nil
 }
 
-func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone v1alpha1.CloudStackZone, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
+func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error {
 	command := newCmkCommand("list networks")
-	if len(zone.Network.Id) > 0 {
-		applyCmkArgs(&command, withCloudStackId(zone.Network.Id))
+	if len(network.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(network.Id))
 	}
 	if multipleZone {
 		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
@@ -289,16 +276,6 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 			applyCmkArgs(&command, withCloudStackAccount(account))
 		}
 	}
-	var zoneId string
-	var err error
-	if len(zone.Id) > 0 {
-		zoneId = zone.Id
-	} else {
-		zoneId, err = getZoneIdByName(zones, zone.Name)
-		if err != nil {
-			return fmt.Errorf("getting zone id by name %s: %v", zone.Name, err)
-		}
-	}
 	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
@@ -306,9 +283,9 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	}
 	if result.Len() == 0 {
 		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zone %s", Shared, zone.Network, zone)
+			return fmt.Errorf("%s network %s not found in zone %s", Shared, network, zoneId)
 		} else {
-			return fmt.Errorf("network %s not found in zone %s", zone.Network, zone)
+			return fmt.Errorf("network %s not found in zone %s", network, zoneId)
 		}
 	}
 
@@ -324,37 +301,33 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	// if network id and name are both provided, the following code is to confirm name matches return value retrieved by id.
 	// if only name is provided, the following code is to only get networks with specified name.
 
-	if len(zone.Network.Name) > 0 {
+	if len(network.Name) > 0 {
 		networks = []cmkResourceIdentifier{}
 		for _, net := range response.CmkNetworks {
-			if net.Name == zone.Network.Name {
+			if net.Name == network.Name {
 				networks = append(networks, net)
 			}
 		}
 	}
 
 	if len(networks) > 1 {
-		return fmt.Errorf("duplicate network %s found", zone.Network)
+		return fmt.Errorf("duplicate network %s found", network)
 	} else if len(networks) == 0 {
 		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, zone.Network, zone)
+			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, network, zoneId)
 		} else {
-			return fmt.Errorf("network %s not found in zoneRef %s", zone.Network, zone)
+			return fmt.Errorf("network %s not found in zoneRef %s", network, zoneId)
 		}
 	}
 	return nil
 }
 
-func getZoneIdByName(zones []v1alpha1.CloudStackResourceIdentifier, zoneName string) (string, error) {
-	for _, zoneIdentifier := range zones {
-		if zoneName == zoneIdentifier.Name {
-			return zoneIdentifier.Id, nil
-		}
-	}
-	return "", fmt.Errorf("zoneId not found for zone %s", zoneName)
-}
-
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domainId string) error {
+	// If account is not specified then no need to check its presence
+	if len(account) == 0 {
+		return nil
+	}
+
 	command := newCmkCommand("list accounts")
 	applyCmkArgs(&command, withCloudStackName(account), withCloudStackDomainId(domainId))
 	result, err := c.exec(ctx, command...)
@@ -380,12 +353,16 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domain
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, config decoder.CloudStackExecConfig) *Cmk {
+func NewCmk(executable Executable, writer filewriter.FileWriter, config decoder.CloudStackProfileConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
 		config:     config,
 	}
+}
+
+func (c *Cmk) GetManagementApiEndpoint() string {
+	return c.config.ManagementUrl
 }
 
 // ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid
@@ -440,14 +417,15 @@ func (c *Cmk) CleanupVms(ctx context.Context, clusterName string, dryRun bool) e
 
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
+		return stdout, fmt.Errorf("failed get environment map: %v", err)
 	}
+
 	configFile, err := c.buildCmkConfigFile()
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
+		return stdout, fmt.Errorf("failed cmk validations: %v", err)
 	}
-	argsWithConfigFile := append([]string{"-c", configFile}, args...)
 
+	argsWithConfigFile := append([]string{"-c", configFile}, args...)
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
@@ -461,15 +439,8 @@ func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 		}
 		cloudstackPreflightTimeout = timeout
 	}
-
-	cmkConfig := &cmkExecConfig{
-		CloudStackApiKey:        c.config.ApiKey,
-		CloudStackSecretKey:     c.config.SecretKey,
-		CloudStackManagementUrl: c.config.ManagementUrl,
-		CloudMonkeyVerifyCert:   c.config.VerifySsl,
-		CloudMonkeyTimeout:      cloudstackPreflightTimeout,
-	}
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
+	c.config.Timeout = cloudstackPreflightTimeout
+	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, fmt.Sprintf(cmkConfigFileNameTemplate, c.config.Name))
 	if err != nil {
 		return "", fmt.Errorf("creating file for cmk config: %v", err)
 	}

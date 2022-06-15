@@ -62,7 +62,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		if err != nil {
 			return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 		}
-		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp, tb.controlPlaneMachineSpec.OSFamily)
+		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
 
 	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
@@ -84,7 +84,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			if err != nil {
 				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 			}
-			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp, tb.etcdMachineSpec.OSFamily)
+			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
 		if err != nil {
@@ -117,7 +117,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			if err != nil {
 				return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
 			}
-			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.tinkerbellIp, workerNodeMachineSpec.OSFamily)
+			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
 
 		wTemplateString, err := wTemplateConfig.ToTemplateString()

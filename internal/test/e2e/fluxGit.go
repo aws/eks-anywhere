@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
@@ -46,7 +47,7 @@ func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 		}
 	}
 
-	repo, err := e.setupGithubRepo(e.jobId, e.testEnvVars)
+	repo, err := e.setupGithubRepo()
 	if err != nil {
 		return fmt.Errorf("setting up github repo for test: %v", err)
 	}
@@ -112,9 +113,10 @@ func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	return nil
 }
 
-func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*git.Repository, error) {
+func (e *E2ESession) setupGithubRepo() (*git.Repository, error) {
 	logger.V(1).Info("setting up Github repo for test")
-	owner := envVars[e2etests.GithubUserVar]
+	owner := e.testEnvVars[e2etests.GithubUserVar]
+	repo := strings.ReplaceAll(e.jobId, ":", "-") // Github API urls get funky if you use ":" in the repo name
 
 	c := &v1alpha1.GithubProviderConfig{
 		Owner:      owner,
@@ -123,7 +125,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 	}
 
 	ctx := context.Background()
-	g, err := e.TestGithubClient(ctx, envVars[e2etests.GithubTokenVar], c.Owner, c.Repository, c.Personal)
+	g, err := e.TestGithubClient(ctx, e.testEnvVars[e2etests.GithubTokenVar], c.Owner, c.Repository, c.Personal)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create Github client for test setup: %v", err)
 	}
@@ -147,6 +149,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 		return nil, fmt.Errorf("generating key pair for git tests: %v", err)
 	}
 
+	logger.Info("Create Deploy Key Configuration for Git Flux tests", "owner", owner, "repo", repo)
 	// Add the newly generated public key to the newly created repository as a deploy key
 	ko := git.AddDeployKeyOpts{
 		Owner:      owner,
@@ -157,7 +160,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 	}
 
 	// Newly generated repositories may take some time to show up in the GitHub API; retry a few times to get around this
-	err = retrier.Retry(6, time.Second*10, func() error {
+	err = retrier.Retry(10, time.Second*10, func() error {
 		err = g.AddDeployKeyToRepo(ctx, ko)
 		if err != nil {
 			return fmt.Errorf("couldn't add deploy key to repo: %v", err)
@@ -170,7 +173,7 @@ func (e *E2ESession) setupGithubRepo(repo string, envVars map[string]string) (*g
 
 	// Generate a PEM file from the private key and write it instance at the user-provided path
 	pkFile := fileFromBytes{
-		dstPath:    envVars[config.EksaGitPrivateKeyTokenEnv],
+		dstPath:    e.testEnvVars[config.EksaGitPrivateKeyTokenEnv],
 		permission: 600,
 		content:    pk,
 	}

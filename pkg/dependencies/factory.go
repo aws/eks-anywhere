@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -40,6 +41,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 type Dependencies struct {
@@ -48,7 +50,7 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
-	Cmk                       *executables.Cmk
+	Cmks                      map[string]*executables.Cmk
 	SnowAwsClient             aws.Clients
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
@@ -75,6 +77,8 @@ type Dependencies struct {
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
 	CliConfig                 *config.CliConfig
+	PackageInstaller          interfaces.PackageInstaller
+	BundleRegistry            curatedpackages.BundleRegistry
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -262,12 +266,17 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			cmkClientMap := cloudstack.CmkClientMap{}
+			for name, cmk := range f.dependencies.Cmks {
+				cmkClientMap[name] = cmk
+			}
+
 			f.dependencies.Provider = cloudstack.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
 				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
+				cmkClientMap,
 				f.dependencies.Writer,
 				time.Now,
 				skipIpCheck,
@@ -405,16 +414,21 @@ func (f *Factory) WithCmk() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Cmk != nil {
+		if f.dependencies.Cmks != nil {
 			return nil
 		}
+		f.dependencies.Cmks = map[string]*executables.Cmk{}
+
 		execConfig, err := decoder.ParseCloudStackSecret()
 		if err != nil {
 			return fmt.Errorf("building cmk executable: %v", err)
 		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
-		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+		for _, profileConfig := range execConfig.Profiles {
+			cmk := f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, profileConfig)
+			f.dependencies.Cmks[profileConfig.Name] = cmk
+			f.dependencies.closers = append(f.dependencies.closers, cmk)
+		}
 
 		return nil
 	})
@@ -779,6 +793,53 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
+	f.WithHelm().WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageInstaller != nil {
+			return nil
+		}
+
+		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec,
+			packagesLocation,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
+	if registryName != "" {
+		f.WithHelm()
+	} else {
+		f.WithManifestReader()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.BundleRegistry != nil {
+			return nil
+		}
+
+		if registryName != "" {
+			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
+				f.dependencies.Helm,
+				registryName,
+			)
+		} else {
+			f.dependencies.BundleRegistry = curatedpackages.NewDefaultRegistry(
+				f.dependencies.ManifestReader,
+				kubeVersion,
+				version,
+			)
+		}
+		return nil
+	})
 	return f
 }
 

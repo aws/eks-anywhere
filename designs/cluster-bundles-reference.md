@@ -9,7 +9,7 @@ Currently, when we create a cluster, we rename the Bundles object we are using t
 This is not a very clean pattern since it forces us to duplicate `Bundles` for multiple clusters. Also, in order to point a cluster to a new `Bundles` we need to update the existing one (or delete and recreate). Ideally, `Bundles` should be immutable in the cluster in the same way they are in real life.
 
 ### Goals and Objectives
-As a EKS-A cluster administrator I want to:
+As an EKS-A cluster administrator I want to:
 
 * Not have duplicated `Bundles` objects
 * Not have my `default` namespace polluted with `Bundles` objects since these are internal details of the EKS-A implementation

@@ -3,8 +3,6 @@ package tinkerbell
 import (
 	"fmt"
 
-	"go.uber.org/multierr"
-
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -84,45 +82,124 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-// NewCreateMinimumHardwareAvailableAssertion asserts that catalogue has sufficient hardware to
-// support the ClusterSpec during a create workflow. It ensures the following:
-// 	- catalogue has sufficient total hardware to accommodate the cluster spec.
-//	- catalogue has sufficient hardware per hardware selector registered in catalogue
-//
-// It does not protect against situations where a selector (A) is a subset of a selector (B)
-// and all hardware in (A) is acquired by (B) leaving no hardware for (A) at the time of hardware
-// acquisition. Performing that type of check implies we know whether all hardware in (A) would
-// be acquired for (B) which is implementation dependent. Instead, we rely on Kubernetes controllers
-// to provide sufficient logging to alert us to insufficient resources.
-func NewCreateMinimumHardwareAvailableAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+// HardwareSatisfiesOnlyOneSelectorAssertion ensures hardware in catalogue only satisfies 1
+// of the MachineConfig's HardwareSelector's from the spec.
+func HardwareSatisfiesOnlyOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
-		var requirements minimumHardwareRequirements
+		selectors, err := selectorsFromClusterSpec(spec)
+		if err != nil {
+			return err
+		}
 
-		requirements.New(
-			spec.ControlPlaneConfiguration().MachineGroupRef.Name,
-			spec.ControlPlaneConfiguration().Count,
+		return validateHardwareSatisfiesOnlyOneSelector(catalogue.AllHardware(), selectors)
+	}
+}
+
+// selectorsFromClusterSpec extracts all selectors specified on MachineConfig's from spec.
+func selectorsFromClusterSpec(spec *ClusterSpec) (selectorSet, error) {
+	selectors := selectorSet{}
+
+	if err := selectors.Add(spec.ControlPlaneMachineConfig().Spec.HardwareSelector); err != nil {
+		return nil, err
+	}
+
+	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+		err := selectors.Add(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if spec.HasExternalEtcd() {
+		if err := selectors.Add(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector); err != nil {
+			return nil, err
+		}
+	}
+
+	return selectors, nil
+}
+
+// MinimumHardwareAvailableAssertionForCreate asserts that catalogue has sufficient hardware to
+// support the ClusterSpec during a create workflow.
+//
+// It does not protect against intersections or subsets so consumers should ensure a 1-2-1
+// mapping between catalogue hardware and selectors.
+func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+	return func(spec *ClusterSpec) error {
+		// Without Hardware selectors we get undesirable behavior so ensure we have them for
+		// all MachineConfigs.
+		if err := ensureHardwareSelectorsSpecified(spec); err != nil {
+			return err
+		}
+
+		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
+		// will account for the same selector being specified on different groups.
+		requirements := minimumHardwareRequirements{}
+
+		err := requirements.Add(
 			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+			spec.ControlPlaneConfiguration().Count,
 		)
+		if err != nil {
+			return err
+		}
 
 		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-			requirements.New(
-				nodeGroup.MachineGroupRef.Name,
-				nodeGroup.Count,
+			err := requirements.Add(
 				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
+				nodeGroup.Count,
 			)
+			if err != nil {
+				return err
+			}
 		}
 
 		if spec.HasExternalEtcd() {
-			requirements.New(
-				spec.ExternalEtcdConfiguration().MachineGroupRef.Name,
-				spec.ExternalEtcdConfiguration().Count,
+			err := requirements.Add(
 				spec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+				spec.ExternalEtcdConfiguration().Count,
 			)
+			if err != nil {
+				return err
+			}
 		}
 
-		return multierr.Combine(
-			validateTotalHardwareRequestedAvailable(spec.Cluster.Spec, catalogue),
-			validateMinimumHardwareRequirements(requirements, catalogue),
-		)
+		return validateMinimumHardwareRequirements(requirements, catalogue)
 	}
+}
+
+// ensureHardwareSelectorsSpecified ensures each machine config present in spec has a hardware
+// selector.
+func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
+	if len(spec.ControlPlaneMachineConfig().Spec.HardwareSelector) == 0 {
+		return missingHardwareSelectorErr{
+			Name: spec.ControlPlaneMachineConfig().Name,
+		}
+	}
+
+	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+		if len(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector) == 0 {
+			return missingHardwareSelectorErr{
+				Name: spec.WorkerNodeGroupMachineConfig(nodeGroup).Name,
+			}
+		}
+	}
+
+	if spec.HasExternalEtcd() {
+		if len(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector) == 0 {
+			return missingHardwareSelectorErr{
+				Name: spec.ExternalEtcdMachineConfig().Name,
+			}
+		}
+	}
+
+	return nil
+}
+
+type missingHardwareSelectorErr struct {
+	Name string
+}
+
+func (e missingHardwareSelectorErr) Error() string {
+	return fmt.Sprintf("missing hardware selector for %v", e.Name)
 }

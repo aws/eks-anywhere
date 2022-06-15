@@ -29,14 +29,14 @@ type CloudStackDatacenterConfigSpec struct {
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-	Domain string `json:"domain"`
+	Domain string `json:"domain,omitempty"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	Zones []CloudStackZone `json:"zones"`
+	Zones []CloudStackZone `json:"zones,omitempty"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
-	ManagementApiEndpoint string `json:"managementApiEndpoint"`
-	// List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
+	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
+	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
 	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 
@@ -72,8 +72,10 @@ type CloudStackZone struct {
 	Network CloudStackResourceIdentifier `json:"network"`
 }
 
-// CloudStackAvailabilityZone is
+// CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
 type CloudStackAvailabilityZone struct {
+	// CredentialsRef refers to the credentials in the input ini file which contains api key/secret key for interacting with this AZ
+	CredentialsRef string `json:"credentialsRef"`
 	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
 	Zone CloudStackZone `json:"zone"`
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
@@ -157,6 +159,26 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 	return nil
 }
 
+func (v *CloudStackDatacenterConfig) SetDefaults() {
+	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
+		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
+		for _, csZone := range v.Spec.Zones {
+			az := CloudStackAvailabilityZone{
+				Zone:                  csZone,
+				Account:               v.Spec.Account,
+				Domain:                v.Spec.Domain,
+				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
+				CredentialsRef:        "Global",
+			}
+			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
+		}
+	}
+	v.Spec.Zones = nil
+	v.Spec.Domain = ""
+	v.Spec.Account = ""
+	v.Spec.ManagementApiEndpoint = ""
+}
+
 func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
 	if s == o {
 		return true
@@ -175,8 +197,14 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
 		return false
 	}
-	for i, az := range s.AvailabilityZones {
-		if !az.Equal(&o.AvailabilityZones[i]) {
+	for _, sAz := range s.AvailabilityZones {
+		found := false
+		for _, oAz := range o.AvailabilityZones {
+			if sAz.Equal(&oAz) {
+				found = true
+			}
+		}
+		if !found {
 			return false
 		}
 	}
@@ -208,13 +236,11 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 	if az == nil || o == nil {
 		return false
 	}
-	if az.Zone.Equal(&o.Zone) &&
+	return az.Zone.Equal(&o.Zone) &&
+		az.CredentialsRef == o.CredentialsRef &&
 		az.Account == o.Account &&
 		az.Domain == o.Domain &&
-		az.ManagementApiEndpoint == o.ManagementApiEndpoint {
-		return true
-	}
-	return false
+		az.ManagementApiEndpoint == o.ManagementApiEndpoint
 }
 
 // +kubebuilder:object:generate=false

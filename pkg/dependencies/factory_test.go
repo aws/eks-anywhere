@@ -2,15 +2,21 @@ package dependencies_test
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type factoryTest struct {
@@ -74,6 +80,10 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 }
 
 func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
+	configString := test.ReadFile(t, "testdata/cloudstack_config_multiple_profiles.ini")
+	encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
+
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
@@ -92,6 +102,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCAPIManager().
 		WithManifestReader().
 		WithUnAuthKubeClient().
+		WithCmk().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -120,4 +131,59 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithPackageInstaller(t *testing.T) {
+	spec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-cluster",
+				},
+			},
+		},
+		VersionsBundle: &cluster.VersionsBundle{
+			VersionsBundle: &v1alpha1.VersionsBundle{
+				PackageController: v1alpha1.PackageBundle{
+					HelmChart: v1alpha1.Image{
+						URI:  "test_registry/test/eks-anywhere-packages:v1",
+						Name: "test_chart",
+					},
+				},
+			},
+		},
+	}
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithHelm().
+		WithKubectl().
+		WithPackageInstaller(spec, "/test/packages.yaml").
+		Build(context.Background())
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithHelm().
+		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithManifestReader().
+		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
 }

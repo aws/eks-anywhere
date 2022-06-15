@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -36,10 +35,7 @@ func (dr *DefaultRegistry) GetRegistryBaseRef(ctx context.Context) (string, erro
 
 	// Use package controller registry to fetch packageBundles.
 	// Format of controller image is: <uri>/<env_type>/<repository_name>
-	controllerImage := strings.Split(packageController.Controller.Image(), "/")
-	if len(controllerImage) < 2 {
-		return "", fmt.Errorf("unable to locate registry location for: %s", packageController.Controller.Image())
-	}
-	registryBaseRef := fmt.Sprintf("%s/%s/%s", controllerImage[0], controllerImage[1], ImageRepositoryName)
+	registry := GetRegistry(packageController.Controller.Image())
+	registryBaseRef := fmt.Sprintf("%s/%s", registry, ImageRepositoryName)
 	return registryBaseRef, nil
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -112,8 +113,17 @@ func generateComponentHash(hashes []string) string {
 	return hashStr
 }
 
-func generateManifestHash(contents []byte) string {
-	hash := sha256.Sum256(contents)
+func (r *ReleaseConfig) GenerateManifestHash(manifestArtifact *ManifestArtifact) (string, error) {
+	if r.DryRun {
+		return fakeComponentChecksum, nil
+	}
+
+	manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+	if err != nil {
+		return "", errors.Wrapf(err, "failed reading manifest contents from [%s]", manifestArtifact.ArtifactPath)
+	}
+	hash := sha256.Sum256(manifestContents)
 	hashStr := hex.EncodeToString(hash[:])
-	return hashStr
+
+	return hashStr, nil
 }
