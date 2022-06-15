@@ -2,6 +2,9 @@ package dependencies_test
 
 import (
 	"context"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"testing"
 
@@ -124,13 +127,31 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 }
 
 func TestFactoryBuildWithPackageInstaller(t *testing.T) {
-	clusterSpec := &cluster.Spec{}
+	spec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-cluster",
+				},
+			},
+		},
+		VersionsBundle: &cluster.VersionsBundle{
+			VersionsBundle: &v1alpha1.VersionsBundle{
+				PackageController: v1alpha1.PackageBundle{
+					HelmChart: v1alpha1.Image{
+						URI:  "test_registry/test/eks-anywhere-packages:v1",
+						Name: "test_chart",
+					},
+				},
+			},
+		},
+	}
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithHelm().
 		WithKubectl().
-		WithPackageInstaller(clusterSpec, "/test/packages.yaml").
+		WithPackageInstaller(spec, "/test/packages.yaml").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
