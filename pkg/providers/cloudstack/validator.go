@@ -42,8 +42,8 @@ type ProviderCmkClient interface {
 	ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
 	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
-	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZone) ([]anywherev1.CloudStackResourceIdentifier, error)
-	ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef anywherev1.CloudStackZone, zones []anywherev1.CloudStackResourceIdentifier, account string, multipleZone bool) error
+	ValidateZonePresent(ctx context.Context, zone anywherev1.CloudStackZone) error
+	ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef anywherev1.CloudStackZone, account string) error
 	ValidateDomainPresent(ctx context.Context, domain string) (anywherev1.CloudStackResourceIdentifier, error)
 	ValidateAccountPresent(ctx context.Context, account string, domainId string) error
 }
@@ -58,13 +58,27 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if len(datacenterConfig.Spec.Domain) <= 0 {
+	if len(datacenterConfig.Spec.FailureDomains) <= 0 {
+		return fmt.Errorf("CloudStackDatacenterConfig failureDomnains is not set or is empty")
+	}
+	for _, failureDomain := range datacenterConfig.Spec.FailureDomains {
+		if err := v.ValidateCloudStackFailureDomain(ctx, &failureDomain); err != nil {
+			return fmt.Errorf("checking failure domain %v", err)
+		}
+	}
+
+	logger.MarkPass("Datacenter validated")
+	return nil
+}
+
+func (v *Validator) ValidateCloudStackFailureDomain(ctx context.Context, failureDomain *anywherev1.CloudStackFailureDomain) error {
+	if len(failureDomain.Domain) <= 0 {
 		return fmt.Errorf("CloudStackDatacenterConfig domain is not set or is empty")
 	}
-	if datacenterConfig.Spec.ManagementApiEndpoint == "" {
+	if failureDomain.ManagementApiEndpoint == "" {
 		return fmt.Errorf("CloudStackDatacenterConfig managementApiEndpoint is not set or is empty")
 	}
-	_, err := getHostnameFromUrl(datacenterConfig.Spec.ManagementApiEndpoint)
+	_, err := getHostnameFromUrl(failureDomain.ManagementApiEndpoint)
 	if err != nil {
 		return fmt.Errorf("checking management api endpoint: %v", err)
 	}
@@ -75,7 +89,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 
 	found := false
 	for _, instance := range execConfig.Instances {
-		if instance.ManagementUrl == datacenterConfig.Spec.ManagementApiEndpoint {
+		if instance.ManagementUrl == failureDomain.ManagementApiEndpoint {
 			found = true
 			break
 		}
@@ -83,45 +97,41 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 
 	if !found {
 		return fmt.Errorf("cluster spec management url (%s) is not found in the cloudstack secret",
-			datacenterConfig.Spec.ManagementApiEndpoint)
+			failureDomain.ManagementApiEndpoint)
 	}
 
-	if err := v.validateDomainAndAccount(ctx, datacenterConfig); err != nil {
+	if err := v.validateDomainAndAccount(ctx, failureDomain); err != nil {
 		return err
 	}
 
-	zones, errZone := v.cmk.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
-	if errZone != nil {
-		return fmt.Errorf("checking zones %v", errZone)
+	if err := v.cmk.ValidateZonePresent(ctx, failureDomain.Zone); err != nil {
+		return fmt.Errorf("checking zones %v", err)
+	}
+	if len(failureDomain.Zone.Network.Id) == 0 && len(failureDomain.Zone.Network.Name) == 0 {
+		return fmt.Errorf("zone network is not set or is empty")
 	}
 
-	for _, zone := range datacenterConfig.Spec.Zones {
-		if len(zone.Network.Id) == 0 && len(zone.Network.Name) == 0 {
-			return fmt.Errorf("zone network is not set or is empty")
-		}
-		err := v.cmk.ValidateNetworkPresent(ctx, domainId, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
-		if err != nil {
-			return fmt.Errorf("checking network %v", err)
-		}
+	if err := v.cmk.ValidateNetworkPresent(ctx, domainId, failureDomain.Zone, failureDomain.Account); err != nil {
+		return fmt.Errorf("checking network %v", err)
 	}
 
 	logger.MarkPass("Datacenter validated")
 	return nil
 }
 
-func (v *Validator) validateDomainAndAccount(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if (datacenterConfig.Spec.Domain != "" && datacenterConfig.Spec.Account == "") ||
-		(datacenterConfig.Spec.Domain == "" && datacenterConfig.Spec.Account != "") {
+func (v *Validator) validateDomainAndAccount(ctx context.Context, failureDomain *anywherev1.CloudStackFailureDomain) error {
+	if (failureDomain.Domain != "" && failureDomain.Account == "") ||
+		(failureDomain.Domain == "" && failureDomain.Account != "") {
 		return fmt.Errorf("both domain and account must be specified or none of them must be specified")
 	}
 
-	if datacenterConfig.Spec.Domain != "" && datacenterConfig.Spec.Account != "" {
-		domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
+	if failureDomain.Domain != "" && failureDomain.Account != "" {
+		domain, errDomain := v.cmk.ValidateDomainPresent(ctx, failureDomain.Domain)
 		if errDomain != nil {
 			return fmt.Errorf("checking domain: %v", errDomain)
 		}
 
-		errAccount := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
+		errAccount := v.cmk.ValidateAccountPresent(ctx, failureDomain.Account, domain.Id)
 		if errAccount != nil {
 			return fmt.Errorf("checking account: %v", errAccount)
 		}
@@ -243,29 +253,18 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 			return fmt.Errorf("restricted key %s found in custom user details", restrictedKey)
 		}
 	}
-	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
-	if err != nil {
-		return fmt.Errorf("checking zones %v", err)
-	}
-	account := datacenterConfig.Spec.Account
 
-	for _, zone := range zones {
-		if err = v.cmk.ValidateTemplatePresent(ctx, domainId, zone.Id, account, machineConfig.Spec.Template); err != nil {
+	for _, failureDomain := range datacenterConfig.Spec.FailureDomains {
+		if err := v.cmk.ValidateTemplatePresent(ctx, domainId, failureDomain.Zone.Id, failureDomain.Account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)
 		}
-		if err = v.cmk.ValidateServiceOfferingPresent(ctx, zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
+		if err := v.cmk.ValidateServiceOfferingPresent(ctx, failureDomain.Zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
 		}
 		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
-			if err = v.cmk.ValidateDiskOfferingPresent(ctx, zone.Id, machineConfig.Spec.DiskOffering); err != nil {
+			if err := v.cmk.ValidateDiskOfferingPresent(ctx, failureDomain.Zone.Id, machineConfig.Spec.DiskOffering); err != nil {
 				return fmt.Errorf("validating disk offering: %v", err)
 			}
-		}
-	}
-
-	if len(machineConfig.Spec.AffinityGroupIds) > 0 {
-		if err = v.cmk.ValidateAffinityGroupsPresent(ctx, domainId, account, machineConfig.Spec.AffinityGroupIds); err != nil {
-			return fmt.Errorf("validating affinity group ids: %v", err)
 		}
 	}
 

@@ -35,19 +35,19 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  zones:{{ range $zone := .cloudstackZones }}
+  zones:{{ range $cfd := .cloudstackFailureDomains }}
     - network:
-{{- if $zone.Network.Id }}
-        id: {{ $zone.Network.Id}}
+{{- if $cfd.Zone.Network.Id }}
+        id: {{ $cfd.Zone.Network.Id}}
 {{- end}}
-{{- if $zone.Network.Name }}
-        name: {{ $zone.Network.Name}}
+{{- if $cfd.Zone.Network.Name }}
+        name: {{ $cfd.Zone.Network.Name}}
 {{- end}}
-{{- if $zone.Id }}
-      id: {{ $zone.Id }}
+{{- if $cfd.Zone.Id }}
+      id: {{ $cfd.Zone.Id }}
 {{- end}}
-{{- if $zone.Name }}
-      name: {{ $zone.Name }}
+{{- if $cfd.Zone.Name }}
+      name: {{ $cfd.Zone.Name }}
 {{- end}}
 {{- end}}
   {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}

@@ -589,21 +589,22 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 
 func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) *anywherev1.CloudStackDatacenterConfig {
 	csSpec := &anywherev1.CloudStackDatacenterConfig{}
-	var zones []anywherev1.CloudStackZone
+	var failureDomains []anywherev1.CloudStackFailureDomain
 	for _, csZone := range csCluster.Spec.Zones {
-		zones = append(zones, anywherev1.CloudStackZone{
-			Id:   csZone.ID,
-			Name: csZone.Name,
-			Network: anywherev1.CloudStackResourceIdentifier{
-				Id:   csZone.Network.ID,
-				Name: csZone.Network.Name,
+		failureDomains = append(failureDomains, anywherev1.CloudStackFailureDomain{
+			Zone: anywherev1.CloudStackZone{
+				Id:   csZone.ID,
+				Name: csZone.Name,
+				Network: anywherev1.CloudStackResourceIdentifier{
+					Id:   csZone.Network.ID,
+					Name: csZone.Network.Name,
+				},
 			},
+			Domain:  csCluster.Spec.Domain,
+			Account: csCluster.Spec.Account,
 		})
 	}
-	csSpec.Spec.Zones = zones
-	csSpec.Spec.Domain = csCluster.Spec.Domain
-	csSpec.Spec.Account = csCluster.Spec.Account
-
+	csSpec.Spec.FailureDomains = failureDomains
 	return csSpec
 }
 

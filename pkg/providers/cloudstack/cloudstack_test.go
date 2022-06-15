@@ -63,12 +63,12 @@ func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZonePresent(gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	return cmk
 }
 
@@ -1404,7 +1404,7 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
-	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
+	shinyModifiedDcConfig.Spec.FailureDomains[0].ManagementApiEndpoint = "shiny-new-api-endpoint"
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)

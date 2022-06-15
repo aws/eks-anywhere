@@ -6,13 +6,15 @@
   },
   "spec": {
     "insecure": true,
-    "domain": "testDomain",
-    "account": "testAccount",
-    "zones": [
+    "failureDomains": [
       {
-        "name": "testZone",
-        "network": {
-          "name": "testNetwork"
+        "domain": "testDomain",
+        "account": "testAccount",
+        "zone": {
+            "name": "testZone",
+            "network": {
+              "name": "testNetwork"
+            }
         }
       }
     ]

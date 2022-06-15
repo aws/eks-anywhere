@@ -39,13 +39,15 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					FailureDomains: []CloudStackFailureDomain{
 						{
-							Name: "zone1",
-							Network: CloudStackResourceIdentifier{
-								Name: "net1",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+								Name: "zone1",
+								Network: CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
 						},
 					},
@@ -65,17 +67,19 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					FailureDomains: []CloudStackFailureDomain{
 						{
-							Id: "zoneId",
-							Network: CloudStackResourceIdentifier{
-								Id: "netId",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+								Id: "zoneId",
+								Network: CloudStackResourceIdentifier{
+									Id: "netId",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 				},
 			},
 			wantErr: false,
@@ -92,17 +96,19 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					FailureDomains: []CloudStackFailureDomain{
 						{
-							Name: "zone1",
-							Network: CloudStackResourceIdentifier{
-								Name: "net1",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+								Name: "zone1",
+								Network: CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 				},
 			},
 			wantErr: false,
@@ -119,17 +125,19 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					FailureDomains: []CloudStackFailureDomain{
 						{
-							Name: "zone1",
-							Network: CloudStackResourceIdentifier{
-								Name: "net1",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+								Name: "zone1",
+								Network: CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 				},
 			},
 			wantErr: false,
@@ -155,17 +163,19 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 }
 
 var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
-	Domain:  "domain1",
-	Account: "admin",
-	Zones: []CloudStackZone{
+	FailureDomains: []CloudStackFailureDomain{
 		{
-			Name: "zone1",
-			Network: CloudStackResourceIdentifier{
-				Name: "net1",
+			Domain:  "domain1",
+			Account: "admin",
+			Zone: CloudStackZone{
+				Name: "zone1",
+				Network: CloudStackResourceIdentifier{
+					Name: "net1",
+				},
 			},
+			ManagementApiEndpoint: "testEndpoint",
 		},
 	},
-	ManagementApiEndpoint: "testEndpoint",
 }
 
 func TestCloudStackDatacenterConfigSpecEqual(t *testing.T) {
@@ -177,27 +187,27 @@ func TestCloudStackDatacenterConfigSpecEqual(t *testing.T) {
 func TestCloudStackDatacenterConfigSpecNotEqualEndpoint(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
-	cloudStackDatacenterConfigSpec2.ManagementApiEndpoint = "newEndpoint"
+	cloudStackDatacenterConfigSpec2.FailureDomains[0].ManagementApiEndpoint = "newEndpoint"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "ManagementApiEndpoint comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualDomain(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
-	cloudStackDatacenterConfigSpec2.Domain = "newDomain"
+	cloudStackDatacenterConfigSpec2.FailureDomains[0].Domain = "newDomain"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Domain comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualAccount(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
-	cloudStackDatacenterConfigSpec2.Account = "newAccount"
+	cloudStackDatacenterConfigSpec2.FailureDomains[0].Account = "newAccount"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualZonesNil(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
-	cloudStackDatacenterConfigSpec2.Zones = nil
+	cloudStackDatacenterConfigSpec2.FailureDomains[0].Zone = CloudStackZone{}
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Zones comparison in CloudStackDatacenterConfigSpec not detected")
 }

@@ -60,10 +60,11 @@ metadata:
   name: test
   namespace: test-namespace
 spec:
-  account: "admin"
-  domain: "domain1"
-  zones:
-    - name: "zone1"
+  failureDomains:
+  - account: "admin"
+    domain: "domain1"
+    zone:
+      name: "zone1"
       network:
         name: "net1"
 

@@ -17,13 +17,15 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 			Name: clusterName,
 		},
 		Spec: CloudStackDatacenterConfigSpec{
-			Domain: "domain1",
-			Zones: []CloudStackZone{
+			FailureDomains: []CloudStackFailureDomain{
 				{
-					Network: CloudStackResourceIdentifier{},
+					Domain: "domain1",
+					Zone: CloudStackZone{
+						Network: CloudStackResourceIdentifier{},
+					},
+					Account: "admin",
 				},
 			},
-			Account: "admin",
 		},
 	}
 }

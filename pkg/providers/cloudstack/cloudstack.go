@@ -135,19 +135,12 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		}
 	}
 
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
-	}
-	if nSpec.Account != oSpec.Account {
-		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
-	}
-
-	if len(nSpec.Zones) != len(oSpec.Zones) {
-		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
+	if len(nSpec.FailureDomains) != len(oSpec.FailureDomains) {
+		return fmt.Errorf("spec.failureDomains is immutable. Previous value %s, new value %s", oSpec.FailureDomains, nSpec.FailureDomains)
 	} else {
-		for i, zone := range nSpec.Zones {
-			if !zone.Equal(&oSpec.Zones[i]) {
-				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
+		for i, failureDomain := range nSpec.FailureDomains {
+			if !failureDomain.Equal(&oSpec.FailureDomains[i]) {
+				return fmt.Errorf("spec.failureDomains is immutable. Previous value %s, new value %s", failureDomain, oSpec.FailureDomains[i])
 			}
 		}
 	}
@@ -250,7 +243,7 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.ManagementApiEndpoint, p.clusterConfig)
+	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.FailureDomains[0].ManagementApiEndpoint, p.clusterConfig)
 }
 
 func (p *cloudstackProvider) Name() string {
@@ -530,8 +523,11 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 }
 
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	for index, zone := range oldCsdc.Spec.Zones {
-		if !zone.Equal(&newCsdc.Spec.Zones[index]) {
+	if len(oldCsdc.Spec.FailureDomains) != len(newCsdc.Spec.FailureDomains) {
+		return true
+	}
+	for index, failureDomain := range oldCsdc.Spec.FailureDomains {
+		if !failureDomain.Equal(&newCsdc.Spec.FailureDomains[index]) {
 			return true
 		}
 	}
@@ -654,9 +650,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackFailureDomains":                     datacenterConfigSpec.FailureDomains,
+		"cloudstackDomain":                             datacenterConfigSpec.FailureDomains[0].Domain,  // TODO: fix
+		"cloudstackAccount":                            datacenterConfigSpec.FailureDomains[0].Account, // TODO: fix
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -716,28 +712,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
-		noProxyList = append(noProxyList,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
+		processProxyConfiguration(values, clusterSpec, datacenterConfigSpec)
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -803,31 +778,37 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
-		noProxyList = append(noProxyList,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
+		processProxyConfiguration(values, clusterSpec, datacenterConfigSpec)
 	}
 
 	return values
+}
+
+func processProxyConfiguration(values map[string]interface{}, clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec) {
+	values["proxyConfig"] = true
+	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+	noProxyList := make([]string, 0, capacity)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+	// Add no-proxy defaults
+	noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
+	for _, failureDomain := range datacenterConfigSpec.FailureDomains {
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(failureDomain.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
+	}
+	noProxyList = append(noProxyList,
+		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+	)
+
+	values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+	values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+	values["noProxy"] = noProxyList
 }
 
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {

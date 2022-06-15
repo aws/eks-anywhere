@@ -26,13 +26,21 @@ type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
+	// FailureDomains is a list of one or more failure domains
+	FailureDomains []CloudStackFailureDomain `json:"failureDomains"`
+}
+
+// CloudStackFailureDomain defines a CAPI failure domain which serves to implements HA and improve availability by distributing machines across "failure domains"
+type CloudStackFailureDomain struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-	//
 	Domain string `json:"domain"`
-	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	Zones []CloudStackZone `json:"zones"`
+	// Zone is a CloudStackZone that is managed by a single CloudStack management endpoint.
+	Zone CloudStackZone `json:"zone"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
@@ -63,7 +71,7 @@ func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bo
 
 // CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
 type CloudStackZone struct {
-	// Zone is the name or UUID of the CloudStack zone in which clusters should be created. Zones should be managed by a single CloudStack Management endpoint.
+	// Zone is the name or UUID of the CloudStack zone in which clusters should be created.
 	Id   string `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
@@ -149,17 +157,28 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	if s == nil || o == nil {
 		return false
 	}
-	if len(s.Zones) != len(o.Zones) {
+	if len(s.FailureDomains) != len(o.FailureDomains) {
 		return false
 	}
-	for i, z := range s.Zones {
-		if !z.Equal(&o.Zones[i]) {
+	for i, z := range s.FailureDomains {
+		if !z.Equal(&o.FailureDomains[i]) {
 			return false
 		}
 	}
+	return true
+}
+
+func (s *CloudStackFailureDomain) Equal(o *CloudStackFailureDomain) bool {
+	if s == o {
+		return true
+	}
+	if s == nil || o == nil {
+		return false
+	}
 	return s.ManagementApiEndpoint == o.ManagementApiEndpoint &&
 		s.Domain == o.Domain &&
-		s.Account == o.Account
+		s.Account == o.Account &&
+		s.Zone == o.Zone
 }
 
 func (z *CloudStackZone) Equal(o *CloudStackZone) bool {

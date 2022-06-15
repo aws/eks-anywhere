@@ -187,39 +187,35 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 	return nil
 }
 
-func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZone) ([]v1alpha1.CloudStackResourceIdentifier, error) {
-	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
-	for _, zone := range zones {
-		command := newCmkCommand("list zones")
-		if len(zone.Id) > 0 {
-			applyCmkArgs(&command, withCloudStackId(zone.Id))
-		} else {
-			applyCmkArgs(&command, withCloudStackName(zone.Name))
-		}
-		result, err := c.exec(ctx, command...)
-		if err != nil {
-			return nil, fmt.Errorf("getting zones info - %s: %v", result.String(), err)
-		}
-		if result.Len() == 0 {
-			return nil, fmt.Errorf("zone %s not found", zone)
-		}
-
-		response := struct {
-			CmkZones []cmkResourceIdentifier `json:"zone"`
-		}{}
-		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-			return nil, fmt.Errorf("parsing response into json: %v", err)
-		}
-		cmkZones := response.CmkZones
-		if len(cmkZones) > 1 {
-			return nil, fmt.Errorf("duplicate zone %s found", zone)
-		} else if len(zones) == 0 {
-			return nil, fmt.Errorf("zone %s not found", zone)
-		} else {
-			zoneIdentifiers = append(zoneIdentifiers, v1alpha1.CloudStackResourceIdentifier{Name: cmkZones[0].Name, Id: cmkZones[0].Id})
-		}
+func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackZone) error {
+	command := newCmkCommand("list zones")
+	if len(zone.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(zone.Id))
+	} else {
+		applyCmkArgs(&command, withCloudStackName(zone.Name))
 	}
-	return zoneIdentifiers, nil
+	result, err := c.exec(ctx, command...)
+	if err != nil {
+		return fmt.Errorf("getting zones info - %s: %v", result.String(), err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("zone %s not found", zone)
+	}
+
+	response := struct {
+		CmkZones []cmkResourceIdentifier `json:"zone"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return fmt.Errorf("parsing response into json: %v", err)
+	}
+	cmkZones := response.CmkZones
+	if len(cmkZones) > 1 {
+		return fmt.Errorf("duplicate zone %s found", zone)
+	} else {
+		zone.Name = cmkZones[0].Name
+		zone.Id = cmkZones[0].Id
+	}
+	return nil
 }
 
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
@@ -265,13 +261,10 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 	return domainIdentifier, nil
 }
 
-func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone v1alpha1.CloudStackZone, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
+func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone v1alpha1.CloudStackZone, account string) error {
 	command := newCmkCommand("list networks")
 	if len(zone.Network.Id) > 0 {
 		applyCmkArgs(&command, withCloudStackId(zone.Network.Id))
-	}
-	if multipleZone {
-		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
 	}
 	// account must be specified within a domainId
 	// domainId can be specified without account
@@ -281,27 +274,13 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 			applyCmkArgs(&command, withCloudStackAccount(account))
 		}
 	}
-	var zoneId string
-	var err error
-	if len(zone.Id) > 0 {
-		zoneId = zone.Id
-	} else {
-		zoneId, err = getZoneIdByName(zones, zone.Name)
-		if err != nil {
-			return fmt.Errorf("getting zone id by name %s: %v", zone.Name, err)
-		}
-	}
-	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
+	applyCmkArgs(&command, withCloudStackZoneId(zone.Id))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return fmt.Errorf("getting network info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
-		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zone %s", Shared, zone.Network, zone)
-		} else {
-			return fmt.Errorf("network %s not found in zone %s", zone.Network, zone)
-		}
+		return fmt.Errorf("network %s not found in zone %s", zone.Network, zone)
 	}
 
 	response := struct {
@@ -328,22 +307,9 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	if len(networks) > 1 {
 		return fmt.Errorf("duplicate network %s found", zone.Network)
 	} else if len(networks) == 0 {
-		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, zone.Network, zone)
-		} else {
-			return fmt.Errorf("network %s not found in zoneRef %s", zone.Network, zone)
-		}
+		return fmt.Errorf("network %s not found in zoneRef %s", zone.Network, zone)
 	}
 	return nil
-}
-
-func getZoneIdByName(zones []v1alpha1.CloudStackResourceIdentifier, zoneName string) (string, error) {
-	for _, zoneIdentifier := range zones {
-		if zoneName == zoneIdentifier.Name {
-			return zoneIdentifier.Id, nil
-		}
-	}
-	return "", fmt.Errorf("zoneId not found for zone %s", zoneName)
 }
 
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domainId string) error {

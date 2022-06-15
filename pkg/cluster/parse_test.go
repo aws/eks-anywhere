@@ -185,17 +185,19 @@ func TestParseConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: anywherev1.CloudStackDatacenterConfigSpec{
-					Account: "admin",
-					Domain:  "domain1",
-					Zones: []anywherev1.CloudStackZone{
+					FailureDomains: []anywherev1.CloudStackFailureDomain{
 						{
-							Name: "zone1",
-							Network: anywherev1.CloudStackResourceIdentifier{
-								Name: "net1",
+							Account: "admin",
+							Domain:  "domain1",
+							Zone: anywherev1.CloudStackZone{
+								Name: "zone1",
+								Network: anywherev1.CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 				},
 			},
 			wantCloudStackMachineConfigs: []*anywherev1.CloudStackMachineConfig{

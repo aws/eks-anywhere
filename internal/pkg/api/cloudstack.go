@@ -63,7 +63,7 @@ func WithCloudStackComputeOfferingForAllMachines(value string) CloudStackFiller 
 
 func WithCloudStackManagementServer(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.ManagementApiEndpoint = value
+		config.datacenterConfig.Spec.FailureDomains[0].ManagementApiEndpoint = value
 	}
 }
 
@@ -119,27 +119,36 @@ func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 	}
 }
 
+func initializeFailureDomains(config CloudStackConfig) {
+	if len(config.datacenterConfig.Spec.FailureDomains) == 0 {
+		config.datacenterConfig.Spec.FailureDomains = []anywherev1.CloudStackFailureDomain{{}}
+	}
+}
+
 func WithCloudStackDomain(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Domain = value
+		initializeFailureDomains(config)
+		config.datacenterConfig.Spec.FailureDomains[0].Domain = value
 	}
 }
 
 func WithCloudStackAccount(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Account = value
+		initializeFailureDomains(config)
+		config.datacenterConfig.Spec.FailureDomains[0].Account = value
 	}
 }
 
 func WithCloudStackZone(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Zones[0].Name = value
+		initializeFailureDomains(config)
+		config.datacenterConfig.Spec.FailureDomains[0].Zone.Name = value
 	}
 }
 
 func WithCloudStackNetwork(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Zones[0].Network.Name = value
+		config.datacenterConfig.Spec.FailureDomains[0].Zone.Network.Name = value
 	}
 }
 

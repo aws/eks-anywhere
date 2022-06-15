@@ -23,43 +23,39 @@ func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Domain = "oldCruftyDomain"
+	vOld.Spec.FailureDomains[0].Domain = "oldCruftyDomain"
 	c := vOld.DeepCopy()
 
-	c.Spec.Domain = "shinyNewDomain"
+	c.Spec.FailureDomains[0].Domain = "shinyNewDomain"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.ManagementApiEndpoint = "oldCruftyManagementApiEndpoint"
+	vOld.Spec.FailureDomains[0].ManagementApiEndpoint = "oldCruftyManagementApiEndpoint"
 	c := vOld.DeepCopy()
 
-	c.Spec.ManagementApiEndpoint = "shinyNewManagementApiEndpoint"
+	c.Spec.FailureDomains[0].ManagementApiEndpoint = "shinyNewManagementApiEndpoint"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "oldCruftyZone",
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet1",
-			},
+	vOld.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "oldCruftyZone",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet1",
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "shinyNewZone",
+	c.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "shinyNewZone",
 
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet1",
-			},
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet1",
 		},
 	}
 	g := NewWithT(t)
@@ -68,32 +64,28 @@ func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Account = "oldCruftyAccount"
+	vOld.Spec.FailureDomains[0].Account = "oldCruftyAccount"
 	c := vOld.DeepCopy()
 
-	c.Spec.Account = "shinyNewAccount"
+	c.Spec.FailureDomains[0].Account = "shinyNewAccount"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "oldCruftyZone",
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet1",
-			},
+	vOld.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "oldCruftyZone",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet1",
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "oldCruftyZone",
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet2",
-			},
+	c.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "oldCruftyZone",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet2",
 		},
 	}
 	g := NewWithT(t)
@@ -102,22 +94,18 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "oldCruftyZone",
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet1",
-			},
+	vOld.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "oldCruftyZone",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet1",
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZone{
-		{
-			Name: "oldCruftyZone",
-			Network: v1alpha1.CloudStackResourceIdentifier{
-				Name: "GuestNet2",
-			},
+	c.Spec.FailureDomains[0].Zone = v1alpha1.CloudStackZone{
+		Name: "oldCruftyZone",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Name: "GuestNet2",
 		},
 	}
 
@@ -139,7 +127,11 @@ func cloudstackDatacenterConfig() v1alpha1.CloudStackDatacenterConfig {
 	return v1alpha1.CloudStackDatacenterConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 1)},
-		Spec:       v1alpha1.CloudStackDatacenterConfigSpec{},
-		Status:     v1alpha1.CloudStackDatacenterConfigStatus{},
+		Spec: v1alpha1.CloudStackDatacenterConfigSpec{
+			FailureDomains: []v1alpha1.CloudStackFailureDomain{
+				{},
+			},
+		},
+		Status: v1alpha1.CloudStackDatacenterConfigStatus{},
 	}
 }

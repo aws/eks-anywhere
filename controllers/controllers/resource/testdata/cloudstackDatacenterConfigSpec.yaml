@@ -4,10 +4,11 @@ metadata:
   creationTimestamp: null
   name: test-cluster
 spec:
-  domain: domain1
-  account: account1
-  zones:
-    - name: zone1
+  failureDomains:
+  - domain: domain1
+    account: account1
+    zone:
+      name: zone1
       network:
         name: shared1
 status: {}

@@ -202,16 +202,18 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 			},
 			want: &anywherev1.CloudStackDatacenterConfig{
 				Spec: anywherev1.CloudStackDatacenterConfigSpec{
-					Zones: []anywherev1.CloudStackZone{
+					FailureDomains: []anywherev1.CloudStackFailureDomain{
 						{
-							Name: "zone",
-							Network: anywherev1.CloudStackResourceIdentifier{
-								Name: "network",
+							Zone: anywherev1.CloudStackZone{
+								Name: "zone",
+								Network: anywherev1.CloudStackResourceIdentifier{
+									Name: "network",
+								},
 							},
+							Account: "account",
+							Domain:  "domain",
 						},
 					},
-					Account: "account",
-					Domain:  "domain",
 				},
 			},
 		},
@@ -220,7 +222,7 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := resource.MapClusterToCloudStackDatacenterConfigSpec(tt.args.csCluster)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapMachineTemplateToCloudStackDatacenterConfigSpec() got = %v, want %v", got, tt.want)
+				t.Errorf("MapMachineTemplateToCloudStackDatacenterConfigSpec() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

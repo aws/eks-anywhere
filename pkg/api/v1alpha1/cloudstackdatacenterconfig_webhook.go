@@ -84,41 +84,51 @@ func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if old.Spec.Domain != new.Spec.Domain {
+	if len(old.Spec.FailureDomains) != len(new.Spec.FailureDomains) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "domain"), new.Spec.Domain, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "zone"), new.Spec.FailureDomains, "field is immutable"),
 		)
-	}
-	zonesMutated := false
-	if len(old.Spec.Zones) != len(new.Spec.Zones) {
-		zonesMutated = true
 	} else {
-		for i, z := range old.Spec.Zones {
-			if !z.Equal(&new.Spec.Zones[i]) {
-				zonesMutated = true
-				break
-			}
+		for i, fd := range old.Spec.FailureDomains {
+			allErrs = append(
+				allErrs,
+				validateImmutableFieldsCloudStackFailureDomain(&new.Spec.FailureDomains[i], &fd)...,
+			)
 		}
 	}
-	if zonesMutated {
+
+	return allErrs
+}
+
+func validateImmutableFieldsCloudStackFailureDomain(new, old *CloudStackFailureDomain) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if old.Domain != new.Domain {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "zone"), new.Spec.Zones, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "domain"), new.Domain, "field is immutable"),
 		)
 	}
 
-	if old.Spec.Account != new.Spec.Account {
+	if old.Zone != new.Zone {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "account"), new.Spec.Account, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "zone"), new.Zone, "field is immutable"),
 		)
 	}
 
-	if old.Spec.ManagementApiEndpoint != new.Spec.ManagementApiEndpoint {
+	if old.Account != new.Account {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "managementApiEndpoint"), new.Spec.ManagementApiEndpoint, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "account"), new.Account, "field is immutable"),
+		)
+	}
+
+	if old.ManagementApiEndpoint != new.ManagementApiEndpoint {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "managementApiEndpoint"), new.ManagementApiEndpoint, "field is immutable"),
 		)
 	}
 
