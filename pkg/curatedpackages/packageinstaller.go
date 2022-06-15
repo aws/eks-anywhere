@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
