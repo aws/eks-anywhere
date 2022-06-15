@@ -3,69 +3,93 @@ title: "Create production cluster"
 weight: 40
 ---
 
-EKS Anywhere supports a vSphere provider for production grade EKS Anywhere deployments.
+EKS Anywhere supports a Bare Metal or vSphere provider for production grade EKS Anywhere deployments.
 EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastructure.
 
 This document walks you through setting up EKS Anywhere in a way that:
 
-* Deploys an initial cluster on your vSphere environment. That cluster can be used as a self-managed cluster (to run workloads) or a management cluster (to create and manage other clusters)
-* Deploys zero or more workload clusters from the management cluster
+* Deploys an initial cluster on your provider.
+For vSphere, that cluster can be used as a self-managed cluster (to run workloads) or a management cluster (to create and manage other clusters). For Bare Metal, only self-managed clusters are currently supported.
+* Deploys zero or more workload clusters from the management cluster (vSphere only).
+
+{{% alert title="Important" color="warning" %}}
 
 If your initial cluster is a management cluster, it is intended to stay in place so you can use it later to modify, upgrade, and delete workload clusters.
 Using a management cluster makes it faster to provision and delete workload clusters.
 Also it lets you keep vSphere credentials for a set of clusters in one place: on the management cluster.
 The alternative is to simply use your initial cluster to run workloads.
 
-{{% alert title="Important" color="warning" %}}
-
-Creating an EKS Anywhere management cluster is the recommended model.
+Creating an EKS Anywhere management cluster is the recommended model for vSphere deployments.
 Separating management features into a separate, persistent management cluster
 provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
 This approach also reduces provider permissions for workload clusters.
 
 {{% /alert %}}
 
-## Prerequisite Checklist
+## Prerequisite checklist
 
 EKS Anywhere needs to be run on an administrative machine that has certain [machine
 requirements]({{< relref "../install" >}}).
-An EKS Anywhere deployment will also require the availability of certain
-[resources from your VMware vSphere deployment]({{< relref "/docs/reference/vsphere/vsphere-prereq/_index.md" >}}).
+An EKS Anywhere deployment will also require the availability of certain resources that vary depending on your provider:
+
+* [Bare Metal requirements]({{< relref "/docs/reference/baremetal/bare-prereq.md" >}})
+* [VMware vSphere requirements]({{< relref "/docs/reference/vsphere/vsphere-prereq.md" >}})
+
+## Preparation checklist
+
+With prerequisites in place, addional preparation is required, depending on your provider:
+
+* [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}})
+* [VMware vSphere preparation]({{< relref "/docs/reference/vsphere/vsphere-preparation.md" >}})
 
 ## Steps
 
 The following steps are divided into two sections:
 
 * Create an initial cluster (used as a management or self-managed cluster)
-* Create zero or more workload clusters from the management cluster
+* Create zero or more workload clusters from the management cluster (vSphere only)
 
 ### Create an initial cluster
 
-Follow these steps to create an EKS Anywhere cluster that can be used either as a management cluster or as a self-managed cluster (for running workloads itself).
+Follow these steps to create an initial EKS Anywhere cluster.
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Generate an initial cluster config (named `mgmt` for this example):
+1. Set environment variables for your provider. For vSphere, these include the cluster name, and your vSphere user name and password (use single quotes around the values):
+   
    ```bash
-   CLUSTER_NAME=mgmt
+   export CLUSTER_NAME=mgmt
+   export EKSA_VSPHERE_USERNAME='billy'
+   export EKSA_VSPHERE_PASSWORD='t0p$ecret'
+   ```
+   For Bare Metal, set the cluster name, IP address of the Tinkerbell stack, and the path to the hardware inventory (for example, `hardware.csv`):
+   ```bash
+   export PROVIDER=tinkerbell
+   export CLUSTER_NAME=mgmt
+   export CSV_FILE=<File path to hardware.csv inventory file>
+   export TINKERBELL_IP=<IP address of tinkerbell stack>
+   ```
+1. Generate a hardware configuration file (Bare Metal only), using the hardware inventory CSV file created from [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}):
+   ```bash
+   eksctl anywhere generate hardware --filename $CSV_FILE --tinkerbell-ip $TINKERBELL_IP
+   ```
+   The command above will place a `hardware.yaml` file in your working directory. This file will be used as an input when you generate the cluster config.
+
+1. Generate an initial cluster config (named `mgmt` for this example). Options are slightly different for Bare Metal (tinkerbell) and vSphere (vsphere) providers:
+   ```bash
+   eksctl anywhere generate clusterconfig $CLUSTER_NAME \
+      --provider tinkerbell > eksa-mgmt-cluster.yaml --hardwarefile hardware.yaml
+   ```
+   or
+   ```bash
    eksctl anywhere generate clusterconfig $CLUSTER_NAME \
       --provider vsphere > eksa-mgmt-cluster.yaml
    ```
 
-1. Modify the initial cluster config (`eksa-mgmt-cluster.yaml`) as follows:
+1. Modify the initial cluster config (`eksa-mgmt-cluster.yaml`) by referring to the clusterspec reference for the appropriate provider:
 
-   * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) for information on configuring this cluster config for a vSphere provider.
-   * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
-   * Optionally, configure the cluster for [OIDC]({{< relref "/docs/reference/clusterspec/optional/oidc" >}}), [etcd]({{< relref "/docs/reference/clusterspec/optional/etcd" >}}), [proxy]({{< relref "/docs/reference/clusterspec/optional/proxy" >}}), [gitops]({{< relref "/docs/reference/clusterspec/optional/gitops" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/optional/registrymirror" >}}).
+   * See [Bare Metal configuration]({{< relref "../../reference/clusterspec/baremetal" >}}) or
+   * See [vSphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) 
 
-1. Set Credential Environment Variables
-
-   Before you create the initial cluster, you will need to set and export these environment variables for your vSphere user name and password.
-Make sure you use single quotes around the values so that your shell does not interpret the values:
-   
-   ```bash
-   export EKSA_VSPHERE_USERNAME='billy'
-   export EKSA_VSPHERE_PASSWORD='t0p$ecret'
-   ```
 
 1. Set License Environment Variable
 
@@ -99,7 +123,7 @@ Make sure you use single quotes around the values so that your shell does not in
          ```bash
          eksctl anywhere list packages --source registry --kube-version 1.21
          ```
-         Example command output
+         Example command output:
          ```                 
          Package                 Version(s)                                       
          -------                 ----------                                       
@@ -132,7 +156,7 @@ Make sure you use single quotes around the values so that your shell does not in
    kubectl get machines -A
    ```
 
-   Example command output
+   Example command output for vSphere:
    ```
    NAMESPACE   NAME                PROVIDERID        PHASE    VERSION
    eksa-system mgmt-b2xyz          vsphere:/xxxxx    Running  v1.21.2-eks-1-21-5
@@ -151,7 +175,7 @@ Make sure you use single quotes around the values so that your shell does not in
    kubectl get clusters mgmt -o yaml
    ```
 
-   Example command output
+   Example command output:
    ```
    ...
    kubernetesVersion: "1.21"
@@ -161,12 +185,10 @@ Make sure you use single quotes around the values so that your shell does not in
    ...
    ```
 
-   {{% alert title="Note" color="primary" %}}
-   The initial cluster is now ready to deploy workload clusters.
-   However, if you just want to use it to run workloads, you can deploy pod workloads directly on the initial cluster without deploying a separate workload cluster and skip the section on running separate workload clusters.
-   {{% /alert %}}
+1. If you just want to use the initial cluster to run workloads, you can deploy pod workloads directly on the initial cluster without deploying a separate workload cluster and skip the section on running separate workload clusters.
+For example, run the test application described in [Deploy test workload]({{< relref "../../tasks/workload/test-app" >}}).
 
-### Create separate workload clusters
+### Create separate workload clusters (vSphere only)
 
 Follow these steps if you want to use your initial cluster to create and manage separate workload clusters.
 
@@ -207,7 +229,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
 
-   Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
+   Verify the test application in [Deploy test workload]({{< relref "../../tasks/workload/test-app" >}}).
 
 1. Add more workload clusters:
 
