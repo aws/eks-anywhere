@@ -2,19 +2,19 @@ package dependencies_test
 
 import (
 	"context"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/api/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type factoryTest struct {
