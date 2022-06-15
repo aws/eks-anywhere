@@ -228,6 +228,12 @@ func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesEmpty(t *testing
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
+func TestCloudStackAvailabilityZonesEqual(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackAvailabilityZoneSpec2 := cloudStackDatacenterConfigSpec1.AvailabilityZones[0]
+	g.Expect(cloudStackDatacenterConfigSpec1.AvailabilityZones[0].Equal(&cloudStackAvailabilityZoneSpec2)).To(BeTrue(), "AvailabilityZones comparison in CloudStackAvailabilityZoneSpec not detected")
+}
+
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesManagementApiEndpoint(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
