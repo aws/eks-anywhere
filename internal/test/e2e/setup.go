@@ -77,10 +77,6 @@ func (e *E2ESession) setup(regex string) error {
 		return fmt.Errorf("waiting for ssm in new instance: %v", err)
 	}
 
-	err = e.updateFSInotifyResources()
-	if err != nil {
-		return err
-	}
 	err = e.createTestNameFile(regex)
 	if err != nil {
 		return err
@@ -146,17 +142,6 @@ func (e *E2ESession) setup(regex string) error {
 	}
 
 	e.testEnvVars[e2etests.ClusterPrefixVar] = clusterPrefix(e.branchName, e.instanceId)
-	return nil
-}
-
-func (e *E2ESession) updateFSInotifyResources() error {
-	command := fmt.Sprintf("sudo sysctl fs.inotify.max_user_watches=%v && sudo sysctl fs.inotify.max_user_instances=%v", maxUserWatches, maxUserInstances)
-
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
-		return fmt.Errorf("updating fs inotify resources: %v", err)
-	}
-	logger.V(1).Info("Successfully updates the fs inotify user watches and instances")
-
 	return nil
 }
 
