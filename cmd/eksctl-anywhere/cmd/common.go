@@ -69,7 +69,7 @@ func WithKubeVersion(kubeVersion string) func(*PackageConfig) {
 	}
 }
 
-func WithPaths(paths ...string) func(*PackageConfig) {
+func WithMountPaths(mountPaths ...string) func(*PackageConfig) {
 	return func(config *PackageConfig) {
 		config.paths = paths
 	}
