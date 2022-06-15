@@ -92,14 +92,19 @@ You can find more information about these Cloudstack resources [here](http://doc
 
 With the multi-endpoint system for the Cloudstack provider, users reference a CloudstackMachineConfig and it's created across multiple failure domains. The implication
 is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the failure domains, or all the Cloudstack endpoints,
-and these resources must be referenced by name, not unique ID. This would mean that for each CloudstackMachineConfig, we have to make sure that all the prerequisite
-Cloudstack resources are available in all the Cloudstack API endpoints. 
+and these resources must be referenced by name, not unique ID. This would mean that we need to check if there are multiple Cloudstack endpoints, and if so check the zones, networks, domains, accounts, and users. 
+
+### `CloudstackMachineConfig` Validation
+
+For each CloudstackMachineConfig, we have to make sure that all the prerequisite
+Cloudstack resources are available in all the Cloudstack API endpoints (DiskOffering, ComputeOffering, template, affinitygroupids). 
 
 In practice, the pseudocode would look like:
 
 for failureDomain in failureDomains:
   for machineConfig in machineConfigs:
     validate resource presence with the failureDomain's configuration of the CloudMonkey executable
+    
 
 ### Cloudstack credentials
 
@@ -166,7 +171,8 @@ The following e2e test will be added:
 simple flow cluster creation/scaleu/deletion across multiple Cloudstack API endpoints:
 
 * create a management+workload cluster spanning multiple Cloudstack API endpoints
-* scale the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
+* scale up the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
+* scale down the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
 * delete cluster
 
 ## Other approaches explored
