@@ -1883,11 +1883,7 @@ func (in *TinkerbellMachineConfigSpec) DeepCopyInto(out *TinkerbellMachineConfig
 			(*out)[key] = val
 		}
 	}
-	if in.TemplateRef != nil {
-		in, out := &in.TemplateRef, &out.TemplateRef
-		*out = new(Ref)
-		**out = **in
-	}
+	out.TemplateRef = in.TemplateRef
 	if in.Users != nil {
 		in, out := &in.Users, &out.Users
 		*out = make([]UserConfiguration, len(*in))

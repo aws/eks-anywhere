@@ -1988,7 +1988,7 @@ func TestGetTinkerbellMachineConfig(t *testing.T) {
 		},
 		Spec: v1alpha1.TinkerbellMachineConfigSpec{
 			OSFamily: "ubuntu",
-			TemplateRef: &v1alpha1.Ref{
+			TemplateRef: v1alpha1.Ref{
 				Name: "mycluster",
 				Kind: "TinkerbellTemplateConfig",
 			},
