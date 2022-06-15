@@ -361,11 +361,11 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.Instances) <= 0 {
+	if len(execConfig.Profiles) <= 0 {
 		return errors.New("cloudstack instances are not defined")
 	}
 
-	for _, instance := range execConfig.Instances {
+	for _, instance := range execConfig.Profiles {
 		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
 			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid",
 				instance.Name, instance.ManagementUrl)

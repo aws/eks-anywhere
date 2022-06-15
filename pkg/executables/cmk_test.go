@@ -19,25 +19,44 @@ import (
 )
 
 const (
-	cmkConfigFileName = "cmk_tmp.ini"
-	accountName       = "account1"
-	rootDomain        = "ROOT"
-	rootDomainId      = "5300cdac-74d5-11ec-8696-c81f66d3e965"
-	domain            = "foo/domain1"
-	domainName        = "domain1"
-	domainId          = "7700cdac-74d5-11ec-8696-c81f66d3e965"
-	domain2           = "foo/bar/domain1"
-	domain2Name       = "domain1"
-	domain2Id         = "8800cdac-74d5-11ec-8696-c81f66d3e965"
-	zoneId            = "4e3b338d-87a6-4189-b931-a1747edeea8f"
+	cmkConfigFileName  = "cmk_test_name.ini"
+	cmkConfigFileName2 = "cmk_test_name_2.ini"
+	accountName        = "account1"
+	rootDomain         = "ROOT"
+	rootDomainId       = "5300cdac-74d5-11ec-8696-c81f66d3e965"
+	domain             = "foo/domain1"
+	domainName         = "domain1"
+	domainId           = "7700cdac-74d5-11ec-8696-c81f66d3e965"
+	domain2            = "foo/bar/domain1"
+	domain2Name        = "domain1"
+	domain2Id          = "8800cdac-74d5-11ec-8696-c81f66d3e965"
+	zoneId             = "4e3b338d-87a6-4189-b931-a1747edeea8f"
 )
 
 var execConfig = decoder.CloudStackExecConfig{
-	Instances: []decoder.CloudStackInstanceConfig{
+	Profiles: []decoder.CloudStackProfileConfig{
 		{
+			Name:          "test_name",
 			ApiKey:        "test",
 			SecretKey:     "test",
 			ManagementUrl: "http://1.1.1.1:8080/client/api",
+		},
+	},
+}
+
+var execConfigWithMultipleProfiles = decoder.CloudStackExecConfig{
+	Profiles: []decoder.CloudStackProfileConfig{
+		{
+			Name:          "test_name",
+			ApiKey:        "test",
+			SecretKey:     "test",
+			ManagementUrl: "http://1.1.1.1:8080/client/api",
+		},
+		{
+			Name:          "test_name_2",
+			ApiKey:        "test_2",
+			SecretKey:     "test_2",
+			ManagementUrl: "http://1.1.1.1:8080/client/api_2",
 		},
 	},
 }
@@ -98,6 +117,26 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
 	c := executables.NewCmk(executable, writer, execConfig)
+	err := c.ValidateCloudStackConnection(ctx)
+	if err != nil {
+		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
+	}
+}
+
+func TestValidateMultipleCloudStackProfiles(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	expectedArgs := []string{"-c", configFilePath, "sync"}
+	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
+	configFilePath2, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName2))
+	expectedArgs2 := []string{"-c", configFilePath2, "sync"}
+	executable.EXPECT().Execute(ctx, expectedArgs2).Return(bytes.Buffer{}, nil)
+
+	c := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles)
 	err := c.ValidateCloudStackConnection(ctx)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)

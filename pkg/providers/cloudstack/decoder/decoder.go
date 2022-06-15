@@ -13,8 +13,6 @@ const (
 	EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	EksaCloudStackHostPathToMount         = "EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT"
-	globalSectionName                     = "Global"
-	defaultSectionName                    = "DEFAULT"
 )
 
 // ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
@@ -31,23 +29,11 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
-	globalSection, err := cfg.GetSection(globalSectionName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract section '%s' from %s: %v", globalSectionName, EksacloudStackCloudConfigB64SecretKey, err)
-	}
-	verifySsl, err := globalSection.GetKey("verify-ssl")
-	verifySslValue := "true"
-	if err == nil {
-		verifySslValue = verifySsl.Value()
-		if _, err := strconv.ParseBool(verifySslValue); err != nil {
-			return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
-		}
-	}
 
-	cloudstackInstances := []CloudStackInstanceConfig{}
+	cloudstackProfiles := []CloudStackProfileConfig{}
 	sections := cfg.Sections()
 	for _, section := range sections {
-		if section.Name() == globalSectionName || section.Name() == defaultSectionName {
+		if section.Name() == "DEFAULT" {
 			continue
 		}
 
@@ -63,33 +49,41 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
-		cloudstackInstances = append(cloudstackInstances, CloudStackInstanceConfig{
+		verifySsl, err := section.GetKey("verify-ssl")
+		verifySslValue := "true"
+		if err == nil {
+			verifySslValue = verifySsl.Value()
+			if _, err := strconv.ParseBool(verifySslValue); err != nil {
+				return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
+			}
+		}
+		cloudstackProfiles = append(cloudstackProfiles, CloudStackProfileConfig{
 			Name:          section.Name(),
 			ApiKey:        apiKey.Value(),
 			SecretKey:     secretKey.Value(),
 			ManagementUrl: apiUrl.Value(),
+			VerifySsl:     verifySslValue,
 		})
 	}
 
-	if len(cloudstackInstances) == 0 {
+	if len(cloudstackProfiles) == 0 {
 		return nil, fmt.Errorf("no instance found from %s", EksacloudStackCloudConfigB64SecretKey)
 	}
 
 	return &CloudStackExecConfig{
-		Instances: cloudstackInstances,
-		VerifySsl: verifySslValue,
+		Profiles: cloudstackProfiles,
 	}, nil
 }
 
 type CloudStackExecConfig struct {
-	Instances []CloudStackInstanceConfig
-	VerifySsl string
-	Timeout   string
+	Profiles []CloudStackProfileConfig
 }
 
-type CloudStackInstanceConfig struct {
+type CloudStackProfileConfig struct {
 	Name          string
 	ApiKey        string
 	SecretKey     string
 	ManagementUrl string
+	VerifySsl     string
+	Timeout       string
 }

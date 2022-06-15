@@ -23,7 +23,7 @@ var cmkConfigTemplate string
 
 const (
 	cmkPath                           = "cmk"
-	cmkConfigFileName                 = "cmk_tmp.ini"
+	cmkConfigFileNameTemplate         = "cmk_%s.ini"
 	Shared                            = "Shared"
 	defaultCloudStackPreflightTimeout = "30"
 	rootDomain                        = "ROOT"
@@ -432,39 +432,50 @@ func (c *Cmk) CleanupVms(ctx context.Context, clusterName string, dryRun bool) e
 
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
+		return stdout, fmt.Errorf("failed get environment map: %v", err)
 	}
-	configFile, err := c.buildCmkConfigFile()
-	if err != nil {
-		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
-	}
-	argsWithConfigFile := append([]string{"-c", configFile}, args...)
 
-	return c.executable.Execute(ctx, argsWithConfigFile...)
+	configFiles, err := c.buildCmkConfigFiles()
+	if err != nil {
+		return stdout, fmt.Errorf("failed cmk validations: %v", err)
+	}
+
+	for _, configFile := range configFiles {
+		argsWithConfigFile := append([]string{"-c", configFile}, args...)
+		output, err := c.executable.Execute(ctx, argsWithConfigFile...)
+		stdout.Write(output.Bytes())
+		if err != nil {
+			return stdout, err
+		}
+	}
+
+	return stdout, nil
 }
 
-func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
+func (c *Cmk) buildCmkConfigFiles() (configFiles []string, err error) {
 	t := templater.New(c.writer)
 
 	cloudstackPreflightTimeout := defaultCloudStackPreflightTimeout
 	if timeout, isSet := os.LookupEnv("CLOUDSTACK_PREFLIGHT_TIMEOUT"); isSet {
 		if _, err := strconv.ParseUint(timeout, 10, 16); err != nil {
-			return "", fmt.Errorf("CLOUDSTACK_PREFLIGHT_TIMEOUT must be a number: %v", err)
+			return []string{}, fmt.Errorf("CLOUDSTACK_PREFLIGHT_TIMEOUT must be a number: %v", err)
 		}
 		cloudstackPreflightTimeout = timeout
 	}
-
-	c.config.Timeout = cloudstackPreflightTimeout
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, cmkConfigFileName)
-	if err != nil {
-		return "", fmt.Errorf("creating file for cmk config: %v", err)
+	for _, profile := range c.config.Profiles {
+		profile.Timeout = cloudstackPreflightTimeout
+		writtenFileName, err := t.WriteToFile(cmkConfigTemplate, profile, fmt.Sprintf(cmkConfigFileNameTemplate, profile.Name))
+		if err != nil {
+			return []string{}, fmt.Errorf("creating file for cmk config: %v", err)
+		}
+		configFile, err := filepath.Abs(writtenFileName)
+		if err != nil {
+			return []string{}, fmt.Errorf("failed to generate absolute filepath for generated config file at %s", writtenFileName)
+		}
+		configFiles = append(configFiles, configFile)
 	}
-	configFile, err = filepath.Abs(writtenFileName)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate absolute filepath for generated config file at %s", writtenFileName)
-	}
 
-	return configFile, nil
+	return configFiles, nil
 }
 
 type cmkTemplate struct {

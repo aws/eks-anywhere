@@ -34,13 +34,11 @@ const (
 	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
 	[Global]
 	verify-ssl = false
-
-	[Instance1]
 	api-key = test-key1
 	secret-key = test-secret1
 	api-url = http://127.16.0.1:8080/client/api
 	*/
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCgpbSW5zdGFuY2UxXQphcGkta2V5ID0gdGVzdC1rZXkxCnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldDEKYXBpLXVybCA9IGh0dHA6Ly8xMjcuMTYuMC4xOjgwODAvY2xpZW50L2FwaQ=="
+	expectedCloudStackCloudConfig = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
 )
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {

@@ -74,7 +74,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 
 	found := false
-	for _, instance := range execConfig.Instances {
+	for _, instance := range execConfig.Profiles {
 		if instance.ManagementUrl == datacenterConfig.Spec.ManagementApiEndpoint {
 			found = true
 			break

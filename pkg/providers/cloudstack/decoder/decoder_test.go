@@ -40,39 +40,40 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			configFile: "../testdata/cloudstack_config_valid.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
 					{
-						Name:          "Instance1",
+						Name:          "Global",
 						ApiKey:        "test-key1",
 						SecretKey:     "test-secret1",
 						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "false",
+						Timeout:       "",
 					},
 				},
-				VerifySsl: "false",
-				Timeout:   "",
 			},
 		},
 		{
-			name:       "Multiple instances config",
-			configFile: "../testdata/cloudstack_config_multiple_instances.ini",
+			name:       "Multiple profiles config",
+			configFile: "../testdata/cloudstack_config_multiple_profiles.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
 					{
-						Name:          "Instance1",
+						Name:          "Global",
 						ApiKey:        "test-key1",
 						SecretKey:     "test-secret1",
 						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "false",
 					},
 					{
 						Name:          "Instance2",
 						ApiKey:        "test-key2",
 						SecretKey:     "test-secret2",
 						ManagementUrl: "http://127.16.0.2:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
 					},
 				},
-				VerifySsl: "false",
-				Timeout:   "",
 			},
 		},
 		{
@@ -95,27 +96,34 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			configFile: "../testdata/cloudstack_config_missing_verifyssl.ini",
 			wantErr:    false,
 			wantConfig: &decoder.CloudStackExecConfig{
-				Instances: []decoder.CloudStackInstanceConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
 					{
-						Name:          "Instance1",
+						Name:          "Global",
 						ApiKey:        "test-key1",
 						SecretKey:     "test-secret1",
 						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
 					},
 				},
-				VerifySsl: "true",
-				Timeout:   "",
 			},
-		},
-		{
-			name:       "Invalid verifyssl",
-			configFile: "../testdata/cloudstack_config_missing_global_section.ini",
-			wantErr:    true,
 		},
 		{
 			name:       "Missing global section",
 			configFile: "../testdata/cloudstack_config_missing_global_section.ini",
-			wantErr:    true,
+			wantErr:    false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          "Instance2",
+						ApiKey:        "test-key2",
+						SecretKey:     "test-secret2",
+						ManagementUrl: "http://127.16.0.2:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
+					},
+				},
+			},
 		},
 		{
 			name:       "Invalid INI format",
@@ -123,8 +131,13 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			wantErr:    true,
 		},
 		{
-			name:       "No instances",
-			configFile: "../testdata/cloudstack_config_no_instances.ini",
+			name:       "Invalid veryfyssl value",
+			configFile: "../testdata/cloudstack_config_invalid_verifyssl.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "No sections",
+			configFile: "../testdata/cloudstack_config_no_sections.ini",
 			wantErr:    true,
 		},
 	}
@@ -150,4 +163,29 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCloudStackConfigDecoderInvalidEncoding(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+	os.Clearenv()
+
+	g := NewWithT(t)
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, "xxx")
+
+	_, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).NotTo(BeNil())
+	tctx.restoreContext()
+}
+
+func TestCloudStackConfigDecoderNoEnvVariable(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+	os.Clearenv()
+
+	g := NewWithT(t)
+
+	_, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).NotTo(BeNil())
+	tctx.restoreContext()
 }
