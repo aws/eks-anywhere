@@ -2,28 +2,49 @@ package curatedpackages
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
+type PackageController interface {
+	InstallController(ctx context.Context) error
+}
+
+type PackageHandler interface {
+	CreatePackages(ctx context.Context, fileName string, kubeConfig string) error
+}
+
 type Installer struct {
-	chartInstaller   ChartInstaller
-	kubectlRunner    KubectlRunner
-	spec             *cluster.Spec
-	packagesLocation string
+	packageController PackageController
+	spec              *cluster.Spec
+	packageClient     PackageHandler
+	packagesLocation  string
 }
 
 func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
+	pcc := newPackageController(installer, runner, spec)
+
+	pc := NewPackageClient(
+		nil,
+		runner,
+	)
+
 	return &Installer{
-		chartInstaller:   installer,
-		kubectlRunner:    runner,
-		spec:             spec,
-		packagesLocation: packagesLocation,
+		spec:              spec,
+		packagesLocation:  packagesLocation,
+		packageController: pcc,
+		packageClient:     pc,
 	}
+}
+
+func newPackageController(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec) *PackageControllerClient {
+	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+
+	chart := spec.VersionsBundle.PackageController.HelmChart
+	imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+	return NewPackageControllerClient(installer, runner, kubeConfig, imageUrl, chart.Name, chart.Tag())
 }
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
@@ -44,16 +65,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Installing curated packages controller on management cluster")
-	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
-
-	versionsBundle := pi.spec.VersionsBundle
-	if versionsBundle == nil {
-		return fmt.Errorf("unknown release bundle")
-	}
-	chart := versionsBundle.PackageController.HelmChart
-	imageUrl := urls.ReplaceHost(chart.Image(), pi.spec.Cluster.RegistryMirror())
-	pc := NewPackageControllerClient(pi.chartInstaller, pi.kubectlRunner, kubeConfig, imageUrl, chart.Name, chart.Tag())
-	err := pc.InstallController(ctx)
+	err := pi.packageController.InstallController(ctx)
 	if err != nil {
 		return err
 	}
@@ -65,11 +77,7 @@ func (pi *Installer) installPackages(ctx context.Context) error {
 		return nil
 	}
 	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
-	packageClient := NewPackageClient(
-		nil,
-		pi.kubectlRunner,
-	)
-	err := packageClient.CreatePackages(ctx, pi.packagesLocation, kubeConfig)
+	err := pi.packageClient.CreatePackages(ctx, pi.packagesLocation, kubeConfig)
 	if err != nil {
 		return err
 	}
