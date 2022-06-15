@@ -51,7 +51,6 @@ will be available on *all* the Cloudstack API endpoints.
 Currently, the CloudstackDataCenterConfig spec contains:
 ```
 // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
-//
 Domain string `json:"domain"`
 // Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 Zones []CloudStackZone `json:"zones"`
@@ -66,7 +65,6 @@ We would instead propose to remove all the existing attributes and instead, simp
 // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 // The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-//
 Domain string `json:"domain"`
 // Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 Zone CloudStackZone `json:"zone"`
@@ -101,7 +99,7 @@ In practice, the pseudocode would look like:
 
 for failureDomain in failureDomains:
   for machineConfig in machineConfigs:
-    validate resource presence with the failureDomain's instance of the CloudMonkey executable
+    validate resource presence with the failureDomain's configuration of the CloudMonkey executable
 
 ### Cloudstack credentials
 
@@ -119,7 +117,7 @@ api-url    = http://172.16.0.1:8080/client/api
 We would propose an extension of the above input mechanism so the user could provide credentials across multiple Cloudstack API endpoints like
 
 ```
-[FailureDomain1]
+[Global]
 api-key    = redacted
 secret-key = redacted
 api-url    = http://172.16.0.1:8080/client/api
@@ -165,9 +163,10 @@ The new code will be covered by unit and e2e tests, and the e2e framework will b
 
 The following e2e test will be added:
 
-simple flow cluster creation/deletion across multiple Cloudstack API endpoints:
+simple flow cluster creation/scaleu/deletion across multiple Cloudstack API endpoints:
 
 * create a management+workload cluster spanning multiple Cloudstack API endpoints
+* scale the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
 * delete cluster
 
 ## Other approaches explored
