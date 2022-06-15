@@ -57,7 +57,7 @@ type InstallOption func(s *Installer)
 
 type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
 
@@ -100,7 +100,7 @@ func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, na
 }
 
 // Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides
-func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error {
+func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -118,6 +118,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	if hookOverride != "" {
+		osiePath = hookOverride
 	}
 
 	valuesMap := map[string]interface{}{
@@ -180,10 +184,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
-	return s.installBootsOnDocker(ctx, bundle, tinkServerIP, kubeconfig)
+	return s.installBootsOnDocker(ctx, bundle, tinkServerIP, kubeconfig, hookOverride)
 }
 
-func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string) error {
+func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string) error {
 	if !s.bootsOnDocker {
 		return nil
 	}
@@ -205,6 +209,10 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	if hookOverride != "" {
+		osiePath = hookOverride
 	}
 
 	cmd := []string{

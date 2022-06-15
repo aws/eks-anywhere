@@ -48,11 +48,11 @@ func getDiskPart(disk string) string {
 	}
 }
 
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string, osFamily OSFamily) []ActionOpt {
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverride string, tinkerbellIp string, osFamily OSFamily) []ActionOpt {
 	var diskPart string
 
 	defaultActions := []ActionOpt{
-		withStreamImageAction(b, disk, osFamily),
+		withStreamImageAction(b, disk, osImageOverride, osFamily),
 	}
 
 	if osFamily == Bottlerocket {
@@ -81,12 +81,19 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string, tinkerb
 	return defaultActions
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily) ActionOpt {
+func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string, osFamily OSFamily) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
-		imageUrl := b.EksD.Raw.Ubuntu.URI
-		if osFamily == Bottlerocket {
+		var imageUrl string
+
+		switch {
+		case osImageOverride != "":
+			imageUrl = osImageOverride
+		case osFamily == Bottlerocket:
 			imageUrl = b.EksD.Raw.Bottlerocket.URI
+		default:
+			imageUrl = b.EksD.Raw.Ubuntu.URI
 		}
+
 		*a = append(*a, tinkerbell.Action{
 			Name:    "stream-image",
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,

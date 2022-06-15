@@ -12,6 +12,10 @@ import (
 type TinkerbellDatacenterConfigSpec struct {
 	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell servies.
 	TinkerbellIP string `json:"tinkerbellIP"`
+	// OSImageURL can be used to override the default OS image path to pull from a local server
+	OSImageURL string `json:"osImageURL,omitempty"`
+	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server
+	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
