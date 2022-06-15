@@ -282,6 +282,7 @@ the existing nodes associated with the configuration.
 
 ### tinkerbellIP
 Optional field to identify the IP address of the Tinkerbell service.
+Other TinkerbellDatacenterConfig fields are not yet supported.
 
 ## TinkerBellMachineConfig Fields
 
@@ -296,6 +297,7 @@ See TinkerbellTemplateConfig fields below.
 The name of the user you want to configure to access your virtual machines through SSH.
 
 The default is `ec2-user`.
+Currently, only one user is supported.
 
 ### users[0].sshAuthorizedKeys (optional)
 The SSH public keys you want to configure to access your machines through SSH (as described below). Only 1 is supported at this time.
@@ -319,11 +321,11 @@ For advanced users, you can modify these fields if you have special needs to do 
 
 ### template.global_timeout
 
-NEED INFO. Set to 6000 in example (100 minutes?). Different for different OS families?
+Sets the timeout value for completing the configuration. Set to 6000 (100 minutes) by default.
 
 ### template.id
 
-NEED INFO
+Not set by default.
 
 ### template.tasks
 
@@ -333,17 +335,17 @@ The following descriptions cover the actions shown in the example template:
 ### template.tasks.actions.name.stream-image
 The `stream-image` action streams the selected image to machine you are provisioning. It identifies:
 
-* environment.COMPRESSED: NEED INFO
+* environment.COMPRESSED: When set to `true`, Tinkerbell expects `IMG_URL` to be a compressed image, which Tinkerbell will uncompress when it writes the contents to disk.
 * environment.DEST_DISK: The hard disk on which the operating system is desployed. The default is the first SCSI disk (/dev/sda), but can be changed for other disk types.
 * environment.IMG_URL: The operating system tarball (ubuntu or other) to stream to the machine you are configuring.
 * image: Container image needed to perform the steps needed by this action.
-* timeout: NEED INFO (Set to 360 (six minutes???). Is the timout to get the image???)
+* timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default 360 (six minutes) to a higher limit if this action is timing out.
 
 ### template.tasks.actions.name.write-netplan
-The `write-netplan` action writes network configuration information to the machine. It identifies:
+The `write-netplan` action writes Ubuntu network configuration information to the machine (see [Netplan](https://netplan.io/)) for details. It identifies:
 
-* environment.CONTENTS.network.version: NEED INFO. CNI version, cilium version??? 
-* environment.CONTENTS.network.renderer: NEED INFO  What is "networkd"????
+* environment.CONTENTS.network.version: Identifies the network version.
+* environment.CONTENTS.network.renderer: Defines the service to manage networking. By default, the `networkd` systemd service is used.
 * environment.CONTENTS.network.ethernets: Network interface to external network (eno1, by default) and whether or not to use dhcp4 (true, by default).
 * environment.DEST_DISK: Destination block storage device partition where the operating system is copied. By default, /dev/sda2 is used (sda1 is the UEFI partition). 
 * environment.DEST_PATH: File where the networking configuration is written (/etc/netplan/config.yaml, by default).
@@ -356,26 +358,26 @@ The `write-netplan` action writes network configuration information to the machi
 * timeout:
 
 ### template.tasks.actions.add-tink-cloud-init-config
-The `add-tink-cloud-init-config` action configures cloud-init features to further configure the operating system. It identifies:
+The `add-tink-cloud-init-config` action configures cloud-init features to further configure the operating system. See [cloud-init Documentation](https://cloudinit.readthedocs.io/en/latest/) for details. It identifies:
 
-* environment.CONTENTS.datasource: NEED INFO. Ec2.metadata_urls: [] Ec2.strict_id: false
+* environment.CONTENTS.datasource: Identifies Ec2 (Ec2.metadata_urls) as the data source and sets `Ec2.strict_id: false` to prevent could init from producing warnings about this datasource.
 * environment.CONTENTS.system_info: Creates the `tink` user and gives it administrative group privileges (wheel, adm) and passwordless sudo privileges, and set the default shell (/bin/bash).
-* environment.CONTENTS.manage_etc_hosts NEED INFO.  Set to localhost.
-* environment.CONTENTS.warnings: NEED INFO. Sets dsid_missing_source: off
-* environment.DEST_DISK: Destination block storage device partition where the operating system is located (/dev/sda2, by default).
-* environment.DEST_PATH: Location of the cloud-init configuration file on disk (/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg, by default)
+* environment.CONTENTS.manage_etc_hosts: Updates the system's `/etc/hosts` file with the hostname. Set to `localhost` by default.
+* environment.CONTENTS.warnings: Sets dsid_missing_source to `off`.
+* environment.DEST_DISK: Destination block storage device partition where the operating system is located (`/dev/sda2`, by default).
+* environment.DEST_PATH: Location of the cloud-init configuration file on disk (`/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg`, by default)
 * environment.DIRMODE: Linux directory permissions bits to use when creating directories (0700, by default)
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
 * environment.GID: The Linux group ID to set on file. Set to 0 (root group) by default.
 * environment.MODE: The Linux permission bits to set on file (0600, by default).
 * environment.UID: The Linux user ID to set on file. Set to 0 (root user) by default.
 * image: Container image used to perform the steps needed by this action.
-* timeout: NEED INFO. Set to 90, by default
+* timeout: Time needed to complete the action. Set to 90, by default
 
 ### template.tasks.actions.add-tink-cloud-init-ds-config
 The `add-tink-cloud-init-ds-config` action configures cloud-init data store features. This identifies the location of your metadata source once the machine is up and running. It identifies:
 
-* environment.CONTENTS.datasource: NEED INFO. Set to Ec2.
+* environment.CONTENTS.datasource: Sets the datasource. Uses Ec2, by default.
 * environment.DEST_DISK: Destination block storage device partition where the operating system is located (/dev/sda2, by default).
 * environment.DEST_PATH: Location of the data store identity configuration file on disk (/etc/cloud/ds-identify.cfg, by default) 
 * environment.DIRMODE: Linux directory permissions bits to use when creating directories (0700, by default)
@@ -384,7 +386,7 @@ The `add-tink-cloud-init-ds-config` action configures cloud-init data store feat
 * environment.MODE: The Linux permission bits to set on file (0600, by default).
 * environment.UID: The Linux user ID to set on file. Set to 0 (root user) by default.
 * image: Container image used to perform the steps needed by this action.
-* timeout: NEED INFO. Set to 90, by default
+* timeout: Time needed to complete the action. Set to 90, by default
 
 ### template.tasks.actions.kexec-image
 The `kexec-image` action performs provisioning activities on the machine, then allows kexec to pivot the kernel to use the system installed on disk. This action identifies:
@@ -392,12 +394,11 @@ The `kexec-image` action performs provisioning activities on the machine, then a
 * environment.BLOCK_DEVICE: Disk partition on which the operating system is installed (/dev/sda2, by default)
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
 * image: Container image used to perform the steps needed by this action.
-* pid: NEED INFO. Set to host.
-* timeout: NEED INFO. Set to 90.
+* pid: Process ID. Set to host, by default.
+* timeout: Time needed to complete the action. Set to 90.
 * volumes: Identifies mount points that need to be remounted to point to locations in the installed system.
 
 If your hardware requires a full reboot, you can change the kexec-image setting as follows:
-
 
 ```
 actions:
