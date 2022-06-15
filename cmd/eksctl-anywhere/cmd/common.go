@@ -29,13 +29,48 @@ func getKubeconfigPath(clusterName, override string) string {
 	return override
 }
 
-func NewDependenciesForPackages(ctx context.Context, registryName, kubeVersion string, paths ...string) (*dependencies.Dependencies, error) {
+func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*dependencies.Dependencies, error) {
+	config := New(opts...)
 	return dependencies.NewFactory().
-		WithExecutableMountDirs(paths...).
+		WithExecutableMountDirs(config.paths...).
 		WithExecutableBuilder().
 		WithManifestReader().
 		WithKubectl().
 		WithHelm().
-		WithCuratedPackagesRegistry(registryName, kubeVersion, version.Get()).
+		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
 		Build(ctx)
+}
+
+type PackageOpt func(*PackageConfig)
+
+type PackageConfig struct {
+	registryName string
+	kubeVersion  string
+	paths        []string
+}
+
+func New(options ...PackageOpt) *PackageConfig {
+	pc := &PackageConfig{}
+	for _, c := range options {
+		c(pc)
+	}
+	return pc
+}
+
+func WithRegistryName(registryName string) func(*PackageConfig) {
+	return func(config *PackageConfig) {
+		config.registryName = registryName
+	}
+}
+
+func WithKubeVersion(kubeVersion string) func(*PackageConfig) {
+	return func(config *PackageConfig) {
+		config.kubeVersion = kubeVersion
+	}
+}
+
+func WithPaths(paths ...string) func(*PackageConfig) {
+	return func(config *PackageConfig) {
+		config.paths = paths
+	}
 }

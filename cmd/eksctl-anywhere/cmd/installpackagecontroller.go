@@ -55,7 +55,7 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, "", "")
+	deps, err := NewDependenciesForPackages(ctx, WithPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

@@ -50,7 +50,7 @@ func runGeneratePackages(cmd *cobra.Command, args []string) error {
 
 func generatePackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := NewDependenciesForPackages(ctx, gpOptions.registry, gpOptions.kubeVersion, kubeConfig)
+	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
