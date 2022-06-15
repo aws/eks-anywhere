@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -44,25 +45,43 @@ warnings:
 `
 )
 
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, tinkerbellIp string, osFamily OSFamily) []ActionOpt {
+func getDiskPart(disk string) string {
+	switch {
+	case strings.Contains(disk, "nvme"):
+		return fmt.Sprintf("%sp", disk)
+	default:
+		return disk
+	}
+}
+
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string, osFamily OSFamily) []ActionOpt {
+	var diskPart string
+
 	defaultActions := []ActionOpt{
 		withStreamImageAction(b, disk, osFamily),
-		withNetplanAction(b, disk, osFamily),
 	}
 
 	if osFamily == Bottlerocket {
+		diskPart = fmt.Sprintf("%s12", getDiskPart(disk))
 		defaultActions = append(defaultActions,
-			withBottlerocketBootconfigAction(b, disk),
-			withBottlerocketUserDataAction(b, disk, tinkerbellIp),
+			withNetplanAction(b, diskPart, osFamily),
+			withBottlerocketBootconfigAction(b, diskPart),
+			withBottlerocketUserDataAction(b, diskPart, tinkerbellIp),
 			withRebootAction(b),
 		)
 	} else {
+		diskPart = fmt.Sprintf("%s2", getDiskPart(disk))
 		defaultActions = append(defaultActions,
-			withDisableCloudInitNetworkCapabilities(b, disk),
-			withTinkCloudInitAction(b, disk, tinkerbellIp),
-			withDsCloudInitAction(b, disk),
-			withKexecAction(b, disk),
+			withNetplanAction(b, diskPart, osFamily),
+			withDisableCloudInitNetworkCapabilities(b, diskPart),
+			withTinkCloudInitAction(b, diskPart, tinkerbellIp),
+			withDsCloudInitAction(b, diskPart),
 		)
+		if strings.Contains(disk, "nvme") {
+			defaultActions = append(defaultActions, withRebootAction(b))
+		} else {
+			defaultActions = append(defaultActions, withKexecAction(b, diskPart))
+		}
 	}
 
 	return defaultActions
@@ -94,7 +113,7 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_DISK": disk,
 				"DEST_PATH": "/etc/netplan/config.yaml",
 				"DIRMODE":   "0755",
 				"FS_TYPE":   "ext4",
@@ -107,7 +126,6 @@ func withNetplanAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFamily
 
 		if osFamily == Bottlerocket {
 			// Bottlerocket needs to write onto the 12th partition as opposed to 2nd for non-Bottlerocket OS
-			netplanAction.Environment["DEST_DISK"] = fmt.Sprintf("%s12", disk)
 			netplanAction.Environment["DEST_PATH"] = "/net.toml"
 			netplanAction.Environment["CONTENTS"] = bottlerocketNetplan
 		} else {
@@ -125,7 +143,7 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 			Timeout: 90,
 			Environment: map[string]string{
 				"CONTENTS":  "network: {config: disabled}",
-				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_DISK": disk,
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
 				"DIRMODE":   "0700",
 				"FS_TYPE":   "ext4",
@@ -146,7 +164,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellI
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_DISK": disk,
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
@@ -166,7 +184,7 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": fmt.Sprintf("%s2", disk),
+				"DEST_DISK": disk,
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 				"CONTENTS":  "datasource: Ec2\n",
@@ -187,7 +205,7 @@ func withKexecAction(b v1alpha1.VersionsBundle, disk string) ActionOpt {
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"BLOCK_DEVICE": fmt.Sprintf("%s2", disk),
+				"BLOCK_DEVICE": disk,
 				"FS_TYPE":      "ext4",
 			},
 		})
@@ -214,7 +232,7 @@ func withBottlerocketBootconfigAction(b v1alpha1.VersionsBundle, disk string) Ac
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"DEST_DISK":           fmt.Sprintf("%s12", disk),
+				"DEST_DISK":           disk,
 				"FS_TYPE":             "ext4",
 				"DEST_PATH":           "/bootconfig.data",
 				"BOOTCONFIG_CONTENTS": bottlerocketBootconfig,
@@ -237,7 +255,7 @@ func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, tink
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"DEST_DISK": fmt.Sprintf("%s12", disk),
+				"DEST_DISK": disk,
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/user-data.toml",
 				"HEGEL_URL": metadataUrl,

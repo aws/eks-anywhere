@@ -110,7 +110,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 		{
 			testName: "Ubuntu-nvme",
-			diskType: "/dev/nvme",
+			diskType: "/dev/nvme0n1",
 			osFamily: Ubuntu,
 			wantActions: []tinkerbell.Action{
 				{
@@ -119,7 +119,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 360,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/nvme",
+						"DEST_DISK":  "/dev/nvme0n1",
 						"COMPRESSED": "true",
 					},
 				},
@@ -129,7 +129,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":      "/dev/nvme2",
+						"DEST_DISK":      "/dev/nvme0n1p2",
 						"FS_TYPE":        "ext4",
 						"DEST_PATH":      "/etc/netplan/config.yaml",
 						"STATIC_NETPLAN": "true",
@@ -145,7 +145,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Environment: map[string]string{
 						"CONTENTS":  "network: {config: disabled}",
-						"DEST_DISK": "/dev/nvme2",
+						"DEST_DISK": "/dev/nvme0n1p2",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
 						"DIRMODE":   "0700",
 						"FS_TYPE":   "ext4",
@@ -159,7 +159,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme2",
+						"DEST_DISK": "/dev/nvme0n1p2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
@@ -174,7 +174,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme2",
+						"DEST_DISK": "/dev/nvme0n1p2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 						"CONTENTS":  "datasource: Ec2\n",
@@ -185,14 +185,11 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					},
 				},
 				{
-					Name:    "kexec-image",
-					Image:   "public.ecr.aws/eks-anywhere/kexec:latest",
+					Name:    "reboot-image",
+					Image:   "public.ecr.aws/eks-anywhere/reboot:latest",
 					Timeout: 90,
+					Volumes: []string{"/worker:/worker"},
 					Pid:     "host",
-					Environment: map[string]string{
-						"BLOCK_DEVICE": "/dev/nvme2",
-						"FS_TYPE":      "ext4",
-					},
 				},
 			},
 		},
@@ -270,7 +267,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 		{
 			testName: "Bottlerocket-nvme",
-			diskType: "/dev/nvme",
+			diskType: "/dev/nvme0n1",
 			osFamily: Bottlerocket,
 			wantActions: []tinkerbell.Action{
 				{
@@ -279,7 +276,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 360,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
-						"DEST_DISK":  "/dev/nvme",
+						"DEST_DISK":  "/dev/nvme0n1",
 						"COMPRESSED": "true",
 					},
 				},
@@ -289,7 +286,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme12",
+						"DEST_DISK": "/dev/nvme0n1p12",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/net.toml",
 						"CONTENTS":  bottlerocketNetplan,
@@ -305,7 +302,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK":           "/dev/nvme12",
+						"DEST_DISK":           "/dev/nvme0n1p12",
 						"FS_TYPE":             "ext4",
 						"DEST_PATH":           "/bootconfig.data",
 						"BOOTCONFIG_CONTENTS": bottlerocketBootconfig,
@@ -321,7 +318,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme12",
+						"DEST_DISK": "/dev/nvme0n1p12",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/user-data.toml",
 						"HEGEL_URL": metadataString,
