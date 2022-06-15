@@ -51,7 +51,7 @@ type PackageConfig struct {
 
 func New(options ...PackageOpt) *PackageConfig {
 	pc := &PackageConfig{}
-	for _, c := range options {
+	for _, o := range options {
 		c(pc)
 	}
 	return pc
