@@ -32,12 +32,6 @@ primary = true
   Ec2:
     metadata_urls: [%s]
     strict_id: false
-system_info:
-  default_user:
-    name: tink
-    groups: [wheel, adm]
-    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-    shell: /bin/bash
 manage_etc_hosts: localhost
 warnings:
   dsid_missing_source: off
