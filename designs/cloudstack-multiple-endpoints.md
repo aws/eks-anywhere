@@ -172,6 +172,5 @@ simple flow cluster creation/deletion across multiple Cloudstack API endpoints:
 
 ## Other approaches explored
 
-Another direction we can go to support this feature is to refactor the entire EKS-A codebase so that instead of all the failure domains existing inside the CloudstackDatacenterConfig
-object, each CloudstackDatacenterConfig itself corresponds with a single failure domain. Then, the top level EKS-A Cluster object could be refactored to have a list of DatacenterRefs instead
-of a single one. However, this approach feels extremely invasive to the product and does not provide tangible value to the other providers.
+1. Another direction we can go to support this feature is to refactor the entire EKS-A codebase so that instead of all the failure domains existing inside the CloudstackDatacenterConfig object, each CloudstackDatacenterConfig itself corresponds with a single failure domain. Then, the top level EKS-A Cluster object could be refactored to have a list of DatacenterRefs instead of a single one. However, this approach feels extremely invasive to the product and does not provide tangible value to the other providers.
+2. Lastly, we can consider the option of introducing a new DatacenterConfig object which represents not one Cloudstack "Availability Zone", but multiple. However, the issue here is that the CloudstackDatacenterConfig already has a list of CloudstackZone objects, so we're essentially already supporting multiple of what could be interpreted as Availability Zones. Adding additional attributes to that concept is a more natural extension of the API, instead of defining a new type
