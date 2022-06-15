@@ -32,7 +32,7 @@ func getKubeconfigPath(clusterName, override string) string {
 func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*dependencies.Dependencies, error) {
 	config := New(opts...)
 	return dependencies.NewFactory().
-		WithExecutableMountDirs(config.paths...).
+		WithExecutableMountDirs(config.mountPaths...).
 		WithExecutableBuilder().
 		WithManifestReader().
 		WithKubectl().
@@ -46,13 +46,13 @@ type PackageOpt func(*PackageConfig)
 type PackageConfig struct {
 	registryName string
 	kubeVersion  string
-	mountPaths        []string
+	mountPaths   []string
 }
 
 func New(options ...PackageOpt) *PackageConfig {
 	pc := &PackageConfig{}
 	for _, o := range options {
-		c(pc)
+		o(pc)
 	}
 	return pc
 }
@@ -71,6 +71,6 @@ func WithKubeVersion(kubeVersion string) func(*PackageConfig) {
 
 func WithMountPaths(mountPaths ...string) func(*PackageConfig) {
 	return func(config *PackageConfig) {
-		config.paths = paths
+		config.mountPaths = mountPaths
 	}
 }
