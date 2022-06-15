@@ -116,7 +116,7 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	c := executables.NewCmk(executable, writer, execConfig)
+	c := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 	err := c.ValidateCloudStackConnection(ctx)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
@@ -136,8 +136,13 @@ func TestValidateMultipleCloudStackProfiles(t *testing.T) {
 	expectedArgs2 := []string{"-c", configFilePath2, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs2).Return(bytes.Buffer{}, nil)
 
-	c := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles)
+	c := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles[0])
 	err := c.ValidateCloudStackConnection(ctx)
+	if err != nil {
+		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
+	}
+	c = executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles[1])
+	err = c.ValidateCloudStackConnection(ctx)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
 	}
@@ -152,7 +157,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
-	c := executables.NewCmk(executable, writer, execConfig)
+	c := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 	err := c.ValidateCloudStackConnection(ctx)
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
@@ -266,7 +271,7 @@ func TestCmkCleanupVms(t *testing.T) {
 				executable.EXPECT().Execute(ctx, argsList).
 					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			}
-			cmk := executables.NewCmk(executable, writer, execConfig)
+			cmk := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return
@@ -894,7 +899,7 @@ func TestCmkListOperations(t *testing.T) {
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, tt.argumentsExecCall).
 				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
-			cmk := executables.NewCmk(executable, writer, execConfig)
+			cmk := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return

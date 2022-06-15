@@ -193,12 +193,15 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, cmk ProviderCmkClient) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
+	cmks := map[string]ProviderCmkClient{}
+	cmks["mockCmk"] = cmk
+
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
-		cmk,
+		cmks,
 		writer,
 		test.FakeNow,
 		false,
