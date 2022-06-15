@@ -46,7 +46,7 @@ type PackageOpt func(*PackageConfig)
 type PackageConfig struct {
 	registryName string
 	kubeVersion  string
-	paths        []string
+	mountPaths        []string
 }
 
 func New(options ...PackageOpt) *PackageConfig {
