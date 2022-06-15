@@ -164,10 +164,36 @@ func constructMinimumHardwareRequirementCounts(requirements []minimumHardwareReq
 	return counts
 }
 
-// validateTotalHardwareRequestedAvailable performs a simple check that sums the total requested
-// hardware and ensures at least that much is registered in the catalogue. It does not take
-// into consideration hardware groupings defined by selectors.
-func validateTotalHardwareRequestedAvailable(cluster v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
+// validateTotalHardwareRequestedAvailableForCreate performs a simple check that sums the total requested
+// hardware and ensures at least that much is registered in the catalogue.
+// It does not take into consideration hardware groupings defined by selectors.
+func validateTotalHardwareRequestedAvailableForCreate(cluster v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
+	return validateTotalHardwareRequestedAvailable(sumRequestedNodes(cluster), catalogue)
+}
+
+// validateTotalHardwareRequestedAvailableForUpgrade checks that there is sufficient hardware in
+// catalogue to satisfy total desired - total current hardware.
+// It does not take into consideration hardware groupings defined by selectors.
+func validateTotalHardwareRequestedAvailableForUpgrade(desired, current v1alpha1.ClusterSpec, catalogue *hardware.Catalogue) error {
+	return validateTotalHardwareRequestedAvailable(
+		sumRequestedNodes(desired)-sumRequestedNodes(current),
+		catalogue,
+	)
+}
+
+func validateTotalHardwareRequestedAvailable(requested int, catalogue *hardware.Catalogue) error {
+	if catalogue.TotalHardware() < requested {
+		return fmt.Errorf(
+			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
+			catalogue.TotalHardware(),
+			requested,
+		)
+	}
+
+	return nil
+}
+
+func sumRequestedNodes(cluster v1alpha1.ClusterSpec) int {
 	requestedNodesCount := cluster.ControlPlaneConfiguration.Count
 	requestedNodesCount += sumWorkerNodeCounts(cluster.WorkerNodeGroupConfigurations)
 
@@ -176,15 +202,7 @@ func validateTotalHardwareRequestedAvailable(cluster v1alpha1.ClusterSpec, catal
 		requestedNodesCount += cluster.ExternalEtcdConfiguration.Count
 	}
 
-	if catalogue.TotalHardware() < requestedNodesCount {
-		return fmt.Errorf(
-			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
-			catalogue.TotalHardware(),
-			requestedNodesCount,
-		)
-	}
-
-	return nil
+	return requestedNodesCount
 }
 
 func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {

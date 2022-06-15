@@ -121,7 +121,59 @@ func NewCreateMinimumHardwareAvailableAssertion(catalogue *hardware.Catalogue) C
 		}
 
 		return multierr.Combine(
-			validateTotalHardwareRequestedAvailable(spec.Cluster.Spec, catalogue),
+			validateTotalHardwareRequestedAvailableForCreate(spec.Cluster.Spec, catalogue),
+			validateMinimumHardwareRequirements(requirements, catalogue),
+		)
+	}
+}
+
+// See NewCreateMinimumHardwareAvailableassertion. The only difference is that expected counts are
+// delta's between desired and current as opposed to counts specified in the cluster spec.
+func NewUpgradeMinimumHardwareAvailableAssertion(current *ClusterSpec, catalogue *hardware.Catalogue) ClusterSpecAssertion {
+	return func(desired *ClusterSpec) error {
+		var requirements minimumHardwareRequirements
+
+		// For each group, we compute a delta between current and desired specs. Use the delta
+		// to construct requirements. Even in scale-down we specify requirements because
+		// validations should pass given the delta will be negative and count 0 or more so
+		// 0 < [some negative] is always false.
+
+		currentControlPlane := current.ControlPlaneConfiguration()
+		desiredControlPlane := desired.ControlPlaneConfiguration()
+		desiredControlPlaneDelta := desiredControlPlane.Count - currentControlPlane.Count
+		requirements.New(
+			desired.ControlPlaneConfiguration().MachineGroupRef.Name,
+			desiredControlPlaneDelta,
+			desired.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		)
+
+		for i, desiredNodeGroup := range desired.WorkerNodeGroupConfigurations() {
+			currentNodeGroup := current.WorkerNodeGroupConfigurations()[i]
+			desiredNodeGroupDelta := desiredNodeGroup.Count - currentNodeGroup.Count
+			requirements.New(
+				desiredNodeGroup.MachineGroupRef.Name,
+				desiredNodeGroupDelta,
+				desired.WorkerNodeGroupMachineConfig(desiredNodeGroup).Spec.HardwareSelector,
+			)
+		}
+
+		if desired.HasExternalEtcd() {
+			currentExternalEtcd := current.ExternalEtcdConfiguration()
+			desiredExternalEtcd := desired.ExternalEtcdConfiguration()
+			desiredExternalEtcdDelta := desiredExternalEtcd.Count - currentExternalEtcd.Count
+			requirements.New(
+				desired.ExternalEtcdConfiguration().MachineGroupRef.Name,
+				desiredExternalEtcdDelta,
+				desired.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+			)
+		}
+
+		return multierr.Combine(
+			validateTotalHardwareRequestedAvailableForUpgrade(
+				desired.Cluster.Spec,
+				current.Cluster.Spec,
+				catalogue,
+			),
 			validateMinimumHardwareRequirements(requirements, catalogue),
 		)
 	}

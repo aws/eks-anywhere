@@ -8,29 +8,37 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 )
 
-type ValidClusterSpecBuilder struct {
+type ClusterSpecBuilder struct {
 	ControlPlaneMachineName    string
 	ExternalEtcdMachineName    string
 	WorkerNodeGroupMachineName string
 	Namespace                  string
 	IncludeHardwareSelectors   bool
+	IncludeExternalEtcd        bool
 }
 
-func NewDefaultValidClusterSpecBuilder() ValidClusterSpecBuilder {
-	return ValidClusterSpecBuilder{
+func NewDefaultClusterSpecBuilder() *ClusterSpecBuilder {
+	return &ClusterSpecBuilder{
 		ControlPlaneMachineName:    "control-plane",
 		ExternalEtcdMachineName:    "external-etcd",
 		WorkerNodeGroupMachineName: "worker-node-group",
 		Namespace:                  "namespace",
 		IncludeHardwareSelectors:   true,
+		IncludeExternalEtcd:        true,
 	}
 }
 
-func (b *ValidClusterSpecBuilder) WithoutHardwareSelectors() {
+func (b *ClusterSpecBuilder) WithoutHardwareSelectors() *ClusterSpecBuilder {
 	b.IncludeHardwareSelectors = false
+	return b
 }
 
-func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
+func (b *ClusterSpecBuilder) ExternalEtcd(toggle bool) *ClusterSpecBuilder {
+	b.IncludeExternalEtcd = toggle
+	return b
+}
+
+func (b ClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 	spec := &tinkerbell.ClusterSpec{
 		Spec: &cluster.Spec{
 			Config: &cluster.Config{
@@ -112,6 +120,11 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 				},
 			},
 		},
+	}
+
+	if !b.IncludeExternalEtcd {
+		spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+		delete(spec.MachineConfigs, b.ExternalEtcdMachineName)
 	}
 
 	if !b.IncludeHardwareSelectors {

@@ -116,6 +116,18 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 	// TODO(chrisdoherty4) Apply assertions specific to upgrade.
 
+	// - Make sure hardware supplied for scale-up meets the same template requirements as already
+	// provisioned hardware. This keeps the complexity down for the user as they don't need to deal
+	// with hardware already in the cluster and hardware submitted via the CSV being different.
+	// - Ensure there's at least N extra hardware for the scale-up. This would be a total of
+	// sum(groupsRequestsCountsDiffs).
+	// - Ensure each selector has sufficient hardware meeting its requested count.
+	// - Need to add something to ensure only 1 label is set in selectors.
+	// - Need to validate nothing except counts have changed in the datacenter config.
+
+	// Validation for the disk consistency is currently done in machines. We need to move that to
+	// cataloguing else taking existing Hardware into consideration likely becomes convoluted.
+
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
 		return err
 	}
