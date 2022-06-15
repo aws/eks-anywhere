@@ -29,7 +29,6 @@ type CloudStackDatacenterConfigSpec struct {
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-	//
 	Domain string `json:"domain"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZone `json:"zones"`
@@ -37,6 +36,8 @@ type CloudStackDatacenterConfigSpec struct {
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`
+	// List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
+	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 
 type CloudStackResourceIdentifier struct {
@@ -69,6 +70,20 @@ type CloudStackZone struct {
 	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
 	// In multiple-zones situation, only 'Shared' network is supported.
 	Network CloudStackResourceIdentifier `json:"network"`
+}
+
+// CloudStackAvailabilityZone is
+type CloudStackAvailabilityZone struct {
+	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
+	Zone CloudStackZone `json:"zone"`
+	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+	Domain string `json:"domain"`
+	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+	Account string `json:"account,omitempty"`
+	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+	ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
@@ -157,6 +172,14 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 			return false
 		}
 	}
+	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
+		return false
+	}
+	for i, az := range s.AvailabilityZones {
+		if !az.Equal(&o.AvailabilityZones[i]) {
+			return false
+		}
+	}
 	return s.ManagementApiEndpoint == o.ManagementApiEndpoint &&
 		s.Domain == o.Domain &&
 		s.Account == o.Account
@@ -173,6 +196,22 @@ func (z *CloudStackZone) Equal(o *CloudStackZone) bool {
 		z.Name == o.Name &&
 		z.Network.Id == o.Network.Id &&
 		z.Network.Name == o.Network.Name {
+		return true
+	}
+	return false
+}
+
+func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool {
+	if az == o {
+		return true
+	}
+	if az == nil || o == nil {
+		return false
+	}
+	if az.Zone.Equal(&o.Zone) &&
+		az.Account == o.Account &&
+		az.Domain == o.Domain &&
+		az.ManagementApiEndpoint == o.ManagementApiEndpoint {
 		return true
 	}
 	return false
