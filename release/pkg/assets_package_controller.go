@@ -47,7 +47,7 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	sourceHelmURI, err := r.GetSourceHelmURI(repoName, sourceImageUri)
 	if err != nil {
 		// This is for Prow, where it's running e2e tests in an account where the ECR lookup will fail, we check for Prow accountID and bypass the error out.
-		if r.DryRun || strings.Contains(err.Error(), "316434458148") == true {
+		if r.DryRun || strings.Contains(err.Error(), "316434458148") {
 			sourceHelmURI = "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm"
 		} else {
 			return nil, errors.Cause(err)
