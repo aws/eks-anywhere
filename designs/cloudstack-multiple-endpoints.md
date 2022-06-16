@@ -62,6 +62,8 @@ ManagementApiEndpoint string `json:"managementApiEndpoint"`
 
 We would instead propose to remove all the existing attributes and instead, simply include a list of AvailabilityZone objects, where each AvailabilityZone object looks like
 ```
+// Name would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
+Name string `json:"name"`
 // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 // The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
@@ -139,6 +141,8 @@ api-url    = http://172.16.0.3:8080/client/api
 
 ...
 ```
+
+Where the Section names (i.e. Global, AvailabilityZone1, etc.) correspond to the Availability Zone names
 
 We are also exploring converting the ini file to a yaml input file which contains a list of credentials and their associated endpoints. Either way, this environment variable would
 be passed along to CAPC and used by the CAPC controller just like it is currently.
