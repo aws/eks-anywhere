@@ -59,7 +59,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",
@@ -106,7 +106,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",
@@ -146,7 +146,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",

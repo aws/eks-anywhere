@@ -80,7 +80,7 @@ spec:
           IMG_URL: ""
         image: image2disk:v1.0.0
         name: stream-image
-        timeout: 360
+        timeout: 600
         idont: "belonghere"
     version: "0.1"
     idont: "belonghere"

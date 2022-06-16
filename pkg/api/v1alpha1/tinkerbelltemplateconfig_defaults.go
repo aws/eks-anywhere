@@ -90,7 +90,7 @@ func withStreamImageAction(b v1alpha1.VersionsBundle, disk string, osFamily OSFa
 		*a = append(*a, tinkerbell.Action{
 			Name:    "stream-image",
 			Image:   b.Tinkerbell.TinkerbellStack.Actions.ImageToDisk.URI,
-			Timeout: 360,
+			Timeout: 600,
 			Environment: map[string]string{
 				"DEST_DISK":  disk,
 				"IMG_URL":    imageUrl,
