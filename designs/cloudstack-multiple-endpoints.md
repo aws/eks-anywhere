@@ -60,7 +60,25 @@ Account string `json:"account,omitempty"`
 ManagementApiEndpoint string `json:"managementApiEndpoint"`
 ```
 
-We would instead propose to remove all the existing attributes and instead, simply include a list of AvailabilityZone objects, where each AvailabilityZone object looks like
+We would instead propose to gradually deprecate all the existing attributes and instead, simply include a list of AvailabilityZone objects like so
+
+```
+type CloudStackDatacenterConfigSpec struct {
+	// Deprecated
+	Domain string `json:"domain,omitempty"`
+	// Deprecated
+	Zones []CloudStackZone `json:"zones,omitempty"`
+	// Deprecated
+	Account string `json:"account,omitempty"`
+	// Deprecated
+	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
+	// List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
+	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
+}
+```
+
+where each AvailabilityZone object looks like
+
 ```
 // Name would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
 Name string `json:"name"`
