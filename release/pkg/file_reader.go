@@ -126,7 +126,11 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketOvaReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
-	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_OVA_RELEASES")
+	bottlerocketReleasesFilePath := "BOTTLEROCKET_RELEASES"
+	if r.BuildRepoBranchName == "release-0.9" {
+		bottlerocketReleasesFilePath = "BOTTLEROCKET_OVA_RELEASES"
+	}
+	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, bottlerocketReleasesFilePath)
 
 	bottlerocketOvaReleaseFile, err := ioutil.ReadFile(bottlerocketOvaReleaseFilePath)
 	if err != nil {
