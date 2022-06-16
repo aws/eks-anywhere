@@ -243,7 +243,7 @@ spec:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-20-16 release
+          description: Bottlerocket Ova image for EKS-D 1-20-16 release
           etcdadm: {}
           name: bottlerocket-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
@@ -263,7 +263,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-16 release
+          description: Ubuntu Ova image for EKS-D 1-20-16 release
           etcdadm:
             arch:
             - amd64
@@ -295,7 +295,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-16 release
+          description: Ubuntu Raw image for EKS-D 1-20-16 release
           etcdadm:
             arch:
             - amd64
@@ -965,7 +965,7 @@ spec:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-21-14 release
+          description: Bottlerocket Ova image for EKS-D 1-21-14 release
           etcdadm: {}
           name: bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
@@ -985,7 +985,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-14 release
+          description: Ubuntu Ova image for EKS-D 1-21-14 release
           etcdadm:
             arch:
             - amd64
@@ -1003,8 +1003,17 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-14/ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-21-14 release
           etcdadm: {}
+          name: bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-14/bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -1017,7 +1026,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-14 release
+          description: Ubuntu Raw image for EKS-D 1-21-14 release
           etcdadm:
             arch:
             - amd64
@@ -1687,7 +1696,7 @@ spec:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-22-7 release
+          description: Bottlerocket Ova image for EKS-D 1-22-7 release
           etcdadm: {}
           name: bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
@@ -1707,7 +1716,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-7 release
+          description: Ubuntu Ova image for EKS-D 1-22-7 release
           etcdadm:
             arch:
             - amd64
@@ -1725,8 +1734,17 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-7/ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-22-7 release
           etcdadm: {}
+          name: bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-7/bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -1739,7 +1757,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-7 release
+          description: Ubuntu Raw image for EKS-D 1-22-7 release
           etcdadm:
             arch:
             - amd64
@@ -2409,7 +2427,7 @@ spec:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-23-1 release
+          description: Bottlerocket Ova image for EKS-D 1-23-1 release
           etcdadm: {}
           name: bottlerocket-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
@@ -2429,7 +2447,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-1 release
+          description: Ubuntu Ova image for EKS-D 1-23-1 release
           etcdadm:
             arch:
             - amd64
@@ -2447,8 +2465,17 @@ spec:
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-1/ubuntu-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-23-1 release
           etcdadm: {}
+          name: bottlerocket-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-1/bottlerocket-v1.23.6-eks-d-1-23-1-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -2461,7 +2488,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-1 release
+          description: Ubuntu Raw image for EKS-D 1-23-1 release
           etcdadm:
             arch:
             - amd64
