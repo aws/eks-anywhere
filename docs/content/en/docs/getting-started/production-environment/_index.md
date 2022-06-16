@@ -42,11 +42,12 @@ With prerequisites in place, addional preparation is required, depending on your
 * [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}})
 * [VMware vSphere preparation]({{< relref "/docs/reference/vsphere/vsphere-preparation.md" >}})
 
+Also, see the [Ports and protocols]({{< relref "/docs/reference/ports.md" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 ## Steps
 
 The following steps are divided into two sections:
 
-* Create an initial cluster (used as a management or self-managed cluster)
+* Create an initial cluster 
 * Create zero or more workload clusters from the management cluster (vSphere only)
 
 ### Create an initial cluster
