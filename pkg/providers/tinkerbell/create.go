@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -48,6 +49,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		p.tinkerbellIp,
 		cluster.KubeconfigFile,
+		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithNamespaceCreate(false),
 		stack.WithBootsOnDocker(),
 		stack.WithHostPortEnabled(true),
@@ -79,6 +81,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
+		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(false),
@@ -119,6 +122,19 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 
 	if !p.skipIpCheck {
 		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
+	}
+
+	if p.datacenterConfig.Spec.OSImageURL != "" {
+		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.OSImageURL); err != nil {
+			return fmt.Errorf("parsing osImageOverride: %v", err)
+		}
+	}
+
+	if p.datacenterConfig.Spec.HookImagesURLPath != "" {
+		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.HookImagesURLPath); err != nil {
+			return fmt.Errorf("parsing hookOverride: %v", err)
+		}
+		logger.Info("hook path override set", "path", p.datacenterConfig.Spec.HookImagesURLPath)
 	}
 
 	// Validate must happen last beacuse we depend on the catalogue entries for some checks.

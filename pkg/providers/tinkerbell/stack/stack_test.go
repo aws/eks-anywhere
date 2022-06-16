@@ -72,6 +72,34 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 		getTinkBundle(),
 		testIP,
 		cluster.KubeconfigFile,
+		"",
+		stack.WithNamespaceCreate(true),
+		stack.WithBootsOnKubernetes(),
+		stack.WithHostPortEnabled(true),
+	); err != nil {
+		t.Fatalf("failed to install Tinkerbell stack: %v", err)
+	}
+}
+
+func TestTinkerbellStackInstallHookOverrideSuccess(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	docker := mocks.NewMockDocker(mockCtrl)
+	helm := mocks.NewMockHelm(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	ctx := context.Background()
+
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+
+	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
+
+	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
+
+	if err := s.Install(ctx,
+		getTinkBundle(),
+		testIP,
+		cluster.KubeconfigFile,
+		"https://hook-override-path",
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(true),
@@ -102,7 +130,7 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 		"-e", gomock.Any(),
 	)
 
-	err := s.Install(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, stack.WithBootsOnDocker())
+	err := s.Install(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "", stack.WithBootsOnDocker())
 	if err != nil {
 		t.Fatalf("failed to install Tinkerbell stack: %v", err)
 	}

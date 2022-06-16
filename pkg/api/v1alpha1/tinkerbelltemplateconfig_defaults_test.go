@@ -342,7 +342,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			givenActions := []tinkerbell.Action{}
-			opts := GetDefaultActionsFromBundle(vBundle, tt.diskType, tinkerbellIp, tt.osFamily)
+			opts := GetDefaultActionsFromBundle(vBundle, tt.diskType, "", tinkerbellIp, tt.osFamily)
 			for _, opt := range opts {
 				opt(&givenActions)
 			}
