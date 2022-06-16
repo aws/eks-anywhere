@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -238,7 +237,6 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
-	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
@@ -247,6 +245,31 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 
 	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerRunPostCreateWorkloadClusterSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+
+	mgmtCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	workloadCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "workload-kubeconfig",
+	}
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
+	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err != nil {
+		t.Errorf("ClusterManager.RunPostCreateWorkloadCluster() error = %v, wantErr nil", err)
 	}
 }
 
@@ -270,7 +293,6 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, mgmtCluster, "60m", clusterName)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
-	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
@@ -282,7 +304,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	}
 }
 
-func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T) {
+func TestClusterManagerRunPostCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -297,36 +319,20 @@ func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T
 		Name:           clusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
 	}
-
-	wantKubeconfigFile := "folder/cluster-name-eks-a-cluster.kubeconfig"
-	wantCluster := &types.Cluster{
+	workloadCluster := &types.Cluster{
 		Name:           clusterName,
-		KubeconfigFile: wantKubeconfigFile,
+		KubeconfigFile: "workload-kubeconfig",
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
-	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
-	kubeconfig := []byte("content")
-	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
-	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
-
-	got, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider)
-	if err != nil {
-		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
-	}
-
-	if !reflect.DeepEqual(got, wantCluster) {
-		t.Errorf("ClusterManager.CreateWorkloadCluster() cluster = %#v, want %#v", got, wantCluster)
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, workloadCluster, gomock.Any())
+	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err != nil {
+		t.Errorf("ClusterManager.RunPostCreateWorkloadCluster() error = %v, wantErr nil", err)
 	}
 }
 
-func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing.T) {
+func TestClusterManagerRunPostCreateWorkloadClusterErrorApplyingExtraObjects(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -341,31 +347,20 @@ func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing
 		Name:           clusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
 	}
-
-	wantKubeconfigFile := "folder/cluster-name-eks-a-cluster.kubeconfig"
-	wantCluster := &types.Cluster{
+	workloadCluster := &types.Cluster{
 		Name:           clusterName,
-		KubeconfigFile: wantKubeconfigFile,
+		KubeconfigFile: "workload-kubeconfig",
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
-	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
-	kubeconfig := []byte("content")
-	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
-	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any()).Return(errors.New("error applying"))
-
-	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err == nil {
-		t.Error("ClusterManager.CreateWorkloadCluster() error = nil, wantErr not nil")
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, workloadCluster, gomock.Any()).Return(errors.New("error applying"))
+	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err == nil {
+		t.Error("ClusterManager.RunPostCreateWorkloadCluster() error = nil, wantErr not nil", err)
 	}
 }
 
-func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T) {
+func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -377,30 +372,25 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 	mgmtCluster := &types.Cluster{
 		Name:           clusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
+	}
+	workloadCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "workload-kubeconfig",
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
-	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
 	// Fail once
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(1).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef the rest of the retries
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).MinTimes(1).Return([]types.Machine{{Metadata: types.MachineMetadata{
 		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
 	}}}, nil)
-	kubeconfig := []byte("content")
-	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
-	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
-
-	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err == nil {
-		t.Error("ClusterManager.CreateWorkloadCluster() error = nil, wantErr not nil")
+	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err == nil {
+		t.Error("ClusterManager.RunPostCreateWorkloadCluster() error = nil, wantErr not nil", err)
 	}
 }
 
-func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t *testing.T) {
+func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t *testing.T) {
 	retries := 10
 	ctx := context.Background()
 	clusterName := "cluster-name"
@@ -414,11 +404,12 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 		Name:           clusterName,
 		KubeconfigFile: "mgmt-kubeconfig",
 	}
+	workloadCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "workload-kubeconfig",
+	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 1*time.Minute, 2*time.Minute))
-	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
-	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
 	// Fail a bunch of times
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(retries-5).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef  times
@@ -446,14 +437,8 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
 	}
 	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Times(1).Return(machines, nil)
-	kubeconfig := []byte("content")
-	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
-	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
-	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
-
-	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err != nil {
-		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
+	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err != nil {
+		t.Errorf("ClusterManager.RunPostCreateWorkloadCluster() error = %v, wantErr nil", err)
 	}
 }
 
