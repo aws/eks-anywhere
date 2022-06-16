@@ -2,9 +2,9 @@ package tinkerbell
 
 import (
 	"fmt"
+	"strings"
 
-	"go.uber.org/multierr"
-
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -84,45 +84,141 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-// NewCreateMinimumHardwareAvailableAssertion asserts that catalogue has sufficient hardware to
-// support the ClusterSpec during a create workflow. It ensures the following:
-// 	- catalogue has sufficient total hardware to accommodate the cluster spec.
-//	- catalogue has sufficient hardware per hardware selector registered in catalogue
-//
-// It does not protect against situations where a selector (A) is a subset of a selector (B)
-// and all hardware in (A) is acquired by (B) leaving no hardware for (A) at the time of hardware
-// acquisition. Performing that type of check implies we know whether all hardware in (A) would
-// be acquired for (B) which is implementation dependent. Instead, we rely on Kubernetes controllers
-// to provide sufficient logging to alert us to insufficient resources.
-func NewCreateMinimumHardwareAvailableAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+func HardwareSatisfiesOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
-		var requirements minimumHardwareRequirements
+		selectors := selectorsFromClusterSpec(spec)
 
-		requirements.New(
-			spec.ControlPlaneConfiguration().MachineGroupRef.Name,
-			spec.ControlPlaneConfiguration().Count,
-			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		var duplicates []string
+		observed := map[string]struct{}{}
+
+		// Iterate over all hardware checking if it meets more than 1 selectors requirements.
+		// If it satisfies more then 1 selector record that and move to the next hardware.
+		for _, h := range catalogue.AllHardware() {
+			for _, selector := range selectors {
+				if hardware.LabelsMatchSelector(selector, h.Labels) {
+					if _, ok := observed[h.Name]; ok {
+						duplicates = append(duplicates, h.Name)
+
+						// Break into the outer for loop because we know this one is a dupe and
+						// don't want to repeatedly add it to duplicates.
+						break
+					}
+					observed[h.Name] = struct{}{}
+				}
+			}
+		}
+
+		// Error out if we found hardware matching more than 1 selector.
+		if len(duplicates) > 0 {
+			return fmt.Errorf(
+				"hardware matches multiple hardware selectors: %v",
+				strings.Join(duplicates, ", "),
+			)
+		}
+
+		return nil
+	}
+}
+
+func selectorsFromClusterSpec(spec *ClusterSpec) []v1alpha1.HardwareSelector {
+	var selectors []v1alpha1.HardwareSelector
+	selectors = append(selectors, spec.ControlPlaneMachineConfig().Spec.HardwareSelector)
+
+	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+		selectors = append(
+			selectors,
+			spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
 		)
+	}
+
+	if spec.HasExternalEtcd() {
+		selectors = append(selectors, spec.ExternalEtcdMachineConfig().Spec.HardwareSelector)
+	}
+
+	return selectors
+}
+
+// MinimumHardwareAvailableAssertionForCreate asserts that catalogue has sufficient hardware to
+// support the ClusterSpec during a create workflow.
+//
+// It does not protect against intersections or subsets so consumers should ensure a 1-2-1
+// mapping between catalogue hardware and selectors.
+func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+	return func(spec *ClusterSpec) error {
+		// Without Hardware selectors we get undesirable behavior so ensure we have them for
+		// all MachineConfigs.
+		if err := ensureHardwareSelectorsSpecified(spec); err != nil {
+			return err
+		}
+
+		// Build a set of required hardware counts per machine group. minimumHardwareRequirements
+		// will account for the same selector being specified on different groups.
+		requirements := minimumHardwareRequirements{}
+
+		err := requirements.Add(
+			spec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+			spec.ControlPlaneConfiguration().Count,
+		)
+		if err != nil {
+			return err
+		}
 
 		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-			requirements.New(
-				nodeGroup.MachineGroupRef.Name,
-				nodeGroup.Count,
+			err := requirements.Add(
 				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
+				nodeGroup.Count,
 			)
+			if err != nil {
+				return err
+			}
 		}
 
 		if spec.HasExternalEtcd() {
-			requirements.New(
-				spec.ExternalEtcdConfiguration().MachineGroupRef.Name,
-				spec.ExternalEtcdConfiguration().Count,
+			err := requirements.Add(
 				spec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+				spec.ExternalEtcdConfiguration().Count,
 			)
+			if err != nil {
+				return err
+			}
 		}
 
-		return multierr.Combine(
-			validateTotalHardwareRequestedAvailable(spec.Cluster.Spec, catalogue),
-			validateMinimumHardwareRequirements(requirements, catalogue),
-		)
+		return validateMinimumHardwareRequirements(requirements, catalogue)
 	}
+}
+
+// ensureHardwareSelectorsSpecified ensures each machine config present in spec has a hardware
+// selector.
+func ensureHardwareSelectorsSpecified(spec *ClusterSpec) error {
+	if len(spec.ControlPlaneMachineConfig().Spec.HardwareSelector) == 0 {
+		return missingHardwareSelectorErr{
+			Name: spec.ControlPlaneMachineConfig().Name,
+		}
+	}
+
+	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
+		if len(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector) == 0 {
+			return missingHardwareSelectorErr{
+				Name: spec.WorkerNodeGroupMachineConfig(nodeGroup).Name,
+			}
+		}
+	}
+
+	if spec.HasExternalEtcd() {
+		if len(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector) == 0 {
+			return missingHardwareSelectorErr{
+				Name: spec.ExternalEtcdMachineConfig().Name,
+			}
+		}
+	}
+
+	return nil
+}
+
+type missingHardwareSelectorErr struct {
+	Name string
+}
+
+func (e missingHardwareSelectorErr) Error() string {
+	return fmt.Sprintf("missing hardware selector for %v", e.Name)
 }
