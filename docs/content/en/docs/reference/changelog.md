@@ -4,10 +4,6 @@ linkTitle: "What's New?"
 weight: 35
 ---
 
-## Unreleased
-
-### Added
-
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
 ### Added
