@@ -315,7 +315,7 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		powerState, err := bmcClient.GetPowerState(ctx)
 		// add sleep retries to give the machine time to power off
 		timeout := 15
-		for strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
+		for !strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
 			if err != nil {
 				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
 			}

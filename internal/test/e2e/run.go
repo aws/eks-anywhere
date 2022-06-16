@@ -164,6 +164,7 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 	}
 
 	success = testCommandResult.Successful()
+	logger.V(1).Info("Instance Test Result", "instance", instanceId, "success", success)
 
 	if err = conf.runPostTestsProcessing(session, testCommandResult); err != nil {
 		return session.instanceId, nil, err
@@ -236,6 +237,8 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 }
 
 func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, error) {
+	var runConfs []instanceRunConf
+
 	testPerInstance := len(testsList) / conf.MaxInstances
 	if testPerInstance == 0 {
 		testPerInstance = 1
@@ -246,7 +249,6 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
-	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
 	awsSession, err := session.NewSession()
@@ -289,7 +291,18 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		}
 	}
 
-	err = s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
+	if strings.EqualFold(conf.BranchName, "main") {
+		runConfs, err = splitTinkerbellTests(awsSession, testsList, conf, testRunnerConfig, runConfs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to split Tinkerbell tests: %v", err)
+		}
+	}
+
+	return runConfs, nil
+}
+
+func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf ParallelRunConf, testRunnerConfig *TestInfraConfig, runConfs []instanceRunConf) ([]instanceRunConf, error) {
+	err := s3.DownloadToDisk(awsSession, os.Getenv(tinkerbellHardwareS3FileKeyEnvVar), conf.StorageBucket, e2eHardwareCsvFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download tinkerbell hardware csv: %v", err)
 	}
