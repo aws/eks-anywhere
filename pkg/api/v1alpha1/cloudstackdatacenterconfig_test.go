@@ -168,6 +168,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 	ManagementApiEndpoint: "testEndpoint",
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
+			Name: "testZone1",
 			Zone: CloudStackZone{
 				Name: "zone2",
 				Network: CloudStackResourceIdentifier{

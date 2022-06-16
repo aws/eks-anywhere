@@ -72,8 +72,10 @@ type CloudStackZone struct {
 	Network CloudStackResourceIdentifier `json:"network"`
 }
 
-// CloudStackAvailabilityZone is
+// CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
 type CloudStackAvailabilityZone struct {
+	// Name is the name of the availability zone and should match with the input cloud-config credentials file
+	Name string `json:"domain"`
 	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
 	Zone CloudStackZone `json:"zone"`
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
@@ -157,6 +159,26 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 	return nil
 }
 
+func (v *CloudStackDatacenterConfig) SetDefaults() {
+	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
+		v.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
+		for _, csZone := range v.Spec.Zones {
+			az := CloudStackAvailabilityZone{
+				Zone: csZone,
+				Account: v.Spec.Account,
+				Domain: v.Spec.Domain,
+				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
+				Name: "Global",
+			}
+			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
+		}
+	}
+	v.Spec.Zones = nil
+	v.Spec.Domain = ""
+	v.Spec.Account = ""
+	v.Spec.ManagementApiEndpoint = ""
+}
+
 func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
 	if s == o {
 		return true
@@ -209,6 +231,7 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 		return false
 	}
 	if az.Zone.Equal(&o.Zone) &&
+		az.Name == o.Name &&
 		az.Account == o.Account &&
 		az.Domain == o.Domain &&
 		az.ManagementApiEndpoint == o.ManagementApiEndpoint {
