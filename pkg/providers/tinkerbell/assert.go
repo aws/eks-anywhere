@@ -2,9 +2,7 @@ package tinkerbell
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -84,58 +82,41 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-func HardwareSatisfiesOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+// HardwareSatisfiesOnlyOneSelectorAssertion ensures hardware in catalogue only satisfies 1
+// of the MachineConfig's HardwareSelector's from the spec.
+func HardwareSatisfiesOnlyOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
-		selectors := selectorsFromClusterSpec(spec)
-
-		var duplicates []string
-		observed := map[string]struct{}{}
-
-		// Iterate over all hardware checking if it meets more than 1 selectors requirements.
-		// If it satisfies more then 1 selector record that and move to the next hardware.
-		for _, h := range catalogue.AllHardware() {
-			for _, selector := range selectors {
-				if hardware.LabelsMatchSelector(selector, h.Labels) {
-					if _, ok := observed[h.Name]; ok {
-						duplicates = append(duplicates, h.Name)
-
-						// Break into the outer for loop because we know this one is a dupe and
-						// don't want to repeatedly add it to duplicates.
-						break
-					}
-					observed[h.Name] = struct{}{}
-				}
-			}
+		selectors, err := selectorsFromClusterSpec(spec)
+		if err != nil {
+			return err
 		}
 
-		// Error out if we found hardware matching more than 1 selector.
-		if len(duplicates) > 0 {
-			return fmt.Errorf(
-				"hardware matches multiple hardware selectors: %v",
-				strings.Join(duplicates, ", "),
-			)
-		}
-
-		return nil
+		return validateHardwareSatisfiesOnlyOneSelector(catalogue.AllHardware(), selectors)
 	}
 }
 
-func selectorsFromClusterSpec(spec *ClusterSpec) []v1alpha1.HardwareSelector {
-	var selectors []v1alpha1.HardwareSelector
-	selectors = append(selectors, spec.ControlPlaneMachineConfig().Spec.HardwareSelector)
+// selectorsFromClusterSpec extracts all selectors specified on MachineConfig's from spec.
+func selectorsFromClusterSpec(spec *ClusterSpec) (selectorSet, error) {
+	selectors := selectorSet{}
+
+	if err := selectors.Add(spec.ControlPlaneMachineConfig().Spec.HardwareSelector); err != nil {
+		return nil, err
+	}
 
 	for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
-		selectors = append(
-			selectors,
-			spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
-		)
+		err := selectors.Add(spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if spec.HasExternalEtcd() {
-		selectors = append(selectors, spec.ExternalEtcdMachineConfig().Spec.HardwareSelector)
+		if err := selectors.Add(spec.ExternalEtcdMachineConfig().Spec.HardwareSelector); err != nil {
+			return nil, err
+		}
 	}
 
-	return selectors
+	return selectors, nil
 }
 
 // MinimumHardwareAvailableAssertionForCreate asserts that catalogue has sufficient hardware to

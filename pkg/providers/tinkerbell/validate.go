@@ -3,7 +3,9 @@ package tinkerbell
 import (
 	"errors"
 	"fmt"
+	"strings"
 
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -104,6 +106,8 @@ type minimumHardwareRequirement struct {
 }
 
 // minimumHardwareRequirements is a collection of minimumHardwareRequirement instances.
+// it stores requirements in a map where the key is derived from selectors. This ensures selectors
+// specifying the same key-value pairs are combined.
 type minimumHardwareRequirements map[string]*minimumHardwareRequirement
 
 // Add a minimumHardwareRequirement to r.
@@ -121,7 +125,7 @@ func (r *minimumHardwareRequirements) Add(selector v1alpha1.HardwareSelector, mi
 	return nil
 }
 
-// ValidateminimumHardwareRequirements validates all requirements can be satisfied using hardware
+// validateminimumHardwareRequirements validates all requirements can be satisfied using hardware
 // registered with catalogue.
 func validateMinimumHardwareRequirements(requirements minimumHardwareRequirements, catalogue *hardware.Catalogue) error {
 	// Count all hardware that meets the selector requirements for each requirement.
@@ -148,4 +152,69 @@ func validateMinimumHardwareRequirements(requirements minimumHardwareRequirement
 	}
 
 	return nil
+}
+
+// validateHardwareSatifiesOnlyOneSelector ensures hardware in allHardware meets one and only one
+// selector in selectors. selectors uses the selectorSet construct to ensure we don't
+// operate on duplicate selectors given a selector can be re-used among groups as they may reference
+// the same TinkerbellMachineConfig.
+func validateHardwareSatisfiesOnlyOneSelector(allHardware []*tinkv1alpha1.Hardware, selectors selectorSet) error {
+	for _, h := range allHardware {
+		if matches := getMatchingHardwareSelectors(h, selectors); len(matches) > 1 {
+			slctrStrs, err := getHardwareSelectorsAsStrings(matches)
+			if err != nil {
+				return err
+			}
+
+			return fmt.Errorf(
+				"hardware must only satisfy 1 selector: hardware name '%v'; selectors '%v'",
+				h.Name,
+				strings.Join(slctrStrs, ", "),
+			)
+		}
+	}
+
+	return nil
+}
+
+// selectorSet defines a set of selectors. Selectors should be added using the Add method to ensure
+// deterministic key generation. The construct is useful to avoid treating selectors that are the
+// same as different.
+type selectorSet map[string]v1alpha1.HardwareSelector
+
+// Add adds selector to ss.
+func (ss *selectorSet) Add(selector v1alpha1.HardwareSelector) error {
+	slctrStr, err := selector.ToString()
+	if err != nil {
+		return err
+	}
+
+	(*ss)[slctrStr] = selector
+
+	return nil
+}
+
+func getMatchingHardwareSelectors(
+	hw *tinkv1alpha1.Hardware,
+	selectors selectorSet,
+) []v1alpha1.HardwareSelector {
+	var satisfies []v1alpha1.HardwareSelector
+	for _, selector := range selectors {
+		if hardware.LabelsMatchSelector(selector, hw.Labels) {
+			satisfies = append(satisfies, selector)
+		}
+	}
+	return satisfies
+}
+
+func getHardwareSelectorsAsStrings(selectors []v1alpha1.HardwareSelector) ([]string, error) {
+	var slctrs []string
+	for _, selector := range selectors {
+		s, err := selector.ToString()
+		if err != nil {
+			return nil, err
+		}
+		slctrs = append(slctrs, s)
+	}
+	return slctrs, nil
 }

@@ -284,3 +284,66 @@ func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFailsWithoutExte
 	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_MeetsOnlyOneSelector(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Labels: clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_MeetsMultipleSelectorFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	// Ensure we have distinct labels for selectors so we can populate the same key on the
+	// test hardware.
+	clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector = map[string]string{
+		"etcd": "etcd",
+	}
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "test",
+			Labels: mergeHardwareSelectors(
+				clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+				clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+			),
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_NoLabelsMeetsNothing(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+// mergeHardwareSelectors merges m1 with m2. Values already in m1 will be overwritten by m2.
+func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
+	for name, value := range m2 {
+		m1[name] = value
+	}
+	return m1
+}

@@ -115,6 +115,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	// constructing the validations rather than injecting flags into the provider.
 	clusterSpecValidator := NewClusterSpecValidator(
 		MinimumHardwareAvailableAssertionForCreate(p.catalogue),
+		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
 
 	if !p.skipIpCheck {
