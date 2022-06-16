@@ -441,9 +441,7 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 	}
 
 	argsWithConfigFile := append([]string{"-c", configFile}, args...)
-	stdout, err = c.executable.Execute(ctx, argsWithConfigFile...)
-
-	return stdout, err
+	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {

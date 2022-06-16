@@ -111,19 +111,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 		{
 			name:       "Missing global section",
 			configFile: "../testdata/cloudstack_config_missing_global_section.ini",
-			wantErr:    false,
-			wantConfig: &decoder.CloudStackExecConfig{
-				Profiles: []decoder.CloudStackProfileConfig{
-					{
-						Name:          "Instance2",
-						ApiKey:        "test-key2",
-						SecretKey:     "test-secret2",
-						ManagementUrl: "http://127.16.0.2:8080/client/api",
-						VerifySsl:     "true",
-						Timeout:       "",
-					},
-				},
-			},
+			wantErr:    true,
 		},
 		{
 			name:       "Invalid INI format",

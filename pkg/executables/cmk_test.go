@@ -46,12 +46,7 @@ var execConfig = decoder.CloudStackExecConfig{
 
 var execConfigWithMultipleProfiles = decoder.CloudStackExecConfig{
 	Profiles: []decoder.CloudStackProfileConfig{
-		{
-			Name:          "test_name",
-			ApiKey:        "test",
-			SecretKey:     "test",
-			ManagementUrl: "http://1.1.1.1:8080/client/api",
-		},
+		execConfig.Profiles[0],
 		{
 			Name:          "test_name_2",
 			ApiKey:        "test_2",

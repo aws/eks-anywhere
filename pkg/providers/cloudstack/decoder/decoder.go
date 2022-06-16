@@ -30,11 +30,15 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
 
+	foundGlobalSection := false
 	cloudstackProfiles := []CloudStackProfileConfig{}
 	sections := cfg.Sections()
 	for _, section := range sections {
 		if section.Name() == "DEFAULT" {
 			continue
+		}
+		if section.Name() == "Global" {
+			foundGlobalSection = true
 		}
 
 		apiKey, err := section.GetKey("api-key")
@@ -49,9 +53,8 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
-		verifySsl, err := section.GetKey("verify-ssl")
 		verifySslValue := "true"
-		if err == nil {
+		if verifySsl, err := section.GetKey("verify-ssl"); err == nil {
 			verifySslValue = verifySsl.Value()
 			if _, err := strconv.ParseBool(verifySslValue); err != nil {
 				return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
@@ -68,6 +71,10 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 
 	if len(cloudstackProfiles) == 0 {
 		return nil, fmt.Errorf("no instance found from %s", EksacloudStackCloudConfigB64SecretKey)
+	}
+
+	if !foundGlobalSection {
+		return nil, fmt.Errorf("[Global] section not found from %s", EksacloudStackCloudConfigB64SecretKey)
 	}
 
 	return &CloudStackExecConfig{
