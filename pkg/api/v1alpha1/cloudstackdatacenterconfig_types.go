@@ -75,7 +75,7 @@ type CloudStackZone struct {
 // CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
 type CloudStackAvailabilityZone struct {
 	// Name is the name of the availability zone and should match with the input cloud-config credentials file
-	Name string `json:"domain"`
+	Name string `json:"name"`
 	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
 	Zone CloudStackZone `json:"zone"`
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains

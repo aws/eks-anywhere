@@ -77,6 +77,10 @@ spec:
                       description: CloudStack Management API endpoint's IP. It is
                         added to VM's noproxy list
                       type: string
+                    name:
+                      description: Name is the name of the availability zone and should
+                        match with the input cloud-config credentials file
+                      type: string
                     zone:
                       description: Zone represents the properties of the CloudStack
                         zone in which clusters should be created, like the network.
@@ -112,6 +116,7 @@ spec:
                   required:
                   - domain
                   - managementApiEndpoint
+                  - name
                   - zone
                   type: object
                 type: array
