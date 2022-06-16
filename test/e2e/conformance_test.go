@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -24,6 +25,8 @@ func runTinkerbellConformanceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
 	test.CreateCluster()
+	test.RunConformanceTests()
+	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
