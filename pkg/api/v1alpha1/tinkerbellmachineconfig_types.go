@@ -9,7 +9,7 @@ import (
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
 	HardwareSelector HardwareSelector    `json:"hardwareSelector"`
-	TemplateRef      *Ref                `json:"templateRef,omitempty"`
+	TemplateRef      Ref                 `json:"templateRef,omitempty"`
 	OSFamily         OSFamily            `json:"osFamily"`
 	Users            []UserConfiguration `json:"users,omitempty"`
 }
