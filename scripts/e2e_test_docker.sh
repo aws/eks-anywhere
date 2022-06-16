@@ -66,6 +66,9 @@ if [ -f "$BIN_FOLDER/local-bundle-release.yaml" ]; then
     BUNDLES_OVERRIDE=true
 fi
 
+echo "Ping vCenter in EKS-A: "
+ping -c 1 10.80.148.25 &> /dev/null && echo success || echo fail
+
 # In order to be uploaded from the sidecar and used by the junit lens
 # the junit reports need to be in /logs/*/junit*.xml
 TEST_REPORT_FOLDER=/logs/artifacts
@@ -93,3 +96,5 @@ $REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
     "linux" \
     "amd64" \
     true
+
+    ping -c 1 10.80.148.25 &> /dev/null && echo success || echo fail
