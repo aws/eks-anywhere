@@ -9,19 +9,21 @@ import (
 )
 
 const (
-	TinkerbellProviderName               = "tinkerbell"
-	tinkerbellBootstrapIPEnvVar          = "T_TINKERBELL_BOOTSTRAP_IP"
-	tinkerbellNetworkCidrEnvVar          = "T_TINKERBELL_NETWORK_CIDR"
-	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
-	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
-	tinkerbellImageUbuntu122EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
-	tinkerbellImageUbuntu123EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
-	tinkerbellInventoryCsvFilePathEnvVar = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellSSHAuthorizedKey           = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellProviderName                  = "tinkerbell"
+	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
+	tinkerbellNetworkCidrEnvVar             = "T_TINKERBELL_NETWORK_CIDR"
+	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellImageUbuntu120EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
+	tinkerbellImageUbuntu121EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
+	tinkerbellImageUbuntu122EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
+	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
+	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 )
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellNetworkCidrEnvVar,
+	tinkerbellControlPlaneNetworkCidrEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
 	tinkerbellImageUbuntu122EnvVar,
@@ -42,6 +44,7 @@ type Tinkerbell struct {
 	clusterFillers       []api.ClusterFiller
 	serverIP             string
 	cidr                 string
+	controlPlaneCidr     string
 	inventoryCsvFilePath string
 }
 
@@ -66,6 +69,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	tink.serverIP = serverIP
 
 	tink.cidr = cidr
+	tink.controlPlaneCidr = os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
 
 	for _, opt := range opts {
@@ -98,7 +102,7 @@ func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.Tinkerb
 }
 
 func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
-	clusterIP, err := GenerateUniqueIp(t.cidr)
+	clusterIP, err := GenerateUniqueIp(t.controlPlaneCidr)
 	if err != nil {
 		t.t.Fatalf("failed to generate cluster ip from cidr %s: %v", t.cidr, err)
 	}
