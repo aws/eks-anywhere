@@ -26,15 +26,12 @@ type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Deprecated: This field is deprecated in favor of AvailabilityZones
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
 	Domain string `json:"domain,omitempty"`
-	// Deprecated: This field is deprecated in favor of AvailabilityZones
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZone `json:"zones,omitempty"`
-	// Deprecated: This field is deprecated in favor of AvailabilityZones
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
@@ -167,11 +164,11 @@ func (v *CloudStackDatacenterConfig) SetDefaults() {
 		v.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
 		for _, csZone := range v.Spec.Zones {
 			az := CloudStackAvailabilityZone{
-				Zone: csZone,
-				Account: v.Spec.Account,
-				Domain: v.Spec.Domain,
+				Zone:                  csZone,
+				Account:               v.Spec.Account,
+				Domain:                v.Spec.Domain,
 				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
-				Name: "Global",
+				Name:                  "Global",
 			}
 			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
 		}
