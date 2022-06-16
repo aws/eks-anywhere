@@ -29,7 +29,7 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	bundleNameFormat := "support-bundle-*.tar.gz"
 	logger.V(1).Info("Uploading diagnostic bundle to s3 bucket")
-	command := newCopyCommand().from(e2eHomeFolder, clusterName(e.branchName, e.instanceId, testName)).to(
+	command := newCopyCommand().from(e2eHomeFolder).to(
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().exclude("*").include(bundleNameFormat).String()
 
