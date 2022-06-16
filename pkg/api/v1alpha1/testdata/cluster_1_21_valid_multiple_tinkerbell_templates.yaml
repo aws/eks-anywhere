@@ -94,7 +94,7 @@ spec:
               IMG_URL: ""
             image: image2disk:v1.0.0
             name: stream-image
-            timeout: 360
+            timeout: 600
         name: tink-test-1
         volumes:
           - /dev:/dev
@@ -121,7 +121,7 @@ spec:
               IMG_URL: ""
             image: image2disk:v1.0.0
             name: stream-image
-            timeout: 360
+            timeout: 600
         name: tink-test-2
         volumes:
           - /dev:/dev

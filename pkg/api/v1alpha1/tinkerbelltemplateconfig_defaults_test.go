@@ -28,7 +28,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 				{
 					Name:    "stream-image",
 					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
-					Timeout: 360,
+					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
 						"DEST_DISK":  "/dev/sda",
@@ -116,7 +116,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 				{
 					Name:    "stream-image",
 					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
-					Timeout: 360,
+					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
 						"DEST_DISK":  "/dev/nvme",
@@ -204,7 +204,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 				{
 					Name:    "stream-image",
 					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
-					Timeout: 360,
+					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
 						"DEST_DISK":  "/dev/sda",
@@ -276,7 +276,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 				{
 					Name:    "stream-image",
 					Image:   "public.ecr.aws/eks-anywhere/image2disk:latest",
-					Timeout: 360,
+					Timeout: 600,
 					Environment: map[string]string{
 						"IMG_URL":    "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
 						"DEST_DISK":  "/dev/nvme",
