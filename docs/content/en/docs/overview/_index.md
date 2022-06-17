@@ -20,12 +20,12 @@ You’ll be able to use that file with `kubectl` to set up and deploy workloads.
 For a detailed description, see [Cluster creation workflow]({{< relref "../concepts/clusterworkflow/" >}}).
 Here’s a diagram that explains the process visually.
 
-![EKS Anywhere create cluster overview](/images/eks-a_create_cluster.png)
+##### EKS Anywhere Create Cluster
 
-The delete process is similar to the create process.
 
-![EKS Anywhere delete cluster overview](/images/eks-a_delete_cluster.png)
+![EKS Anywhere create cluster overview](/images/line-create-cluster.svg)
 
+<br/>
 
 Next steps:
 * [Getting Started]({{< relref "../getting-started/" >}})
