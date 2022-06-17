@@ -35,7 +35,6 @@ func describeResources(ctx context.Context, args []string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	packages := curatedpackages.NewPackageClient(
-		nil,
 		deps.Kubectl,
 	)
 

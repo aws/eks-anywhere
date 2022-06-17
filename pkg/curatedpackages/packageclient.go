@@ -26,18 +26,24 @@ const (
 	kind       = "Package"
 )
 
+type PackageClientOpt func(*PackageClient)
+
 type PackageClient struct {
-	bundle   *packagesv1.PackageBundle
-	packages []string
-	kubectl  KubectlRunner
+	bundle         *packagesv1.PackageBundle
+	customPackages []string
+	kubectl        KubectlRunner
+	customConfigs  []string
+	showOptions    bool
 }
 
-func NewPackageClient(bundle *packagesv1.PackageBundle, kubectl KubectlRunner, packages ...string) *PackageClient {
-	return &PackageClient{
-		bundle:   bundle,
-		packages: packages,
-		kubectl:  kubectl,
+func NewPackageClient(kubectl KubectlRunner, options ...PackageClientOpt) *PackageClient {
+	pc := &PackageClient{
+		kubectl: kubectl,
 	}
+	for _, o := range options {
+		o(pc)
+	}
+	return pc
 }
 
 func (pc *PackageClient) DisplayPackages() {
@@ -63,13 +69,14 @@ func convertBundleVersionToPackageVersion(bundleVersions []packagesv1.SourceVers
 func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 	packageMap := pc.packageMap()
 	var packages []packagesv1.Package
-	for _, p := range pc.packages {
+	for _, p := range pc.customPackages {
 		bundlePackage, found := packageMap[strings.ToLower(p)]
 		if !found {
 			return nil, fmt.Errorf("unknown package %q", p)
 		}
 		name := CustomName + strings.ToLower(bundlePackage.Name)
-		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion))
+		configString := pc.getGenerateConfigurations(&bundlePackage)
+		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion, configString))
 	}
 	return packages, nil
 }
@@ -106,7 +113,12 @@ func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
 }
 
 func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName string, kubeConfig string) error {
-	p := convertBundlePackageToPackage(*bp, customName, pc.bundle.APIVersion)
+	configString, err := pc.getInstallConfigurations(bp)
+	if err != nil {
+		return err
+	}
+
+	p := convertBundlePackageToPackage(*bp, customName, pc.bundle.APIVersion, configString)
 	displayPackage := NewDisplayablePackage(&p)
 	params := []string{"create", "-f", "-", "--kubeconfig", kubeConfig}
 	packageYaml, err := yaml.Marshal(displayPackage)
@@ -119,6 +131,29 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	}
 	fmt.Print(&stdOut)
 	return nil
+}
+
+func (pc *PackageClient) getInstallConfigurations(bp *packagesv1.BundlePackage) (string, error) {
+	installConfigs, err := ParseConfigurations(pc.customConfigs)
+	if err != nil {
+		return "", err
+	}
+
+	configs := GetConfigurationsFromBundle(bp)
+
+	err = UpdateConfigurations(configs, installConfigs)
+	if err != nil {
+		return "", err
+	}
+
+	configString := GenerateAllValidConfigurations(configs)
+	return configString, nil
+}
+
+func (pc *PackageClient) getGenerateConfigurations(bp *packagesv1.BundlePackage) string {
+	configs := GetConfigurationsFromBundle(bp)
+	configString := GenerateDefaultConfigurations(configs)
+	return configString
 }
 
 func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
@@ -170,7 +205,7 @@ func (pc *PackageClient) DescribePackages(ctx context.Context, packages []string
 	return nil
 }
 
-func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, apiVersion string) packagesv1.Package {
+func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, apiVersion string, config string) packagesv1.Package {
 	p := packagesv1.Package{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -182,7 +217,32 @@ func convertBundlePackageToPackage(bp packagesv1.BundlePackage, name string, api
 		},
 		Spec: packagesv1.PackageSpec{
 			PackageName: bp.Name,
+			Config:      config,
 		},
 	}
 	return p
+}
+
+func WithBundle(bundle *packagesv1.PackageBundle) func(*PackageClient) {
+	return func(config *PackageClient) {
+		config.bundle = bundle
+	}
+}
+
+func WithCustomPackages(customPackages []string) func(*PackageClient) {
+	return func(config *PackageClient) {
+		config.customPackages = customPackages
+	}
+}
+
+func WithCustomConfigs(customConfigs []string) func(*PackageClient) {
+	return func(config *PackageClient) {
+		config.customConfigs = customConfigs
+	}
+}
+
+func WithShowOptions(showOptions bool) func(client *PackageClient) {
+	return func(config *PackageClient) {
+		config.showOptions = showOptions
+	}
 }
