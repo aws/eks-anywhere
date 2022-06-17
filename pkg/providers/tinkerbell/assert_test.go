@@ -150,7 +150,7 @@ func TestNewIPNotInUseAssertion_InUseFails(t *testing.T) {
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_SufficientSucceeds(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -180,11 +180,11 @@ func TestNewCreateMinimumHardwareAvailableAssertion_SufficientSucceeds(t *testin
 		},
 	})).To(gomega.Succeed())
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_SufficientSucceedsWithoutExternalEtcd(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceedsWithoutExternalEtcd(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -208,11 +208,11 @@ func TestNewCreateMinimumHardwareAvailableAssertion_SufficientSucceedsWithoutExt
 		},
 	})).To(gomega.Succeed())
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_NoControlPlaneSelectorMatchesAnything(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_NoControlPlaneSelectorMatchesAnything(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -225,11 +225,11 @@ func TestNewCreateMinimumHardwareAvailableAssertion_NoControlPlaneSelectorMatche
 	// Add something to match the control plane selector.
 	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
-	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_NoExternalEtcdSelectorMatchesAnything(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_NoExternalEtcdSelectorMatchesAnything(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -242,11 +242,11 @@ func TestNewCreateMinimumHardwareAvailableAssertion_NoExternalEtcdSelectorMatche
 	// Add something to match the control plane selector.
 	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
-	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_NoWorkerNodeGroupSelectorMatchesAnything(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_NoWorkerNodeGroupSelectorMatchesAnything(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
@@ -260,40 +260,90 @@ func TestNewCreateMinimumHardwareAvailableAssertion_NoWorkerNodeGroupSelectorMat
 	// Add something to match the control plane selector.
 	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
-	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_InsufficientFails(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFails(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	catalogue := hardware.NewCatalogue()
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_InsufficientFailsWithoutExternalEtcd(t *testing.T) {
+func TestMinimumHardwareAvailableAssertionForCreate_InsufficientFailsWithoutExternalEtcd(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	catalogue := hardware.NewCatalogue()
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
+	assertion := tinkerbell.MinimumHardwareAvailableAssertionForCreate(catalogue)
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
-func TestNewCreateMinimumHardwareAvailableAssertion_TotalCountsNotMet(t *testing.T) {
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_MeetsOnlyOneSelector(t *testing.T) {
 	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Labels: clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_MeetsMultipleSelectorFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	// Ensure we have distinct labels for selectors so we can populate the same key on the
+	// test hardware.
+	clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector = map[string]string{
+		"etcd": "etcd",
+	}
+
+	catalogue := hardware.NewCatalogue()
+	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "test",
+			Labels: mergeHardwareSelectors(
+				clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector,
+				clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector,
+			),
+		},
+	})).To(gomega.Succeed())
+
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestHardwareSatisfiesOnlyOneSelectorAssertion_NoLabelsMeetsNothing(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 
 	catalogue := hardware.NewCatalogue()
 	g.Expect(catalogue.InsertHardware(&v1alpha1.Hardware{})).To(gomega.Succeed())
-	clusterSpecBuilder := NewDefaultValidClusterSpecBuilder()
-	clusterSpecBuilder.WithoutHardwareSelectors()
-	clusterSpec := clusterSpecBuilder.Build()
 
-	assertion := tinkerbell.NewCreateMinimumHardwareAvailableAssertion(catalogue)
-	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
+	assertion := tinkerbell.HardwareSatisfiesOnlyOneSelectorAssertion(catalogue)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+// mergeHardwareSelectors merges m1 with m2. Values already in m1 will be overwritten by m2.
+func mergeHardwareSelectors(m1, m2 map[string]string) map[string]string {
+	for name, value := range m2 {
+		m1[name] = value
+	}
+	return m1
 }
