@@ -166,17 +166,21 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 		},
 	},
 	ManagementApiEndpoint: "testEndpoint",
+}
+
+var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
-			Name: "testZone1",
+			Name: "Global",
 			Zone: CloudStackZone{
-				Name: "zone2",
+				Name: "zone1",
 				Network: CloudStackResourceIdentifier{
-					Name: "net2",
+					Name: "net1",
 				},
 			},
-			Domain:                "domain2",
-			ManagementApiEndpoint: "testEndpoint2",
+			Account:               "admin",
+			Domain:                "domain1",
+			ManagementApiEndpoint: "testEndpoint",
 		},
 	},
 }
@@ -217,41 +221,56 @@ func TestCloudStackDatacenterConfigSpecNotEqualZonesNil(t *testing.T) {
 
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesNil(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
-	cloudStackDatacenterConfigSpec2.AvailabilityZones = nil
-	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "Zones comparison in CloudStackDatacenterConfigSpec not detected")
+	g.Expect(cloudStackDatacenterConfigSpecAzs.AvailabilityZones[0].Equal(nil)).To(BeFalse(), "Zones comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesEmpty(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpecAzs.DeepCopy()
 	cloudStackDatacenterConfigSpec2.AvailabilityZones = []CloudStackAvailabilityZone{}
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackAvailabilityZonesEqual(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackAvailabilityZoneSpec2 := cloudStackDatacenterConfigSpec1.AvailabilityZones[0]
-	g.Expect(cloudStackDatacenterConfigSpec1.AvailabilityZones[0].Equal(&cloudStackAvailabilityZoneSpec2)).To(BeTrue(), "AvailabilityZones comparison in CloudStackAvailabilityZoneSpec not detected")
+	cloudStackAvailabilityZoneSpec2 := cloudStackDatacenterConfigSpecAzs.AvailabilityZones[0].DeepCopy()
+	g.Expect(cloudStackDatacenterConfigSpecAzs.AvailabilityZones[0].Equal(cloudStackAvailabilityZoneSpec2)).To(BeTrue(), "AvailabilityZones comparison in CloudStackAvailabilityZoneSpec not detected")
+}
+
+func TestCloudStackAvailabilityZonesSame(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackAvailabilityZoneSpec2 := cloudStackDatacenterConfigSpecAzs.AvailabilityZones[0]
+	g.Expect(cloudStackDatacenterConfigSpecAzs.AvailabilityZones[0].Equal(&cloudStackAvailabilityZoneSpec2)).To(BeTrue(), "AvailabilityZones comparison in CloudStackAvailabilityZoneSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesManagementApiEndpoint(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpecAzs.DeepCopy()
 	cloudStackDatacenterConfigSpec2.AvailabilityZones[0].ManagementApiEndpoint = "fake-endpoint"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesAccount(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpecAzs.DeepCopy()
 	cloudStackDatacenterConfigSpec2.AvailabilityZones[0].Account = "fake-acc"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not detected")
 }
 
 func TestCloudStackDatacenterConfigSpecNotEqualAvailabilityZonesDomain(t *testing.T) {
 	g := NewWithT(t)
-	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpecAzs.DeepCopy()
 	cloudStackDatacenterConfigSpec2.AvailabilityZones[0].Domain = "fake-domain"
 	g.Expect(cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2)).To(BeFalse(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not detected")
+}
+
+func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+	cloudStackDatacenterConfig.SetDefaults()
+	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
+
+
 }
