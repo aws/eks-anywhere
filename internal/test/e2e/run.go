@@ -237,8 +237,6 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 }
 
 func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, error) {
-	var runConfs []instanceRunConf
-
 	testPerInstance := len(testsList) / conf.MaxInstances
 	if testPerInstance == 0 {
 		testPerInstance = 1
@@ -249,6 +247,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
+	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
 	awsSession, err := session.NewSession()

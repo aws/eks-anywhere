@@ -2,8 +2,8 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 130
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 130
+    INTEGRATION_TEST_MAX_EC2_COUNT: 160
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 160
     T_CLOUDSTACK_CIDR: "10.11.255.0/24"
     SKIPPED_TESTS: "TestTinkerbellKubernetes121ThreeWorkersSimpleFlow,TestTinkerbellKubernetes122BottleRocketSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes123SimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig"
     CLOUDSTACK_PROVIDER: true

@@ -93,5 +93,3 @@ $REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
     "linux" \
     "amd64" \
     true
-
-    ping -c 1 10.80.148.25 &> /dev/null && echo success || echo fail
