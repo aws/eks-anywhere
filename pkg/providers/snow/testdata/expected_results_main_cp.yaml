@@ -3,6 +3,8 @@ kind: Cluster
 metadata:
   creationTimestamp: null
   labels:
+    cluster.anywhere.eks.amazonaws.com/cluster-name: snow-test
+    cluster.anywhere.eks.amazonaws.com/cluster-namespace: test-namespace
     cluster.x-k8s.io/cluster-name: snow-test
   name: snow-test
   namespace: eksa-system
