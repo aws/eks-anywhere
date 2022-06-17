@@ -230,14 +230,11 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 	if az == nil || o == nil {
 		return false
 	}
-	if az.Zone.Equal(&o.Zone) &&
+	return az.Zone.Equal(&o.Zone) &&
 		az.Name == o.Name &&
 		az.Account == o.Account &&
 		az.Domain == o.Domain &&
-		az.ManagementApiEndpoint == o.ManagementApiEndpoint {
-		return true
-	}
-	return false
+		az.ManagementApiEndpoint == o.ManagementApiEndpoint
 }
 
 // +kubebuilder:object:generate=false
