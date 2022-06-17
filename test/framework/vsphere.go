@@ -38,7 +38,7 @@ const (
 	VsphereClusterIPPoolEnvVar  = "T_VSPHERE_CLUSTER_IP_POOL"
 	cidrVar                     = "T_VSPHERE_CIDR"
 	privateNetworkCidrVar       = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
-	govcUrlVar                  = "GOVC_URL"
+	govcUrlVar                  = "VSPHERE_SERVER"
 	govcInsecureVar             = "GOVC_INSECURE"
 )
 
