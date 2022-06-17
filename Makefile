@@ -118,6 +118,7 @@ ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_D
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
+E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
@@ -465,18 +466,19 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 		exit 1;\
 	fi
 
+.PHONY: e2e-cross-platform
+e2e-cross-platform: $(E2E_CROSS_PLATFORMS)
+
+.PHONY: e2e-cross-platform-%
+e2e-cross-platform-%: ## Generate binaries for Linux and MacOS
+e2e-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
+e2e-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
+e2e-cross-platform-%:
+	$(MAKE) e2e-tests-binary E2E_TAGS=e2e GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) E2E_OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/e2e.test
+
 .PHONY: e2e
 e2e: eks-a-e2e integration-test-binary ## Build integration tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
-
-.PHONY: conformance
-conformance:
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
-
-.PHONY: conformance-tests
-conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: eks-a-e2e
 eks-a-e2e:
@@ -496,12 +498,22 @@ eks-a-e2e:
 	fi
 
 .PHONY: e2e-tests-binary
+e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
-	$(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
-	$(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+
+.PHONY: conformance
+conformance:
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
+	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
+
+.PHONY: conformance-tests
+conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: check-eksa-components-override
 check-eksa-components-override:

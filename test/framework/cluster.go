@@ -16,6 +16,8 @@ import (
 	"testing"
 	"time"
 
+	rapi "github.com/tinkerbell/rufio/api/v1alpha1"
+	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -36,7 +38,7 @@ const (
 	defaultClusterName               = "eksa-test"
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
-	ClusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 	CleanupVmsVar                    = "T_CLEANUP_VMS"
@@ -87,7 +89,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
-	e.ClusterConfigFolder = fmt.Sprintf("%s-config", e.ClusterName)
+	e.ClusterConfigFolder = e.ClusterName
 	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
 	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
 
@@ -104,7 +106,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithHardware(requiredCount int) ClusterE2ETestOpt {
+func withHardware(requiredCount int, hardareType string, labels map[string]string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		hardwarePool := e.GetHardwarePool()
 
@@ -116,6 +118,7 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		for id, h := range hardwarePool {
 			if _, exists := e.TestHardware[id]; !exists {
 				count++
+				h.Labels = labels
 				e.TestHardware[id] = h
 			}
 
@@ -125,9 +128,21 @@ func WithHardware(requiredCount int) ClusterE2ETestOpt {
 		}
 
 		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of hardware", requiredCount)
+			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, hardareType)
 		}
 	}
+}
+
+func WithControlPlaneHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ControlPlane, map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane})
+}
+
+func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: api.Worker})
+}
+
+func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -226,15 +241,101 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) PowerOffHardware() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		_, err = bmcClient.SetPowerState(ctx, string(rapi.Off))
+		if err != nil {
+			e.T.Fatalf("failed to power off hardware: %v", err)
+		}
+	}
 }
 
 func (e *ClusterE2ETest) PowerOnHardware() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		_, err = bmcClient.SetPowerState(ctx, string(rapi.On))
+		if err != nil {
+			e.T.Fatalf("failed to power on hardware: %v", err)
+		}
+	}
 }
 
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
-	// TODO(chrisdoherty4) Requires an implementation that's independent of the old PBnJ service.
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	var failedToDecomm []*api.Hardware
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "443", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		powerState, err := bmcClient.GetPowerState(ctx)
+		// add sleep retries to give the machine time to power off
+		timeout := 15
+		for !strings.EqualFold(powerState, string(rapi.Off)) && timeout > 0 {
+			if err != nil {
+				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+			}
+			time.Sleep(5 * time.Second)
+			timeout = timeout - 5
+			powerState, err = bmcClient.GetPowerState(ctx)
+			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
+		}
+
+		if !strings.EqualFold(powerState, string(rapi.Off)) {
+			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			failedToDecomm = append(failedToDecomm, h)
+		} else {
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+		}
+	}
+
+	if len(failedToDecomm) > 0 {
+		e.T.Fatalf("failed to decommision hardware during cluster deletion")
+	}
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
@@ -257,9 +358,8 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 
 	generateHardwareConfigArgs := []string{
 		"generate", "hardware",
-		"--skip-registration",
-		"-f", e.HardwareCsvLocation,
-		"-o", e.ClusterConfigFolder,
+		"-z", e.HardwareCsvLocation,
+		"-o", e.HardwareConfigLocation,
 	}
 
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
@@ -327,7 +427,12 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	if e.Provider.Name() == TinkerbellProviderName {
-		createClusterArgs = append(createClusterArgs, "-w", e.HardwareConfigLocation)
+		createClusterArgs = append(createClusterArgs, "-z", e.HardwareCsvLocation)
+		tinkBootstrapIP := os.Getenv(tinkerbellBootstrapIPEnvVar)
+		e.T.Logf("tinkBootstrapIP: %s", tinkBootstrapIP)
+		if tinkBootstrapIP != "" {
+			createClusterArgs = append(createClusterArgs, "--tinkerbell-bootstrap-ip", tinkBootstrapIP)
+		}
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
@@ -604,17 +709,22 @@ func (e *ClusterE2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
 }
 
+func GetTestNameHash(name string) string {
+	h := sha1.New()
+	h.Write([]byte(name))
+	testNameHash := fmt.Sprintf("%x", h.Sum(nil))
+	return testNameHash[:7]
+}
+
 func getClusterName(t *testing.T) string {
-	value := os.Getenv(ClusterNameVar)
+	value := os.Getenv(ClusterPrefixVar)
+	// Append hash to make each cluster name unique per test. Using the testname will be too long
+	// and would fail validations
 	if len(value) == 0 {
-		h := sha1.New()
-		h.Write([]byte(t.Name()))
-		testNameHash := fmt.Sprintf("%x", h.Sum(nil))
-		// Append hash to make each cluster name unique per test. Using the testname will be too long
-		// and would fail validations
-		return fmt.Sprintf("%s-%s", defaultClusterName, testNameHash[:7])
+		value = defaultClusterName
 	}
-	return value
+
+	return fmt.Sprintf("%s-%s", value, GetTestNameHash(t.Name()))
 }
 
 func getBundlesOverride() string {
