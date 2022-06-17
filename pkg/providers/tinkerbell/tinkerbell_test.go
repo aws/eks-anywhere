@@ -63,6 +63,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
+	t.Skip("External etcd unsupported for GA")
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
