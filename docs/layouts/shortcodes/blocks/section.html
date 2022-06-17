@@ -4,7 +4,7 @@
 {{ $type   := .Get "type" | default "" }}
 {{ $section_type := .Get "section" | default "td-box" }}
 <a id="td-block-{{ .Ordinal }}" class="td-offset-anchor"></a>
-<section class="row {{ $section_type }} td-box--{{ $col_id }} td-box--gradient td-box--height-{{ $height }} main-copy-section">
+<section class="row {{ $section_type }} td-box--{{ $col_id }} td-box--gradient td-box--height-{{ $height }}">
 	<div class="col">
 		<div class="row {{ $type }}">
 			{{ if eq .Page.File.Ext "md" }}
