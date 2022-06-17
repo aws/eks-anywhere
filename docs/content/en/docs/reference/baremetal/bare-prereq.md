@@ -46,7 +46,7 @@ Each machine should include the following features:
 
 Here are other network requirements:
 
-* All EKS Anywhere machine, including the Admin, control plane and worker machines, must be on the same level 2 connection to the other machines in the cluster and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same L2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
+* All EKS Anywhere machine, including the Admin, control plane and worker machines, must be on the same layer 2 connection to the other machines in the cluster and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same L2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
 
 * You must be able to run DHCP on control plane/worker machine network.
 
@@ -69,8 +69,9 @@ Here are other network requirements:
 While many different hardware options that meet the criteria listed above should work with EKS Anywhere, the following hardware has been tested and shown to work:
 
 * Dell
-  * PowerEdge R340 (iDRAC 9)
+  * Dell PowerEdge R340 (iDRAC 9)
   * Dell PowerEdge R750 (iDRAC 9)
+  * Dell PowerEdge R740xd (iDRAC 9)
   * Dell PowerEdge R240 (iDRAC 9)
 * HP
 * Supermicro
