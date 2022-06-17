@@ -271,6 +271,4 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 	}
 	cloudStackDatacenterConfig.SetDefaults()
 	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
-
-
 }
