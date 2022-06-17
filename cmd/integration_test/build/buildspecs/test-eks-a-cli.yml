@@ -80,13 +80,13 @@ env:
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
-    TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci: govc_password"
-    TEST_RUNNER_GOVC_URL: "tinkerbell_ci: govc_url"
-    TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci: govc_datacenter"
-    TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci: govc_datastore"
-    TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci: govc_resource_pool"
-    TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci: govc_network"
-    TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci: govc_folder"
+    TEST_RUNNER_GOVC_PASSWORD: "tinkerbell_ci:govc_password"
+    TEST_RUNNER_GOVC_URL: "tinkerbell_ci:govc_url"
+    TEST_RUNNER_GOVC_DATACENTER: "tinkerbell_ci:govc_datacenter"
+    TEST_RUNNER_GOVC_DATASTORE: "tinkerbell_ci:govc_datastore"
+    TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
+    TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
+    TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
 
 phases:
   pre_build:
