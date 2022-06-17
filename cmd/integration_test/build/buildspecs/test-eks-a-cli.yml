@@ -18,9 +18,7 @@ env:
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
-    GOVC_URL: "vsphere_ci_beta_connection:vsphere_url"
-    GOVC_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
-    GOVC_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
     T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
