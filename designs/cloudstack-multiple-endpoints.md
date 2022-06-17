@@ -47,7 +47,7 @@ will need to be available on *all* the Cloudstack API endpoints. We will validat
 
 ### Interface changes
 Currently, the CloudstackDataCenterConfig spec contains:
-```
+``` Go
 type CloudStackDatacenterConfigSpec struct {
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	Domain string `json:"domain"`
@@ -62,7 +62,7 @@ type CloudStackDatacenterConfigSpec struct {
 
 We would instead propose to gradually deprecate all the existing attributes and instead, simply include a list of AvailabilityZone objects like so
 
-```
+``` Go
 type CloudStackDatacenterConfigSpec struct {
 	// Deprecated
 	Domain string `json:"domain,omitempty"`
@@ -79,7 +79,7 @@ type CloudStackDatacenterConfigSpec struct {
 
 where each AvailabilityZone object looks like
 
-```
+``` Go
 type CloudStackAvailabilityZone struct {
 	// Name would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
 	Name string `json:"name"`
