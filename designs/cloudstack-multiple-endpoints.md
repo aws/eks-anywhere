@@ -19,7 +19,7 @@ In CAPC, we are considering addressing the problem by extending our use of the c
 
 As a Kubernetes administrator I want to:
 
-* Perform preflight checks when creating/upgrading clusters which span across multiple failure domains
+* support validation of my cluster and environment across multiple failure domains before creating/upgrading/deleting my cluster
 * Create EKS Anywhere clusters which span across multiple failure domains 
 * Upgrade EKS Anywhere clusters which span across multiple failure domains
 * Delete EKS Anywhere clusters which span across multiple failure domains
@@ -29,7 +29,6 @@ As a Kubernetes administrator I want to:
 **In scope**
 
 * Add support for create/upgrade/delete of EKS-A clusters across multiple Cloudstack API endpoints
-* Add test environment for CI/CD e2e tests which can be used as a second Cloudstack API endpoint 
 
 **Not in scope**
 
@@ -41,9 +40,8 @@ As a Kubernetes administrator I want to:
 
 ## Overview of Solution
 
-We propose to take the least invasive solution of repurposing the CloudstackDataCenterConfig to point to multiple Availability Zones, each of which contains the necessary
-information for interacting with a Cloudstack failure domain. The assumption is that the necessary Cloudstack resources (i.e. image, computeOffering, diskOffering, network, etc.)
-will be available on *all* the Cloudstack API endpoints. 
+We propose to take the least invasive solution of repurposing the CloudstackDataCenterConfig to point to multiple Availability Zones, each of which contains the necessary Cloudstack resources (i.e. image, computeOffering, diskOffering, network, etc.). In order for this to work, all the necessary Cloudstack resources (i.e. image, computeOffering, diskOffering, network, etc.)
+will need to be available on *all* the Cloudstack API endpoints. We will validate this prior to create/upgrade.
 
 ## Solution Details
 
@@ -201,6 +199,8 @@ simple flow cluster creation/scaling/deletion across multiple Cloudstack API end
 * scale up the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
 * scale down the size of the management+workload cluster so that we touch multiple Cloudstack API endpoints
 * delete cluster
+
+In order to achieve this e2e test, we'll need to introduce a new test environment for CI/CD e2e tests which can be used as a second Cloudstack API endpoint 
 
 ## Other approaches explored
 
