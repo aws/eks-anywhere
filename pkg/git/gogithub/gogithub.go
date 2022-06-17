@@ -83,7 +83,11 @@ func (ggc *githubClient) DeleteRepo(ctx context.Context, owner, repo string) (*g
 }
 
 func (ggc *githubClient) AddDeployKeyToRepo(ctx context.Context, owner, repo string, key *goGithub.Key) error {
-	_, _, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+	_, resp, err := ggc.client.Repositories.CreateKey(ctx, owner, repo, key)
+	if err != nil {
+		logger.Info("createKey response", "resp", resp)
+		return fmt.Errorf("adding deploy key to repo: %v", err)
+	}
 	return err
 }
 
