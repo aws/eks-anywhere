@@ -195,7 +195,7 @@ api-url    = http://172.16.0.3:8080/client/api
     provide details. We should standardize on a general way to pass multiple secrets per provider. The data present in
     these secrets should be entirely provider specific. In this manner any arbitrary data form that a specific provider
     needs can be dictated by the provider yet the underlying secret passing mechanism can remain the same.
-8. ini what!? The ini format came out in the same decade as Bact to the Future. Great movie, but... : )
+8. ini what!? The ini format came out in the same decade as Back to the Future. Great movie, but... : )
 
 
 Where the Section names (i.e. Global, AvailabilityZone1, etc.) correspond to the Availability Zone names
