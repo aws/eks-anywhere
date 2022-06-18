@@ -12,7 +12,9 @@ The following additional optional configuration can also be included:
 * [CNI]({{< relref "optional/cni.md" >}})
 * [multus]({{< relref "optional/multus.md" >}})
 
-To generate your own cluster configuration, follow instructions from [Create production cluster]({{< relref "../../getting-started/production-environment/" >}}) and modify it using descriptions below.
+To generate your own cluster configuration, follow instructions from the Bare Metal [Create production cluster]({{< relref "../../getting-started/production-environment/" >}}) section and modify it using descriptions below.
+For information on how to add cluster configuration settings to this file for advanced node configuration, see [Advanced Bare Metal cluster configuration]({{< relref "#advanced-bare-metal-cluster-configuration" >}}).
+
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -55,11 +57,7 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: my-cluster-name
 spec:
-  tinkerbellCertURL: ""
-  tinkerbellGRPCAuth: ""
-  tinkerbellHegelURL: ""
   tinkerbellIP: "193.17.0.50"
-  tinkerbellPBnJGRPCAuth: ""
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -67,10 +65,9 @@ kind: TinkerbellMachineConfig
 metadata:
   name: my-cluster-name-cp
 spec:
+  hardwareSelector: {}
   osFamily: ubuntu
-  templateRef:
-    kind: TinkerbellTemplateConfig
-    name: my-cluster-name
+  templateRef: {}
   users:
   - name: ec2-user
     sshAuthorizedKeys:
@@ -90,98 +87,6 @@ spec:
   - name: ec2-user
     sshAuthorizedKeys:
     - ssh-rsa AAAAB3NzaC1yc2... jwjones@833efcab1482.home.example.com
-
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: TinkerbellTemplateConfig
-metadata:
-  name: my-cluster-name
-spec:
-  template:
-    global_timeout: 6000
-    id: ""
-    name: my-cluster-name
-    tasks:
-    - actions:
-      - environment:
-          COMPRESSED: "true"
-          DEST_DISK: /dev/sda
-          IMG_URL: https://.../ubuntu-v1.22.9-eks-d...
-        image: public.ecr.aws/.../image2disk:6c0f0d437bde2c...
-        name: stream-image
-        timeout: 360
-      - environment:
-          CONTENTS: |
-            network:
-              version: 2
-              renderer: networkd
-              ethernets:
-                  eno1:
-                      dhcp4: true
-          DEST_DISK: /dev/sda2
-          DEST_PATH: /etc/netplan/config.yaml
-          DIRMODE: "0755"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0644"
-          UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
-        name: write-netplan
-        timeout: 90
-      - environment:
-          CONTENTS: |
-            datasource:
-              Ec2:
-                metadata_urls: []
-                strict_id: false
-            system_info:
-              default_user:
-                name: tink
-                groups: [wheel, adm]
-                sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                shell: /bin/bash
-            manage_etc_hosts: localhost
-            warnings:
-              dsid_missing_source: off
-          DEST_DISK: /dev/sda2
-          DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
-          DIRMODE: "0700"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0600"
-          UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
-        name: add-tink-cloud-init-config
-        timeout: 90
-      - environment:
-          CONTENTS: |
-            datasource: Ec2
-          DEST_DISK: /dev/sda2
-          DEST_PATH: /etc/cloud/ds-identify.cfg
-          DIRMODE: "0700"
-          FS_TYPE: ext4
-          GID: "0"
-          MODE: "0600"
-          UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
-        name: add-tink-cloud-init-ds-config
-        timeout: 90
-      - environment:
-          BLOCK_DEVICE: /dev/sda2
-          FS_TYPE: ext4
-        image: public.ecr.aws/.../kexec:6c0f0d437bde2c...
-        name: kexec-image
-        pid: host
-        timeout: 90
-      name: my-cluster-name
-      volumes:
-      - /dev:/dev
-      - /dev/console:/dev/console
-      - /lib/firmware:/lib/firmware:ro
-      worker: '{{.device_1}}'
-    version: "0.1"
-
----
 ```
 
 ## Cluster Fields
@@ -289,6 +194,14 @@ Other TinkerbellDatacenterConfig fields are not yet supported.
 ### osFamily (required)
 Operating system on the machine. For example, `ubuntu`.
 
+### hardwareSelector
+
+
+
+
+
+
+
 ### templateRef
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
 See TinkerbellTemplateConfig fields below.
@@ -310,14 +223,197 @@ them. The user will be what is defined under name above. For example:
 ssh -i <private-key-file> <user>@<machine-IP>
 ```
 
-The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value
+The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value.
 
+## Advanced Bare Metal cluster configuration
 
+When you generate a Bare Metal cluster configuration, the `TinkerbellTemplateConfig` is kept internally and not shown in the generated configuration file.
+`TinkerbellTemplateConfig` settings define the actions done to install each node, such as get installation media, configure networking, add users, and otherwise configure the node.
+
+Advanced users can override the default values set for `TinkerbellTemplateConfig`.
+They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/actions/action-architecture/) to make personalized modifications to EKS Anywhere nodes.
+
+The following shows two `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu and one for Bottlerocket.
+Actions used differ for the different operating systems.
+
+### Ubuntu TinkerbellTemplateConfig example
+```
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: my-cluster-name
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: my-cluster-name
+    tasks:
+    - actions:
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: https://.../ubuntu-v1.22.9-eks-d...
+        image: public.ecr.aws/.../image2disk:6c0f0d437bde2c...
+        name: stream-image
+        timeout: 360
+      - environment:
+          CONTENTS: |
+            network:
+              version: 2
+              renderer: networkd
+              ethernets:
+                  eno1:
+                      dhcp4: true
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/netplan/config.yaml
+          DIRMODE: "0755"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        name: write-netplan
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            datasource:
+              Ec2:
+                metadata_urls: []
+                strict_id: false
+            system_info:
+              default_user:
+                name: tink
+                groups: [wheel, adm]
+                sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                shell: /bin/bash
+            manage_etc_hosts: localhost
+            warnings:
+              dsid_missing_source: off
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        name: add-tink-cloud-init-config
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            datasource: Ec2
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/ds-identify.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        name: add-tink-cloud-init-ds-config
+        timeout: 90
+      - environment:
+          BLOCK_DEVICE: /dev/sda2
+          FS_TYPE: ext4
+        image: public.ecr.aws/.../kexec:6c0f0d437bde2c...
+        name: kexec-image
+        pid: host
+        timeout: 90
+      name: my-cluster-name
+      volumes:
+      - /dev:/dev
+      - /dev/console:/dev/console
+      - /lib/firmware:/lib/firmware:ro
+      worker: '{{.device_1}}'
+    version: "0.1"
+```
+
+### Bottlerocket TinkerbellTemplateConfig example
+
+```
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellTemplateConfig
+metadata:
+  name: my-cluster-name
+spec:
+  template:
+    global_timeout: 6000
+    id: ""
+    name: my-cluster-name
+    tasks:
+    - actions:
+      - environment:
+          COMPRESSED: "true"
+          DEST_DISK: /dev/sda
+          IMG_URL: https://.../bottlerocket-metal-k8s-1.22-x86_64-1.7.2-cf824404.img
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2166
+        name: stream-image
+        timeout: 360
+      - environment:
+          BOOTCONFIG_CONTENTS: |
+            kernel {
+                console = "tty0", "ttyS0,115200n8"
+            }
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /bootconfig.data
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        name: write-bootconfig
+        timeout: 90
+      - environment:
+          CONTENTS: |
+            # Version is required, it will change as we support
+            # additional settings
+            version = 1
+            # "eno1" is the interface name
+            # Users may turn on dhcp4 and dhcp6 via boolean
+            [eno1]
+            dhcp4 = true
+            # Define this interface as the "primary" interface
+            # for the system.  This IP is what kubelet will use
+            # as the node IP.  If none of the interfaces has
+            # "primary" set, we choose the first interface in
+            # the file
+            primary = true
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /net.toml
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        name: write-netconfig
+        timeout: 90
+      - environment:
+          HEGEL_URL: http://<hegel-ip>:50061
+          DEST_DISK: /dev/sda12
+          DEST_PATH: /user-data.toml
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0644"
+          UID: "0"
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        name: write-user-data
+        timeout: 90
+      - name: "reboot"
+        image: public.ecr.aws/t0n3a9y4/reboot-action:latest
+        timeout: 90
+        volumes:
+          - /worker:/worker
+```
 ## TinkerbellTemplateConfig Fields
 
-The values in the `TinkerbellTemplateConfig` fields are created from the contents of the CSV file used to generate this configuration.
+The values in the `TinkerbellTemplateConfig` fields are created from the contents of the CSV file used to generate a configuration.
 The template contains actions that are performed on a Bare Metal machine when it first boots up to be provisioned.
-For advanced users, you can modify these fields if you have special needs to do so.
+For advanced users, you can add these fields to your cluster configuration file if you have special needs to do so.
 
 ### template.global_timeout
 
@@ -333,7 +429,7 @@ Within the TinkerbellTemplateConfig `template` under `tasks` is a set of actions
 The following descriptions cover the actions shown in the example template:
 
 ### template.tasks.actions.name.stream-image
-The `stream-image` action streams the selected image to machine you are provisioning. It identifies:
+The `stream-image` action streams the selected image to the machine you are provisioning. It identifies:
 
 * environment.COMPRESSED: When set to `true`, Tinkerbell expects `IMG_URL` to be a compressed image, which Tinkerbell will uncompress when it writes the contents to disk.
 * environment.DEST_DISK: The hard disk on which the operating system is desployed. The default is the first SCSI disk (/dev/sda), but can be changed for other disk types.
@@ -341,7 +437,9 @@ The `stream-image` action streams the selected image to machine you are provisio
 * image: Container image needed to perform the steps needed by this action.
 * timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default 360 (six minutes) to a higher limit if this action is timing out.
 
-### template.tasks.actions.name.write-netplan
+## Ubuntu-specific actions
+
+### template.tasks.actions.name.write-netplan (Ubuntu)
 The `write-netplan` action writes Ubuntu network configuration information to the machine (see [Netplan](https://netplan.io/)) for details. It identifies:
 
 * environment.CONTENTS.network.version: Identifies the network version.
@@ -357,7 +455,7 @@ The `write-netplan` action writes Ubuntu network configuration information to th
 * image: Container image used to perform the steps needed by this action.
 * timeout:
 
-### template.tasks.actions.add-tink-cloud-init-config
+### template.tasks.actions.add-tink-cloud-init-config (Ubuntu)
 The `add-tink-cloud-init-config` action configures cloud-init features to further configure the operating system. See [cloud-init Documentation](https://cloudinit.readthedocs.io/en/latest/) for details. It identifies:
 
 * environment.CONTENTS.datasource: Identifies Ec2 (Ec2.metadata_urls) as the data source and sets `Ec2.strict_id: false` to prevent could init from producing warnings about this datasource.
@@ -374,7 +472,7 @@ The `add-tink-cloud-init-config` action configures cloud-init features to furthe
 * image: Container image used to perform the steps needed by this action.
 * timeout: Time needed to complete the action. Set to 90, by default
 
-### template.tasks.actions.add-tink-cloud-init-ds-config
+### template.tasks.actions.add-tink-cloud-init-ds-config (Ubuntu)
 The `add-tink-cloud-init-ds-config` action configures cloud-init data store features. This identifies the location of your metadata source once the machine is up and running. It identifies:
 
 * environment.CONTENTS.datasource: Sets the datasource. Uses Ec2, by default.
@@ -388,7 +486,7 @@ The `add-tink-cloud-init-ds-config` action configures cloud-init data store feat
 * image: Container image used to perform the steps needed by this action.
 * timeout: Time needed to complete the action. Set to 90, by default
 
-### template.tasks.actions.kexec-image
+### template.tasks.actions.kexec-image (Ubuntu)
 The `kexec-image` action performs provisioning activities on the machine, then allows kexec to pivot the kernel to use the system installed on disk. This action identifies:
 
 * environment.BLOCK_DEVICE: Disk partition on which the operating system is installed (/dev/sda2, by default)
@@ -409,5 +507,16 @@ actions:
   - /worker:/worker
 ```
 
-* version
-     "0.1"
+## Bottlerocket-specific actions
+
+### template.tasks.actions.write-bootconfig (Bottlerocket)
+
+### template.tasks.actions.write-netconfig (Bottlerocket)
+
+### template.tasks.actions.write-user-data (Bottlerocket)
+
+### template.tasks.actions.reboot (Bottlerocket)
+
+### version
+
+Matches the current version of the Tinkerbell template.
