@@ -106,7 +106,7 @@ Follow these steps to create an EKS Anywhere cluster.
    kubectl get machines -A
    ```
 
-   Example command output for vSphere:
+   Example command output:
    ```
    NAMESPACE   NAME                PROVIDERID         PHASE    VERSION
    eksa-system mgmt-b2xyz          tinkerbell:/xxxxx  Running  v1.21.2-eks-1-21-5
