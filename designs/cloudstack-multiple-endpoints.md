@@ -81,8 +81,6 @@ where each AvailabilityZone object looks like
 
 ``` Go
 type CloudStackAvailabilityZone struct {
-	// Name would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
-	Name string `json:"name"`
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
@@ -131,20 +129,36 @@ for availabilityZone in availabilityZones:
 
 ### Cloudstack credentials
 
+In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials.
 
-In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
-only as a list corresponding to AvailabilityZones. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
+We propose that we make the leap to yaml k8s secrets for endpoint credentials of the form:
 
+``` yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "someendpoint:8080/client/api"
+  namespace: system
+type: Opaque
+data:
+  apikey: "redacted1"
+  secretkey: "redacted1"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "someotherendpoint:8080/client/api"
+  namespace: system
+type: Opaque
+data:
+  apikey: "redacted2"
+  secretkey: "redacted2"
 ```
-[Global]
-api-key    = redacted
-secret-key = redacted
-api-url    = http://172.16.0.1:8080/client/api
-```
 
-We would propose an extension of the above input mechanism so the user could provide credentials across multiple Cloudstack API endpoints like
 
-```
+Simply expanding the current ini file to include multiple endpoints has a few short comings.
+
+``` ini
 [Global]
 api-key    = redacted
 secret-key = redacted
@@ -162,6 +176,27 @@ api-url    = http://172.16.0.3:8080/client/api
 
 ...
 ```
+
+1. `Global`, `AvailabilityZone2`, and `AvailabilityZone3` are entirely arbitrary names that are unnecessary.
+2. If these tags mismatch between the name in the AvailabilityZone and here there will be an error.
+3. If we use validation, then we can prevent mismatched names, but what about modifying this secret in an existing cluster?
+    - Validation doesn't operate on an existing cluster unless the secret is updated through EKS-A.
+    - If an existing cluster wants to update a secret, the entire secret must be modified together. If this results in
+    an error, the entire set of AvalailabilityZones are at risk.
+4. To do validation of the secret ini with multiple tags the DataCenter needs to match the tags to the names of its
+   AvailabilityZones. This is fine, but with yaml the secrets can be iterated on and checked individually without
+   concern for the tags.
+5. CAPC wants a k8s secret anyway.
+6. Currently we create a k8s secret in a highly convoluted maner that requires b64 encoding an environment
+   variable that is expanded during clusterctl expansion but decoded in the CAPC controllers. The b64
+   encoding provides no extra security. It is used purely as a way to avoid potential command line special characters 
+   present in the cloud-config ini file.
+7. Other providers _will_ need multiple secrets soon enough. One in the pipeline already requires a CSV as a format to
+    provide details. We should standardize on a general way to pass multiple secrets per provider. The data present in
+    these secrets should be entirely provider specific. In this manner any arbitrary data form that a specific provider
+    needs can be dictated by the provider yet the underlying secret passing mechanism can remain the same.
+8. ini what!? The ini format came out in the same decade as Bact to the Future. Great movie, but... : )
+
 
 Where the Section names (i.e. Global, AvailabilityZone1, etc.) correspond to the Availability Zone names
 
