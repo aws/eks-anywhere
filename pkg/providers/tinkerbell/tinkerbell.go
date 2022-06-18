@@ -234,35 +234,36 @@ func (p *Provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig 
 }
 
 func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
-	// TODO: Figure out if something is needed here
-	var configs []providers.MachineConfig
+	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
 		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 	}
-
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
-	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName])
-		if p.clusterConfig.IsManaged() {
-			p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-		}
-	}
+	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
 
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName])
+			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
 			if p.clusterConfig.IsManaged() {
 				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 			}
 		}
 	}
 
-	return configs
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if _, ok := configs[workerMachineName]; !ok {
+			configs[workerMachineName] = p.machineConfigs[workerMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
+	return providers.ConfigsMapToSlice(configs)
 }
 
 func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
