@@ -79,6 +79,7 @@ kind: TinkerbellMachineConfig
 metadata:
   name: my-cluster-name
 spec:
+  hardwareSelector: {}
   osFamily: ubuntu
   templateRef:
     kind: TinkerbellTemplateConfig
@@ -189,19 +190,27 @@ the existing nodes associated with the configuration.
 Optional field to identify the IP address of the Tinkerbell service.
 Other TinkerbellDatacenterConfig fields are not yet supported.
 
-## TinkerBellMachineConfig Fields
-
-### osFamily (required)
-Operating system on the machine. For example, `ubuntu`.
-
+## TinkerbellMachineConfig Fields
+In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
+The following fields identify information needed to configure the nodes in each of those groups.
+>**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane and one for all machines in the worker group.
+>
 ### hardwareSelector
-
-
-
-
-
-
-
+Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
+Choose any label name you like.
+For example, if you had added the label `node=cp-machine` to all the machines listed in your CSV file, the following `hardwareSelector` field would cause those machines to be added to the control plane:
+```bash
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: TinkerbellMachineConfig
+metadata:
+  name: my-cluster-name-cp
+spec:
+  hardwareSelector:
+    node: "cp-machine"
+```
+### osFamily (required)
+Operating system on the machine. For example, `bottlerocker` or `ubuntu`.
 ### templateRef
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
 See TinkerbellTemplateConfig fields below.
@@ -414,6 +423,9 @@ spec:
 The values in the `TinkerbellTemplateConfig` fields are created from the contents of the CSV file used to generate a configuration.
 The template contains actions that are performed on a Bare Metal machine when it first boots up to be provisioned.
 For advanced users, you can add these fields to your cluster configuration file if you have special needs to do so.
+
+While there are a fields that apply to all provisioned operating systems, actions are specific to each operating system.
+Examples below describe actions for Ubuntu and Bottlerocket operating systems.
 
 ### template.global_timeout
 
