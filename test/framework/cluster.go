@@ -794,14 +794,23 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	f(e)
 }
 
-func (e *ClusterE2ETest) VerifyHelloPackageInstalled(serviceName string) {
+func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	ctx := context.Background()
 
 	ns := constants.EksaPackagesName
 	err := e.KubectlClient.WaitForService(ctx,
-		e.cluster().KubeconfigFile, "5m", serviceName, ns)
+		e.cluster().KubeconfigFile, "5m", name, ns)
 	if err != nil {
 		e.T.Fatalf("waiting for service timed out: %s", err)
+	}
+
+	// Ensure that the pod is up before trying to port-forward. In some test
+	// environments, the pod might not be running when the port-forward is
+	// attempted, and that will cause the port-forward to fail.
+	err = e.KubectlClient.WaitForDeployment(ctx,
+		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
+	if err != nil {
+		e.T.Fatalf("waiting for hello-eks-anywhere pod timed out: %s", err)
 	}
 
 	timedCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
@@ -813,7 +822,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(serviceName string) {
 	// for reading stdout before the process exits. Polling provides a
 	// workable solution.
 	const port = 9980 // ...and hope it's available...
-	stopPF, pfErrCh := e.forwardPortToService(timedCtx, serviceName, ns, port)
+	stopPF, pfErrCh := e.forwardPortToService(timedCtx, name, ns, port)
 	defer stopPF()
 
 	ticker := time.NewTicker(time.Second)
