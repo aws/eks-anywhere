@@ -36,7 +36,7 @@ type CloudStackDatacenterConfigSpec struct {
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
 	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
-	// List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
+	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
 	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 
@@ -161,14 +161,20 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 
 func (v *CloudStackDatacenterConfig) SetDefaults() {
 	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
-		v.Spec.AvailabilityZones = []CloudStackAvailabilityZone{}
+		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
 		for _, csZone := range v.Spec.Zones {
+			var azName string
+			if csZone.Id != "" {
+				azName = csZone.Id
+			} else {
+				azName = csZone.Name
+			}
 			az := CloudStackAvailabilityZone{
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,
 				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
-				Name:                  "Global",
+				Name:                  azName,
 			}
 			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
 		}
@@ -197,8 +203,13 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
 		return false
 	}
-	for i, az := range s.AvailabilityZones {
-		if !az.Equal(&o.AvailabilityZones[i]) {
+	oAzsMap := map[string]CloudStackAvailabilityZone{}
+	for _, az := range o.AvailabilityZones {
+		oAzsMap[az.Name] = az
+	}
+	for _, sAz := range s.AvailabilityZones {
+		oAz := oAzsMap[sAz.Name]
+		if !sAz.Equal(&oAz) {
 			return false
 		}
 	}

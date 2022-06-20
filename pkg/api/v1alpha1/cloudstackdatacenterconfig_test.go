@@ -171,7 +171,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
-			Name: "Global",
+			Name: "zone1",
 			Zone: CloudStackZone{
 				Name: "zone1",
 				Network: CloudStackResourceIdentifier{
@@ -277,4 +277,15 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 	}
 	cloudStackDatacenterConfig.SetDefaults()
 	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
+}
+
+func TestCloudStackDatacenterConfigSetDefaultsWithId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+	cloudStackDatacenterConfig.Spec.Zones[0].Id = cloudStackDatacenterConfig.Spec.Zones[0].Name
+	cloudStackDatacenterConfig.Spec.Zones[0].Name = ""
+	cloudStackDatacenterConfig.SetDefaults()
+	g.Expect(cloudStackDatacenterConfig.Spec.AvailabilityZones[0].Name).To(Equal(cloudStackDatacenterConfigSpec1.Zones[0].Name), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
 }
