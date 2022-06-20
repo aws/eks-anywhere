@@ -11,8 +11,10 @@ import (
 
 func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
-	tinkerbellIp := "0.0.0.0"
-	metadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellIp)
+	tinkerbellLocalIp := "127.0.0.1"
+	tinkerbellLBIP := "1.2.3.4"
+	brMetadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellLocalIp)
+	ubuntuMetadataString := fmt.Sprintf("\"http://%s:50061\", \"http://%s:50061\"", tinkerbellLocalIp, tinkerbellLBIP)
 
 	tests := []struct {
 		testName    string
@@ -74,7 +76,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/sda2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
+						"CONTENTS":  fmt.Sprintf(cloudInit, ubuntuMetadataString),
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0600",
@@ -162,7 +164,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/nvme0n1p2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
+						"CONTENTS":  fmt.Sprintf(cloudInit, ubuntuMetadataString),
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0600",
@@ -249,7 +251,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/sda12",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/user-data.toml",
-						"HEGEL_URL": metadataString,
+						"HEGEL_URL": brMetadataString,
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0644",
@@ -321,7 +323,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/nvme0n1p12",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/user-data.toml",
-						"HEGEL_URL": metadataString,
+						"HEGEL_URL": brMetadataString,
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0644",
@@ -342,7 +344,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			givenActions := []tinkerbell.Action{}
-			opts := GetDefaultActionsFromBundle(vBundle, tt.diskType, "", tinkerbellIp, tt.osFamily)
+			opts := GetDefaultActionsFromBundle(vBundle, tt.diskType, "", tinkerbellLocalIp, tinkerbellLBIP, tt.osFamily)
 			for _, opt := range opts {
 				opt(&givenActions)
 			}
