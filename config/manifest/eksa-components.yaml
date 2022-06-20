@@ -3318,6 +3318,11 @@ spec:
                         have credentials to operate on resources within that account.
                         If an account name is provided, a domain must also be provided.
                       type: string
+                    credentialsRef:
+                      description: CredentialsRef refers to the credentials in the
+                        input ini file which contains api key/secret key for interacting
+                        with this AZ
+                      type: string
                     domain:
                       description: Domain contains a grouping of accounts. Domains
                         usually contain multiple accounts that have some logical relationship
@@ -3333,10 +3338,6 @@ spec:
                     managementApiEndpoint:
                       description: CloudStack Management API endpoint's IP. It is
                         added to VM's noproxy list
-                      type: string
-                    name:
-                      description: Name is the name of the availability zone and should
-                        match with the input cloud-config credentials file
                       type: string
                     zone:
                       description: Zone represents the properties of the CloudStack
@@ -3371,9 +3372,9 @@ spec:
                       - network
                       type: object
                   required:
+                  - credentialsRef
                   - domain
                   - managementApiEndpoint
-                  - name
                   - zone
                   type: object
                 type: array
