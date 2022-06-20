@@ -138,7 +138,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: "someendpoint:8080/client/api"
-  namespace: system
+  namespace: eksa-system
 type: Opaque
 data:
   apikey: "redacted1"
@@ -148,7 +148,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: "someotherendpoint:8080/client/api"
-  namespace: system
+  namespace: eksa-system
 type: Opaque
 data:
   apikey: "redacted2"
