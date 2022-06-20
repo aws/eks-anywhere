@@ -74,8 +74,8 @@ type CloudStackZone struct {
 
 // CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
 type CloudStackAvailabilityZone struct {
-	// Name is the name of the availability zone and should match with the input cloud-config credentials file
-	Name string `json:"name"`
+	// CredentialsRef refers to the credentials in the input ini file which contains api key/secret key for interacting with this AZ
+	CredentialsRef string `json:"credentialsRef"`
 	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
 	Zone CloudStackZone `json:"zone"`
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
@@ -163,18 +163,12 @@ func (v *CloudStackDatacenterConfig) SetDefaults() {
 	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
 		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
 		for _, csZone := range v.Spec.Zones {
-			var azName string
-			if csZone.Id != "" {
-				azName = csZone.Id
-			} else {
-				azName = csZone.Name
-			}
 			az := CloudStackAvailabilityZone{
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,
 				ManagementApiEndpoint: v.Spec.ManagementApiEndpoint,
-				Name:                  azName,
+				CredentialsRef:        "Global",
 			}
 			v.Spec.AvailabilityZones = append(v.Spec.AvailabilityZones, az)
 		}
@@ -203,13 +197,14 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
 		return false
 	}
-	oAzsMap := map[string]CloudStackAvailabilityZone{}
-	for _, az := range o.AvailabilityZones {
-		oAzsMap[az.Name] = az
-	}
 	for _, sAz := range s.AvailabilityZones {
-		oAz := oAzsMap[sAz.Name]
-		if !sAz.Equal(&oAz) {
+		found := false
+		for _, oAz := range o.AvailabilityZones {
+			if sAz.Equal(&oAz) {
+				found = true
+			}
+		}
+		if !found {
 			return false
 		}
 	}
@@ -242,7 +237,7 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 		return false
 	}
 	return az.Zone.Equal(&o.Zone) &&
-		az.Name == o.Name &&
+		az.CredentialsRef == o.CredentialsRef &&
 		az.Account == o.Account &&
 		az.Domain == o.Domain &&
 		az.ManagementApiEndpoint == o.ManagementApiEndpoint
