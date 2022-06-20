@@ -55,12 +55,17 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		withStreamImageAction(b, disk, osImageOverride, osFamily),
 	}
 
+	// The metadata string will have two URLs:
+	// - one that will be used initially for bootstrap and will point to hegel running on kind
+	// - the other will be used when the workload cluster is up and  will point to hegel running on the workload cluster
+	metadataUrls := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIp)
+
 	if osFamily == Bottlerocket {
 		diskPart = fmt.Sprintf("%s12", getDiskPart(disk))
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withBottlerocketBootconfigAction(b, diskPart),
-			withBottlerocketUserDataAction(b, diskPart, tinkerbellLocalIp),
+			withBottlerocketUserDataAction(b, diskPart, metadataUrls),
 			withRebootAction(b),
 		)
 	} else {
@@ -68,7 +73,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withDisableCloudInitNetworkCapabilities(b, diskPart),
-			withTinkCloudInitAction(b, diskPart, tinkerbellLocalIp, tinkerbellLBIp),
+			withTinkCloudInitAction(b, diskPart, metadataUrls),
 			withDsCloudInitAction(b, diskPart),
 		)
 		if strings.Contains(disk, "nvme") {
@@ -156,12 +161,7 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellLocalIp, tinkerbellLBIp string) ActionOpt {
-	// The metadata string will have two URLs:
-	// - one that will be used initially for bootstrap and will point to hegel running on kind
-	// - the other will be used when the workload cluster is up and  will point to hegel running on the workload cluster
-	metadataString := fmt.Sprintf("\"http://%s:50061\", \"http://%s:50061\"", tinkerbellLocalIp, tinkerbellLBIp)
-
+func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, metadataUrls string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
@@ -171,7 +171,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellL
 				"DEST_DISK": disk,
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-				"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
+				"CONTENTS":  fmt.Sprintf(cloudInit, metadataUrls),
 				"UID":       "0",
 				"GID":       "0",
 				"MODE":      "0600",
@@ -249,9 +249,7 @@ func withBottlerocketBootconfigAction(b v1alpha1.VersionsBundle, disk string) Ac
 	}
 }
 
-func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string) ActionOpt {
-	metadataUrl := fmt.Sprintf("\"http://%s:50061\"", tinkerbellIp)
-
+func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, metadataUrls string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "write-user-data",
@@ -259,14 +257,14 @@ func withBottlerocketUserDataAction(b v1alpha1.VersionsBundle, disk string, tink
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"DEST_DISK": disk,
-				"FS_TYPE":   "ext4",
-				"DEST_PATH": "/user-data.toml",
-				"HEGEL_URL": metadataUrl,
-				"UID":       "0",
-				"GID":       "0",
-				"MODE":      "0644",
-				"DIRMODE":   "0700",
+				"DEST_DISK":  disk,
+				"FS_TYPE":    "ext4",
+				"DEST_PATH":  "/user-data.toml",
+				"HEGEL_URLS": metadataUrls,
+				"UID":        "0",
+				"GID":        "0",
+				"MODE":       "0644",
+				"DIRMODE":    "0700",
 			},
 		})
 	}
