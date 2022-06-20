@@ -29,27 +29,32 @@ const (
 
 var helmChartURI = fmt.Sprintf("%s:%s", helmChartPath, helmChartVersion)
 
-func getTinkBundle() releasev1alpha1.TinkerbellStackBundle {
-	return releasev1alpha1.TinkerbellStackBundle{
-		Tink: releasev1alpha1.TinkBundle{
-			TinkWorker: releasev1alpha1.Image{URI: "tink-worker:latest"},
-		},
-		Boots: releasev1alpha1.TinkerbellServiceBundle{
-			Image: releasev1alpha1.Image{URI: "boots:latest"},
-		},
-		Hegel: releasev1alpha1.TinkerbellServiceBundle{
-			Image: releasev1alpha1.Image{URI: "hegel:latest"},
-		},
-		Hook: releasev1alpha1.HookBundle{
-			Initramfs: releasev1alpha1.HookArch{
-				Amd: releasev1alpha1.Archive{
-					URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/initramfs-x86-64",
+func getTinkBundle() releasev1alpha1.TinkerbellBundle {
+	return releasev1alpha1.TinkerbellBundle{
+		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
+			Tink: releasev1alpha1.TinkBundle{
+				TinkWorker: releasev1alpha1.Image{URI: "tink-worker:latest"},
+			},
+			Boots: releasev1alpha1.TinkerbellServiceBundle{
+				Image: releasev1alpha1.Image{URI: "boots:latest"},
+			},
+			Hegel: releasev1alpha1.TinkerbellServiceBundle{
+				Image: releasev1alpha1.Image{URI: "hegel:latest"},
+			},
+			Hook: releasev1alpha1.HookBundle{
+				Initramfs: releasev1alpha1.HookArch{
+					Amd: releasev1alpha1.Archive{
+						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/initramfs-x86-64",
+					},
 				},
 			},
+			TinkebellChart: releasev1alpha1.Image{
+				Name: helmChartName,
+				URI:  helmChartURI,
+			},
 		},
-		TinkebellChart: releasev1alpha1.Image{
-			Name: helmChartName,
-			URI:  helmChartURI,
+		KubeVip: releasev1alpha1.Image{
+			URI: "public.ecr.aws/eks-anywhere/kube-vip:latest",
 		},
 	}
 }
@@ -76,6 +81,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(true),
+		stack.WithLoadBalancer(),
 	); err != nil {
 		t.Fatalf("failed to install Tinkerbell stack: %v", err)
 	}
