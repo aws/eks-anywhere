@@ -55,7 +55,7 @@ func DeployTemplate(library, templateName, vmName, deployFolder, datacenter, dat
 	return nil
 }
 
-func TagVirtualMachine(vmPath, tag string) error {
+func TagVirtualMachine(envMap map[string]string, vmPath, tag string) error {
 	context := context.Background()
 	executableBuilder, close, err := executables.NewExecutableBuilder(context, executables.DefaultEksaImage())
 	if err != nil {
@@ -64,7 +64,7 @@ func TagVirtualMachine(vmPath, tag string) error {
 
 	defer close.CheckErr(context)
 	tmpWriter, _ := filewriter.NewWriter(vmPath)
-	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
+	govc := executableBuilder.BuildGovcExecutable(tmpWriter, executables.WithGovcEnvMap(envMap))
 	defer govc.Close(context)
 
 	if err := govc.AddTag(context, vmPath, tag); err != nil {

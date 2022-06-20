@@ -193,7 +193,13 @@ func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) er
 	vmName := getTestRunnerName(c.jobId)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
-	if err := vsphere.TagVirtualMachine(vmPath, tag); err != nil {
+
+	envMap, err := v.setEnvironment()
+	if err != nil {
+		return fmt.Errorf("failed to set env while tagging vSphere test runner instance: %v", err)
+	}
+
+	if err := vsphere.TagVirtualMachine(envMap, vmPath, tag); err != nil {
 		return fmt.Errorf("failed to tag vSphere test runner: %v", err)
 	}
 	return nil
