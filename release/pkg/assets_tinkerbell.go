@@ -122,6 +122,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 				Kexec:       bundleImageArtifacts["kexec"],
 				ImageToDisk: bundleImageArtifacts["image2disk"],
 				OciToDisk:   bundleImageArtifacts["oci2disk"],
+				Reboot:      bundleImageArtifacts["reboot"],
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
 			Boots: anywherev1alpha1.TinkerbellServiceBundle{
