@@ -198,7 +198,7 @@ The following fields identify information needed to configure the nodes in each 
 ### hardwareSelector
 Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
-For example, if you had added the label `node=cp-machine` to all the machines listed in your CSV file, the following `hardwareSelector` field would cause those machines to be added to the control plane:
+For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
 ```bash
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
