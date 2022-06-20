@@ -32,7 +32,7 @@ func init() {
 	flags := generateHardwareCmd.Flags()
 	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "Path to output hardware YAML.")
 	flags.StringVarP(
-		&cc.hardwareCSVPath,
+		&hOpts.csvPath,
 		TinkerbellHardwareCSVFlagName,
 		TinkerbellHardwareCSVFlagAlias,
 		"",
