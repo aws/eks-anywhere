@@ -243,9 +243,10 @@ Advanced users can override the default values set for `TinkerbellTemplateConfig
 They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/actions/action-architecture/) to make personalized modifications to EKS Anywhere nodes.
 
 The following shows two `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu and one for Bottlerocket.
-Actions used differ for the different operating systems.
+Most actions used differ for different operating systems.
 
 ### Ubuntu TinkerbellTemplateConfig example
+
 ```
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -417,6 +418,7 @@ spec:
         timeout: 90
         volumes:
           - /worker:/worker
+    version: "0.1"
 ```
 ## TinkerbellTemplateConfig Fields
 
@@ -438,16 +440,16 @@ Not set by default.
 ### template.tasks
 
 Within the TinkerbellTemplateConfig `template` under `tasks` is a set of actions.
-The following descriptions cover the actions shown in the example template:
+The following descriptions cover the actions shown in the example templates for Ubuntu and Bottlerocket:
 
-### template.tasks.actions.name.stream-image
+### template.tasks.actions.name.stream-image (Ubuntu and Bottlerocket)
 The `stream-image` action streams the selected image to the machine you are provisioning. It identifies:
 
 * environment.COMPRESSED: When set to `true`, Tinkerbell expects `IMG_URL` to be a compressed image, which Tinkerbell will uncompress when it writes the contents to disk.
 * environment.DEST_DISK: The hard disk on which the operating system is desployed. The default is the first SCSI disk (/dev/sda), but can be changed for other disk types.
 * environment.IMG_URL: The operating system tarball (ubuntu or other) to stream to the machine you are configuring.
 * image: Container image needed to perform the steps needed by this action.
-* timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default 360 (six minutes) to a higher limit if this action is timing out.
+* timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default to a higher limit if this action is timing out.
 
 ## Ubuntu-specific actions
 
@@ -465,7 +467,7 @@ The `write-netplan` action writes Ubuntu network configuration information to th
 * environment.MODE: The Linux permission bits to set on file (0644, by default).
 * environment.UID: The Linux user ID to set on file. Set to 0 (root user) by default.
 * image: Container image used to perform the steps needed by this action.
-* timeout:
+* timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.add-tink-cloud-init-config (Ubuntu)
 The `add-tink-cloud-init-config` action configures cloud-init features to further configure the operating system. See [cloud-init Documentation](https://cloudinit.readthedocs.io/en/latest/) for details. It identifies:
@@ -482,7 +484,7 @@ The `add-tink-cloud-init-config` action configures cloud-init features to furthe
 * environment.MODE: The Linux permission bits to set on file (0600, by default).
 * environment.UID: The Linux user ID to set on file. Set to 0 (root user) by default.
 * image: Container image used to perform the steps needed by this action.
-* timeout: Time needed to complete the action. Set to 90, by default
+* timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.add-tink-cloud-init-ds-config (Ubuntu)
 The `add-tink-cloud-init-ds-config` action configures cloud-init data store features. This identifies the location of your metadata source once the machine is up and running. It identifies:
@@ -496,7 +498,7 @@ The `add-tink-cloud-init-ds-config` action configures cloud-init data store feat
 * environment.MODE: The Linux permission bits to set on file (0600, by default).
 * environment.UID: The Linux user ID to set on file. Set to 0 (root user) by default.
 * image: Container image used to perform the steps needed by this action.
-* timeout: Time needed to complete the action. Set to 90, by default
+* timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.kexec-image (Ubuntu)
 The `kexec-image` action performs provisioning activities on the machine, then allows kexec to pivot the kernel to use the system installed on disk. This action identifies:
@@ -505,7 +507,7 @@ The `kexec-image` action performs provisioning activities on the machine, then a
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
 * image: Container image used to perform the steps needed by this action.
 * pid: Process ID. Set to host, by default.
-* timeout: Time needed to complete the action. Set to 90.
+* timeout: Time needed to complete the action, in seconds.
 * volumes: Identifies mount points that need to be remounted to point to locations in the installed system.
 
 If your hardware requires a full reboot, you can change the kexec-image setting as follows:
@@ -522,13 +524,52 @@ actions:
 ## Bottlerocket-specific actions
 
 ### template.tasks.actions.write-bootconfig (Bottlerocket)
+The write-bootconfig action identifies the location on the machine to put content needed to boot the system from disk????
+
+* environment.BOOTCONFIG_CONTENTS.kernel: Add kernel parameters that are passed to the kernel when the system boots???
+* environment.DEST_DISK: Identifies the block storage device that holds the boot partition???
+* environment.DEST_PATH: Identifies the file holding boot configuration data (`/bootconfig.data` in this example).
+* environment.DIRMODE: The Linux permissions assigned to the boot directory???
+* environment.FS_TYPE: The filesystem type associated with the boot partition???
+* environment.GID: The group ID associated with files and directories created on the boot partition???. GID 0 is the root group.
+* environment.MODE: The Linux permissions assigned to files in the boot partition???
+* environment.UID: The user ID associated with files and directories created on the boot partition???. UID 0 is the root user.
+* image: Container image used to perform the steps needed by this action.
+* timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.write-netconfig (Bottlerocket)
+The write-netconfig action configures networking for the system???
+
+* environment.CONTENTS: Add network values, including: `version = 1` (version number), `[eno1]` (external network interface), `dhcp4 = true` (turns on dhcp4), and `primary = true` (identifies this interface as the primary interface used by kubelet).
+* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information ???
+* environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
+* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings???
+* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings???
+* environment.GID: The group ID associated with files and directories created on the partition???. GID 0 is the root group.
+* environment.MODE: The Linux permissions assigned to files in the partition???
+* environment.UID: The user ID associated with files and directories created on the partition???. UID 0 is the root user.
+* image: Container image used to perform the steps needed by this action.
 
 ### template.tasks.actions.write-user-data (Bottlerocket)
+The write-user-data action configures the Tinkerbell Hegel service, which provides the metadata store for Tinkerbell.
+
+* environment.HEGEL_URL: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
+* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information ???
+* environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
+* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings???
+* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings???
+* environment.GID: The group ID associated with files and directories created on the partition???. GID 0 is the root group.
+* environment.MODE: The Linux permissions assigned to files in the partition???
+* environment.UID: The user ID associated with files and directories created on the partition???. UID 0 is the root user.
+* image: Container image used to perform the steps needed by this action.
+* timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.reboot (Bottlerocket)
+The reboot action defines how the system restarts to bring up the installed system.
 
+* image: Container image used to perform the steps needed by this action.
+* timeout: Time needed to complete the action, in seconds.
+* volumes: The volume (directory) to mount into the container from the installed system.??????
 ### version
 
 Matches the current version of the Tinkerbell template.
