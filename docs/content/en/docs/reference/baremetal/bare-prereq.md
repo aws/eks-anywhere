@@ -46,9 +46,9 @@ Each machine should include the following features:
 
 Here are other network requirements:
 
-* All EKS Anywhere machine, including the Admin, control plane and worker machines, must be on the same layer 2 connection to the other machines in the cluster and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same L2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
+* All EKS Anywhere machine, including the Admin, control plane and worker machines, must be on the same layer 2 connection to the other machines in the cluster and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same layer 2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
 
-* You must be able to run DHCP on control plane/worker machine network.
+* You must be able to run DHCP on the control plane/worker machine network.
 
 * The administrative machine and the target workload environment will need network access to:
 
@@ -57,12 +57,14 @@ Here are other network requirements:
   * distro.eks.amazonaws.com: To download EKS Distro binaries and manifests
   * d2glxqk2uabbnd.cloudfront.net: For EKS Anywhere and EKS Distro ECR container images
 
-* Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP or kube-vip VIP address. The other is required for the Tinkerbell IP address on the cluster. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer.
+* Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP or kube-vip VIP address. The other is for the Tinkerbell IP address on the target cluster. The Tinkerbell IP address is not yet required, but will be required in the near future. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses.
 
   * Pick IP addresses reachable from the cluster subnet that are excluded from the DHCP range or
   * Create an IP reservation for these addresses on your DHCP server. This is usually accomplished by adding a dummy mapping of this IP address to a non-existent mac address.
 
->**_NOTE:_** When your set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `ControlPlaneConfiguration.endpoint.host` and `TinkerbellDatacenterConfig` fields, respectively.
+>**_NOTE:_** When your set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `ControlPlaneConfiguration.endpoint.host` and `tinkerbellIP` fields, respectively.
+
+* Ports must be open to the Admin machine and cluster machines as described in [Ports and protocols]({{< relref "../ports/" >}}).
 
 ## Hardware suggestions
 
