@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -266,6 +267,50 @@ func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *type
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
+// WaitForService blocks until an IP address is assigned.
+//
+// Until more generic status matching comes around (possibly in 1.23), poll
+// the service, checking for an IP address. Would you like to know more?
+// https://github.com/kubernetes/kubernetes/issues/83094
+func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig string, timeout string, target string, namespace string) error {
+	timeoutDur, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("parsing duration %q: %w", timeout, err)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeoutDur)
+	defer cancel()
+	timedOut := timeoutCtx.Done()
+
+	const pollInterval = time.Second
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	svc := &corev1.Service{}
+	for {
+		select {
+		case <-timedOut:
+			return timeoutCtx.Err()
+		case <-ticker.C:
+			err := k.GetObject(ctx, "service", target, namespace, kubeconfig, svc)
+			if err != nil {
+				logger.V(6).Info("failed to poll service", "target", target, "namespace", namespace, "error", err)
+				continue
+			}
+			for _, ingress := range svc.Status.LoadBalancer.Ingress {
+				if ingress.IP != "" {
+					logger.V(5).Info("found a load balancer:", "IP", svc.Spec.ClusterIP)
+					return nil
+				}
+			}
+			if svc.Spec.ClusterIP != "" {
+				logger.V(5).Info("found a ClusterIP:", "IP", svc.Spec.ClusterIP)
+				return nil
+			}
+		}
+	}
 }
 
 func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {

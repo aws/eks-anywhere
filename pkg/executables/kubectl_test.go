@@ -253,6 +253,66 @@ func TestKubectlWaitSuccess(t *testing.T) {
 	}
 }
 
+func TestKubectlWaitForService(t *testing.T) {
+	testSvc := &corev1.Service{
+		Spec: corev1.ServiceSpec{
+			ClusterIP: "192.168.1.2",
+		},
+	}
+	respJSON, err := json.Marshal(testSvc)
+	if err != nil {
+		t.Errorf("marshaling test service: %s", err)
+	}
+	ret := bytes.NewBuffer(respJSON)
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "service", "test", "-o", "json", "--kubeconfig", "kubeconfig"}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
+	if err := k.WaitForService(ctx, "kubeconfig", "5m", "test", "eksa-packages"); err != nil {
+		t.Errorf("Kubectl.WaitForService() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlWaitForServiceWithLoadBalancer(t *testing.T) {
+	testSvc := &corev1.Service{
+		Status: corev1.ServiceStatus{
+			LoadBalancer: corev1.LoadBalancerStatus{
+				Ingress: []corev1.LoadBalancerIngress{
+					{
+						IP: "192.168.1.1",
+					},
+				},
+			},
+		},
+	}
+	respJSON, err := json.Marshal(testSvc)
+	if err != nil {
+		t.Errorf("marshaling test service: %s", err)
+	}
+	ret := bytes.NewBuffer(respJSON)
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "service", "test", "-o", "json", "--kubeconfig", "kubeconfig"}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(*ret, nil).AnyTimes()
+	if err := k.WaitForService(ctx, "kubeconfig", "5m", "test", "eksa-packages"); err != nil {
+		t.Errorf("Kubectl.WaitForService() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlWaitForServiceTimedOut(t *testing.T) {
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"get", "--ignore-not-found", "--namespace", "eksa-packages", "service", "test", "-o", "json", "--kubeconfig", "kubeconfig"}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil).AnyTimes()
+	if err := k.WaitForService(ctx, "kubeconfig", "2s", "test", "eksa-packages"); err == nil {
+		t.Errorf("Kubectl.WaitForService() error = nil, want %v", context.Canceled)
+	}
+}
+
+func TestKubectlWaitForServiceBadTimeout(t *testing.T) {
+	k, ctx, _, _ := newKubectl(t)
+	if err := k.WaitForService(ctx, "kubeconfig", "abc", "test", "eksa-packages"); err == nil {
+		t.Errorf("Kubectl.WaitForService() error = nil, want parsing duration error")
+	}
+}
+
 func TestKubectlWaitError(t *testing.T) {
 	var timeout, kubeconfig, forCondition, property, namespace string
 
