@@ -65,17 +65,32 @@ type Govc struct {
 	Executable
 	*retrier.Retrier
 	requiredEnvs *syncSlice
+	envMap       map[string]string
 }
 
-func NewGovc(executable Executable, writer filewriter.FileWriter) *Govc {
+type GovcOpt func(*Govc)
+
+func NewGovc(executable Executable, writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
 	envVars := newSyncSlice()
 	envVars.append(requiredEnvs...)
 
-	return &Govc{
+	g := &Govc{
 		writer:       writer,
 		Executable:   executable,
 		Retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		requiredEnvs: envVars,
+	}
+
+	for _, opt := range opts {
+		opt(g)
+	}
+
+	return g
+}
+
+func WithGovcEnvMap(envMap map[string]string) GovcOpt {
+	return func(g *Govc) {
+		g.envMap = envMap
 	}
 }
 
@@ -471,6 +486,10 @@ func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) 
 }
 
 func (g *Govc) getEnvMap() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	envMap := make(map[string]string)
 	for key := range g.requiredEnvs.iterate() {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {

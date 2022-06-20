@@ -96,39 +96,44 @@ type VSphereTestRunner struct {
 	Folder       string `yaml:"folder"`
 }
 
-func (v *VSphereTestRunner) setEnvironment() error {
+func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
+	envMap := make(map[string]string)
 	if vSphereUsername, ok := os.LookupEnv(testRunnerVCUserEnvVar); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(govcUsernameKey, vSphereUsername); err != nil {
-			return fmt.Errorf("unable to set %s: %v", govcUsernameKey, err)
+			return nil, fmt.Errorf("unable to set %s: %v", govcUsernameKey, err)
 		}
+		envMap[govcUsernameKey] = vSphereUsername
 	} else {
-		return fmt.Errorf("missing environment variable: %s", testRunnerVCUserEnvVar)
+		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCUserEnvVar)
 	}
 
 	if vSpherePassword, ok := os.LookupEnv(testRunnerVCPasswordEnvVar); ok && len(vSpherePassword) > 0 {
 		if err := os.Setenv(govcPasswordKey, vSpherePassword); err != nil {
-			return fmt.Errorf("unable to set %s: %v", govcPasswordKey, err)
+			return nil, fmt.Errorf("unable to set %s: %v", govcPasswordKey, err)
 		}
+		envMap[govcPasswordKey] = vSpherePassword
 	} else {
-		return fmt.Errorf("missing environment variable: %s", testRunnerVCPasswordEnvVar)
+		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCPasswordEnvVar)
 	}
 
 	if err := os.Setenv(govcURLKey, v.Url); err != nil {
-		return fmt.Errorf("unable to set %s: %v", govcURLKey, err)
+		return nil, fmt.Errorf("unable to set %s: %v", govcURLKey, err)
 	}
+	envMap[govcURLKey] = v.Url
 
 	if err := os.Setenv(govcInsecure, strconv.FormatBool(v.Insecure)); err != nil {
-		return fmt.Errorf("unable to set %s: %v", govcURLKey, err)
+		return nil, fmt.Errorf("unable to set %s: %v", govcURLKey, err)
 	}
+	envMap[govcInsecure] = strconv.FormatBool(v.Insecure)
 
-	return nil
+	return envMap, nil
 }
 
 func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	name := getTestRunnerName(c.jobId)
 	logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
 
-	err := v.setEnvironment()
+	envMap, err := v.setEnvironment()
 	if err != nil {
 		return "", fmt.Errorf("unable to create vSphere test runner instance: %v", err)
 	}
@@ -155,7 +160,7 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	}
 
 	// deploy template
-	if err := vsphere.DeployTemplate(v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
+	if err := vsphere.DeployTemplate(envMap, v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
 		return "", err
 	}
 

@@ -30,7 +30,7 @@ type NetworkMapping struct {
 	Network string `json:"Network"`
 }
 
-func DeployTemplate(library, templateName, vmName, deployFolder, datacenter, datastore, resourcePool string, opts OVFDeployOptions) error {
+func DeployTemplate(envMap map[string]string, library, templateName, vmName, deployFolder, datacenter, datastore, resourcePool string, opts OVFDeployOptions) error {
 	context := context.Background()
 	executableBuilder, close, err := executables.NewExecutableBuilder(context, executables.DefaultEksaImage())
 	if err != nil {
@@ -39,7 +39,7 @@ func DeployTemplate(library, templateName, vmName, deployFolder, datacenter, dat
 
 	defer close.CheckErr(context)
 	tmpWriter, _ := filewriter.NewWriter(vmName)
-	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
+	govc := executableBuilder.BuildGovcExecutable(tmpWriter, executables.WithGovcEnvMap(envMap))
 	defer govc.Close(context)
 
 	deployOptions, err := json.Marshal(opts)
