@@ -2,6 +2,7 @@ package dependencies_test
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 type factoryTest struct {
@@ -74,6 +76,10 @@ func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 }
 
 func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
+	configString := test.ReadFile(t, "testdata/cloudstack_config_multiple_profiles.ini")
+	encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
+
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
@@ -92,6 +98,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCAPIManager().
 		WithManifestReader().
 		WithUnAuthKubeClient().
+		WithCmk().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
