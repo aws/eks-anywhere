@@ -47,8 +47,8 @@ spec:
                   a domain must also be provided.
                 type: string
               availabilityZones:
-                description: List of AvailabilityZones to distribute VMs across -
-                  corresponds to a list of CAPI failure domains
+                description: AvailabilityZones list of different partitions to distribute
+                  VMs across - corresponds to a list of CAPI failure domains
                 items:
                   description: CloudStackAvailabilityZone maps to a CAPI failure domain
                     to distribute machines across Cloudstack infrastructure
