@@ -90,7 +90,8 @@ Follow these steps to create an EKS Anywhere cluster.
 
          ```bash
          # Create a cluster with curated packages installation
-         eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages packages.yaml
+         eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml \
+            --hardware-csv hardware.csv --install-packages packages.yaml
          ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
