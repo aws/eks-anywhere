@@ -130,7 +130,11 @@ type instanceRunConf struct {
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
-	testRunner := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
+	testRunner, err := newTestRunner(conf.testRunnerType, conf.testRunnerConfig)
+	if err != nil {
+		return "", nil, err
+	}
+
 	instanceId, err := testRunner.createInstance(conf)
 	if err != nil {
 		return "", nil, err
