@@ -23,14 +23,28 @@ func TestAssertMachineConfigsValid_ValidSucceds(t *testing.T) {
 }
 
 func TestAssertMachineConfigsValid_InvalidFails(t *testing.T) {
-	g := gomega.NewWithT(t)
-	builder := NewDefaultValidClusterSpecBuilder()
-	clusterSpec := builder.Build()
-
 	// Invalidate the namespace check.
-	clusterSpec.MachineConfigs[builder.ControlPlaneMachineName].Name = ""
-
-	g.Expect(tinkerbell.AssertMachineConfigsValid(clusterSpec)).ToNot(gomega.Succeed())
+	for name, mutate := range map[string]func(*tinkerbell.ClusterSpec){
+		"MissingName": func(clusterSpec *tinkerbell.ClusterSpec) {
+			clusterSpec.ControlPlaneMachineConfig().Name = ""
+		},
+		"MissingHardwareSelector": func(clusterSpec *tinkerbell.ClusterSpec) {
+			clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = map[string]string{}
+		},
+		"MultipleKeyValuePairsInHardwareSelector": func(clusterSpec *tinkerbell.ClusterSpec) {
+			clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = map[string]string{
+				"foo": "bar",
+				"baz": "qux",
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			g := gomega.NewWithT(t)
+			spec := NewDefaultValidClusterSpecBuilder().Build()
+			mutate(spec)
+			g.Expect(tinkerbell.AssertMachineConfigsValid(spec)).ToNot(gomega.Succeed())
+		})
+	}
 }
 
 func TestAssertDatacenterConfigValid_ValidSucceeds(t *testing.T) {
