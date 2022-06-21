@@ -17,6 +17,10 @@ DRY_RUN="${8?Specify sixth argument - Dry run upload}"
 REPO="eksctl-anywhere"
 BINARY_PATH="bin"
 TAR_PATH="${REPO_ROOT}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/artifacts"
+LATEST=latest
+if [[ $BRANCH_NAME != "main" ]]; then
+  LATEST=$BRANCH_NAME
+fi
 
 function build::cli::move_artifacts() {
   local -r os=$1
@@ -85,18 +89,20 @@ function build::cli::upload() {
   local -r projectpath=$3
   local -r buildidentifier=$4
   local -r githash=$5
+  local -r latesttag=$6
+  local -r dry_run=$7
 
   echo "$githash" >> "$artifactspath"/githash
 
-  if [ "$DRY_RUN" = "true" ]; then
+  if [ "$dry_run" = "true" ]; then
     aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --recursive --dryrun
-    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/latest --recursive --dryrun
+    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/"$latesttag" --recursive --dryrun
   else
     # Upload artifacts to s3
     # 1. To proper path on s3 with buildId-githash
     # 2. Latest path to indicate the latest build, with --delete option to delete stale files in the dest path
     aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --acl public-read
-    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/latest --delete --acl public-read
+    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$latesttag" --delete --acl public-read
   fi
 }
 
@@ -115,4 +121,4 @@ for OS in "${OS_LIST[@]}"; do
     build::cli::generate_shasum $TAR_PATH $OS $ARCH
   done
 done
-build::cli::upload ${TAR_PATH} ${ARTIFACTS_BUCKET} ${PROJECT_PATH} ${BUILD_IDENTIFIER} ${GIT_HASH}
+build::cli::upload ${TAR_PATH} ${ARTIFACTS_BUCKET} ${PROJECT_PATH} ${BUILD_IDENTIFIER} ${GIT_HASH} ${LATEST} ${DRY_RUN}
