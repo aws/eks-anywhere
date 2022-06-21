@@ -58,6 +58,8 @@ metadata:
   name: my-cluster-name
 spec:
   tinkerbellIP: "193.17.0.50"
+  osImageURL: "http://10.80.30.20:8080/ubuntu-...gz"    # Optional
+  hookImagesURLPath: "http://10.80.30.20:8080"          # Optional
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -189,6 +191,16 @@ the existing nodes associated with the configuration.
 ### tinkerbellIP
 Optional field to identify the IP address of the Tinkerbell service.
 Other TinkerbellDatacenterConfig fields are not yet supported.
+See [Artifacts]({{< relref "../artifacts/" >}}) for details.
+
+### osImageURL
+Optional field to replace the default operating system image.
+This field is useful if you want to provide a customized operating system image or simply host the standard image locally.
+See [Artifacts]({{< relref "../artifacts/" >}}) for details.
+
+### hookImagesURLPath
+Optional field to replace the HookOS image.
+This field is useful if you want to provide a customized HookOS image or simply host the standard image locally.
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
