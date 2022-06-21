@@ -49,14 +49,14 @@ will need to be available on *all* the Cloudstack API endpoints. We will validat
 Currently, the CloudstackDataCenterConfig spec contains:
 ```
 type CloudStackDatacenterConfigSpec struct {
-	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
-	Domain string `json:"domain"`
-	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	Zones []CloudStackZone `json:"zones"`
-	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
-	Account string `json:"account,omitempty"`
-	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
-        ManagementApiEndpoint string `json:"managementApiEndpoint"`
+    // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+    Domain string `json:"domain"`
+    // Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+    Zones []CloudStackZone `json:"zones"`
+    // Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+    Account string `json:"account,omitempty"`
+    // CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+    ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 ```
 
@@ -64,16 +64,16 @@ We would instead propose to gradually deprecate all the existing attributes and 
 
 ```
 type CloudStackDatacenterConfigSpec struct {
-	// Deprecated
-	Domain string `json:"domain,omitempty"`
-	// Deprecated
-	Zones []CloudStackZone `json:"zones,omitempty"`
-	// Deprecated
-	Account string `json:"account,omitempty"`
-	// Deprecated
-	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
-	// List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
-	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
+    // Deprecated
+    Domain string `json:"domain,omitempty"`
+    // Deprecated
+    Zones []CloudStackZone `json:"zones,omitempty"`
+    // Deprecated
+    Account string `json:"account,omitempty"`
+    // Deprecated
+    ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
+    // List of AvailabilityZones to distribute VMs across - corresponds to a list of CAPI failure domains
+    AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 ```
 
@@ -81,18 +81,18 @@ where each AvailabilityZone object looks like
 
 ```
 type CloudStackAvailabilityZone struct {
-	// Name would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
-	Name string `json:"name"`
-	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
-	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
-	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
-	Domain string `json:"domain"`
-	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	Zone CloudStackZone `json:"zone"`
-	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
-	Account string `json:"account,omitempty"`
-	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
-	ManagementApiEndpoint string `json:"managementApiEndpoint"`
+    // CredentialRef would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
+    CredentialRef string `json:"credentialRef"`
+    // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+    // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+    // The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+    Domain string `json:"domain"`
+    // Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+    Zone CloudStackZone `json:"zone"`
+    // Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+    Account string `json:"account,omitempty"`
+    // CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+    ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 ```
 
@@ -107,7 +107,13 @@ CAPC currently utilizes them to distribute machines across CloudStack Zones. How
 2. Cloudstack domain
 3. Cloudstack zone
 4. Cloudstack account
-5. A unique name
+5. A reference to the customer-provider credentials
+
+To add more detail to the credential ref, we will continue to accept a base64 encoded ini file as input from the customer when running eks-a. However,
+in order to avoid taking a dependency on a meaningless section of a transient file, we will modify EKS-A to also create the secrets to be used by CAPC.
+These secrets will be generated from the ini file provided by customer and applied to the cluster. CAPC will then proceed to take ownership of them as
+currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
+We will refer to this set of credentials in the CloudstackCluster resource as well so CAPC knows which ones to use.
 
 You can find more information about these Cloudstack resources [here](http://docs.cloudstack.apache.org/en/latest/conceptsandterminology/concepts.html#cloudstack-terminology)
 
