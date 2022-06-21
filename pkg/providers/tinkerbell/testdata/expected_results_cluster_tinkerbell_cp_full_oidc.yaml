@@ -54,6 +54,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -62,6 +63,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
       - content: |
           apiVersion: v1
