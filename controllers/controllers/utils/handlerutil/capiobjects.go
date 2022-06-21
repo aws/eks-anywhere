@@ -19,7 +19,7 @@ func CAPIObjectToCluster(log logr.Logger) handler.MapFunc {
 		labels := o.GetLabels()
 		clusterName, ok := labels[clusterapi.EKSAClusterLabelName]
 		if !ok {
-			// Object not managed by a eks-a Cluster, don't enqueue
+			// Object not managed by an eks-a Cluster, don't enqueue
 			log.V(6).Info("Object not managed by an eks-a Cluster, ignoring", "type", fmt.Sprintf("%T", o), "name", o.GetName())
 			return nil
 		}

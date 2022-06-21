@@ -22,7 +22,7 @@ type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1
 
 type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
 
-// BuildSpec constructs a cluster.Spec for a eks-a cluster by retrieving all
+// BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
 // necessary objects using fetch methods
 // This is deprecated in favour of BuildSpec
 func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch) (*Spec, error) {
@@ -154,7 +154,7 @@ func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch OID
 	return nil, nil
 }
 
-// BuildSpec constructs a cluster.Spec for a eks-a cluster by retrieving all
+// BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
 // necessary objects from the cluster using a kubernetes client
 func BuildSpec(ctx context.Context, client Client, cluster *v1alpha1.Cluster) (*Spec, error) {
 	configBuilder := NewDefaultConfigClientBuilder()
