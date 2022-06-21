@@ -18,7 +18,7 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 type ActionOpt func(action *[]tinkerbell.Action)
 
 // NewDefaultTinkerbellTemplateConfigCreate returns a default TinkerbellTemplateConfig with the required Tasks and Actions
-func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, tinkerbellIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
+func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha1.VersionsBundle, disk string, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) *TinkerbellTemplateConfig {
 	config := &TinkerbellTemplateConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
@@ -45,7 +45,7 @@ func NewDefaultTinkerbellTemplateConfigCreate(name string, versionBundle v1alpha
 		},
 	}
 
-	defaultActions := GetDefaultActionsFromBundle(versionBundle, disk, tinkerbellIp, osFamily)
+	defaultActions := GetDefaultActionsFromBundle(versionBundle, disk, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp, osFamily)
 	for _, action := range defaultActions {
 		action(&config.Spec.Template.Tasks[0].Actions)
 	}

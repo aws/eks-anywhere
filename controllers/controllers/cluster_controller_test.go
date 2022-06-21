@@ -19,6 +19,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -52,10 +53,11 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	r := &ClusterReconciler{
-		client:    cl,
-		log:       logf.Log,
-		validator: validator,
-		defaulter: defaulter,
+		client:                  cl,
+		log:                     logf.Log,
+		validator:               validator,
+		defaulter:               defaulter,
+		buildProviderReconciler: clusters.BuildProviderReconciler,
 	}
 
 	req := reconcile.Request{
@@ -113,10 +115,11 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	r := &ClusterReconciler{
-		client:    cl,
-		log:       logf.Log,
-		validator: validator,
-		defaulter: defaulter,
+		client:                  cl,
+		log:                     logf.Log,
+		validator:               validator,
+		defaulter:               defaulter,
+		buildProviderReconciler: clusters.BuildProviderReconciler,
 	}
 
 	req := reconcile.Request{
@@ -174,10 +177,11 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	r := &ClusterReconciler{
-		client:    cl,
-		log:       logf.Log,
-		validator: validator,
-		defaulter: defaulter,
+		client:                  cl,
+		log:                     logf.Log,
+		validator:               validator,
+		defaulter:               defaulter,
+		buildProviderReconciler: clusters.BuildProviderReconciler,
 	}
 
 	req := reconcile.Request{
@@ -237,10 +241,11 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	r := &ClusterReconciler{
-		client:    cl,
-		log:       logf.Log,
-		validator: validator,
-		defaulter: defaulter,
+		client:                  cl,
+		log:                     logf.Log,
+		validator:               validator,
+		defaulter:               defaulter,
+		buildProviderReconciler: clusters.BuildProviderReconciler,
 	}
 
 	req := reconcile.Request{

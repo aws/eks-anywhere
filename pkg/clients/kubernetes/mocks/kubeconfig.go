@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	gomock "github.com/golang/mock/gomock"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // MockClient is a mock of Client interface.
@@ -36,7 +36,7 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockClient) Get(ctx context.Context, name, namespace string, obj runtime.Object) error {
+func (m *MockClient) Get(ctx context.Context, name, namespace string, obj kubernetes.Object) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Get", ctx, name, namespace, obj)
 	ret0, _ := ret[0].(error)

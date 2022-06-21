@@ -151,6 +151,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
+		WithPackageInstaller(clusterSpec, cc.installPackages).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -165,10 +166,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
-	if !features.IsActive(features.CuratedPackagesSupport()) && cc.installPackages != "" {
-		return fmt.Errorf("curated packages installation is not supported in this release")
-	}
-
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,
@@ -176,6 +173,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.FluxAddonClient,
 		deps.Writer,
 		deps.EksdInstaller,
+		deps.PackageInstaller,
 	)
 
 	var cluster *types.Cluster
@@ -204,7 +202,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean, cc.installPackages)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+
 	cleanup(deps, &err)
 	return err
 }
@@ -215,6 +214,7 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
 		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
 		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
+		dirs = append(dirs, filepath.Dir(cc.installPackages))
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {

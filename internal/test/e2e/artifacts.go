@@ -14,7 +14,7 @@ const e2eHomeFolder = "/home/e2e/"
 func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	logger.V(1).Info("Uploading log files to s3 bucket")
 	command := newCopyCommand().from(
-		e2eHomeFolder, clusterName(e.branchName, e.instanceId),
+		e2eHomeFolder, clusterName(e.branchName, e.instanceId, testName),
 	).to(
 		e.generatedArtifactsBucketPath(), testName,
 	).recursive().String()

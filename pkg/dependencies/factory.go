@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -40,6 +41,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 type Dependencies struct {
@@ -75,6 +77,8 @@ type Dependencies struct {
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
 	CliConfig                 *config.CliConfig
+	PackageInstaller          interfaces.PackageInstaller
+	BundleRegistry            curatedpackages.BundleRegistry
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -779,6 +783,53 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
+	f.WithHelm().WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageInstaller != nil {
+			return nil
+		}
+
+		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec,
+			packagesLocation,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
+	if registryName != "" {
+		f.WithHelm()
+	} else {
+		f.WithManifestReader()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.BundleRegistry != nil {
+			return nil
+		}
+
+		if registryName != "" {
+			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
+				f.dependencies.Helm,
+				registryName,
+			)
+		} else {
+			f.dependencies.BundleRegistry = curatedpackages.NewDefaultRegistry(
+				f.dependencies.ManifestReader,
+				kubeVersion,
+				version,
+			)
+		}
+		return nil
+	})
 	return f
 }
 

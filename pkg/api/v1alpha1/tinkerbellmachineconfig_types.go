@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -20,6 +22,14 @@ type HardwareSelector map[string]string
 // IsEmpty returns true if s has no key-value pairs.
 func (s HardwareSelector) IsEmpty() bool {
 	return len(s) == 0
+}
+
+func (s HardwareSelector) ToString() (string, error) {
+	encoded, err := json.Marshal(s)
+	if err != nil {
+		return "", err
+	}
+	return string(encoded), nil
 }
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {

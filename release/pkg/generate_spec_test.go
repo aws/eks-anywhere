@@ -34,9 +34,9 @@ import (
 )
 
 const (
-	releaseFolder             = "release"
-	testdataFolder            = "pkg/test/testdata"
-	artifactsDownloadLocation = "downloaded-artifacts"
+	releaseFolder         = "release"
+	testdataFolder        = "pkg/test/testdata"
+	generatedBundleFolder = "generated-bundles"
 )
 
 var releaseConfig = &ReleaseConfig{
@@ -101,9 +101,13 @@ func TestGenerateBundleManifest(t *testing.T) {
 				t.Fatalf("Error getting top-level Git directory: %v\n", err)
 			}
 
+			generatedBundlePath := filepath.Join(gitRoot, releaseFolder, generatedBundleFolder)
+			if err := os.MkdirAll(generatedBundlePath, 0o755); err != nil {
+				t.Fatalf("Error creating directory at %s for bundle generation: %v\n", generatedBundleFolder, err)
+			}
+
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 			releaseConfig.CliRepoBranchName = tt.cliRepoBranchName
-			releaseConfig.ArtifactDir = filepath.Join(gitRoot, releaseFolder, artifactsDownloadLocation)
 
 			releaseVersion, err := releaseConfig.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion)
 			if err != nil {
@@ -129,11 +133,6 @@ func TestGenerateBundleManifest(t *testing.T) {
 			}
 			releaseConfig.BundleArtifactsTable = bundleArtifactsTable
 
-			err = releaseConfig.PrepareBundleRelease()
-			if err != nil {
-				t.Fatalf("Error preparing bundle release: %v\n", err)
-			}
-
 			imageDigests, err := releaseConfig.GenerateImageDigestsTable(bundleArtifactsTable)
 			if err != nil {
 				t.Fatalf("Error generating image digests table: %+v\n", err)
@@ -154,7 +153,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 			}
 
 			expectedBundleManifestFile := filepath.Join(gitRoot, releaseFolder, testdataFolder, fmt.Sprintf("%s-bundle-release.yaml", tt.buildRepoBranchName))
-			generatedBundleManifestFile := filepath.Join(releaseConfig.ArtifactDir, fmt.Sprintf("%s-dry-run-bundle-release.yaml", tt.buildRepoBranchName))
+			generatedBundleManifestFile := filepath.Join(generatedBundlePath, fmt.Sprintf("%s-dry-run-bundle-release.yaml", tt.buildRepoBranchName))
 			err = ioutil.WriteFile(generatedBundleManifestFile, bundleManifest, 0o644)
 			if err != nil {
 				t.Fatalf("Error writing bundles manifest file to disk: %v\n", err)

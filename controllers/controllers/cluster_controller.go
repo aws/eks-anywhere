@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,10 +16,15 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
+	"github.com/aws/eks-anywhere/controllers/controllers/clients"
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
+	"github.com/aws/eks-anywhere/controllers/controllers/utils/handlerutil"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -32,32 +38,70 @@ const (
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
-	client    client.Client
-	log       logr.Logger
-	validator *vsphere.Validator
-	defaulter *vsphere.Defaulter
-	tracker   *remote.ClusterCacheTracker
+	client                  client.Client
+	log                     logr.Logger
+	validator               *vsphere.Validator
+	defaulter               *vsphere.Defaulter
+	tracker                 *remote.ClusterCacheTracker
+	buildProviderReconciler BuildProviderReconciler
 }
 
-func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc, tracker *remote.ClusterCacheTracker) *ClusterReconciler {
+// TODO: this is not ideal and will need a refactor. I will follow up but for now this
+// allows us to decouple the cluster reconciler main logic from provider specific logic
+type BuildProviderReconciler func(datacenterKind string, client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) (clusters.ProviderClusterReconciler, error)
+
+func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc, tracker *remote.ClusterCacheTracker, buildProviderReconciler BuildProviderReconciler) *ClusterReconciler {
 	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
 	defaulter := vsphere.NewDefaulter(govc)
 
 	return &ClusterReconciler{
-		client:    client,
-		log:       log,
-		validator: validator,
-		defaulter: defaulter,
-		tracker:   tracker,
+		client:                  client,
+		log:                     log,
+		validator:               validator,
+		defaulter:               defaulter,
+		tracker:                 tracker,
+		buildProviderReconciler: buildProviderReconciler,
 	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	childObjectHandler := handlerutil.ChildObjectToClusters(r.log)
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.Cluster{}).
-		// Watches(&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
-		// Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(
+			&source.Kind{Type: &anywherev1.OIDCConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.AWSIamConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.GitOpsConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.FluxConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.VSphereMachineConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.SnowDatacenterConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
+		Watches(
+			&source.Kind{Type: &anywherev1.SnowMachineConfig{}},
+			handler.EnqueueRequestsFromMapFunc(childObjectHandler),
+		).
 		Complete(r)
 }
 
@@ -113,6 +157,10 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		return ctrl.Result{}, nil
 	}
 
+	if err = r.ensureClusterOwnerReferences(ctx, cluster); err != nil {
+		return ctrl.Result{}, err
+	}
+
 	result, err := r.reconcile(ctx, cluster, log)
 	if err != nil {
 		failureMessage := err.Error()
@@ -123,7 +171,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 }
 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
-	clusterProviderReconciler, err := clusters.BuildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter, r.tracker)
+	clusterProviderReconciler, err := r.buildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter, r.tracker)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -159,4 +207,31 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywhe
 
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, clus *anywherev1.Cluster) error {
+	builder := cluster.NewDefaultConfigClientBuilder()
+	config, err := builder.Build(ctx, clients.NewKubeClient(r.client), clus)
+	if err != nil {
+		return err
+	}
+
+	childObjs := config.ChildObjects()
+	for _, obj := range childObjs {
+		numberOfOwnerReferences := len(obj.GetOwnerReferences())
+		if err = controllerutil.SetOwnerReference(clus, obj, r.client.Scheme()); err != nil {
+			return errors.Wrapf(err, "setting cluster owner reference for %s", obj.GetObjectKind())
+		}
+
+		if numberOfOwnerReferences == len(obj.GetOwnerReferences()) {
+			// obj already had the owner reference
+			continue
+		}
+
+		if err = r.client.Update(ctx, obj); err != nil {
+			return errors.Wrapf(err, "updating object (%s) with cluster owner reference", obj.GetObjectKind())
+		}
+	}
+
+	return nil
 }

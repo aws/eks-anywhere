@@ -17,7 +17,7 @@ type Machine struct {
 
 	// Disk used to populate the default workflow actions.
 	// Currently needs to be the same for all hardware residing in the same group where a group
-	// is either: control plane hardwar, external etcd hard, or the definable worker node groups.
+	// is either: control plane hardware, external etcd hard, or the definable worker node groups.
 	Disk string `csv:"disk"`
 
 	// Labels to be applied to the Hardware resource.
@@ -71,6 +71,10 @@ func (l Labels) Has(k string) bool {
 // See https://pkg.go.dev/k8s.io/apimachinery/pkg/labels#Labels
 func (l Labels) Get(k string) string {
 	return l[k]
+}
+
+func (l *Labels) MarshalCSV() (string, error) {
+	return l.String(), nil
 }
 
 func (l *Labels) UnmarshalCSV(s string) error {

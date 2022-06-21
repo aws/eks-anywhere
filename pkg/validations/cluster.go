@@ -35,8 +35,7 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 	}
 
 	if certContent != "" {
-		err := tlsValidator.ValidateCert(host, port, certContent)
-		if err != nil {
+		if err = tlsValidator.ValidateCert(host, port, certContent); err != nil {
 			return fmt.Errorf("invalid registry certificate: %v", err)
 		}
 	}

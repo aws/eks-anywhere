@@ -66,6 +66,10 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		return ErrExternalEtcdUnsupported
+	}
+
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}

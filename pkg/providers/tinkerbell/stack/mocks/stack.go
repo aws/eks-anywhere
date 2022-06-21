@@ -159,9 +159,9 @@ func (mr *MockStackInstallerMockRecorder) CleanupLocalBoots(ctx, forceCleanup in
 }
 
 // Install mocks base method.
-func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...stack.InstallOption) error {
+func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...stack.InstallOption) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, bundle, tinkServerIP, kubeconfig}
+	varargs := []interface{}{ctx, bundle, tinkerbellIP, kubeconfig, hookOverride}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
@@ -171,9 +171,9 @@ func (m *MockStackInstaller) Install(ctx context.Context, bundle v1alpha1.Tinker
 }
 
 // Install indicates an expected call of Install.
-func (mr *MockStackInstallerMockRecorder) Install(ctx, bundle, tinkServerIP, kubeconfig interface{}, opts ...interface{}) *gomock.Call {
+func (mr *MockStackInstallerMockRecorder) Install(ctx, bundle, tinkerbellIP, kubeconfig, hookOverride interface{}, opts ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, bundle, tinkServerIP, kubeconfig}, opts...)
+	varargs := append([]interface{}{ctx, bundle, tinkerbellIP, kubeconfig, hookOverride}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockStackInstaller)(nil).Install), varargs...)
 }
 

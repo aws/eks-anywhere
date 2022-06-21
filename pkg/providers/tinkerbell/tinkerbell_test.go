@@ -16,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	stackmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -63,6 +62,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
+	t.Skip("External etcd unsupported for GA")
 	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
@@ -225,9 +225,10 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 
 	stackInstaller.EXPECT().Install(
 		ctx,
-		releasev1alpha1.TinkerbellStackBundle{},
+		clusterSpec.VersionsBundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
+		"",
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
@@ -260,9 +261,11 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 
 	stackInstaller.EXPECT().Install(
 		ctx,
-		releasev1alpha1.TinkerbellStackBundle{},
+		clusterSpec.VersionsBundle.Tinkerbell,
 		testIP,
 		"test.kubeconfig",
+		"",
+		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),

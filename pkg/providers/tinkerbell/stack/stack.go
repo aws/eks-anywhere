@@ -31,6 +31,8 @@ const (
 	tinkServer     = "tinkServer"
 	rufio          = "rufio"
 	grpcPort       = "42113"
+	kubevip        = "kubevip"
+	loadBalancer   = "loadBalancer"
 )
 
 type Docker interface {
@@ -51,13 +53,14 @@ type Installer struct {
 	createNamespace bool
 	bootsOnDocker   bool
 	hostPort        bool
+	loadBalancer    bool
 }
 
 type InstallOption func(s *Installer)
 
 type StackInstaller interface {
 	CleanupLocalBoots(ctx context.Context, forceCleanup bool) error
-	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error
+	Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error
 	UninstallLocal(ctx context.Context) error
 }
 
@@ -89,6 +92,12 @@ func WithHostPortEnabled(enabled bool) InstallOption {
 	}
 }
 
+func WithLoadBalancer() InstallOption {
+	return func(s *Installer) {
+		s.loadBalancer = true
+	}
+}
+
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
 func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string) StackInstaller {
 	return &Installer{
@@ -100,7 +109,7 @@ func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, na
 }
 
 // Install installs the Tinkerbell stack on a target cluster using a helm chart and providing the necessary values overrides
-func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string, opts ...InstallOption) error {
+func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.TinkerbellBundle, tinkerbellIP, kubeconfig, hookOverride string, opts ...InstallOption) error {
 	logger.V(6).Info("Installing Tinkerbell helm chart")
 
 	for _, option := range opts {
@@ -108,16 +117,20 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	}
 
 	bootEnv := []map[string]string{}
-	for k, v := range s.getBootsEnv(bundle, tinkServerIP) {
+	for k, v := range s.getBootsEnv(bundle.TinkerbellStack, tinkerbellIP) {
 		bootEnv = append(bootEnv, map[string]string{
 			"name":  k,
 			"value": v,
 		})
 	}
 
-	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
+	osiePath, err := getURIDir(bundle.TinkerbellStack.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	if hookOverride != "" {
+		osiePath = hookOverride
 	}
 
 	valuesMap := map[string]interface{}{
@@ -125,11 +138,11 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		createNamespace: s.createNamespace,
 		tinkController: map[string]interface{}{
 			deploy: true,
-			image:  bundle.Tink.TinkController.URI,
+			image:  bundle.TinkerbellStack.Tink.TinkController.URI,
 		},
 		tinkServer: map[string]interface{}{
 			deploy: true,
-			image:  bundle.Tink.TinkServer.URI,
+			image:  bundle.TinkerbellStack.Tink.TinkServer.URI,
 			args:   []string{"--tls=false"},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
@@ -137,7 +150,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		hegel: map[string]interface{}{
 			deploy: true,
-			image:  bundle.Hegel.Image.URI,
+			image:  bundle.TinkerbellStack.Hegel.Image.URI,
 			args:   []string{"--grpc-use-tls=false"},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
@@ -145,7 +158,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		boots: map[string]interface{}{
 			deploy: !s.bootsOnDocker,
-			image:  bundle.Boots.Image.URI,
+			image:  bundle.TinkerbellStack.Boots.Image.URI,
 			env:    bootEnv,
 			args: []string{
 				"-dhcp-addr=0.0.0.0:67",
@@ -154,7 +167,14 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		rufio: map[string]interface{}{
 			deploy: true,
-			image:  bundle.Rufio.Image.URI,
+			image:  bundle.TinkerbellStack.Rufio.Image.URI,
+		},
+		loadBalancer: map[string]interface{}{
+			"enabled": s.loadBalancer,
+			"ip":      tinkerbellIP,
+		},
+		kubevip: map[string]interface{}{
+			image: bundle.KubeVip.URI,
 		},
 	}
 
@@ -170,9 +190,9 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
-		bundle.TinkebellChart.Name,
-		fmt.Sprintf("oci://%s", bundle.TinkebellChart.Image()),
-		bundle.TinkebellChart.Tag(),
+		bundle.TinkerbellStack.TinkebellChart.Name,
+		fmt.Sprintf("oci://%s", bundle.TinkerbellStack.TinkebellChart.Image()),
+		bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
 	)
@@ -180,10 +200,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("installing Tinkerbell helm chart: %v", err)
 	}
 
-	return s.installBootsOnDocker(ctx, bundle, tinkServerIP, kubeconfig)
+	return s.installBootsOnDocker(ctx, bundle.TinkerbellStack, tinkerbellIP, kubeconfig, hookOverride)
 }
 
-func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig string) error {
+func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP, kubeconfig, hookOverride string) error {
 	if !s.bootsOnDocker {
 		return nil
 	}
@@ -205,6 +225,10 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	osiePath, err := getURIDir(bundle.Hook.Initramfs.Amd.URI)
 	if err != nil {
 		return fmt.Errorf("getting directory path from hook uri: %v", err)
+	}
+
+	if hookOverride != "" {
+		osiePath = hookOverride
 	}
 
 	cmd := []string{

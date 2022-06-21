@@ -49,15 +49,15 @@ func (mr *MockTlsValidatorMockRecorder) HasSelfSignedCert(host, port interface{}
 }
 
 // ValidateCert mocks base method.
-func (m *MockTlsValidator) ValidateCert(host, port, cert string) error {
+func (m *MockTlsValidator) ValidateCert(host, port, caCertContent string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateCert", host, port, cert)
+	ret := m.ctrl.Call(m, "ValidateCert", host, port, caCertContent)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateCert indicates an expected call of ValidateCert.
-func (mr *MockTlsValidatorMockRecorder) ValidateCert(host, port, cert interface{}) *gomock.Call {
+func (mr *MockTlsValidatorMockRecorder) ValidateCert(host, port, caCertContent interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCert", reflect.TypeOf((*MockTlsValidator)(nil).ValidateCert), host, port, cert)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCert", reflect.TypeOf((*MockTlsValidator)(nil).ValidateCert), host, port, caCertContent)
 }

@@ -37,8 +37,8 @@ func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
 	return NewKubectl(b.buildExecutable(kubectlPath))
 }
 
-func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *Govc {
-	return NewGovc(b.buildExecutable(govcPath), writer)
+func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
+	return NewGovc(b.buildExecutable(govcPath), writer, opts...)
 }
 
 func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, execConfig decoder.CloudStackExecConfig) *Cmk {
