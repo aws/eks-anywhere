@@ -103,11 +103,11 @@ CNI plugin to be installed in the cluster. The only supported value at the momen
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the machines.
+This CIDR block should not conflict with the `clusterNetwork.services.cidrBlocks` and network subnet range selected for the machines.
 
 ### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
-This CIDR block should not conflict with the network subnet range selected for the machines.
+This CIDR block should not conflict with the `clusterNetwork.pods.cidrBlocks` and network subnet range selected for the machines.
 
 ### clusterNetwork.dns.resolvConf.path (optional)
 Path to the file with a custom DNS resolver configuration.
@@ -116,17 +116,18 @@ Path to the file with a custom DNS resolver configuration.
 Specific control plane configuration for your Kubernetes cluster.
 
 ### controlPlaneConfiguration.count (required)
-Number of control plane nodes
+Number of control plane nodes.
+This number needs to be odd to maintain ETCD quorum.
 
 ### controlPlaneConfiguration.endpoint.host (required)
 A unique IP you want to use for the control plane in your EKS Anywhere cluster. Choose an IP in your network
 range that does not conflict with other machines.
 
-### controlPlaneConfiguration.machineGroupRef (required)
-Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
-
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
 the control plane nodes for kube-apiserver loadbalancing. 
+
+### controlPlaneConfiguration.machineGroupRef (required)
+Refers to the Kubernetes object with Tinkerbell-specific configuration for your nodes. See `TinkerbellMachineConfig Fields` below.
 
 ### controlPlaneConfiguration.taints
 A list of taints to apply to the control plane nodes of the cluster.
@@ -187,7 +188,7 @@ the existing nodes associated with the configuration.
 ## TinkerbellDatacenterConfig Fields
 
 ### tinkerbellIP
-Optional field to identify the IP address of the Tinkerbell service.
+Required field to identify the IP address of the Tinkerbell service.
 Other TinkerbellDatacenterConfig fields are not yet supported.
 See [Artifacts]({{< relref "../artifacts/" >}}) for details.
 
@@ -220,10 +221,12 @@ spec:
     node: "cp-machine"
 ```
 ### osFamily (required)
-Operating system on the machine. For example, `bottlerocker` or `ubuntu`.
-### templateRef
+Operating system on the machine. For example, `bottlerocket` or `ubuntu`.
+### templateRef (optional)
 Identifies the template that defines the actions that will be applied to the TinkerbellMachineConfig.
 See TinkerbellTemplateConfig fields below.
+EKS Anywhere will generate default templates based on `osFamily` during the `create` command.
+You can override this default template by providing your own template here.
 
 ### users
 The name of the user you want to configure to access your virtual machines through SSH.
