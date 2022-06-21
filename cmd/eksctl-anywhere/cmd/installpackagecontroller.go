@@ -71,7 +71,7 @@ func installPackageController(ctx context.Context) error {
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
 	ctrlClient := curatedpackages.NewPackageControllerClient(
-		deps.Helm,
+		deps.HelmInsecure,
 		deps.Kubectl,
 		kubeConfig,
 		imageUrl,
