@@ -46,7 +46,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 
 func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, writer filewriter.FileWriter, docker stack.Docker, helm stack.Helm, kubectl ProviderKubectlClient, forceCleanup bool) *Provider {
 	hardwareFile := "./testdata/hardware.csv"
-	return NewProvider(
+	provider, err := NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
@@ -60,6 +60,11 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		forceCleanup,
 		false,
 	)
+	if err != nil {
+		panic(err)
+	}
+
+	return provider
 }
 
 func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
