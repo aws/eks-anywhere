@@ -13,8 +13,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
-	brMetadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellLocalIp)
-	ubuntuMetadataString := fmt.Sprintf("\"http://%s:50061\", \"http://%s:50061\"", tinkerbellLocalIp, tinkerbellLBIP)
+	metadataString := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIP)
 
 	tests := []struct {
 		testName    string
@@ -76,7 +75,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/sda2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-						"CONTENTS":  fmt.Sprintf(cloudInit, ubuntuMetadataString),
+						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0600",
@@ -164,7 +163,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 						"DEST_DISK": "/dev/nvme0n1p2",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-						"CONTENTS":  fmt.Sprintf(cloudInit, ubuntuMetadataString),
+						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0600",
@@ -248,14 +247,14 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda12",
-						"FS_TYPE":   "ext4",
-						"DEST_PATH": "/user-data.toml",
-						"HEGEL_URL": brMetadataString,
-						"UID":       "0",
-						"GID":       "0",
-						"MODE":      "0644",
-						"DIRMODE":   "0700",
+						"DEST_DISK":  "/dev/sda12",
+						"FS_TYPE":    "ext4",
+						"DEST_PATH":  "/user-data.toml",
+						"HEGEL_URLS": metadataString,
+						"UID":        "0",
+						"GID":        "0",
+						"MODE":       "0644",
+						"DIRMODE":    "0700",
 					},
 				},
 				{
@@ -320,14 +319,14 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 					Timeout: 90,
 					Pid:     "host",
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/nvme0n1p12",
-						"FS_TYPE":   "ext4",
-						"DEST_PATH": "/user-data.toml",
-						"HEGEL_URL": brMetadataString,
-						"UID":       "0",
-						"GID":       "0",
-						"MODE":      "0644",
-						"DIRMODE":   "0700",
+						"DEST_DISK":  "/dev/nvme0n1p12",
+						"FS_TYPE":    "ext4",
+						"DEST_PATH":  "/user-data.toml",
+						"HEGEL_URLS": metadataString,
+						"UID":        "0",
+						"GID":        "0",
+						"MODE":       "0644",
+						"DIRMODE":    "0700",
 					},
 				},
 				{
