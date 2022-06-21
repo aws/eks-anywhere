@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/internal/pkg/vsphere"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -43,11 +44,17 @@ const (
 	VSphereTestRunnerType TestRunnerType = "vSphere"
 )
 
-func newTestRunner(runnerType TestRunnerType, config TestInfraConfig) TestRunner {
+func newTestRunner(runnerType TestRunnerType, config TestInfraConfig) (TestRunner, error) {
 	if runnerType == VSphereTestRunnerType {
-		return &config.VSphereTestRunner
+		var err error
+		v := &config.VSphereTestRunner
+		v.envMap, err = v.setEnvironment()
+		if err != nil {
+			return nil, fmt.Errorf("failed to set env for vSphere test runner: %v", err)
+		}
+		return v, nil
 	} else {
-		return &config.Ec2TestRunner
+		return &config.Ec2TestRunner, nil
 	}
 }
 
@@ -85,6 +92,7 @@ type Ec2TestRunner struct {
 type VSphereTestRunner struct {
 	testRunner
 	ActivationId string
+	envMap       map[string]string
 	Url          string `yaml:"url"`
 	Insecure     bool   `yaml:"insecure"`
 	Library      string `yaml:"library"`
@@ -126,17 +134,13 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 	}
 	envMap[govcInsecure] = strconv.FormatBool(v.Insecure)
 
+	v.envMap = envMap
 	return envMap, nil
 }
 
 func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	name := getTestRunnerName(c.jobId)
 	logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
-
-	envMap, err := v.setEnvironment()
-	if err != nil {
-		return "", fmt.Errorf("unable to create vSphere test runner instance: %v", err)
-	}
 
 	ssmActivationInfo, err := ssm.CreateActivation(c.session, name, c.instanceProfileName)
 	if err != nil {
@@ -160,7 +164,7 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 	}
 
 	// deploy template
-	if err := vsphere.DeployTemplate(envMap, v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
+	if err := vsphere.DeployTemplate(v.envMap, v.Library, v.Template, name, v.Folder, v.Datacenter, v.Datastore, v.ResourcePool, opts); err != nil {
 		return "", err
 	}
 
@@ -198,7 +202,8 @@ func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) er
 	vmName := getTestRunnerName(c.jobId)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
-	if err := vsphere.TagVirtualMachine(vmPath, tag); err != nil {
+
+	if err := vsphere.TagVirtualMachine(v.envMap, vmPath, tag); err != nil {
 		return fmt.Errorf("failed to tag vSphere test runner: %v", err)
 	}
 	return nil
@@ -215,7 +220,7 @@ func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error 
 func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 	_, deregisterError := ssm.DeregisterInstance(c.session, v.InstanceID)
 	_, deactivateError := ssm.DeleteActivation(c.session, v.ActivationId)
-	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(c.jobId))
+	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(c.jobId), executables.WithGovcEnvMap(v.envMap))
 
 	if deregisterError != nil {
 		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deregisterError)

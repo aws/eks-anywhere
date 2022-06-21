@@ -40,7 +40,9 @@ func wantCAPICluster() *clusterv1.Cluster {
 			Name:      "snow-test",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "snow-test",
+				"cluster.x-k8s.io/cluster-name":                        "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
 		Spec: clusterv1.ClusterSpec{
@@ -391,7 +393,9 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Name:      "snow-test-md-0",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "snow-test",
+				"cluster.x-k8s.io/cluster-name":                        "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{

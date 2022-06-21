@@ -24,6 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/aws/eks-anywhere/controllers/controllers"
+	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -138,6 +139,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			mgr.GetScheme(),
 			deps.Govc,
 			tracker,
+			clusters.BuildProviderReconciler,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
 			os.Exit(1)
