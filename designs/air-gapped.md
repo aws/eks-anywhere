@@ -15,7 +15,7 @@ This document aims to solve that, learning from the experience gained building s
 
 ### Goals and Objectives
 
-As a EKS-A cluster administrator I want to:
+As an EKS-A cluster administrator I want to:
 
 * Manage clusters in an environment without Internet connection.
 * Populate my environment with the necessary dependencies without having to worry about what those dependencies are and with minimal effort.
