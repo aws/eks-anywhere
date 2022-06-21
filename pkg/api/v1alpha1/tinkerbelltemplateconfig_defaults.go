@@ -48,7 +48,7 @@ func getDiskPart(disk string) string {
 	}
 }
 
-func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverride string, tinkerbellIp string, osFamily OSFamily) []ActionOpt {
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverride, tinkerbellLocalIp, tinkerbellLBIp string, osFamily OSFamily) []ActionOpt {
 	var diskPart string
 
 	defaultActions := []ActionOpt{
@@ -60,7 +60,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withBottlerocketBootconfigAction(b, diskPart),
-			withBottlerocketUserDataAction(b, diskPart, tinkerbellIp),
+			withBottlerocketUserDataAction(b, diskPart, tinkerbellLocalIp),
 			withRebootAction(b),
 		)
 	} else {
@@ -68,7 +68,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withDisableCloudInitNetworkCapabilities(b, diskPart),
-			withTinkCloudInitAction(b, diskPart, tinkerbellIp),
+			withTinkCloudInitAction(b, diskPart, tinkerbellLocalIp, tinkerbellLBIp),
 			withDsCloudInitAction(b, diskPart),
 		)
 		if strings.Contains(disk, "nvme") {
@@ -156,8 +156,11 @@ func withDisableCloudInitNetworkCapabilities(b v1alpha1.VersionsBundle, disk str
 	}
 }
 
-func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellIp string) ActionOpt {
-	metadataString := fmt.Sprintf("\"http://%s:50061\"", tinkerbellIp)
+func withTinkCloudInitAction(b v1alpha1.VersionsBundle, disk string, tinkerbellLocalIp, tinkerbellLBIp string) ActionOpt {
+	// The metadata string will have two URLs:
+	// - one that will be used initially for bootstrap and will point to hegel running on kind
+	// - the other will be used when the workload cluster is up and  will point to hegel running on the workload cluster
+	metadataString := fmt.Sprintf("\"http://%s:50061\", \"http://%s:50061\"", tinkerbellLocalIp, tinkerbellLBIp)
 
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{

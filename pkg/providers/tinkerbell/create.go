@@ -46,7 +46,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 
 	err := p.stackInstaller.Install(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		clusterSpec.VersionsBundle.Tinkerbell,
 		p.tinkerbellIp,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
@@ -78,13 +78,14 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 	err := p.stackInstaller.Install(
 		ctx,
-		clusterSpec.VersionsBundle.Tinkerbell.TinkerbellStack,
+		clusterSpec.VersionsBundle.Tinkerbell,
 		p.templateBuilder.datacenterSpec.TinkerbellIP,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithNamespaceCreate(true),
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(false),
+		stack.WithLoadBalancer(),
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)
