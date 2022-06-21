@@ -63,7 +63,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
-		WithHelm().
+		WithHelmInsecure().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
-		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
+		ChartDownloader:    helm.NewChartRegistryDownloader(deps.HelmInsecure, downloadFolder),
 		Version:            version.Get(),
 		TmpDowloadFolder:   downloadFolder,
 		DstFile:            c.outputFile,

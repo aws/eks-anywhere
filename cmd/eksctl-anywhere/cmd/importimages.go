@@ -72,7 +72,7 @@ func importImages(ctx context.Context, spec string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	defer closer.CheckErr(ctx)
-	helmExecutable := executableBuilder.BuildHelmExecutable()
+	helmExecutable := executableBuilder.BuildHelmExecutable(executables.WithInsecure())
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
