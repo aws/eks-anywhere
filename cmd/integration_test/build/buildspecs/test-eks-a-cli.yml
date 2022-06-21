@@ -143,6 +143,15 @@ phases:
         ./bin/test e2e cleanup cloudstack
         -n ${CLUSTER_NAME_PREFIX}
         -v 4
+      # Clean up test runner instances in EKS-A Baremetal lab
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
+      - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
+      - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n eksa-e2e-${JOB_ID}
+        -v 4
 reports:
   e2e-reports:
     files:
