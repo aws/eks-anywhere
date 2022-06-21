@@ -34,7 +34,7 @@ spec:
   controlPlaneConfiguration:              
     count: 1
     endpoint:
-      host: "193.17.0.50"
+      host: "<Control Plane Endpoint IP>"
     machineGroupRef:
       kind: TinkerbellMachineConfig
       name: my-cluster-name-cp
@@ -57,9 +57,7 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: my-cluster-name
 spec:
-  tinkerbellIP: "193.17.0.50"
-  osImageURL: "http://10.80.30.20:8080/ubuntu-...gz"    # Optional
-  hookImagesURLPath: "http://10.80.30.20:8080"          # Optional
+  tinkerbellIP: "<Tinkerbell IP>"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -536,43 +534,43 @@ actions:
 ## Bottlerocket-specific actions
 
 ### template.tasks.actions.write-bootconfig (Bottlerocket)
-The write-bootconfig action identifies the location on the machine to put content needed to boot the system from disk????
+The write-bootconfig action identifies the location on the machine to put content needed to boot the system from disk.
 
-* environment.BOOTCONFIG_CONTENTS.kernel: Add kernel parameters that are passed to the kernel when the system boots???
-* environment.DEST_DISK: Identifies the block storage device that holds the boot partition???
+* environment.BOOTCONFIG_CONTENTS.kernel: Add kernel parameters that are passed to the kernel when the system boots.
+* environment.DEST_DISK: Identifies the block storage device that holds the boot partition.
 * environment.DEST_PATH: Identifies the file holding boot configuration data (`/bootconfig.data` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the boot directory???
-* environment.FS_TYPE: The filesystem type associated with the boot partition???
-* environment.GID: The group ID associated with files and directories created on the boot partition???. GID 0 is the root group.
-* environment.MODE: The Linux permissions assigned to files in the boot partition???
-* environment.UID: The user ID associated with files and directories created on the boot partition???. UID 0 is the root user.
+* environment.DIRMODE: The Linux permissions assigned to the boot directory.
+* environment.FS_TYPE: The filesystem type associated with the boot partition.
+* environment.GID: The group ID associated with files and directories created on the boot partition.
+* environment.MODE: The Linux permissions assigned to files in the boot partition.
+* environment.UID: The user ID associated with files and directories created on the boot partition. UID 0 is the root user.
 * image: Container image used to perform the steps needed by this action.
 * timeout: Time needed to complete the action, in seconds.
 
 ### template.tasks.actions.write-netconfig (Bottlerocket)
-The write-netconfig action configures networking for the system???
+The write-netconfig action configures networking for the system.
 
 * environment.CONTENTS: Add network values, including: `version = 1` (version number), `[eno1]` (external network interface), `dhcp4 = true` (turns on dhcp4), and `primary = true` (identifies this interface as the primary interface used by kubelet).
-* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information ???
+* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
 * environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings???
-* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings???
-* environment.GID: The group ID associated with files and directories created on the partition???. GID 0 is the root group.
-* environment.MODE: The Linux permissions assigned to files in the partition???
-* environment.UID: The user ID associated with files and directories created on the partition???. UID 0 is the root user.
+* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.
+* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings.
+* environment.GID: The group ID associated with files and directories created on the partition. GID 0 is the root group.
+* environment.MODE: The Linux permissions assigned to files in the partition.
+* environment.UID: The user ID associated with files and directories created on the partition. UID 0 is the root user.
 * image: Container image used to perform the steps needed by this action.
 
 ### template.tasks.actions.write-user-data (Bottlerocket)
 The write-user-data action configures the Tinkerbell Hegel service, which provides the metadata store for Tinkerbell.
 
 * environment.HEGEL_URL: The IP address and port number of the Tinkerbell [Hegel](https://docs.tinkerbell.org/services/hegel/) service.
-* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information ???
+* environment.DEST_DISK: Identifies the block storage device that holds the network configuration information.
 * environment.DEST_PATH: Identifies the file holding network configuration data (`/net.toml` in this example).
-* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings???
-* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings???
-* environment.GID: The group ID associated with files and directories created on the partition???. GID 0 is the root group.
-* environment.MODE: The Linux permissions assigned to files in the partition???
-* environment.UID: The user ID associated with files and directories created on the partition???. UID 0 is the root user.
+* environment.DIRMODE: The Linux permissions assigned to the directory holding network configuration settings.
+* environment.FS_TYPE: The filesystem type associated with the partition holding network configuration settings.
+* environment.GID: The group ID associated with files and directories created on the partition. GID 0 is the root group.
+* environment.MODE: The Linux permissions assigned to files in the partition.
+* environment.UID: The user ID associated with files and directories created on the partition. UID 0 is the root user.
 * image: Container image used to perform the steps needed by this action.
 * timeout: Time needed to complete the action, in seconds.
 
@@ -581,7 +579,7 @@ The reboot action defines how the system restarts to bring up the installed syst
 
 * image: Container image used to perform the steps needed by this action.
 * timeout: Time needed to complete the action, in seconds.
-* volumes: The volume (directory) to mount into the container from the installed system.??????
+* volumes: The volume (directory) to mount into the container from the installed system.
 ### version
 
 Matches the current version of the Tinkerbell template.
