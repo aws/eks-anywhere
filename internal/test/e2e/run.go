@@ -140,17 +140,12 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 		return "", nil, err
 	}
 
-	success := false
-	defer func(successRef *bool) {
-		if *successRef {
-			err := testRunner.decommInstance(conf)
-			if err != nil {
-				logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
-			}
-		} else {
-			logger.V(1).Info("Persist instance on failure", "instance", instanceId)
+	defer func() {
+		err := testRunner.decommInstance(conf)
+		if err != nil {
+			logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
 		}
-	}(&success)
+	}()
 
 	session, err := newE2ESession(instanceId, conf)
 	if err != nil {
@@ -166,9 +161,6 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 	if err != nil {
 		return session.instanceId, nil, err
 	}
-
-	success = testCommandResult.Successful()
-	logger.V(1).Info("Instance Test Result", "instance", instanceId, "success", success)
 
 	if err = conf.runPostTestsProcessing(session, testCommandResult); err != nil {
 		return session.instanceId, nil, err
