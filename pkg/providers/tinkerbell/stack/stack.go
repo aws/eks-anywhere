@@ -174,7 +174,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			"ip":      tinkerbellIP,
 		},
 		kubevip: map[string]interface{}{
-			image: bundle.KubeVip,
+			image: bundle.KubeVip.URI,
 		},
 	}
 
