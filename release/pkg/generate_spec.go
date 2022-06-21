@@ -154,13 +154,24 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
-	var snowBundle anywherev1alpha1.SnowBundle
-	if r.DevRelease && r.BuildRepoBranchName == "main" {
+	var branchMinorVersion int
+	if strings.HasPrefix(r.BuildRepoBranchName, "release-") {
+		branchMinorVersion, err = strconv.Atoi(strings.Split(r.BuildRepoBranchName, ".")[1])
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error converting branch minor version to integer")
+		}
+	}
+
+	// TODO: change logic when we update major version to 1
+	if r.BuildRepoBranchName == "main" || branchMinorVersion > 9 {
 		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
 		}
+	}
 
+	var snowBundle anywherev1alpha1.SnowBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		snowBundle, err = r.GetSnowBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
@@ -283,7 +294,17 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"eks-anywhere-packages":           r.GetPackagesAssets,
 	}
 
-	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
+	var branchMinorVersion int
+	var err error
+	if strings.HasPrefix(r.BuildRepoBranchName, "release-") {
+		branchMinorVersion, err = strconv.Atoi(strings.Split(r.BuildRepoBranchName, ".")[1])
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error converting branch minor version to integer")
+		}
+	}
+	
+	// TODO: change logic when we update major version to 1
+	if r.BuildRepoBranchName == "main" || branchMinorVersion > 9 {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
@@ -291,10 +312,13 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
-		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
 		eksAArtifactsFuncs["rufio"] = r.GetRufioAssets
 		eksAArtifactsFuncs["tinkerbell-chart"] = r.GetTinkerbellChartAssets
+	}
+
+	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
+		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
