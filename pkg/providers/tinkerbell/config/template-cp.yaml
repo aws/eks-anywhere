@@ -67,9 +67,9 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
-{{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
     initConfiguration:
@@ -78,6 +78,20 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     joinConfiguration:
 {{- if (eq .format "bottlerocket") }}
       pause:
@@ -94,6 +108,20 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     files:
       - content: |
           apiVersion: v1

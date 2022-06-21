@@ -366,6 +366,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	format := "cloud-config"
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
 		"clusterName":                  clusterSpec.Cluster.Name,
@@ -390,8 +393,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
+		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
 		"controlPlanetemplateOverride": cpTemplateOverride,
 		"hardwareSelector":             controlPlaneMachineSpec.HardwareSelector,
+		"controlPlaneTaints":           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 	}
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
@@ -416,9 +421,14 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
+		"kubeletExtraArgs":       kubeletExtraArgs.ToPartialYaml(),
 		"format":                 format,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
@@ -426,6 +436,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"workertemplateOverride": workerTemplateOverride,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
+		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
 	}
 
 	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
