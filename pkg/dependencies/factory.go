@@ -306,7 +306,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
 
-			f.dependencies.Provider = tinkerbell.NewProvider(
+			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
@@ -320,6 +320,11 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				force,
 				skipIpCheck,
 			)
+			if err != nil {
+				return err
+			}
+
+			f.dependencies.Provider = provider
 
 		case v1alpha1.DockerDatacenterKind:
 			datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFile)
