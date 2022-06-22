@@ -171,7 +171,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
-			Name: "availability-zone-0",
+			Name:           "availability-zone-0",
 			CredentialsRef: "Global",
 			Zone: CloudStackZone{
 				Name: "zone1",
