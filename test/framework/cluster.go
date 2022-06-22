@@ -147,6 +147,10 @@ func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
 	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: api.Worker})
 }
 
+func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt {
+	return withHardware(requiredCount, api.Worker, map[string]string{api.HardwareLabelTypeKeyName: label})
+}
+
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
 	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
 }
