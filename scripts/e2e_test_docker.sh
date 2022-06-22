@@ -31,6 +31,7 @@ fi
 REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
 TEST_REGEX="${1:-TestDockerKubernetes121SimpleFlow}"
+BRANCH_NAME="${2:-main}"
 
 cat << EOF > config_file
 [default]
@@ -79,4 +80,5 @@ $REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
     $PULL_PULL_SHA \
     "linux" \
     "amd64" \
+    $BRANCH_NAME \
     true
