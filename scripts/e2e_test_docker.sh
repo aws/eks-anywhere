@@ -83,6 +83,7 @@ $BIN_FOLDER/test e2e run \
 # Faking cross-platform versioned folders for dry-run
 mkdir -p $BIN_FOLDER/linux/amd64
 cp $BIN_FOLDER/eksctl-anywhere $BIN_FOLDER/linux/amd64/eksctl-anywhere
+export BRANCH_NAME="main"
 
 $REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
     "s3://artifacts-bucket" \
