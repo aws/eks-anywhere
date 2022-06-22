@@ -260,6 +260,12 @@ They can also add their own [Tinkerbell actions](https://docs.tinkerbell.org/act
 The following shows two `TinkerbellTemplateConfig` examples that you can add to your cluster configuration file to override the values that EKS Anywhere sets: one for Ubuntu and one for Bottlerocket.
 Most actions used differ for different operating systems.
 
+>**_NOTE:_** For the `stream-image` action, `DEST_DISK` points to the device representing the entire hard disk (for example, `/dev/sda`). 
+For UEFI-enabled images, such as Ubuntu, write actions use `DEST_DISK` to point to the second partition (for example, `/dev/sda2`), with the first being the EFI partition.
+For the Bottlerocket image, which has 12 partitions, `DEST_DISK` is partition 12 (for example, `/dev/sda12`).
+Device names will be different for different disk types.
+>
+
 ### Ubuntu TinkerbellTemplateConfig example
 
 ```
@@ -474,7 +480,7 @@ The `write-netplan` action writes Ubuntu network configuration information to th
 * environment.CONTENTS.network.version: Identifies the network version.
 * environment.CONTENTS.network.renderer: Defines the service to manage networking. By default, the `networkd` systemd service is used.
 * environment.CONTENTS.network.ethernets: Network interface to external network (eno1, by default) and whether or not to use dhcp4 (true, by default).
-* environment.DEST_DISK: Destination block storage device partition where the operating system is copied. By default, /dev/sda2 is used (sda1 is the UEFI partition). 
+* environment.DEST_DISK: Destination block storage device partition where the operating system is copied. By default, /dev/sda2 is used (sda1 is the EFI partition). 
 * environment.DEST_PATH: File where the networking configuration is written (/etc/netplan/config.yaml, by default).
 * environment.DIRMODE: Linux directory permissions bits to use when creating directories (0755, by default)
 * environment.FS_TYPE: Type of filesystem on the partition (ext4, by default).
