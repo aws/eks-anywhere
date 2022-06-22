@@ -171,6 +171,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
+			Name: "availability-zone-0",
 			CredentialsRef: "Global",
 			Zone: CloudStackZone{
 				Name: "zone1",
@@ -277,4 +278,5 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 	}
 	cloudStackDatacenterConfig.SetDefaults()
 	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
+	g.Expect(len(cloudStackDatacenterConfigSpec1.Zones)).To(Equal(len(cloudStackDatacenterConfig.Spec.AvailabilityZones)), "AvailabilityZones count in CloudStackDatacenterConfigSpec not equal to zone count")
 }

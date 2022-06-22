@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -74,6 +75,8 @@ type CloudStackZone struct {
 
 // CloudStackAvailabilityZone maps to a CAPI failure domain to distribute machines across Cloudstack infrastructure
 type CloudStackAvailabilityZone struct {
+	// Name is used as a unique identifier for each availability zone
+	Name string `json:"name"`
 	// CredentialsRef refers to the credentials in the input ini file which contains api key/secret key for interacting with this AZ
 	CredentialsRef string `json:"credentialsRef"`
 	// Zone represents the properties of the CloudStack zone in which clusters should be created, like the network.
@@ -162,8 +165,9 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 func (v *CloudStackDatacenterConfig) SetDefaults() {
 	if v.Spec.AvailabilityZones == nil || len(v.Spec.AvailabilityZones) == 0 {
 		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
-		for _, csZone := range v.Spec.Zones {
+		for index, csZone := range v.Spec.Zones {
 			az := CloudStackAvailabilityZone{
+				Name:                  fmt.Sprintf("availability-zone-%d", index),
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,
@@ -237,6 +241,7 @@ func (az *CloudStackAvailabilityZone) Equal(o *CloudStackAvailabilityZone) bool 
 		return false
 	}
 	return az.Zone.Equal(&o.Zone) &&
+		az.Name == o.Name &&
 		az.CredentialsRef == o.CredentialsRef &&
 		az.Account == o.Account &&
 		az.Domain == o.Domain &&

@@ -3339,6 +3339,10 @@ spec:
                       description: CloudStack Management API endpoint's IP. It is
                         added to VM's noproxy list
                       type: string
+                    name:
+                      description: Name is used as a unique identifier for each availability
+                        zone
+                      type: string
                     zone:
                       description: Zone represents the properties of the CloudStack
                         zone in which clusters should be created, like the network.
@@ -3375,6 +3379,7 @@ spec:
                   - credentialsRef
                   - domain
                   - managementApiEndpoint
+                  - name
                   - zone
                   type: object
                 type: array

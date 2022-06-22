@@ -47,7 +47,7 @@ will need to be available on *all* the Cloudstack API endpoints. We will validat
 
 ### Interface changes
 Currently, the CloudstackDataCenterConfig spec contains:
-```
+```go
 type CloudStackDatacenterConfigSpec struct {
     // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
     Domain string `json:"domain"`
@@ -62,7 +62,7 @@ type CloudStackDatacenterConfigSpec struct {
 
 We would instead propose to gradually deprecate all the existing attributes and instead, simply include a list of AvailabilityZone objects like so
 
-```
+```go
 type CloudStackDatacenterConfigSpec struct {
     // Deprecated
     Domain string `json:"domain,omitempty"`
@@ -79,10 +79,12 @@ type CloudStackDatacenterConfigSpec struct {
 
 where each AvailabilityZone object looks like
 
-```
+```go
 type CloudStackAvailabilityZone struct {
-    // CredentialRef would be used to match the availability zone defined in the datacenter config to the credentials passed in from the cloud-config ini file
-    CredentialRef string `json:"credentialRef"`
+    // Name would be used as a unique identifier for each availability zone
+    Name string `json:"name"`
+    // CredentialRef would be used to match a secret in the eksa-system namespace
+    CredentialRef string `json:"credentialRef"
     // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
     // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
     // The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
@@ -115,6 +117,8 @@ These secrets will be generated from the ini file provided by customer and appli
 currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
 We will refer to this set of credentials in the CloudstackCluster resource as well so CAPC knows which ones to use.
 
+The secrets will be mutable following the example set by the VSphere provider - they will be regenerated and applied to the cluster on create and upgrade
+
 You can find more information about these Cloudstack resources [here](http://docs.cloudstack.apache.org/en/latest/conceptsandterminology/concepts.html#cloudstack-terminology)
 
 ### `CloudstackDatacenterConfig` Validation
@@ -141,7 +145,7 @@ for availabilityZone in availabilityZones:
 In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
 only as a list corresponding to AvailabilityZones. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
 
-```
+```ini
 [Global]
 api-key    = redacted
 secret-key = redacted
@@ -150,7 +154,7 @@ api-url    = http://172.16.0.1:8080/client/api
 
 We would propose an extension of the above input mechanism so the user could provide credentials across multiple Cloudstack API endpoints like
 
-```
+```ini
 [Global]
 api-key    = redacted
 secret-key = redacted
