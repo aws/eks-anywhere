@@ -41,6 +41,8 @@ spec:
         imageTag: v1.8.3-eks-1-21-4
       apiServer:
         extraArgs:
+          oidc-client-id: my-client-id
+          oidc-issuer-url: https://mydomain.com/issuer
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
