@@ -216,6 +216,8 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 	flags := []string{
 		"-v", fmt.Sprintf("%s:/kubeconfig", kubeconfig),
 		"--network", "host",
+		"-e", fmt.Sprintf("PUBLIC_IP=%s", tinkServerIP),
+		"-e", fmt.Sprintf("PUBLIC_SYSLOG_IP=%s", tinkServerIP),
 	}
 
 	for name, value := range s.getBootsEnv(bundle, tinkServerIP) {
