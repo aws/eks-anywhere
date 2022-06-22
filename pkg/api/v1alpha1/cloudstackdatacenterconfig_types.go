@@ -201,14 +201,13 @@ func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec
 	if len(s.AvailabilityZones) != len(o.AvailabilityZones) {
 		return false
 	}
+	oAzsMap := map[string]CloudStackAvailabilityZone{}
+	for _, oAz := range o.AvailabilityZones {
+		oAzsMap[oAz.Name] = oAz
+	}
 	for _, sAz := range s.AvailabilityZones {
-		found := false
-		for _, oAz := range o.AvailabilityZones {
-			if sAz.Equal(&oAz) {
-				found = true
-			}
-		}
-		if !found {
+		oAz, found := oAzsMap[sAz.Name]
+		if !found || !sAz.Equal(&oAz) {
 			return false
 		}
 	}
