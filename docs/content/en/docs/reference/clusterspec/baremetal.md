@@ -189,8 +189,9 @@ the existing nodes associated with the configuration.
 
 ### tinkerbellIP
 Required field to identify the IP address of the Tinkerbell service.
-Other TinkerbellDatacenterConfig fields are not yet supported.
-See [Artifacts]({{< relref "../artifacts/" >}}) for details.
+This IP address must be a unique IP in the network range that does not conflict with other IPs.
+Once the Tinkerbell services move from the Admin machine to run on the target cluster, this IP address makes it possible for the stack to be used for future provisioning needs.
+When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
 Optional field to replace the default operating system image.
@@ -200,11 +201,12 @@ See [Artifacts]({{< relref "../artifacts/" >}}) for details.
 ### hookImagesURLPath
 Optional field to replace the HookOS image.
 This field is useful if you want to provide a customized HookOS image or simply host the standard image locally.
+See [Artifacts]({{< relref "../artifacts/" >}}) for details.
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
 The following fields identify information needed to configure the nodes in each of those groups.
->**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane and one for all machines in the worker group.
+>**_NOTE:_** Currently, you can only have one machine group for all machines in the control plane, although you can have multiple machine groups for the workers.
 >
 ### hardwareSelector
 Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
@@ -239,7 +241,7 @@ The SSH public keys you want to configure to access your machines through SSH (a
 
 ### users[0].sshAuthorizedKeys[0] (optional)
 This is the SSH public key that will be placed in `authorized_keys` on all EKS Anywhere cluster machines so you can SSH into
-them. The user will be what is defined under name above. For example:
+them. The user will be what is defined under `name` above. For example:
 
 ```
 ssh -i <private-key-file> <user>@<machine-IP>
@@ -439,7 +441,7 @@ The values in the `TinkerbellTemplateConfig` fields are created from the content
 The template contains actions that are performed on a Bare Metal machine when it first boots up to be provisioned.
 For advanced users, you can add these fields to your cluster configuration file if you have special needs to do so.
 
-While there are a fields that apply to all provisioned operating systems, actions are specific to each operating system.
+While there are fields that apply to all provisioned operating systems, actions are specific to each operating system.
 Examples below describe actions for Ubuntu and Bottlerocket operating systems.
 
 ### template.global_timeout
@@ -459,10 +461,10 @@ The following descriptions cover the actions shown in the example templates for 
 The `stream-image` action streams the selected image to the machine you are provisioning. It identifies:
 
 * environment.COMPRESSED: When set to `true`, Tinkerbell expects `IMG_URL` to be a compressed image, which Tinkerbell will uncompress when it writes the contents to disk.
-* environment.DEST_DISK: The hard disk on which the operating system is desployed. The default is the first SCSI disk (/dev/sda), but can be changed for other disk types.
+* environment.DEST_DISK: The hard disk on which the operating system is deployed. The default is the first SCSI disk (/dev/sda), but can be changed for other disk types.
 * environment.IMG_URL: The operating system tarball (ubuntu or other) to stream to the machine you are configuring.
 * image: Container image needed to perform the steps needed by this action.
-* timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default to a higher limit if this action is timing out.
+* timeout: Sets the amount of time (in seconds) that Tinkerbell has to stream the image, uncompress it, and write it to disk before timing out. Consider increasing this limit from the default 600 to a higher limit if this action is timing out.
 
 ## Ubuntu-specific actions
 
@@ -485,7 +487,7 @@ The `write-netplan` action writes Ubuntu network configuration information to th
 ### template.tasks.actions.add-tink-cloud-init-config (Ubuntu)
 The `add-tink-cloud-init-config` action configures cloud-init features to further configure the operating system. See [cloud-init Documentation](https://cloudinit.readthedocs.io/en/latest/) for details. It identifies:
 
-* environment.CONTENTS.datasource: Identifies Ec2 (Ec2.metadata_urls) as the data source and sets `Ec2.strict_id: false` to prevent could init from producing warnings about this datasource.
+* environment.CONTENTS.datasource: Identifies Ec2 (Ec2.metadata_urls) as the data source and sets `Ec2.strict_id: false` to prevent cloud-init from producing warnings about this datasource.
 * environment.CONTENTS.system_info: Creates the `tink` user and gives it administrative group privileges (wheel, adm) and passwordless sudo privileges, and set the default shell (/bin/bash).
 * environment.CONTENTS.manage_etc_hosts: Updates the system's `/etc/hosts` file with the hostname. Set to `localhost` by default.
 * environment.CONTENTS.warnings: Sets dsid_missing_source to `off`.
@@ -523,7 +525,8 @@ The `kexec-image` action performs provisioning activities on the machine, then a
 * timeout: Time needed to complete the action, in seconds.
 * volumes: Identifies mount points that need to be remounted to point to locations in the installed system.
 
-If your hardware requires a full reboot, you can change the kexec-image setting as follows:
+There are known issues related to drivers with some hardware that may make it necessary to replace the kexec-image action with a full reboot.
+If you require a full reboot, you can change the kexec-image setting as follows:
 
 ```
 actions:
