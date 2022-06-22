@@ -39,6 +39,8 @@ spec:
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
+      apiServer:
+        extraArgs:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
