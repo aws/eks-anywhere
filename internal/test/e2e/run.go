@@ -286,7 +286,7 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		}
 	}
 
-	if strings.EqualFold(conf.BranchName, "main") {
+	if strings.EqualFold(conf.BranchName, "release-0.10") {
 		runConfs, err = splitTinkerbellTests(awsSession, testsList, conf, testRunnerConfig, runConfs)
 		if err != nil {
 			return nil, fmt.Errorf("failed to split Tinkerbell tests: %v", err)
