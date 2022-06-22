@@ -102,25 +102,34 @@ func NewProvider(
 	now types.NowFunc,
 	forceCleanup bool,
 	skipIpCheck bool,
-) *Provider {
+) (*Provider, error) {
 	diskExtractor := hardware.NewDiskExtractor()
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-		diskExtractor.RegisterHardwareSelector(controlPlaneMachineSpec.HardwareSelector)
+		err := diskExtractor.Register(controlPlaneMachineSpec.HardwareSelector)
+		if err != nil {
+			return nil, err
+		}
 	}
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
 	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
 			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
 			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
-			diskExtractor.RegisterHardwareSelector(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
+			err := diskExtractor.Register(workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name].HardwareSelector)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-			diskExtractor.RegisterHardwareSelector(etcdMachineSpec.HardwareSelector)
+			err := diskExtractor.Register(etcdMachineSpec.HardwareSelector)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -160,7 +169,7 @@ func NewProvider(
 		// Behavioral flags.
 		forceCleanup: forceCleanup,
 		skipIpCheck:  skipIpCheck,
-	}
+	}, nil
 }
 
 func (p *Provider) Name() string {

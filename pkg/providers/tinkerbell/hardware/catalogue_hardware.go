@@ -14,49 +14,79 @@ import (
 
 // DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file
 type DiskExtractor struct {
-	Selector map[string]eksav1alpha1.HardwareSelector
-	Disks    map[string]string
+	selector map[string]eksav1alpha1.HardwareSelector
+	disks    map[string]string
 }
 
+// NewDiskExtractor creates a DiskExtractor instance.
 func NewDiskExtractor() *DiskExtractor {
 	return &DiskExtractor{
-		Selector: make(map[string]eksav1alpha1.HardwareSelector),
-		Disks:    make(map[string]string),
+		selector: make(map[string]eksav1alpha1.HardwareSelector),
+		disks:    make(map[string]string),
 	}
 }
 
+// Write matches m to registered hardware selectors and caches the disk for a given selector.
+// If subsequent Machine matches are made for a given selector, the disk from the first Machine
+// match is used.
 func (d *DiskExtractor) Write(m Machine) error {
-	labelKey := m.Labels.String()
-	if _, ok := d.Selector[labelKey]; ok {
-		d.Disks[labelKey] = m.Disk
+	for key, selector := range d.selector {
+		if _, ok := d.disks[key]; !ok && LabelsMatchSelector(selector, m.Labels) {
+			d.disks[key] = m.Disk
+		}
 	}
+
 	return nil
 }
 
-// RegisterHardwareSelector adds the key into DiskExtractor for each machine config type
-func (d *DiskExtractor) RegisterHardwareSelector(hardwareSelector eksav1alpha1.HardwareSelector) {
-	key := serializedHardwareSelector(hardwareSelector)
-	if _, ok := d.Selector[key]; !ok {
-		d.Selector[key] = hardwareSelector
+// Register registers selector with d such that a disk can be cached when
+// machines are written to Write().
+func (d *DiskExtractor) Register(selector eksav1alpha1.HardwareSelector) error {
+	key, err := serializeHardwareSelector(selector)
+	if err != nil {
+		return err
 	}
+
+	if _, ok := d.selector[key]; !ok {
+		d.selector[key] = selector
+	}
+
+	return nil
 }
 
-// serializedHardwareSelector returns a string by serializing all the hardware selectors given per machine config
-func serializedHardwareSelector(hardwareSelector eksav1alpha1.HardwareSelector) string {
-	selectorKey := make(Labels)
-	for key, val := range hardwareSelector {
-		selectorKey[key] = val
+// GetDisk returns the disk cached for selector. If selector has no disk cached ErrDiskNotFound
+// is returned.
+func (d *DiskExtractor) GetDisk(selector eksav1alpha1.HardwareSelector) (string, error) {
+	key, err := serializeHardwareSelector(selector)
+	if err != nil {
+		return "", err
 	}
-	return selectorKey.String()
+
+	if _, ok := d.disks[key]; !ok {
+		return "", ErrDiskNotFound{key}
+	}
+
+	return d.disks[key], nil
 }
 
-// GetDisk returns a disk associated with hardwareSelector of the machine config
-func (d *DiskExtractor) GetDisk(hardwareSelector eksav1alpha1.HardwareSelector) (string, error) {
-	key := serializedHardwareSelector(hardwareSelector)
-	if _, ok := d.Disks[key]; !ok {
-		return "", fmt.Errorf("hardware selector does not match with any given hardware machines: %v", hardwareSelector)
-	}
-	return d.Disks[key], nil
+// serializeHardwareSelector returns a key for use in a map unique selector.
+func serializeHardwareSelector(selector eksav1alpha1.HardwareSelector) (string, error) {
+	return selector.ToString()
+}
+
+// ErrDiskNotFound indicates a disk was not found for a given selector.
+type ErrDiskNotFound struct {
+	// A unique identifier for the selector, preferrably something useful to an end-user.
+	SelectorID string
+}
+
+func (e ErrDiskNotFound) Error() string {
+	return fmt.Sprintf("no disk found for hardware selector %v", e.SelectorID)
+}
+
+func (ErrDiskNotFound) Is(t error) bool {
+	_, ok := t.(ErrDiskNotFound)
+	return ok
 }
 
 // IndexHardware indexes Hardware instances on index by extracfting the key using fn.
