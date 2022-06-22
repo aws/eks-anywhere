@@ -7,6 +7,13 @@ menu:
     weight: 10
 ---
 
+## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Fixed
+- Fix issue by avoiding processing Snow images when URI is empty
+
+## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
 ### Added
