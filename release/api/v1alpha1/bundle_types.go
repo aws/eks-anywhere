@@ -144,6 +144,7 @@ type CertManagerBundle struct {
 	Acmesolver Image    `json:"acmesolver"`
 	Cainjector Image    `json:"cainjector"`
 	Controller Image    `json:"controller"`
+	Ctl        Image    `json:"ctl"`
 	Webhook    Image    `json:"webhook"`
 	Manifest   Manifest `json:"manifest"`
 }
