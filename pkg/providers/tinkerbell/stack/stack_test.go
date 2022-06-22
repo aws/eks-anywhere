@@ -134,6 +134,8 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 		"-e", gomock.Any(),
 		"-e", gomock.Any(),
 		"-e", gomock.Any(),
+		"-e", gomock.Any(),
+		"-e", gomock.Any(),
 	)
 
 	err := s.Install(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "", stack.WithBootsOnDocker())
