@@ -107,6 +107,7 @@ phases:
         $GIT_HASH
         "linux,darwin"
         "amd64"
+        $BRANCH_NAME
         false
       - >
         ./bin/test e2e cleanup vsphere
