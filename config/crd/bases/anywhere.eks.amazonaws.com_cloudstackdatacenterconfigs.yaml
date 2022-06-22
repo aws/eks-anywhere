@@ -62,9 +62,8 @@ spec:
                         If an account name is provided, a domain must also be provided.
                       type: string
                     credentialsRef:
-                      description: CredentialsRef refers to the credentials in the
-                        input ini file which contains api key/secret key for interacting
-                        with this AZ
+                      description: CredentialRef is used to reference a secret in
+                        the eksa-system namespace
                       type: string
                     domain:
                       description: Domain contains a grouping of accounts. Domains
