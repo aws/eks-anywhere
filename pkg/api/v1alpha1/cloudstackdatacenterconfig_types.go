@@ -160,6 +160,10 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 }
 
 func (v *CloudStackDatacenterConfig) Validate() error {
+	// TODO https://github.com/aws/eks-anywhere/issues/2406: Add validation to
+	// * Make sure that v.Spec.Zones, v.Spec.Domain, v.Spec.Account, v.Spec.ManagementApiEndpoint are all empty
+	// * Make sure that len(v.Spec.AvailabilityZones) > 0
+	// * Make sure that all the AZ names are unique
 	return nil
 }
 
