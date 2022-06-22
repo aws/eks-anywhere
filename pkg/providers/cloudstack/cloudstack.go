@@ -1,10 +1,12 @@
 package cloudstack
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
+	"html/template"
 	"net"
 	"net/url"
 	"os"
@@ -47,6 +49,9 @@ var defaultClusterConfigMD string
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
+//go:embed config/secrets.yaml
+var defaultSecretsTemplate string
+
 var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
@@ -63,7 +68,8 @@ type cloudstackProvider struct {
 	selfSigned            bool
 	templateBuilder       *CloudStackTemplateBuilder
 	skipIpCheck           bool
-	validators            map[string]*Validator
+	validator             *Validator
+	execConfig            *decoder.CloudStackExecConfig
 }
 
 func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
@@ -71,7 +77,8 @@ func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *typ
 }
 
 func (p *cloudstackProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return nil
+	logger.Info("Installing secrets on bootstrap cluster")
+	return p.UpdateSecrets(ctx, cluster)
 }
 
 func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
@@ -87,6 +94,34 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+	var contents bytes.Buffer
+	err := p.createSecrets(ctx, cluster, &contents)
+	if err != nil {
+		return err
+	}
+
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
+	if err != nil {
+		return fmt.Errorf("loading secrets object: %v", err)
+	}
+	return nil
+}
+
+func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+			return err
+		}
+	}
+	t, err := template.New("tmpl").Parse(defaultSecretsTemplate)
+	if err != nil {
+		return fmt.Errorf("creating secrets template: %v", err)
+	}
+
+	err = t.Execute(contents, p.execConfig)
+	if err != nil {
+		return fmt.Errorf("substituting values for secrets template: %v", err)
+	}
 	return nil
 }
 
@@ -184,6 +219,7 @@ func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
@@ -381,6 +417,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
 		}
 	}
+	p.execConfig = execConfig
 	return nil
 }
 
