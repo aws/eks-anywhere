@@ -242,5 +242,11 @@ func (v *Ec2TestRunner) decommInstance(c instanceRunConf) error {
 }
 
 func getTestRunnerName(jobId string) string {
-	return fmt.Sprintf("eksa-e2e-%s", jobId)
+	name := fmt.Sprintf("eksa-e2e-%s", jobId)
+	if len(name) > 80 {
+		logger.V(1).Info("Truncating test runner name to 80 chars", "original_name", name)
+		name = name[len(name)-80:]
+		logger.V(1).Info("Truncated test runner name", "truncated_name", name)
+	}
+	return name
 }
