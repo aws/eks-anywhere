@@ -10,6 +10,12 @@ weight: 35
 
 ### Fixed
 - Fix issue using self-signed certificates for registry mirror [#1857](https://github.com/aws/eks-anywhere/issues/1857)
+## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Fixed
+- Fix issue by avoiding processing Snow images when URI is empty
+
+## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
@@ -22,7 +28,6 @@ weight: 35
 
 ### Fixed
 - Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)
-
 
 ## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
 
