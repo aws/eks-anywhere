@@ -235,6 +235,7 @@ func (in *CertManagerBundle) DeepCopyInto(out *CertManagerBundle) {
 	in.Acmesolver.DeepCopyInto(&out.Acmesolver)
 	in.Cainjector.DeepCopyInto(&out.Cainjector)
 	in.Controller.DeepCopyInto(&out.Controller)
+	in.Ctl.DeepCopyInto(&out.Ctl)
 	in.Webhook.DeepCopyInto(&out.Webhook)
 	out.Manifest = in.Manifest
 }
