@@ -93,7 +93,7 @@ The `EKSA_GIT_KNOWN_HOSTS` environment variable should be a path to a known host
 For example, if you wanted to provide a known hosts file which allows you to connect to and verify the identity of github.com using a private key based on the key algorithm ecdsa, you can use the OpenSSH utility [ssh-keyscan](https://manpages.ubuntu.com/manpages/xenial/man1/ssh-keyscan.1.html) to obtain the known host entry used by github.com for the `ecdsa` key type.
 EKS Anywhere supports `ecdsa`, `rsa`, and `ed25519` key types, which can be specified via the `sshKeyAlgorithm` field of the git provider config.
 
-`ssk-keyscan -t ecdsa github.com >> my_eksa_known_hosts`
+`ssh-keyscan -t ecdsa github.com >> my_eksa_known_hosts`
 
 This will produce a file which contains known-hosts entries for the `ecdsa` key type supported by github.com, mapping the host to the key-type and public key.
 
