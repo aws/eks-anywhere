@@ -144,6 +144,10 @@ type AWSSnowMachineSpec struct {
 	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
 
+	// Devices is a device ip list which is assigned by customer to provision machines
+	// +kubebuilder:validation:MinItems=1
+	Devices []string `json:"devices,omitempty"`
+
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
 	// +optional
