@@ -78,6 +78,10 @@ func (a *analyzerFactory) packageDeploymentAnalyzers() []*Analyze {
 func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
+			Name:             "capt-controller-manager",
+			Namespace:        constants.CaptSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
 			Name:             "capv-controller-manager",
 			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
