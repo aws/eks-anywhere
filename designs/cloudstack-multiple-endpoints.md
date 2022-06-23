@@ -117,7 +117,7 @@ These secrets will be generated from the ini file provided by customer and appli
 currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
 We will refer to this set of credentials in the CloudstackCluster resource as well so CAPC knows which ones to use.
 
-The secrets will be mutable following the example set by the VSphere provider - they will be regenerated and applied to the cluster on create and upgrade
+The secrets will be immutable so that they can be shared across workload clusters safely. They can be created and deleted but not modified.
 
 You can find more information about these Cloudstack resources [here](http://docs.cloudstack.apache.org/en/latest/conceptsandterminology/concepts.html#cloudstack-terminology)
 
