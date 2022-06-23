@@ -142,6 +142,22 @@ The associated private key should be treated as extremely sensitive, as `sudo` a
 
 Only download OVAs for cluster nodes from official sources, and do not allow untrusted users or processes to modify the templates used by EKS Anywhere for provisioning nodes.
 
+### Keeping Bottlerocket up to date
+
+EKS Anywhere provides the most updated patch of operating systems with every release. It is recommended to keep your clusters up to date with the latest EKS Anyhwere release to ensure you get the latest security updates.
+Bottlerocket is one of the EKS Anywhere supported operating system and can be kept up to date without requiring to update the whole cluster. The [Bottlerocket Update Operator](https://github.com/bottlerocket-os/bottlerocket-update-operator)
+is a Kubernetes update operator that coordinates Bottlerocket updates on hosts in the cluster. Please follow the instructions [here](https://github.com/bottlerocket-os/bottlerocket-update-operator/blob/develop/README.md) to install Bottlerocket update operator.
+
+### Baremetal Clusters
+
+EKS Anywhere Baremetal clusters run directly on metal servers in a datacenter. Ensure that the physical infrastructure components used including the network are secure and can be trusted before using them to run EKS Anywhere clusters. 
+
+* Only allow trusted devices on the network
+* Secure the network using a firewall
+* Never source hardware from an untrusted vendor
+* Inspect and verify the metal servers you are using for the clusters are the ones you intended to use
+* If possible, use a separate L2 network for EKS Anywhere baremetal clusters
+
 ### Benchmark tests for cluster hardening
 
 EKS Anywhere creates clusters with server hardening configurations out of the box, via the use of security flags and opinionated default templates. You can verify the security posture of your EKS Anywhere cluster by using a tool called [`kube-bench`](https://github.com/aquasecurity/kube-bench), that checks whether Kubernetes is deployed securely.
