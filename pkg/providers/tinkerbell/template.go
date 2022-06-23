@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -364,6 +365,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
+
 	values := map[string]interface{}{
 		"clusterName":                  clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -376,6 +379,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"kubeVipImage":                 bundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
 		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
 		"osDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
 		"osVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL

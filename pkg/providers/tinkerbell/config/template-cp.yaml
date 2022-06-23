@@ -67,6 +67,11 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+      apiServer:
+        extraArgs:
+{{- if .apiserverExtraArgs }}
+{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{- end }}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
