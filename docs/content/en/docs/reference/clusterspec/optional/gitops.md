@@ -99,7 +99,7 @@ This will produce a file which contains known-hosts entries for the `ecdsa` key 
 
 `github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=`
 
-EKS Anywhere will use the content of the file at the path `EKA_GIT_KNOWN_HOSTS` to verify the identity of the remote git server, and the provided known hosts file must contain an entry for the remote host and key type.
+EKS Anywhere will use the content of the file at the path `EKSA_GIT_KNOWN_HOSTS` to verify the identity of the remote git server, and the provided known hosts file must contain an entry for the remote host and key type.
 
 
 #### `EKSA_GIT_PRIVATE_KEY`
