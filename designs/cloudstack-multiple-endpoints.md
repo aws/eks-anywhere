@@ -117,7 +117,9 @@ These secrets will be generated from the ini file provided by customer and appli
 currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
 We will refer to this set of credentials in the CloudstackCluster resource as well so CAPC knows which ones to use.
 
-The secrets will be immutable so that they can be shared across workload clusters safely. They can be created and deleted but not modified.
+The secrets will be managed by EKS-A insofar that they can be created but not updated. If users want to update an existing secret, they will have to 
+do so manually. We can also add a warning if a user is attempting to modify an existing secret. This will provide a safeguard to prevent unintentionally
+setting incorrect credentials for a whole collection of clusters.
 
 You can find more information about these Cloudstack resources [here](http://docs.cloudstack.apache.org/en/latest/conceptsandterminology/concepts.html#cloudstack-terminology)
 
