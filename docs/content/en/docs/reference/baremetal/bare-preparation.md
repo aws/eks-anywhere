@@ -23,7 +23,7 @@ Once the hardware is in place, you need to:
   * PXE boot is enabled on each NIC
   * PXE is set as the first device in each machine's boot order
   * IPMI over LAN is enabled on the IPMI interfaces
-* Go to the IPMI settings for each machine and set the IP address (bnc_ip), username (bnc_username), and password (bnc_password) to use later in the CSV file.
+* Go to the IPMI settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
 
 ## Prepare hardware inventory
 Create a CSV file to provide information about all physical machines that you are ready to add to your target Bare Metal cluster.
@@ -44,18 +44,19 @@ eksa-wk03,10.10.44.5,root,w7EenR94,CC:48:3A:00:00:05,10.10.50.6,255.255.254.0,10
 
 ```
 
-The CSV file is a comma-separated list of values in a plain text file, representing physical control plane and worker machines (not virtual machines) in your cluster.
+The CSV file is a comma-separated list of values in a plain text file, holding information about the physical machines in the datacenter that are intended to be a part of the cluster creation process.
+Each line represents a physical machine (not a virtual machine).
 Multiple values in an item can be separated by pipe symbols (|).
 
 The following sections describe each value.
 
 ### hostname
 The hostname assigned to the machine.
-### bnc_ip
+### bmc_ip
 The IP address assigned to the IPMI interface on the machine.
 ### bmc_username
 The username assigned to the IPMI interface on the machine.
-### bnc_password
+### bmc_password
 The password associated with the `bmc_username` assigned to the IPMI interface on the machine.
 ### mac
 The MAC address of the network interface card (NIC) that provides access to the host computer.
