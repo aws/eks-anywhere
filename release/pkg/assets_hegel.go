@@ -55,7 +55,5 @@ func (r *ReleaseConfig) GetHegelAssets() ([]Artifact, error) {
 		ProjectPath:       hegelProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
-
-	return artifacts, nil
+	return []Artifact{{Image: imageArtifact}}, nil
 }

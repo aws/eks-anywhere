@@ -335,7 +335,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -550,15 +550,13 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
@@ -568,15 +566,13 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -624,36 +620,15 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
+          arch:
+          - amd64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -662,8 +637,6 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -1081,7 +1054,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1296,15 +1269,13 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
@@ -1314,15 +1285,13 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -1370,36 +1339,15 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
+          arch:
+          - amd64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -1408,8 +1356,6 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -1827,7 +1773,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -2042,15 +1988,13 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
@@ -2060,15 +2004,13 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2116,36 +2058,15 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
+          arch:
+          - amd64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2154,8 +2075,6 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64
@@ -2573,7 +2492,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -2788,15 +2707,13 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
@@ -2806,15 +2723,13 @@ spec:
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
@@ -2862,36 +2777,15 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3/manifest.yaml
+          arch:
+          - amd64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
@@ -2900,8 +2794,6 @@ spec:
             name: tink-controller
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
           tinkServer:
             arch:
             - amd64

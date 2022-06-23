@@ -30,10 +30,12 @@ type versioner struct {
 	pathToProject string
 }
 
+//nolint
 func newVersioner(pathToProject string) *versioner {
 	return &versioner{pathToProject: pathToProject}
 }
 
+//nolint
 func (v *versioner) buildMetadata() (string, error) {
 	out, err := git.GetLatestCommitForPath(v.pathToProject, v.pathToProject)
 	if err != nil {
