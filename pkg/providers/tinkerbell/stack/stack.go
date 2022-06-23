@@ -150,7 +150,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		hegel: map[string]interface{}{
 			deploy: true,
-			image:  bundle.TinkerbellStack.Hegel.Image.URI,
+			image:  bundle.TinkerbellStack.Hegel.URI,
 			args:   []string{"--grpc-use-tls=false"},
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
@@ -158,7 +158,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		boots: map[string]interface{}{
 			deploy: !s.bootsOnDocker,
-			image:  bundle.TinkerbellStack.Boots.Image.URI,
+			image:  bundle.TinkerbellStack.Boots.URI,
 			env:    bootEnv,
 			args: []string{
 				"-dhcp-addr=0.0.0.0:67",
@@ -167,7 +167,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		rufio: map[string]interface{}{
 			deploy: true,
-			image:  bundle.TinkerbellStack.Rufio.Image.URI,
+			image:  bundle.TinkerbellStack.Rufio.URI,
 		},
 		loadBalancer: map[string]interface{}{
 			"enabled": s.loadBalancer,
@@ -238,7 +238,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-dhcp-addr", "0.0.0.0:67",
 		"-osie-path-override", osiePath,
 	}
-	if err := s.docker.Run(ctx, bundle.Boots.Image.URI, boots, cmd, flags...); err != nil {
+	if err := s.docker.Run(ctx, bundle.Boots.URI, boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
 

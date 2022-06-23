@@ -55,7 +55,6 @@ func (r *ReleaseConfig) GetBootsAssets() ([]Artifact, error) {
 		ProjectPath:       bootsProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
 
-	return artifacts, nil
+	return []Artifact{{Image: imageArtifact}}, nil
 }

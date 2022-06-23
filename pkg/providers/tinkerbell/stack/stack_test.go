@@ -35,12 +35,8 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 			Tink: releasev1alpha1.TinkBundle{
 				TinkWorker: releasev1alpha1.Image{URI: "tink-worker:latest"},
 			},
-			Boots: releasev1alpha1.TinkerbellServiceBundle{
-				Image: releasev1alpha1.Image{URI: "boots:latest"},
-			},
-			Hegel: releasev1alpha1.TinkerbellServiceBundle{
-				Image: releasev1alpha1.Image{URI: "hegel:latest"},
-			},
+			Boots: releasev1alpha1.Image{URI: "boots:latest"},
+			Hegel: releasev1alpha1.Image{URI: "hegel:latest"},
 			Hook: releasev1alpha1.HookBundle{
 				Initramfs: releasev1alpha1.HookArch{
 					Amd: releasev1alpha1.Archive{
