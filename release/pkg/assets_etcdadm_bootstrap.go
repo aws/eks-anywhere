@@ -58,7 +58,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 		ProjectPath:       etcdadmBootstrapProviderProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
