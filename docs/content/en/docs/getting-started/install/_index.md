@@ -4,7 +4,7 @@ weight: 10
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
-Currently we support creating development clusters locally with Docker and production clusters using Bare Metal or VMware vSphere.
+Currently we support creating development clusters locally using Docker and production clusters using Bare Metal or VMware vSphere.
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
@@ -20,6 +20,7 @@ This will let you create a cluster in multiple providers for local development o
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
+- Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
    {{% alert title="Note" color="primary" %}}
    * If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
