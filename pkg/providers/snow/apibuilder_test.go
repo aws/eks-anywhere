@@ -148,10 +148,10 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 					},
 				},
 				PreKubeadmCommands: []string{
-					"/etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
 				PostKubeadmCommands: []string{
-					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
 				Files: []bootstrapv1.File{},
 			},

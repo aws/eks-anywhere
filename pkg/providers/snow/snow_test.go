@@ -138,7 +138,7 @@ func givenClusterSpec() *cluster.Spec {
 					KubeVip: releasev1alpha1.Image{
 						Name:        "kube-vip",
 						OS:          "linux",
-						URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+						URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 						ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 						Description: "Container image for kube-vip image",
 						Arch:        []string{"amd64"},
@@ -522,7 +522,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip-diff",
 					OS:          "linux-diff",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
 					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 					Description: "Container image for kube-vip image-diff",
 					Arch:        []string{"amd64-diff"},
@@ -545,7 +545,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip",
 					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 					ImageDigest: "sha256:diff",
 					Description: "Container image for kube-vip image",
 					Arch:        []string{"amd64"},
@@ -568,7 +568,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip",
 					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 					Description: "Container image for kube-vip image",
 					Arch:        []string{"amd64"},

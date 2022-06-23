@@ -159,7 +159,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
       version: v0.4.5-rc3+abcdef1
@@ -480,7 +480,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
@@ -709,7 +709,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       manager:
         arch:
         - amd64
@@ -880,7 +880,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
       version: v0.4.5-rc3+abcdef1
@@ -1210,7 +1210,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
@@ -1439,7 +1439,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       manager:
         arch:
         - amd64
@@ -1610,7 +1610,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
       version: v0.4.5-rc3+abcdef1
@@ -1940,7 +1940,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
@@ -2169,7 +2169,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       manager:
         arch:
         - amd64
@@ -2340,7 +2340,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc3/metadata.yaml
       version: v0.4.5-rc3+abcdef1
@@ -2670,7 +2670,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
@@ -2899,7 +2899,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.2-eks-a-v0.0.0-dev-release-0.10-build.1
       manager:
         arch:
         - amd64
