@@ -50,7 +50,7 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 	)
 }
 
-func TestCloudstackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
+func TestCloudStackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
