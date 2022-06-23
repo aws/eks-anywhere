@@ -20,6 +20,17 @@ func runOIDCFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
+func runTinkerbellOIDCFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithForce())
+	test.ValidateOIDC()
+	test.StopIfFailed()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func runUpgradeFlowWithOIDC(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
@@ -181,4 +192,16 @@ func TestVSphereKubernetes122To123OIDCUpgrade(t *testing.T) {
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate123Var()),
 		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
+}
+
+func TestTinkerbellKubernetes122OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellOIDCFlow(test)
 }
