@@ -54,7 +54,7 @@ type CloudStackResourceDiskOffering struct {
 	CloudStackResourceIdentifier `json:",inline"`
 	// disk size in GB, > 0 for customized disk offering; = 0 for non-customized disk offering
 	// +optional
-	CustomSize int64 `json:"customSizeInGB"`
+	CustomSize int64 `json:"customSizeInGB,omitempty"`
 	// path the filesystem will use to mount in VM
 	MountPath string `json:"mountPath"`
 	// device name of the disk offering in VM, shows up in lsblk command

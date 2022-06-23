@@ -50,6 +50,23 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 	)
 }
 
+func TestCloudStackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFromLatestReleaseFlow(
+		test,
+		anywherev1.Kube120,
+		provider.WithProviderUpgrade(),
+	)
+}
+
 func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
 		api.WithTemplateForAllMachines(""), // Use default template from bundle
