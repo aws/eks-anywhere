@@ -56,7 +56,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		ProjectPath:       kindProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	manifestList := []string{
 		"kindnetd.yaml",
