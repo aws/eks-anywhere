@@ -40,13 +40,13 @@ The computer hardware you need for your Bare Metal cluster must meet the followi
 Each machine should include the following features:
 
 * Network Interface Cards: At least one NIC is required. It must be capable of netbooting from PXE. 
-* IPMI integration (recommended): An IPMI implementation (such a Dell iDRAC or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
+* IPMI integration (recommended): An IPMI implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
 
 >**_NOTE:_** IPMI is not required for an EKS Anywhere cluster. However, without IPMI, upgrades are not supported and you will have to physically turn machines off and on when appropriate.
 
 Here are other network requirements:
 
-* All EKS Anywhere machine, including the Admin, control plane and worker machines, must be on the same layer 2 connection to the other machines in the cluster and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same layer 2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
+* All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same layer 2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
 
 * You must be able to run DHCP on the control plane/worker machine network.
 
@@ -62,7 +62,7 @@ Here are other network requirements:
   * Pick IP addresses reachable from the cluster subnet that are excluded from the DHCP range or
   * Create an IP reservation for these addresses on your DHCP server. This is usually accomplished by adding a dummy mapping of this IP address to a non-existent mac address.
 
->**_NOTE:_** When your set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `ControlPlaneConfiguration.endpoint.host` and `tinkerbellIP` fields, respectively.
+>**_NOTE:_** When you set up your cluster configuration YAML file, the endpoint and Tinkerbell addresses are set in the `ControlPlaneConfiguration.endpoint.host` and `tinkerbellIP` fields, respectively.
 
 * Ports must be open to the Admin machine and cluster machines as described in [Ports and protocols]({{< relref "../ports/" >}}).
 
