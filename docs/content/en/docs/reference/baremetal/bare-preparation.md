@@ -9,10 +9,6 @@ After gathering hardware described in Bare Metal [Requirements]({{< relref "./ba
 
 ## Prepare hardware
 To prepare your computer hardware for EKS Anywhere, you need to connect your computer hardware and do some configuration.
-The following figure provides an example of an EKS Anywhere Bare Metal cluster consisting of three control plane and two worker machines:
-
-**_NEED TO ADD A HARDWARE DIAGRAM AND SHORT DESCRIPTION OF EACH COMPONENT._**
-
 Once the hardware is in place, you need to:
 
 * Obtain IP addresses to assign to the IPMI and regular NIC interface on each machine in the cluster.
