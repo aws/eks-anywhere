@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const kubeVipProjectPath = "projects/plunder-app/kube-vip"
+const kubeVipProjectPath = "projects/kube-vip/kube-vip"
 
 // GetKubeVipAssets returns the eks a artifacts for kube-vip
 func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
@@ -30,7 +30,7 @@ func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
 	}
 
 	name := "kube-vip"
-	repoName := fmt.Sprintf("plunder-app/%s", name)
+	repoName := fmt.Sprintf("kube-vip/%s", name)
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": kubeVipProjectPath,
