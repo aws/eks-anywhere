@@ -175,3 +175,24 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 		return nil
 	}
 }
+
+func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		if _, ok := config.machineConfigs[selector]; !ok {
+			m := &anywherev1.TinkerbellMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.TinkerbellMachineConfigKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: selector,
+				},
+				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: selector},
+				},
+			}
+			config.machineConfigs[selector] = m
+		}
+		return nil
+	}
+}

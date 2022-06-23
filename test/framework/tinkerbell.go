@@ -161,3 +161,9 @@ func WithTinkerbellExternalEtcdTopology(count int) TinkerbellOpt {
 		t.clusterFillers = append(t.clusterFillers, api.WithExternalEtcdTopology(count), api.WithExternalEtcdMachineRef(anywherev1.TinkerbellMachineConfigKind))
 	}
 }
+
+func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append([]api.TinkerbellFiller{api.WithCustomTinkerbellMachineConfig(selector)}, t.fillers...)
+	}
+}
