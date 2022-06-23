@@ -57,7 +57,7 @@ Here are other network requirements:
   * distro.eks.amazonaws.com: To download EKS Distro binaries and manifests
   * d2glxqk2uabbnd.cloudfront.net: For EKS Anywhere and EKS Distro ECR container images
 
-* Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP or kube-vip VIP address. The other is for the Tinkerbell IP address on the target cluster. The Tinkerbell IP address is not yet required, but will be required in the near future. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses.
+* Two IP addresses routable from the cluster, but excluded from DHCP offering. One IP address is to be used as the Control Plane Endpoint IP or kube-vip VIP address. The other is for the Tinkerbell IP address on the target cluster. Below are some suggestions to ensure that these IP addresses are never handed out by your DHCP server. You may need to contact your network engineer to manage these addresses.
 
   * Pick IP addresses reachable from the cluster subnet that are excluded from the DHCP range or
   * Create an IP reservation for these addresses on your DHCP server. This is usually accomplished by adding a dummy mapping of this IP address to a non-existent mac address.
