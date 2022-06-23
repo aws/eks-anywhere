@@ -46,7 +46,6 @@ eksa-wk03,10.10.44.5,root,w7EenR94,CC:48:3A:00:00:05,10.10.50.6,255.255.254.0,10
 
 The CSV file is a comma-separated list of values in a plain text file, holding information about the physical machines in the datacenter that are intended to be a part of the cluster creation process.
 Each line represents a physical machine (not a virtual machine).
-Multiple values in an item can be separated by pipe symbols (|).
 
 The following sections describe each value.
 
@@ -70,18 +69,10 @@ IP address of the interface that provides access (the gateway) to the Internet.
 ### nameservers
 The IP address of the server that you want to provide DNS service to the cluster.
 ### labels
-Optional labels you can set on each node that are added to any labels set on that node by the cluster.
-These labels consist of key/value pairs that can be used by Kubernetes to match workloads that request nodes with those labels.
-See Kubernetes [Labels and Selectors](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) for details.
+The optional labels field can consist of a key/value pair to use in conjunction with the `hardwareSelector` field when you set up your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/" >}}).
+The key/value pair is connected with an equal (`=`) sign.
 
-Labels can also be used in conjunction with the `hardwareSelector` field when you set up your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/" >}}).
-For example, if you had the `controlPlaneConfiguration.machineGroupRef.TinkerbellMachineConfig` name set to `my-cluster-name-cp` and a `hardwareSelector` under the `TinkerbellMachineConfig` definition for that name set to `node: "cp-machine"`, that machine would be added to the control plane.
-
-In this CSV field, each key/value pair is connected with an equal (`=`) sign.
-For example, you could set `environment=test` on one node and `environment=production` on another to allow workloads to request the appropriate node to run on based on their stage of development.
-
-Use a pipe (|) symbol to add multiple labels to one field. For example, to set a machine as a worker node to be used for production workloads, the field might appear as follows: `node=worker-node|environment=production`.
-In this way, the cluster specification could be set to recognize this machine as a worker node and workloads could later request to run on a production system by matching that label in its pod spec.
+For example, if you had the `controlPlaneConfiguration.machineGroupRef.TinkerbellMachineConfig` name set to `my-cluster-name-cp` and a `hardwareSelector` under the `TinkerbellMachineConfig` definition for that name set to `machine: "cp-machine"`, that machine would be added to the control plane if you set this label to `machine=cp-machine`.
 
 ### disk
 The device name of the disk on which the operating system will be installed.
