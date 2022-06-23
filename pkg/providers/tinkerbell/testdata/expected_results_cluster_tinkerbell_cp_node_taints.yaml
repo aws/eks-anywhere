@@ -46,6 +46,16 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        taints:
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
+          - key: key2
+            value: val2
+            effect: NoSchedule
+          - key: key3
+            value: val3
+            effect: NoExecute
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -55,6 +65,16 @@ spec:
           read-only-port: "0"
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        taints:
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
+          - key: key2
+            value: val2
+            effect: NoSchedule
+          - key: key3
+            value: val3
+            effect: NoExecute
     files:
       - content: |
           apiVersion: v1

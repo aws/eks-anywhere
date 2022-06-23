@@ -69,10 +69,24 @@ spec:
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
         nodeRegistration:
+{{- if .workerNodeGroupTaints }}
+          taints:
+{{- range .workerNodeGroupTaints}}
+            - key: {{ .Key }}
+              value: {{ .Value }}
+              effect: {{ .Effect }}
+{{- if .TimeAdded }}
+              timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
           kubeletExtraArgs:
             provider-id: PROVIDER_ID
             read-only-port: "0"
             anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
