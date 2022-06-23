@@ -67,9 +67,23 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) [
 		return c.eksaDockerCollectors()
 	case v1alpha1.CloudStackDatacenterKind:
 		return c.eksaCloudstackCollectors()
+	case v1alpha1.TinkerbellDatacenterKind:
+		return c.eksaTinkerbellCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
+	tinkerbellLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CaptSystemNamespace,
+				Name:      logpath(constants.CaptSystemNamespace),
+			},
+		},
+	}
+	return append(tinkerbellLogs, c.tinkerbellCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
@@ -266,6 +280,24 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 		"kubeadmcontrolplane.controlplane.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(mgmtCrds)
+}
+
+func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
+	captCrds := []string{
+		"baseboardmanagements.bmc.tinkerbell.org",
+		"bmcjobs.bmc.tinkerbell.org",
+		"bmctasks.bmc.tinkerbell.org",
+		"hardware.tinkerbell.org",
+		"templates.tinkerbell.org",
+		"tinkerbellclusters.infrastructure.cluster.x-k8s.io",
+		"tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com",
+		"tinkerbellmachineconfigs.anywhere.eks.amazonaws.com",
+		"tinkerbellmachines.infrastructure.cluster.x-k8s.io",
+		"tinkerbellmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"tinkerbelltemplateconfigs.anywhere.eks.amazonaws.com",
+		"workflows.tinkerbell.org",
+	}
+	return c.generateCrdCollectors(captCrds)
 }
 
 func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
