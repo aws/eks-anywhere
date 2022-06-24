@@ -150,7 +150,7 @@ is a Kubernetes update operator that coordinates Bottlerocket updates on hosts i
 
 ### Baremetal Clusters
 
-EKS Anywhere Baremetal clusters run directly on metal servers in a datacenter. Ensure that the physical infrastructure components used including the network are secure and can be trusted before using them to run EKS Anywhere clusters. 
+EKS Anywhere Baremetal clusters run directly on physical servers in a datacenter. Make sure that the physical infrastructure, including the network, is secure before running EKS Anywhere clusters. 
 
 * Only allow trusted devices on the network
 * Secure the network using a firewall
