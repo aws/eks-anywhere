@@ -11,12 +11,13 @@ After gathering hardware described in Bare Metal [Requirements]({{< relref "./ba
 To prepare your computer hardware for EKS Anywhere, you need to connect your computer hardware and do some configuration.
 Once the hardware is in place, you need to:
 
-* Obtain IP addresses to assign to the IPMI and regular NIC interface on each machine in the cluster.
+* Obtain IP and MAC addresses for your machines' NICs.
+* Obtain IP addresses for your machines' IPMI interfaces.
 * Obtain the gateway address for your network to reach the Internet.
 * Obtain the IP address for your DNS servers.
 * Make sure the following settings are in place:
   * UEFI is enabled on all target cluster machines
-  * PXE boot is enabled on each NIC
+  * PXE boot is enabled for the NIC on each machine for which you provided the MAC address. This is the interface on which the operating system will be provisioned.
   * PXE is set as the first device in each machine's boot order
   * IPMI over LAN is enabled on the IPMI interfaces
 * Go to the IPMI settings for each machine and set the IP address (bmc_ip), username (bmc_username), and password (bmc_password) to use later in the CSV file.
@@ -32,11 +33,11 @@ The following is an example of an EKS Anywhere Bare Metal hardware CSV file:
 
 ```
 hostname,bmc_ip,bmc_username,bmc_password,mac,ip_address,netmask,gateway,nameservers,labels,disk
-eksa-cp01,10.10.44.1,root,PrZ8W93i,CC:48:3A:00:00:01,10.10.50.2,255.255.254.0,10.10.50.1,X.X.X.X,,/dev/sda
-eksa-cp02,10.10.44.2,root,Me9xQf93,CC:48:3A:00:00:02,10.10.50.3,255.255.254.0,10.10.50.1,X.X.X.X,,/dev/sda
-eksa-wk01,10.10.44.3,root,Z8x2M6hl,CC:48:3A:00:00:03,10.10.50.4,255.255.254.0,10.10.50.1,X.X.X.X,,/dev/sda
-eksa-wk02,10.10.44.4,root,B398xRTp,CC:48:3A:00:00:04,10.10.50.5,255.255.254.0,10.10.50.1,X.X.X.X,,/dev/sda
-eksa-wk03,10.10.44.5,root,w7EenR94,CC:48:3A:00:00:05,10.10.50.6,255.255.254.0,10.10.50.1,X.X.X.X,,/dev/sda
+eksa-cp01,10.10.44.1,root,PrZ8W93i,CC:48:3A:00:00:01,10.10.50.2,255.255.254.0,10.10.50.1,8.8.8.8|8.8.4.4,type=cp,/dev/sda
+eksa-cp02,10.10.44.2,root,Me9xQf93,CC:48:3A:00:00:02,10.10.50.3,255.255.254.0,10.10.50.1,8.8.8.8|8.8.4.4,type=cp,/dev/sda
+eksa-cp03,10.10.44.3,root,Z8x2M6hl,CC:48:3A:00:00:03,10.10.50.4,255.255.254.0,10.10.50.1,8.8.8.8|8.8.4.4,type=cp,/dev/sda
+eksa-wk01,10.10.44.4,root,B398xRTp,CC:48:3A:00:00:04,10.10.50.5,255.255.254.0,10.10.50.1,8.8.8.8|8.8.4.4,type=worker,/dev/sda
+eksa-wk02,10.10.44.5,root,w7EenR94,CC:48:3A:00:00:05,10.10.50.6,255.255.254.0,10.10.50.1,8.8.8.8|8.8.4.4,type=worker,/dev/sda
 
 ```
 
@@ -68,7 +69,7 @@ The IP address of the server that you want to provide DNS service to the cluster
 The optional labels field can consist of a key/value pair to use in conjunction with the `hardwareSelector` field when you set up your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/" >}}).
 The key/value pair is connected with an equal (`=`) sign.
 
-For example, if you had the `controlPlaneConfiguration.machineGroupRef.TinkerbellMachineConfig` name set to `my-cluster-name-cp` and a `hardwareSelector` under the `TinkerbellMachineConfig` definition for that name set to `machine: "cp-machine"`, that machine would be added to the control plane if you set this label to `machine=cp-machine`.
+For example, if you had the `controlPlaneConfiguration.machineGroupRef.TinkerbellMachineConfig` name set to `my-cluster-name-cp` and a `hardwareSelector` under the `TinkerbellMachineConfig` definition for that name set to `type: "cp"`, that machine would be added to the control plane if you set this label to `type=cp`.
 
 ### disk
 The device name of the disk on which the operating system will be installed.
