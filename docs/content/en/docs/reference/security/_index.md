@@ -144,8 +144,8 @@ Only download OVAs for cluster nodes from official sources, and do not allow unt
 
 ### Keeping Bottlerocket up to date
 
-EKS Anywhere provides the most updated patch of operating systems with every release. It is recommended to keep your clusters up to date with the latest EKS Anyhwere release to ensure you get the latest security updates.
-Bottlerocket is one of the EKS Anywhere supported operating system and can be kept up to date without requiring to update the whole cluster. The [Bottlerocket Update Operator](https://github.com/bottlerocket-os/bottlerocket-update-operator)
+EKS Anywhere provides the most updated patch of operating systems with every release. It is recommended that your clusters are kept up to date with the latest EKS Anyhwere release to ensure you get the latest security updates.
+Bottlerocket is an EKS Anywhere supported operating system that can be kept up to date without requiring a cluster update. The [Bottlerocket Update Operator](https://github.com/bottlerocket-os/bottlerocket-update-operator)
 is a Kubernetes update operator that coordinates Bottlerocket updates on hosts in the cluster. Please follow the instructions [here](https://github.com/bottlerocket-os/bottlerocket-update-operator/blob/develop/README.md) to install Bottlerocket update operator.
 
 ### Baremetal Clusters
