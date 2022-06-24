@@ -152,11 +152,14 @@ is a Kubernetes update operator that coordinates Bottlerocket updates on hosts i
 
 EKS Anywhere Baremetal clusters run directly on physical servers in a datacenter. Make sure that the physical infrastructure, including the network, is secure before running EKS Anywhere clusters. 
 
+Please follow industry best practices for securing your network and datacenter, including but not limited to the following
 * Only allow trusted devices on the network
 * Secure the network using a firewall
 * Never source hardware from an untrusted vendor
 * Inspect and verify the metal servers you are using for the clusters are the ones you intended to use
 * If possible, use a separate L2 network for EKS Anywhere baremetal clusters
+* Conduct thorough audits of access, users, logs and other exploitable venues periodically 
+
 
 ### Benchmark tests for cluster hardening
 
