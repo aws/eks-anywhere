@@ -19,6 +19,27 @@ const (
 	nodeGroupLabel2 = "md-1"
 )
 
+func TestTinkerbellKubernetes122SkipPowerActions(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithNoPowerActions(),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.PXEBootHardware()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce())
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestTinkerbellKubernetes122UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
