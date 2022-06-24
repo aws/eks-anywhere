@@ -25,7 +25,9 @@ func (e *E2ESession) setupOIDC(testRegex string) error {
 		return nil
 	}
 
-	folder := fmt.Sprintf("%s/%s/%s", e.jobId, "generated-artifacts", testRegex)
+	logger.V(2).Info("Creating OIDC server for the instance.")
+
+	folder := fmt.Sprintf("%s/%s", e.jobId, "generated-artifacts")
 	bucketUrl := s3.GetBucketPublicURL(e.session, e.storageBucket)
 	issuerURL := fmt.Sprintf("%s/%s/%s", bucketUrl, folder, "oidc")
 
