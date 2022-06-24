@@ -57,7 +57,10 @@ The rest of this document is a high level specification about changes to the EKS
 ### Architectural Diagram
 
 ![Cluster lifecycle](images/cluster-lifecycle.png)
-### Cluster Reconciler
+
+### Cluster Controller
+
+![Cluster controller](images/cluster-controller-container-components.png)
 
 The main logic for this feature will be implemented in the cluster reconciler. This will take care of creating/patching and deleting all resources needed for a cluster to be fully operational, from CAPI resources in the management cluster to installing the CNI in the workload cluster.
 
@@ -84,12 +87,25 @@ Kubernetes offers the validation webhook for CRDs: custom code to validate objec
 
 We will implement those validations in a separate reconciler. This means that they will run after the object has already been accepted by the api server. We will store if the object has been validated or not as well as the validation error (if any) in the `VSphereDatacenterConfig` status.
 
-The cluster reconciler won’t continue with the reconciliation process until `VSphereDatacenterConfig` has been marked as validated. If not valid, it will surface the error on its own status.
+The cluster controller won’t continue with the reconciliation process until `VSphereDatacenterConfig` has been marked as validated. If not valid, it will surface the error on its own status.
 
+![VSphere datacenter controller](images/vspheredatacenterconfig-controller-container-components.png)
 
 ### `VSphereMachineConfig` Validation
 
 `VSphereMachineConfig` requires similar validations to the datacenter config object. We will apply the same pattern, having a separate reconciler for `VSphereMachineConfig` , the status and only reconciling the cluster once they have been validated.
+
+### `SnowMachineConfig` Validation
+
+`SnowMachineConfig` requires similar validations to the vsphere datacenter config object but using the Snow API endpoint instead of the vSphere one. We will apply the same pattern, having a separate controller for `SnowMachineConfig`, updating the status and only reconciling the cluster once they have been validated.
+
+![Snow machine config controller](images/snowmachineconfig-controller-container-components.png)
+
+### Controller manager
+
+All controllers would be deploy in the same container as part of the controller manager:
+
+![Controller manager](images/controller-manager-deployment.png)
 
 ### vSphere credentials
 
