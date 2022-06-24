@@ -87,6 +87,13 @@ func WithTinkerbellServer(value string) TinkerbellFiller {
 	}
 }
 
+func WithTinkerbellOSImageURL(value string) TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		config.datacenterConfig.Spec.OSImageURL = value
+		return nil
+	}
+}
+
 func WithStringFromEnvVarTinkerbell(envVar string, opt func(string) TinkerbellFiller) TinkerbellFiller {
 	return opt(os.Getenv(envVar))
 }
