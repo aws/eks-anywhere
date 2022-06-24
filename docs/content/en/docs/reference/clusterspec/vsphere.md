@@ -110,8 +110,11 @@ Name of your cluster `my-cluster-name` in this example
 ### clusterNetwork (required)
 Specific network configuration for your Kubernetes cluster.
 
-### clusterNetwork.cni (required)
-CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
+### clusterNetwork.cniConfig (required)
+CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
+
+### clusterNetwork.cniConfig.cilium.policyEnforcementMode
+Optionally, you may specify a policyEnforcementMode of default, always, never.
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
