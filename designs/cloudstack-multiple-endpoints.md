@@ -109,17 +109,7 @@ CAPC currently utilizes them to distribute machines across CloudStack Zones. How
 2. Cloudstack domain
 3. Cloudstack zone
 4. Cloudstack account
-5. A reference to the customer-provider credentials
-
-To add more detail to the credential ref, we will continue to accept a base64 encoded ini file as input from the customer when running eks-a. However,
-in order to avoid taking a dependency on a meaningless section of a transient file, we will modify EKS-A to also create the secrets to be used by CAPC.
-These secrets will be generated from the ini file provided by customer and applied to the cluster. CAPC will then proceed to take ownership of them as
-currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
-We will refer to this set of credentials in the CloudstackCluster resource as well so CAPC knows which ones to use.
-
-The secrets will be managed by EKS-A insofar that they can be created but not updated. If users want to update an existing secret, they will have to 
-do so manually. We can also add a warning if a user is attempting to modify an existing secret. This will provide a safeguard to prevent unintentionally
-setting incorrect credentials for a whole collection of clusters.
+5. A reference to the customer-provider credentials for interacting with this Cloudstack endpoint
 
 You can find more information about these Cloudstack resources [here](http://docs.cloudstack.apache.org/en/latest/conceptsandterminology/concepts.html#cloudstack-terminology)
 
@@ -128,6 +118,9 @@ You can find more information about these Cloudstack resources [here](http://doc
 With the multi-endpoint system for the Cloudstack provider, users reference a CloudstackMachineConfig and it's created across multiple AvailabilityZones. The implication
 is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the AvailabilityZones, or all the Cloudstack endpoints,
 and these resources must be referenced by name, not unique ID. This would mean that we need to check if there are multiple Cloudstack endpoints, and if so check the zones, networks, domains, accounts, and users. 
+
+We will also validate the credentials referenced by each AvailabilityZone, which can either be referenced as existing k8s secrets on the cluster, or from the local ini file. More details 
+in the Cloudstack Credentials section below
 
 ### `CloudstackMachineConfig` Validation
 
@@ -141,11 +134,10 @@ for availabilityZone in availabilityZones:
     validate resource presence with the availabilityZone's configuration of the CloudMonkey executable
     
 
-### Cloudstack credentials
-
+### Cloudstack Credentials
 
 In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
-only as a list corresponding to AvailabilityZones. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
+only as a list corresponding to some k8s secrets which will be generated. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
 
 ```ini
 [Global]
@@ -175,10 +167,26 @@ api-url    = http://172.16.0.3:8080/client/api
 ...
 ```
 
-Where the Section names (i.e. Global, AvailabilityZone1, etc.) correspond to the Availability Zone names
+Where the Section names (i.e. Global, AvailabilityZone1, etc.) correspond to the credentials needed to access a given Availability Zone.
 
-We are also exploring converting the ini file to a yaml input file which contains a list of credentials and their associated endpoints. Either way, this environment variable would
-be passed along to CAPC and used by the CAPC controller just like it is currently.
+In order to avoid taking a dependency on a meaningless section of a transient file, we will modify EKS-A to also create the secrets to be used by CAPC.
+These secrets will be generated from the ini file provided by customer and applied to the cluster. CAPC will then proceed to take ownership of them as
+currently done in [CAPV](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/fae6ef88467e608665e2902e2bb0aaeb4cee67ed/docs/identity_management.md#identity-types).
+We will refer to this set of credentials in the CloudStackCluster resource as well so CAPC knows which ones to use.
+
+So for create, we’ll have:
+
+1. Customer provides ini file containing set of named credentials
+2. Customer provides CloudstackDatacenterConfigSpec with list of named AvailabilityZones to distribute the cluster across. Each AvailabilityZone will have a credentialRef which 
+can either point to an existing secret on the cluster, or a named credential from the ini file
+3. EKS-A will check each credentialRef in the AvailabilityZones provided. If it’s already in the cluster as a secret, validate it against the 
+contents in the ini file. If it’s not already in the cluster as a secret but there’s an entry in the ini file for it, create a new secret. If it’s 
+not in the cluster as a secret and not in the ini file, throw an error
+4. Proceed to generate CAPC template and pass these secretRefs to CAPC who will add an OwnerRef to them
+
+The secrets will be managed by EKS-A insofar that they can be created but not updated. If users want to update an existing secret, they will have to
+do so manually both in the k8s secret object, as well as the local ini file prior to running upgrade. We can also add a warning if there is a discrepancy in secret contents between the k8s object and the ini file. 
+This will provide a safeguard to prevent unintentionally setting incorrect credentials for a whole collection of clusters.
 
 ### Backwards Compatibility
 
@@ -188,16 +196,17 @@ In order to support backwards compatibility in the CloudstackDatacenterConfig re
 
 Between these two approaches, we propose to take the first and then deprecate the legacy fields in a subsequent release to simplify the code paths.
 
-However, given that the Cloudstack credentials are persisted in a write-once secret on the cluster, upgrading existing clusters may not be feasible unless CAPC supports overwriting that secret.
-
-## User Experience
-
+Upgrading an existing cluster will require passing the new credentials and templates to CAPC in a way that the mapping from CAPC FailureDomains to EKS-A AvailabilityZones can
+be preserved. We plan to align on naming conventions for upgrading existing clusters based on some metadata from the current multi-zone configuration into a multi-endpoint configuration.
 
 ## Security
 
 The main change regarding security is the additional credential management. Otherwise, we are doing exactly the same operations - preflight check with cloudmonkey,
 create yaml templates and apply them, and then read/write eks-a resources in the eks-a controller. The corresponding change is an extension of an existing mechanism
 and there should not be any new surface area for risks than there was previously.
+
+One risk to consider with regards to the new credential management strategy is that if AvailabilityZones are upgraded to use a new credential, there is a possibility of having old rogue Secret objects
+which will need to be cleaned up manually.
 
 ## Testing
 
