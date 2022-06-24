@@ -142,6 +142,25 @@ The associated private key should be treated as extremely sensitive, as `sudo` a
 
 Only download OVAs for cluster nodes from official sources, and do not allow untrusted users or processes to modify the templates used by EKS Anywhere for provisioning nodes.
 
+### Keeping Bottlerocket up to date
+
+EKS Anywhere provides the most updated patch of operating systems with every release. It is recommended that your clusters are kept up to date with the latest EKS Anyhwere release to ensure you get the latest security updates.
+Bottlerocket is an EKS Anywhere supported operating system that can be kept up to date without requiring a cluster update. The [Bottlerocket Update Operator](https://github.com/bottlerocket-os/bottlerocket-update-operator)
+is a Kubernetes update operator that coordinates Bottlerocket updates on hosts in the cluster. Please follow the instructions [here](https://github.com/bottlerocket-os/bottlerocket-update-operator/blob/develop/README.md) to install Bottlerocket update operator.
+
+### Baremetal Clusters
+
+EKS Anywhere Baremetal clusters run directly on physical servers in a datacenter. Make sure that the physical infrastructure, including the network, is secure before running EKS Anywhere clusters. 
+
+Please follow industry best practices for securing your network and datacenter, including but not limited to the following
+* Only allow trusted devices on the network
+* Secure the network using a firewall
+* Never source hardware from an untrusted vendor
+* Inspect and verify the metal servers you are using for the clusters are the ones you intended to use
+* If possible, use a separate L2 network for EKS Anywhere baremetal clusters
+* Conduct thorough audits of access, users, logs and other exploitable venues periodically 
+
+
 ### Benchmark tests for cluster hardening
 
 EKS Anywhere creates clusters with server hardening configurations out of the box, via the use of security flags and opinionated default templates. You can verify the security posture of your EKS Anywhere cluster by using a tool called [`kube-bench`](https://github.com/aquasecurity/kube-bench), that checks whether Kubernetes is deployed securely.
