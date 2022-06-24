@@ -62,6 +62,7 @@ type ClusterE2ETest struct {
 	HardwareCsvLocation    string
 	TestHardware           map[string]*api.Hardware
 	HardwarePool           map[string]*api.Hardware
+	WithNoPowerActions     bool
 	ClusterName            string
 	ClusterConfig          *v1alpha1.Cluster
 	Provider               Provider
@@ -136,6 +137,12 @@ func withHardware(requiredCount int, hardareType string, labels map[string]strin
 		if count < requiredCount {
 			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, hardareType)
 		}
+	}
+}
+
+func WithNoPowerActions() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.WithNoPowerActions = true
 	}
 }
 
@@ -276,6 +283,32 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
+func (e *ClusterE2ETest) PXEBootHardware() {
+	// Initializing BMC Client
+	ctx := context.Background()
+	bmcClientFactory := rctrl.NewBMCClientFactoryFunc(ctx)
+
+	for _, h := range e.TestHardware {
+		bmcClient, err := bmcClientFactory(ctx, h.BMCIPAddress, "623", h.BMCUsername, h.BMCPassword)
+		if err != nil {
+			e.T.Fatalf("failed to create bmc client: %v", err)
+		}
+
+		defer func() {
+			// Close BMC connection after reconcilation
+			err = bmcClient.Close(ctx)
+			if err != nil {
+				e.T.Fatalf("BMC close connection failed: %v", err)
+			}
+		}()
+
+		_, err = bmcClient.SetBootDevice(ctx, string(rapi.PXE), false, true)
+		if err != nil {
+			e.T.Fatalf("failed to pxe boot hardware: %v", err)
+		}
+	}
+}
+
 func (e *ClusterE2ETest) PowerOnHardware() {
 	// Initializing BMC Client
 	ctx := context.Background()
@@ -361,7 +394,20 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 		os.Remove(e.HardwareCsvLocation)
 	}
 
-	err := api.WriteHardwareMapToCSV(e.TestHardware, e.HardwareCsvLocation)
+	testHardware := e.TestHardware
+	if e.WithNoPowerActions {
+		hardwareWithNoBMC := make(map[string]*api.Hardware)
+		for k, h := range testHardware {
+			lessBmc := *h
+			lessBmc.BMCIPAddress = ""
+			lessBmc.BMCUsername = ""
+			lessBmc.BMCPassword = ""
+			hardwareWithNoBMC[k] = &lessBmc
+		}
+		testHardware = hardwareWithNoBMC
+	}
+
+	err := api.WriteHardwareMapToCSV(testHardware, e.HardwareCsvLocation)
 	if err != nil {
 		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
 	}
