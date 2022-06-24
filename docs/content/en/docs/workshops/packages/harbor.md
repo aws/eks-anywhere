@@ -212,3 +212,77 @@ This use case is to use Harbor to replicate local images and charts to a private
     The image should appear in the target ECR repository shortly.
 
     ![Harbor replication result](/images/harbor-replication_result.png)
+
+## Set up trivy image scanner in an air-gapped environment
+This use case is to manually import vulnerability database to Harbor trivy when Harbor is running in an air-gapped environment. All the following commands are assuming Harbor is running in the default namespace.
+
+1. Configure trivy
+
+    TLS example with auto certificate generation
+    ```yaml
+    apiVersion: packages.eks.amazonaws.com/v1alpha1
+    kind: Package
+    metadata:
+       name: my-harbor
+       namespace: eksa-packages
+    spec:
+       packageName: harbor
+       config: |-
+         secretKey: "use-a-secret-key"
+         externalURL: https://harbor.eksa.demo:30003
+         expose:
+           tls:
+             certSource: auto
+             auto:
+               commonName: "harbor.eksa.demo"
+           trivy:
+             skipUpdate: true
+             offlineScan: true
+    ```
+
+    Non-TLS example
+    ```yaml
+    apiVersion: packages.eks.amazonaws.com/v1alpha1
+    kind: Package
+    metadata:
+       name: my-harbor
+       namespace: eksa-packages
+    spec:
+       packageName: harbor
+       config: |-
+         secretKey: "use-a-secret-key"
+         externalURL: http://harbor.eksa.demo:30002
+         expose:
+           tls:
+             enabled: false
+         trivy:
+           skipUpdate: true
+           offlineScan: true
+    ```
+
+    If Harbor is already running without the above trivy configurations, run the following command to update both `skipUpdate` and `offlineScan`
+    ```bash
+    kubectl edit statefulsets/harbor-helm-trivy
+    ```
+
+1. Download vulnerability database to your local host
+
+    Please follow [oras installation instruction](https://oras.land/cli/).
+    ```bash
+    oras pull ghcr.io/aquasecurity/trivy-db:2 -a
+    ```
+
+1. Upload database to trivy pod from your local host
+    ```bash
+    kubectl cp db.tar.gz harbor-helm-trivy-0:/home/scanner/.cache/trivy -c trivy
+    ```
+
+1. Set up database on Harbor trivy pod
+    ```bash
+    kubectl exec -it harbor-helm-trivy-0 -c trivy bash
+    cd /home/scanner/.cache/trivy
+    mkdir db
+    mv db.tar.gz db
+    cd db
+    tar zxvf db.tar.gz
+    ```
