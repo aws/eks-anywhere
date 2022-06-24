@@ -119,7 +119,7 @@ With the multi-endpoint system for the Cloudstack provider, users reference a Cl
 is that all the Cloudstack resources such as image, ComputeOffering, ISOAttachment, etc. must be available in *all* the AvailabilityZones, or all the Cloudstack endpoints,
 and these resources must be referenced by name, not unique ID. This would mean that we need to check if there are multiple Cloudstack endpoints, and if so check the zones, networks, domains, accounts, and users. 
 
-We will also validate the credentials referenced by each AvailabilityZone, which can either be referenced as existing k8s secrets on the cluster, or from the local ini file. More details 
+We will also validate the credentials referenced by each AvailabilityZone, which can either be referenced as existing K8s secrets on the cluster, or from the local ini file. More details 
 in the Cloudstack Credentials section below
 
 ### `CloudstackMachineConfig` Validation
@@ -137,7 +137,7 @@ for availabilityZone in availabilityZones:
 ### Cloudstack Credentials
 
 In a multi-endpoint Cloudstack cluster, each endpoint may have its own credentials. We propose that Cloudstack credentials will be passed in via environment variable in the same way as they are currently,
-only as a list corresponding to some k8s secrets which will be generated. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
+only as a list corresponding to some K8s secrets which will be generated. Currently, these credentials are passed in via environment variable, which contains a base64 encoded .ini file that looks like
 
 ```ini
 [Global]
@@ -185,7 +185,7 @@ not in the cluster as a secret and not in the ini file, throw an error
 4. Proceed to generate CAPC template and pass these secretRefs to CAPC who will add an OwnerRef to them
 
 The secrets will be managed by EKS-A insofar that they can be created but not updated. If users want to update an existing secret, they will have to
-do so manually both in the k8s secret object, as well as the local ini file prior to running upgrade. We can also add a warning if there is a discrepancy in secret contents between the k8s object and the ini file. 
+do so manually both in the K8s secret object, as well as the local ini file prior to running upgrade. We will also error out if there is a discrepancy in secret contents between the K8s object and the ini file. 
 This will provide a safeguard to prevent unintentionally setting incorrect credentials for a whole collection of clusters.
 
 ### Backwards Compatibility
