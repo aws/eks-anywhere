@@ -8,6 +8,9 @@ description: >
   How to delete an EKS Anywhere cluster
 ---
 
+>**_NOTE_**: EKS Anywhere Bare Metal clusters do not yet support separate workload and management clusters. Use the instructions for Deleting a management cluster to delete a Bare Metal cluster.
+>
+
 ### Deleting a workload cluster
 
 Follow these steps to delete your EKS Anywhere cluster that is managed by a separate management cluster.
@@ -74,5 +77,5 @@ GitOps field not specified, clean up git repo skipped
 🎉 Cluster deleted!
 ```
 
-This will delete all of the VMs that were created in your provider.
+For vSphere, this will delete all of the VMs that were created in your provider.
 If your workloads created external resources such as external DNS entries or load balancer endpoints you may need to delete those resources manually.
