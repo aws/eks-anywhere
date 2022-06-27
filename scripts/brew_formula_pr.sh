@@ -71,7 +71,7 @@ if [ "$FILES_ADDED" = "" ]; then
 fi
 
 git commit -m "$COMMIT_MESSAGE"
-ssh-agent bash -c 'ssh-add /secrets/ssh-secrets/ssh-privatekey; ssh -o StrictHostKeyChecking=no git@github.com; git fetch upstream; git rebase -Xtheirs upstream/main; git push -u origin $PR_BRANCH -f'
+ssh-agent bash -c 'ssh-add /secrets/ssh-secrets/ssh-privatekey; ssh -o StrictHostKeyChecking=no git@github.com; git fetch upstream; git rebase -Xtheirs upstream/master; git push -u origin $PR_BRANCH -f'
 
 echo "Added ssh private key\n"
 
