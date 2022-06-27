@@ -630,6 +630,23 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(sharedExtraArgs)
 	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
+	availabilityZones := []v1alpha1.CloudStackAvailabilityZone{}
+	for i, zone := range datacenterConfigSpec.Zones {
+		az := v1alpha1.CloudStackAvailabilityZone{
+			Name: fmt.Sprintf("availability-zone-%d", i),
+			Zone: v1alpha1.CloudStackZone{
+				Name: zone.Name,
+				Network: v1alpha1.CloudStackResourceIdentifier{
+					Name: zone.Network.Name,
+				},
+			},
+			Domain:         datacenterConfigSpec.Domain,
+			Account:        datacenterConfigSpec.Account,
+			CredentialsRef: "global",
+		}
+		availabilityZones = append(availabilityZones, az)
+	}
+	availabilityZones = append(availabilityZones, datacenterConfigSpec.AvailabilityZones...)
 
 	values := map[string]interface{}{
 		"clusterName":                                  clusterSpec.Cluster.Name,
@@ -649,9 +666,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAvailabilityZones":                  availabilityZones,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,

@@ -34,27 +34,30 @@ spec:
     host: 1.2.3.4
     port: 6443
   failureDomains:
-  - name: availability-zone-0
+  - name: az-1
     zone:
-      name: zone1
+      name: zone-1
       network:
-        name: net1
-    domain: domain1
-    account: admin
+        name: network-1
+    domain: domain-1
+    account: account-1
     managementApiEndpointRef:
-      name: global
+      name: secret-1
+  - name: az-2
+    zone:
+      name: zone-2
+      network:
+        name: network-2
+    domain: domain-2
+    account: account-2
+    managementApiEndpointRef:
+      name: secret-2
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
   namespace: eksa-system
-  annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
 spec:
   template:
     spec:
@@ -62,14 +65,6 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
-      diskOffering:
-        name: Small
-        mountPath: /data-small
-        device: /dev/vdb
-        filesystem: ext4
-        label: data_disk
-      affinitygroupids:
-      - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -364,30 +359,6 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-    - >-
-      if [ ! -L /var/log/kubernetes ] ;
-        then
-          mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
-          mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
-        else echo "/var/log/kubernetes already symlnk";
-      fi
-    diskSetup:
-      filesystems:
-        - device: /dev/vdb1
-          overwrite: false
-          extraOpts:
-            - -E
-            - lazy_itable_init=1,lazy_journal_init=1
-          filesystem: ext4
-          label: data_disk
-      partitions:
-        - device: /dev/vdb
-          layout: true
-          overwrite: false
-          tableType: gpt
-    mounts:
-      - - LABEL=data_disk
-        - /data-small
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -423,20 +394,6 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-    - >-
-      echo "type=83" | sfdisk /dev/vdb &&
-      mkfs -t ext4 /dev/vdb1 &&
-      mkdir -p /data-small &&
-      echo /dev/vdb1 /data-small ext4 defaults 0 2 >> /etc/fstab &&
-      mount /data-small
-    - >-
-      if [ ! -L /var/lib/ ] ;
-        then
-          mv /var/lib/ /var/lib/-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
-          mkdir -p /data-small/var/lib && ln -s /data-small/var/lib /var/lib/ ;
-        else
-          echo "/var/lib/ already symlnk" ;
-      fi
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
@@ -453,12 +410,6 @@ kind: CloudStackMachineTemplate
 metadata:
   name: test-etcd-template-1234567890000
   namespace: 'eksa-system'
-  annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
 spec:
   template:
     spec:
@@ -466,11 +417,3 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
-      diskOffering:
-        name: Small
-        mountPath: /data-small
-        device: /dev/vdb
-        filesystem: ext4
-        label: data_disk
-      affinitygroupids:
-      - etcd-affinity

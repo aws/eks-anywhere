@@ -29,12 +29,16 @@ spec:
   controlPlaneEndpoint:
     host: 1.2.3.4
     port: 6443
-  zones:
-    - network:
-        name: net1
+  failureDomains:
+  - name: availability-zone-0
+    zone:
       name: zone1
-  domain: domain1
-  account: admin
+      network:
+        name: net1
+    domain: domain1
+    account: admin
+    managementApiEndpointRef:
+      name: global
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate

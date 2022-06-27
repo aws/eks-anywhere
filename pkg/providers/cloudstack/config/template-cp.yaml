@@ -35,23 +35,17 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  zones:{{ range $zone := .cloudstackZones }}
-    - network:
-{{- if $zone.Network.Id }}
-        id: {{ $zone.Network.Id}}
-{{- end}}
-{{- if $zone.Network.Name }}
-        name: {{ $zone.Network.Name}}
-{{- end}}
-{{- if $zone.Id }}
-      id: {{ $zone.Id }}
-{{- end}}
-{{- if $zone.Name }}
-      name: {{ $zone.Name }}
-{{- end}}
-{{- end}}
-  {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
-  {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
+  failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
+  - name: {{ $az.Name }}
+    zone:
+      name: {{ $az.Zone.Name }}
+      network:
+        name: {{ $az.Zone.Network.Name }}
+    domain: {{ $az.Domain }}
+    account: {{ $az.Account }}
+    managementApiEndpointRef:
+      name: {{ $az.CredentialsRef }}
+{{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate

@@ -263,6 +263,32 @@ func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_affinity_md.yaml")
 }
 
+func TestProviderGenerateCAPISpecForCreateWithMultiAvailabilityZones(t *testing.T) {
+	clusterSpecManifest := "cluster_availability_zones.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_availability_zones_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_availability_zones_md.yaml")
+}
+
 func TestProviderGenerateCAPISpecForCreateWithMirrorConfig(t *testing.T) {
 	clusterSpecManifest := "cluster_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)
