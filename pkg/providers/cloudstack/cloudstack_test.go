@@ -33,12 +33,12 @@ const (
 
 	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
 	[Global]
-	api-key    = test-key
-	secret-key = test-secret
-	api-url    = http://127.16.0.1:8080/client/api
-	verify-ssl = true
+	verify-ssl = false
+	api-key = test-key1
+	secret-key = test-secret1
+	api-url = http://127.16.0.1:8080/client/api
 	*/
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSB0cnVlCg=="
+	expectedCloudStackCloudConfig = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
 )
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
@@ -62,12 +62,13 @@ func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZonePresent(gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().GetManagementApiEndpoint().AnyTimes().Return("http://127.16.0.1:8080/client/api")
 	return cmk
 }
 
@@ -193,12 +194,15 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, cmk ProviderCmkClient) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
+	cmks := CmkClientMap{}
+	cmks["Global"] = cmk
+
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
-		cmk,
+		cmks,
 		writer,
 		test.FakeNow,
 		false,

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/hashicorp/go-multierror"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
@@ -85,7 +86,7 @@ func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.G
 	return govc.CleanupVms(ctx, clusterName, false)
 }
 
-func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
+func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) (retErr error) {
 	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
@@ -99,12 +100,23 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	if err != nil {
 		return fmt.Errorf("building cmk executable: %v", err)
 	}
-	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, *execConfig)
-	defer cmk.Close(ctx)
+	for _, config := range execConfig.Profiles {
+		cmk := executableBuilder.BuildCmkExecutable(tmpWriter, config)
+		if err := cleanupCloudStackVms(ctx, cmk, clusterName, dryRun); err != nil {
+			retErr = multierror.Append(retErr, err)
+		}
+		cmk.Close(ctx)
+	}
+	return retErr
+}
 
+func cleanupCloudStackVms(ctx context.Context, cmk *executables.Cmk, clusterName string, dryRun bool) error {
 	if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
 		return fmt.Errorf("validating cloudstack connection with cloudmonkey: %v", err)
 	}
 
-	return cmk.CleanupVms(ctx, clusterName, dryRun)
+	if err := cmk.CleanupVms(ctx, clusterName, dryRun); err != nil {
+		return fmt.Errorf("cleaning up VMs with cloudmonkey: %v", err)
+	}
+	return nil
 }

@@ -201,20 +201,20 @@ type ProviderKubectlClient interface {
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClients CmkClientMap, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
-		providerCmkClient,
+		providerCmkClients,
 		writer,
 		now,
 		skipIpCheck,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClients CmkClientMap, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -240,7 +240,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 			now:                         now,
 		},
 		skipIpCheck: skipIpCheck,
-		validator:   NewValidator(providerCmkClient),
+		validator:   NewValidator(providerCmkClients),
 	}
 }
 
@@ -361,12 +361,17 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.ManagementUrl) <= 0 {
-		return errors.New("cloudstack management api url is not set or is empty")
+	if len(execConfig.Profiles) <= 0 {
+		return errors.New("cloudstack instances are not defined")
 	}
-	if err := p.validateManagementApiEndpoint(execConfig.ManagementUrl); err != nil {
-		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is invalid")
+
+	for _, instance := range execConfig.Profiles {
+		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
+			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid",
+				instance.Name, instance.ManagementUrl)
+		}
 	}
+
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
@@ -375,22 +380,26 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
-func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-
-	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-
-	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
+func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
+	if err := p.validator.validateCloudStackAccess(ctx, p.datacenterConfig); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
 		return err
 	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.validateEnv(ctx); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
+		return fmt.Errorf("failed cluster spec validation: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
@@ -424,28 +433,19 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
-		return err
-	}
-	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
-		return err
-	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
-		return err
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
+		return fmt.Errorf("failed cluster spec validation: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForUpgrade(); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
-	if err != nil {
+	if err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec); err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
 	return nil

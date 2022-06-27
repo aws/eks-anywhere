@@ -19,23 +19,41 @@ import (
 )
 
 const (
-	cmkConfigFileName = "cmk_tmp.ini"
-	accountName       = "account1"
-	rootDomain        = "ROOT"
-	rootDomainId      = "5300cdac-74d5-11ec-8696-c81f66d3e965"
-	domain            = "foo/domain1"
-	domainName        = "domain1"
-	domainId          = "7700cdac-74d5-11ec-8696-c81f66d3e965"
-	domain2           = "foo/bar/domain1"
-	domain2Name       = "domain1"
-	domain2Id         = "8800cdac-74d5-11ec-8696-c81f66d3e965"
-	zoneId            = "4e3b338d-87a6-4189-b931-a1747edeea8f"
+	cmkConfigFileName  = "cmk_test_name.ini"
+	cmkConfigFileName2 = "cmk_test_name_2.ini"
+	accountName        = "account1"
+	rootDomain         = "ROOT"
+	rootDomainId       = "5300cdac-74d5-11ec-8696-c81f66d3e965"
+	domain             = "foo/domain1"
+	domainName         = "domain1"
+	domainId           = "7700cdac-74d5-11ec-8696-c81f66d3e965"
+	domain2            = "foo/bar/domain1"
+	domain2Name        = "domain1"
+	domain2Id          = "8800cdac-74d5-11ec-8696-c81f66d3e965"
+	zoneId             = "4e3b338d-87a6-4189-b931-a1747edeea8f"
 )
 
 var execConfig = decoder.CloudStackExecConfig{
-	ApiKey:        "test",
-	SecretKey:     "test",
-	ManagementUrl: "http://1.1.1.1:8080/client/api",
+	Profiles: []decoder.CloudStackProfileConfig{
+		{
+			Name:          "test_name",
+			ApiKey:        "test",
+			SecretKey:     "test",
+			ManagementUrl: "http://1.1.1.1:8080/client/api",
+		},
+	},
+}
+
+var execConfigWithMultipleProfiles = decoder.CloudStackExecConfig{
+	Profiles: []decoder.CloudStackProfileConfig{
+		execConfig.Profiles[0],
+		{
+			Name:          "test_name_2",
+			ApiKey:        "test_2",
+			SecretKey:     "test_2",
+			ManagementUrl: "http://1.1.1.1:8080/client/api_2",
+		},
+	},
 }
 
 var zones = []v1alpha1.CloudStackZone{
@@ -93,8 +111,33 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	c := executables.NewCmk(executable, writer, execConfig)
+	c := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 	err := c.ValidateCloudStackConnection(ctx)
+	if err != nil {
+		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
+	}
+}
+
+func TestValidateMultipleCloudStackProfiles(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	expectedArgs := []string{"-c", configFilePath, "sync"}
+	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
+	configFilePath2, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName2))
+	expectedArgs2 := []string{"-c", configFilePath2, "sync"}
+	executable.EXPECT().Execute(ctx, expectedArgs2).Return(bytes.Buffer{}, nil)
+
+	c := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles[0])
+	err := c.ValidateCloudStackConnection(ctx)
+	if err != nil {
+		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
+	}
+	c = executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles[1])
+	err = c.ValidateCloudStackConnection(ctx)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
 	}
@@ -109,7 +152,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
-	c := executables.NewCmk(executable, writer, execConfig)
+	c := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 	err := c.ValidateCloudStackConnection(ctx)
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
@@ -223,7 +266,7 @@ func TestCmkCleanupVms(t *testing.T) {
 				executable.EXPECT().Execute(ctx, argsList).
 					Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			}
-			cmk := executables.NewCmk(executable, writer, execConfig)
+			cmk := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return
@@ -404,7 +447,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonesPresent(ctx, []v1alpha1.CloudStackZone{zones[0]})
+				_, err := cmk.ValidateZonePresent(ctx, zones[0])
 				return err
 			},
 			cmkResponseError:      nil,
@@ -420,7 +463,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceId.Id),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonesPresent(ctx, []v1alpha1.CloudStackZone{zones[2]})
+				_, err := cmk.ValidateZonePresent(ctx, zones[2])
 				return err
 			},
 			cmkResponseError:      nil,
@@ -436,7 +479,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonesPresent(ctx, zones)
+				_, err := cmk.ValidateZonePresent(ctx, zones[0])
 				return err
 			},
 			cmkResponseError:      nil,
@@ -452,7 +495,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonesPresent(ctx, zones)
+				_, err := cmk.ValidateZonePresent(ctx, zones[0])
 				return err
 			},
 			cmkResponseError:      nil,
@@ -468,7 +511,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "networks", fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName), fmt.Sprintf("zoneid=\"%s\"", "TEST_RESOURCE"),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2], []v1alpha1.CloudStackResourceIdentifier{}, accountName, false)
+				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2].Network, zones[2].Id, accountName, false)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -483,7 +526,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "networks", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName), fmt.Sprintf("zoneid=\"%s\"", "TEST_RESOURCE"),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateNetworkPresent(ctx, domainId, zones[3], []v1alpha1.CloudStackResourceIdentifier{}, accountName, false)
+				return cmk.ValidateNetworkPresent(ctx, domainId, zones[3].Network, zones[3].Id, accountName, false)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -498,7 +541,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "networks", fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName), fmt.Sprintf("zoneid=\"%s\"", "TEST_RESOURCE"),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2], []v1alpha1.CloudStackResourceIdentifier{}, accountName, false)
+				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2].Network, zones[2].Id, accountName, false)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -513,7 +556,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "networks", fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName), fmt.Sprintf("zoneid=\"%s\"", "TEST_RESOURCE"),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2], []v1alpha1.CloudStackResourceIdentifier{}, accountName, false)
+				return cmk.ValidateNetworkPresent(ctx, domainId, zones[2].Network, zones[2].Id, accountName, false)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -851,7 +894,7 @@ func TestCmkListOperations(t *testing.T) {
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, tt.argumentsExecCall).
 				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
-			cmk := executables.NewCmk(executable, writer, execConfig)
+			cmk := executables.NewCmk(executable, writer, execConfig.Profiles[0])
 			err := tt.cmkFunc(*cmk, ctx)
 			if tt.wantErr && err != nil || !tt.wantErr && err == nil {
 				return

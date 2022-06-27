@@ -19,6 +19,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1

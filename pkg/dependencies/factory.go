@@ -50,7 +50,7 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
-	Cmk                       *executables.Cmk
+	Cmks                      map[string]*executables.Cmk
 	SnowAwsClient             aws.Clients
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
@@ -266,12 +266,17 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			cmkClientMap := cloudstack.CmkClientMap{}
+			for name, cmk := range f.dependencies.Cmks {
+				cmkClientMap[name] = cmk
+			}
+
 			f.dependencies.Provider = cloudstack.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
 				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
+				cmkClientMap,
 				f.dependencies.Writer,
 				time.Now,
 				skipIpCheck,
@@ -414,16 +419,21 @@ func (f *Factory) WithCmk() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Cmk != nil {
+		if f.dependencies.Cmks != nil {
 			return nil
 		}
+		f.dependencies.Cmks = map[string]*executables.Cmk{}
+
 		execConfig, err := decoder.ParseCloudStackSecret()
 		if err != nil {
 			return fmt.Errorf("building cmk executable: %v", err)
 		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
-		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+		for _, profileConfig := range execConfig.Profiles {
+			cmk := f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, profileConfig)
+			f.dependencies.Cmks[profileConfig.Name] = cmk
+			f.dependencies.closers = append(f.dependencies.closers, cmk)
+		}
 
 		return nil
 	})
