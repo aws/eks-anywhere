@@ -108,6 +108,11 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 
 	e.T.Cleanup(func() {
 		e.CleanupVms()
+
+		tinkerbellCIEnvironment := os.Getenv(TinkerbellCIEnvironment)
+		if e.Provider.Name() == TinkerbellProviderName && tinkerbellCIEnvironment == "true" {
+			e.CleanupDockerEnvironment()
+		}
 	})
 
 	return e
@@ -610,6 +615,13 @@ func (e *ClusterE2ETest) CleanupVms() {
 	if err := e.Provider.CleanupVMs(e.ClusterName); err != nil {
 		e.T.Logf("failed to clean up VMs: %v", err)
 	}
+}
+
+func (e *ClusterE2ETest) CleanupDockerEnvironment() {
+	e.T.Logf("cleanup kind enviornment...")
+	e.Run("kind", "get", "clusters", "|", "xargs", "-t", "-n1", "kind", "delete", "cluster", "--name")
+	e.T.Logf("cleanup docker enviornment...")
+	e.Run("docker", "rm", "-vf", "$(docker ps -a -q)")
 }
 
 func shouldCleanUpVms() bool {

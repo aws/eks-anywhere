@@ -19,6 +19,7 @@ const (
 	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
 	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
 )
 
 var requiredTinkerbellEnvVars = []string{
