@@ -265,7 +265,7 @@ This use case is to manually import vulnerability database to Harbor trivy when 
     kubectl edit statefulsets/harbor-helm-trivy
     ```
 
-1. Download vulnerability database to your local host
+1. Download the vulnerability database to your local host
 
     Please follow [oras installation instruction](https://oras.land/cli/).
     ```bash
