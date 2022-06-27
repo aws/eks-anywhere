@@ -41,7 +41,7 @@ require (
 	k8s.io/client-go v0.23.4
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/cluster-api v1.1.3
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.5-rc3
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.5.0
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -185,4 +185,5 @@ replace (
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.1.3-custom
+	sigs.k8s.io/cluster-api-provider-cloudstack => /Users/wonkun/dev/pike/cluster-api-provider-cloudstack-joshua
 )

@@ -16,7 +16,7 @@ spec:
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
@@ -26,7 +26,7 @@ spec:
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: {{.clusterName}}
@@ -47,7 +47,7 @@ spec:
       name: {{ $az.CredentialsRef }}
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -121,7 +121,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
@@ -486,11 +486,11 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}

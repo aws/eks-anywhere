@@ -16,11 +16,11 @@ spec:
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: test
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: test
@@ -40,7 +40,7 @@ spec:
     managementApiEndpointRef:
       name: global
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
@@ -61,7 +61,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:

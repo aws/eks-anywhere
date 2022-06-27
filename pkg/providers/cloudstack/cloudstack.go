@@ -381,6 +381,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	p.datacenterConfig.SetDefaults()
 	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
@@ -429,6 +430,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	p.datacenterConfig.SetDefaults()
 	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
 		return err
@@ -630,23 +632,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(sharedExtraArgs)
 	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
-	availabilityZones := []v1alpha1.CloudStackAvailabilityZone{}
-	for i, zone := range datacenterConfigSpec.Zones {
-		az := v1alpha1.CloudStackAvailabilityZone{
-			Name: fmt.Sprintf("availability-zone-%d", i),
-			Zone: v1alpha1.CloudStackZone{
-				Name: zone.Name,
-				Network: v1alpha1.CloudStackResourceIdentifier{
-					Name: zone.Network.Name,
-				},
-			},
-			Domain:         datacenterConfigSpec.Domain,
-			Account:        datacenterConfigSpec.Account,
-			CredentialsRef: "global",
-		}
-		availabilityZones = append(availabilityZones, az)
-	}
-	availabilityZones = append(availabilityZones, datacenterConfigSpec.AvailabilityZones...)
 
 	values := map[string]interface{}{
 		"clusterName":                                  clusterSpec.Cluster.Name,
@@ -666,7 +651,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackAvailabilityZones":                  availabilityZones,
+		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -737,9 +722,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		for i, az := range datacenterConfigSpec.AvailabilityZones {
+			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
+				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+			}
 		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -824,9 +810,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		for i, az := range datacenterConfigSpec.AvailabilityZones {
+			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
+				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+			}
 		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
