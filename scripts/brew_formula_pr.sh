@@ -44,9 +44,9 @@ then
   exit 1
 fi
 
-LATEST_VERSION=$(echo $(./$BREW_UPDATE_SCRIPT))
+LATEST_VERSION=$(echo $(/home/prow/go/src/github.com/aws/eks-anywhere/scripts/$BREW_UPDATE_SCRIPT))
 
-cd ../../${REPO}
+cd ${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}
 git config --global push.default current
 git config user.name "EKS Anywhere Brew Update PR Bot"
 git config user.email "aws-model-rocket-bots+eksbrewprbot@amazon.com"
