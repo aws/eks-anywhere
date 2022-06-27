@@ -52,8 +52,8 @@ git config user.name "EKS Anywhere Brew Update PR Bot"
 git config user.email "aws-model-rocket-bots+eksbrewprbot@amazon.com"
 git remote -v
 
-git remote set-url origin git@github.com:${ORIGIN_ORG}/${REPO}.git
-git remote set-url upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
+git remote add origin git@github.com:${ORIGIN_ORG}/${REPO}.git
+git remote add upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
 
 PR_TITLE="Update eks-anywhere formula for ${LATEST_VERSION}"
 COMMIT_MESSAGE="[PR BOT] Update eks-anywhere brew formula for ${LATEST_VERSION}"

@@ -40,7 +40,7 @@ latest_release_version="${latest_release_version:1}"
 export VERSION=$latest_release_version
 
 EKSA_TEMPLATE="eks-anywhere.rb.tmpl"
-EKSA_FORMULA="{SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere.rb"
+EKSA_FORMULA="${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere.rb"
 
 if [ ! -f "$EKSA_TEMPLATE" ]
 then
