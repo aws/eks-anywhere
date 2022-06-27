@@ -6,6 +6,8 @@ date: 2017-01-05
 description: >
   How to perform a cluster version upgrade
 ---
+> **_NOTE_**: Cluster upgrade is supported for vSphere clusters, but is not yet available for Bare Metal clusters
+>
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
