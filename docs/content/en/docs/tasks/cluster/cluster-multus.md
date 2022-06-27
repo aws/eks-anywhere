@@ -1,6 +1,6 @@
 ---
 title: "Multus CNI plugin configuration"
-linkTitle: "Multus CNI"
+linkTitle: "Add Multus CNI plugin"
 weight: 21
 description: >
  EKS Anywhere configuration for Multus CNI plugin
@@ -16,7 +16,7 @@ In Kubernetes, each pod has only one network interface by default, other than lo
 With Multus, you can create multi-homed pods that have multiple interfaces.
 Multus acts a as ‘meta’ plugin that can call other CNI plugins to configure additional interfaces.
 
-## Pre-Requisite
+## Pre-Requisites
 
 Given that Multus CNI is used to create pods with multiple network interfaces, the cluster machines that these pods run on need to have multiple network interfaces attached and configured.
 The interfaces on multi-homed pods need to map to these interfaces on the machines.
@@ -24,16 +24,16 @@ The interfaces on multi-homed pods need to map to these interfaces on the machin
 For Bare Metal clusters using the Tinkerbell provider, the cluster machines need to have multiple network interfaces cabled in and appropriate network configuration put in place during machine provisioning.
 
 
-## Overview of Multus Setup on EKS Anywhere Worker Nodes
+## Overview of Multus setup
 
 The following diagrams show the result of two applications (app1 and app2) running in pods that use the Multus plugin to communicate over two network interfaces (eth0 and net1) from within the pods.
-The Multus plugin uses two network interfaces on the node (eth0 and eth1) to provide communications outside of the node.
+The Multus plugin uses two network interfaces on the worker node (eth0 and eth1) to provide communications outside of the node.
 
 ![Multus allows pods to have multiple network interfaces](/images/multus.png)
 
 Following the procedure below to set up Multus as illustrated in the previous diagrams.
 
-## Install and Configure Multus on EKS Anywhere Cluster
+## Install and configure Multus
 
 Deploying Multus using a Daemonset will spin up pods that install a Multus binary and configure Multus for usage in every node in the cluster.
 Here are the steps for doing that.
@@ -62,7 +62,7 @@ Here are the steps for doing that.
     ```bash
     kubectl get pods -A | grep multus
     ```
-    Output should be similar to the following:
+    Output:
 
     ```
     kube-system kube-multus-ds-bmfjs     1/1      Running      0      3d1h
@@ -99,6 +99,7 @@ spec:
          "gateway": "198.17.0.1"
       }
  }'
+EOF
 ```
 
 Note that `eth1` is used as the master parameter.
@@ -132,6 +133,7 @@ kubectl describe network-attachment-definitions ipvlan-conf
       - name: app1
         command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
         image: alpine
+    EOF
     ```
 
 1. Create a sample application 2 (app2) with the network annotation created in the previous step:
@@ -149,6 +151,7 @@ kubectl describe network-attachment-definitions ipvlan-conf
       - name: app2
         command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
         image: alpine
+    EOF
     ```
 
 1. Verify that the additional interfaces were created on these application pods using the defined network attachment:
@@ -156,6 +159,7 @@ kubectl describe network-attachment-definitions ipvlan-conf
     ```bash
     kubectl exec -it app1 -- ip a                            
     ```
+    Output:
 
     ```
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
@@ -181,7 +185,8 @@ kubectl describe network-attachment-definitions ipvlan-conf
     ```bash
     kubectl exec -it app2 -- ip a
     ```
-    
+
+    Output:
     ```
     1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN qlen 1000
         link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -203,24 +208,28 @@ kubectl describe network-attachment-definitions ipvlan-conf
            valid_lft forever preferred_lft forever
     ```
 
-    Note that both pods got the new interface net1.
-    Also, the additional network interface on each pod got assigned an IP address out of the range specified by the Network Attachment Definition.
+    Note that both pods got the new interface net1. Also, the additional network interface on each pod got assigned an IP address out of the range specified by the Network Attachment Definition.
 
-    1. Test the network connectivity across these pods for Multus interfaces:
+1. Test the network connectivity across these pods for Multus interfaces:
 
     ```bash
     kubectl exec -it app1 -- ping -I net1 198.17.0.201 
     ```
+
+    Output:
     ```
     PING 198.17.0.201 (198.17.0.201): 56 data bytes
     64 bytes from 198.17.0.201: seq=0 ttl=64 time=0.074 ms
     64 bytes from 198.17.0.201: seq=1 ttl=64 time=0.077 ms
     64 bytes from 198.17.0.201: seq=2 ttl=64 time=0.078 ms
     64 bytes from 198.17.0.201: seq=3 ttl=64 time=0.077 ms
+    ```
 
     ```bash
     kubectl exec -it app2 -- ping -I net1 198.17.0.200
     ```
+
+    Output:
     ```
     PING 198.17.0.200 (198.17.0.200): 56 data bytes
     64 bytes from 198.17.0.200: seq=0 ttl=64 time=0.074 ms
