@@ -71,6 +71,7 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 	}
 
 	e.testEnvVars[tinkerbellInventoryCsvFilePathEnvVar] = inventoryFilePath
+	e.testEnvVars[e2etests.TinkerbellCIEnvironment] = "true"
 
 	return nil
 }
