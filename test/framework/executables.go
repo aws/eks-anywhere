@@ -53,7 +53,7 @@ func buildDocker(t *testing.T) *executables.Docker {
 
 func buildHelm(t *testing.T) *executables.Helm {
 	ctx := context.Background()
-	helm := executableBuilder(t, ctx).BuildHelmExecutable()
+	helm := executableBuilder(t, ctx).BuildHelmExecutable(executables.WithInsecure())
 
 	return helm
 }
