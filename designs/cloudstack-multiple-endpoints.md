@@ -84,7 +84,7 @@ type CloudStackAvailabilityZone struct {
     // Name would be used as a unique identifier for each availability zone
     Name string `json:"name"`
     // CredentialRef would be used to match a secret in the eksa-system namespace
-    CredentialRef string `json:"credentialRef"
+    CredentialsRef string `json:"credentialsRef"
     // Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
     // This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
     // The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
