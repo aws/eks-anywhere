@@ -10,7 +10,6 @@ This is a generic template with detailed descriptions below for reference.
 The following additional optional configuration can also be included:
 
 * [CNI]({{< relref "optional/cni.md" >}})
-* [multus]({{< relref "optional/multus.md" >}})
 
 
 ```yaml
