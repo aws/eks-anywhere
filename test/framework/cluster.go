@@ -619,9 +619,9 @@ func (e *ClusterE2ETest) CleanupVms() {
 
 func (e *ClusterE2ETest) CleanupDockerEnvironment() {
 	e.T.Logf("cleanup kind enviornment...")
-	e.Run("kind", "get", "clusters", "|", "xargs", "-t", "-n1", "kind", "delete", "cluster", "--name")
+	e.Run("kind", "delete", "clusters", "--all", "||", "true")
 	e.T.Logf("cleanup docker enviornment...")
-	e.Run("docker", "rm", "-vf", "$(docker ps -a -q)")
+	e.Run("docker", "rm", "-vf", "$(docker ps -a -q)", "||", "true")
 }
 
 func shouldCleanUpVms() bool {

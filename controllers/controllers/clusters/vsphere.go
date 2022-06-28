@@ -267,7 +267,7 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 
 		v.Log.Info("About to apply CNI")
 
-		helm := executables.NewHelm(executables.NewExecutable("helm"))
+		helm := executables.NewHelm(executables.NewExecutable("helm"), executables.WithInsecure())
 		cilium := cilium.NewCilium(nil, helm)
 
 		if err != nil {

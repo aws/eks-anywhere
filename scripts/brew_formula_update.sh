@@ -12,7 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+REPO="homebrew-tap"
+ORIGIN_ORG="eks-anywhere-brew-pr-bot"
+UPSTREAM_ORG="aws"
 YQ_LATEST_RELEASE_URL="https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64"
 
 wget -qO /usr/local/bin/yq $YQ_LATEST_RELEASE_URL
@@ -37,7 +40,7 @@ latest_release_version="${latest_release_version:1}"
 export VERSION=$latest_release_version
 
 EKSA_TEMPLATE="eks-anywhere.rb.tmpl"
-EKSA_FORMULA="../../homebrew-tap/Formula/eks-anywhere.rb"
+EKSA_FORMULA="${SCRIPT_ROOT}/../../../${ORIGIN_ORG}/${REPO}/Formula/eks-anywhere.rb"
 
 if [ ! -f "$EKSA_TEMPLATE" ]
 then

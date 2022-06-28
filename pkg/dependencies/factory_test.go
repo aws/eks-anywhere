@@ -29,8 +29,23 @@ type factoryTest struct {
 	cliConfig             config.CliConfig
 }
 
-func newTest(t *testing.T) *factoryTest {
-	clusterConfigFile := "testdata/cluster_vsphere.yaml"
+type provider string
+
+const (
+	vsphere    provider = "vsphere"
+	tinkerbell provider = "tinkerbell"
+)
+
+func newTest(t *testing.T, p provider) *factoryTest {
+	var clusterConfigFile string
+	switch p {
+	case vsphere:
+		clusterConfigFile = "testdata/cluster_vsphere.yaml"
+	case tinkerbell:
+		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
+	default:
+		t.Fatalf("Not a valid provider: %v", p)
+	}
 	// Disable tools image executable for the tests
 	if err := os.Setenv("MR_TOOLS_DISABLE", "true"); err != nil {
 		t.Fatal(err)
@@ -44,8 +59,8 @@ func newTest(t *testing.T) *factoryTest {
 	}
 }
 
-func TestFactoryBuildWithProvider(t *testing.T) {
-	tt := newTest(t)
+func TestFactoryBuildWithProvidervSphere(t *testing.T) {
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
@@ -56,8 +71,22 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 	tt.Expect(deps.DockerClient).To(BeNil(), "it only builds deps for vsphere")
 }
 
+func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
+	tt := newTest(t, tinkerbell)
+	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Provider).NotTo(BeNil())
+	tt.Expect(deps.HelmSecure).NotTo(BeNil())
+	tt.Expect(deps.DockerClient).NotTo(BeNil())
+	tt.Expect(deps.HelmInsecure).To(BeNil(), "should not build HelmInsecure")
+}
+
 func TestFactoryBuildWithClusterManager(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithCliConfig(&tt.cliConfig).
@@ -69,7 +98,7 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 }
 
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithClusterManager(tt.clusterSpec.Cluster).
@@ -84,7 +113,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithBootstrapper().
@@ -122,15 +151,15 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 }
 
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithRegistryMirror("1.2.3.4:443").
-		WithHelm().
+		WithHelmInsecure().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.Helm).NotTo(BeNil())
+	tt.Expect(deps.HelmInsecure).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithPackageInstaller(t *testing.T) {
@@ -153,10 +182,10 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 			},
 		},
 	}
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
-		WithHelm().
+		WithHelmInsecure().
 		WithKubectl().
 		WithPackageInstaller(spec, "/test/packages.yaml").
 		Build(context.Background())
@@ -165,10 +194,10 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 }
 
 func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
-		WithHelm().
+		WithHelmInsecure().
 		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
 
@@ -177,7 +206,7 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 }
 
 func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		UseExecutableImage("image:1").
 		WithManifestReader().

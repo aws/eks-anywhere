@@ -58,7 +58,8 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
-	Helm                      *executables.Helm
+	HelmSecure                *executables.Helm
+	HelmInsecure              *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
@@ -221,7 +222,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter()
+		f.WithDocker().WithKubectl().WithWriter().WithHelmSecure()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -319,7 +320,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
-				f.dependencies.Helm,
+				f.dependencies.HelmSecure,
 				f.dependencies.Kubectl,
 				tinkerbellIp,
 				time.Now,
@@ -576,11 +577,11 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithHelm() *Factory {
+func (f *Factory) WithHelmSecure() *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Helm != nil {
+		if f.dependencies.HelmSecure != nil {
 			return nil
 		}
 
@@ -593,7 +594,31 @@ func (f *Factory) WithHelm() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
+		f.dependencies.HelmSecure = f.executableBuilder.BuildHelmExecutable(opts...)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithHelmInsecure() *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmInsecure != nil {
+			return nil
+		}
+
+		opts := []executables.HelmOpt{executables.WithInsecure()}
+		if f.registryMirror != "" {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		}
+
+		if f.proxyConfiguration != nil {
+			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
+		}
+
+		f.dependencies.HelmInsecure = f.executableBuilder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -608,9 +633,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelm()
+		f.WithKubectl().WithHelmInsecure()
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.HelmInsecure)
 		}
 	}
 
@@ -803,14 +828,14 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 }
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelm().WithKubectl()
+	f.WithHelmInsecure().WithKubectl()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
-			f.dependencies.Helm,
+			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
 			spec,
 			packagesLocation,
@@ -822,7 +847,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
 	if registryName != "" {
-		f.WithHelm()
+		f.WithHelmInsecure()
 	} else {
 		f.WithManifestReader()
 	}
@@ -834,7 +859,7 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 
 		if registryName != "" {
 			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
-				f.dependencies.Helm,
+				f.dependencies.HelmInsecure,
 				registryName,
 			)
 		} else {
