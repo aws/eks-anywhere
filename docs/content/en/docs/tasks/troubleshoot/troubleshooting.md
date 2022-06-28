@@ -8,7 +8,16 @@ aliases:
    - /docs/tasks/troubleshoot/_troubleshooting
 ---
 
-This guide covers some generic troubleshooting techniques and then cover more detailed examples. You may want to search this document for a fragment of the error you are seeing.
+
+This guide covers EKS Anywhere troubleshooting. It is divided into the following sections:
+
+* [General troubleshooting]({{< relref "#general-troubleshooting" >}})
+* [Bare Metal Troubleshooting]({{< relref "#bare-metal-troubleshooting" >}})
+* [vSphere Troubleshooting]({{< relref "#vsphere-troubleshooting" >}})
+
+You may want to search this document for a fragment of the error you are seeing.
+
+## General troubleshooting
 
 ### Increase eksctl anywhere output
 
@@ -28,6 +37,7 @@ sudo usermod -a -G docker $USER
 Now you need to log out and back in to get the new group permissions.
 
 ### Minimum requirements for docker version have not been met
+
 ```
 Error: failed to validate docker: minimum requirements for docker version have not been met. Install Docker version 20.x.x or above
 ```
@@ -62,29 +72,6 @@ All images needed for EKS Anywhere are public and do not need authentication. Ol
 Remove cached credentials by running:
 ```sh
 docker logout public.ecr.aws
-```
-
-### EKSA_VSPHERE_USERNAME is not set or is empty
-```
-❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", "remediation": ""}
-```
-Two environment variables need to be set and exported in your environment to create clusters successfully.
-Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
-```
-export EKSA_VSPHERE_USERNAME='<vSphere-username>'
-export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
-```
-
-### vSphere authentication failed
-```
-❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "error validating vCenter setup: vSphere authentication failed: govc: ServerFaultCode: Cannot complete login due to an incorrect user name or password.\n", "remediation": ""}
-Error: failed to create cluster: validations failed
-```
-Two environment variables need to be set and exported in your environment to create clusters successfully.
-Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
-```
-export EKSA_VSPHERE_USERNAME='<vSphere-username>'
-export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
 ```
 
 ### error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
@@ -138,19 +125,147 @@ If you don't have any other docker containers running you may want to run `docke
 You may want to restart Docker.
 To restart Docker on Ubuntu `sudo systemctl restart docker`.
 
-### Issues detected with selected template
-```
-Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
-```
-Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
-Make sure your ESXi hosts are also up to date.
-
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
 Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
 ```
 This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
+
+
+### The connection to the server localhost:8080 was refused 
+```
+Performing provider setup and validations
+Creating new bootstrap cluster
+Installing cluster-api providers on bootstrap cluster
+Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
+Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
+```
+This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+
+### Generic cluster unavailable
+Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
+```
+kubectl get pods -A --kubeconfig=<kubeconfig>
+kubectl get nodes -A --kubeconfig=<kubeconfig>
+kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
+....
+```
+Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
+
+## Bare Metal troubleshooting
+
+### Bootstrap cluster fails to come up
+
+```
+Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
+, try rerunning with —force-cleanup to force delete previously created bootstrap cluster
+```
+
+The cluster already exists, so you can delete the old one:
+
+```bash
+kind delete cluster --name cluster-name
+```
+
+### Creating new workload cluster hangs or fails
+
+Cluster creation appears to be hung waiting for the Control Plane to be ready.
+If the CLI is hung on this message for over 30 mins, something likely failed during the OS provisioning:
+
+```
+Waiting for Control Plane to be ready
+```
+
+Or if cluster creation times out on this step and fails with the following messages:
+
+```
+Support bundle archive created {"path": "support-bundle-2022-06-28T00_41_24.tar.gz"}
+Analyzing support bundle {"bundle": "CLUSTER_NAME/generated/bootstrap-cluster-2022-06-28T00:41:24Z-bundle.yaml", "archive": "support-bundle-2022-06-28T00_41_24.tar.gz"}
+Analysis output generated {"path": "CLUSTER_NAME/generated/bootstrap-cluster-2022-06-28T00:43:40Z-analysis.yaml"}
+collecting workload cluster diagnostics
+Error: waiting for workload cluster control plane to be ready: executing wait: error: timed out waiting for the condition on clusters/CLUSTER_NAME
+```
+In either of those cases, the following steps can help you determine the problem:
+
+1. Export the kind cluster’s kubeconfig file:
+
+    ```bash
+    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+    ```
+1. If you have provided BMC information:
+
+    * Check all of the machines that the EKS Anywhere CLI has picked up from the pool of hardware in the CSV file:
+
+        ```bash
+        kubectl get machines -A
+        ```
+    * Check if those nodes are powered on. If any of those nodes are not powered on after a while then it could be possible that BMC credentials are invalid. You can verify it by checking the logs:
+
+        ```bash
+        kubectl get bmt -n eksa-system
+        kubectl get bmt <bmt-name> -n eksa-system -o yaml
+        ```
+
+    BMC credentials are incorrect if the message in the bmt log says something like `Failed to connect to BMC: failed to open connection to BMC`. You might have enable “IPMI over LAN” for that machine if it says something like “failed to perform OneTimeBootDeviceAction”
+
+1. If the machine is powered on but you see `linuxkit is not running`, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
+
+    * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. 
+    * Check the boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
+
+        ```bash 
+        docker logs boots
+        ```
+
+1. If you see `linuxkit is running*, click enter in the BMC console to access the linuxkit terminal. Run the following commands to check if the tink-worker is running.
+
+    ```bash
+    docker logs <container-id>
+    docker ps -a
+    ```
+
+1. If the machine has already started provisioning the OS and it’s in irrecoverable state, get the workflow of the provisioning/provisioned machine using:
+
+    ```bash
+    kubectl get workflow -n eksa-system
+    kubectl get workflow <workflow-name> -n eksa-system -o yaml
+    ```
+
+    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec. 
+
+
+## vSphere troubleshooting
+
+### EKSA_VSPHERE_USERNAME is not set or is empty
+```
+❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", "remediation": ""}
+```
+Two environment variables need to be set and exported in your environment to create clusters successfully.
+Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
+```
+export EKSA_VSPHERE_USERNAME='<vSphere-username>'
+export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
+```
+
+### vSphere authentication failed
+```
+❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "error validating vCenter setup: vSphere authentication failed: govc: ServerFaultCode: Cannot complete login due to an incorrect user name or password.\n", "remediation": ""}
+Error: failed to create cluster: validations failed
+```
+Two environment variables need to be set and exported in your environment to create clusters successfully.
+Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
+```
+export EKSA_VSPHERE_USERNAME='<vSphere-username>'
+export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
+```
+
+### Issues detected with selected template
+```
+Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
+```
+Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
+Make sure your ESXi hosts are also up to date.
 
 ### Timed out waiting for the condition on deployments/capv-controller-manager
 ```
@@ -185,27 +300,6 @@ kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 ```
 Make sure you are choosing an ip in your network range that does not conflict with other VMs.
 https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
-
-
-### The connection to the server localhost:8080 was refused 
-```
-Performing provider setup and validations
-Creating new bootstrap cluster
-Installing cluster-api providers on bootstrap cluster
-Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
-Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
-```
-This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
-
-### Generic cluster unavailable
-Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
-```
-kubectl get pods -A --kubeconfig=<kubeconfig>
-kubectl get nodes -A --kubeconfig=<kubeconfig>
-kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
-....
-```
-Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
 
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.
