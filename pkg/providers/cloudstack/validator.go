@@ -14,8 +14,8 @@ import (
 )
 
 type Validator struct {
-	cmks              CmkClientMap
-	availabilityZones []localAvailabilityZone
+	cmks                   CmkClientMap
+	localAvailabilityZones []localAvailabilityZone
 }
 
 // Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java
@@ -32,8 +32,8 @@ var restrictedUserCustomDetails = [...]string{
 
 func NewValidator(cmks CmkClientMap) *Validator {
 	return &Validator{
-		cmks:              cmks,
-		availabilityZones: []localAvailabilityZone{},
+		cmks:                   cmks,
+		localAvailabilityZones: []localAvailabilityZone{},
 	}
 }
 
@@ -59,25 +59,25 @@ type ProviderCmkClient interface {
 type CmkClientMap map[string]ProviderCmkClient
 
 func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	azNamesToCheck := []string{}
+	refNamesToCheck := []string{}
 	if len(datacenterConfig.Spec.Domain) > 0 {
-		azNamesToCheck = append(azNamesToCheck, decoder.CloudStackGlobalAZ)
+		refNamesToCheck = append(refNamesToCheck, decoder.CloudStackGlobalAZ)
 	}
 	for _, az := range datacenterConfig.Spec.AvailabilityZones {
-		azNamesToCheck = append(azNamesToCheck, az.CredentialsRef)
+		refNamesToCheck = append(refNamesToCheck, az.CredentialsRef)
 	}
 
-	for _, azName := range azNamesToCheck {
-		cmk, ok := v.cmks[azName]
+	for _, refName := range refNamesToCheck {
+		cmk, ok := v.cmks[refName]
 		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for availability zone %s", azName)
+			return fmt.Errorf("cannot find CloudStack profile for credentialsRef %s", refName)
 		}
 		if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
-			return fmt.Errorf("failed validating connection to cloudstack %s: %v", azName, err)
+			return fmt.Errorf("failed validating connection to cloudstack %s: %v", refName, err)
 		}
 	}
 
-	logger.MarkPass("Connected to", "servers", azNamesToCheck)
+	logger.MarkPass("Connected to", "servers", refNamesToCheck)
 	return nil
 }
 
@@ -86,7 +86,8 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		return err
 	}
 
-	for _, az := range v.availabilityZones {
+	for _, az := range v.localAvailabilityZones {
+		fmt.Printf("az: %+v\n", az.CloudStackAvailabilityZone)
 		_, err := getHostnameFromUrl(az.ManagementApiEndpoint)
 		if err != nil {
 			return fmt.Errorf("checking management api endpoint: %v", err)
@@ -94,12 +95,22 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 
 		cmk, ok := v.cmks[az.CredentialsRef]
 		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for availability zone %s", az.CredentialsRef)
+			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
 		}
 		endpoint := cmk.GetManagementApiEndpoint()
 		if endpoint != az.ManagementApiEndpoint {
 			return fmt.Errorf("cloudstack secret management url (%s) differs from cluster spec management url (%s)",
 				endpoint, az.ManagementApiEndpoint)
+		}
+
+		domain, err := cmk.ValidateDomainPresent(ctx, az.Domain)
+		if err != nil {
+			return err
+		}
+		az.DomainId = domain.Id
+
+		if err := cmk.ValidateAccountPresent(ctx, az.Account, az.DomainId); err != nil {
+			return err
 		}
 
 		zoneId, err := cmk.ValidateZonePresent(ctx, az.CloudStackAvailabilityZone.Zone)
@@ -125,52 +136,37 @@ func (v *Validator) generateLocalAvailabilityZones(ctx context.Context, datacent
 	}
 
 	if len(datacenterConfig.Spec.Domain) > 0 {
-		cmk, ok := v.cmks[decoder.CloudStackGlobalAZ]
+		_, ok := v.cmks[decoder.CloudStackGlobalAZ]
 		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for availability zone %s", decoder.CloudStackGlobalAZ)
+			return fmt.Errorf("cannot find CloudStack profile named %s for default availability zone", decoder.CloudStackGlobalAZ)
 		}
-		domain, err := cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
-		if err != nil {
-			return err
-		}
-		if err := cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id); err != nil {
-			return err
-		}
-		for _, zone := range datacenterConfig.Spec.Zones {
+		for index, zone := range datacenterConfig.Spec.Zones {
 			availabilityZone := localAvailabilityZone{
 				CloudStackAvailabilityZone: &anywherev1.CloudStackAvailabilityZone{
+					Name:                  fmt.Sprintf("availability-zone-%d", index),
 					CredentialsRef:        decoder.CloudStackGlobalAZ,
 					Domain:                datacenterConfig.Spec.Domain,
 					Account:               datacenterConfig.Spec.Account,
 					ManagementApiEndpoint: datacenterConfig.Spec.ManagementApiEndpoint,
 					Zone:                  zone,
 				},
-				DomainId: domain.Id,
 			}
-			v.availabilityZones = append(v.availabilityZones, availabilityZone)
+			v.localAvailabilityZones = append(v.localAvailabilityZones, availabilityZone)
 		}
 	}
 	for _, az := range datacenterConfig.Spec.AvailabilityZones {
-		cmk, ok := v.cmks[az.CredentialsRef]
+		_, ok := v.cmks[az.CredentialsRef]
 		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for availability zone %s", az.CredentialsRef)
-		}
-		domain, err := cmk.ValidateDomainPresent(ctx, az.Domain)
-		if err != nil {
-			return err
-		}
-		if err := cmk.ValidateAccountPresent(ctx, az.Account, domain.Id); err != nil {
-			return err
+			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
 		}
 		availabilityZone := localAvailabilityZone{
 			CloudStackAvailabilityZone: &az,
-			DomainId:                   domain.Id,
 		}
-		v.availabilityZones = append(v.availabilityZones, availabilityZone)
+		v.localAvailabilityZones = append(v.localAvailabilityZones, availabilityZone)
 	}
 
-	if len(v.availabilityZones) <= 0 {
-		return fmt.Errorf("CloudStackDatacenterConfig domain or availabilityZones is not set or is empty")
+	if len(v.localAvailabilityZones) <= 0 {
+		return fmt.Errorf("CloudStackDatacenterConfig domain or localAvailabilityZones is not set or is empty")
 	}
 	return nil
 }
@@ -286,10 +282,10 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 	}
 
-	for _, az := range v.availabilityZones {
+	for _, az := range v.localAvailabilityZones {
 		cmk, ok := v.cmks[az.CredentialsRef]
 		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for availability zone %s", az.CredentialsRef)
+			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
 		}
 		if err := cmk.ValidateTemplatePresent(ctx, az.DomainId, az.CloudStackAvailabilityZone.Zone.Id, az.Account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)

@@ -519,21 +519,6 @@ func TestCmkListOperations(t *testing.T) {
 			wantResultCount:       1,
 		},
 		{
-			testName:         "listnetworks success on id filter",
-			jsonResponseFile: "testdata/cmk_list_network_singular.json",
-			argumentsExecCall: []string{
-				"-c", configFilePath,
-				"list", "networks", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName), fmt.Sprintf("zoneid=\"%s\"", "TEST_RESOURCE"),
-			},
-			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateNetworkPresent(ctx, domainId, zones[3].Network, zones[3].Id, accountName, false)
-			},
-			cmkResponseError:      nil,
-			wantErr:               false,
-			shouldSecondCallOccur: true,
-			wantResultCount:       1,
-		},
-		{
 			testName:         "listnetworks no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
 			argumentsExecCall: []string{

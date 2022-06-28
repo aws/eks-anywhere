@@ -395,15 +395,15 @@ func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpe
 
 func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
-		return fmt.Errorf("failed cluster spec validation: %v", err)
+		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("setting up SSH keys: %v", err)
 	}
 
 	if clusterSpec.Cluster.IsManaged() {
@@ -434,15 +434,15 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
-		return fmt.Errorf("failed cluster spec validation: %v", err)
+		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForUpgrade(); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("setting up SSH keys: %v", err)
 	}
 
 	if err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec); err != nil {
@@ -454,7 +454,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("validating environment variables: %v", err)
 	}
 	return nil
 }

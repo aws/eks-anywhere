@@ -262,9 +262,6 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error {
 	command := newCmkCommand("list networks")
-	if len(network.Id) > 0 {
-		applyCmkArgs(&command, withCloudStackId(network.Id))
-	}
 	if multipleZone {
 		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
 	}
@@ -432,14 +429,13 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)
 
-	cloudstackPreflightTimeout := defaultCloudStackPreflightTimeout
+	c.config.Timeout = defaultCloudStackPreflightTimeout
 	if timeout, isSet := os.LookupEnv("CLOUDSTACK_PREFLIGHT_TIMEOUT"); isSet {
 		if _, err := strconv.ParseUint(timeout, 10, 16); err != nil {
 			return "", fmt.Errorf("CLOUDSTACK_PREFLIGHT_TIMEOUT must be a number: %v", err)
 		}
-		cloudstackPreflightTimeout = timeout
+		c.config.Timeout = timeout
 	}
-	c.config.Timeout = cloudstackPreflightTimeout
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, fmt.Sprintf(cmkConfigFileNameTemplate, c.config.Name))
 	if err != nil {
 		return "", fmt.Errorf("creating file for cmk config: %v", err)

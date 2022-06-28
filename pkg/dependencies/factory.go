@@ -266,6 +266,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
+			// map[string]*executables.Cmk and map[string]ProviderCmkClient are not compatible so we convert the map manually
 			cmkClientMap := cloudstack.CmkClientMap{}
 			for name, cmk := range f.dependencies.Cmks {
 				cmkClientMap[name] = cmk
@@ -419,7 +420,7 @@ func (f *Factory) WithCmk() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Cmks != nil {
+		if f.dependencies.Cmks != nil && len(f.dependencies.Cmks) > 0 {
 			return nil
 		}
 		f.dependencies.Cmks = map[string]*executables.Cmk{}
