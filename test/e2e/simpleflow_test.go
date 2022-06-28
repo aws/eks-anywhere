@@ -278,6 +278,17 @@ func TestTinkerbellKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes121BottleRocketSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes121ExternalEtcdSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -303,11 +314,37 @@ func TestTinkerbellKubernetes121ThreeReplicasSimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
+func TestTinkerbellKubernetes122BottleRocketThreeReplicasSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
+		framework.WithControlPlaneHardware(3),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes121ThreeWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(3),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes122BottleRocketThreeWorkersSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithControlPlaneHardware(1),
