@@ -70,11 +70,14 @@ Here are other network requirements:
 
 While many different hardware options that meet the criteria listed above should work with EKS Anywhere, the following hardware has been tested and shown to work:
 
-* Dell
-  * Dell PowerEdge R340 (iDRAC 9)
-  * Dell PowerEdge R750 (iDRAC 9)
-  * Dell PowerEdge R740xd (iDRAC 9)
-  * Dell PowerEdge R240 (iDRAC 9)
-* HP
-* Supermicro
-  * SYS-510-M (IPMI 2.0)
+| Bare metal servers  | IPMI  | NIC     | OS      |
+|---------------------|-------|---------|---------|
+| Dell PowerEdge R740 | iDRAC9 |  ?  | Validated with Ubuntu v20.04 |
+| PowerFlex SO Cluster, Dell R640 | iDRAC9 | Mellanox ConnectX-4 LX 25GbE | Validated with Ubuntu v20.04 |
+| Supermicro | IPMI2.0/Redfish API | Intel® Ethernet Controller i350 2x 1GbE | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
+| Dell R240 | iDRAC9 | Broadcom 57414 Dual Port 10/25GbE | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
+| HPE ProLiant DL20 | iLO5 | HPE 361i 1G | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
+| HPE ProLiant DL160 Gen10 | iLO5 | HPE Eth 10/25Gb 2P 640SFP28 A | Validated with Ubuntu v20.04 |
+| Dell PowerEdge R340 | iDRAC9 | Broadcom 57416 Dual Port 10GbE | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
+| HPE ProLiant DL360 | iLO5 | HPE Ethernet 1Gb 4-port 331i | Validated with Ubuntu v20.04 |
+| Lenovo ThinkSystem SR650 V2 | ? | Label 1-4 1B97A | Validated with Ubuntu v20.04 |
