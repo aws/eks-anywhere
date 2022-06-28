@@ -31,7 +31,7 @@ The Multus plugin uses two network interfaces on the worker node (eth0 and eth1)
 
 ![Multus allows pods to have multiple network interfaces](/images/multus.png)
 
-Following the procedure below to set up Multus as illustrated in the previous diagrams.
+Follow the procedure below to set up Multus as illustrated in the previous diagrams.
 
 ## Install and configure Multus
 
