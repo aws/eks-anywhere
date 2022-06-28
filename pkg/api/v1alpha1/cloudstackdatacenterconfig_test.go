@@ -280,3 +280,50 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
 	g.Expect(len(cloudStackDatacenterConfigSpec1.Zones)).To(Equal(len(cloudStackDatacenterConfig.Spec.AvailabilityZones)), "AvailabilityZones count in CloudStackDatacenterConfigSpec not equal to zone count")
 }
+
+func TestCloudStackDatacenterConfigValidate(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+
+	// Spec.Accout validation
+	err := cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.Domain validation
+	cloudStackDatacenterConfig.Spec.Account = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.ManagementApiEndpoint validation
+	cloudStackDatacenterConfig.Spec.Domain = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.Zones validation
+	cloudStackDatacenterConfig.Spec.ManagementApiEndpoint = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.AvailabilityZones validation #1 (Length)
+	cloudStackDatacenterConfig.Spec.Zones = []CloudStackZone{}
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+}
+
+func TestCloudStackDatacenterConfigValidateAfterSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+
+	cloudStackDatacenterConfig.SetDefaults()
+	err := cloudStackDatacenterConfig.Validate()
+	g.Expect(err).To(BeNil())
+
+	// Spec.AvailabilityZones validation #2 (Name uniqueness)
+	cloudStackDatacenterConfig.Spec.AvailabilityZones = append(cloudStackDatacenterConfig.Spec.AvailabilityZones, cloudStackDatacenterConfig.Spec.AvailabilityZones[0])
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+}
