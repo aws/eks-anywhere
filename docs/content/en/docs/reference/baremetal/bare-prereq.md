@@ -66,9 +66,10 @@ Here are other network requirements:
 
 * Ports must be open to the Admin machine and cluster machines as described in [Ports and protocols]({{< relref "../ports/" >}}).
 
-## Hardware suggestions
+## Validated hardware
 
-While many different hardware options that meet the criteria listed above should work with EKS Anywhere, the following hardware has been tested and shown to work:
+Through extensive testing in a variety of on premises customer environments during our beta phase, we expect Amazon EKS Anywhere on bare metal to run on most generic hardware that meets the above requirements.
+In addition, we have collaborated with our hardware original equipment manufacturer (OEM) partners to provide you a list of validated hardware:
 
 | Bare metal servers  | IPMI  | NIC     | OS      |
 |---------------------|-------|---------|---------|
