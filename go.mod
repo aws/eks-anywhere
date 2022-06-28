@@ -185,5 +185,5 @@ replace (
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.1.3-custom
-	sigs.k8s.io/cluster-api-provider-cloudstack => /Users/wonkun/dev/pike/cluster-api-provider-cloudstack-joshua
+	sigs.k8s.io/cluster-api-provider-cloudstack => github.com/rejoshed/cluster-api-provider-cloudstack v0.4.5-rc3.0.20220624225157-3db8cdb06659
 )

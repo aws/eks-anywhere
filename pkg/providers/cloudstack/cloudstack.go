@@ -722,7 +722,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		for i, az := range datacenterConfigSpec.AvailabilityZones {
+		for _, az := range datacenterConfigSpec.AvailabilityZones {
 			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
 				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 			}
@@ -810,7 +810,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		for i, az := range datacenterConfigSpec.AvailabilityZones {
+		for _, az := range datacenterConfigSpec.AvailabilityZones {
 			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
 				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 			}
