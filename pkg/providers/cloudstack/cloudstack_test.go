@@ -657,7 +657,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -672,7 +672,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -687,7 +687,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
@@ -1333,7 +1333,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -1349,7 +1349,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -1365,7 +1365,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestClusterUpgradeNeededNoChanges(t *testing.T) {
