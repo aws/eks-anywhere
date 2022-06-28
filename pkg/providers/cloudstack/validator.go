@@ -87,7 +87,6 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 
 	for _, az := range v.localAvailabilityZones {
-		fmt.Printf("az: %+v\n", az.CloudStackAvailabilityZone)
 		_, err := getHostnameFromUrl(az.ManagementApiEndpoint)
 		if err != nil {
 			return fmt.Errorf("checking management api endpoint: %v", err)
