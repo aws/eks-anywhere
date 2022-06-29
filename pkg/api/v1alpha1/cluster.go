@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -591,12 +592,13 @@ func validateProxyData(proxy string) error {
 	} else {
 		proxyHost = proxy
 	}
-	ip, port, err := net.SplitHostPort(proxyHost)
+	host, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
-	if net.ParseIP(ip) == nil {
-		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
+	_, err = net.DefaultResolver.LookupIPAddr(context.Background(), host)
+	if err != nil && net.ParseIP(host) == nil {
+		return fmt.Errorf("proxy endpoint %s is invalid, please provide a valid proxy domain name or ip", host)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
 		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
