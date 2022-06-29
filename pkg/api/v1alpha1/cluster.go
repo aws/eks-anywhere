@@ -591,14 +591,12 @@ func validateProxyData(proxy string) error {
 	} else {
 		proxyHost = proxy
 	}
-	host, port, err := net.SplitHostPort(proxyHost)
+	ip, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
-	if net.ParseIP(host) == nil {
-		if _, err := net.LookupIP(host); err != nil {
-			return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", host)
-		}
+	if net.ParseIP(ip) == nil {
+		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
 		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)

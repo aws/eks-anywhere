@@ -16,13 +16,13 @@ const (
 	cloudstackNoProxyVar    = "T_NO_PROXY_CLOUDSTACK"
 )
 
-var vsphereProxyRequiredEnvVars = ProxyRequiredEnvVars{
+var VsphereProxyRequiredEnvVars = ProxyRequiredEnvVars{
 	HttpProxy:  vsphereHttpProxyVar,
 	HttpsProxy: vsphereHttpsProxyVar,
 	NoProxy:    vsphereNoProxyVar,
 }
 
-var cloudstackProxyRequiredEnvVars = ProxyRequiredEnvVars{
+var CloudstackProxyRequiredEnvVars = ProxyRequiredEnvVars{
 	HttpProxy:  cloudstackHttpProxyVar,
 	HttpsProxy: cloudstackHttpsProxyVar,
 	NoProxy:    cloudstackNoProxyVar,
@@ -49,12 +49,4 @@ func WithProxy(requiredEnvVars ProxyRequiredEnvVars) ClusterE2ETestOpt {
 			api.WithProxyConfig(httpProxy, httpsProxy, noProxy),
 		)
 	}
-}
-
-func RequiredVSphereProxyEnvVars() ProxyRequiredEnvVars {
-	return vsphereProxyRequiredEnvVars
-}
-
-func RequiredCloudStackProxyEnvVars() ProxyRequiredEnvVars {
-	return cloudstackProxyRequiredEnvVars
 }
