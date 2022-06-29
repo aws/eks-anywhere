@@ -595,3 +595,34 @@ The reboot action defines how the system restarts to bring up the installed syst
 ### version
 
 Matches the current version of the Tinkerbell template.
+
+## Custom Tinkerbell action examples
+By creating your own custom Tinkerbell actions, you can add to or modify the installed operating system so those changes take effect when the installed system first starts (from a reboot or pivot).
+The following example shows how to add a .deb package (`openssl`) to an Ubuntu installation:
+
+```bash
+      - environment:
+          BLOCK_DEVICE: /dev/sda1
+          CHROOT: "y"
+          CMD_LINE: apt -y update && apt -y install openssl
+          DEFAULT_INTERPRETER: /bin/sh -c
+          FS_TYPE: ext4
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1970
+        name: install-openssl
+        timeout: 90
+```
+The following shows an example of adding a new user (`tinkerbell`) to an installed Ubuntu system:
+
+```bash
+      - environment:
+          BLOCK_DEVICE: <block device path> # E.g. /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "useradd --password $(openssl passwd -1 tinkerbell) --shell /bin/bash --create-home --groups sudo tinkerbell"
+        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2301
+        name: "create-user"
+        timeout: 90
+```
+
+Look for more examples as they are added to the [Tinkerbell examples](https://github.com/aws/eks-anywhere/tree/main/examples/tinkerbell) page.
