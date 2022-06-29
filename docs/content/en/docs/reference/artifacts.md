@@ -3,12 +3,42 @@ title: "Artifacts"
 linkTitle: "Artifacts"
 weight: 55
 description: >
-  Artifacts associated with this release: OVAs and container images.
+  Artifacts associated with this release: OVAs and images.
 ---
 
-# OVAs
+# Bare Metal artifacts
 
-## Bottlerocket
+Artifacts for EKS Anyware Bare Metal clusters are listed below.
+If you like, you can download these images and serve them locally to speed up cluster creation.
+See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) and [`hookImagesURLPath`]({{< relref "./clusterspec/baremetal/#hookimagesurlpath" >}}) fields for details.
+
+## Ubuntu OS images for Bare Metal
+
+```
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-20/ubuntu-v1.20.15-eks-d-1-20-17-eks-a-11-amd64.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/ubuntu-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+```
+
+## Bottlerocket OS images for Bare Metal
+
+```
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.img.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
+```
+
+## HookOS (kernel and initial ram disk) for Bare Metal
+
+```
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-aarch64
+```
+
+# vSphere OVAs
+
+## Bottlerocket OVAs
 
 Bottlerocket vends its VMware variant OVAs using a secure distribution tool called tuftool. Please follow instructions down below to
 download Bottlerocket OVA.
@@ -50,25 +80,25 @@ EKS-D Release
 
 1.20 - `eksdRelease:kubernetes-1-20-eks-15`
 
-## Ubuntu with Kubernetes 1.22
+## Ubuntu with Kubernetes 1.22 OVA
 
 * https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-22-eks-6`
 
-## Ubuntu with Kubernetes 1.21
+## Ubuntu with Kubernetes 1.21 OVA
 
 * https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-21-eks-13`
 
-## Ubuntu with Kubernetes 1.20
+## Ubuntu with Kubernetes 1.20 OVA
 
 * https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-10-amd64.ova
 * `os:ubuntu`
 * `eksdRelease:kubernetes-1-20-eks-15`
 
-## Building your own Ubuntu OVA
+## Building your own Ubuntu OVA for vSphere
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
 If you want to build an OVA with a custom Ubuntu base image to use for an EKS Anywhere cluster, please follow the instructions below.
 
