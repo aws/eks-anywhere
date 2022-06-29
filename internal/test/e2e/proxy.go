@@ -22,7 +22,7 @@ func (e *E2ESession) setupProxyEnv(testRegex string) error {
 		return nil
 	}
 	var requiredEnvVars e2etests.ProxyRequiredEnvVars
-	for key, vars := range proxyVarsByProvider{
+	for key, vars := range proxyVarsByProvider {
 		if strings.Contains(testRegex, key) {
 			requiredEnvVars = vars
 			break
