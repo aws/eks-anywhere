@@ -14,26 +14,43 @@ See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimag
 
 ## Ubuntu OS images for Bare Metal
 
-```
+Kubernetes 1.20:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-20/ubuntu-v1.20.15-eks-d-1-20-17-eks-a-11-amd64.gz
+```
+
+Kubernetes 1.21:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/ubuntu-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.gz
+```
+
+Kubernetes 1.22:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
 ```
 
 ## Bottlerocket OS images for Bare Metal
 
-```
+Kubernetes 1.21:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.img.gz
+```
+
+Kubernetes 1.22:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
 ```
 
-## HookOS (kernel and initial ram disk) for Bare Metal
+## HookOS (kernel and initial ramdisk) for Bare Metal
 
-```
+kernel:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
+```
+
+initial ramdisk:
+```bash
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-aarch64
 ```
 
 # vSphere OVAs
