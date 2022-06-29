@@ -63,13 +63,13 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
 1. Modify the `hook.yaml` file located in the root of the repo with the following changes:
 
     ```bash
-    *diff --git a/hook.yaml b/hook.yaml*
+    diff --git a/hook.yaml b/hook.yaml
     
-     *index 0c5d789..b51b35e 100644*
+     index 0c5d789..b51b35e 100644
     
      net: host
-    *--- a/hook.yaml*
-    *+++ b/hook.yaml*
+    --- a/hook.yaml
+    +++ b/hook.yaml
     @@ -1,5 +1,5 @@
      kernel:
     - image: quay.io/tinkerbell/hook-kernel:5.10.85 (http://quay.io/tinkerbell/hook-kernel:5.10.85)
@@ -150,7 +150,7 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
 1. Start a local registry:
 
     ```bash
-    docker run -d -p 5000:5000 -—name *registry* *registry*:2
+    docker run -d -p 5000:5000 -—name registry registry:2
     ```
 
 1. Compile by running the following in the root of the repo:
@@ -167,4 +167,4 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
     ./vmlinuz-x86_64
     ```
 
-1. To use the kernel (`vmlinuz`) and initial ram disk (`initramfs`) when you build your cluster, see the description of the `hookImagesURLPath` field in your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/" >}}) file.
+1. To use the kernel (`vmlinuz`) and initial ram disk (`initramfs`) when you build your cluster, see the description of the `hookImagesURLPath` field in your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/#hookimagesurlpath" >}}) file.
