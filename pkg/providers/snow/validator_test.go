@@ -44,6 +44,10 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 		Spec: v1alpha1.SnowMachineConfigSpec{
 			AMIID:      "ami-1",
 			SshKeyName: "default",
+			Devices: []string{
+				"device-1",
+				"device-2",
+			},
 		},
 	}
 	_, writer := test.NewWriter(t)
@@ -101,5 +105,20 @@ func TestValidateEC2ImageExistsOnDeviceError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(false, errors.New("error"))
 	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateMachineDeviceIPs(t *testing.T) {
+	g := newConfigManagerTest(t)
+	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
+	g.Expect(err).To(Succeed())
+}
+
+func TestValidateMachineDeviceIPsNotValid(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.Devices = []string{
+		"device-not-exists",
+	}
+	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }

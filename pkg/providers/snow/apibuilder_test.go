@@ -483,6 +483,10 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 						InsecureSkipSecretsManager: true,
 					},
 					PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
+					Devices: []string{
+						"1.2.3.4",
+						"1.2.3.5",
+					},
 				},
 			},
 		},
