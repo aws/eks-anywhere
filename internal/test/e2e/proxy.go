@@ -20,6 +20,9 @@ func (e *E2ESession) setupProxyEnv(testRegex string) error {
 		requiredEnvVars = e2etests.RequiredVSphereProxyEnvVars()
 	} else if isTestProvider(testRegex, "CloudStack") {
 		requiredEnvVars = e2etests.RequiredCloudStackProxyEnvVars()
+	} else if isTestProvider(testRegex, "Snow") {
+		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
+		requiredEnvVars = e2etests.RequiredVSphereProxyEnvVars()
 	} else {
 		return fmt.Errorf("proxy config for provider test %s was not found", testRegex)
 	}

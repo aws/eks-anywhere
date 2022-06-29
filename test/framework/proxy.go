@@ -37,8 +37,8 @@ type ProxyRequiredEnvVars struct {
 func WithProxy(requiredEnvVars ProxyRequiredEnvVars) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, []string{requiredEnvVars.HttpProxy, requiredEnvVars.HttpsProxy, requiredEnvVars.NoProxy})
-		HttpProxy := os.Getenv(requiredEnvVars.HttpProxy)
-		HttpsProxy := os.Getenv(requiredEnvVars.HttpsProxy)
+		httpProxy := os.Getenv(requiredEnvVars.HttpProxy)
+		httpsProxy := os.Getenv(requiredEnvVars.HttpsProxy)
 		noProxies := os.Getenv(requiredEnvVars.NoProxy)
 		var noProxy []string
 		for _, data := range strings.Split(noProxies, ",") {
@@ -46,7 +46,7 @@ func WithProxy(requiredEnvVars ProxyRequiredEnvVars) ClusterE2ETestOpt {
 		}
 
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithProxyConfig(HttpProxy, HttpsProxy, noProxy),
+			api.WithProxyConfig(httpProxy, httpsProxy, noProxy),
 		)
 	}
 }
