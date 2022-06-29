@@ -26,11 +26,11 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | **Control plane** ||||
 | K8s control plane management      | Managed by customer                  | Managed by AWS                  |
 | K8s control plane location        | Customer's datacenter                 | AWS cloud                       |
-| Cluster updates        | Manual CLI updates for control plane. Flux supported rolling updates for data plane (vSphere only). | Managed in-place updates for control plane and managed rolling updates for data plane.                       |
+| Cluster updates        | Manual CLI updates for control plane. Flux supported rolling updates for data plane | Managed in-place updates for control plane and managed rolling updates for data plane.                       |
 ||||
 | **Compute** |||
-| Compute options | VMs (VMware vSphere provider) or bare metal (Bare metal provider) | Amazon EC2, AWS Fargate | 
-| Supported node operating systems   | BottleRocket, Ubuntu         | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
+| Compute options | VMware vSphere, Bare Metal servers | Amazon EC2, AWS Fargate | 
+| Supported node operating systems   | Bottlerocket, Ubuntu         | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
 | Physical hardware (servers, network equipment, storage, etc.) | Managed by customer | Managed by AWS |
 | Serverless | Not supported | Amazon EKS on AWS Fargate |
 ||||
@@ -39,7 +39,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Console view for Kubernetes objects | Optional EKS console connection using EKS Connector (public preview) | Native EKS console connection|
 | Infrastructure-as-code        | Cluster manifest, Kubernetes controllers, [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | AWS CloudFormation, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
 | Logging and monitoring        | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
-| GitOps                        | Flux controller (vSphere only)                      | Flux controller                 |
+| GitOps                        | Flux controller | Flux controller                 |
 ||||
 | **Functions and tooling** | | |
 | Networking and Security       | Cilium CNI and network policy supported | Amazon VPC CNI supported. Calico supported for network policy. Other compatible [3rd-party CNI plugins](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) available.|
