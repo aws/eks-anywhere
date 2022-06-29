@@ -607,7 +607,7 @@ The following example shows how to add a .deb package (`openssl`) to an Ubuntu i
           CMD_LINE: apt -y update && apt -y install openssl
           DEFAULT_INTERPRETER: /bin/sh -c
           FS_TYPE: ext4
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1970
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: install-openssl
         timeout: 90
 ```
@@ -620,7 +620,7 @@ The following shows an example of adding a new user (`tinkerbell`) to an install
           CHROOT: y
           DEFAULT_INTERPRETER: "/bin/sh -c"
           CMD_LINE: "useradd --password $(openssl passwd -1 tinkerbell) --shell /bin/bash --create-home --groups sudo tinkerbell"
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2301
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: "create-user"
         timeout: 90
 ```
