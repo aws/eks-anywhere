@@ -8,34 +8,53 @@ import (
 )
 
 const (
-	httpProxyVar  = "T_HTTP_PROXY"
-	httpsProxyVar = "T_HTTPS_PROXY"
-	noProxyVar    = "T_NO_PROXY"
+	vsphereHttpProxyVar     = "T_HTTP_PROXY"
+	vsphereHttpsProxyVar    = "T_HTTPS_PROXY"
+	vsphereNoProxyVar       = "T_NO_PROXY"
+	cloudstackHttpProxyVar  = "T_HTTP_PROXY_CLOUDSTACK"
+	cloudstackHttpsProxyVar = "T_HTTPS_PROXY_CLOUDSTACK"
+	cloudstackNoProxyVar    = "T_NO_PROXY_CLOUDSTACK"
 )
 
-var proxyRequiredEnvVars = []string{
-	httpProxyVar,
-	httpsProxyVar,
-	noProxyVar,
+var vsphereProxyRequiredEnvVars = ProxyRequiredEnvVars{
+	HttpProxy:  vsphereHttpProxyVar,
+	HttpsProxy: vsphereHttpsProxyVar,
+	NoProxy:    vsphereNoProxyVar,
 }
 
-func WithProxy() ClusterE2ETestOpt {
+var cloudstackProxyRequiredEnvVars = ProxyRequiredEnvVars{
+	HttpProxy:  cloudstackHttpProxyVar,
+	HttpsProxy: cloudstackHttpsProxyVar,
+	NoProxy:    cloudstackNoProxyVar,
+}
+
+type ProxyRequiredEnvVars struct {
+	HttpProxy  string
+	HttpsProxy string
+	NoProxy    string
+}
+
+func WithProxy(requiredEnvVars ProxyRequiredEnvVars) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, proxyRequiredEnvVars)
-		httpProxy := os.Getenv(httpProxyVar)
-		httpsProxy := os.Getenv(httpsProxyVar)
-		noProxies := os.Getenv(noProxyVar)
+		checkRequiredEnvVars(e.T, []string{requiredEnvVars.HttpProxy, requiredEnvVars.HttpsProxy, requiredEnvVars.NoProxy})
+		HttpProxy := os.Getenv(requiredEnvVars.HttpProxy)
+		HttpsProxy := os.Getenv(requiredEnvVars.HttpsProxy)
+		noProxies := os.Getenv(requiredEnvVars.NoProxy)
 		var noProxy []string
 		for _, data := range strings.Split(noProxies, ",") {
 			noProxy = append(noProxy, strings.TrimSpace(data))
 		}
 
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithProxyConfig(httpProxy, httpsProxy, noProxy),
+			api.WithProxyConfig(HttpProxy, HttpsProxy, noProxy),
 		)
 	}
 }
 
-func RequiredProxyEnvVars() []string {
-	return proxyRequiredEnvVars
+func RequiredVSphereProxyEnvVars() ProxyRequiredEnvVars {
+	return vsphereProxyRequiredEnvVars
+}
+
+func RequiredCloudStackProxyEnvVars() ProxyRequiredEnvVars {
+	return cloudstackProxyRequiredEnvVars
 }

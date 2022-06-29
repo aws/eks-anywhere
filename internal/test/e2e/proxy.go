@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 
@@ -14,13 +15,24 @@ func (e *E2ESession) setupProxyEnv(testRegex string) error {
 		logger.V(2).Info("Not running Proxy tests, skipping Env variable setup")
 		return nil
 	}
-
-	requiredEnvVars := e2etests.RequiredProxyEnvVars()
-	for _, eVar := range requiredEnvVars {
+	var requiredEnvVars e2etests.ProxyRequiredEnvVars
+	if isTestProvider(testRegex, "VSphere") {
+		requiredEnvVars = e2etests.RequiredVSphereProxyEnvVars()
+	} else if isTestProvider(testRegex, "CloudStack") {
+		requiredEnvVars = e2etests.RequiredCloudStackProxyEnvVars()
+	} else {
+		return fmt.Errorf("proxy config for provider test %s was not found", testRegex)
+	}
+	for _, eVar := range []string{requiredEnvVars.HttpProxy, requiredEnvVars.HttpsProxy, requiredEnvVars.NoProxy} {
 		if val, ok := os.LookupEnv(eVar); ok {
 			e.testEnvVars[eVar] = val
 		}
 	}
 
 	return nil
+}
+
+func isTestProvider(testRegex string, providerName string) bool {
+	reProvider := regexp.MustCompile(fmt.Sprintf(`^.*%s.*$`, providerName))
+	return reProvider.MatchString(testRegex)
 }

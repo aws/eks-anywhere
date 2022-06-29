@@ -131,10 +131,18 @@ The [oidc](https://github.com/aws/eks-anywhere/blob/main/internal/pkg/oidc/serve
 # Proxy test requisites
 The following env variables need to be set:
 
+For VSphere proxy:
 ```sh
 T_HTTP_PROXY
 T_HTTPS_PROXY
 T_NO_PROXY
+```
+
+For CloudStack proxy:
+```sh
+T_HTTP_PROXY_CLOUDSTACK
+T_HTTPS_PROXY_CLOUDSTACK
+T_NO_PROXY_CLOUDSTACK
 ```
 
 # Registry test requisites
