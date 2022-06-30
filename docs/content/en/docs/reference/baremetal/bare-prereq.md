@@ -13,9 +13,9 @@ To run EKS Anywhere on Bare Metal, you need to meet the hardware and networking 
 
 Set up an Administrative machine as described in [Install EKS Anywhere ]({{< relref "../../getting-started/install/" >}}).
 
-## Computer requirements 
+## Compute server requirements
 
-The minimum number of physical computers needed to run EKS Anywhere in a non-production mode is:
+The minimum number of physical machines needed to run EKS Anywhere in a non-production mode is:
 
 * Control plane physical machines: 1
 * Worker physical machines: 1
@@ -29,7 +29,7 @@ You will need an additional, temporary machine for each control plane node group
 That machine must have the same specs as all the machines in that group.
 This comes from the need to use the same template to populate data on the disks for all nodes in a group.
 
-The computer hardware you need for your Bare Metal cluster must meet the following capacity requirements:
+The compute hardware you need for your Bare Metal cluster must meet the following capacity requirements:
 
 * CPU: 2
 * Memory: 8GB RAM
@@ -42,13 +42,15 @@ Each machine should include the following features:
 * Network Interface Cards: At least one NIC is required. It must be capable of netbooting from PXE. 
 * IPMI integration (recommended): An IPMI implementation (such a Dell iDRAC, RedFish-compatible, legacy or HP iLO) on the computer's motherboard or on a separate expansion card. This feature is used to allow remote management of the machine, such as turning the machine on and off.
 
->**_NOTE:_** IPMI is not required for an EKS Anywhere cluster. However, without IPMI, upgrades are not supported and you will have to physically turn machines off and on when appropriate.
+>**_NOTE_**: IPMI is not required for an EKS Anywhere cluster. However, without IPMI, upgrades are not supported and you will have to physically turn machines off and on when appropriate.
 
 Here are other network requirements:
 
 * All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same layer 2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
 
 * You must be able to run DHCP on the control plane/worker machine network.
+
+>**_NOTE:_**: If you have another DHCP service running on the network, you need to prevent it from interfering with the EKS Anywhere DHCP service. You can do that by configuring the other DHCP service to explicitly block all MAC addresses and exclude all IP addresses that you plan to use with your EKS Anywhere clusters.
 
 * The administrative machine and the target workload environment will need network access to:
 
