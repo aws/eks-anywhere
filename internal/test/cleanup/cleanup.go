@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/hashicorp/go-multierror"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
@@ -86,7 +85,7 @@ func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.G
 	return govc.CleanupVms(ctx, clusterName, false)
 }
 
-func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) (retErr error) {
+func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
 	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
@@ -103,11 +102,12 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	for _, config := range execConfig.Profiles {
 		cmk := executableBuilder.BuildCmkExecutable(tmpWriter, config)
 		if err := cleanupCloudStackVms(ctx, cmk, clusterName, dryRun); err != nil {
-			retErr = multierror.Append(retErr, err)
+			cmk.Close(ctx)
+			return err
 		}
 		cmk.Close(ctx)
 	}
-	return retErr
+	return nil
 }
 
 func cleanupCloudStackVms(ctx context.Context, cmk *executables.Cmk, clusterName string, dryRun bool) error {
