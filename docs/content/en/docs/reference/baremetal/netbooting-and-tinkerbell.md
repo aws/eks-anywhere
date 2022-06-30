@@ -39,7 +39,7 @@ See [Preparing hardware inventory]({{< relref "./bare-preparation/#prepare-hardw
 Before you create a cluster using the [Bare Metal configuration]({{< relref "../clusterspec/baremetal" >}}) file, you can make Tinkerbell-related changes to that file.
 In particular, [TinkerbellDatacenterConfig fields]({{< relref "../clusterspec/baremetal/#tinkerbelldatacenterconfig-fields" >}}), [TinkerbellMachineConfig fields]({{< relref "../clusterspec/baremetal/#tinkerbellmachineconfig-fields" >}}), and [Tinkerbell Actions](https://docs.tinkerbell.org/actions/action-architecture/) can be added or modified.
 
-There are different sets of Tinkerbell actions for provisioning different operating systems to bare metal machines for your EKS Anywhere cluster.
+Tinkerbell actions vary based on the operating system you choose for your EKS Anywhere cluster.
 Actions are stored internally and not shown in the generated cluster specification file, so you must add those sections yourself to change from the defaults.
 
 In most cases, you don’t need to touch the default actions.
