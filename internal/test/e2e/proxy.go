@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -31,5 +32,12 @@ func (e *E2ESession) setupProxyEnv(testRegex string) error {
 	if reflect.ValueOf(requiredEnvVars).IsZero() {
 		return fmt.Errorf("proxy config for provider test %s was not found", testRegex)
 	}
+
+	for _, eVar := range []string{requiredEnvVars.HttpProxy, requiredEnvVars.HttpsProxy, requiredEnvVars.NoProxy} {
+		if val, ok := os.LookupEnv(eVar); ok {
+			e.testEnvVars[eVar] = val
+		}
+	}
+
 	return nil
 }
