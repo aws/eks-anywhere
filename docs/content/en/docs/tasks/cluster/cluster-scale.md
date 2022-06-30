@@ -4,7 +4,7 @@ linkTitle: "Scale cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to scale your cluster.
+  How to scale your cluster
 ---
 
 When you are scaling your EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
@@ -12,6 +12,20 @@ Each plane can be scaled horizontally (add more nodes) or vertically (provide no
 In each case you can scale the cluster manually, semi-automatically, or automatically.
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).
+
+### Scaling nodes on Bare Metal clusters
+Before you can scale up nodes on a Bare Metal cluster, you must have already defined the machines in a [hardware CSV file]({{< relref "../../reference/baremetal/bare-preparation/#prepare-hardware-inventory" >}}) and supplied it to Tinkerbell.
+
+Then, to scale a worker node group:
+
+```bash
+kubectl scale machinedeployments -n eksa-system <workerNodeGroupName> --replicas <num replicas>
+```
+To scale control plane nodes:
+
+```bash
+kubectl scale kubeadmcontrolplane -n eksa-system <controlPlaneName> --replicas <num replicas>
+```
 
 ### Manual cluster scaling
 
