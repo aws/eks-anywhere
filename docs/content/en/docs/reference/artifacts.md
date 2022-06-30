@@ -78,7 +78,7 @@ export KUBEVERSION="1.22"
 ```
 5. Download the OVA
 ```
-OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.7.2.ova"
+OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.8.0.ova"
 tuftool download . --target-name "${OVA}" \
    --root ./root.json \
    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -91,29 +91,29 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-6`
+1.22 - `eksdRelease:kubernetes-1-22-eks-8`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-13`
+1.21 - `eksdRelease:kubernetes-1-21-eks-15`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-15`
+1.20 - `eksdRelease:kubernetes-1-20-eks-17`
 
 ## Ubuntu with Kubernetes 1.22 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-22/ubuntu-v1.22.6-eks-d-1-22-6-eks-a-10-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-22-eks-6`
+* `eksdRelease:kubernetes-1-22-eks-8`
 
 ## Ubuntu with Kubernetes 1.21 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-21/ubuntu-v1.21.9-eks-d-1-21-13-eks-a-10-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-21/ubuntu-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-13`
+* `eksdRelease:kubernetes-1-21-eks-15`
 
 ## Ubuntu with Kubernetes 1.20 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/10/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-15-eks-a-10-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-17-eks-a-11-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-15`
+* `eksdRelease:kubernetes-1-20-eks-17`
 
 ## Building your own Ubuntu OVA for vSphere
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
