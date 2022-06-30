@@ -69,7 +69,7 @@ The IP address of the server that you want to provide DNS service to the cluster
 The optional labels field can consist of a key/value pair to use in conjunction with the `hardwareSelector` field when you set up your [Bare Metal configuration]({{< relref "../clusterspec/baremetal/" >}}).
 The key/value pair is connected with an equal (`=`) sign.
 
-For example, if you had the `controlPlaneConfiguration.machineGroupRef.TinkerbellMachineConfig` name set to `my-cluster-name-cp` and a `hardwareSelector` under the `TinkerbellMachineConfig` definition for that name set to `type: "cp"`, that machine would be added to the control plane if you set this label to `type=cp`.
+For example, a `TinkerbellMachineConfig` with a `hardwareSelector` containing `type: cp` will match entries in the CSV containing `type=cp` in its label definition.
 
 ### disk
 The device name of the disk on which the operating system will be installed.
