@@ -13,20 +13,6 @@ In each case you can scale the cluster manually, semi-automatically, or automati
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).
 
-### Scaling nodes on Bare Metal clusters
-Before you can scale up nodes on a Bare Metal cluster, you must have already defined the machines in a [hardware CSV file]({{< relref "../../../reference/baremetal/bare-preparation#prepare-hardware-inventory" >}}) and supplied it to Tinkerbell.
-
-Then, to scale a worker node group:
-
-```bash
-kubectl scale machinedeployments -n eksa-system <workerNodeGroupName> --replicas <num replicas>
-```
-To scale control plane nodes:
-
-```bash
-kubectl scale kubeadmcontrolplane -n eksa-system <controlPlaneName> --replicas <num replicas>
-```
-
 ### Manual cluster scaling
 
 Horizontally scaling the cluster is done by increasing the number for the control plane or worker node groups under the Cluster specification.
