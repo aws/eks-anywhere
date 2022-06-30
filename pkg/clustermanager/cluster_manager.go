@@ -63,6 +63,7 @@ type ClusterClient interface {
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
 	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
@@ -356,6 +357,16 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 
 	var externalEtcdTopology bool
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		logger.V(3).Info("Waiting for external etcd upgrade to be in progress")
+		err = c.clusterClient.WaitForManagedExternalEtcdNotReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+		if err != nil {
+			if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
+				return fmt.Errorf("error waiting for external etcd upgrade not ready: %v", err)
+			} else {
+				logger.V(3).Info("Timed out while waiting for  external etcd to be in progress, likely caused by no  external etcd upgrade")
+			}
+		}
+
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
 		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, newClusterSpec.Cluster.Name); err != nil {
 			return fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
