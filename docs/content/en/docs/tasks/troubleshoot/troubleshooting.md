@@ -211,7 +211,7 @@ In either of those cases, the following steps can help you determine the problem
         kubectl get bmt <bmt-name> -n eksa-system -o yaml
         ```
 
-    Validate BMC credentials are correct if a connection error is observed on the `bmt` resource. Note that IPMI over LAN is required for the `bmt` resource to communicate with BMC.
+    Validate BMC credentials are correct if a connection error is observed on the `bmt` resource. Note that "IPMI over LAN" must be enabled in the BMC configuration for the `bmt` resource to communicate successfully.
 
 1. If the machine is powered on but you see linuxkit is not running, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
 
