@@ -24,11 +24,11 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	}
 	decodedString, err := b64.StdEncoding.DecodeString(cloudStackB64EncodedSecret)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode value for %s with base64: %v", EksacloudStackCloudConfigB64SecretKey, err)
+		return nil, fmt.Errorf("decoding value for %s with base64: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
 	cfg, err := ini.Load(decodedString)
 	if err != nil {
-		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", EksacloudStackCloudConfigB64SecretKey, err)
+		return nil, fmt.Errorf("extracting values from %s with ini: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
 
 	cloudstackProfiles := []CloudStackProfileConfig{}
@@ -40,15 +40,15 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 
 		apiKey, err := section.GetKey("api-key")
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract value of 'api-key' from %s: %v", section.Name(), err)
+			return nil, fmt.Errorf("extracting value of 'api-key' from %s: %v", section.Name(), err)
 		}
 		secretKey, err := section.GetKey("secret-key")
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract value of 'secret-key' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
+			return nil, fmt.Errorf("extracting value of 'secret-key' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
 		apiUrl, err := section.GetKey("api-url")
 		if err != nil {
-			return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
+			return nil, fmt.Errorf("extracting value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
 		verifySslValue := "true"
 		if verifySsl, err := section.GetKey("verify-ssl"); err == nil {
