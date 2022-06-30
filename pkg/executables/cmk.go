@@ -260,11 +260,8 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, profile string, domain 
 	return domainIdentifier, nil
 }
 
-func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error {
+func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string) error {
 	command := newCmkCommand("list networks")
-	if multipleZone {
-		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
-	}
 	// account must be specified within a domainId
 	// domainId can be specified without account
 	if len(domainId) > 0 {
@@ -279,11 +276,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domain
 		return fmt.Errorf("getting network info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
-		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zone %s", Shared, network, zoneId)
-		} else {
-			return fmt.Errorf("network %s not found in zone %s", network, zoneId)
-		}
+		return fmt.Errorf("network %s not found in zone %s", network, zoneId)
 	}
 
 	response := struct {
@@ -310,11 +303,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domain
 	if len(networks) > 1 {
 		return fmt.Errorf("duplicate network %s found", network)
 	} else if len(networks) == 0 {
-		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, network, zoneId)
-		} else {
-			return fmt.Errorf("network %s not found in zoneRef %s", network, zoneId)
-		}
+		return fmt.Errorf("network %s not found in zoneRef %s", network, zoneId)
 	}
 	return nil
 }

@@ -267,7 +267,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			// map[string]*executables.Cmk and map[string]ProviderCmkClient are not compatible so we convert the map manually
 			f.dependencies.Provider = cloudstack.NewProvider(
 				datacenterConfig,
 				machineConfigs,

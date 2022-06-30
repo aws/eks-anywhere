@@ -101,10 +101,16 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	}
 	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig.Profiles)
 	defer cmk.Close(ctx)
+
+	failedProfiles := []string{}
 	for _, profile := range execConfig.Profiles {
 		if err := cmk.CleanupVms(ctx, profile.Name, clusterName, dryRun); err != nil {
-			cmk.Close(ctx)
+			failedProfiles = append(failedProfiles, profile.Name)
 		}
+	}
+
+	if len(failedProfiles) > 0 {
+		return fmt.Errorf("cleaning up VMs: %+v", failedProfiles)
 	}
 	return nil
 }

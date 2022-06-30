@@ -128,17 +128,17 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateDomainPresent(arg0, arg1, a
 }
 
 // ValidateNetworkPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1, arg2 string, arg3 v1alpha1.CloudStackResourceIdentifier, arg4, arg5 string, arg6 bool) error {
+func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1, arg2 string, arg3 v1alpha1.CloudStackResourceIdentifier, arg4, arg5 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateNetworkPresent", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "ValidateNetworkPresent", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateNetworkPresent indicates an expected call of ValidateNetworkPresent.
-func (mr *MockProviderCmkClientMockRecorder) ValidateNetworkPresent(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+func (mr *MockProviderCmkClientMockRecorder) ValidateNetworkPresent(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateNetworkPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateNetworkPresent), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateNetworkPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateNetworkPresent), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // ValidateServiceOfferingPresent mocks base method.

@@ -49,7 +49,7 @@ type ProviderCmkClient interface {
 	ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, profile string, domainId string, account string, affinityGroupIds []string) error
 	ValidateZonePresent(ctx context.Context, profile string, zone anywherev1.CloudStackZone) (string, error)
-	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error
+	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string) error
 	ValidateDomainPresent(ctx context.Context, profile string, domain string) (anywherev1.CloudStackResourceIdentifier, error)
 	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
 }
@@ -85,8 +85,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 			return fmt.Errorf("checking management api endpoint: %v", err)
 		}
 
-		cmk := v.cmk
-		endpoint, err := cmk.GetManagementApiEndpoint(az.CredentialsRef)
+		endpoint, err := v.cmk.GetManagementApiEndpoint(az.CredentialsRef)
 		if err != nil {
 			return err
 		}
@@ -113,7 +112,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if len(az.CloudStackAvailabilityZone.Zone.Network.Id) == 0 && len(az.CloudStackAvailabilityZone.Zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		if err := v.cmk.ValidateNetworkPresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Network, zoneId, az.Account, true); err != nil {
+		if err := v.cmk.ValidateNetworkPresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Network, zoneId, az.Account); err != nil {
 			return err
 		}
 	}
@@ -152,7 +151,7 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 	}
 
 	if len(localAvailabilityZones) <= 0 {
-		return nil, fmt.Errorf("CloudStackDatacenterConfig domain or localAvailabilityZones is not set or is empty")
+		return nil, fmt.Errorf("CloudStackDatacenterConfig domain or availabilityZones is not set or is empty")
 	}
 	return localAvailabilityZones, nil
 }
