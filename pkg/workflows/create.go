@@ -219,6 +219,11 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 	commandContext.WorkloadCluster = workloadCluster
 
+	if err = commandContext.ClusterManager.RunPostCreateWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Installing networking on workload cluster")
 	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {

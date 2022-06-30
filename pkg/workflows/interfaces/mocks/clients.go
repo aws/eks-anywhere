@@ -328,6 +328,20 @@ func (mr *MockClusterManagerMockRecorder) ResumeEKSAControllerReconcile(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).ResumeEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
+// RunPostCreateWorkloadCluster mocks base method.
+func (m *MockClusterManager) RunPostCreateWorkloadCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostCreateWorkloadCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostCreateWorkloadCluster indicates an expected call of RunPostCreateWorkloadCluster.
+func (mr *MockClusterManagerMockRecorder) RunPostCreateWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostCreateWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).RunPostCreateWorkloadCluster), arg0, arg1, arg2, arg3)
+}
+
 // SaveLogsManagementCluster mocks base method.
 func (m *MockClusterManager) SaveLogsManagementCluster(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
