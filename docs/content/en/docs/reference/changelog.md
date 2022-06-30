@@ -9,7 +9,7 @@ weight: 35
 ## [v0.10.0](https://github.com/aws/eks-anywhere/releases/tag/v0.10.0)
 
 ### Added
-- Added support to EKS Anywhere for bare metal cluster provisioning with provider tinkerbell.
+- Added support for EKS Anywhere on bare metal with provider [tinkerbell](https://tinkerbell.org/). EKS Anywhere on bare metal supports complete provisioning cycle, including power on/off and PXE boot for standing up a cluster with the given hardware data.
 - Support for node CIDR mask config exposed via the cluster spec. [#488](https://github.com/aws/eks-anywhere/issues/488)
 
 ### Changed
