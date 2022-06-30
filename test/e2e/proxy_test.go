@@ -27,7 +27,7 @@ func TestVSphereKubernetes123UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithProxy(),
+		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
 		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
@@ -42,7 +42,7 @@ func TestVSphereKubernetes123BottlerocketProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithProxy(),
+		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
 		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
@@ -56,7 +56,7 @@ func TestCloudStackKubernetes121RedhatProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithProxy(),
+		framework.WithProxy(framework.CloudstackProxyRequiredEnvVars),
 	)
 	runProxyConfigFlow(test)
 }
@@ -68,7 +68,8 @@ func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithProxy(),
+		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
+		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
 	)
 	runProxyConfigFlow(test)
