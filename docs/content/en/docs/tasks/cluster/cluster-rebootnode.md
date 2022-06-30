@@ -10,6 +10,11 @@ description: >
 
 If you need to reboot a node in your cluster for maintenance or any other reason, performing the following steps will help prevent possible disruption of services on those nodes:
 
+{{% alert title="Warning" color="primary" %}}
+Rebooting a cluster node as described here is good for all nodes, but is critically important when rebooting a Bottlerocket node running the `boots` service on a Bare Metal cluster.
+If it does go down while running the `boots` service, the Bottlerocket node will not be able to boot again until the `boots` service is restored on another machine. This is because Bottlerocket must get its address from a DHCP service.
+{{% /alert %}}
+
 1. Cordon the node so no further workloads are scheduled to run on it:
 
     ```bash
@@ -31,3 +36,4 @@ If you need to reboot a node in your cluster for maintenance or any other reason
    ```bash
    kubectl uncordon <node-name>
    ```
+
