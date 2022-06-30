@@ -86,13 +86,13 @@ The format that it serves is similar to an Ec2 metadata format.
 * **rufio**: Handles talking to BMCs (which manages things like starting and stopping systems with IPMI).
 The rufio Kubernetes controller sets things such as power state, persistent boot order, and eventually other services (like NTP, LDAP, and TLS certificates).
 BMC authentication is managed with Kubernetes secrets.
-* **tink**: The tink service consists of three components: tink server, tink controller, and tink CLI.
-The tink server manages hardware data, templates you want to execute, and the worflows that each target specific hardware you are provisioning.
+* **tink**: The tink service consists of three components: tink server, tink controller, and tink worker.
+The tink controller manages hardware data, templates you want to execute, and the worflows that each target specific hardware you are provisioning.
 The tink worker is a small binary that runs inside of HookOS and talks to the tink server.
 The worker sends the tink server its MAC address and asks the server for workflows to run.
 The tink worker will then go through each action, one-by-one, and try to execute it.
 
-To see those services running on the kind bootstrap cluster, type:
+To see those services and controllers running on the kind bootstrap cluster, type:
 
 ```bash
 kubectl get pods -n eksa-system
@@ -183,7 +183,7 @@ Status:
     Type:      Completed   
 ```
 
-The rufio service converts the baseboard management jobs into task objects, then goes ahead and executes each task. To see rufio logs, type:
+Rufio converts the baseboard management jobs into task objects, then goes ahead and executes each task. To see rufio logs, type:
 
 ```bash
 kubectl logs -n eksa-system rufio-controller-manager-5dcc568c79-9kllz | less
@@ -204,7 +204,7 @@ You can search the output for `vmlinuz` and `initramfs` to watch as the HookOS i
 ### Running workflows
 
 Once the HookOS is up, Tinkerbell begins running the tasks and actions contained in the workflows.
-This is coordinated between the tinks worker, running in memory within the HookOS on the machine, and the tinks server on the kind cluster.
+This is coordinated between the tink worker, running in memory within the HookOS on the machine, and the tink server on the kind cluster.
 To see the workflows being run, type the following:
 
 ```bash
@@ -230,7 +230,7 @@ status:
     - environment:
         COMPRESSED: "true"
         DEST_DISK: /dev/sda
-        IMG_URL: http://10.80.30.20:8080/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+        IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
       image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
       name: stream-image
       seconds: 35
@@ -240,7 +240,7 @@ status:
 ```
 
 You can see that the first action in the workflow is to stream (`stream-image`) the operating system to the destination disk (`DEST_DISK`) on the machine.
-In this example, the Ubuntu operating system that will be copied to disk (`/dev/sda`) is being served from a local machine (`http://10.80.30.20`).
+In this example, the Ubuntu operating system that will be copied to disk (`/dev/sda`) is being served from the location specificed by IMG_URL.
 The action was successful (STATE_SUCCESS) and it took 35 seconds.
 
 Each action and its status is shown in this output for the whole workflow.
@@ -256,11 +256,36 @@ In general, the actions include:
 
 If all goes well, you will see all actions set to STATE_SUCCESS, except for the kexec-image action. That should show as STATE_RUNNING for as long as the machine is running.
 
+If something goes wrong, viewing hegel files can help you understand why a stuck system that has booted into Ubuntu has not joined the cluster yet.
+To see the hegel files, get the internal IP address for one of the new nodes. Then check for the names of hegel logs and display the contents of one of those logs, searching for the IP address of the node:
+
+```bash
+kubectl get nodes -o wide
+```
+```
+NAME        STATUS   ROLES                 AGE    VERSION               INTERNAL-IP    ...
+eksa-da04   Ready    control-plane,master  9m5s   v1.22.10-eks-7dc61e8  10.80.30.23
+```
+```bash
+kubectl get logs -n eksa-system | grep hegel
+```
+```
+hegel-n7ngs
+```
+```bash
+kubectl logs -n eksa-system hegel-n7ngs
+```
+```
+..."Retrieved IP peer IP..."userIP":"10.80.30.23...
+```
+
+If the log shows you are getting requests from the node, the problem is not a cloud-init issue.
+
 After the first machine successfully completes the workflow, each other machine repeats the same process until the initial set of machines is all up and running.
 
 ### Tinkerbell moves to target cluster
 
-Once the initial set of machines are up and the EKS Anywhere cluster is running, all the Tinkerbell services (including boots) are moved to the new target cluster and run as pods on that cluster.
+Once the initial set of machines is up and the EKS Anywhere cluster is running, all the Tinkerbell services and components (including boots) are moved to the new target cluster and run as pods on that cluster.
 Those services are deleted on the kind cluster on the Admin machine.
 
 ### Reviewing the status
@@ -308,8 +333,8 @@ NAME              CLUSTER    NODENAME    PROVIDERID                         PHAS
 mycluster-72p72   mycluster  eksa-da04   tinkerbell://eksa-system/eksa-da04 Running  7m25s   v1.22.10-eks-1-22-8
 ```
 
-If you add a new machine after Tinkerbell has moved to the target cluster, you can review the CAPT logs to see provisioning activity.
-For example, at the start of a new provisioning event, you would sees something like the following:
+You can review the CAPT logs to see provisioning activity.
+For example, at the start of a new provisioning event, you would see something like the following:
 
 ```bash
 kubectl logs -n capt-system capt-controller-manager-9f8b95b-frbq | less
@@ -322,31 +347,6 @@ You can follow this output to see the machine as it goes through the provisionin
 
 After the node is initialized, completes all the Tinkerbell actions, and is booted into the installed operating system (Ubuntu or Bottlerocket), the new system starts cloud-init to do further configuration.
 At this point, the system will reach out to the Tinkerbell hegel service to get the hegel metadata.
-
-Viewing hegel files can help you understand why a stuck system that has booted into Ubuntu has not joined the cluster yet.
-To see the hegel files, get the internal IP address for one of the new nodes. Then check for the names of hegel logs and display the contents of one of those logs, searching for the IP address of the node:
-
-```bash
-kubectl get nodes -o wide
-```
-```
-NAME        STATUS   ROLES                 AGE    VERSION               INTERNAL-IP    ...
-eksa-da04   Ready    control-plane,master  9m5s   v1.22.10-eks-7dc61e8  10.80.30.23
-```
-```bash
-kubectl get logs -n eksa-system | grep hegel
-```
-```
-hegel-n7ngs
-```
-```bash
-kubectl logs -n eksa-system hegel-n7ngs
-```
-```
-..."Retrieved IP peer IP..."userIP":"10.80.30.23...
-```
-
-If the log shows you are getting requests from the node, the problem is not a cloud-init issue.
 
 Once you have confirmed that all your machines are successfully running as nodes on the target cluster, there is not much for Tinkerbell to do.
 It stays around to continue running the DHCP service and to be available to add more machines to the cluster.
