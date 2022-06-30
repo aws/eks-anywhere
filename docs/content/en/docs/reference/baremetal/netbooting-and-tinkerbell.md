@@ -18,7 +18,8 @@ As someone deploying an EKS Anywhere cluster on Bare Metal, you have several opp
 ## Using Tinkerbell on EKS Anywhere
 
 The sections below step through how Tinkerbell is integrated with EKS Anywhere to deploy a Bare Metal cluster.
-Refer to the [Tinkerbell Documentation](https://docs.tinkerbell.org/) for further information on Tinkerbell.
+While based on features described in [Tinkerbell Documentation](https://docs.tinkerbell.org/),
+EKS Anywhere has modified and added to Tinkerbell components such that the entire Tinkerbell stack is now Kubernetes-friendly and can run on a Kubernetes cluster.
 
 ### Create bare metal CSV file
 
@@ -40,7 +41,7 @@ Before you create a cluster using the [Bare Metal configuration]({{< relref "../
 In particular, [TinkerbellDatacenterConfig fields]({{< relref "../clusterspec/baremetal/#tinkerbelldatacenterconfig-fields" >}}), [TinkerbellMachineConfig fields]({{< relref "../clusterspec/baremetal/#tinkerbellmachineconfig-fields" >}}), and [Tinkerbell Actions](https://docs.tinkerbell.org/actions/action-architecture/) can be added or modified.
 
 Tinkerbell actions vary based on the operating system you choose for your EKS Anywhere cluster.
-Actions are stored internally and not shown in the generated cluster specification file, so you must add those sections yourself to change from the defaults.
+Actions are stored internally and not shown in the generated cluster specification file, so you must add those sections yourself to change from the defaults (see [Ubuntu TinkerbellTemplateConfig example]({{< relref "../clusterspec/baremetal/#ubuntu-tinkerbelltemplateconfig-example" >}}) and [Bottlerocket TinkerbellTemplateConfig example]({{< relref "../clusterspec/baremetal/#bottlerocket-tinkerbelltemplateconfig-example" >}}) for details).
 
 In most cases, you don’t need to touch the default actions.
 However, you might want to modify an action (for example to change `kexec` to a `reboot` action if the hardware requires it) or add an action to further configure the installed system.
@@ -51,16 +52,17 @@ The next section describes how Tinkerbell works during cluster creation to provi
 
 ## Overview of Tinkerbell in EKS Anywhere
 
-When you run the command to create an EKS Anywhere Bare Metal cluster, a set of Tinkerbell services start up on the Admin machine.
-Some of these services run in a container on Docker, while others run in pods on the Kubernetes [kind](https://kind.sigs.k8s.io/) cluster that is started up on the Admin machine.
-Tinkerbell services include the boots, hegel, rufio, and tink.
+When you run the command to create an EKS Anywhere Bare Metal cluster, a set of Tinkerbell components start up on the Admin machine.
+One of these components runs in a container on Docker, while other components run as either controllers or services in pods on the Kubernetes [kind](https://kind.sigs.k8s.io/) cluster that is started up on the Admin machine.
+Tinkerbell components include boots, hegel, rufio, and tink.
 
 ### Tinkerbell boots service
 
-The boots service runs in a single container to handle the DHCP service and Netbooting activities. In particular, boots serves iPXE binaries via HTTP and TFTP, delivers an iPXE script to the provisioned machines, and runs a syslog server. 
+The boots service runs in a single container to handle the DHCP service and Netbooting activities. 
+In particular, boots hands out IP addresses, serves iPXE binaries via HTTP and TFTP, delivers an iPXE script to the provisioned machines, and runs a syslog server. 
 
 Boots is different from the other Tinkerbell services because the DHCP service it runs must listen directly to layer 2 traffic.
-(The kind cluster running on the Admin machine doesn’t have the ability to have pods listening on layer 2 networks, which is why boots is run directly on Docker instead.)
+(The kind cluster running on the Admin machine doesn’t have the ability to have pods listening on layer 2 networks, which is why boots is run directly on Docker instead, with host networking enabled.)
 
 Because boots is running as a container in Docker, you can see the output in the logs for the boots container by running:
 
@@ -73,16 +75,16 @@ If the process doesn’t get all the information it wants from the DHCP server, 
 You can see iPXE loading variables, loading a kernel and initramfs (via DHCP), then booting into that kernel and initramfs: in other words, you will see everything that happens with iPXE before it switches over to the kernel and initramfs.
 The kernel, initramfs, and all images retrieved later are obtained remotely over HTTP and HTTPS.
 
-### Tinkerbell hegel, rufio, and tink services
+### Tinkerbell hegel, rufio, and tink components
 
 After boots comes up on Docker, a small Kubernetes kind cluster starts up on the Admin machine.
-Other Tinkerbell services run as pods on that kind cluster. Those services include:
+Other Tinkerbell components run as pods on that kind cluster. Those components include:
 
 * **hegel**: Manages Tinkerbell’s metadata service.
 The hegel service gets its metadata from the hardware specification stored in Kubernetes in the form of custom resources.
 The format that it serves is similar to an Ec2 metadata format.
 * **rufio**: Handles talking to BMCs (which manages things like starting and stopping systems with IPMI).
-The rufio service sets things such as power state, persistent boot order, and eventually other services (like NTP, LDAP, and TLS certificates).
+The rufio Kubernetes controller sets things such as power state, persistent boot order, and eventually other services (like NTP, LDAP, and TLS certificates).
 BMC authentication is managed with Kubernetes secrets.
 * **tink**: The tink service consists of three components: tink server, tink controller, and tink CLI.
 The tink server manages hardware data, templates you want to execute, and the worflows that each target specific hardware you are provisioning.
