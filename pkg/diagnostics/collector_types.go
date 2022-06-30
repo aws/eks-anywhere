@@ -1,6 +1,7 @@
 package diagnostics
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -69,15 +70,10 @@ type exec struct {
 }
 
 type run struct {
-	collectorMeta   `json:",inline"`
-	Name            string            `json:"name,omitempty"`
-	Namespace       string            `json:"namespace"`
-	Image           string            `json:"image"`
-	Command         []string          `json:"command,omitempty"`
-	Args            []string          `json:"args,omitempty"`
-	Timeout         string            `json:"timeout,omitempty"`
-	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
-	ImagePullSecret *imagePullSecrets `json:"imagePullSecret,omitempty"`
+	collectorMeta `json:",inline"`
+	Name          string      `json:"name,omitempty"`
+	Namespace     string      `json:"namespace"`
+	PodSpec       *v1.PodSpec `json:"podSpec,omitempty"`
 }
 
 type imagePullSecrets struct {
