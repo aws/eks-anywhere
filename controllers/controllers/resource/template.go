@@ -160,8 +160,8 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
-		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
+		values["controlPlaneSshUsers"] = cpVmc.Spec.Users
+		values["etcdSshUsers"] = etcdVmc.Spec.Users
 		values["etcdTemplateName"] = etcdTemplateName
 		values["eksaVsphereUsername"] = string(usernameBytes)
 		values["eksaVspherePassword"] = string(passwordBytes)
@@ -208,8 +208,8 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["cloudstackControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpCsmc.Spec.Users)
-		values["cloudstackEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdCsmc.Spec.Users)
+		values["controlPlaneSshUsers"] = cpCsmc.Spec.Users
+		values["etcdSshUsers"] = etcdCsmc.Spec.Users
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 

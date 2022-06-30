@@ -414,11 +414,14 @@ spec:
         - {{ .cloudstackControlPlaneDiskOfferingPath }}
 {{- end }}
     useExperimentalRetryJoin: true
-    users:
-    - name: {{.controlPlaneSshUsername}}
+    users:{{ range $user := .controlPlaneSshUsers }}
+    - name: {{ $user.Name }}
       sshAuthorizedKeys:
-      - '{{.cloudstackControlPlaneSshAuthorizedKey}}'
+      {{- range $user.SshAuthorizedKeys }}
+      - '{{.}}'
+      {{- end }}
       sudo: ALL=(ALL) NOPASSWD:ALL
+    {{- end}}
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
@@ -470,11 +473,14 @@ spec:
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
-    users:
-    - name: {{.etcdSshUsername}}
+    users:{{ range $user := .etcdSshUsers }}
+    - name: {{ $user.Name }}
       sshAuthorizedKeys:
-      - '{{.cloudstackEtcdSshAuthorizedKey}}'
+      {{- range $user.SshAuthorizedKeys }}
+      - '{{.}}'
+      {{- end }}
       sudo: ALL=(ALL) NOPASSWD:ALL
+    {{- end}}
 {{- if .proxyConfig }}
     proxy:
       httpProxy: {{ .httpProxy }}

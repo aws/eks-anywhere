@@ -114,7 +114,14 @@ func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 			if len(m.Spec.Users) == 0 {
 				m.Spec.Users = []anywherev1.UserConfiguration{{Name: "capc"}}
 			}
-			m.Spec.Users[0].SshAuthorizedKeys[0] = value
+			for _, user := range m.Spec.Users {
+				if len(user.SshAuthorizedKeys) == 0 {
+					user.SshAuthorizedKeys = []string{""}
+				}
+				for i := range user.SshAuthorizedKeys {
+					user.SshAuthorizedKeys[i] = value
+				}
+			}
 		}
 	}
 }

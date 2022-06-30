@@ -1,0 +1,87 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-md-0-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /var/run/containerd/containerd.sock
+          taints: []
+          kubeletExtraArgs:
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+            read-only-port: "0"
+            anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+          name: '{{ ds.meta_data.local_hostname }}'
+      preKubeadmCommands:
+      - swapoff -a
+      - hostname "{{ ds.meta_data.local_hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      users:
+      - name: md-user
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCJ3/Gfmet+hjK/mW2fREc3qYxby/Q3gGRp4hDPTgWpDY6i94uX5x+ZNudgJ3HxHqCIoSwLoZWP2chIdguW9ATovdRHEVJmrogP+JY/g6F3Q1U8XL5JSgY7xGq3VBp3+W0/zg518URDMpl4Sdj+SRpyvsSwA/z/K180o7ZGRjAUGc4uvi41PG0D/CNyrpBOT3h6glb7Lme+tmKh7Vrsx+/L7OmR35Rd8ml32Q4Imwfw364kdQVJh56El6sQ7bcgIbXj1qTr62/uQD4lifSIClQgZP3bTbPO5Xm1Mmgbj4QLzQAG4YBEpniBkmZQ16Vaw0mKRbAkjkiu4lyXFHFtWfTb'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      - name: md-user2
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+4yVx1dSbm56UAZcdsPFGktKOz1PIYkkRBpvEncMRIoRH6gKMcKflqxlgtxFYVPvJBpHkmci6NGvoz2gXSvohrNENT43eIQ+25VDK3iTgJhYbSpvjta2CMmNtRxc9D2C3zVZEt/olrvLuHa4kc42ptpyeJ9mgVXqwmezGoa6+C1wjov4Bip1vr1Xm9q68usOj8Ht5blo0fZE2cYi/rFC2+R022PO4bW7dn3OwMGLr6BeeWUA7i7a9xd3gCUPKYZPWmieFM9R8R7b1Kgy8CjZ9+XXFsyt/1UqXSZ6pKhcaQ5Ubc99Ws6aoImvCrm7XMKb12qztH0g67KYPRV0hsFNL'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      - name: md-user3
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCBdZuhnkn0UlZjoO6S/s+UYLxRHKamdZJ8Iyqs1d0Vu2BP5wDC+d6SfMb8lLz3Hefn54hQr9lWM/9o3tPyallPG/eVJ4xZJykG8V7OlCx4m2HiNMMf4+cb8dGekp6DMA99oAGWrB/6fcAQf3iZ3Khc2VbpBirkYMHt7xMAFs1rrB8ExaC4UDS72hc+vy5PdrINfAgbV3pIMGk6lDcAHI8iQiiU2X+Yaq0CtHS7j5vPmHpJPp+LTaoWKRfG9R7XqFf3tkm3EAzXJihOuZ4+sVIcEupm4mEH9zdUauJTqAoR7BigSEbAs0k5PB44CpbBwen8ifJnWMn64Qa/nPFd35kr'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: cloud-config
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test-md-0
+  namespace: eksa-system
+spec:
+  clusterName: test
+  replicas: 3
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: test
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: test-md-0-template-1234567890000
+      clusterName: test
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: CloudStackMachineTemplate
+        name: test-md-0-1234567890000
+      version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: CloudStackMachineTemplate
+metadata:
+  name: test-md-0-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      offering:
+        name: m4-large
+      template:
+        name: centos7-k8s-118
+      details:
+        foo: bar
+      affinitygroupids:
+      - worker-affinity
+
+---

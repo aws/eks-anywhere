@@ -315,6 +315,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 	type args struct {
 		csMachineTemplate *cloudstackv1.CloudStackMachineTemplate
+		users             []kubeadmv1.User
 	}
 	tests := []struct {
 		name    string
@@ -438,6 +439,10 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 						},
 					},
 				},
+				users: []kubeadmv1.User{
+					{Name: "user1", SSHAuthorizedKeys: []string{"ssh-key1"}},
+					{Name: "user2", SSHAuthorizedKeys: []string{"ssh-key2-1", "ssh-key2-2"}},
+				},
 			},
 			want: &anywherev1.CloudStackMachineConfig{
 				Spec: anywherev1.CloudStackMachineConfigSpec{
@@ -455,14 +460,18 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 					Affinity:          "anti",
 					AffinityGroupIds:  []string{"c", "d"},
 					UserCustomDetails: map[string]string{"foo": "bar"},
-					Symlinks:          map[string]string{},
+					Users: []anywherev1.UserConfiguration{
+						{Name: "user1", SshAuthorizedKeys: []string{"ssh-key1"}},
+						{Name: "user2", SshAuthorizedKeys: []string{"ssh-key2-1", "ssh-key2-2"}},
+					},
+					Symlinks: map[string]string{},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapMachineTemplateToCloudStackMachineConfigSpec(tt.args.csMachineTemplate)
+			got, err := resource.MapMachineTemplateToCloudStackMachineConfigSpec(tt.args.csMachineTemplate, tt.args.users)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MapMachineTemplateToCloudStackWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -101,11 +101,14 @@ spec:
         - - LABEL={{ .cloudstackDiskOfferingLabel }}
           - {{ .cloudstackDiskOfferingPath }}
 {{- end }}
-      users:
-      - name: {{.workerSshUsername}}
+      users:{{ range $user := .workerSshUsers }}
+      - name: {{ $user.Name }}
         sshAuthorizedKeys:
-        - '{{.cloudstackWorkerSshAuthorizedKey}}'
+        {{- range $user.SshAuthorizedKeys }}
+        - '{{.}}'
+        {{- end }}
         sudo: ALL=(ALL) NOPASSWD:ALL
+      {{- end}}
       format: {{.format}}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1

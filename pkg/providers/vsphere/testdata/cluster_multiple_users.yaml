@@ -1,0 +1,126 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: 1.2.3.4
+    machineGroupRef:
+      name: test-cp
+      kind: VSphereMachineConfig
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        name: test-wn
+        kind: VSphereMachineConfig
+      name: md-0
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      name: test-etcd
+      kind: VSphereMachineConfig
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: test
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-cp
+  namespace: test-namespace
+spec:
+  diskGiB: 25
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  users:
+  - name: "cp-user"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCJ3/Gfmet+hjK/mW2fREc3qYxby/Q3gGRp4hDPTgWpDY6i94uX5x+ZNudgJ3HxHqCIoSwLoZWP2chIdguW9ATovdRHEVJmrogP+JY/g6F3Q1U8XL5JSgY7xGq3VBp3+W0/zg518URDMpl4Sdj+SRpyvsSwA/z/K180o7ZGRjAUGc4uvi41PG0D/CNyrpBOT3h6glb7Lme+tmKh7Vrsx+/L7OmR35Rd8ml32Q4Imwfw364kdQVJh56El6sQ7bcgIbXj1qTr62/uQD4lifSIClQgZP3bTbPO5Xm1Mmgbj4QLzQAG4YBEpniBkmZQ16Vaw0mKRbAkjkiu4lyXFHFtWfTb  cp-user@test.com"
+  - name: "cp-user2"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+4yVx1dSbm56UAZcdsPFGktKOz1PIYkkRBpvEncMRIoRH6gKMcKflqxlgtxFYVPvJBpHkmci6NGvoz2gXSvohrNENT43eIQ+25VDK3iTgJhYbSpvjta2CMmNtRxc9D2C3zVZEt/olrvLuHa4kc42ptpyeJ9mgVXqwmezGoa6+C1wjov4Bip1vr1Xm9q68usOj8Ht5blo0fZE2cYi/rFC2+R022PO4bW7dn3OwMGLr6BeeWUA7i7a9xd3gCUPKYZPWmieFM9R8R7b1Kgy8CjZ9+XXFsyt/1UqXSZ6pKhcaQ5Ubc99Ws6aoImvCrm7XMKb12qztH0g67KYPRV0hsFNL  cp-user2@test.com"
+  - name: "cp-user3"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCBdZuhnkn0UlZjoO6S/s+UYLxRHKamdZJ8Iyqs1d0Vu2BP5wDC+d6SfMb8lLz3Hefn54hQr9lWM/9o3tPyallPG/eVJ4xZJykG8V7OlCx4m2HiNMMf4+cb8dGekp6DMA99oAGWrB/6fcAQf3iZ3Khc2VbpBirkYMHt7xMAFs1rrB8ExaC4UDS72hc+vy5PdrINfAgbV3pIMGk6lDcAHI8iQiiU2X+Yaq0CtHS7j5vPmHpJPp+LTaoWKRfG9R7XqFf3tkm3EAzXJihOuZ4+sVIcEupm4mEH9zdUauJTqAoR7BigSEbAs0k5PB44CpbBwen8ifJnWMn64Qa/nPFd35kr  cp-user3@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-wn
+  namespace: test-namespace
+spec:
+  diskGiB: 25
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 4096
+  numCPUs: 3
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  users:
+  - name: "md-user"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCJ3/Gfmet+hjK/mW2fREc3qYxby/Q3gGRp4hDPTgWpDY6i94uX5x+ZNudgJ3HxHqCIoSwLoZWP2chIdguW9ATovdRHEVJmrogP+JY/g6F3Q1U8XL5JSgY7xGq3VBp3+W0/zg518URDMpl4Sdj+SRpyvsSwA/z/K180o7ZGRjAUGc4uvi41PG0D/CNyrpBOT3h6glb7Lme+tmKh7Vrsx+/L7OmR35Rd8ml32Q4Imwfw364kdQVJh56El6sQ7bcgIbXj1qTr62/uQD4lifSIClQgZP3bTbPO5Xm1Mmgbj4QLzQAG4YBEpniBkmZQ16Vaw0mKRbAkjkiu4lyXFHFtWfTb  md-user@test.com"
+  - name: "md-user2"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+4yVx1dSbm56UAZcdsPFGktKOz1PIYkkRBpvEncMRIoRH6gKMcKflqxlgtxFYVPvJBpHkmci6NGvoz2gXSvohrNENT43eIQ+25VDK3iTgJhYbSpvjta2CMmNtRxc9D2C3zVZEt/olrvLuHa4kc42ptpyeJ9mgVXqwmezGoa6+C1wjov4Bip1vr1Xm9q68usOj8Ht5blo0fZE2cYi/rFC2+R022PO4bW7dn3OwMGLr6BeeWUA7i7a9xd3gCUPKYZPWmieFM9R8R7b1Kgy8CjZ9+XXFsyt/1UqXSZ6pKhcaQ5Ubc99Ws6aoImvCrm7XMKb12qztH0g67KYPRV0hsFNL  md-user2@test.com"
+  - name: "md-user3"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCBdZuhnkn0UlZjoO6S/s+UYLxRHKamdZJ8Iyqs1d0Vu2BP5wDC+d6SfMb8lLz3Hefn54hQr9lWM/9o3tPyallPG/eVJ4xZJykG8V7OlCx4m2HiNMMf4+cb8dGekp6DMA99oAGWrB/6fcAQf3iZ3Khc2VbpBirkYMHt7xMAFs1rrB8ExaC4UDS72hc+vy5PdrINfAgbV3pIMGk6lDcAHI8iQiiU2X+Yaq0CtHS7j5vPmHpJPp+LTaoWKRfG9R7XqFf3tkm3EAzXJihOuZ4+sVIcEupm4mEH9zdUauJTqAoR7BigSEbAs0k5PB44CpbBwen8ifJnWMn64Qa/nPFd35kr  md-user3@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: test-etcd
+  namespace: test-namespace
+spec:
+  diskGiB: 25
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 4096
+  numCPUs: 3
+  osFamily: ubuntu
+  resourcePool: "*/Resources"
+  storagePolicyName: "vSAN Default Storage Policy"
+  template: "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+  users:
+  - name: "etcd-user"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCJ3/Gfmet+hjK/mW2fREc3qYxby/Q3gGRp4hDPTgWpDY6i94uX5x+ZNudgJ3HxHqCIoSwLoZWP2chIdguW9ATovdRHEVJmrogP+JY/g6F3Q1U8XL5JSgY7xGq3VBp3+W0/zg518URDMpl4Sdj+SRpyvsSwA/z/K180o7ZGRjAUGc4uvi41PG0D/CNyrpBOT3h6glb7Lme+tmKh7Vrsx+/L7OmR35Rd8ml32Q4Imwfw364kdQVJh56El6sQ7bcgIbXj1qTr62/uQD4lifSIClQgZP3bTbPO5Xm1Mmgbj4QLzQAG4YBEpniBkmZQ16Vaw0mKRbAkjkiu4lyXFHFtWfTb  etcd-user@test.com"
+  - name: "etcd-user2"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC+4yVx1dSbm56UAZcdsPFGktKOz1PIYkkRBpvEncMRIoRH6gKMcKflqxlgtxFYVPvJBpHkmci6NGvoz2gXSvohrNENT43eIQ+25VDK3iTgJhYbSpvjta2CMmNtRxc9D2C3zVZEt/olrvLuHa4kc42ptpyeJ9mgVXqwmezGoa6+C1wjov4Bip1vr1Xm9q68usOj8Ht5blo0fZE2cYi/rFC2+R022PO4bW7dn3OwMGLr6BeeWUA7i7a9xd3gCUPKYZPWmieFM9R8R7b1Kgy8CjZ9+XXFsyt/1UqXSZ6pKhcaQ5Ubc99Ws6aoImvCrm7XMKb12qztH0g67KYPRV0hsFNL  etcd-user2@test.com"
+  - name: "etcd-user3"
+    sshAuthorizedKeys: # The key below was manually generated and not used in any production systems
+    - "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCBdZuhnkn0UlZjoO6S/s+UYLxRHKamdZJ8Iyqs1d0Vu2BP5wDC+d6SfMb8lLz3Hefn54hQr9lWM/9o3tPyallPG/eVJ4xZJykG8V7OlCx4m2HiNMMf4+cb8dGekp6DMA99oAGWrB/6fcAQf3iZ3Khc2VbpBirkYMHt7xMAFs1rrB8ExaC4UDS72hc+vy5PdrINfAgbV3pIMGk6lDcAHI8iQiiU2X+Yaq0CtHS7j5vPmHpJPp+LTaoWKRfG9R7XqFf3tkm3EAzXJihOuZ4+sVIcEupm4mEH9zdUauJTqAoR7BigSEbAs0k5PB44CpbBwen8ifJnWMn64Qa/nPFd35kr  etcd-user3@test.com"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: test
+  namespace: test-namespace
+spec:
+  datacenter: "SDDC-Datacenter"
+  network: "/SDDC-Datacenter/network/sddc-cgw-network-1"
+  server: "vsphere_server"
+  thumbprint: "ABCDEFG"
+  insecure: false
