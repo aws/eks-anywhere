@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	vsphereHttpProxyVar     = "T_HTTP_PROXY"
-	vsphereHttpsProxyVar    = "T_HTTPS_PROXY"
-	vsphereNoProxyVar       = "T_NO_PROXY"
+	vsphereHttpProxyVar     = "T_HTTP_PROXY_VSPHERE"
+	vsphereHttpsProxyVar    = "T_HTTPS_PROXY_VSPHERE"
+	vsphereNoProxyVar       = "T_NO_PROXY_VSPHERE"
 	cloudstackHttpProxyVar  = "T_HTTP_PROXY_CLOUDSTACK"
 	cloudstackHttpsProxyVar = "T_HTTPS_PROXY_CLOUDSTACK"
 	cloudstackNoProxyVar    = "T_NO_PROXY_CLOUDSTACK"

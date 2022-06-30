@@ -133,9 +133,9 @@ The following env variables need to be set:
 
 For VSphere proxy:
 ```sh
-T_HTTP_PROXY
-T_HTTPS_PROXY
-T_NO_PROXY
+T_HTTP_PROXY_VSPHERE
+T_HTTPS_PROXY_VSPHERE
+T_NO_PROXY_VSPHERE
 ```
 
 For CloudStack proxy:
