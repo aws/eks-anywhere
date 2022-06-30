@@ -1,0 +1,33 @@
+{
+  "count": 1,
+  "iso": [
+    {
+      "account": "admin",
+      "bits": 64,
+      "bootable": false,
+      "checksum": "058ecd9a4b28368ff96aba72a96c5e229cb64acde717bf3a485c6150eddb12cd0919276ca8b10bf6e21fe6afe79ddacb1af5692b91aea8e2af98d9136b26e7d0",
+      "created": "2022-05-25T09:50:47-0400",
+      "crossZones": true,
+      "directdownload": false,
+      "displaytext": "cloudstack built-in scripts",
+      "domain": "ROOT",
+      "domainid": "5300cdac-74d5-11ec-8696-c81f66d3e965",
+      "id": "0d62d107-0377-4dfd-92a3-8f46fac1e9e0",
+      "isdynamicallyscalable": false,
+      "isextractable": false,
+      "isfeatured": false,
+      "ispublic": true,
+      "isready": true,
+      "name": "cloudstack-scripts.iso",
+      "ostypeid": "530cb819-74d5-11ec-8696-c81f66d3e965",
+      "ostypename": "None",
+      "passwordenabled": false,
+      "size": 358400,
+      "status": "Successfully Installed",
+      "tags": [],
+      "url": "http://192.168.1.130/templates/scripts.iso",
+      "zoneid": "4adf232d-be21-419b-b4b1-713dd18a0627",
+      "zonename": "zone2"
+    }
+  ]
+}

@@ -16,7 +16,6 @@ package v1alpha1
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +35,8 @@ type CloudStackMachineConfigSpec struct {
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
 	// DiskOffering refers to a disk offering which has been previously registered in CloudStack. It represents a disk offering with pre-defined size or custom specified disk size. It can either be specified as a UUID or name
 	DiskOffering CloudStackResourceDiskOffering `json:"diskOffering,omitempty"`
+	// ISOAttachment attaches an ISO rom which has been previously registered in CloudStack. ISO rom will be attached before VM starts.
+	ISOAttachment CloudStackISOAttachment `json:"isoAttachment,omitempty"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
@@ -65,6 +66,58 @@ type CloudStackResourceDiskOffering struct {
 	Label string `json:"label"`
 }
 
+type CloudStackISOAttachment struct {
+	CloudStackResourceIdentifier `json:",inline"`
+	// device name of the ISO in VM, shows up in lsblk command
+	Device string `json:"device"`
+	// path the ISO will use to mount in VM
+	MountPath string `json:"mountPath"`
+	// run preKubeadmCommand pre-defined in attached ISO directory.
+	// +optional
+	RunPreKubeadmCommand bool `json:"runPreKubeadmCommand,omitempty"`
+	// specifies a list of args to be passed to preKubeadmCommand pre-defined in ISO directory.
+	// +optional
+	PreKubeadmCommandArgs []string `json:"preKubeadmCommandArgs,omitempty"`
+
+	// run preKubeadmCommand pre-defined in attached ISO directory.
+	// +optional
+	RunPostKubeadmCommand bool `json:"runPostKubeadmCommand,omitempty"`
+	// specifies a list of args to be passed to postKubeadmCommand pre-defined in ISO directory.
+	// +optional
+	PostKubeadmCommandArgs []string `json:"postKubeadmCommandArgs,omitempty"`
+}
+
+func (r *CloudStackISOAttachment) Equal(o *CloudStackISOAttachment) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id || r.Name != o.Name ||
+		r.MountPath != o.MountPath ||
+		r.Device != o.Device ||
+		r.RunPreKubeadmCommand != o.RunPreKubeadmCommand ||
+		r.RunPostKubeadmCommand != o.RunPostKubeadmCommand {
+		return false
+	}
+	if len(r.PreKubeadmCommandArgs) != len(o.PreKubeadmCommandArgs) ||
+		len(r.PostKubeadmCommandArgs) != len(o.PostKubeadmCommandArgs) {
+		return false
+	}
+	for i, v := range r.PreKubeadmCommandArgs {
+		if v != o.PreKubeadmCommandArgs[i] {
+			return false
+		}
+	}
+	for i, v := range r.PostKubeadmCommandArgs {
+		if v != o.PostKubeadmCommandArgs[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering) bool {
 	if r == o {
 		return true
@@ -88,14 +141,14 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 
 func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
 	if len(r.Id) > 0 || len(r.Name) > 0 {
-		if len(r.MountPath) < 2 || !strings.HasPrefix(r.MountPath, "/") {
-			return errors.New("must be non-empty and starts with /"), "mountPath", r.MountPath
+		if !isValidAbsolutePath(r.MountPath) {
+			return errors.New("must start with / and NOT end with /"), "mountPath", r.MountPath
 		}
 		if len(r.Filesystem) < 1 {
 			return errors.New("empty filesystem"), "filesystem", r.Filesystem
 		}
-		if len(r.Device) < 1 {
-			return errors.New("empty device"), "device", r.Device
+		if !isValidAbsolutePath(r.Device) {
+			return errors.New("must start with / and NOT end with /"), "device", r.Device
 		}
 		if len(r.Label) < 1 {
 			return errors.New("empty label"), "label", r.Label
@@ -111,12 +164,6 @@ func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, va
 func (r SymlinkMaps) Validate() (err error, field string, value string) {
 	isPortableFileNameSet := regexp.MustCompile(`^[a-zA-Z0-9\.\-\_\/]+$`)
 	for key, value := range r {
-		if !strings.HasPrefix(key, "/") || strings.HasSuffix(key, "/") {
-			return errors.New("must start with / and NOT end with /"), "symlinks", key
-		}
-		if !strings.HasPrefix(value, "/") || strings.HasSuffix(value, "/") {
-			return errors.New("must start with / and NOT end with /"), "symlinks", value
-		}
 		match := isPortableFileNameSet.Match([]byte(key))
 		if !match {
 			return errors.New("has char not in portable file name set"), "symlinks", key
@@ -125,8 +172,35 @@ func (r SymlinkMaps) Validate() (err error, field string, value string) {
 		if !match {
 			return errors.New("has char not in portable file name set"), "symlinks", value
 		}
+		if !isValidAbsolutePath(key) {
+			return errors.New("must start with / and NOT end with /"), "symlinks", key
+		}
+		if !isValidAbsolutePath(value) {
+			return errors.New("must start with / and NOT end with /"), "symlinks", value
+		}
 	}
 	return nil, "", ""
+}
+
+func (r *CloudStackISOAttachment) Validate() (err error, field string, value string) {
+	if len(r.Id) > 0 || len(r.Name) > 0 {
+		if !isValidAbsolutePath(r.MountPath) {
+			return errors.New("must start with / and NOT end with /"), "mountPath", r.MountPath
+		}
+		if len(r.Device) < 1 {
+			return errors.New("empty device"), "device", r.Device
+		}
+	} else {
+		if len(r.MountPath)+len(r.Device) > 0 {
+			return errors.New("empty id/name"), "id or name", r.Id
+		}
+	}
+	return nil, "", ""
+}
+
+func isValidAbsolutePath(path string) bool {
+	r := regexp.MustCompile(`^(\/[a-zA-Z_\-0-9\.]+)+$`)
+	return r.Match([]byte(path))
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
@@ -219,7 +293,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 	}
 	if !c.Template.Equal(&o.Template) ||
 		!c.ComputeOffering.Equal(&o.ComputeOffering) ||
-		!c.DiskOffering.Equal(&o.DiskOffering) {
+		!c.DiskOffering.Equal(&o.DiskOffering) ||
+		!c.ISOAttachment.Equal(&o.ISOAttachment) {
 		return false
 	}
 	if c.Affinity != o.Affinity {
@@ -235,7 +310,7 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	for detail, value := range c.UserCustomDetails {
-		if value != o.UserCustomDetails[detail] {
+		if v, ok := o.UserCustomDetails[detail]; !ok || v != value {
 			return false
 		}
 	}
@@ -243,10 +318,11 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		return false
 	}
 	for detail, value := range c.Symlinks {
-		if value != o.Symlinks[detail] {
+		if v, ok := o.Symlinks[detail]; !ok || v != value {
 			return false
 		}
 	}
+
 	return true
 }
 

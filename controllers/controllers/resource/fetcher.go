@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -617,16 +618,13 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
-		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
-			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
-			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
-		},
-		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
+	err := parseAnnotation(csMachineTemplate, "diskoffering.", &csSpec.Spec.DiskOffering)
+	if err != nil {
+		return nil, err
+	}
+	err = parseAnnotation(csMachineTemplate, "isoAttachment.", &csSpec.Spec.ISOAttachment)
+	if err != nil {
+		return nil, err
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
@@ -638,22 +636,20 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
 	}
-	if csSpec.Spec.Symlinks == nil {
-		csSpec.Spec.Symlinks = map[string]string{}
-	}
-	for _, keyValueStr := range strings.Split(csMachineTemplate.Annotations["symlinks."+constants.CloudstackAnnotationSuffix], ",") {
-		keyValueStr = strings.TrimSpace(keyValueStr)
-		if len(keyValueStr) == 0 {
-			continue
-		}
-		key, value, err := parseKeyValue(keyValueStr)
-		if err != nil {
-			return nil, err
-		}
-
-		csSpec.Spec.Symlinks[key] = value
+	csSpec.Spec.Symlinks = anywherev1.SymlinkMaps{}
+	err = parseAnnotation(csMachineTemplate, "symlinks.", &csSpec.Spec.Symlinks)
+	if err != nil {
+		return nil, err
 	}
 	return csSpec, nil
+}
+
+func parseAnnotation(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate, key string, v interface{}) (err error) {
+	annotation, exists := csMachineTemplate.Annotations[key+constants.CloudstackAnnotationSuffix]
+	if !exists || len(annotation) == 0 {
+		return nil
+	}
+	return json.Unmarshal([]byte(annotation), v)
 }
 
 func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
@@ -674,12 +670,4 @@ func convertStringToLabelsMap(labels string) map[string]string {
 		labelsMap[pair[0]] = pair[1]
 	}
 	return labelsMap
-}
-
-func parseKeyValue(keyValueStr string) (key string, value string, err error) {
-	keyV := strings.Split(keyValueStr, ":")
-	if len(keyV) != 2 {
-		return "", "", fmt.Errorf("symlinks: %s is not key:value format", keyV)
-	}
-	return keyV[0], keyV[1], nil
 }

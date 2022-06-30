@@ -46,11 +46,9 @@ metadata:
   name: test-control-plane-template-original
   namespace: eksa-system
   annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
+    diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
+    ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"cloudstack-scripts.iso\",\"device\":\"/dev/sr0\",\"mountPath\":\"/mnt/cloudstack-scripts\",\"runPreKubeadmCommand\":true,\"preKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"],\"runPostKubeadmCommand\":true,\"postKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"]}"
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"/var/log/kubernetes\":\"/data-small/var/log/kubernetes\"}"
 spec:
   template:
     spec:
@@ -64,6 +62,8 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
+      isoAttachment:
+        name: cloudstack-scripts.iso
       affinitygroupids:
       - control-plane-anti-affinity
 ---
@@ -333,6 +333,16 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+    - content: |
+        --dryrun=true
+        --env=prod
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - content: |
+        --dryrun=true
+        --env=prod
+      owner: root:root
+      path: /var/run/cloud-init/customer-provided-postkubeadmcommands-input
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -365,8 +375,12 @@ spec:
         then
           mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
-        else echo "/var/log/kubernetes already symlnk";
+        else
+          echo "/var/log/kubernetes already symlink";
       fi
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh < /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    postKubeadmCommands:
+    - /mnt/cloudstack-scripts/postKubeadmCommands.sh < /var/run/cloud-init/customer-provided-postkubeadmcommands-input
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -384,6 +398,8 @@ spec:
     mounts:
       - - LABEL=data_disk
         - /data-small
+      - - /dev/sr0
+        - /mnt/cloudstack-scripts
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -431,8 +447,15 @@ spec:
           mv /var/lib/ /var/lib/-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
           mkdir -p /data-small/var/lib && ln -s /data-small/var/lib /var/lib/ ;
         else
-          echo "/var/lib/ already symlnk" ;
+          echo "/var/lib/ already symlink" ;
       fi
+    - >-
+      mkdir -p /mnt/cloudstack-scripts &&
+      echo /dev/sr0 /mnt/cloudstack-scripts auto ro 0 2 >> /etc/fstab &&
+      mount /mnt/cloudstack-scripts
+    - echo --dryrun=true >> /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - echo --env=prod >> /var/run/cloud-init/customer-provided-prekubeadmcommands-input
+    - /mnt/cloudstack-scripts/preKubeadmCommands.sh < /var/run/cloud-init/customer-provided-prekubeadmcommands-input
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
@@ -450,11 +473,9 @@ metadata:
   name: test-etcd-template-original
   namespace: 'eksa-system'
   annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
+    diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"Small\",\"customSizeInGB\":0,\"mountPath\":\"/data-small\",\"device\":\"/dev/vdb\",\"filesystem\":\"ext4\",\"label\":\"data_disk\"}"
+    ISOAttachment.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"name\":\"cloudstack-scripts.iso\",\"device\":\"/dev/sr0\",\"mountPath\":\"/mnt/cloudstack-scripts\",\"runPreKubeadmCommand\":true,\"preKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"],\"postKubeadmCommandArgs\":[\"--dryrun\u003Dtrue\",\"--env\u003Dprod\"]}"
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: "{\"/var/lib/\":\"/data-small/var/lib\"}"
 spec:
   template:
     spec:
@@ -468,5 +489,7 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
+      isoAttachment:
+        name: cloudstack-scripts.iso
       affinitygroupids:
       - etcd-affinity
