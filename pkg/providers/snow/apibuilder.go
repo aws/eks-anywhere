@@ -154,6 +154,7 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 						InsecureSkipSecretsManager: true,
 					},
 					PhysicalNetworkConnectorType: &networkConnector,
+					Devices:                      machineConfig.Spec.Devices,
 				},
 			},
 		},

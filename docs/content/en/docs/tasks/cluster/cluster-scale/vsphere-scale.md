@@ -1,13 +1,13 @@
 ---
-title: "Scale cluster"
-linkTitle: "Scale cluster"
+title: "Scale vSphere cluster"
+linkTitle: "Scale vSphere cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to scale your cluster.
+  How to scale your vSphere cluster
 ---
 
-When you are scaling your EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
+When you are scaling your vSphere EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
 Each plane can be scaled horizontally (add more nodes) or vertically (provide nodes with more resources).
 In each case you can scale the cluster manually, semi-automatically, or automatically.
 
@@ -64,7 +64,7 @@ In a semi-automatic mode you change your cluster spec and then have automation m
 
 You can do this by storing your cluster config manifest in git and then having a CI/CD system deploy your changes.
 Or you can use a GitOps controller to apply the changes.
-To read more about making changes with the integrated Flux GitOps controller you can read how to [Manage a cluster with GitOps]({{< relref "./cluster-flux" >}}).
+To read more about making changes with the integrated Flux GitOps controller you can read how to [Manage a cluster with GitOps]({{< relref "../cluster-flux" >}}).
 
 ### Automatic scaling
 

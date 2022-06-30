@@ -84,6 +84,9 @@ spec:
         id: eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea
       cloudInit:
         insecureSkipSecretsManager: true
+      devices:
+      - 1.2.3.4
+      - 1.2.3.5
       iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
       instanceType: sbe-c.xlarge
       physicalNetworkConnectorType: SFP_PLUS
