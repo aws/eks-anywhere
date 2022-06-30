@@ -7,7 +7,7 @@ description: >
 aliases:
    - /docs/tasks/troubleshoot/_troubleshooting
 ---
-
+x_
 
 This guide covers EKS Anywhere troubleshooting. It is divided into the following sections:
 
@@ -96,16 +96,6 @@ Failed to create cluster	{"error": "error creating bootstrap cluster: error exec
 ```
 A bootstrap cluster already exists with the same name. If you are sure the cluster is not being used, you may use the `--force-cleanup` option to `eksctl anywhere` to delete the cluster or you may delete the cluster with `kind delete cluster --name <cluster-name>`. If you do not have `kind` installed, you may use `docker stop` to stop the docker container running the KinD cluster.
 
-### Bootstrap cluster fails to come up
-If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
-
-You may also access the logs from your bootstrap cluster directly as below:
-```bash
-export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
-kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
-```
-
-It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
 
 ### Memory or disk resource problem
 There are various disk and memory issues that can cause problems.
@@ -153,6 +143,17 @@ kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ```
 Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
 
+### Bootstrap cluster fails to come up
+If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
+
+You may also access the logs from your bootstrap cluster directly as below:
+```bash
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
+```
+
+It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
+
 ## Bare Metal troubleshooting
 
 ### Bootstrap cluster fails to come up
@@ -162,7 +163,10 @@ Error: creating bootstrap cluster: executing create cluster: ERROR: failed to cr
 , try rerunning with —force-cleanup to force delete previously created bootstrap cluster
 ```
 
-The cluster already exists, so you can delete the old one:
+Cluster creation fails because a cluster of the same name already exists.
+Try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
+
+If that doesn't work, you can manually delete the old cluster:
 
 ```bash
 kind delete cluster --name cluster-name
@@ -207,29 +211,29 @@ In either of those cases, the following steps can help you determine the problem
         kubectl get bmt <bmt-name> -n eksa-system -o yaml
         ```
 
-    BMC credentials are incorrect if the message in the bmt log says something like `Failed to connect to BMC: failed to open connection to BMC`. You might have enable “IPMI over LAN” for that machine if it says something like “failed to perform OneTimeBootDeviceAction”
+    Validate BMC credentials are correct if a connection error is observed on the `bmt` resource. Note that IPMI over LAN is required for the `bmt` resource to communicate with BMC.
 
-1. If the machine is powered on but you see `linuxkit is not running`, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
+1. If the machine is powered on but you see linuxkit is not running, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
 
-    * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. 
     * Check the boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
 
         ```bash 
         docker logs boots
         ```
+    * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. Other DHCP servers on the network can result in race conditions and should be avoided by configuring the other server to block all MAC addresses and exclude all IP addresses used by EKS Anywhere.
 
-1. If you see `linuxkit is running*, click enter in the BMC console to access the linuxkit terminal. Run the following commands to check if the tink-worker is running.
+1. If you see `Welcome to LinuxKit`, click enter in the BMC console to access the LinuxKit terminal. Run the following commands to check if the tink-worker container is running.
 
     ```bash
-    docker logs <container-id>
     docker ps -a
+    docker logs <container-id>
     ```
 
 1. If the machine has already started provisioning the OS and it’s in irrecoverable state, get the workflow of the provisioning/provisioned machine using:
 
     ```bash
-    kubectl get workflow -n eksa-system
-    kubectl get workflow <workflow-name> -n eksa-system -o yaml
+    kubectl get workflows -n eksa-system
+    kubectl describe workflow/<workflow-name> -n eksa-system 
     ```
 
     Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec. 
