@@ -256,6 +256,21 @@ In general, the actions include:
 
 If all goes well, you will see all actions set to STATE_SUCCESS, except for the kexec-image action. That should show as STATE_RUNNING for as long as the machine is running.
 
+You can review the CAPT logs to see provisioning activity.
+For example, at the start of a new provisioning event, you would see something like the following:
+
+```bash
+kubectl logs -n capt-system capt-controller-manager-9f8b95b-frbq | less
+```
+```
+..."Created BMCJob to get hardware ready for provisioning"...
+```
+
+You can follow this output to see the machine as it goes through the provisioning process.
+
+After the node is initialized, completes all the Tinkerbell actions, and is booted into the installed operating system (Ubuntu or Bottlerocket), the new system starts cloud-init to do further configuration.
+At this point, the system will reach out to the Tinkerbell hegel service to get the hegel metadata.
+
 If something goes wrong, viewing hegel files can help you understand why a stuck system that has booted into Ubuntu has not joined the cluster yet.
 To see the hegel files, get the internal IP address for one of the new nodes. Then check for the names of hegel logs and display the contents of one of those logs, searching for the IP address of the node:
 
@@ -332,21 +347,5 @@ kubectl get machines -n eksa-system
 NAME              CLUSTER    NODENAME    PROVIDERID                         PHASE    AGE  VERSION
 mycluster-72p72   mycluster  eksa-da04   tinkerbell://eksa-system/eksa-da04 Running  7m25s   v1.22.10-eks-1-22-8
 ```
-
-You can review the CAPT logs to see provisioning activity.
-For example, at the start of a new provisioning event, you would see something like the following:
-
-```bash
-kubectl logs -n capt-system capt-controller-manager-9f8b95b-frbq | less
-```
-```
-..."Created BMCJob to get hardware ready for provisioning"...
-```
-
-You can follow this output to see the machine as it goes through the provisioning process.
-
-After the node is initialized, completes all the Tinkerbell actions, and is booted into the installed operating system (Ubuntu or Bottlerocket), the new system starts cloud-init to do further configuration.
-At this point, the system will reach out to the Tinkerbell hegel service to get the hegel metadata.
-
 Once you have confirmed that all your machines are successfully running as nodes on the target cluster, there is not much for Tinkerbell to do.
 It stays around to continue running the DHCP service and to be available to add more machines to the cluster.
