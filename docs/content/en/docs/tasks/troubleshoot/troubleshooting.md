@@ -7,7 +7,6 @@ description: >
 aliases:
    - /docs/tasks/troubleshoot/_troubleshooting
 ---
-x_
 
 This guide covers EKS Anywhere troubleshooting. It is divided into the following sections:
 
