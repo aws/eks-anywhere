@@ -41,8 +41,8 @@ func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter, op
 	return NewGovc(b.buildExecutable(govcPath), writer, opts...)
 }
 
-func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, config decoder.CloudStackProfileConfig) *Cmk {
-	return NewCmk(b.buildExecutable(cmkPath), writer, config)
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, configs []decoder.CloudStackProfileConfig) *Cmk {
+	return NewCmk(b.buildExecutable(cmkPath), writer, configs)
 }
 
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {

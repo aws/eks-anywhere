@@ -59,16 +59,16 @@ func givenEmptyClusterSpec() *cluster.Spec {
 
 func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
-	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateZonePresent(gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().GetManagementApiEndpoint().AnyTimes().Return("http://127.16.0.1:8080/client/api")
+	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZonePresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).AnyTimes().Return("http://127.16.0.1:8080/client/api", nil)
 	return cmk
 }
 
@@ -194,15 +194,13 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, cmk ProviderCmkClient) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
-	cmks := CmkClientMap{}
-	cmks["Global"] = cmk
 
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
-		cmks,
+		cmk,
 		writer,
 		test.FakeNow,
 		false,

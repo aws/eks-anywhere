@@ -14,7 +14,7 @@ import (
 )
 
 type Validator struct {
-	cmks                   CmkClientMap
+	cmk                    ProviderCmkClient
 	localAvailabilityZones []localAvailabilityZone
 }
 
@@ -30,9 +30,9 @@ var restrictedUserCustomDetails = [...]string{
 	"keypairnames", "controlNodeLoginUser",
 }
 
-func NewValidator(cmks CmkClientMap) *Validator {
+func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
-		cmks:                   cmks,
+		cmk:                    cmk,
 		localAvailabilityZones: []localAvailabilityZone{},
 	}
 }
@@ -44,19 +44,17 @@ type localAvailabilityZone struct {
 }
 
 type ProviderCmkClient interface {
-	GetManagementApiEndpoint() string
-	ValidateCloudStackConnection(ctx context.Context) error
-	ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
-	ValidateDiskOfferingPresent(ctx context.Context, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
-	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
-	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
-	ValidateZonePresent(ctx context.Context, zone anywherev1.CloudStackZone) (string, error)
-	ValidateNetworkPresent(ctx context.Context, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error
-	ValidateDomainPresent(ctx context.Context, domain string) (anywherev1.CloudStackResourceIdentifier, error)
-	ValidateAccountPresent(ctx context.Context, account string, domainId string) error
+	GetManagementApiEndpoint(profile string) (string, error)
+	ValidateCloudStackConnection(ctx context.Context, profile string) error
+	ValidateServiceOfferingPresent(ctx context.Context, profile string, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
+	ValidateDiskOfferingPresent(ctx context.Context, profile string, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
+	ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
+	ValidateAffinityGroupsPresent(ctx context.Context, profile string, domainId string, account string, affinityGroupIds []string) error
+	ValidateZonePresent(ctx context.Context, profile string, zone anywherev1.CloudStackZone) (string, error)
+	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string, multipleZone bool) error
+	ValidateDomainPresent(ctx context.Context, profile string, domain string) (anywherev1.CloudStackResourceIdentifier, error)
+	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
 }
-
-type CmkClientMap map[string]ProviderCmkClient
 
 func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
 	refNamesToCheck := []string{}
@@ -68,11 +66,7 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConf
 	}
 
 	for _, refName := range refNamesToCheck {
-		cmk, ok := v.cmks[refName]
-		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile for credentialsRef %s", refName)
-		}
-		if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
+		if err := v.cmk.ValidateCloudStackConnection(ctx, refName); err != nil {
 			return fmt.Errorf("failed validating connection to cloudstack %s: %v", refName, err)
 		}
 	}
@@ -92,27 +86,27 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 			return fmt.Errorf("checking management api endpoint: %v", err)
 		}
 
-		cmk, ok := v.cmks[az.CredentialsRef]
-		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
+		cmk := v.cmk
+		endpoint, err := cmk.GetManagementApiEndpoint(az.CredentialsRef)
+		if err != nil {
+			return err
 		}
-		endpoint := cmk.GetManagementApiEndpoint()
 		if endpoint != az.ManagementApiEndpoint {
 			return fmt.Errorf("cloudstack secret management url (%s) differs from cluster spec management url (%s)",
 				endpoint, az.ManagementApiEndpoint)
 		}
 
-		domain, err := cmk.ValidateDomainPresent(ctx, az.Domain)
+		domain, err := v.cmk.ValidateDomainPresent(ctx, az.CredentialsRef, az.Domain)
 		if err != nil {
 			return err
 		}
 		az.DomainId = domain.Id
 
-		if err := cmk.ValidateAccountPresent(ctx, az.Account, az.DomainId); err != nil {
+		if err := v.cmk.ValidateAccountPresent(ctx, az.CredentialsRef, az.Account, az.DomainId); err != nil {
 			return err
 		}
 
-		zoneId, err := cmk.ValidateZonePresent(ctx, az.CloudStackAvailabilityZone.Zone)
+		zoneId, err := v.cmk.ValidateZonePresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone)
 		if err != nil {
 			return err
 		}
@@ -120,7 +114,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if len(az.CloudStackAvailabilityZone.Zone.Network.Id) == 0 && len(az.CloudStackAvailabilityZone.Zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		if err := cmk.ValidateNetworkPresent(ctx, az.DomainId, az.CloudStackAvailabilityZone.Zone.Network, zoneId, az.Account, true); err != nil {
+		if err := v.cmk.ValidateNetworkPresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Network, zoneId, az.Account, true); err != nil {
 			return err
 		}
 	}
@@ -135,10 +129,6 @@ func (v *Validator) generateLocalAvailabilityZones(ctx context.Context, datacent
 	}
 
 	if len(datacenterConfig.Spec.Domain) > 0 {
-		_, ok := v.cmks[decoder.CloudStackGlobalAZ]
-		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile named %s for default availability zone", decoder.CloudStackGlobalAZ)
-		}
 		for index, zone := range datacenterConfig.Spec.Zones {
 			availabilityZone := localAvailabilityZone{
 				CloudStackAvailabilityZone: &anywherev1.CloudStackAvailabilityZone{
@@ -154,10 +144,6 @@ func (v *Validator) generateLocalAvailabilityZones(ctx context.Context, datacent
 		}
 	}
 	for _, az := range datacenterConfig.Spec.AvailabilityZones {
-		_, ok := v.cmks[az.CredentialsRef]
-		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
-		}
 		availabilityZone := localAvailabilityZone{
 			CloudStackAvailabilityZone: &az,
 		}
@@ -282,23 +268,19 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	}
 
 	for _, az := range v.localAvailabilityZones {
-		cmk, ok := v.cmks[az.CredentialsRef]
-		if !ok {
-			return fmt.Errorf("cannot find CloudStack profile named %s for availability zone %s", az.CredentialsRef, az.Name)
-		}
-		if err := cmk.ValidateTemplatePresent(ctx, az.DomainId, az.CloudStackAvailabilityZone.Zone.Id, az.Account, machineConfig.Spec.Template); err != nil {
+		if err := v.cmk.ValidateTemplatePresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Id, az.Account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)
 		}
-		if err := cmk.ValidateServiceOfferingPresent(ctx, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
+		if err := v.cmk.ValidateServiceOfferingPresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
 		}
 		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
-			if err := cmk.ValidateDiskOfferingPresent(ctx, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.DiskOffering); err != nil {
+			if err := v.cmk.ValidateDiskOfferingPresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.DiskOffering); err != nil {
 				return fmt.Errorf("validating disk offering: %v", err)
 			}
 		}
 		if len(machineConfig.Spec.AffinityGroupIds) > 0 {
-			if err := cmk.ValidateAffinityGroupsPresent(ctx, az.DomainId, az.Account, machineConfig.Spec.AffinityGroupIds); err != nil {
+			if err := v.cmk.ValidateAffinityGroupsPresent(ctx, az.CredentialsRef, az.DomainId, az.Account, machineConfig.Spec.AffinityGroupIds); err != nil {
 				return fmt.Errorf("validating affinity group ids: %v", err)
 			}
 		}
