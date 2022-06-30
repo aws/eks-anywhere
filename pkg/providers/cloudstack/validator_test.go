@@ -852,6 +852,12 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	}
 	validator := NewValidator(cmk)
 
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(),
+		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
+	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
+	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).Times(3)
+
 	for _, machineConfig := range machineConfigs {
 		err := validator.validateMachineConfig(ctx, datacenterConfig, machineConfig)
 		if err != nil {

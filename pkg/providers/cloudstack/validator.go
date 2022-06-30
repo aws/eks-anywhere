@@ -14,8 +14,7 @@ import (
 )
 
 type Validator struct {
-	cmk                    ProviderCmkClient
-	localAvailabilityZones []localAvailabilityZone
+	cmk ProviderCmkClient
 }
 
 // Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java
@@ -32,8 +31,7 @@ var restrictedUserCustomDetails = [...]string{
 
 func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
-		cmk:                    cmk,
-		localAvailabilityZones: []localAvailabilityZone{},
+		cmk: cmk,
 	}
 }
 
@@ -76,11 +74,12 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConf
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if err := v.generateLocalAvailabilityZones(ctx, datacenterConfig); err != nil {
+	localAvailabilityZones, err := generateLocalAvailabilityZones(ctx, datacenterConfig)
+	if err != nil {
 		return err
 	}
 
-	for _, az := range v.localAvailabilityZones {
+	for _, az := range localAvailabilityZones {
 		_, err := getHostnameFromUrl(az.ManagementApiEndpoint)
 		if err != nil {
 			return fmt.Errorf("checking management api endpoint: %v", err)
@@ -123,9 +122,11 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	return nil
 }
 
-func (v *Validator) generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
+func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) ([]localAvailabilityZone, error) {
+	localAvailabilityZones := []localAvailabilityZone{}
+
 	if datacenterConfig == nil {
-		return errors.New("CloudStack Datacenter Config is null")
+		return nil, errors.New("CloudStack Datacenter Config is null")
 	}
 
 	if len(datacenterConfig.Spec.Domain) > 0 {
@@ -140,20 +141,20 @@ func (v *Validator) generateLocalAvailabilityZones(ctx context.Context, datacent
 					Zone:                  zone,
 				},
 			}
-			v.localAvailabilityZones = append(v.localAvailabilityZones, availabilityZone)
+			localAvailabilityZones = append(localAvailabilityZones, availabilityZone)
 		}
 	}
 	for _, az := range datacenterConfig.Spec.AvailabilityZones {
 		availabilityZone := localAvailabilityZone{
 			CloudStackAvailabilityZone: &az,
 		}
-		v.localAvailabilityZones = append(v.localAvailabilityZones, availabilityZone)
+		localAvailabilityZones = append(localAvailabilityZones, availabilityZone)
 	}
 
-	if len(v.localAvailabilityZones) <= 0 {
-		return fmt.Errorf("CloudStackDatacenterConfig domain or localAvailabilityZones is not set or is empty")
+	if len(localAvailabilityZones) <= 0 {
+		return nil, fmt.Errorf("CloudStackDatacenterConfig domain or localAvailabilityZones is not set or is empty")
 	}
-	return nil
+	return localAvailabilityZones, nil
 }
 
 // TODO: dry out machine configs validations
@@ -267,7 +268,12 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 		}
 	}
 
-	for _, az := range v.localAvailabilityZones {
+	localAvailabilityZones, err := generateLocalAvailabilityZones(ctx, datacenterConfig)
+	if err != nil {
+		return err
+	}
+
+	for _, az := range localAvailabilityZones {
 		if err := v.cmk.ValidateTemplatePresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Id, az.Account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)
 		}
