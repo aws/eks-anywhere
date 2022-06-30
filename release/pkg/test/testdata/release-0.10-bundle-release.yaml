@@ -335,7 +335,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.0-eks-a-v0.0.0-dev-release-0.10-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1038,7 +1038,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.0-eks-a-v0.0.0-dev-release-0.10-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -1741,7 +1741,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.0-eks-a-v0.0.0-dev-release-0.10-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
@@ -2444,7 +2444,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.2-eks-a-v0.0.0-dev-release-0.10-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.0-eks-a-v0.0.0-dev-release-0.10-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.10-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
       diagnosticCollector:
