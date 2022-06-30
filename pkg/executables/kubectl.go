@@ -269,6 +269,10 @@ func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
+func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady=false", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
 // WaitForService blocks until an IP address is assigned.
 //
 // Until more generic status matching comes around (possibly in 1.23), poll
