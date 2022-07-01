@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 )
@@ -35,14 +38,40 @@ func UpdateConfigurations(originalConfigs map[string]packagesv1.VersionConfigura
 	return nil
 }
 
-func GenerateAllValidConfigurations(configs map[string]packagesv1.VersionConfiguration) string {
-	b := new(bytes.Buffer)
+func GenerateAllValidConfigurations(configs map[string]packagesv1.VersionConfiguration) (string, error) {
+	data := map[string]interface{}{}
 	for key, val := range configs {
 		if val.Default != "" || val.Required {
-			fmt.Fprintf(b, "%s: \"%s\"\n", key, val.Default)
+			keySegments := strings.Split(key, ".")
+			parse(data, keySegments, 0, val.Default)
 		}
 	}
-	return b.String()
+	out, err := yaml.Marshal(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal configurations %v", data)
+	}
+	return string(out), nil
+}
+
+func parse(data map[string]interface{}, keySegments []string, index int, val string) {
+	if index >= len(keySegments) {
+		return
+	}
+	key := keySegments[index]
+	inner := map[string]interface{}{}
+	if _, ok := data[key]; ok {
+		inner = data[key].(map[string]interface{})
+	}
+	parse(inner, keySegments, index+1, val)
+	if len(inner) == 0 {
+		if bVal, err := strconv.ParseBool(val); err == nil {
+			data[key] = bVal
+		} else {
+			data[key] = val
+		}
+	} else {
+		data[key] = inner
+	}
 }
 
 func GenerateDefaultConfigurations(configs map[string]packagesv1.VersionConfiguration) string {
