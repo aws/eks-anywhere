@@ -412,12 +412,12 @@ func (c *Cmk) CleanupVms(ctx context.Context, profile string, clusterName string
 
 func (c *Cmk) exec(ctx context.Context, profile string, args ...string) (stdout bytes.Buffer, err error) {
 	if err != nil {
-		return stdout, fmt.Errorf("failed get environment map: %v", err)
+		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
 	}
 
 	configFile, err := c.buildCmkConfigFile(profile)
 	if err != nil {
-		return stdout, fmt.Errorf("failed cmk validations: %v", err)
+		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
 	}
 
 	argsWithConfigFile := append([]string{"-c", configFile}, args...)
