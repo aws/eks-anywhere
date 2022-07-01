@@ -97,6 +97,20 @@ func TestValidateCloudStackConnection(t *testing.T) {
 	}
 }
 
+func TestValidateCloudStackConnectionFailure(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk)
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+
+	cmk.EXPECT().ValidateCloudStackConnection(ctx, "Global").Return(errors.New("exception"))
+	err = validator.validateCloudStackAccess(ctx, datacenterConfig)
+	thenErrorExpected(t, "validating connection to cloudstack Global: exception", err)
+}
+
 func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))

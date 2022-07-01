@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -38,7 +39,8 @@ const (
 	secret-key = test-secret1
 	api-url = http://127.16.0.1:8080/client/api
 	*/
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
+	expectedCloudStackCloudConfig       = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
+	cloudStackCloudConfigWithInvalidUrl = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0geHh4Cg=="
 )
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
@@ -237,6 +239,109 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateDeleteCluster(ctx, cluster)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateCreateClusterFailureOnInvalidClusterSpec(t *testing.T) {
+	tt := NewWithT(t)
+	clusterSpecManifest := "cluster_invalid.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *testing.T) {
+	tt := NewWithT(t)
+	clusterSpecManifest := "cluster_invalid.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {

@@ -65,7 +65,7 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConf
 
 	for _, refName := range refNamesToCheck {
 		if err := v.cmk.ValidateCloudStackConnection(ctx, refName); err != nil {
-			return fmt.Errorf("failed validating connection to cloudstack %s: %v", refName, err)
+			return fmt.Errorf("validating connection to cloudstack %s: %v", refName, err)
 		}
 	}
 
