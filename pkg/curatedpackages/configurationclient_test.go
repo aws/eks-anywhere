@@ -104,8 +104,10 @@ func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
 	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
-	output := curatedpackages.GenerateAllValidConfigurations(configs)
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
+	output, err := curatedpackages.GenerateAllValidConfigurations(configs)
+	tt.Expect(err).To(BeNil())
+
+	expectedOutput := fmt.Sprintf("%s: %s\n",
 		"sourceRegistry", "localhost:8080")
 
 	tt.Expect(output).To(Equal(expectedOutput))

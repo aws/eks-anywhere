@@ -146,8 +146,8 @@ func (pc *PackageClient) getInstallConfigurations(bp *packagesv1.BundlePackage) 
 		return "", err
 	}
 
-	configString := GenerateAllValidConfigurations(configs)
-	return configString, nil
+	configString, err := GenerateAllValidConfigurations(configs)
+	return configString, err
 }
 
 func (pc *PackageClient) getGenerateConfigurations(bp *packagesv1.BundlePackage) string {
