@@ -28,6 +28,7 @@ const (
 	govcUsername       = "GOVC_USERNAME"
 	govcPassword       = "GOVC_PASSWORD"
 	govcURL            = "GOVC_URL"
+	govcDatacenter     = "GOVC_DATACENTER"
 	govcInsecure       = "GOVC_INSECURE"
 	vSphereUsername    = "EKSA_VSPHERE_USERNAME"
 	vSpherePassword    = "EKSA_VSPHERE_PASSWORD"
@@ -37,25 +38,29 @@ const (
 )
 
 var govcEnvironment = map[string]string{
-	govcUsername: "vsphere_username",
-	govcPassword: "vsphere_password",
-	govcURL:      "vsphere_server",
-	govcInsecure: "false",
+	govcUsername:   "vsphere_username",
+	govcPassword:   "vsphere_password",
+	govcURL:        "vsphere_server",
+	govcDatacenter: "vsphere_datacenter",
+	govcInsecure:   "false",
 }
 
 type testContext struct {
-	oldUsername   string
-	isUsernameSet bool
-	oldPassword   string
-	isPasswordSet bool
-	oldServer     string
-	isServerSet   bool
+	oldUsername     string
+	isUsernameSet   bool
+	oldPassword     string
+	isPasswordSet   bool
+	oldServer       string
+	isServerSet     bool
+	oldDatacenter   string
+	isDatacenterSet bool
 }
 
 func (tctx *testContext) SaveContext() {
 	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(vSphereUsername)
 	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(vSpherePassword)
 	tctx.oldServer, tctx.isServerSet = os.LookupEnv(vSphereServer)
+	tctx.oldDatacenter, tctx.isDatacenterSet = os.LookupEnv(govcDatacenter)
 	os.Setenv(vSphereUsername, "vsphere_username")
 	os.Setenv(vSpherePassword, "vsphere_password")
 	os.Setenv(vSphereServer, "vsphere_server")
@@ -63,6 +68,7 @@ func (tctx *testContext) SaveContext() {
 	os.Setenv(govcPassword, os.Getenv(vSpherePassword))
 	os.Setenv(govcURL, os.Getenv(vSphereServer))
 	os.Setenv(govcInsecure, "false")
+	os.Setenv(govcDatacenter, "vsphere_datacenter")
 }
 
 func (tctx *testContext) RestoreContext() {
@@ -80,6 +86,11 @@ func (tctx *testContext) RestoreContext() {
 		os.Setenv(vSphereServer, tctx.oldServer)
 	} else {
 		os.Unsetenv(vSphereServer)
+	}
+	if tctx.isDatacenterSet {
+		os.Setenv(govcDatacenter, tctx.oldDatacenter)
+	} else {
+		os.Unsetenv(govcDatacenter)
 	}
 }
 
@@ -992,6 +1003,17 @@ func TestGovcValidateVCenterAuthenticationSuccess(t *testing.T) {
 
 	if err := g.ValidateVCenterAuthentication(ctx); err != nil {
 		t.Fatalf("Govc.ValidateVCenterAuthentication() err = %v, want err nil", err)
+	}
+}
+
+func TestGovcValidateVCenterAuthenticationErrorNoDatacenter(t *testing.T) {
+	ctx := context.Background()
+	_, g, _, _ := setup(t)
+
+	os.Setenv(govcDatacenter, "")
+
+	if err := g.ValidateVCenterAuthentication(ctx); err == nil {
+		t.Fatal("Govc.ValidateVCenterAuthentication() err = nil, want err not nil")
 	}
 }
 

@@ -26,6 +26,7 @@ const (
 	govcPasswordKey            string = "GOVC_PASSWORD"
 	govcURLKey                 string = "GOVC_URL"
 	govcInsecure               string = "GOVC_INSECURE"
+	govcDatacenterKey          string = "GOVC_DATACENTER"
 	ssmActivationCodeKey       string = "ssm_activation_code"
 	ssmActivationIdKey         string = "ssm_activation_id"
 	ssmActivationRegionKey     string = "ssm_activation_region"
@@ -133,6 +134,11 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 		return nil, fmt.Errorf("unable to set %s: %v", govcURLKey, err)
 	}
 	envMap[govcInsecure] = strconv.FormatBool(v.Insecure)
+
+	if err := os.Setenv(govcDatacenterKey, v.Datacenter); err != nil {
+		return nil, fmt.Errorf("unable to set %v: %v", govcDatacenterKey, err)
+	}
+	envMap[govcDatacenterKey] = v.Datacenter
 
 	v.envMap = envMap
 	return envMap, nil
