@@ -8,8 +8,9 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"sigs.k8s.io/yaml"
+
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 )
 
 func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[string]packagesv1.VersionConfiguration {
@@ -61,7 +62,7 @@ func parse(data map[string]interface{}, keySegments []string, index int, val str
 	if _, ok := data[key]; ok {
 		inner = data[key].(map[string]interface{})
 	}
-	parse(inner, keySegments, index + 1, val)
+	parse(inner, keySegments, index+1, val)
 	if len(inner) == 0 {
 		if bVal, err := strconv.ParseBool(val); err == nil {
 			data[key] = bVal

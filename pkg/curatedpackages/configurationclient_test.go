@@ -38,13 +38,13 @@ func newConfigurationTest(t *testing.T) *configurationTest {
 							Required: false,
 						},
 						{
-							Name:    "expose.tls.enabled",
-							Default: "false",
+							Name:     "expose.tls.enabled",
+							Default:  "false",
 							Required: false,
 						},
 						{
-							Name:    "expose.tls.auto.commonName",
-							Default: "localhost",
+							Name:     "expose.tls.auto.commonName",
+							Default:  "localhost",
 							Required: false,
 						},
 					},
