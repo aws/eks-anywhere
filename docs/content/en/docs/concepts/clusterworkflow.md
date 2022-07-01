@@ -328,7 +328,7 @@ Refer to the clusterNetwork section of your configuration file to see how the ci
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
 
-* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) and [MetalLB]({{< relref "../tasks/workload/loadbalance/metallb.md" >}}).
+* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [MetalLB]({{< relref "../tasks/workload/loadbalance/" >}}).
 * **Ingress controller**: You can add a Kubernetes ingress controller to EKS Anywhere.
 The project documents the use of [Emissary-ingress]({{< relref "../tasks/workload/ingress" >}}) ingress controller.
 
