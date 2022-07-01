@@ -48,7 +48,7 @@ func GenerateAllValidConfigurations(configs map[string]packagesv1.VersionConfigu
 	}
 	out, err := yaml.Marshal(data)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshall object %v", data)
+		return "", fmt.Errorf("failed to marshal configurations %v", data)
 	}
 	return string(out), nil
 }
