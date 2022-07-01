@@ -40,6 +40,7 @@ const (
 	etcdWaitStr            = "60m"
 	deploymentWaitStr      = "30m"
 	ctrlPlaneInProgressStr = "1m"
+	etcdInProgressStr      = "1m"
 )
 
 type ClusterManager struct {
@@ -358,12 +359,12 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	var externalEtcdTopology bool
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd upgrade to be in progress")
-		err = c.clusterClient.WaitForManagedExternalEtcdNotReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+		err = c.clusterClient.WaitForManagedExternalEtcdNotReady(ctx, managementCluster, etcdInProgressStr, newClusterSpec.Cluster.Name)
 		if err != nil {
 			if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
 				return fmt.Errorf("error waiting for external etcd upgrade not ready: %v", err)
 			} else {
-				logger.V(3).Info("Timed out while waiting for  external etcd to be in progress, likely caused by no  external etcd upgrade")
+				logger.V(3).Info("Timed out while waiting for external etcd to be in progress, likely caused by no external etcd upgrade")
 			}
 		}
 
