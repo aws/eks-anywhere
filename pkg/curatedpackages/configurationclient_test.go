@@ -42,6 +42,11 @@ func newConfigurationTest(t *testing.T) *configurationTest {
 							Default: "false",
 							Required: false,
 						},
+						{
+							Name:    "expose.tls.auto.commonName",
+							Default: "localhost",
+							Required: false,
+						},
 					},
 				},
 			},
@@ -65,7 +70,7 @@ func TestGetConfigurationsFromBundleSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
 	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
-	tt.Expect(len(configs)).To(Equal(4))
+	tt.Expect(len(configs)).To(Equal(5))
 }
 
 func TestGetConfigurationsFromBundleFail(t *testing.T) {
@@ -112,9 +117,11 @@ func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 	output, err := curatedpackages.GenerateAllValidConfigurations(configs)
 	tt.Expect(err).To(BeNil())
 
-	expectedOutput := fmt.Sprintf("%s:\n  %s:\n    %s: %s\n%s: %s\n",
-		"expose", "tls", "enabled", "false",
-		"sourceRegistry", "localhost:8080")
+	expectedOutput := fmt.Sprintf(
+		"%s:\n  %s:\n    %s:\n      %s: %s\n    %s: %s\n%s: %s\n",
+		"expose", "tls", "auto", "commonName", "localhost", "enabled", "false",
+		"sourceRegistry", "localhost:8080",
+	)
 
 	tt.Expect(output).To(Equal(expectedOutput))
 }
