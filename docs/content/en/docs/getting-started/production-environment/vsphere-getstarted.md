@@ -1,6 +1,9 @@
 ---
-title: "Create vSphere production cluster"
+title: "Create vSphere production cluster" 
+linkTitle: "vSphere cluster" 
 weight: 40
+description: >
+  Create a production-quality cluster on VMware vSphere
 ---
 
 EKS Anywhere supports a VMware vSphere provider for production grade EKS Anywhere deployments.

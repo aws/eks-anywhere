@@ -53,7 +53,7 @@ which gives permission to impersonate AWS IAM entities.
 #### How do I enable an AWS user account to view my connected cluster through the EKS console?
 
 For each AWS user or other IAM identity, you should add cluster role binding to the Kubernetes cluster with the appropriate permission for that IAM identity.
-Additionally, each of these IAM entities should be associated with the [IAM policy](SOME_MANAGED_POLICY)
+Additionally, each of these IAM entities should be associated with the IAM policy
 to invoke the EKS Connector on the cluster.
 
 ### Can I use Amazon Controllers for Kubernetes (ACK) on EKS Anywhere?
@@ -63,8 +63,8 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 
 ### Can I deploy EKS Anywhere on other clouds?
 
-EKS Anywhere can be installed on any infrastructure with the required VMware vSphere versions.
-See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentation.
+EKS Anywhere can be installed on any infrastructure with the required Bare Metal or VMware vSphere components.
+See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}) or [vSphere]({{< relref "../vsphere" >}}) documentation.
 
 ### How can I manage EKS Anywhere at scale?
 
@@ -74,5 +74,5 @@ See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md
 
 ### Can I run EKS Anywhere on ESXi?
 
-No. EKS Anywhere is dependent on the vSphere cluster API provider CAPV and it uses the vCenter API.
+No. EKS Anywhere is only supported on Bare Metal and vSphere platforms.
 There would need to be a change to the upstream project to support ESXi.
