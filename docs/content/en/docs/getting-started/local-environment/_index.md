@@ -63,10 +63,10 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    ```
 
    * Apart from the base configuration, you can add additional optional configuration to enable supported features:
-      * [OIDC](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/oidc/) 
-      * [etcd](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/etcd/)
-      * [proxy](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/proxy/)
-      * [gitops](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/gitops/)
+      * [OIDC]({{< relref "../../reference/clusterspec/optional/oidc" >}})
+      * [etcd]({{< relref "../../reference/clusterspec/optional/etcd" >}})
+      * [proxy]({{< relref "../../reference/clusterspec/optional/proxy" >}})
+      * [gitops]({{< relref "../../reference/clusterspec/optional/gitops" >}})
 
 1. Create Cluster: Create your cluster either with or without curated packages:
 
