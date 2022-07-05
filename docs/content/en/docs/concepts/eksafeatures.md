@@ -43,7 +43,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 ||||
 | **Functions and tooling** | | |
 | Networking and Security       | Cilium CNI and network policy supported | Amazon VPC CNI supported. Calico supported for network policy. Other compatible [3rd-party CNI plugins](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) available.|
-| Load balancer                 | Elastic Load Balancing including Application Load Balancer (ALB), and Network Load Balancer (NLB) |
+| Load balancer                 | Metallb | Elastic Load Balancing including Application Load Balancer (ALB), and Network Load Balancer (NLB) |
 | Service mesh                  | Community or [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)    | AWS App Mesh, community, or [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
 | Community tools and Helm      | Works with compatible community tooling and helm charts.  | Works with compatible community tooling and helm charts. |
 ||||
