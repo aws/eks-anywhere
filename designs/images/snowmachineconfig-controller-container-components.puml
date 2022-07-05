@@ -13,8 +13,8 @@ Container_Boundary(snowMachineConfigController, "Snow MachineConfig Controller")
     Rel(snowMachineConfigReconciler, awsCli, "Uses")
 }
 
-Component_Ext(snowAPI, "Snow API endpoint", "AWS?")
-Rel(awsCli, snowAPI, "Makes API calls", "JSON/HTTPS ??")
+Component_Ext(snowAPI, "Snow API endpoint")
+Rel(awsCli, snowAPI, "Makes API calls", "JSON/HTTPS")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 

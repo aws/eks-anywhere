@@ -22,13 +22,13 @@ Deployment_Node(controllerManagerDeployment, "Controller Manager", "Kubernetes D
 }
 
 Container_Ext(vCenter, "vCenter Server", "VMware", "vSphere Automation API")
-Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS ??")
+Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS")
 
 Container_Ext(ociRegistry, "OCI registry", "Public ECR or other", "OCI compliant registry to store container images and Helm charts")
-Rel(helm, ociRegistry, "Reads Helm charts", "JSON/HTTPS??")
+Rel(helm, ociRegistry, "Reads Helm charts", "OCI/HTTPS")
 
-Container_Ext(snowAPI, "Snow API endpoint", "AWS?")
-Rel(snowMachineConfigController, snowAPI, "Makes API calls", "JSON/HTTPS ??")
+Container_Ext(snowAPI, "Snow API endpoint")
+Rel(snowMachineConfigController, snowAPI, "Makes API calls", "JSON/HTTPS")
 
 Rel(clusterController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
 Rel(vsphereDatacenterController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")

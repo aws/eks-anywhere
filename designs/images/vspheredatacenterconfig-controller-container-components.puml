@@ -14,7 +14,7 @@ Container_Boundary(vSphereDatacenterController, "vSphere Datacenter Controller")
 }
 
 Component_Ext(vCenter, "vCenter Server", "VMware", "vSphere Automation API")
-Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS ??")
+Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 

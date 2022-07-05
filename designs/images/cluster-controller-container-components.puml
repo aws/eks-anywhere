@@ -53,7 +53,7 @@ Rel(client, kubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
 
 Rel(remoteClient, workloadKubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
 
-Rel(helm, ociRegistry, "Reads Helm charts", "JSON/HTTPS??")
+Rel(helm, ociRegistry, "Reads Helm charts", "OCI/HTTPS")
 
 SHOW_LEGEND()
 @enduml
