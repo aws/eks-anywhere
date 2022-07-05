@@ -6,8 +6,8 @@ description: >
   Provides an overview of EKS Anywhere
 ---
 
-EKS Anywhere lets you create a Kubernetes cluster on premises to a chosen provider.
-Supported providers include Bare Metal and vSphere.
+EKS Anywhere creates a Kubernetes cluster on premises to a chosen provider.
+Supported providers include Bare Metal (via Tinkerbell) and vSphere.
 To manage that cluster, you can run cluster create and delete commands from an Ubuntu or Mac Administrative machine.
 
 Creating a cluster involves downloading EKS Anywhere tools to an Administrative machine, then running the `eksctl anywhere create cluster` command to deploy that cluster to the provider.
