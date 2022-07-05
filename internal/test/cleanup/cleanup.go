@@ -102,17 +102,15 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig.Profiles)
 	defer cmk.Close(ctx)
 
-	failedProfiles := []string{}
-	errors := []error{}
+	errorsMap := map[string]error{}
 	for _, profile := range execConfig.Profiles {
 		if err := cmk.CleanupVms(ctx, profile.Name, clusterName, dryRun); err != nil {
-			failedProfiles = append(failedProfiles, profile.Name)
-			errors = append(errors, err)
+			errorsMap[profile.Name] = err
 		}
 	}
 
-	if len(failedProfiles) > 0 {
-		return fmt.Errorf("cleaning up VMs: profiles=%+v, errors=%+v", failedProfiles, errors)
+	if len(errorsMap) > 0 {
+		return fmt.Errorf("cleaning up VMs: %+v", errorsMap)
 	}
 	return nil
 }
