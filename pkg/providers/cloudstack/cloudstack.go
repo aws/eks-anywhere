@@ -354,8 +354,8 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 
 	for _, instance := range execConfig.Profiles {
 		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
-			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid",
-				instance.Name, instance.ManagementUrl)
+			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid: %v",
+				instance.Name, instance.ManagementUrl, err)
 		}
 	}
 
