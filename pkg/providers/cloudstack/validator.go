@@ -108,7 +108,6 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if err != nil {
 			return err
 		}
-		az.CloudStackAvailabilityZone.Zone.Id = zoneId
 		if len(az.CloudStackAvailabilityZone.Zone.Network.Id) == 0 && len(az.CloudStackAvailabilityZone.Zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
@@ -273,14 +272,19 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	}
 
 	for _, az := range localAvailabilityZones {
-		if err := v.cmk.ValidateTemplatePresent(ctx, az.CredentialsRef, az.DomainId, az.CloudStackAvailabilityZone.Zone.Id, az.Account, machineConfig.Spec.Template); err != nil {
+		zoneId, err := v.cmk.ValidateZoneAndGetId(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone)
+		if err != nil {
+			return err
+		}
+
+		if err := v.cmk.ValidateTemplatePresent(ctx, az.CredentialsRef, az.DomainId, zoneId, az.Account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)
 		}
-		if err := v.cmk.ValidateServiceOfferingPresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
+		if err := v.cmk.ValidateServiceOfferingPresent(ctx, az.CredentialsRef, zoneId, machineConfig.Spec.ComputeOffering); err != nil {
 			return fmt.Errorf("validating service offering: %v", err)
 		}
 		if len(machineConfig.Spec.DiskOffering.Id) > 0 || len(machineConfig.Spec.DiskOffering.Name) > 0 {
-			if err := v.cmk.ValidateDiskOfferingPresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone.Id, machineConfig.Spec.DiskOffering); err != nil {
+			if err := v.cmk.ValidateDiskOfferingPresent(ctx, az.CredentialsRef, zoneId, machineConfig.Spec.DiskOffering); err != nil {
 				return fmt.Errorf("validating disk offering: %v", err)
 			}
 		}

@@ -866,6 +866,7 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	}
 	validator := NewValidator(cmk)
 
+	cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), gomock.Any()).Times(3).Return("4e3b338d-87a6-4189-b931-a1747edeea82", nil)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(),
 		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
