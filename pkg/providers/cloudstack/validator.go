@@ -69,7 +69,7 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context, datacenterConf
 		}
 	}
 
-	logger.MarkPass("Connected to", "servers", refNamesToCheck)
+	logger.MarkPass(fmt.Sprintf("Connected to servers: %s", strings.Join(refNamesToCheck, ", ")))
 	return nil
 }
 
