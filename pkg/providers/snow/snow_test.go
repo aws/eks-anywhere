@@ -187,6 +187,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.large",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 		"test-wn": {
@@ -199,6 +203,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.xlarge",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 	}
@@ -216,8 +224,8 @@ func givenEmptyClusterSpec() *cluster.Spec {
 
 func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient) *snow.SnowProvider {
 	awsClients := snow.AwsClientMap{
-		"device-1": mockaws,
-		"device-2": mockaws,
+		"1.2.3.4": mockaws,
+		"1.2.3.5": mockaws,
 	}
 	validator := snow.NewValidatorFromAwsClientMap(awsClients)
 	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, nil, nil)

@@ -5,7 +5,7 @@ env:
     INTEGRATION_TEST_MAX_EC2_COUNT: 160
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 160
     T_CLOUDSTACK_CIDR: "10.11.255.0/24"
-    SKIPPED_TESTS: "TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes123SimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig"
+    SKIPPED_TESTS: "TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes123SimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
@@ -46,9 +46,12 @@ env:
     T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
     T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
     T_GIT_SSH_REPO_URL: "github-eks-anywhere-flux-bot:generic-git-repository-url"
-    T_HTTP_PROXY: "proxy-config-data:httpProxy"
-    T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
-    T_NO_PROXY: "proxy-config-data:noProxy"
+    T_HTTP_PROXY_VSPHERE: "proxy-config-data:httpProxyVSphere"
+    T_HTTPS_PROXY_VSPHERE: "proxy-config-data:httpsProxyVSphere"
+    T_NO_PROXY_VSPHERE: "proxy-config-data:noProxyVSphere"
+    T_HTTP_PROXY_CLOUDSTACK: "proxy-config-data:httpProxyCloudStack"
+    T_HTTPS_PROXY_CLOUDSTACK: "proxy-config-data:httpsProxyCloudStack"
+    T_NO_PROXY_CLOUDSTACK: "proxy-config-data:noProxyCloudStack"
     T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
     T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
     T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"

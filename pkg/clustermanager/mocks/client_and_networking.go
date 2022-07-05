@@ -641,6 +641,20 @@ func (mr *MockClusterClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockClusterClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// WaitForManagedExternalEtcdNotReady mocks base method.
+func (m *MockClusterClient) WaitForManagedExternalEtcdNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdNotReady indicates an expected call of WaitForManagedExternalEtcdNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForManagedExternalEtcdNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForManagedExternalEtcdNotReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForManagedExternalEtcdReady mocks base method.
 func (m *MockClusterClient) WaitForManagedExternalEtcdReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()

@@ -195,12 +195,28 @@ When separate management and workload clusters are supported in Bare Metal, the 
 ### osImageURL
 Optional field to replace the default operating system image.
 This field is useful if you want to provide a customized operating system image or simply host the standard image locally.
-See [Artifacts]({{< relref "../artifacts/" >}}) for details.
+See [Artifacts]({{< relref "../artifacts/#ubuntu-os-images-for-bare-metal" >}}) for details.
 
 ### hookImagesURLPath
 Optional field to replace the HookOS image.
 This field is useful if you want to provide a customized HookOS image or simply host the standard image locally.
-See [Artifacts]({{< relref "../artifacts/" >}}) for details.
+See [Artifacts]({{< relref "../artifacts/#hookos-kernel-and-initial-ramdisk-for-bare-metal" >}}) for details.
+
+#### Example `TinkerbellDatacenterConfig.spec`
+```yaml
+spec:
+  tinkerbellIP: "192.168.0.10"                                                      # Available, routable IP
+  osImageURL: "http://my-web-server/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz" # Full URL to the OS Image hosted locally
+  hookImagesURLPath: "http://my-web-server/hook"                                    # Path to the hook images. This path contains vmlinuz-x86_64 and initramfs-x86_64 
+```
+This is the folder structure for `my-web-server`:
+```
+my-web-server
+├── hook
+│   ├── initramfs-x86_64
+│   └── vmlinuz-x86_64
+└── ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+```
 
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
@@ -283,8 +299,8 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://.../ubuntu-v1.22.9-eks-d...
-        image: public.ecr.aws/.../image2disk:6c0f0d437bde2c...
+          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: stream-image
         timeout: 360
       - environment:
@@ -302,7 +318,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: write-netplan
         timeout: 90
       - environment:
@@ -327,7 +343,7 @@ spec:
           GID: "0"
           MODE: "0600"
           UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: add-tink-cloud-init-config
         timeout: 90
       - environment:
@@ -340,13 +356,13 @@ spec:
           GID: "0"
           MODE: "0600"
           UID: "0"
-        image: public.ecr.aws/.../writefile:6c0f0d437bde2c...
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: add-tink-cloud-init-ds-config
         timeout: 90
       - environment:
           BLOCK_DEVICE: /dev/sda2
           FS_TYPE: ext4
-        image: public.ecr.aws/.../kexec:6c0f0d437bde2c...
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: kexec-image
         pid: host
         timeout: 90
@@ -377,8 +393,8 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://.../bottlerocket-metal-k8s-1.22-x86_64-1.7.2-cf824404.img
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2166
+          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: stream-image
         timeout: 360
       - environment:
@@ -393,7 +409,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: write-bootconfig
         timeout: 90
       - environment:
@@ -418,7 +434,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: write-netconfig
         timeout: 90
       - environment:
@@ -430,11 +446,11 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.2878
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: write-user-data
         timeout: 90
       - name: "reboot"
-        image: public.ecr.aws/t0n3a9y4/reboot-action:latest
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         timeout: 90
         volumes:
           - /worker:/worker
@@ -594,3 +610,34 @@ The reboot action defines how the system restarts to bring up the installed syst
 ### version
 
 Matches the current version of the Tinkerbell template.
+
+## Custom Tinkerbell action examples
+By creating your own custom Tinkerbell actions, you can add to or modify the installed operating system so those changes take effect when the installed system first starts (from a reboot or pivot).
+The following example shows how to add a .deb package (`openssl`) to an Ubuntu installation:
+
+```bash
+      - environment:
+          BLOCK_DEVICE: /dev/sda1
+          CHROOT: "y"
+          CMD_LINE: apt -y update && apt -y install openssl
+          DEFAULT_INTERPRETER: /bin/sh -c
+          FS_TYPE: ext4
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        name: install-openssl
+        timeout: 90
+```
+The following shows an example of adding a new user (`tinkerbell`) to an installed Ubuntu system:
+
+```bash
+      - environment:
+          BLOCK_DEVICE: <block device path> # E.g. /dev/sda1
+          FS_TYPE: ext4
+          CHROOT: y
+          DEFAULT_INTERPRETER: "/bin/sh -c"
+          CMD_LINE: "useradd --password $(openssl passwd -1 tinkerbell) --shell /bin/bash --create-home --groups sudo tinkerbell"
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        name: "create-user"
+        timeout: 90
+```
+
+Look for more examples as they are added to the [Tinkerbell examples](https://github.com/aws/eks-anywhere/tree/main/examples/tinkerbell) page.
