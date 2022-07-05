@@ -187,7 +187,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, profile string,
 	return nil
 }
 
-func (c *Cmk) ValidateZonePresent(ctx context.Context, profile string, zone v1alpha1.CloudStackZone) (string, error) {
+func (c *Cmk) ValidateZoneAndGetId(ctx context.Context, profile string, zone v1alpha1.CloudStackZone) (string, error) {
 	command := newCmkCommand("list zones")
 	if len(zone.Id) > 0 {
 		applyCmkArgs(&command, withCloudStackId(zone.Id))
@@ -217,8 +217,8 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, profile string, zone v1al
 	return cmkZones[0].Id, nil
 }
 
-func (c *Cmk) ValidateDomainPresent(ctx context.Context, profile string, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
-	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
+func (c *Cmk) ValidateDomainAndGetId(ctx context.Context, profile string, domain string) (string, error) {
+	domainId := ""
 	command := newCmkCommand("list domains")
 	// "list domains" API does not support querying by domain path, so here we extract the domain name which is the last part of the input domain
 	tokens := strings.Split(domain, domainDelimiter)
@@ -227,17 +227,17 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, profile string, domain 
 
 	result, err := c.exec(ctx, profile, command...)
 	if err != nil {
-		return domainIdentifier, fmt.Errorf("getting domain info - %s: %v", result.String(), err)
+		return domainId, fmt.Errorf("getting domain info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
-		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+		return domainId, fmt.Errorf("domain %s not found", domain)
 	}
 
 	response := struct {
 		CmkDomains []cmkDomain `json:"domain"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return domainIdentifier, fmt.Errorf("parsing response into json: %v", err)
+		return domainId, fmt.Errorf("parsing response into json: %v", err)
 	}
 	domains := response.CmkDomains
 	var domainPath string
@@ -248,16 +248,15 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, profile string, domain 
 	}
 	for _, d := range domains {
 		if d.Path == domainPath {
-			domainIdentifier.Id = d.Id
-			domainIdentifier.Name = d.Name
+			domainId = d.Id
 			break
 		}
 	}
-	if domainIdentifier.Id == "" {
-		return domainIdentifier, fmt.Errorf("domain(s) found for domain name %s, but not found a domain with domain path %s", domain, domainPath)
+	if domainId == "" {
+		return domainId, fmt.Errorf("domain(s) found for domain name %s, but not found a domain with domain path %s", domain, domainPath)
 	}
 
-	return domainIdentifier, nil
+	return domainId, nil
 }
 
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network v1alpha1.CloudStackResourceIdentifier, zoneId string, account string) error {

@@ -296,9 +296,9 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", rootDomain), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, rootDomain)
-				if domain.Id != rootDomainId {
-					t.Fatalf("Expected domain id: %s, actual domain id: %s", rootDomainId, domain.Id)
+				domainId, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, rootDomain)
+				if domainId != rootDomainId {
+					t.Fatalf("Expected domain id: %s, actual domain id: %s", rootDomainId, domainId)
 				}
 				return err
 			},
@@ -314,9 +314,9 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, domain)
-				if domain.Id != domainId {
-					t.Fatalf("Expected domain id: %s, actual domain id: %s", domainId, domain.Id)
+				actualDomainId, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, domain)
+				if actualDomainId != domainId {
+					t.Fatalf("Expected domain id: %s, actual domain id: %s", domainId, actualDomainId)
 				}
 				return err
 			},
@@ -332,7 +332,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, domainName)
+				_, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, domainName)
 				return err
 			},
 			cmkResponseError: nil,
@@ -347,9 +347,9 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domain2Name), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, domain2)
-				if domain.Id != domain2Id {
-					t.Fatalf("Expected domain id: %s, actual domain id: %s", domain2Id, domain.Id)
+				domainId, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, domain2)
+				if domainId != domain2Id {
+					t.Fatalf("Expected domain id: %s, actual domain id: %s", domain2Id, domainId)
 				}
 				return err
 			},
@@ -365,7 +365,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, domain)
+				_, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, domain)
 				return err
 			},
 			cmkResponseError: nil,
@@ -380,7 +380,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateDomainPresent(ctx, execConfig.Profiles[0].Name, domain)
+				_, err := cmk.ValidateDomainAndGetId(ctx, execConfig.Profiles[0].Name, domain)
 				return err
 			},
 			cmkResponseError: nil,
@@ -437,7 +437,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[0])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[0])
 				return err
 			},
 			cmkResponseError: nil,
@@ -452,7 +452,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceId.Id),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[2])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[2])
 				return err
 			},
 			cmkResponseError: nil,
@@ -467,7 +467,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceId.Id),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[2])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[2])
 				return err
 			},
 			cmkResponseError: nil,
@@ -482,7 +482,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceId.Id),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[2])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[2])
 				return err
 			},
 			cmkResponseError: nil,
@@ -497,7 +497,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[0])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[0])
 				return err
 			},
 			cmkResponseError: errors.New("cmk calling return exception"),
@@ -512,7 +512,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[0])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[0])
 				return err
 			},
 			cmkResponseError: nil,
@@ -527,7 +527,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Name),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateZonePresent(ctx, execConfig.Profiles[0].Name, zones[0])
+				_, err := cmk.ValidateZoneAndGetId(ctx, execConfig.Profiles[0].Name, zones[0])
 				return err
 			},
 			cmkResponseError: nil,

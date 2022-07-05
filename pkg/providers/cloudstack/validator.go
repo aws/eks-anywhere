@@ -48,9 +48,9 @@ type ProviderCmkClient interface {
 	ValidateDiskOfferingPresent(ctx context.Context, profile string, zoneId string, diskOffering anywherev1.CloudStackResourceDiskOffering) error
 	ValidateTemplatePresent(ctx context.Context, profile string, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, profile string, domainId string, account string, affinityGroupIds []string) error
-	ValidateZonePresent(ctx context.Context, profile string, zone anywherev1.CloudStackZone) (string, error)
+	ValidateZoneAndGetId(ctx context.Context, profile string, zone anywherev1.CloudStackZone) (string, error)
 	ValidateNetworkPresent(ctx context.Context, profile string, domainId string, network anywherev1.CloudStackResourceIdentifier, zoneId string, account string) error
-	ValidateDomainPresent(ctx context.Context, profile string, domain string) (anywherev1.CloudStackResourceIdentifier, error)
+	ValidateDomainAndGetId(ctx context.Context, profile string, domain string) (string, error)
 	ValidateAccountPresent(ctx context.Context, profile string, account string, domainId string) error
 }
 
@@ -94,17 +94,17 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 				endpoint, az.ManagementApiEndpoint)
 		}
 
-		domain, err := v.cmk.ValidateDomainPresent(ctx, az.CredentialsRef, az.Domain)
+		domainId, err := v.cmk.ValidateDomainAndGetId(ctx, az.CredentialsRef, az.Domain)
 		if err != nil {
 			return err
 		}
-		az.DomainId = domain.Id
+		az.DomainId = domainId
 
 		if err := v.cmk.ValidateAccountPresent(ctx, az.CredentialsRef, az.Account, az.DomainId); err != nil {
 			return err
 		}
 
-		zoneId, err := v.cmk.ValidateZonePresent(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone)
+		zoneId, err := v.cmk.ValidateZoneAndGetId(ctx, az.CredentialsRef, az.CloudStackAvailabilityZone.Zone)
 		if err != nil {
 			return err
 		}
