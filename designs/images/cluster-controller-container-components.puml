@@ -43,7 +43,6 @@ Container(capiControllers, "CAPI controllers", "Go", "Reoncile workload clusters
 Rel(snowHandler, capiControllers, "Creates/updates snow clusters", $tags="indirect relantionship")
 Rel(vsphereHandler, capiControllers, "Creates/updates vSphere clusters", $tags="indirect relantionship")
 Rel(capiControllers, cilimHandler, "Marks control plane as ready", $tags="indirect relantionship")
-Rel(capiControllers, workloadKubeApiServer, "Creates", $tags="indirect relantionship")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
