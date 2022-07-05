@@ -14,6 +14,7 @@ const (
 	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	EksaCloudStackHostPathToMount         = "EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT"
 	CloudStackGlobalAZ                    = "Global"
+	defaultVerifySslValue                 = "true"
 )
 
 // ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
@@ -50,7 +51,7 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		if err != nil {
 			return nil, fmt.Errorf("extracting value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 		}
-		verifySslValue := "true"
+		verifySslValue := defaultVerifySslValue
 		if verifySsl, err := section.GetKey("verify-ssl"); err == nil {
 			verifySslValue = verifySsl.Value()
 			if _, err := strconv.ParseBool(verifySslValue); err != nil {
