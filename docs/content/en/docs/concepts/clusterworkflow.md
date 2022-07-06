@@ -7,24 +7,21 @@ description: >
   Explanation of the process of creating an EKS Anywhere cluster
 ---
 
+WORK IN PROGRESS!!!
+
 The EKS Anywhere cluster creation process makes it easy not only to bring up a cluster initially, but also to update configuration settings and to upgrade Kubernetes versions going forward.
 The EKS Anywhere cluster versions match the same Kubernetes distribution versions that are used in the AWS EKS cloud service.
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
-Currently, VMware vSphere is the recommended provider for supported EKS Anywhere clusters.
-So, vSphere is the example provider we step through here.
-
-This document provides an in-depth description of the process of creating an EKS Anywhere cluster.
-It starts by describing the components to put in place before creating the cluster.
-Then it shows you what happens at each step of the process.
-After that, the document describes the attributes of the resulting cluster.
+Currently, Bare Metal and VMware vSphere are the recommended providers for supported EKS Anywhere clusters.
+So, we step through those two providers here.
 
 ## Before cluster creation
 
 Some assets need to be in place before you can create an EKS Anywhere cluster.
 You need to have an Administrative machine that includes the tools required to create the cluster.
 Next, you need get the software tools and artifacts used to build the cluster.
-Then you also need to prepare the provider, in this case a vCenter environment, on which to create the resulting cluster. 
+Then you also need to prepare the provider, such as a vCenter environment or a set of Bare Metal machines, on which to create the resulting cluster. 
 
 ### Administrative machine
 
@@ -35,51 +32,40 @@ The Administrative machine is needed to provide:
 * A place to hold the `kubeconfig` file needed to perform administrative actions using `kubectl`.
 (The `kubeconfig` file is stored in the root of the folder created during cluster creation.)
 
-The Administrative machine can be any computer (such as your local laptop) with a supported operating system that meets the requirements.
-It must also have Internet access to the places where the command line tools and EKS Anywhere artifacts are made available.
-Likewise, the Administrative machine must be able to reach and have access to the provider (vSphere).
 See the [Install EKS Anywhere]({{< relref "../getting-started/install" >}}) guide for Administrative machine requirements.
 
 ### EKS Anywhere software
 
 To obtain EKS Anywhere software, you need Internet access to the repositories holding that software.
-EKS Anywhere does not currently support the use of private registries and repositories for the software that EKS Anywhere needs to draw on during cluster creation at this time.
-EKS Anywhere software is divided into two types of components.
+EKS Anywhere software is divided into two types of components:
 The CLI interface for managing clusters and the cluster components and controllers used to run workloads and configure clusters.
 The software you need to obtain includes:
 
 * **Command line tools**: Binaries to [install on the administrative machine]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
-* **Cluster components and controllers**: These include [artifacts]({{< relref "../reference/artifacts" >}}) such as OVAs for different operating systems and Kubernetes versions to [Import to vSphere]({{< relref "../reference/vsphere/vsphere-ovas" >}}).
+* **Cluster components and controllers**: These components are listed on the [artifacts]({{< relref "../reference/artifacts" >}}) page for each provider.
 
-The sites to which the administrative machine and the target workload environment need access are listed in the [Requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) section. 
 If you are operating behind a firewall that limits access to the Internet, you can configure EKS Anywhere to identify the location of the [proxy service]({{< relref "../reference/clusterspec/optional/proxy" >}}) you choose to connect to the Internet.
 
 For more information on the software used in EKS Distro, which includes the Kubernetes release and related software in EKS Anywhere, see the [EKS Distro Releases](https://distro.eks.amazonaws.com/#releases) GitHub page.
-For information on the Ubuntu and Bottlerocket operating systems used with EKS Anywhere, see the EKS Anywhere [Artifacts]({{< relref "../reference/artifacts" >}}) page.
 
 ### Providers
 
 EKS Anywhere uses an infrastructure provider model for creating, upgrading, and managing Kubernetes clusters that leverages the [Kubernetes Cluster API](https://cluster-api.sigs.k8s.io/) project.
-The first supported EKS Anywhere provider, VMware vSphere, is implemented based on the [Kubernetes Cluster API Provider vsphere](https://github.com/kubernetes-sigs/cluster-api-provider-vsphere) (CAPV) specifications.  
 
 Like Cluster API, EKS Anywhere runs a [kind](https://kind.sigs.k8s.io/) cluster on the local Administrative machine to act as a bootstrap cluster.
 However, instead of using CAPI directly with the `clusterctl` command to manage the workload cluster, you use the `eksctl anywhere` command which abstracts that process for you, including calling `clusterctl` under the covers.
 
-As for other providers, the EKS Anywhere project documents the [Cluster API Provider Docker (CAPD)](https://github.com/kubernetes-sigs/cluster-api/tree/master/test/infrastructure/docker), but doesn’t support it for production use.
-Expect other providers to be supported for EKS Anywhere in the future.
-If you are interested in EKS Anywhere supporting a different provider, feel free to create an [an issue on Github](https://github.com/aws/eks-anywhere/issues) for consideration.
+With your Administrative machine in place, you need to prepare your [vSphere]({{< relref "../reference/vsphere" >}}) or [Bare Metal]({{< relref "../reference/baremetal" >}}) provider for EKS Anywhere.
+The following sections describe how to create a vSphere or Bare Metal cluster.
 
-With your Administrative machine in place, to prepare the vSphere provider for EKS Anywhere you need to make sure your vSphere environment meets the EKS Anywhere [requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) and that [permissions]({{< relref "../reference/vsphere/vsphere-prereq" >}}) set up properly.
-If you don’t want to use the default OVA images, you can [import the OVAs]({{< relref "../reference/vsphere/vsphere-ovas" >}}) representing the operating systems and Kubernetes releases you want.
+## Creating a Bare Metal cluster
 
-## Creating a cluster
+IN PROGRESS
 
-With the provider (vSphere) prepared and the Administrative machine set up to run Docker and the required binaries, you can create an EKS Anywhere cluster.
-This section steps through an example of an EKS Anywhere cluster being created on a vSphere provider.
-Once you understand this process, you can use the following documentation to create your own cluster:
 
-* [Create production cluster]({{< relref "../getting-started/production-environment" >}}) for the exact procedure to create a cluster on vSphere.
-* [Troubleshooting]({{< relref "../tasks/troubleshoot/troubleshooting" >}}) if you encounter problems along the way.
+## Creating a vSphere cluster
+
+With the provider prepared and the Administrative machine set up to run Docker and the required binaries, you can create an EKS Anywhere cluster.
 
 ### Starting the process
 
@@ -90,7 +76,8 @@ The following diagram illustrates what happens when you start the cluster creati
 
 #### 1. Generate an EKS Anywhere config file
 
-When you run `eksctl anywhere generate clusterconfig`, the two pieces of information you provide are the name of the cluster ($CLUSTER_NAME) and the type of provider (`-p vsphere`, in this example).
+Here is an example of creating a 
+
 Then you can direct the yaml cluster config output into a file (`> $CLUSTER_NAME.yaml`). For example: 
 
 ```
