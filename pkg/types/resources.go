@@ -55,6 +55,7 @@ type CAPICluster struct {
 
 type ClusterStatus struct {
 	Phase string
+	Conditions Conditions
 }
 
 type Metadata struct {
@@ -73,6 +74,8 @@ type NowFunc func() time.Time
 
 type NodeReadyChecker func(status MachineStatus) bool
 
+type ClusterReadyChecker func(status ClusterStatus) bool
+
 func WithNodeRef() NodeReadyChecker {
 	return func(status MachineStatus) bool {
 		return status.NodeRef != nil
@@ -83,6 +86,17 @@ func WithNodeHealthy() NodeReadyChecker {
 	return func(status MachineStatus) bool {
 		for _, c := range status.Conditions {
 			if c.Type == "NodeHealthy" {
+				return c.Status == "True"
+			}
+		}
+		return false
+	}
+}
+
+func WithClusterReady() ClusterReadyChecker {
+	return func(status ClusterStatus) bool {
+		for _, c := range status.Conditions {
+			if c.Type == "Ready" {
 				return c.Status == "True"
 			}
 		}

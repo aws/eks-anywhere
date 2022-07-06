@@ -160,6 +160,9 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
 		return err
 	}
+	if err := c.waitForClustersReady(ctx, from, clusterName, labels, types.WithClusterReady()); err != nil {
+		return err
+	}
 
 	err := c.clusterClient.MoveManagement(ctx, from, to)
 	if err != nil {
@@ -799,6 +802,47 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
+func (c *ClusterManager) waitForClustersReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.ClusterReadyChecker) error {
+	readyClusters, totalClusters := 0, 0
+	policy := func(_ int, _ error) (bool, time.Duration) {
+		// TODO: configure this timeout outside the function
+		return true, 30 * time.Minute * time.Duration(totalClusters-readyClusters)
+	}
+
+	areClustersReady := func() error {
+		var err error
+		readyClusters, totalClusters, err = c.countClustersReady(ctx, managementCluster, clusterName, labels, checkers...)
+		if err != nil {
+			return err
+		}
+
+		if readyClusters != totalClusters {
+			logger.V(4).Info("Clusters are not ready yet", "total", totalClusters, "ready", readyClusters, "cluster name", clusterName)
+			return errors.New("nodes are not ready yet")
+		}
+
+		logger.V(4).Info("Clusters ready", "total", totalClusters)
+		return nil
+	}
+
+	err := areClustersReady()
+	if err == nil {
+		return nil
+	}
+
+	timeout := time.Duration(totalClusters) * c.machineMaxWait
+	if timeout <= c.machinesMinWait {
+		timeout = c.machinesMinWait
+	}
+
+	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
+	if err := r.Retry(areClustersReady); err != nil {
+		return fmt.Errorf("retries exhausted waiting for clusters to be ready: %v", err)
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
 	machines, err := c.clusterClient.GetMachines(ctx, managementCluster, clusterName)
 	if err != nil {
@@ -817,6 +861,30 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		passed := true
 		for _, checker := range checkers {
 			if !checker(m.Status) {
+				passed = false
+				break
+			}
+		}
+		if passed {
+			ready += 1
+		}
+	}
+	return ready, total, nil
+}
+
+func (c *ClusterManager) countClustersReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.ClusterReadyChecker) (ready, total int, err error) {
+	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
+	if err != nil {
+		return 0, 0, fmt.Errorf("getting clusters resources from management cluster: %v", err)
+	}
+
+	// TODO: Check if management cluster or workload cluster to see if we need all or just the target cluster
+	for _, c := range clusters {
+		total += 1
+
+		passed := true
+		for _, checker := range checkers {
+			if !checker(c.Status) {
 				passed = false
 				break
 			}
