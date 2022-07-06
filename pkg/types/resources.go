@@ -54,7 +54,7 @@ type CAPICluster struct {
 }
 
 type ClusterStatus struct {
-	Phase string
+	Phase      string
 	Conditions Conditions
 }
 
