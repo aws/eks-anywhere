@@ -989,7 +989,23 @@ func TestKubectlGetClusters(t *testing.T) {
 					Metadata: types.Metadata{
 						Name: "eksa-test-capd",
 					},
-					Status: types.ClusterStatus{Phase: "Provisioned"},
+					Status: types.ClusterStatus{
+						Phase: "Provisioned",
+						Conditions: []types.Condition{
+							{
+								Type: "Ready",
+								Status: "True",
+							},
+							{
+								Type: "ControlPlaneReady",
+								Status: "True",
+							},
+							{
+								Type: "InfrastructureReady",
+								Status: "True",
+							},
+						},
+					},
 				},
 			},
 		},

@@ -865,6 +865,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, to.Name)
+	m.client.EXPECT().GetClusters(ctx, from)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	capiClusterName := "capi-cluster"
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
@@ -895,6 +896,7 @@ func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
+	m.client.EXPECT().GetClusters(ctx, from)
 	m.client.EXPECT().MoveManagement(ctx, from, to).Return(errors.New("error moving"))
 
 	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
@@ -918,6 +920,7 @@ func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
+	m.client.EXPECT().GetClusters(ctx, from)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to).Return(nil, errors.New("error getting clusters"))
 
@@ -945,6 +948,7 @@ func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	capiClusterName := "capi-cluster"
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
+	m.client.EXPECT().GetClusters(ctx, from)
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName).Return(errors.New("error waiting for control plane"))
 
@@ -970,6 +974,7 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(0, 10*time.Microsecond, 20*time.Microsecond))
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
+	m.client.EXPECT().GetClusters(ctx, from)
 	m.client.EXPECT().GetClusters(ctx, to)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
 	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
