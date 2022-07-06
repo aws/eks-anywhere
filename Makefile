@@ -85,9 +85,9 @@ endif
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
-CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
+CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat manager/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
-DOCKERFILE_FOLDER = ./controllers/docker/linux/eks-anywhere-cluster-controller
+DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
 
 IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
@@ -263,7 +263,7 @@ eks-a-tool: ## Build eks-a-tool
 
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
-	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./controllers
+	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./manager
 
 # This target will copy LICENSE file from root to the release submodule
 # when fetching licenses for cluster-controller
@@ -286,7 +286,7 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 
 .PHONY: upload-artifacts
 upload-artifacts:
-	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
+	manager/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
 .PHONY: create-cluster-controller-binaries
 create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
@@ -303,11 +303,11 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	$(MAKE) create-cluster-controller-binaries
 	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
-	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./controllers"
+	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./manager"
 
 .PHONY: cluster-controller-tarballs
 cluster-controller-tarballs:  cluster-controller-binaries
-	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
+	manager/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
 
 .PHONY: cluster-controller-local-images
 cluster-controller-local-images: IMAGE_PLATFORMS = linux/amd64
@@ -350,7 +350,7 @@ ifeq ($(UNAME), Darwin)
 else
 	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 endif
-	rm -rf ./controllers/bin/*
+	rm -rf ./manager/bin/*
 	rm -rf ./hack/tools/bin
 	rm -rf vendor
 	rm -rf GIT_TAG
@@ -423,8 +423,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${GOPATH}/bin/mockgen -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
-	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/controllers/resource" ResourceFetcher,ResourceUpdater
-	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/reader.go -package=mocks "sigs.k8s.io/controller-runtime/pkg/client" Reader
+	${GOPATH}/bin/mockgen -destination=controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/resource" ResourceFetcher,ResourceUpdater
+	${GOPATH}/bin/mockgen -destination=controllers/resource/mocks/reader.go -package=mocks "sigs.k8s.io/controller-runtime/pkg/client" Reader
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
@@ -542,6 +542,7 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 	$(CONTROLLER_GEN) \
 		paths=./pkg/api/... \
 		paths=./controllers/... \
+		paths=./manager/... \
 		crd:crdVersions=v1 \
 		rbac:roleName=manager-role \
 		output:crd:dir=./config/crd/bases \
@@ -592,7 +593,7 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
-	tilt up --file controllers/Tiltfile
+	tilt up --file manager/Tiltfile
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 # originally copied from kubebuilder
