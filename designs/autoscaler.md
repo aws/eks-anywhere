@@ -26,7 +26,8 @@ As an EKS Anywhere user, I want to:
 * Integrate Cluster Autoscaler to all CAPI providers since the feature is provider agnostic.
 * Integrate autoscaling configuration in cluster spec to make EKS-A cluster autoscaling-aware.
 * Generate an EKS-A opinionated Cluster Autoscaler curated package template with default configurations.
-* Install Cluster Autoscaler controller as a curated package during or after management/workload cluster creation.
+* Install Cluster Autoscaler controller as a curated package during or after management cluster creation.
+* Install Cluster Autoscaler controller as a curated package after workload cluster creation.
 * Support upstream k8s Autoscaler installed/managed outside of EKS-A Curated Package.
 * Update the autoscaling configuration to set up the min/max number of nodes in each worker node group.
 
@@ -163,16 +164,16 @@ metadata:
 spec:
   workerNodeGroupConfigurations:
   - autoscalingConfiguration:
-    - minCount: 1
-    - maxCount: 5
+      minCount: 1
+      maxCount: 5
     machineGroupRef:
       kind: VSphereMachineConfig
       name: worker-machine-a
     name: md-0
   - count: 1
     autoscalingConfiguration:
-    - minCount: 1
-    - maxCount: 3
+      minCount: 1
+      maxCount: 3
     machineGroupRef:
       kind: VSphereMachineConfig
       name: worker-machine-b
@@ -226,41 +227,7 @@ This command goes through the following steps:
 2. install curated package controller on the management cluster
 3. the package controller on the management cluster then installs the Cluster Autoscaler package on management cluster
 
-b) enables autoscaling in workload cluster, where the autoscaler controller is deployed in workload cluster and watches the workload cluster itself.
-
-```yaml
-// cas-package.yaml
-apiVersion: packages.eks.amazonaws.com/v1alpha1
-kind: Package
-metadata:
-  name: cluster-autoscaler-workload-cluster
-  namespace: eksa-packages
-spec:
-  packageName: cluster-autoscaler
-  config:
-    cloudProvider: "clusterapi"
-    autoDiscovery:
-      clusterName: "workload-cluster"
-    clusterAPIMode: "incluster-kubeconfig"
-    clusterAPICloudConfigPath: "/etc/kubernetes/value"
-    extraVolumeSecrets:
-      cluster-autoscaler-cloud-config:
-        mountPath: "/etc/kubernetes"
-        name: "management-cluster-kubeconfig"
-```
-
-```sh
-$ eksctl anywhere create cluster -f workload-cluster.yaml --install-packages cas-package.yaml --kubeconfig mgmt-cluster.kubeconfig
-```
-
-This command goes through the following steps:
-
-1. create a new EKS-A cluster with proper autoscaling annotations on worker resources
-2. install curated package controller on the management cluster
-3. store the management cluster’s kubeconfig as a secret in the workload cluster (through curated package webhook, TBD)
-4. the package controller on the management cluster then installs the Cluster Autoscaler package on workload cluster
-
-c) enables autoscaling in workload cluster, where the autoscaler controller is deployed in management cluster and watches a remote workload cluster.
+b) enables autoscaling in workload cluster, where the autoscaler controller is deployed in management cluster and watches a remote workload cluster.
 
 ```yaml
 // cas-package.yaml
@@ -300,6 +267,29 @@ Install Cluster Autoscaler curated package:
 
 ```sh
 $ eksctl anywhere create packages -f cas-package.yaml
+```
+
+*Notice if choosing to deploy autoscaler on workload cluster itself, user needs to manually store the management cluster’s kubeconfig as a secret in the workload cluster before running the `create packages` command above, with the package config:*
+
+```yaml
+// cas-package.yaml
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: Package
+metadata:
+  name: cluster-autoscaler-workload-cluster
+  namespace: eksa-packages
+spec:
+  packageName: cluster-autoscaler
+  config:
+    cloudProvider: "clusterapi"
+    autoDiscovery:
+      clusterName: "workload-cluster"
+    clusterAPIMode: "incluster-kubeconfig"
+    clusterAPICloudConfigPath: "/etc/kubernetes/value"
+    extraVolumeSecrets:
+      cluster-autoscaler-cloud-config:
+        mountPath: "/etc/kubernetes"
+        name: "management-cluster-kubeconfig"
 ```
 
 **Use Upstream Cluster Autoscaler in EKS-A Cluster**
