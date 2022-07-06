@@ -91,8 +91,7 @@ type ClusterClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
 	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
@@ -907,14 +906,16 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
+func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {
+	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+}
+
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
 ) error {
 	if clusterSpec.Cluster.Namespace != "" {
-		if err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
-			if err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
-				return err
-			}
+		if err := c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
+			return err
 		}
 	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
