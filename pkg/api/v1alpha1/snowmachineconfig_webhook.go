@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -37,4 +38,31 @@ var _ webhook.Defaulter = &SnowMachineConfig{}
 func (r *SnowMachineConfig) Default() {
 	snowmachineconfiglog.Info("Setting up Snow Machine Config defaults for", "name", r.Name)
 	r.SetDefaults()
+}
+
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+//+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-snowmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=snowmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.snowmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Validator = &SnowMachineConfig{}
+
+// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
+func (r *SnowMachineConfig) ValidateCreate() error {
+	snowmachineconfiglog.Info("validate create", "name", r.Name)
+
+	return r.Validate()
+}
+
+// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
+func (r *SnowMachineConfig) ValidateUpdate(old runtime.Object) error {
+	snowmachineconfiglog.Info("validate update", "name", r.Name)
+
+	return r.Validate()
+}
+
+// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
+func (r *SnowMachineConfig) ValidateDelete() error {
+	snowmachineconfiglog.Info("validate delete", "name", r.Name)
+
+	// TODO(user): fill in your validation logic upon object deletion.
+	return nil
 }
