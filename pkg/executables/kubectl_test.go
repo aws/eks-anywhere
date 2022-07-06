@@ -993,15 +993,15 @@ func TestKubectlGetClusters(t *testing.T) {
 						Phase: "Provisioned",
 						Conditions: []types.Condition{
 							{
-								Type: "Ready",
+								Type:   "Ready",
 								Status: "True",
 							},
 							{
-								Type: "ControlPlaneReady",
+								Type:   "ControlPlaneReady",
 								Status: "True",
 							},
 							{
-								Type: "InfrastructureReady",
+								Type:   "InfrastructureReady",
 								Status: "True",
 							},
 						},
