@@ -884,7 +884,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.cluster(), "5m", "Available", prefix+"-harbor-"+name, ns)
+				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), ns)
 			if err != nil {
 				errCh <- err
 			}
@@ -893,8 +893,8 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 	for _, name := range statefulsets {
 		go func(name string) {
 			defer wg.Done()
-			err := e.KubectlClient.WaitForPod(ctx,
-				e.cluster(), "5m", "Ready", prefix+"-harbor-"+name+"-0", ns)
+			err := e.KubectlClient.Wait(ctx, e.kubeconfigFilePath(), "5m", "Ready",
+				fmt.Sprintf("pods/%s-harbor-%s-0", prefix, name), ns)
 			if err != nil {
 				errCh <- err
 			}

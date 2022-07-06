@@ -321,10 +321,6 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
-func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "pods/"+target, namespace)
-}
-
 func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string) error {
 	_, err := k.Execute(ctx, "wait", "--timeout", timeout,
 		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
