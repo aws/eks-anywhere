@@ -3,14 +3,14 @@
 
 title Component diagram for EKS-A Cluster controller
 
-AddRelTag("indirect relantionship", $textColor="orange", $lineColor="orange", $lineStyle = DashedLine())
+AddRelTag("indirect relationship", $textColor="orange", $lineColor="orange", $lineStyle = DashedLine())
 
 Person(user, "EKS-A user", "Manages EKS-A clusters")
 Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
 Container_Ext(workloadKubeApiServer, "Workload Cluster Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server")
 Container_Ext(ociRegistry, "OCI registry", "Public ECR or other", "OCI compliant registry to store container images and Helm charts")
 
-Container_Boundary(clusteController, "Cluster Controller") {
+Container_Boundary(clusterController, "Cluster Controller") {
     AddElementTag("port", $fontColor="#ffffbf", $borderColor="#ffffbf")
     AddElementTag("busines logic", $fontColor="#01ffff", $borderColor="#01ffff")
 
@@ -40,13 +40,13 @@ Container_Boundary(clusteController, "Cluster Controller") {
 }
 
 Container(capiControllers, "CAPI controllers", "Go", "Reoncile workload clusters")
-Rel(snowHandler, capiControllers, "Creates/updates snow clusters", $tags="indirect relantionship")
-Rel(vsphereHandler, capiControllers, "Creates/updates vSphere clusters", $tags="indirect relantionship")
-Rel(capiControllers, cilimHandler, "Marks control plane as ready", $tags="indirect relantionship")
+Rel(snowHandler, capiControllers, "Creates/updates snow clusters", $tags="indirect relationship")
+Rel(vsphereHandler, capiControllers, "Creates/updates vSphere clusters", $tags="indirect relationship")
+Rel(capiControllers, cilimHandler, "Marks control plane as ready", $tags="indirect relationship")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
-Rel(clusteController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
+Rel(clusterController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
 
 Rel(client, kubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
 

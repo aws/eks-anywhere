@@ -8,13 +8,13 @@ Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write acc
 
 Container_Boundary(snowMachineConfigController, "Snow MachineConfig Controller") {
     Component(snowMachineConfigReconciler, "SnowMachineConfig Reconciler", "K8s controller-runtime Reconciler", "Runs validations for SnowMAchineConfig that require external API calls (eg. Snow endpoint)")
-    Component(awsCli, "AWS API client", "awscli - Python")
+    Component(awsClient, "AWS API client", "aws-sdk-go-v2")
 
-    Rel(snowMachineConfigReconciler, awsCli, "Uses")
+    Rel(snowMachineConfigReconciler, awsClient, "Uses")
 }
 
 Component_Ext(snowAPI, "Snow API endpoint")
-Rel(awsCli, snowAPI, "Makes API calls", "JSON/HTTPS")
+Rel(awsClient, snowAPI, "Makes API calls", "JSON/HTTPS")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
