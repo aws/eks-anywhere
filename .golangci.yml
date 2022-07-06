@@ -4,7 +4,7 @@ run:
   - "zz_generated.*\\.go$"
   skip-dirs:
   - ".*/mocks"
-  - "controllers/tilt_modules"
+  - "manager/tilt_modules"
 linters:
   enable:
     - gofumpt
