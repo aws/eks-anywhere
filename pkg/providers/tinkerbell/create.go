@@ -122,7 +122,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
 	clusterSpecValidator := NewClusterSpecValidator(
-		MinimumHardwareAvailableAssertionForCreate(p.catalogue),
+		MinimumHardwareForCreate(p.catalogue),
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
 

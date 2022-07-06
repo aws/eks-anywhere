@@ -1,8 +1,10 @@
 package tinkerbell
 
 import (
+	"errors"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
@@ -119,12 +121,12 @@ func selectorsFromClusterSpec(spec *ClusterSpec) (selectorSet, error) {
 	return selectors, nil
 }
 
-// MinimumHardwareAvailableAssertionForCreate asserts that catalogue has sufficient hardware to
+// MinimumHardwareForCreate asserts that catalogue has sufficient hardware to
 // support the ClusterSpec during a create workflow.
 //
 // It does not protect against intersections or subsets so consumers should ensure a 1-2-1
 // mapping between catalogue hardware and selectors.
-func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) ClusterSpecAssertion {
+func MinimumHardwareForCreate(catalogue *hardware.Catalogue) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		// Without Hardware selectors we get undesirable behavior so ensure we have them for
 		// all MachineConfigs.
@@ -166,6 +168,147 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 
 		return validateMinimumHardwareRequirements(requirements, catalogue)
 	}
+}
+
+// MinimumHardwareForUpgrade ensures there is sufficient hardware in catalogue to perform a
+// Kubernetes upgrade operation. Operators cannot invoke a Kubernetes version upgrade with a
+// scaling upgrade.
+func MinimumHardwareForUpgrade(current *ClusterSpec, catalogue *hardware.Catalogue) ClusterSpecAssertion {
+	return func(desired *ClusterSpec) error {
+		isVersionUpgrade := isVersionUpgrade(current, desired)
+		isScaleUpgrade := isScaleUpgrade(current, desired)
+
+		if isVersionUpgrade && isScaleUpgrade {
+			return errors.New("cannot upgrade kubernetes version and scale up/down simultaneously")
+		}
+
+		if err := ensureHardwareSelectorsSpecified(desired); err != nil {
+			return err
+		}
+
+		if isVersionUpgrade {
+			return validateHardwareForVersionUpgrade(current, desired, catalogue)
+		}
+
+		if isScaleUpgrade {
+			return validateHardwareForScaleUpgrade(current, desired, catalogue)
+		}
+
+		// Noop as default indicating there isn't a change requiring more/less hardware.
+		return nil
+	}
+}
+
+// isScaleUpgrade returns true if there is a change in the clusters size on a per node group
+// basis. For example, adjustment in control plane counts or individual worker node group counts.
+//
+// Changes to external etcd are unsupported.
+func isScaleUpgrade(currentSpec, desiredSpec *ClusterSpec) bool {
+	currentNodeGroups := buildNodeGroupMap(currentSpec.WorkerNodeGroupConfigurations())
+	return hasWorkerNodeGroupDiffs(currentNodeGroups, desiredSpec.WorkerNodeGroupConfigurations()) ||
+		hasControlPlaneDiff(currentSpec, desiredSpec)
+}
+
+// buildNodeGroupMap builds a map of node group name to node group config.
+func buildNodeGroupMap(s []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	groups := map[string]v1alpha1.WorkerNodeGroupConfiguration{}
+	for _, nodeGroup := range s {
+		groups[nodeGroup.Name] = nodeGroup
+	}
+	return groups
+}
+
+// hasWorkerNodeGroupDiffs returns true if there is an increase between current and desired
+// worker node group counts.
+func hasWorkerNodeGroupDiffs(
+	current map[string]v1alpha1.WorkerNodeGroupConfiguration,
+	desired []v1alpha1.WorkerNodeGroupConfiguration,
+) bool {
+	// Ensure the group exists. If the group does exist check if there's a count diff.
+	// If the group doesn't already exist its a new group which counts as a diff.
+	for _, desiredGroup := range desired {
+		current, exists := current[desiredGroup.Name]
+		if !exists || desiredGroup.Count > current.Count {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasControlPlaneDiff(current, desired *ClusterSpec) bool {
+	return current.ControlPlaneConfiguration().Count != desired.ControlPlaneConfiguration().Count
+}
+
+// isVersionUpgrade returns true if there is a difference in the current and desired Kubernetes
+// versions. It does not check if the version was incremeneted.
+func isVersionUpgrade(current, desired *ClusterSpec) bool {
+	return current.Cluster.Spec.KubernetesVersion != desired.Cluster.Spec.KubernetesVersion
+}
+
+func validateHardwareForVersionUpgrade(current, desired *ClusterSpec, catalogue *hardware.Catalogue) error {
+	requirements := minimumHardwareRequirements{}
+
+	selector := current.ControlPlaneMachineConfig().Spec.HardwareSelector
+	err := requirements.Add(selector, 1)
+	if err != nil {
+		return err
+	}
+
+	for _, nodeGroup := range current.WorkerNodeGroupConfigurations() {
+		selector := current.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector
+		if err := requirements.Add(selector, 1); err != nil {
+			return err
+		}
+	}
+
+	if current.HasExternalEtcd() {
+		selector := current.ExternalEtcdMachineConfig().Spec.HardwareSelector
+		if err := requirements.Add(selector, 1); err != nil {
+			return err
+		}
+	}
+
+	return validateMinimumHardwareRequirements(requirements, catalogue)
+}
+
+func validateHardwareForScaleUpgrade(current, desired *ClusterSpec, catalogue *hardware.Catalogue) error {
+	requirements := minimumHardwareRequirements{}
+
+	controlPlaneDiff := desired.ControlPlaneConfiguration().Count - current.ControlPlaneConfiguration().Count
+	if controlPlaneDiff > 0 {
+		selector := desired.ControlPlaneMachineConfig().Spec.HardwareSelector
+		err := requirements.Add(selector, controlPlaneDiff)
+		if err != nil {
+			return err
+		}
+	}
+
+	currentWorkerNodeGroups := buildNodeGroupMap(current.WorkerNodeGroupConfigurations())
+
+	for _, desiredNodeGroup := range desired.WorkerNodeGroupConfigurations() {
+		currentNodeGroup, ok := currentWorkerNodeGroups[desiredNodeGroup.Name]
+
+		// If its a new node group so we need the full hardware set.
+		if !ok {
+			selector := desired.WorkerNodeGroupMachineConfig(desiredNodeGroup).Spec.HardwareSelector
+			if err := requirements.Add(selector, desiredNodeGroup.Count); err != nil {
+				return err
+			}
+			continue
+		}
+
+		// If its an existing node group we need to add the difference in count.
+		diff := desiredNodeGroup.Count - currentNodeGroup.Count
+		if diff > 0 {
+			selector := desired.WorkerNodeGroupMachineConfig(desiredNodeGroup).Spec.HardwareSelector
+			if err := requirements.Add(selector, diff); err != nil {
+				return err
+			}
+		}
+	}
+
+	return validateMinimumHardwareRequirements(requirements, catalogue)
 }
 
 // ensureHardwareSelectorsSpecified ensures each machine config present in spec has a hardware

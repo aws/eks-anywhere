@@ -118,7 +118,8 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	// must take place last so as to ensure the catalogue is populated with available hardware.
 	clusterSpecValidator := NewClusterSpecValidator()
 
-	// TODO(chrisdoherty4) Apply assertions specific to upgrade.
+	// TODO(chrisdoherty4) Retrieve the current cluster spec and inject here.
+	clusterSpecValidator.Register(MinimumHardwareForUpgrade(tinkerbellClusterSpec, p.catalogue))
 
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
 		return err

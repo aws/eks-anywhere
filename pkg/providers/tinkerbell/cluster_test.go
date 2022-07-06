@@ -18,7 +18,7 @@ func TestClusterSpecValidator_AssertionsWithoutError(t *testing.T) {
 		validator.Register(assertion.ClusterSpecAsseritonFunc())
 	}
 
-	g.Expect(validator.Validate(NewDefaultValidClusterSpecBuilder().Build())).To(gomega.Succeed())
+	g.Expect(validator.Validate(DefaultClusterSpecBuilder().Build())).To(gomega.Succeed())
 	for _, assertion := range assertions {
 		g.Expect(assertion.Called).To(gomega.BeTrue())
 	}
@@ -34,7 +34,7 @@ func TestClusterSpecValidator_AssertionsWithError(t *testing.T) {
 		validator.Register(assertion.ClusterSpecAsseritonFunc())
 	}
 
-	g.Expect(validator.Validate(NewDefaultValidClusterSpecBuilder().Build())).ToNot(gomega.Succeed())
+	g.Expect(validator.Validate(DefaultClusterSpecBuilder().Build())).ToNot(gomega.Succeed())
 	g.Expect(assertions[0].Called).To(gomega.BeTrue())
 	g.Expect(assertions[1].Called).To(gomega.BeFalse())
 	g.Expect(assertions[1].Called).To(gomega.BeFalse())
