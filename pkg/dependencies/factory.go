@@ -418,12 +418,13 @@ func (f *Factory) WithCmk() *Factory {
 		if f.dependencies.Cmk != nil {
 			return nil
 		}
+
 		execConfig, err := decoder.ParseCloudStackSecret()
 		if err != nil {
 			return fmt.Errorf("building cmk executable: %v", err)
 		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
+		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, execConfig.Profiles)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 
 		return nil

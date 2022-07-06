@@ -10,6 +10,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -33,12 +34,13 @@ const (
 
 	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
 	[Global]
-	api-key    = test-key
-	secret-key = test-secret
-	api-url    = http://127.16.0.1:8080/client/api
-	verify-ssl = true
+	verify-ssl = false
+	api-key = test-key1
+	secret-key = test-secret1
+	api-url = http://127.16.0.1:8080/client/api
 	*/
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSB0cnVlCg=="
+	expectedCloudStackCloudConfig       = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
+	cloudStackCloudConfigWithInvalidUrl = "W0dsb2JhbF0KdmVyaWZ5LXNzbCA9IGZhbHNlCmFwaS1rZXkgPSB0ZXN0LWtleTEKc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0MQphcGktdXJsID0geHh4Cg=="
 )
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
@@ -59,15 +61,16 @@ func givenEmptyClusterSpec() *cluster.Spec {
 
 func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
-	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZoneAndGetId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateDomainAndGetId(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).AnyTimes().Return("http://127.16.0.1:8080/client/api", nil)
 	return cmk
 }
 
@@ -193,7 +196,8 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 
 func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, cmk ProviderCmkClient) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
-	return NewProviderCustomNet(
+
+	return NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
@@ -235,6 +239,109 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) {
+	tt := NewWithT(t)
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	err := provider.SetupAndValidateDeleteCluster(ctx, cluster)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateCreateClusterFailureOnInvalidClusterSpec(t *testing.T) {
+	tt := NewWithT(t)
+	clusterSpecManifest := "cluster_invalid.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *testing.T) {
+	tt := NewWithT(t)
+	clusterSpecManifest := "cluster_invalid.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {
@@ -653,7 +760,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -668,7 +775,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -683,7 +790,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
@@ -1329,7 +1436,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -1345,7 +1452,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -1361,7 +1468,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
 func TestClusterUpgradeNeededNoChanges(t *testing.T) {

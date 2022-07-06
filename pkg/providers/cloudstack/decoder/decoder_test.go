@@ -2,29 +2,15 @@ package decoder_test
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"os"
+	"reflect"
 	"testing"
 
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-)
-
-const (
-	apiKey                     = "test-key"
-	secretKey                  = "test-secret"
-	apiUrl                     = "http://127.16.0.1:8080/client/api"
-	verifySsl                  = "false"
-	defaultVerifySsl           = "true"
-	validCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQo="
-	missingApiKey              = "W0dsb2JhbF0Kc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0CmFwaS11cmwgPSBodHRwOi8vMTI3LjE2LjAuMTo4MDgwL2NsaWVudC9hcGkKdmVyaWZ5LXNzbCA9IGZhbHNlCg=="
-	missingSecretKey           = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CmFwaS11cmwgPSBodHRwOi8vMTI3LjE2LjAuMTo4MDgwL2NsaWVudC9hcGkKdmVyaWZ5LXNzbCA9IGZhbHNlCg=="
-	missingApiUrl              = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAp2ZXJpZnktc3NsID0gZmFsc2UK"
-	missingVerifySsl           = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCg=="
-	invalidVerifySslValue      = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBUVFRUVAo="
-	missingGlobalSection       = "YXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQo="
-	invalidINI                 = "W0dsb2JhbF0KYXBpLWtleSA7IHRlc3Qta2V5CnNlY3JldC1rZXkgOyB0ZXN0LXNlY3JldAphcGktdXJsIDsgaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgOyBmYWxzZQo="
-	invalidEncoding            = "=====W0dsb2JhbF0KYXBpLWtleSA7IHRlc3Qta2V5CnNlY3JldC1rZXkgOyB0ZXN0LXNlY3JldAphcGktdXJsIDsgaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgOyBmYWxzZQo======"
 )
 
 type testContext struct {
@@ -42,130 +28,139 @@ func (tctx *testContext) restoreContext() {
 	}
 }
 
-func TestValidConfigShouldSucceedtoParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
+func TestCloudStackConfigDecoder(t *testing.T) {
+	tests := []struct {
+		name       string
+		configFile string
+		wantErr    bool
+		wantConfig *decoder.CloudStackExecConfig
+	}{
+		{
+			name:       "Valid config",
+			configFile: "../testdata/cloudstack_config_valid.ini",
+			wantErr:    false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          decoder.CloudStackGlobalAZ,
+						ApiKey:        "test-key1",
+						SecretKey:     "test-secret1",
+						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "false",
+						Timeout:       "",
+					},
+				},
+			},
+		},
+		{
+			name:       "Multiple profiles config",
+			configFile: "../testdata/cloudstack_config_multiple_profiles.ini",
+			wantErr:    false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          decoder.CloudStackGlobalAZ,
+						ApiKey:        "test-key1",
+						SecretKey:     "test-secret1",
+						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "false",
+					},
+					{
+						Name:          "Instance2",
+						ApiKey:        "test-key2",
+						SecretKey:     "test-secret2",
+						ManagementUrl: "http://127.16.0.2:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
+					},
+				},
+			},
+		},
+		{
+			name:       "Missing apikey",
+			configFile: "../testdata/cloudstack_config_missing_apikey.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "Missing secretkey",
+			configFile: "../testdata/cloudstack_config_missing_secretkey.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "Missing apiurl",
+			configFile: "../testdata/cloudstack_config_missing_apiurl.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "Missing verifyssl",
+			configFile: "../testdata/cloudstack_config_missing_verifyssl.ini",
+			wantErr:    false,
+			wantConfig: &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{
+					{
+						Name:          decoder.CloudStackGlobalAZ,
+						ApiKey:        "test-key1",
+						SecretKey:     "test-secret1",
+						ManagementUrl: "http://127.16.0.1:8080/client/api",
+						VerifySsl:     "true",
+						Timeout:       "",
+					},
+				},
+			},
+		},
+		{
+			name:       "Invalid INI format",
+			configFile: "../testdata/cloudstack_config_invalid_format.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "Invalid veryfyssl value",
+			configFile: "../testdata/cloudstack_config_invalid_verifyssl.ini",
+			wantErr:    true,
+		},
+		{
+			name:       "No sections",
+			configFile: "../testdata/cloudstack_config_no_sections.ini",
+			wantErr:    true,
+		},
+	}
 
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validCloudStackCloudConfig)
-	execConfig, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).To(BeNil(), "An error occurred when parsing a valid secret")
-	g.Expect(execConfig.ApiKey).To(Equal(apiKey))
-	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
-	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
-	g.Expect(execConfig.VerifySsl).To(Equal(verifySsl))
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			g := NewWithT(t)
+			configString := test.ReadFile(t, tc.configFile)
+			encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
+			tt.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
-	tctx.restoreContext()
+			gotConfig, err := decoder.ParseCloudStackSecret()
+			if tc.wantErr {
+				g.Expect(err).NotTo(BeNil())
+			} else {
+				g.Expect(err).To(BeNil())
+				if !reflect.DeepEqual(tc.wantConfig, gotConfig) {
+					t.Errorf("%v got = %v, want %v", tc.name, gotConfig, tc.wantConfig)
+				}
+			}
+		})
+	}
 }
 
-func TestMissingApiKeyShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
+func TestCloudStackConfigDecoderInvalidEncoding(t *testing.T) {
 	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingApiKey)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, "xxx")
+
 	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
+	g.Expect(err).NotTo(BeNil())
 }
 
-func TestMissingSecretKeyShouldFailToParse(t *testing.T) {
+func TestCloudStackConfigDecoderNoEnvVariable(t *testing.T) {
 	var tctx testContext
 	tctx.backupContext()
+	os.Clearenv()
 
 	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingSecretKey)
+
 	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestMissingApiUrlShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingApiUrl)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestMissingVerifySslShouldSetDefaultValue(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingVerifySsl)
-	execConfig, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).To(BeNil(), "An error occurred when parsing a valid secret")
-	g.Expect(execConfig.ApiKey).To(Equal(apiKey))
-	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
-	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
-	g.Expect(execConfig.VerifySsl).To(Equal(defaultVerifySsl))
-
-	tctx.restoreContext()
-}
-
-func TestInvalidVerifySslShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidVerifySslValue)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestMissingGlobalSectionShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingGlobalSection)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestInvalidINIShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidINI)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestMissingEnvVariableShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Unsetenv(decoder.EksacloudStackCloudConfigB64SecretKey)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
-	tctx.restoreContext()
-}
-
-func TestInvalidEncodingShouldFailToParse(t *testing.T) {
-	var tctx testContext
-	tctx.backupContext()
-
-	g := NewWithT(t)
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidEncoding)
-	_, err := decoder.ParseCloudStackSecret()
-	g.Expect(err).ToNot(BeNil())
-
+	g.Expect(err).NotTo(BeNil())
 	tctx.restoreContext()
 }

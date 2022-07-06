@@ -99,12 +99,18 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	if err != nil {
 		return fmt.Errorf("building cmk executable: %v", err)
 	}
-	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, *execConfig)
+	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig.Profiles)
 	defer cmk.Close(ctx)
 
-	if err := cmk.ValidateCloudStackConnection(ctx); err != nil {
-		return fmt.Errorf("validating cloudstack connection with cloudmonkey: %v", err)
+	errorsMap := map[string]error{}
+	for _, profile := range execConfig.Profiles {
+		if err := cmk.CleanupVms(ctx, profile.Name, clusterName, dryRun); err != nil {
+			errorsMap[profile.Name] = err
+		}
 	}
 
-	return cmk.CleanupVms(ctx, clusterName, dryRun)
+	if len(errorsMap) > 0 {
+		return fmt.Errorf("cleaning up VMs: %+v", errorsMap)
+	}
+	return nil
 }

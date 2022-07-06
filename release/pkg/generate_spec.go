@@ -301,7 +301,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 			return nil, errors.Wrapf(err, "Error converting branch minor version to integer")
 		}
 	}
-
 	// TODO: change logic when we update major version to 1
 	if r.BuildRepoBranchName == "main" || branchMinorVersion > 9 {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
