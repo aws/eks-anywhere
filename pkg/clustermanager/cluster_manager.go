@@ -160,8 +160,10 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
 		return err
 	}
-	if err := c.waitForClustersReady(ctx, from, clusterName, labels, types.WithClusterReady()); err != nil {
-		return err
+	if clusterSpec.Cluster.IsSelfManaged() {
+		if err := c.waitForManagedClustersReady(ctx, from, types.WithClusterReady()); err != nil {
+			return err
+		}
 	}
 
 	err := c.clusterClient.MoveManagement(ctx, from, to)
@@ -802,23 +804,22 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) waitForClustersReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.ClusterReadyChecker) error {
+func (c *ClusterManager) waitForManagedClustersReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.ClusterReadyChecker) error {
 	readyClusters, totalClusters := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		// TODO: configure this timeout outside the function
-		return true, 30 * time.Minute * time.Duration(totalClusters-readyClusters)
+		return true, backOffPeriod * time.Duration(totalClusters-readyClusters)
 	}
 
 	areClustersReady := func() error {
 		var err error
-		readyClusters, totalClusters, err = c.countClustersReady(ctx, managementCluster, clusterName, labels, checkers...)
+		readyClusters, totalClusters, err = c.countClustersReady(ctx, managementCluster, checkers...)
 		if err != nil {
 			return err
 		}
 
 		if readyClusters != totalClusters {
-			logger.V(4).Info("Clusters are not ready yet", "total", totalClusters, "ready", readyClusters, "cluster name", clusterName)
-			return errors.New("nodes are not ready yet")
+			logger.V(4).Info("Clusters are not ready yet", "total", totalClusters, "ready", readyClusters)
+			return errors.New("clusters are not ready yet")
 		}
 
 		logger.V(4).Info("Clusters ready", "total", totalClusters)
@@ -872,13 +873,12 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 	return ready, total, nil
 }
 
-func (c *ClusterManager) countClustersReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.ClusterReadyChecker) (ready, total int, err error) {
+func (c *ClusterManager) countClustersReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.ClusterReadyChecker) (ready, total int, err error) {
 	clusters, err := c.clusterClient.GetClusters(ctx, managementCluster)
 	if err != nil {
 		return 0, 0, fmt.Errorf("getting clusters resources from management cluster: %v", err)
 	}
 
-	// TODO: Check if management cluster or workload cluster to see if we need all or just the target cluster
 	for _, c := range clusters {
 		total += 1
 
