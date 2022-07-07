@@ -599,6 +599,20 @@ func (mr *MockClusterClientMockRecorder) ValidateWorkerNodes(arg0, arg1, arg2 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockClusterClient)(nil).ValidateWorkerNodes), arg0, arg1, arg2)
 }
 
+// WaitForClusterReady mocks base method.
+func (m *MockClusterClient) WaitForClusterReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForClusterReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForClusterReady indicates an expected call of WaitForClusterReady.
+func (mr *MockClusterClientMockRecorder) WaitForClusterReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForClusterReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForClusterReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForControlPlaneNotReady mocks base method.
 func (m *MockClusterClient) WaitForControlPlaneNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
