@@ -251,16 +251,8 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 			return err
 		},
 	)
-
-	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
-	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef()); err != nil {
-		return nil, err
-	}
-
-	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
 	if err != nil {
-		return nil, fmt.Errorf("applying extra resources to workload cluster: %v", err)
+		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
 	}
 
 	return workloadCluster, nil
@@ -281,6 +273,19 @@ func (c *ClusterManager) generateWorkloadKubeconfig(ctx context.Context, cluster
 		return "", fmt.Errorf("writing workload kubeconfig: %v", err)
 	}
 	return writtenFile, nil
+}
+
+func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err := c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef()); err != nil {
+		return err
+	}
+
+	if err := cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec); err != nil {
+		return fmt.Errorf("applying extra resources to workload cluster: %v", err)
+	}
+	return nil
 }
 
 func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
