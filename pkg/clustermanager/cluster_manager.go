@@ -35,6 +35,9 @@ const (
 	backOffPeriod          = 5 * time.Second
 	machineBackoff         = 1 * time.Second
 	machinesMinWait        = 30 * time.Minute
+	maxWaitPerCluster      = 15 * time.Minute
+	clusterBackoff         = 10 * time.Second
+	clustersMinWait        = 15 * time.Minute
 	moveCAPIWait           = 15 * time.Minute
 	ctrlPlaneWaitStr       = "60m"
 	etcdWaitStr            = "60m"
@@ -53,6 +56,9 @@ type ClusterManager struct {
 	machineMaxWait     time.Duration
 	machineBackoff     time.Duration
 	machinesMinWait    time.Duration
+	clusterMaxWait     time.Duration
+	clusterBackoff     time.Duration
+	clustersMinWait    time.Duration
 	awsIamAuth         AwsIamAuth
 }
 
@@ -129,6 +135,9 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machineMaxWait:     maxWaitPerMachine,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
+		clusterMaxWait:     maxWaitPerCluster,
+		clusterBackoff:     clusterBackoff,
+		clustersMinWait:    clustersMinWait,
 		awsIamAuth:         awsIamAuth,
 	}
 
@@ -807,7 +816,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 func (c *ClusterManager) waitForManagedClustersReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.ClusterReadyChecker) error {
 	readyClusters, totalClusters := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
-		return true, backOffPeriod * time.Duration(totalClusters-readyClusters)
+		return true, clusterBackoff * time.Duration(totalClusters-readyClusters)
 	}
 
 	areClustersReady := func() error {
@@ -831,9 +840,9 @@ func (c *ClusterManager) waitForManagedClustersReady(ctx context.Context, manage
 		return nil
 	}
 
-	timeout := time.Duration(totalClusters) * c.machineMaxWait
-	if timeout <= c.machinesMinWait {
-		timeout = c.machinesMinWait
+	timeout := time.Duration(totalClusters) * c.clusterMaxWait
+	if timeout <= c.clustersMinWait {
+		timeout = c.clustersMinWait
 	}
 
 	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
