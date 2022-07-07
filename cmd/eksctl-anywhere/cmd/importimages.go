@@ -67,7 +67,7 @@ func importImages(ctx context.Context, spec string) error {
 	de := executables.BuildDockerExecutable()
 
 	bundle := clusterSpec.VersionsBundle
-	executableBuilder, closer, err := executables.NewExecutableBuilder(ctx, bundle.Eksa.CliTools.VersionedImage())
+	executableBuilder, closer, err := executables.InitInDockerExecutablesBuilder(ctx, bundle.Eksa.CliTools.VersionedImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

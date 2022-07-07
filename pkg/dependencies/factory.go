@@ -104,8 +104,10 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 }
 
 type Factory struct {
-	executableBuilder        *executables.ExecutableBuilder
+	executableBuilder        *executables.ExecutablesBuilder
 	executablesImage         string
+	executablesInDocker      bool
+	executablesDockerClient  executables.DockerClient
 	registryMirror           string
 	proxyConfiguration       map[string]string
 	executablesMountDirs     []string
@@ -119,8 +121,9 @@ type buildStep func(ctx context.Context) error
 
 func NewFactory() *Factory {
 	return &Factory{
-		writerFolder: "./",
-		buildSteps:   make([]buildStep, 0),
+		writerFolder:        "./",
+		executablesInDocker: executables.ExecutablesInDocker(),
+		buildSteps:          make([]buildStep, 0),
 	}
 }
 
@@ -190,23 +193,51 @@ func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
 	return f
 }
 
+func (f *Factory) WithLocalExecutables() *Factory {
+	f.executablesInDocker = false
+	return f
+}
+
+// UserExecutablesDockerClient forces a specific DockerClient to build
+// Executables as opposed to follow the normal building flow
+// This is only for testing
+func (f *Factory) UserExecutablesDockerClient(client executables.DockerClient) *Factory {
+	f.executablesDockerClient = client
+	return f
+}
+
 func (f *Factory) WithExecutableBuilder() *Factory {
-	f.WithExecutableImage()
+	if f.executablesInDocker {
+		f.WithExecutableImage().WithDocker()
+	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.executableBuilder != nil {
 			return nil
 		}
 
-		image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
-		b, close, err := executables.NewExecutableBuilder(ctx, image, f.executablesMountDirs...)
+		if f.executablesInDocker {
+			image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
+			b, err := executables.NewInDockerExecutablesBuilder(
+				f.executablesDockerClient,
+				image,
+				f.executablesMountDirs...,
+			)
+			if err != nil {
+				return err
+			}
+
+			f.executableBuilder = b
+		} else {
+			f.executableBuilder = executables.NewLocalExecutablesBuilder()
+		}
+
+		closer, err := f.executableBuilder.Init(ctx)
 		if err != nil {
 			return err
 		}
+		f.dependencies.closers = append(f.dependencies.closers, closer)
 
-		f.dependencies.closers = append(f.dependencies.closers, close)
-
-		f.executableBuilder = b
 		return nil
 	})
 
@@ -365,14 +396,16 @@ func (f *Factory) WithClusterAwsCli() *Factory {
 }
 
 func (f *Factory) WithDocker() *Factory {
-	f.WithExecutableBuilder()
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DockerClient != nil {
 			return nil
 		}
 
 		f.dependencies.DockerClient = executables.BuildDockerExecutable()
+		if f.executablesDockerClient == nil {
+			f.executablesDockerClient = f.dependencies.DockerClient
+		}
+
 		return nil
 	})
 

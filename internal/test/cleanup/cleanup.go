@@ -73,7 +73,7 @@ func CleanUpVsphereTestResources(ctx context.Context, clusterName string) error 
 
 func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.GovcOpt) error {
 	logger.V(1).Info("Deleting vsphere vcenter vms")
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -86,7 +86,7 @@ func VsphereRmVms(ctx context.Context, clusterName string, opts ...executables.G
 }
 
 func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dryRun bool) error {
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

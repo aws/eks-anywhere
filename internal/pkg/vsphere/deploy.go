@@ -32,7 +32,7 @@ type NetworkMapping struct {
 
 func DeployTemplate(envMap map[string]string, library, templateName, vmName, deployFolder, datacenter, datastore, resourcePool string, opts OVFDeployOptions) error {
 	context := context.Background()
-	executableBuilder, close, err := executables.NewExecutableBuilder(context, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(context, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -57,7 +57,7 @@ func DeployTemplate(envMap map[string]string, library, templateName, vmName, dep
 
 func TagVirtualMachine(envMap map[string]string, vmPath, tag string) error {
 	context := context.Background()
-	executableBuilder, close, err := executables.NewExecutableBuilder(context, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(context, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
