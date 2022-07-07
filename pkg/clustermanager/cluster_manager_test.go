@@ -916,6 +916,55 @@ func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 	}
 }
 
+func TestClusterManagerMoveCAPIErrorGetClustersBeforeMove(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+	to := &types.Cluster{
+		Name: "to-cluster",
+	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = to.Name
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetMachines(ctx, from, from.Name)
+	m.client.EXPECT().GetClusters(ctx, from).Return(nil, errors.New("error getting clusters"))
+
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
+	}
+}
+
+func TestClusterManagerMoveCAPIErrorWaitForClusterReady(t *testing.T) {
+	from := &types.Cluster{
+		Name: "from-cluster",
+	}
+	to := &types.Cluster{
+		Name: "to-cluster",
+	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = to.Name
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+	ctx := context.Background()
+
+	c, m := newClusterManager(t)
+	m.client.EXPECT().GetMachines(ctx, from, from.Name)
+	capiClusterName := "capi-cluster"
+	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
+	m.client.EXPECT().GetClusters(ctx, from).Return(clusters, nil)
+	m.client.EXPECT().WaitForClusterReady(ctx, from, "60m", capiClusterName).Return(errors.New("error waitinf for cluster to be ready"))
+
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
+	}
+}
+
 func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
