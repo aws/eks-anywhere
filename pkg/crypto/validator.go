@@ -12,22 +12,21 @@ type DefaultTlsValidator struct{}
 
 type TlsValidator interface {
 	ValidateCert(host, port, caCertContent string) error
-	HasSelfSignedCert(host, port string) (bool, error)
+	IsSignedByUnknownAuthority(host, port string) (bool, error)
 }
 
 func NewTlsValidator() TlsValidator {
 	return &DefaultTlsValidator{}
 }
 
-// HasSelfSignedCert determines whether the url is using self-signed certs or not
-func (tv *DefaultTlsValidator) HasSelfSignedCert(host, port string) (bool, error) {
+// IsSignedByUnknownAuthority determines if the url is signed by an unknown authority.
+func (tv *DefaultTlsValidator) IsSignedByUnknownAuthority(host, port string) (bool, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 
 	_, err := tls.Dial("tcp", net.JoinHostPort(host, port), conf)
 	if err != nil {
-		// If the error is x509.UnknownAuthorityError, this means the url is using self-signed certs
 		if err.Error() == (x509.UnknownAuthorityError{}).Error() {
 			return true, nil
 		}

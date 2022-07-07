@@ -33,19 +33,19 @@ func (m *MockTlsValidator) EXPECT() *MockTlsValidatorMockRecorder {
 	return m.recorder
 }
 
-// HasSelfSignedCert mocks base method.
-func (m *MockTlsValidator) HasSelfSignedCert(host, port string) (bool, error) {
+// IsSignedByUnknownAuthority mocks base method.
+func (m *MockTlsValidator) IsSignedByUnknownAuthority(host, port string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasSelfSignedCert", host, port)
+	ret := m.ctrl.Call(m, "IsSignedByUnknownAuthority", host, port)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// HasSelfSignedCert indicates an expected call of HasSelfSignedCert.
-func (mr *MockTlsValidatorMockRecorder) HasSelfSignedCert(host, port interface{}) *gomock.Call {
+// IsSignedByUnknownAuthority indicates an expected call of IsSignedByUnknownAuthority.
+func (mr *MockTlsValidatorMockRecorder) IsSignedByUnknownAuthority(host, port interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasSelfSignedCert", reflect.TypeOf((*MockTlsValidator)(nil).HasSelfSignedCert), host, port)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSignedByUnknownAuthority", reflect.TypeOf((*MockTlsValidator)(nil).IsSignedByUnknownAuthority), host, port)
 }
 
 // ValidateCert mocks base method.
