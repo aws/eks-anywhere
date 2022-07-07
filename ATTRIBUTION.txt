@@ -1,7 +1,4 @@
 
-** cloud.google.com/go/compute/metadata; version v0.99.0 --
-https://github.com/googleapis/google-cloud-go
-
 ** github.com/aws/aws-sdk-go-v2; version v1.16.2 --
 https://github.com/aws/aws-sdk-go-v2
 
@@ -40,21 +37,6 @@ https://github.com/aws/eks-distro-build-tooling/release
 
 ** github.com/aws/smithy-go; version v1.11.2 --
 https://github.com/aws/smithy-go
-
-** github.com/Azure/go-autorest/autorest; version v0.11.20 --
-https://github.com/Azure/go-autorest/autorest
-
-** github.com/Azure/go-autorest/autorest/adal; version v0.9.15 --
-https://github.com/Azure/go-autorest/autorest/adal
-
-** github.com/Azure/go-autorest/autorest/date; version v0.3.0 --
-https://github.com/Azure/go-autorest/autorest/date
-
-** github.com/Azure/go-autorest/logger; version v0.2.1 --
-https://github.com/Azure/go-autorest/logger
-
-** github.com/Azure/go-autorest/tracing; version v0.6.0 --
-https://github.com/Azure/go-autorest/tracing
 
 ** github.com/containerd/containerd; version v1.5.13 --
 https://github.com/containerd/containerd
@@ -774,9 +756,6 @@ https://go.googlesource.com/time
 ** k8s.io/apimachinery/third_party/forked/golang; version v0.23.4 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/client-go/third_party/forked/golang/template; version v0.23.4 --
-https://github.com/kubernetes/client-go
-
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1399,11 +1378,6 @@ Copyright (c) 2019 Mark Bates
 ** github.com/gocarina/gocsv; version v0.0.0-20220304222734-caabc5f00d30 --
 https://github.com/gocarina/gocsv
 Copyright (c) 2014 Jonathan Picques
-
-** github.com/golang-jwt/jwt/v4; version v4.0.0 --
-https://github.com/golang-jwt/jwt/v4
-Copyright (c) 2012 Dave Grijalva
-Copyright (c) 2021 golang-jwt maintainers
 
 ** github.com/huandu/xstrings; version v1.3.2 --
 https://github.com/huandu/xstrings
