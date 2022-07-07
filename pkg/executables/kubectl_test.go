@@ -989,7 +989,14 @@ func TestKubectlGetClusters(t *testing.T) {
 					Metadata: types.Metadata{
 						Name: "eksa-test-capd",
 					},
-					Status: types.ClusterStatus{Phase: "Provisioned"},
+					Status: types.ClusterStatus{
+						Phase: "Provisioned",
+						Conditions: []types.Condition{
+							{Type: "Ready", Status: "True"},
+							{Type: "ControlPlaneReady", Status: "True"},
+							{Type: "InfrastructureReady", Status: "True"},
+						},
+					},
 				},
 			},
 		},
@@ -2211,4 +2218,14 @@ func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 	).Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
+}
+
+func TestKubectlWaitForClusterReady(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"wait", "--timeout", "5m", "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
 }

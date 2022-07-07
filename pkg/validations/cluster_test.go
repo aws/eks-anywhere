@@ -54,7 +54,7 @@ func TestValidateCertForRegistryMirrorNoRegistryMirror(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(errors.New("invalid cert"))
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
@@ -65,22 +65,22 @@ func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertValid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertNoSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorNoCertIsSignedByKnownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorIsSignedByUnknownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(true, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(true, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("registry https://host.h is using self-signed certs, please provide the certificate using caCertContent field")),

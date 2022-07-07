@@ -837,7 +837,7 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	}
 }
 
-func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string) {
+func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string, opts ...string) {
 	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
 	// The package install command doesn't (yet?) have a --kubeconfig flag.
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
@@ -845,7 +845,18 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string
 		"install", "package", packageName,
 		"--source=registry", "--registry=public.ecr.aws/l0g8r8j6",
 		"--package-name=" + packagePrefix, "-v=9", "--kube-version=1.21",
+		strings.Join(opts, " "),
 	})
+}
+
+func (e *ClusterE2ETest) InstallLocalStorageProvisioner() {
+	ctx := context.Background()
+	_, err := e.KubectlClient.ExecuteCommand(ctx, "apply", "-f",
+		"https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.22/deploy/local-path-storage.yaml",
+		"--kubeconfig", e.kubeconfigFilePath())
+	if err != nil {
+		e.T.Fatalf("Error installing local-path-provisioner: %v", err)
+	}
 }
 
 // WithCluster helps with bringing up and tearing down E2E test clusters.
@@ -854,6 +865,52 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.CreateCluster()
 	defer e.DeleteCluster()
 	f(e)
+}
+
+func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ns := constants.EksaPackagesName
+	deployments := []string{"core", "jobservice", "nginx", "portal", "registry"}
+	statefulsets := []string{"database", "redis", "trivy"}
+
+	var wg sync.WaitGroup
+	wg.Add(len(deployments) + len(statefulsets))
+	errCh := make(chan error, 1)
+	okCh := make(chan string, 1)
+
+	for _, name := range deployments {
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.WaitForDeployment(ctx,
+				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), ns)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+	for _, name := range statefulsets {
+		go func(name string) {
+			defer wg.Done()
+			err := e.KubectlClient.Wait(ctx, e.kubeconfigFilePath(), "5m", "Ready",
+				fmt.Sprintf("pods/%s-harbor-%s-0", prefix, name), ns)
+			if err != nil {
+				errCh <- err
+			}
+		}(name)
+	}
+	go func() {
+		wg.Wait()
+		okCh <- "completed"
+	}()
+
+	select {
+	case err := <-errCh:
+		e.T.Fatal(err)
+	case <-okCh:
+		return
+	}
 }
 
 func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
