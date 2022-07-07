@@ -81,7 +81,7 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
-func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("setting up credentials: %v", err)
 	}

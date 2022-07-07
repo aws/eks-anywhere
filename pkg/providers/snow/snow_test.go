@@ -294,7 +294,7 @@ func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
 	setupContext(t)
 	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
-	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 }
 
@@ -302,7 +302,7 @@ func TestSetupAndValidateUpgradeClusterNoCredsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
-	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
@@ -310,7 +310,7 @@ func TestSetupAndValidateUpgradeClusterNoCertsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
-	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 

@@ -28,8 +28,9 @@ import (
 )
 
 const (
-	maxRetries    = 30
-	backOffPeriod = 5 * time.Second
+	maxRetries                = 30
+	backOffPeriod             = 5 * time.Second
+	maxSurgeForRollingUpgrade = 1
 )
 
 // ErrExternalEtcdUnsupported is returned from create or update when the user attempts to create
