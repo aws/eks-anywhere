@@ -37,7 +37,7 @@ const (
 	machinesMinWait        = 30 * time.Minute
 	maxWaitPerCluster      = 15 * time.Minute
 	clusterBackoff         = 10 * time.Second
-	clustersMinWait        = 15 * time.Minute
+	clusterMinWait         = 15 * time.Minute
 	moveCAPIWait           = 15 * time.Minute
 	ctrlPlaneWaitStr       = "60m"
 	etcdWaitStr            = "60m"
@@ -58,7 +58,7 @@ type ClusterManager struct {
 	machinesMinWait    time.Duration
 	clusterMaxWait     time.Duration
 	clusterBackoff     time.Duration
-	clustersMinWait    time.Duration
+	clusterMinWait     time.Duration
 	awsIamAuth         AwsIamAuth
 }
 
@@ -137,7 +137,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machinesMinWait:    machinesMinWait,
 		clusterMaxWait:     maxWaitPerCluster,
 		clusterBackoff:     clusterBackoff,
-		clustersMinWait:    clustersMinWait,
+		clusterMinWait:     clusterMinWait,
 		awsIamAuth:         awsIamAuth,
 	}
 
@@ -841,8 +841,8 @@ func (c *ClusterManager) waitForManagedClustersReady(ctx context.Context, manage
 	}
 
 	timeout := time.Duration(totalClusters) * c.clusterMaxWait
-	if timeout <= c.clustersMinWait {
-		timeout = c.clustersMinWait
+	if timeout <= c.clusterMinWait {
+		timeout = c.clusterMinWait
 	}
 
 	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
