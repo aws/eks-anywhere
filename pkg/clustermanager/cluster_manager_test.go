@@ -878,6 +878,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, to.Name)
+	m.client.EXPECT().GetClusters(ctx, from).Return(nil, errors.New("error getting clusters"))
 	m.client.EXPECT().GetClusters(ctx, from).Return(clustersNotReady, nil)
 	m.client.EXPECT().GetClusters(ctx, from).Return(clustersReady, nil)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
