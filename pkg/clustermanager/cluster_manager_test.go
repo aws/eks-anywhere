@@ -861,15 +861,27 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
 		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
 	})
+	capiClusterName := "capi-cluster"
+	clustersNotReady := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}, Status: types.ClusterStatus{
+		Conditions: []types.Condition{{
+			Type:   "Ready",
+			Status: "False",
+		}},
+	}}}
+	clustersReady := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}, Status: types.ClusterStatus{
+		Conditions: []types.Condition{{
+			Type:   "Ready",
+			Status: "True",
+		}},
+	}}}
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, to.Name)
-	m.client.EXPECT().GetClusters(ctx, from)
+	m.client.EXPECT().GetClusters(ctx, from).Return(clustersNotReady, nil)
+	m.client.EXPECT().GetClusters(ctx, from).Return(clustersReady, nil)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
-	capiClusterName := "capi-cluster"
-	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
-	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
+	m.client.EXPECT().GetClusters(ctx, to).Return(clustersReady, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
 	m.client.EXPECT().CountMachineDeploymentReplicasReady(ctx, to.Name, to.KubeconfigFile)
