@@ -36,6 +36,7 @@ const (
 	machineBackoff         = 1 * time.Second
 	machinesMinWait        = 30 * time.Minute
 	moveCAPIWait           = 15 * time.Minute
+	clusterWaitStr         = "60m"
 	ctrlPlaneWaitStr       = "60m"
 	etcdWaitStr            = "60m"
 	deploymentWaitStr      = "30m"
@@ -61,6 +62,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
+	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -158,6 +160,11 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
+		return err
+	}
+
+	logger.V(3).Info("Waiting for all clusters to be ready before move")
+	if err := c.waitForAllClustersReady(ctx, from, clusterWaitStr); err != nil {
 		return err
 	}
 
@@ -838,6 +845,22 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 		err = c.clusterClient.WaitForControlPlaneReady(ctx, cluster, waitForCluster.String(), clu.Metadata.Name)
 		if err != nil {
 			return fmt.Errorf("waiting for workload cluster control plane for cluster %s to be ready: %v", clu.Metadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) waitForAllClustersReady(ctx context.Context, cluster *types.Cluster, waitStr string) error {
+	clusters, err := c.clusterClient.GetClusters(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("getting clusters: %v", err)
+	}
+
+	for _, clu := range clusters {
+		err = c.clusterClient.WaitForClusterReady(ctx, cluster, waitStr, clu.Metadata.Name)
+		if err != nil {
+			return fmt.Errorf("waiting for cluster %s to be ready: %v", clu.Metadata.Name, err)
 		}
 	}
 
