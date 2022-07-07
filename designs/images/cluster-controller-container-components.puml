@@ -46,7 +46,7 @@ Rel(capiControllers, cilimHandler, "Marks control plane as ready", $tags="indire
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
-Rel(clusterController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
+Rel(clusterReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
 
 Rel(client, kubeApiServer, "Reads/Writes Objects", "JSON/HTTPS")
 

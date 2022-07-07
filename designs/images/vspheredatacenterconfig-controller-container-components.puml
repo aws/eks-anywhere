@@ -18,7 +18,7 @@ Rel(govc, vCenter, "Makes API calls", "JSON/HTTPS")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
-Rel(vSphereDatacenterController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
+Rel(vsphereDatacenterReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
 
 SHOW_LEGEND()
 @enduml

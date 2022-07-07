@@ -18,7 +18,7 @@ Rel(awsClient, snowAPI, "Makes API calls", "JSON/HTTPS")
 
 Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
 
-Rel(snowMachineConfigController, kubeApiServer, "Subscribes to API events", "JSON/HTTPS")
+Rel(snowMachineConfigReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
 
 SHOW_LEGEND()
 @enduml
