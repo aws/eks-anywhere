@@ -25,12 +25,12 @@ weight: 35
 ### Fixed
 - Fix issue using self-signed certificates for registry mirror [#1857](https://github.com/aws/eks-anywhere/issues/1857)
 
-## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.2)
 
 ### Fixed
 - Fix issue by avoiding processing Snow images when URI is empty
 
-## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.1)
 
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
