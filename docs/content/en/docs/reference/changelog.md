@@ -6,6 +6,14 @@ weight: 35
 
 ## Unreleased
 
+## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
+
+### Changed
+- Updated EKS Distro versions to latest release
+
+### Fixed
+- Fixed control plane nodes not upgraded for same kube version [#2636](https://github.com/aws/eks-anywhere/issues/2636)
+
 ## [v0.10.0](https://github.com/aws/eks-anywhere/releases/tag/v0.10.0)
 
 ### Added
