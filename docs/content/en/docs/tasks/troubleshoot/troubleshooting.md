@@ -311,7 +311,7 @@ Make sure you are choosing an ip in your network range that does not conflict wi
 https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
 
 ### Generic cluster unavailable
-The first ting to look at is were virtual machines created on your target provider. In the case of vSphere, you should see some vms in your folder and they should be up. Check the console and if you see:
+The first thing to look at is: were virtual machines created on your target provider? In the case of vSphere, you should see some VMs in your folder and they should be up. Check the console and if you see:
 ```
 [FAILED] Failed to start Wait for Network to be Configured.
 ```
