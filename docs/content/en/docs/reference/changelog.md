@@ -11,8 +11,7 @@ weight: 35
 ### Changed
 - Updated EKS Distro versions to latest release
 
-Fixed
-- Fixed workload cluster support bundle generation when kubeconfig is ready but cluster is not fully ready [#2265](https://github.com/aws/eks-anywhere/issues/2265)
+### Fixed
 - Fixed control plane nodes not upgraded for same kube version [#2636](https://github.com/aws/eks-anywhere/issues/2636)
 
 ## [v0.10.0](https://github.com/aws/eks-anywhere/releases/tag/v0.10.0)
