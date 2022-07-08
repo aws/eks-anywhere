@@ -8,8 +8,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestClusterDefault(t *testing.T) {
+	cOld := &v1alpha1.Cluster{}
+	cOld.SetSelfManaged()
+	cOld.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+		Port: "",
+	}
+	cOld.Default()
+	g := NewWithT(t)
+	g.Expect(cOld.Spec.ClusterNetwork.CNIConfig).To(Equal(&v1alpha1.CNIConfig{}))
+	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
+}
 
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{}
