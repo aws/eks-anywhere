@@ -16,41 +16,41 @@ See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimag
 
 Kubernetes 1.20:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-20/ubuntu-v1.20.15-eks-d-1-20-17-eks-a-11-amd64.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-20/ubuntu-v1.20.15-eks-d-1-20-18-eks-a-12-amd64.gz
 ```
 
 Kubernetes 1.21:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/ubuntu-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-21/ubuntu-v1.21.13-eks-d-1-21-16-eks-a-12-amd64.gz
 ```
 
 Kubernetes 1.22:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.gz
 ```
 
 ## Bottlerocket OS images for Bare Metal
 
 Kubernetes 1.21:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.img.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-12-amd64.img.gz
 ```
 
 Kubernetes 1.22:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.img.gz
 ```
 
 ## HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 # vSphere OVAs
@@ -91,29 +91,29 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-8`
+1.22 - `eksdRelease:kubernetes-1-22-eks-9`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-15`
+1.21 - `eksdRelease:kubernetes-1-21-eks-16`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-17`
+1.20 - `eksdRelease:kubernetes-1-20-eks-18`
 
 ## Ubuntu with Kubernetes 1.22 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/ova/1-22/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-22-eks-8`
+* `eksdRelease:kubernetes-1-22-eks-9`
 
 ## Ubuntu with Kubernetes 1.21 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-21/ubuntu-v1.21.13-eks-d-1-21-15-eks-a-11-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/ova/1-21/ubuntu-v1.21.13-eks-d-1-21-16-eks-a-12-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-15`
+* `eksdRelease:kubernetes-1-21-eks-16`
 
 ## Ubuntu with Kubernetes 1.20 OVA
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-17-eks-a-11-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/ova/1-20/ubuntu-v1.20.15-eks-d-1-20-18-eks-a-12-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-17`
+* `eksdRelease:kubernetes-1-20-eks-18`
 
 ## Building your own Ubuntu OVA for vSphere
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
