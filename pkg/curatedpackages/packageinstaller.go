@@ -30,7 +30,6 @@ type Installer struct {
 }
 
 func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
-
 	pcc := newPackageController(installer, runner, spec)
 
 	pc := NewPackageClient(

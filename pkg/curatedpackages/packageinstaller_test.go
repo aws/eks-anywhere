@@ -74,6 +74,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	values := []string{sourceRegistry}
 	tt.kubectlRunner.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
@@ -88,6 +89,7 @@ func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	registry := curatedpackages.GetRegistry(helmChart.URI)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	values := []string{sourceRegistry}
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(errors.New("controller installation failed"))
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
@@ -104,6 +106,7 @@ func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	values := []string{sourceRegistry}
 	tt.kubectlRunner.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("path doesn't exist"))
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
