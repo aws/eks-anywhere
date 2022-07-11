@@ -160,6 +160,7 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 		Namespace:  bundle.Namespace,
 	}
 
+	cluster.Spec.BundlesRef = nil
 	datacenterConfig := createDataCenter(cluster)
 	eksd := createEksdRelease()
 	machineConfigCP := createCPMachineConfig()
@@ -409,8 +410,8 @@ func createEksdRelease() *eksdv1alpha1.Release {
 func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 	return &v1alpha1.Bundles{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cluster.Name,
-			Namespace: "default",
+			Name:      "bundles-1",
+			Namespace: cluster.Namespace,
 		},
 		Spec: v1alpha1.BundlesSpec{
 			VersionsBundles: []v1alpha1.VersionsBundle{
@@ -472,6 +473,7 @@ func createCluster() *anywherev1.Cluster {
 			Namespace: namespace,
 		},
 		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{Namespace: namespace, Name: "bundles-1"},
 			DatacenterRef: anywherev1.Ref{
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",
