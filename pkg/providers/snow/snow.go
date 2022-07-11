@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -47,6 +48,7 @@ type SnowProvider struct {
 
 type KubeUnAuthClient interface {
 	KubeconfigClient(kubeconfig string) kubernetes.Client
+	Get(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
 	Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
 }
 
@@ -221,7 +223,25 @@ func (p *SnowProvider) MachineConfigs(clusterSpec *cluster.Spec) []providers.Mac
 	return configs
 }
 
+// ValidateNewSpec validates the immutability of snow machine config by comparing it with the existing one in cluster.
 func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	for _, mc := range clusterSpec.SnowMachineConfigs {
+		oldMc := &v1alpha1.SnowMachineConfig{}
+		err := p.kubeUnAuthClient.Get(ctx, mc.GetName(), mc.GetNamespace(), cluster.KubeconfigFile, oldMc)
+
+		// if machine config object does not exist in cluster, it means user defines new machine config. Skip comparison.
+		if apierrors.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		if oldMc.Spec.SshKeyName != mc.Spec.SshKeyName {
+			return fmt.Errorf("spec.sshKeyName is immutable. Previous value %s, new value %s", oldMc.Spec.SshKeyName, mc.Spec.SshKeyName)
+		}
+
+	}
 	return nil
 }
 
