@@ -55,7 +55,7 @@ git remote -v
 git remote add origin git@github.com:${ORIGIN_ORG}/${REPO}.git
 git remote add upstream git@github.com:${UPSTREAM_ORG}/${REPO}.git
 
-PR_TITLE="Update eks-anywhere formula for ${LATEST_VERSION}"
+PR_TITLE="chore: update eks-anywhere formula for ${LATEST_VERSION}"
 COMMIT_MESSAGE="[PR BOT] Update eks-anywhere brew formula for ${LATEST_VERSION}"
 PR_BRANCH="eks-anywhere-formula-update"
 
