@@ -17,25 +17,34 @@ type PackageHandler interface {
 	CreatePackages(ctx context.Context, fileName string, kubeConfig string) error
 }
 
+type CertManager interface {
+	CertManagerExists(ctx context.Context) (bool, error)
+}
+
 type Installer struct {
 	packageController PackageController
 	spec              *cluster.Spec
 	packageClient     PackageHandler
 	packagesLocation  string
+	certManager       CertManager
 }
 
 func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
+
 	pcc := newPackageController(installer, runner, spec)
 
 	pc := NewPackageClient(
 		runner,
 	)
 
+	cm := newCertManager(runner, spec)
+
 	return &Installer{
 		spec:              spec,
 		packagesLocation:  packagesLocation,
 		packageController: pcc,
 		packageClient:     pc,
+		certManager:       cm,
 	}
 }
 
@@ -47,9 +56,27 @@ func newPackageController(installer ChartInstaller, runner KubectlRunner, spec *
 	return NewPackageControllerClient(installer, runner, kubeConfig, imageUrl, chart.Name, chart.Tag())
 }
 
+func newCertManager(runner KubectlRunner, spec *cluster.Spec) *CertManagerClient {
+	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+
+	return NewCertManagerClient(runner, kubeConfig)
+}
+
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
-	err := pi.installPackagesController(ctx)
+
+	// If cert-manager does not exist, instruct users to follow instructions in
+	// PrintCertManagerDoesNotExistMsg to install packages manually.
+	certManagerExits, err := pi.certManager.CertManagerExists(ctx)
+	if err != nil {
+		return err
+	}
+	if !certManagerExits {
+		PrintCertManagerDoesNotExistMsg()
+		return nil
+	}
+
+	err = pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return err
