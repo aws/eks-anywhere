@@ -113,7 +113,7 @@ func InitInDockerExecutablesBuilder(ctx context.Context, image string, mountDirs
 	return b, closer, nil
 }
 
-// InitInDockerExecutablesBuilder builds an executables builder for docker
+// NewInDockerExecutablesBuilder builds an executables builder for docker
 func NewInDockerExecutablesBuilder(dockerClient DockerClient, image string, mountDirs ...string) (*ExecutablesBuilder, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
