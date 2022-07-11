@@ -81,6 +81,16 @@ func TestPackageInstallerSuccess(t *testing.T) {
 	tt.Expect(err).To(BeNil())
 }
 
+func TestPackageInstallerFailWhenCertManagerFails(t *testing.T) {
+	tt := newPackageInstallerTest(t)
+
+	kubeConfigPath := kubeconfig.FromClusterName(tt.spec.Cluster.Name)
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(false, nil)
+
+	err := tt.command.InstallCuratedPackages(tt.ctx)
+	tt.Expect(err).NotTo(BeNil())
+}
+
 func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 

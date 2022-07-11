@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -72,7 +73,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	}
 	if !certManagerExits {
 		PrintCertManagerDoesNotExistMsg()
-		return nil
+		return errors.New("Error when installing curated packages on workload cluster; cert manager doesn't exist")
 	}
 
 	err = pi.installPackagesController(ctx)
