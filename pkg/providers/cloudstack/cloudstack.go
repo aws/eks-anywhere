@@ -94,8 +94,7 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	var contents bytes.Buffer
-	err := p.createSecrets(ctx, cluster, &contents)
+	contents, err := p.createSecrets(ctx, cluster)
 	if err != nil {
 		return err
 	}
@@ -107,22 +106,23 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 	return nil
 }
 
-func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster) (*bytes.Buffer, error) {
+	var contents bytes.Buffer
 	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
 		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	t, err := template.New("tmpl").Parse(defaultSecretsTemplate)
 	if err != nil {
-		return fmt.Errorf("creating secrets template: %v", err)
+		return nil, fmt.Errorf("creating secrets template: %v", err)
 	}
 
-	err = t.Execute(contents, p.execConfig)
+	err = t.Execute(&contents, p.execConfig)
 	if err != nil {
-		return fmt.Errorf("substituting values for secrets template: %v", err)
+		return nil, fmt.Errorf("substituting values for secrets template: %v", err)
 	}
-	return nil
+	return &contents, nil
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
