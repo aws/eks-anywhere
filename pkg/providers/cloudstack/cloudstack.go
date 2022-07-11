@@ -49,9 +49,6 @@ var defaultClusterConfigMD string
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
-//go:embed config/secrets.yaml
-var defaultSecretsTemplate string
-
 var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
@@ -97,7 +94,6 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 	contents, err := p.createSecrets(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("creating secrets object: %v", err)
-
 	}
 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents)
