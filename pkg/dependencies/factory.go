@@ -198,10 +198,10 @@ func (f *Factory) WithLocalExecutables() *Factory {
 	return f
 }
 
-// UserExecutablesDockerClient forces a specific DockerClient to build
+// UseExecutablesDockerClient forces a specific DockerClient to build
 // Executables as opposed to follow the normal building flow
 // This is only for testing
-func (f *Factory) UserExecutablesDockerClient(client executables.DockerClient) *Factory {
+func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *Factory {
 	f.executablesDockerClient = client
 	return f
 }

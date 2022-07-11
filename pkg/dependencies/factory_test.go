@@ -216,7 +216,7 @@ func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UserExecutablesDockerClient(dummyDockerClient{}).
+		UseExecutablesDockerClient(dummyDockerClient{}).
 		UseExecutableImage("myimage").
 		WithGovc().
 		WithHelmSecure().
