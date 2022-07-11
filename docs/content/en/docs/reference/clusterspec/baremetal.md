@@ -227,7 +227,7 @@ The following fields identify information needed to configure the nodes in each 
 Use fields under `hardwareSelector` to add key/value pair labels to match particular machines that you identified in the CSV file where you defined the machines in your cluster.
 Choose any label name you like.
 For example, if you had added the label `node=cp-machine` to the machines listed in your CSV file that you want to be control plane nodes, the following `hardwareSelector` field would cause those machines to be added to the control plane:
-```bash
+```yaml
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellMachineConfig
@@ -283,7 +283,7 @@ Device names will be different for different disk types.
 
 ### Ubuntu TinkerbellTemplateConfig example
 
-```
+```yaml
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
@@ -304,15 +304,9 @@ spec:
         name: stream-image
         timeout: 360
       - environment:
-          CONTENTS: |
-            network:
-              version: 2
-              renderer: networkd
-              ethernets:
-                  eno1:
-                      dhcp4: true
           DEST_DISK: /dev/sda2
           DEST_PATH: /etc/netplan/config.yaml
+          STATIC_NETPLAN: true
           DIRMODE: "0755"
           FS_TYPE: ext4
           GID: "0"
@@ -325,14 +319,8 @@ spec:
           CONTENTS: |
             datasource:
               Ec2:
-                metadata_urls: []
+                metadata_urls: [<admin-machine-ip>, <tinkerbell-ip-from-cluster-config>]
                 strict_id: false
-            system_info:
-              default_user:
-                name: tink
-                groups: [wheel, adm]
-                sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                shell: /bin/bash
             manage_etc_hosts: localhost
             warnings:
               dsid_missing_source: off
@@ -348,6 +336,20 @@ spec:
         timeout: 90
       - environment:
           CONTENTS: |
+            network:
+              config: disabled
+          DEST_DISK: /dev/sda2
+          DEST_PATH: /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+          DIRMODE: "0700"
+          FS_TYPE: ext4
+          GID: "0"
+          MODE: "0600"
+          UID: "0"
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        name: disable-cloud-init-network-capabilities
+        timeout: 90
+      - environment:
+          CONTENTS: | 
             datasource: Ec2
           DEST_DISK: /dev/sda2
           DEST_PATH: /etc/cloud/ds-identify.cfg
@@ -377,7 +379,7 @@ spec:
 
 ### Bottlerocket TinkerbellTemplateConfig example
 
-```
+```yaml
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellTemplateConfig
@@ -549,7 +551,7 @@ The `kexec-image` action performs provisioning activities on the machine, then a
 There are known issues related to drivers with some hardware that may make it necessary to replace the kexec-image action with a full reboot.
 If you require a full reboot, you can change the kexec-image setting as follows:
 
-```
+```yaml
 actions:
 - name: "reboot"
   image: public.ecr.aws/l0g8r8j6/tinkerbell/hub/reboot-action:latest
@@ -615,7 +617,7 @@ Matches the current version of the Tinkerbell template.
 By creating your own custom Tinkerbell actions, you can add to or modify the installed operating system so those changes take effect when the installed system first starts (from a reboot or pivot).
 The following example shows how to add a .deb package (`openssl`) to an Ubuntu installation:
 
-```bash
+```yaml
       - environment:
           BLOCK_DEVICE: /dev/sda1
           CHROOT: "y"
@@ -628,7 +630,7 @@ The following example shows how to add a .deb package (`openssl`) to an Ubuntu i
 ```
 The following shows an example of adding a new user (`tinkerbell`) to an installed Ubuntu system:
 
-```bash
+```yaml
       - environment:
           BLOCK_DEVICE: <block device path> # E.g. /dev/sda1
           FS_TYPE: ext4
