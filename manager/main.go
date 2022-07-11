@@ -108,11 +108,7 @@ func main() {
 
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
-		// This feature doesn't support running the binaries through docker on the controller image so relying on the
-		// binaries built within the controller image instead. We also can specify a fake executable image for now in
-		// order to get the dependencies to build.
-		os.Setenv("MR_TOOLS_DISABLE", "true")
-		factory := dependencies.NewFactory().UseExecutableImage("test.com/fake-image:1.0")
+		factory := dependencies.NewFactory().WithLocalExecutables()
 		deps, err := factory.WithGovc().Build(ctx)
 		if err != nil {
 			setupLog.Error(err, "unable to build dependencies")

@@ -1,9 +1,9 @@
 package dependencies_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -46,10 +46,6 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
-	// Disable tools image executable for the tests
-	if err := os.Setenv("MR_TOOLS_DISABLE", "true"); err != nil {
-		t.Fatal(err)
-	}
 
 	return &factoryTest{
 		WithT:             NewGomegaWithT(t),
@@ -62,7 +58,7 @@ func newTest(t *testing.T, p provider) *factoryTest {
 func TestFactoryBuildWithProvidervSphere(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		Build(context.Background())
 
@@ -74,7 +70,7 @@ func TestFactoryBuildWithProvidervSphere(t *testing.T) {
 func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt := newTest(t, tinkerbell)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		Build(context.Background())
 
@@ -88,7 +84,7 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
@@ -100,7 +96,7 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 func TestFactoryBuildWithClusterManagerWithoutCliConfig(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
@@ -115,7 +111,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithBootstrapper().
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster).
@@ -153,7 +149,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithRegistryMirror("1.2.3.4:443").
 		WithHelmInsecure().
 		Build(context.Background())
@@ -184,7 +180,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 	}
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithHelmInsecure().
 		WithKubectl().
 		WithPackageInstaller(spec, "/test/packages.yaml").
@@ -196,7 +192,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithHelmInsecure().
 		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
@@ -208,11 +204,35 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 func TestFactoryBuildWithCuratedPackagesDefaultRegistry(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
-		UseExecutableImage("image:1").
+		WithLocalExecutables().
 		WithManifestReader().
 		WithCuratedPackagesRegistry("", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.BundleRegistry).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		UseExecutablesDockerClient(dummyDockerClient{}).
+		UseExecutableImage("myimage").
+		WithGovc().
+		WithHelmSecure().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Govc).NotTo(BeNil())
+	tt.Expect(deps.HelmSecure).NotTo(BeNil())
+}
+
+type dummyDockerClient struct{}
+
+func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
+	return nil
+}
+
+func (b dummyDockerClient) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
+	return bytes.Buffer{}, nil
 }
