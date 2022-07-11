@@ -80,6 +80,8 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
+	VSphereValidator          *vsphere.Validator
+	VSphereDefaulter          *vsphere.Defaulter
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -1018,6 +1020,38 @@ func (f *Factory) WithUnAuthKubeClient() *Factory {
 		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
 			return fmt.Errorf("building unauth kube client: %v", err)
 		}
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereValidator() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereValidator != nil {
+			return nil
+		}
+
+		f.dependencies.VSphereValidator = vsphere.NewValidator(f.dependencies.Govc, &networkutils.DefaultNetClient{})
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereDefaulter() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
 
 		return nil
 	})
