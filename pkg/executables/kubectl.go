@@ -167,6 +167,13 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
+func (k *Kubectl) CreateNamespaceIfNotExists(ctx context.Context, kubeconfig string, namespace string) error {
+	if err := k.GetNamespace(ctx, kubeconfig, namespace); err != nil {
+		return k.CreateNamespace(ctx, kubeconfig, namespace)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
 	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)

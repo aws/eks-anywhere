@@ -1,12 +1,10 @@
 package cloudstack
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
-	"html/template"
 	"net"
 	"net/url"
 	"os"
@@ -14,8 +12,10 @@ import (
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -96,33 +96,53 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	contents, err := p.createSecrets(ctx, cluster)
 	if err != nil {
-		return err
+		return fmt.Errorf("creating secrets object: %v", err)
+
 	}
 
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents)
 	if err != nil {
-		return fmt.Errorf("loading secrets object: %v", err)
+		return fmt.Errorf("applying secrets object: %v", err)
 	}
 	return nil
 }
 
-func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster) (*bytes.Buffer, error) {
-	var contents bytes.Buffer
-	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-			return nil, err
-		}
-	}
-	t, err := template.New("tmpl").Parse(defaultSecretsTemplate)
-	if err != nil {
-		return nil, fmt.Errorf("creating secrets template: %v", err)
+func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
+	if err := p.providerKubectlClient.CreateNamespaceIfNotExists(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return nil, err
 	}
 
-	err = t.Execute(&contents, p.execConfig)
-	if err != nil {
-		return nil, fmt.Errorf("substituting values for secrets template: %v", err)
+	secrets := [][]byte{}
+	for _, profile := range p.execConfig.Profiles {
+		secret := createSecret(profile)
+		if bytes, err := yaml.Marshal(secret); err == nil {
+			secrets = append(secrets, bytes)
+		} else {
+			return nil, fmt.Errorf("marshalling secret: %v: %v", secret, err)
+		}
 	}
-	return &contents, nil
+	return templater.AppendYamlResources(secrets...), nil
+}
+
+func createSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
+	immutable := true
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      profile.Name,
+		},
+		Immutable: &immutable,
+		StringData: map[string]string{
+			"uri":       profile.ManagementUrl,
+			"apikey":    profile.ApiKey,
+			"secretkey": profile.SecretKey,
+			"verifyssl": profile.VerifySsl,
+		},
+	}
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
@@ -221,6 +241,7 @@ type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotExists(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
