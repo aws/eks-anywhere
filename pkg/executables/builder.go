@@ -97,7 +97,7 @@ func ExecutablesInDocker() bool {
 	return true
 }
 
-// InitInDockerExecutablesBuilder builds an inits a default executables builder
+// InitInDockerExecutablesBuilder builds and inits a default ExecutablesBuilder to run executables in a docker container
 // that will make use of a long running docker container
 func InitInDockerExecutablesBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutablesBuilder, Closer, error) {
 	b, err := NewInDockerExecutablesBuilder(BuildDockerExecutable(), image, mountDirs...)
