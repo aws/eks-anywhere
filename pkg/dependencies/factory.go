@@ -104,26 +104,32 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 }
 
 type Factory struct {
-	executableBuilder        *executables.ExecutablesBuilder
-	executablesImage         string
-	executablesInDocker      bool
-	executablesDockerClient  executables.DockerClient
+	executablesConfig        *executablesConfig
 	registryMirror           string
 	proxyConfiguration       map[string]string
-	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
 	buildSteps               []buildStep
 	dependencies             Dependencies
 }
 
+type executablesConfig struct {
+	builder            *executables.ExecutablesBuilder
+	image              string
+	useDockerContainer bool
+	dockerClient       executables.DockerClient
+	mountDirs          []string
+}
+
 type buildStep func(ctx context.Context) error
 
 func NewFactory() *Factory {
 	return &Factory{
-		writerFolder:        "./",
-		executablesInDocker: executables.ExecutablesInDocker(),
-		buildSteps:          make([]buildStep, 0),
+		writerFolder: "./",
+		executablesConfig: &executablesConfig{
+			useDockerContainer: executables.ExecutablesInDocker(),
+		},
+		buildSteps: make([]buildStep, 0),
 	}
 }
 
@@ -159,7 +165,7 @@ func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory
 }
 
 func (f *Factory) UseExecutableImage(image string) *Factory {
-	f.executablesImage = image
+	f.executablesConfig.image = image
 	return f
 }
 
@@ -172,7 +178,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 	f.WithManifestReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executablesImage != "" {
+		if f.executablesConfig.image != "" {
 			return nil
 		}
 
@@ -181,7 +187,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
 		}
 
-		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
+		f.executablesConfig.image = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
 
@@ -189,12 +195,12 @@ func (f *Factory) WithExecutableImage() *Factory {
 }
 
 func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
-	f.executablesMountDirs = mountDirs
+	f.executablesConfig.mountDirs = mountDirs
 	return f
 }
 
 func (f *Factory) WithLocalExecutables() *Factory {
-	f.executablesInDocker = false
+	f.executablesConfig.useDockerContainer = false
 	return f
 }
 
@@ -202,37 +208,37 @@ func (f *Factory) WithLocalExecutables() *Factory {
 // Executables as opposed to follow the normal building flow
 // This is only for testing
 func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *Factory {
-	f.executablesDockerClient = client
+	f.executablesConfig.dockerClient = client
 	return f
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
-	if f.executablesInDocker {
+	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executableBuilder != nil {
+		if f.executablesConfig.builder != nil {
 			return nil
 		}
 
-		if f.executablesInDocker {
-			image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
+		if f.executablesConfig.useDockerContainer {
+			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
 			b, err := executables.NewInDockerExecutablesBuilder(
-				f.executablesDockerClient,
+				f.executablesConfig.dockerClient,
 				image,
-				f.executablesMountDirs...,
+				f.executablesConfig.mountDirs...,
 			)
 			if err != nil {
 				return err
 			}
 
-			f.executableBuilder = b
+			f.executablesConfig.builder = b
 		} else {
-			f.executableBuilder = executables.NewLocalExecutablesBuilder()
+			f.executablesConfig.builder = executables.NewLocalExecutablesBuilder()
 		}
 
-		closer, err := f.executableBuilder.Init(ctx)
+		closer, err := f.executablesConfig.builder.Init(ctx)
 		if err != nil {
 			return err
 		}
@@ -380,21 +386,6 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithClusterAwsCli() *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ClusterAwsCli != nil {
-			return nil
-		}
-
-		f.dependencies.ClusterAwsCli = f.executableBuilder.BuildClusterAwsAdmExecutable()
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithDocker() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DockerClient != nil {
@@ -402,8 +393,8 @@ func (f *Factory) WithDocker() *Factory {
 		}
 
 		f.dependencies.DockerClient = executables.BuildDockerExecutable()
-		if f.executablesDockerClient == nil {
-			f.executablesDockerClient = f.dependencies.DockerClient
+		if f.executablesConfig.dockerClient == nil {
+			f.executablesConfig.dockerClient = f.dependencies.DockerClient
 		}
 
 		return nil
@@ -420,7 +411,7 @@ func (f *Factory) WithKubectl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kubectl = f.executableBuilder.BuildKubectlExecutable()
+		f.dependencies.Kubectl = f.executablesConfig.builder.BuildKubectlExecutable()
 		return nil
 	})
 
@@ -435,7 +426,7 @@ func (f *Factory) WithGovc() *Factory {
 			return nil
 		}
 
-		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		f.dependencies.Govc = f.executablesConfig.builder.BuildGovcExecutable(f.dependencies.Writer)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
 
 		return nil
@@ -457,7 +448,7 @@ func (f *Factory) WithCmk() *Factory {
 			return fmt.Errorf("building cmk executable: %v", err)
 		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, execConfig.Profiles)
+		f.dependencies.Cmk = f.executablesConfig.builder.BuildCmkExecutable(f.dependencies.Writer, execConfig.Profiles)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 
 		return nil
@@ -548,7 +539,7 @@ func (f *Factory) WithKind() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kind = f.executableBuilder.BuildKindExecutable(f.dependencies.Writer)
+		f.dependencies.Kind = f.executablesConfig.builder.BuildKindExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -563,7 +554,7 @@ func (f *Factory) WithClusterctl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Clusterctl = f.executableBuilder.BuildClusterCtlExecutable(f.dependencies.Writer)
+		f.dependencies.Clusterctl = f.executablesConfig.builder.BuildClusterCtlExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -578,7 +569,7 @@ func (f *Factory) WithFlux() *Factory {
 			return nil
 		}
 
-		f.dependencies.Flux = f.executableBuilder.BuildFluxExecutable()
+		f.dependencies.Flux = f.executablesConfig.builder.BuildFluxExecutable()
 		return nil
 	})
 
@@ -593,7 +584,7 @@ func (f *Factory) WithTroubleshoot() *Factory {
 			return nil
 		}
 
-		f.dependencies.Troubleshoot = f.executableBuilder.BuildTroubleshootExecutable()
+		f.dependencies.Troubleshoot = f.executablesConfig.builder.BuildTroubleshootExecutable()
 		return nil
 	})
 
@@ -617,7 +608,7 @@ func (f *Factory) WithHelmSecure() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmSecure = f.executableBuilder.BuildHelmExecutable(opts...)
+		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -641,7 +632,7 @@ func (f *Factory) WithHelmInsecure() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmInsecure = f.executableBuilder.BuildHelmExecutable(opts...)
+		f.dependencies.HelmInsecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
