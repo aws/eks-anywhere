@@ -19,17 +19,12 @@ func (r *Runner) Register(validations ...Validation) {
 }
 
 func (r *Runner) Run() error {
-	failed := false
 	for _, v := range r.validations {
 		result := v()
 		result.Report()
 		if result.Err != nil {
-			failed = true
+			return errRunnerValidation
 		}
-	}
-
-	if failed {
-		return errRunnerValidation
 	}
 
 	return nil
