@@ -114,14 +114,13 @@ func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.C
 		if bytes, err := yaml.Marshal(secret); err == nil {
 			secrets = append(secrets, bytes)
 		} else {
-			return nil, fmt.Errorf("marshalling secret: %v: %v", secret, err)
+			return nil, fmt.Errorf("marshalling secret for profile %s: %v", profile.Name, err)
 		}
 	}
 	return templater.AppendYamlResources(secrets...), nil
 }
 
 func createSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
-	immutable := true
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -131,7 +130,6 @@ func createSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Namespace: constants.EksaSystemNamespace,
 			Name:      profile.Name,
 		},
-		Immutable: &immutable,
 		StringData: map[string]string{
 			"uri":       profile.ManagementUrl,
 			"apikey":    profile.ApiKey,
@@ -389,6 +387,7 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var cloudStackB64EncodedSecret string
 	var ok bool
+	var err error
 
 	if cloudStackB64EncodedSecret, ok = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
 		if err := os.Setenv(decoder.CloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
@@ -397,15 +396,15 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)
 	}
-	execConfig, err := decoder.ParseCloudStackSecret()
+	p.execConfig, err = decoder.ParseCloudStackSecret()
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.Profiles) <= 0 {
+	if len(p.execConfig.Profiles) <= 0 {
 		return errors.New("cloudstack instances are not defined")
 	}
 
-	for _, instance := range execConfig.Profiles {
+	for _, instance := range p.execConfig.Profiles {
 		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
 			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid: %v",
 				instance.Name, instance.ManagementUrl, err)
@@ -417,7 +416,6 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
 		}
 	}
-	p.execConfig = execConfig
 	return nil
 }
 
