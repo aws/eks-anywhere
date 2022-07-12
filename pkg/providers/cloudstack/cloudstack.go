@@ -421,6 +421,26 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
+func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
+	for _, profile := range p.execConfig.Profiles {
+		secret, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
+		}
+		if secretDifferentFromProfile(secret, profile) {
+			return fmt.Errorf("profile '%s' is different from the secret", profile.Name)
+		}
+	}
+	return nil
+}
+
+func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
+	return string(secret.Data["uri"]) != profile.ManagementUrl ||
+		string(secret.Data["apikey"]) != profile.ApiKey ||
+		string(secret.Data["secretkey"]) != profile.SecretKey ||
+		string(secret.Data["verifyssl"]) != profile.VerifySsl
+}
+
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
 	if err := p.validator.validateCloudStackAccess(ctx, p.datacenterConfig); err != nil {
 		return err
@@ -476,6 +496,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
+	}
+
+	if err := p.validateSecretsUnchanged(ctx, cluster); err != nil {
+		return fmt.Errorf("validating secrets unchanged: %v", err)
 	}
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
