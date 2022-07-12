@@ -50,20 +50,6 @@ func (mr *MockKubeUnAuthClientMockRecorder) Delete(ctx, name, namespace, kubecon
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKubeUnAuthClient)(nil).Delete), ctx, name, namespace, kubeconfig, obj)
 }
 
-// Get mocks base method.
-func (m *MockKubeUnAuthClient) Get(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, name, namespace, kubeconfig, obj)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Get indicates an expected call of Get.
-func (mr *MockKubeUnAuthClientMockRecorder) Get(ctx, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockKubeUnAuthClient)(nil).Get), ctx, name, namespace, kubeconfig, obj)
-}
-
 // KubeconfigClient mocks base method.
 func (m *MockKubeUnAuthClient) KubeconfigClient(kubeconfig string) kubernetes.Client {
 	m.ctrl.T.Helper()
