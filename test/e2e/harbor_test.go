@@ -11,9 +11,9 @@ import (
 
 func TestHarborInstallSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithPackageConfig(t, eksaPackageBundleURI, eksaPackageControllerHelmChartName,
-			eksaPackageControllerHelmURI, eksaPackageControllerHelmVersion,
-			eksaPackageControllerHelmValues),
+		framework.WithPackageConfig(t, eksAnywherePackagesBundleUri,
+			eksAnywherePackagesHelmChartName, eksAnywherePackagesHelmUri,
+			eksAnywherePackagesHelmVersion, eksaPackageControllerHelmValues),
 	)
 	runHarborInstallSimpleFlow(test) // other args as necessary
 }
