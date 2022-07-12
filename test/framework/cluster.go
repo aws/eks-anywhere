@@ -873,7 +873,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 
 	ns := constants.EksaPackagesName
 	deployments := []string{"core", "jobservice", "nginx", "portal", "registry"}
-	statefulsets := []string{"database", "redis"}
+	statefulsets := []string{"database", "redis", "trivy"}
 
 	var wg sync.WaitGroup
 	wg.Add(len(deployments) + len(statefulsets))

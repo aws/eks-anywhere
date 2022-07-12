@@ -33,7 +33,7 @@ func runHarborInstallSimpleFlow(test *framework.ClusterE2ETest) {
 			"--set persistence.persistentVolumeClaim.jobservice.storageClass=local-path",
 			"--set persistence.persistentVolumeClaim.database.storageClass=local-path",
 			"--set persistence.persistentVolumeClaim.redis.storageClass=local-path",
-			// "--set persistence.persistentVolumeClaim.trivy.storageClass=local-path",
+			"--set persistence.persistentVolumeClaim.trivy.storageClass=local-path",
 		)
 		test.VerifyHarborPackageInstalled(packagePrefix)
 	})
