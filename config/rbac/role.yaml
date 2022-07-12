@@ -110,6 +110,14 @@ rules:
   - update
   - watch
 - apiGroups:
+  - clusterctl.cluster.x-k8s.io
+  resources:
+  - providers
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - distro.eks.amazonaws.com
   resources:
   - releases

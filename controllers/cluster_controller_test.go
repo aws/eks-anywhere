@@ -21,9 +21,11 @@ import (
 
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
+	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -32,10 +34,41 @@ var (
 	namespace = "eksa-system"
 )
 
-func TestClusterReconcilerSkipManagement(t *testing.T) {
+type vsphereClusterReconcilerTest struct {
+	govcClient *mocks.MockProviderGovcClient
+	reconciler *ClusterReconciler
+}
+
+func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsphereClusterReconcilerTest {
 	ctrl := gomock.NewController(t)
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
+	defaulter := vsphere.NewDefaulter(govcClient)
+
+	reconciler := vspherereconciler.NewVSphereReconciler(
+		cl,
+		logf.Log,
+		validator,
+		defaulter,
+		nil,
+	)
+	registry := clusters.NewProviderClusterReconcilerRegistryBuilder().
+		Add(anywherev1.VSphereDatacenterKind, reconciler).
+		Build()
+
+	r := NewClusterReconciler(cl, logf.Log, &registry)
+
+	return &vsphereClusterReconcilerTest{
+		govcClient: govcClient,
+		reconciler: r,
+	}
+}
+
+func TestClusterReconcilerSkipManagement(t *testing.T) {
 	secret := createSecret()
 	cluster := createCluster()
 	datacenterConfig := createDataCenter(cluster)
@@ -45,41 +78,24 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	tt := newVsphereClusterReconcilerTest(t, objs...)
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govcClient)
-
-	r := &ClusterReconciler{
-		client:                  cl,
-		log:                     logf.Log,
-		validator:               validator,
-		defaulter:               defaulter,
-		buildProviderReconciler: BuildProviderReconciler,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+	req := clusterRequest(cluster)
 
 	ctx := context.Background()
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(0)
-	govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil).Times(0)
-	govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
-	govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2).Times(0)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(0)
+	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, gomock.Any()).Return("test", nil).Times(0)
+	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
+	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2).Times(0)
 
-	_, err := r.Reconcile(ctx, req)
+	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
@@ -90,9 +106,6 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 
 func TestClusterReconcilerSuccess(t *testing.T) {
 	t.Skip("It will be implemented soon")
-
-	ctrl := gomock.NewController(t)
-	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
 	secret := createSecret()
 	managementCluster := createCluster()
@@ -107,42 +120,25 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	tt := newVsphereClusterReconcilerTest(t, objs...)
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govcClient)
-
-	r := &ClusterReconciler{
-		client:                  cl,
-		log:                     logf.Log,
-		validator:               validator,
-		defaulter:               defaulter,
-		buildProviderReconciler: BuildProviderReconciler,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+	req := clusterRequest(cluster)
 
 	ctx := context.Background()
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(nil)
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil)
-	govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil)
-	govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
-	govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil)
+	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil)
+	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil)
+	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(2)
 
-	_, err := r.Reconcile(ctx, req)
+	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
@@ -152,58 +148,44 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 }
 
 func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	govcClient := mocks.NewMockProviderGovcClient(ctrl)
-
 	secret := createSecret()
 	managementCluster := createCluster()
 	managementCluster.Name = "management-cluster"
+	bundle := createBundle(managementCluster)
 	cluster := createCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	cluster.Spec.BundlesRef = &anywherev1.BundlesRef{
+		APIVersion: bundle.APIVersion,
+		Name:       bundle.Name,
+		Namespace:  bundle.Namespace,
+	}
 
 	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(managementCluster)
 	eksd := createEksdRelease()
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, eksd, machineConfigCP, machineConfigWN, managementCluster}
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	tt := newVsphereClusterReconcilerTest(t, objs...)
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govcClient)
+	req := clusterRequest(cluster)
 
-	r := &ClusterReconciler{
-		client:                  cl,
-		log:                     logf.Log,
-		validator:               validator,
-		defaulter:               defaulter,
-		buildProviderReconciler: BuildProviderReconciler,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
 	ctx := context.Background()
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(fmt.Errorf("error"))
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil).MaxTimes(1)
-	govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil).Times(0)
-	govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
-	govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(0)
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(fmt.Errorf("error"))
+	tt.govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil).MaxTimes(1)
+	tt.govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil).Times(0)
+	tt.govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
+	tt.govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(0)
 
-	_, err := r.Reconcile(ctx, req)
+	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err == nil {
 		t.Fatalf("expected and error in the reconcile")
 	}
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
@@ -213,9 +195,6 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 }
 
 func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	govcClient := mocks.NewMockProviderGovcClient(ctrl)
-
 	secret := createSecret()
 	managementCluster := createCluster()
 	managementCluster.Name = "management-cluster"
@@ -233,37 +212,20 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster, capiCluster}
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	tt := newVsphereClusterReconcilerTest(t, objs...)
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govcClient)
-
-	r := &ClusterReconciler{
-		client:                  cl,
-		log:                     logf.Log,
-		validator:               validator,
-		defaulter:               defaulter,
-		buildProviderReconciler: BuildProviderReconciler,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+	req := clusterRequest(cluster)
 
 	ctx := context.Background()
 
-	_, err := r.Reconcile(ctx, req)
+	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
 	apiCluster := &clusterv1.Cluster{}
 
-	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if !apierrors.IsNotFound(err) {
 		t.Fatalf("expected apierrors.IsNotFound but got: (%v)", err)
 	}
@@ -273,9 +235,6 @@ func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
 }
 
 func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	govcClient := mocks.NewMockProviderGovcClient(ctrl)
-
 	g := NewWithT(t)
 
 	secret := createSecret()
@@ -295,37 +254,21 @@ func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
 
 	g.Expect(cluster.Finalizers).NotTo(ContainElement(clusterFinalizerName))
 
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
+	tt := newVsphereClusterReconcilerTest(t, objs...)
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govcClient)
-
-	r := &ClusterReconciler{
-		client:    cl,
-		log:       logf.Log,
-		validator: validator,
-		defaulter: defaulter,
-	}
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
+	req := clusterRequest(cluster)
 
 	ctx := context.Background()
 
 	controllerutil.AddFinalizer(cluster, clusterFinalizerName)
-	_, err := r.Reconcile(ctx, req)
+	_, err := tt.reconciler.Reconcile(ctx, req)
 	if err != nil {
 		t.Fatalf("reconcile: (%v)", err)
 	}
 
 	apiCluster := &anywherev1.Cluster{}
 
-	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	err = tt.reconciler.client.Get(context.TODO(), req.NamespacedName, apiCluster)
 	if err != nil {
 		t.Fatalf("get cluster: (%v)", err)
 	}
@@ -568,6 +511,15 @@ func createSecret() *apiv1.Secret {
 		Data: map[string][]byte{
 			"username": []byte("test"),
 			"password": []byte("test"),
+		},
+	}
+}
+
+func clusterRequest(cluster *anywherev1.Cluster) reconcile.Request {
+	return reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      cluster.Name,
+			Namespace: cluster.Namespace,
 		},
 	}
 }
