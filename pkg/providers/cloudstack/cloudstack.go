@@ -167,16 +167,6 @@ func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *typ
 	}
 }
 
-func (p *cloudstackProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
-}
-
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	// Nothing to do
 	return nil

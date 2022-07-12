@@ -285,16 +285,6 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 	return nil
 }
 
-func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, nodeGroup := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, nodeGroup.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
-}
-
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }

@@ -275,10 +275,6 @@ func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Clu
 	return nil
 }
 
-func (p *SnowProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	return nil
-}
-
 func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
