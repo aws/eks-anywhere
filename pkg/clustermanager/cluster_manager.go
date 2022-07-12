@@ -579,8 +579,8 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	return nil
 }
 
-func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error {
-	mhc, err := provider.GenerateMHC()
+func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, provider providers.Provider) error {
+	mhc, err := provider.GenerateMHC(clusterSpec)
 	if err != nil {
 		return err
 	}

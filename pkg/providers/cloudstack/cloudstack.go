@@ -1021,7 +1021,7 @@ func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *
 	return false, nil
 }
 
-func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
+func (p *cloudstackProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,

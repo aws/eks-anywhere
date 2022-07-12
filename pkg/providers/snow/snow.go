@@ -225,8 +225,8 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *SnowProvider) GenerateMHC() ([]byte, error) {
-	return nil, nil
+func (p *SnowProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {

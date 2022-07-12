@@ -173,3 +173,39 @@ func TestWorkerMachineTemplateName(t *testing.T) {
 		})
 	}
 }
+
+func TestControlPlaneMachineHealthCheckName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "cp",
+			want: "test-cluster-kcp-unhealthy",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.ControlPlaneMachineHealthCheckName(g.clusterSpec)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestWorkerMachineHealthCheckName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "wng 1",
+			want: "test-cluster-wng-1-worker-unhealthy",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.WorkerMachineHealthCheckName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+		})
+	}
+}
