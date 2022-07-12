@@ -346,7 +346,6 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *te
 	ctx := context.Background()
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -354,7 +353,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *te
 
 func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *testing.T) {
 	tt := NewWithT(t)
-	clusterSpecManifest := "cluster_affinity.yaml"
+	clusterSpecManifest := "cluster_main.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -365,6 +364,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	ctx := context.Background()
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New(""))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -373,7 +373,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 
 func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing.T) {
 	tt := NewWithT(t)
-	clusterSpecManifest := "cluster_affinity.yaml"
+	clusterSpecManifest := "cluster_main.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -386,6 +386,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	modifiedSecret := expectedSecret.DeepCopy()
 	modifiedSecret.Data["apikey"] = []byte("updated-api-key")
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1465,7 +1466,6 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
@@ -1485,7 +1485,6 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
@@ -1505,7 +1504,6 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }

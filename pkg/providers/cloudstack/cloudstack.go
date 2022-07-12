@@ -496,10 +496,6 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := p.validateSecretsUnchanged(ctx, cluster); err != nil {
-		return fmt.Errorf("validating secrets unchanged: %v", err)
-	}
-
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -511,6 +507,11 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	if err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec); err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
+
+	if err := p.validateSecretsUnchanged(ctx, cluster); err != nil {
+		return fmt.Errorf("validating secrets unchanged: %v", err)
+	}
+
 	return nil
 }
 
