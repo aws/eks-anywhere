@@ -2,7 +2,6 @@ package snow_test
 
 import (
 	"context"
-	"errors"
 	"os"
 	"testing"
 
@@ -336,94 +335,6 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
-}
-
-func TestValidateNewSpecSuccess(t *testing.T) {
-	tt := newSnowTest(t)
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		DoAndReturn(func(_ context.Context, _, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].DeepCopyInto(obj)
-			return nil
-		})
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-wn"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-wn"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		DoAndReturn(func(_ context.Context, _, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
-			tt.clusterSpec.SnowMachineConfigs["test-wn"].DeepCopyInto(obj)
-			return nil
-		})
-	err := tt.provider.ValidateNewSpec(tt.ctx, tt.cluster, tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-}
-
-func TestValidateNewSpecOldMachineConfigNotFound(t *testing.T) {
-	tt := newSnowTest(t)
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-wn"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-wn"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
-	err := tt.provider.ValidateNewSpec(tt.ctx, tt.cluster, tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-}
-
-func TestValidateNewSpecFetchOldMachineConfigError(t *testing.T) {
-	tt := newSnowTest(t)
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		Return(errors.New("get mc error"))
-	err := tt.provider.ValidateNewSpec(tt.ctx, tt.cluster, tt.clusterSpec)
-	tt.Expect(err).NotTo(Succeed())
-}
-
-func TestValidateNewSpecSshKeyNameChanged(t *testing.T) {
-	tt := newSnowTest(t)
-	tt.kubeUnAuthClient.EXPECT().
-		Get(
-			tt.ctx,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Name,
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].Namespace,
-			tt.cluster.KubeconfigFile,
-			&v1alpha1.SnowMachineConfig{},
-		).
-		DoAndReturn(func(_ context.Context, _, _, _ string, obj *v1alpha1.SnowMachineConfig) error {
-			tt.clusterSpec.SnowMachineConfigs["test-cp"].DeepCopyInto(obj)
-			obj.Spec.SshKeyName = "key-2"
-			return nil
-		})
-	err := tt.provider.ValidateNewSpec(tt.ctx, tt.cluster, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("spec.sshKeyName is immutable")))
 }
 
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
