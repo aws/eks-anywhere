@@ -873,12 +873,14 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 
 	ns := constants.EksaPackagesName
 	deployments := []string{"core", "jobservice", "nginx", "portal", "registry"}
-	statefulsets := []string{"database", "redis", "trivy"}
-
+	statefulsets := []string{"database", "redis"}
+	
 	var wg sync.WaitGroup
 	wg.Add(len(deployments) + len(statefulsets))
 	errCh := make(chan error, 1)
 	okCh := make(chan string, 1)
+
+	time.Sleep(time.Minute)
 
 	for _, name := range deployments {
 		go func(name string) {
