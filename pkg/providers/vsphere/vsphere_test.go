@@ -2748,7 +2748,7 @@ spec:
       timeout: 300s
 `, constants.EksaSystemNamespace)
 
-	mch, err := provider.GenerateMHC()
+	mch, err := provider.GenerateMHC(nil)
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }

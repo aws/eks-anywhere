@@ -482,6 +482,13 @@ func TestMachineConfigs(t *testing.T) {
 	tt.Expect(len(want)).To(Equal(2))
 }
 
+func TestGenerateMHC(t *testing.T) {
+	tt := newSnowTest(t)
+	got, err := tt.provider.GenerateMHC(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(got), "testdata/expected_results_machine_health_check.yaml")
+}
+
 func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubeUnAuthClient.EXPECT().Delete(

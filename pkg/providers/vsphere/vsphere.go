@@ -1073,7 +1073,7 @@ func (p *vsphereProvider) GenerateStorageClass() []byte {
 	return defaultStorageClass
 }
 
-func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
+func (p *vsphereProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,

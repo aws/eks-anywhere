@@ -17,6 +17,7 @@ type ExecutableBuilder interface {
 	Init(ctx context.Context) (Closer, error)
 	Build(binaryPath string) Executable
 }
+
 type ExecutablesBuilder struct {
 	executableBuilder ExecutableBuilder
 }

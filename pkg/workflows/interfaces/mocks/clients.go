@@ -240,17 +240,17 @@ func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, ar
 }
 
 // InstallMachineHealthChecks mocks base method.
-func (m *MockClusterManager) InstallMachineHealthChecks(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider) error {
+func (m *MockClusterManager) InstallMachineHealthChecks(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallMachineHealthChecks", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "InstallMachineHealthChecks", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallMachineHealthChecks indicates an expected call of InstallMachineHealthChecks.
-func (mr *MockClusterManagerMockRecorder) InstallMachineHealthChecks(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallMachineHealthChecks(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallMachineHealthChecks", reflect.TypeOf((*MockClusterManager)(nil).InstallMachineHealthChecks), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallMachineHealthChecks", reflect.TypeOf((*MockClusterManager)(nil).InstallMachineHealthChecks), arg0, arg1, arg2, arg3)
 }
 
 // InstallNetworking mocks base method.

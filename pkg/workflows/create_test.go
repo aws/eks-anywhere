@@ -232,7 +232,7 @@ func (c *createTestSetup) expectNotDeleteBootstrap() {
 func (c *createTestSetup) expectInstallMHC() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallMachineHealthChecks(
-			c.ctx, c.bootstrapCluster, c.provider,
+			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider,
 		),
 	)
 }

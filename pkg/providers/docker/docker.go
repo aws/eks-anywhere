@@ -424,7 +424,7 @@ func (p *provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *provider) GenerateMHC() ([]byte, error) {
+func (p *provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	return []byte{}, nil
 }
 
