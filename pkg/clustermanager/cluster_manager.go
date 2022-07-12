@@ -15,6 +15,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -867,8 +868,18 @@ func (c *ClusterManager) waitForAllClustersReady(ctx context.Context, cluster *t
 	return nil
 }
 
+func machineDeploymentsToDelete(currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
+	for _, group := range nodeGroupsToDelete {
+		mdName := clusterapi.MachineDeploymentName(newSpec, group)
+		machineDeployments = append(machineDeployments, mdName)
+	}
+	return machineDeployments
+}
+
 func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
-	machineDeployments := provider.MachineDeploymentsToDelete(workloadCluster, currentSpec, newSpec)
+	machineDeployments := machineDeploymentsToDelete(currentSpec, newSpec)
 	for _, machineDeploymentName := range machineDeployments {
 		machineDeployment, err := c.clusterClient.GetMachineDeployment(ctx, machineDeploymentName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {

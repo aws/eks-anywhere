@@ -242,20 +242,6 @@ func (mr *MockProviderMockRecorder) MachineConfigs(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs), arg0)
 }
 
-// MachineDeploymentsToDelete mocks base method.
-func (m *MockProvider) MachineDeploymentsToDelete(arg0 *types.Cluster, arg1, arg2 *cluster.Spec) []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineDeploymentsToDelete", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// MachineDeploymentsToDelete indicates an expected call of MachineDeploymentsToDelete.
-func (mr *MockProviderMockRecorder) MachineDeploymentsToDelete(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeploymentsToDelete", reflect.TypeOf((*MockProvider)(nil).MachineDeploymentsToDelete), arg0, arg1, arg2)
-}
-
 // MachineResourceType mocks base method.
 func (m *MockProvider) MachineResourceType() string {
 	m.ctrl.T.Helper()
