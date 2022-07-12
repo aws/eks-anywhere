@@ -16,7 +16,6 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/remote"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -25,7 +24,6 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -108,45 +106,24 @@ func main() {
 
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
-		factory := dependencies.NewFactory().WithLocalExecutables()
-		deps, err := factory.WithGovc().Build(ctx)
+		factory := controllers.NewFactory(ctrl.Log, mgr).
+			WithClusterReconciler().
+			WithVSphereDatacenterReconciler()
+
+		reconcilers, err := factory.Build(ctx)
 		if err != nil {
-			setupLog.Error(err, "unable to build dependencies")
-			os.Exit(1)
-		}
-		logger := ctrl.Log.WithName("remote").WithName("ClusterCacheTracker")
-		tracker, err := remote.NewClusterCacheTracker(
-			mgr,
-			remote.ClusterCacheTrackerOptions{
-				Log:     &logger,
-				Indexes: remote.DefaultIndexes,
-			},
-		)
-		if err != nil {
-			setupLog.Error(err, "unable to create cluster cache tracker")
+			setupLog.Error(err, "unable to build reconcilers")
 			os.Exit(1)
 		}
 
 		setupLog.Info("Setting up cluster controller")
-		if err := (controllers.NewClusterReconciler(
-			mgr.GetClient(),
-			ctrl.Log.WithName("controllers").WithName(anywherev1.ClusterKind),
-			mgr.GetScheme(),
-			deps.Govc,
-			tracker,
-			controllers.BuildProviderReconciler,
-		)).SetupWithManager(mgr); err != nil {
+		if err := (reconcilers.ClusterReconciler).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
 			os.Exit(1)
 		}
 
 		setupLog.Info("Setting up vspheredatacenter controller")
-		if err := (controllers.NewVSphereDatacenterReconciler(
-			mgr.GetClient(),
-			ctrl.Log.WithName("controllers").WithName(anywherev1.VSphereDatacenterKind),
-			mgr.GetScheme(),
-			deps.Govc,
-		)).SetupWithManager(mgr); err != nil {
+		if err := (reconcilers.VSphereDatacenterReconciler).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
 			os.Exit(1)
 		}

@@ -5,15 +5,12 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
@@ -23,10 +20,7 @@ type VSphereDatacenterReconciler struct {
 	reconciler.VSphereReconciler
 }
 
-func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc) *VSphereDatacenterReconciler {
-	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govc)
-
+func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereDatacenterReconciler {
 	return &VSphereDatacenterReconciler{
 		reconciler.VSphereReconciler{
 			Client:    client,
