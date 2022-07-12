@@ -371,6 +371,26 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	tt.Expect(err).NotTo(BeNil())
 }
 
+func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testing.T) {
+	tt := NewWithT(t)
+	clusterSpecManifest := "cluster_main.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	tt.Expect(err).To(BeNil())
+}
+
 func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing.T) {
 	tt := NewWithT(t)
 	clusterSpecManifest := "cluster_main.yaml"
@@ -1742,7 +1762,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			t.Fatalf("Failed to read embed eksd release: %s", err)
 		}
 
-		kubectl.EXPECT().CreateNamespaceIfNotExists(ctx, gomock.Any(), constants.EksaSystemNamespace).Return(nil)
+		kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
 		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
 
 		if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {

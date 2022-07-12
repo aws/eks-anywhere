@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -91,7 +92,7 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	contents, err := p.createSecrets(ctx, cluster)
+	contents, err := p.generateSecrets(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("creating secrets object: %v", err)
 	}
@@ -103,14 +104,16 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 	return nil
 }
 
-func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
-	if err := p.providerKubectlClient.CreateNamespaceIfNotExists(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-		return nil, err
-	}
-
+func (p *cloudstackProvider) generateSecrets(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
 	secrets := [][]byte{}
 	for _, profile := range p.execConfig.Profiles {
-		secret := createSecret(profile)
+		_, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err == nil {
+			// When a secret already exists with the profile name we skip creating it
+			continue
+		}
+
+		secret := generateSecret(profile)
 		if bytes, err := yaml.Marshal(secret); err == nil {
 			secrets = append(secrets, bytes)
 		} else {
@@ -120,7 +123,7 @@ func (p *cloudstackProvider) createSecrets(ctx context.Context, cluster *types.C
 	return templater.AppendYamlResources(secrets...), nil
 }
 
-func createSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
+func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -233,9 +236,6 @@ func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	CreateNamespaceIfNotExists(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
@@ -423,6 +423,10 @@ func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, clust
 	for _, profile := range p.execConfig.Profiles {
 		secret, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
+			if strings.Contains(err.Error(), "not found") {
+				// When the secret is not found we allow for new secrets
+				continue
+			}
 			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
 		}
 		if secretDifferentFromProfile(secret, profile) {

@@ -36,7 +36,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-			client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+			client.EXPECT().CreateNamespaceIfNotExists(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
 			if err != nil {
@@ -60,7 +60,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+	client.EXPECT().CreateNamespaceIfNotExists(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
 
 	got, err := b.CreateBootstrapCluster(ctx, clusterSpec)
