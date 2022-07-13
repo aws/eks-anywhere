@@ -13,6 +13,7 @@ type Collect struct {
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
 	Run              *run              `json:"run,omitempty"`
+	RunPod           *runPod           `json:"runPod,omitempty"`
 }
 
 type clusterResources struct {
@@ -85,4 +86,12 @@ type imagePullSecrets struct {
 type collectorMeta struct {
 	CollectorName string `json:"collectorName,omitempty"`
 	Exclude       bool   `json:"exclude,omitempty"`
+}
+
+type runPod struct {
+	Name             string      `json:"name,omitempty"`
+	Namespaces       string      `json:"namespace"`
+	PodSpec          *v1.PodSpec `json:"podSpec,omitempty"`
+	Timeout          string      `json:"timeout,omitempty"`
+	imagePullSecrets `json:",inline"`
 }

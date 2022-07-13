@@ -530,6 +530,20 @@ func (m *MockCollectorFactory) EXPECT() *MockCollectorFactoryMockRecorder {
 	return m.recorder
 }
 
+// APIServerCollector mocks base method.
+func (m *MockCollectorFactory) APIServerCollector(controlPlaneIP string) []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "APIServerCollector", controlPlaneIP)
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// APIServerCollector indicates an expected call of APIServerCollector.
+func (mr *MockCollectorFactoryMockRecorder) APIServerCollector(controlPlaneIP interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIServerCollector", reflect.TypeOf((*MockCollectorFactory)(nil).APIServerCollector), controlPlaneIP)
+}
+
 // DataCenterConfigCollectors mocks base method.
 func (m *MockCollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*diagnostics.Collect {
 	m.ctrl.T.Helper()
