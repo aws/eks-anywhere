@@ -76,30 +76,50 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
-	// If we've been given a CSV with additional hardware for the cluster, validate it and
-	// write it to the catalogue so it can be used for further processing.
 	if p.hardareCSVIsProvided() {
-		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
-
-		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
-		if err != nil {
-			return err
-		}
-
-		// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
-		// Enabled Management Cluster that we're upgrading.
-		var selectors []v1alpha1.HardwareSelector
-
-		machineValidator := hardware.NewDefaultMachineValidator()
-		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
-
-		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+		if err := p.applyNewHardware(); err != nil {
 			return err
 		}
 	}
 
-	// Retrieve all unprovisioned hardware from the existing cluster and populate the catalogue so
-	// it can be considered for the upgrade.
+	if err := p.applyUnprovisionedHardware(ctx, cluster); err != nil {
+		return err
+	}
+
+	clusterSpecValidator := NewClusterSpecValidator(
+		// TODO(chrisdoherty4) Retrieve the current cluster spec and inject here.
+		MinimumHardwareForUpgrade(tinkerbellClusterSpec.Spec, p.catalogue),
+	)
+	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) applyNewHardware() error {
+	machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	if err != nil {
+		return err
+	}
+
+	// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
+	// Enabled Management Cluster that we're upgrading.
+	var selectors []v1alpha1.HardwareSelector
+
+	machineValidator := hardware.NewDefaultMachineValidator()
+	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
+
+	if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Provider) applyUnprovisionedHardware(ctx context.Context, cluster *types.Cluster) error {
 	hardware, err := p.providerKubectlClient.GetUnprovisionedTinkerbellHardware(
 		ctx,
 		cluster.KubeconfigFile,
@@ -108,21 +128,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if err != nil {
 		return fmt.Errorf("retrieving unprovisioned hardware: %v", err)
 	}
+
 	for i := range hardware {
 		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
 			return err
 		}
-	}
-
-	// Construct a spec validator and apply assertions specific to upgrade. The validation
-	// must take place last so as to ensure the catalogue is populated with available hardware.
-	clusterSpecValidator := NewClusterSpecValidator()
-
-	// TODO(chrisdoherty4) Retrieve the current cluster spec and inject here.
-	clusterSpecValidator.Register(MinimumHardwareForUpgrade(tinkerbellClusterSpec, p.catalogue))
-
-	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
-		return err
 	}
 
 	return nil

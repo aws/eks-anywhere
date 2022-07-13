@@ -465,7 +465,7 @@ func TestMinimumHardwareForUpgrade(t *testing.T) {
 			g := gomega.NewWithT(t)
 			current, desired := d.specs()
 			catalogue := d.catalogue(current, desired)
-			assertion := tinkerbell.MinimumHardwareForUpgrade(current, catalogue)
+			assertion := tinkerbell.MinimumHardwareForUpgrade(current.Spec, catalogue)
 			g.Expect(assertion(desired)).To(d.result)
 		})
 	}
@@ -556,7 +556,4 @@ func buildNodeGroupMap(s []eksav1alpha1.WorkerNodeGroupConfiguration) map[string
 		groups[nodeGroup.Name] = nodeGroup
 	}
 	return groups
-}
-
-func removeExternalEtcd(spec *tinkerbell.ClusterSpec) {
 }
