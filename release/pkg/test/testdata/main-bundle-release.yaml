@@ -289,7 +289,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Ova image for EKS-D 1-20-18 release
           etcdadm:
             arch:
@@ -321,7 +321,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Raw image for EKS-D 1-20-18 release
           etcdadm:
             arch:
@@ -488,7 +488,7 @@ spec:
       version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -506,10 +506,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.6-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
-      version: v0.1.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/metadata.yaml
+      version: v0.1.6+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1058,7 +1058,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Ova image for EKS-D 1-21-16 release
           etcdadm:
             arch:
@@ -1099,7 +1099,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Raw image for EKS-D 1-21-16 release
           etcdadm:
             arch:
@@ -1266,7 +1266,7 @@ spec:
       version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -1284,10 +1284,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.6-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
-      version: v0.1.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/metadata.yaml
+      version: v0.1.6+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -1836,7 +1836,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Ova image for EKS-D 1-22-9 release
           etcdadm:
             arch:
@@ -1877,7 +1877,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Raw image for EKS-D 1-22-9 release
           etcdadm:
             arch:
@@ -2044,7 +2044,7 @@ spec:
       version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2062,10 +2062,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.6-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
-      version: v0.1.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/metadata.yaml
+      version: v0.1.6+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
@@ -2614,7 +2614,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Ova image for EKS-D 1-23-3 release
           etcdadm:
             arch:
@@ -2655,7 +2655,7 @@ spec:
             os: linux
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
+            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.24.2/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
           description: Ubuntu Raw image for EKS-D 1-23-3 release
           etcdadm:
             arch:
@@ -2822,7 +2822,7 @@ spec:
       version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
@@ -2840,10 +2840,10 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.6-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
-      version: v0.1.5+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/metadata.yaml
+      version: v0.1.6+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
