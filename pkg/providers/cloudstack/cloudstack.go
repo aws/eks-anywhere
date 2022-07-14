@@ -397,20 +397,21 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)
 	}
-	p.execConfig, err = decoder.ParseCloudStackSecret()
+	execConfig, err := decoder.ParseCloudStackSecret()
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(p.execConfig.Profiles) <= 0 {
+	if len(execConfig.Profiles) <= 0 {
 		return errors.New("cloudstack instances are not defined")
 	}
 
-	for _, instance := range p.execConfig.Profiles {
+	for _, instance := range execConfig.Profiles {
 		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
 			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid: %v",
 				instance.Name, instance.ManagementUrl, err)
 		}
 	}
+	p.execConfig = execConfig
 
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
