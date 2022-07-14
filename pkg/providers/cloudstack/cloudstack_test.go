@@ -1773,29 +1773,46 @@ func TestProviderUpdateSecrets(t *testing.T) {
 		configPath              string
 		expectedSecretsYamlPath string
 		getSecretError          error
+		applyError              error
+		wantErr                 bool
 	}{
 		{
 			testName:                "valid single profile",
 			configPath:              defaultCloudStackCloudConfigPath,
 			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
 			getSecretError:          errors.New("not found"),
+			applyError:              nil,
+			wantErr:                 false,
 		},
 		{
 			testName:                "valid multiple profiles",
 			configPath:              "testdata/cloudstack_config_multiple_profiles.ini",
 			expectedSecretsYamlPath: "testdata/expected_secrets_multiple.yaml",
 			getSecretError:          errors.New("not found"),
+			applyError:              nil,
+			wantErr:                 false,
 		},
 		{
 			testName:                "secret already present",
 			configPath:              defaultCloudStackCloudConfigPath,
 			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
 			getSecretError:          nil,
+			applyError:              nil,
+			wantErr:                 false,
+		},
+		{
+			testName:                "valid single profile",
+			configPath:              defaultCloudStackCloudConfigPath,
+			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
+			getSecretError:          errors.New("not found"),
+			applyError:              errors.New("exception"),
+			wantErr:                 true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.testName, func(t *testing.T) {
+			tt := NewWithT(t)
 			mockCtrl := gomock.NewController(t)
 			ctx := context.Background()
 			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
@@ -1817,15 +1834,18 @@ func TestProviderUpdateSecrets(t *testing.T) {
 
 			kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
 			if test.getSecretError != nil {
-				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
+				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml).Return(test.applyError)
 			}
 
 			if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 				t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 			}
 
-			if err := provider.UpdateSecrets(ctx, cluster); err != nil {
-				t.Fatalf("failed to update secrets: %v", err)
+			err = provider.UpdateSecrets(ctx, cluster)
+			if test.wantErr {
+				tt.Expect(err).NotTo(BeNil())
+			} else {
+				tt.Expect(err).To(BeNil())
 			}
 		})
 	}

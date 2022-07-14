@@ -1067,6 +1067,26 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "")
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
+	tt.clusterSpec.Cluster.Namespace = "test_namespace"
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{}
+
+	c, m := newClusterManager(t)
+
+	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(errors.New(""))
+	if err := c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs); err == nil {
+		t.Errorf("ClusterManager.CreateEKSAResources() error = nil, wantErr not nil")
+	}
+}
+
 func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
