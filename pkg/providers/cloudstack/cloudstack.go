@@ -97,9 +97,10 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 		return fmt.Errorf("creating secrets object: %v", err)
 	}
 
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents)
-	if err != nil {
-		return fmt.Errorf("applying secrets object: %v", err)
+	if len(contents) > 0 {
+		if err := p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents); err != nil {
+			return fmt.Errorf("applying secrets object: %v", err)
+		}
 	}
 	return nil
 }

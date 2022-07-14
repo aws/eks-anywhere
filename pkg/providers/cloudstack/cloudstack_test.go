@@ -778,6 +778,50 @@ func TestVersion(t *testing.T) {
 	}
 }
 
+func TestPreCAPIInstallOnBootstrap(t *testing.T) {
+	tests := []struct {
+		testName                string
+		configPath              string
+		expectedSecretsYamlPath string
+	}{
+		{
+			testName:                "valid single profile",
+			configPath:              defaultCloudStackCloudConfigPath,
+			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	for _, test := range tests {
+		saveContext(t, test.configPath)
+		expectedSecretsYaml, err := configFS.ReadFile(test.expectedSecretsYamlPath)
+		if err != nil {
+			t.Fatalf("Failed to read embed eksd release: %s", err)
+		}
+
+		kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
+		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
+		_ = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+		if err := provider.PreCAPIInstallOnBootstrap(ctx, cluster, clusterSpec); err != nil {
+			t.Fatalf("provider.PreCAPIInstallOnBootstrap() err = %v, want err = nil", err)
+		}
+	}
+}
+
 func TestSetupAndValidateCreateClusterEndpointPortNotSpecified(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -1728,49 +1772,61 @@ func TestProviderUpdateSecrets(t *testing.T) {
 		testName                string
 		configPath              string
 		expectedSecretsYamlPath string
+		getSecretError          error
 	}{
 		{
 			testName:                "valid single profile",
 			configPath:              defaultCloudStackCloudConfigPath,
 			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
+			getSecretError:          errors.New("not found"),
 		},
 		{
 			testName:                "valid multiple profiles",
 			configPath:              "testdata/cloudstack_config_multiple_profiles.ini",
 			expectedSecretsYamlPath: "testdata/expected_secrets_multiple.yaml",
+			getSecretError:          errors.New("not found"),
+		},
+		{
+			testName:                "secret already present",
+			configPath:              defaultCloudStackCloudConfigPath,
+			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
+			getSecretError:          nil,
 		},
 	}
 
-	mockCtrl := gomock.NewController(t)
-	ctx := context.Background()
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{}
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	cmk := givenWildcardCmk(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
-	if provider == nil {
-		t.Fatalf("provider object is nil")
-	}
-
 	for _, test := range tests {
-		saveContext(t, test.configPath)
-		expectedSecretsYaml, err := configFS.ReadFile(test.expectedSecretsYamlPath)
-		if err != nil {
-			t.Fatalf("Failed to read embed eksd release: %s", err)
-		}
+		t.Run(test.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{}
+			clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-		kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
-		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
+			datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+			machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+			cmk := givenWildcardCmk(mockCtrl)
+			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+			saveContext(t, test.configPath)
+			expectedSecretsYaml, err := configFS.ReadFile(test.expectedSecretsYamlPath)
+			if err != nil {
+				t.Fatalf("Failed to read embed eksd release: %s", err)
+			}
 
-		if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
-			t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-		}
+			kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
+			if test.getSecretError != nil {
+				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
+			}
 
-		if err := provider.UpdateSecrets(ctx, cluster); err != nil {
-			t.Fatalf("failed to update secrets: %v", err)
-		}
+			if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+				t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+			}
+
+			if err := provider.UpdateSecrets(ctx, cluster); err != nil {
+				t.Fatalf("failed to update secrets: %v", err)
+			}
+		})
 	}
 }

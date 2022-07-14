@@ -187,6 +187,43 @@ func TestKubectlCreateNamespaceError(t *testing.T) {
 	}
 }
 
+func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespacePresent(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParamForGetNamespace := []string{"get", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParamForGetNamespace)).Return(bytes.Buffer{}, nil)
+	if err := k.CreateNamespaceIfNotPresent(ctx, kubeconfig, namespace); err != nil {
+		t.Errorf("Kubectl.CreateNamespaceIfNotPresent() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlCreateNamespaceIfNotPresentSuccessOnNamespaceNotPresent(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParamForGetNamespace := []string{"get", "namespace", namespace, "--kubeconfig", kubeconfig}
+	expectedParamForCreateNamespace := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParamForGetNamespace)).Return(bytes.Buffer{}, errors.New("not found"))
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParamForCreateNamespace)).Return(bytes.Buffer{}, nil)
+	if err := k.CreateNamespaceIfNotPresent(ctx, kubeconfig, namespace); err != nil {
+		t.Errorf("Kubectl.CreateNamespaceIfNotPresent() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlCreateNamespaceIfNotPresentFailureOnNamespaceCreationFailure(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParamForGetNamespace := []string{"get", "namespace", namespace, "--kubeconfig", kubeconfig}
+	expectedParamForCreateNamespace := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParamForGetNamespace)).Return(bytes.Buffer{}, errors.New("not found"))
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParamForCreateNamespace)).Return(bytes.Buffer{}, errors.New("exception"))
+	if err := k.CreateNamespaceIfNotPresent(ctx, kubeconfig, namespace); err == nil {
+		t.Errorf("Kubectl.CreateNamespaceIfNotPresent() error = nil, want not nil")
+	}
+}
+
 func TestKubectlDeleteNamespaceSuccess(t *testing.T) {
 	var kubeconfig, namespace string
 

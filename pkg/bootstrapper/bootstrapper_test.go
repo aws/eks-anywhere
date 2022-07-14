@@ -73,6 +73,24 @@ func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
 	}
 }
 
+func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentFailure(t *testing.T) {
+	kubeconfigFile := "c.kubeconfig"
+	clusterName := "cluster-name"
+	clusterSpec, _ := given(t, clusterName, kubeconfigFile)
+	clusterSpec.VersionsBundle.KubeVersion = "1.20"
+	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
+
+	ctx := context.Background()
+	b, client := newBootstrapper(t)
+	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
+
+	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("Bootstrapper.CreateBootstrapCluster() error == nil, wantErr %v", err)
+	}
+}
+
 func TestBootstrapperDeleteBootstrapClusterNoBootstrap(t *testing.T) {
 	cluster := &types.Cluster{
 		Name:           "cluster-name",
