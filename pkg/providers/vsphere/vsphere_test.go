@@ -1499,7 +1499,7 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	}
 }
 
-func TestProviderUpdateSecret(t *testing.T) {
+func TestProviderUpdateSecretSuccess(t *testing.T) {
 	ctx := context.Background()
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
@@ -1522,6 +1522,7 @@ func TestProviderUpdateSecret(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
+	kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
 
 	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
@@ -1536,6 +1537,31 @@ func TestProviderUpdateSecret(t *testing.T) {
 	err = provider.UpdateSecrets(ctx, &cluster)
 	if err != nil {
 		t.Fatalf("UpdateSecrets error %v", err)
+	}
+}
+
+func TestProviderUpdateSecretFailureOnCreateNamespaceFailure(t *testing.T) {
+	ctx := context.Background()
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterConfig, kubectl)
+	cluster := types.Cluster{
+		Name:           "test",
+		KubeconfigFile: "",
+	}
+
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace).Return(errors.New(""))
+
+	err := provider.UpdateSecrets(ctx, &cluster)
+	if err == nil {
+		t.Fatalf("UpdateSecrets error is nil")
 	}
 }
 

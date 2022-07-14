@@ -221,6 +221,20 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpecFromBytes(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytes", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpecFromBytes), arg0, arg1, arg2)
 }
 
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockProviderKubectlClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockProviderKubectlClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
+}
+
 // DeleteEksaCloudStackDatacenterConfig mocks base method.
 func (m *MockProviderKubectlClient) DeleteEksaCloudStackDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()

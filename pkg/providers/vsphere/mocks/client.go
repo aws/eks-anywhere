@@ -425,6 +425,20 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyTolerationsFromTaintsToDae
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyTolerationsFromTaintsToDaemonSet", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyTolerationsFromTaintsToDaemonSet), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockProviderKubectlClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockProviderKubectlClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
+}
+
 // DeleteEksaDatacenterConfig mocks base method.
 func (m *MockProviderKubectlClient) DeleteEksaDatacenterConfig(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
 	m.ctrl.T.Helper()

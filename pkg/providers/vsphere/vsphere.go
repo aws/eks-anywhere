@@ -128,6 +128,7 @@ type ProviderGovcClient interface {
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
@@ -506,6 +507,10 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 }
 
 func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+	if err := p.providerKubectlClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return err
+	}
+
 	var contents bytes.Buffer
 	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {

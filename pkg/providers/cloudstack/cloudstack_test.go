@@ -812,6 +812,7 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 			t.Fatalf("Failed to read embed eksd release: %s", err)
 		}
 
+		kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
 		kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
 		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
 		_ = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
@@ -1832,6 +1833,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 				t.Fatalf("Failed to read embed eksd release: %s", err)
 			}
 
+			kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
 			kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
 			if test.getSecretError != nil {
 				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml).Return(test.applyError)

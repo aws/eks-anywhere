@@ -92,6 +92,10 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+	if err := p.providerKubectlClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return err
+	}
+
 	contents, err := p.generateSecrets(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("creating secrets object: %v", err)
@@ -237,6 +241,7 @@ func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
