@@ -19,6 +19,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,19 +55,31 @@ var _ webhook.Validator = &Cluster{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
-		return nil
-	}
+	var allErrs []error
+
 	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
-	}
-	if r.IsSelfManaged() {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+		allErrs = append(allErrs,
+			fmt.Errorf("creating new cluster on existing cluster is not supported"))
 	}
 
-	if err := validateCNIPlugin(r.Spec.ClusterNetwork); err != nil {
-		return apierrors.NewBadRequest(err.Error())
+	if err := r.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			fmt.Errorf("invalid cluster %v", err.Error()))
+	}
+
+	if r.IsSelfManaged() {
+		if !r.IsReconcilePaused() {
+			allErrs = append(
+				allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
+		} else {
+			clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
+		}
+	}
+
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return apierrors.NewBadRequest(fmt.Sprintf("validating cluster spec: %v", aggregate))
 	}
 
 	return nil
@@ -88,20 +101,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	// Test for both taints and labels
-	if err := validateWorkerNodeGroups(r); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "workerNodeGroupConfigurations"), r.Spec.WorkerNodeGroupConfigurations, err.Error()))
-	}
-
-	// Control plane configuration is mutable if workload cluster
-	if !r.IsSelfManaged() {
-		if err := validateControlPlaneLabels(r); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneConfiguration", "labels"), r.Spec, err.Error()))
-		}
-	}
-
-	if len(allErrs) != 0 {
-		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+	if err := r.Validate(); err != nil {
+		return err
 	}
 
 	return nil
