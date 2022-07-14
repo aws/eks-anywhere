@@ -695,8 +695,8 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 
 func collectDiagnosticBundle(ctx context.Context, bundle diagnostics.DiagnosticBundle) error {
 	var sinceTimeValue *time.Time
-	oneHour := "1h"
-	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(oneHour)
+	threeHours := "3h"
+	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(threeHours)
 	if err != nil {
 		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
 		return nil
