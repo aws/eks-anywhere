@@ -114,8 +114,9 @@ func newUpgradeManagedClusterTest(t *testing.T) *upgradeTestSetup {
 	return tt
 }
 
-func (c *upgradeTestSetup) expectSetup() {
-	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec)
+func (c *upgradeTestSetup) expectSetup(expectedCluster *types.Cluster) {
+	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), nil, c.newClusterSpec)
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
 	c.provider.EXPECT().Name()
 }
 
@@ -384,7 +385,7 @@ func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
 
 func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup()
+	test.expectSetup(test.managementCluster)
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -403,7 +404,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 
 func TestUpgradeRunSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup()
+	test.expectSetup(test.workloadCluster)
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -435,7 +436,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 
 func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup()
+	test.expectSetup(test.workloadCluster)
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -466,7 +467,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 
 func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup()
+	test.expectSetup(test.workloadCluster)
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -489,7 +490,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 
 func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test := newUpgradeManagedClusterTest(t)
-	test.expectSetup()
+	test.expectSetup(test.managementCluster)
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.managementCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.managementCluster)

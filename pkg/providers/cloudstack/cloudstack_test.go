@@ -282,7 +282,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T)
 	}
 
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -340,7 +340,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *te
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -1349,7 +1349,7 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	tctx.SaveContext()
 
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1371,7 +1371,7 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 
 	cluster := &types.Cluster{}
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1394,7 +1394,7 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	cluster := &types.Cluster{}
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1417,7 +1417,7 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	cluster := &types.Cluster{}
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1435,7 +1435,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	tctx.SaveContext()
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
@@ -1451,7 +1451,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	tctx.SaveContext()
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
@@ -1467,7 +1467,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	tctx.SaveContext()
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, nil, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 

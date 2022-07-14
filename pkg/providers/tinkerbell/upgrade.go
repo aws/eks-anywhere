@@ -63,10 +63,10 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 	return false
 }
 
-func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, current, desired *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+	if desired.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		return ErrExternalEtcdUnsupported
 	}
 
@@ -74,10 +74,10 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		return err
 	}
 
-	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	tinkerbellClusterSpec := NewClusterSpec(desired, p.machineConfigs, p.datacenterConfig)
 
 	if p.hardareCSVIsProvided() {
-		if err := p.applyNewHardware(); err != nil {
+		if err := p.readCSVToCatalogue(); err != nil {
 			return err
 		}
 	}
@@ -88,31 +88,9 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 	clusterSpecValidator := NewClusterSpecValidator(
 		// TODO(chrisdoherty4) Retrieve the current cluster spec and inject here.
-		MinimumHardwareForUpgrade(tinkerbellClusterSpec.Spec, p.catalogue),
+		MinimumHardwareForUpgrade(current, p.catalogue),
 	)
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *Provider) applyNewHardware() error {
-	machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
-
-	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
-	if err != nil {
-		return err
-	}
-
-	// TODO(chrisdoherty4) Build the selectors slice using the selectors in the Tinkerbell
-	// Enabled Management Cluster that we're upgrading.
-	var selectors []v1alpha1.HardwareSelector
-
-	machineValidator := hardware.NewDefaultMachineValidator()
-	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
-
-	if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
 		return err
 	}
 

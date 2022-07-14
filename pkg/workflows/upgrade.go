@@ -111,24 +111,19 @@ type writeClusterConfigTask struct{}
 
 func (s *setupAndValidateTasks) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Performing setup and validations")
-	runner := validations.NewRunner()
-	runner.Register(s.validations(ctx, commandContext)...)
 
-	err := runner.Run()
+	current, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec.Cluster.Name)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
-	return &updateSecrets{}
-}
-
-func (s *setupAndValidateTasks) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
-	return []validations.Validation{
+	runner := validations.NewRunner()
+	runner.Register(
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
 				Name: fmt.Sprintf("%s Provider setup is valid", commandContext.Provider.Name()),
-				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec),
+				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, current, commandContext.ClusterSpec),
 			}
 		},
 		func() *validations.ValidationResult {
@@ -137,7 +132,14 @@ func (s *setupAndValidateTasks) validations(ctx context.Context, commandContext 
 				Err:  commandContext.Validations.PreflightValidations(ctx),
 			}
 		},
+	)
+
+	if err := runner.Run(); err != nil {
+		commandContext.SetError(err)
+		return nil
 	}
+
+	return &updateSecrets{}
 }
 
 func (s *setupAndValidateTasks) Name() string {
