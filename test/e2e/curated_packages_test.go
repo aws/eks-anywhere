@@ -14,7 +14,8 @@ import (
 const (
 	eksAnywherePackagesHelmChartName = "eks-anywhere-packages"
 	eksAnywherePackagesHelmUri       = "oci://public.ecr.aws/l0g8r8j6/eks-anywhere-packages"
-	eksAnywherePackagesHelmVersion   = "0.1.6-eks-a-v0.0.0-dev-build.2404"
+	eksAnywherePackagesHelmVersion   = "0.1.14-eks-a-v0.0.0-dev-build.3481"
+	eksAnywherePackagesBundleUri     = "oci://public.ecr.aws/l0g8r8j6/eks-anywhere-packages-bundles:v1-21-latest"
 
 	eksaPackageControllerHelmChartName = "eks-anywhere-packages"
 	eksaPackageControllerHelmURI       = "oci://public.ecr.aws/eks-anywhere/eks-anywhere-packages"
