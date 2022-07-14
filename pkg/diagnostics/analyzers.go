@@ -225,7 +225,7 @@ func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 
 func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
 	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
-	capiCpManagerContainerLogFile := path.Join(capiCpManagerPod, "manager.log")
+	capiCpManagerContainerLogFile := capiCpManagerPod + ".log"
 	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerContainerLogFile)
 	return []*Analyze{
 		{
@@ -233,9 +233,8 @@ func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze
 				analyzeMeta: analyzeMeta{
 					CheckName: fmt.Sprintf("%s: API server pod missing. Log: %s", logAnalysisAnalyzerPrefix, fullManagerPodLogPath),
 				},
-				CollectorName: constants.CapiKubeadmControlPlaneSystemNamespace,
-				FileName:      capiCpManagerContainerLogFile,
-				RegexPattern:  `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
+				FileName:     fullManagerPodLogPath,
+				RegexPattern: `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
 				Outcomes: []*outcome{
 					{
 						Fail: &singleOutcome{
