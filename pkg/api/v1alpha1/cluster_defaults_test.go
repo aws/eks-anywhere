@@ -14,7 +14,7 @@ func TestSetClusterDefaults(t *testing.T) {
 		wantErr         string
 	}{
 		{
-			name: "worker node group - no name or count specified",
+			name: "worker node group - no name specified",
 			in: &Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       ClusterKind,
@@ -36,6 +36,7 @@ func TestSetClusterDefaults(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -80,7 +81,7 @@ func TestSetClusterDefaults(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 1,
+						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",

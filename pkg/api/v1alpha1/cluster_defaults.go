@@ -50,11 +50,6 @@ func setWorkerNodeGroupDefaults(cluster *Cluster) error {
 		logger.V(1).Info("First worker node group name not specified. Defaulting name to md-0.")
 		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
-	for i := range cluster.Spec.WorkerNodeGroupConfigurations {
-		if cluster.Spec.WorkerNodeGroupConfigurations[i].Count <= 0 {
-			cluster.Spec.WorkerNodeGroupConfigurations[i].Count = 1
-		}
-	}
 	return nil
 }
 

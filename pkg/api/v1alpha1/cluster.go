@@ -402,6 +402,10 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
+		if workerNodeGroupConfig.Count <= 0 {
+			return errors.New("worker node count must be positive")
+		}
+
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
 			return errors.New("worker node group names must be unique")
 		}
