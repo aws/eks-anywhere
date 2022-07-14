@@ -419,6 +419,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
+// TODO: Consider to move this functionality to validator.go
 func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
 	for _, profile := range p.execConfig.Profiles {
 		secret, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))

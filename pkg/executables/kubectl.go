@@ -167,7 +167,7 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
-func (k *Kubectl) CreateNamespaceIfNotExists(ctx context.Context, kubeconfig string, namespace string) error {
+func (k *Kubectl) CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error {
 	if err := k.GetNamespace(ctx, kubeconfig, namespace); err != nil {
 		return k.CreateNamespace(ctx, kubeconfig, namespace)
 	}

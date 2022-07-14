@@ -86,18 +86,18 @@ func (mr *MockClusterClientMockRecorder) CreateBootstrapCluster(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBootstrapCluster", reflect.TypeOf((*MockClusterClient)(nil).CreateBootstrapCluster), varargs...)
 }
 
-// CreateNamespaceIfNotExists mocks base method.
-func (m *MockClusterClient) CreateNamespaceIfNotExists(arg0 context.Context, arg1, arg2 string) error {
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockClusterClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNamespaceIfNotExists", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateNamespaceIfNotExists indicates an expected call of CreateNamespaceIfNotExists.
-func (mr *MockClusterClientMockRecorder) CreateNamespaceIfNotExists(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockClusterClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotExists", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespaceIfNotExists), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
 }
 
 // DeleteBootstrapCluster mocks base method.
