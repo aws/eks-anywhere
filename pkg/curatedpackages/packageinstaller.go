@@ -67,11 +67,11 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 
 	// If cert-manager does not exist, instruct users to follow instructions in
 	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	certManagerExits, err := pi.certManager.CertManagerExists(ctx)
+	certManagerExists, err := pi.certManager.CertManagerExists(ctx)
 	if err != nil {
 		return err
 	}
-	if !certManagerExits {
+	if !certManagerExists {
 		PrintCertManagerDoesNotExistMsg()
 		return errors.New("Error when installing curated packages on workload cluster; cert manager doesn't exist")
 	}
