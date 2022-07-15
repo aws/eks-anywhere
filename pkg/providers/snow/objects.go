@@ -172,3 +172,13 @@ func recreateKubeadmConfigTemplateNeeded(new, old *bootstrapv1.KubeadmConfigTemp
 	}
 	return !equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }
+
+// MachineHealthCheckObjects creates MachineHealthCheck resources for control plane and all the worker node groups.
+func MachineHealthCheckObjects(clusterSpec *cluster.Spec) []runtime.Object {
+	mhcWorkers := clusterapi.MachineHealthCheckForWorkers(clusterSpec)
+	o := make([]runtime.Object, 0, len(mhcWorkers)+1)
+	for _, item := range mhcWorkers {
+		o = append(o, item)
+	}
+	return append(o, clusterapi.MachineHealthCheckForControlPlane(clusterSpec))
+}

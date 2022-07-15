@@ -8,7 +8,15 @@ aliases:
    - /docs/tasks/troubleshoot/_troubleshooting
 ---
 
-This guide covers some generic troubleshooting techniques and then cover more detailed examples. You may want to search this document for a fragment of the error you are seeing.
+This guide covers EKS Anywhere troubleshooting. It is divided into the following sections:
+
+* [General troubleshooting]({{< relref "#general-troubleshooting" >}})
+* [Bare Metal Troubleshooting]({{< relref "#bare-metal-troubleshooting" >}})
+* [vSphere Troubleshooting]({{< relref "#vsphere-troubleshooting" >}})
+
+You may want to search this document for a fragment of the error you are seeing.
+
+## General troubleshooting
 
 ### Increase eksctl anywhere output
 
@@ -28,6 +36,7 @@ sudo usermod -a -G docker $USER
 Now you need to log out and back in to get the new group permissions.
 
 ### Minimum requirements for docker version have not been met
+
 ```
 Error: failed to validate docker: minimum requirements for docker version have not been met. Install Docker version 20.x.x or above
 ```
@@ -64,6 +73,173 @@ Remove cached credentials by running:
 docker logout public.ecr.aws
 ```
 
+### error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+```
+Error: loading config file "cluster.yaml": error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
+```
+Use `eksctl anywhere create cluster -f cluster.yaml` instead of `eksctl create cluster -f cluster.yaml` to create an EKS Anywhere cluster.
+
+### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
+```
+Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
+```
+The `my-cluster` directory already exists in the current directory.
+Either use a different cluster name or move the directory.
+
+### failed to create cluster: node(s) already exist for a cluster with the name
+```
+Performing provider setup and validations
+Creating new bootstrap cluster
+Error create bootstrapcluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
+Failed to create cluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}ry rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
+```
+A bootstrap cluster already exists with the same name. If you are sure the cluster is not being used, you may use the `--force-cleanup` option to `eksctl anywhere` to delete the cluster or you may delete the cluster with `kind delete cluster --name <cluster-name>`. If you do not have `kind` installed, you may use `docker stop` to stop the docker container running the KinD cluster.
+
+
+### Memory or disk resource problem
+There are various disk and memory issues that can cause problems.
+Make sure docker is configured with enough memory.
+Make sure the system wide Docker memory configuration provides enough RAM for the bootstrap cluster.
+
+Make sure you do not have unneeded KinD clusters running `kind get clusters`.
+You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`.
+If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
+ 
+Make sure you do not have any unneeded Docker containers running with `docker ps`.
+Terminate any unneeded Docker containers.
+   
+Make sure Docker isn't out of disk resources.
+If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
+
+You may want to restart Docker.
+To restart Docker on Ubuntu `sudo systemctl restart docker`.
+
+### Waiting for cert-manager to be available... Error: timed out waiting for the condition
+```
+Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
+```
+This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
+
+
+### The connection to the server localhost:8080 was refused 
+```
+Performing provider setup and validations
+Creating new bootstrap cluster
+Installing cluster-api providers on bootstrap cluster
+Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
+Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
+```
+This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+
+### Generic cluster unavailable
+Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
+```
+kubectl get pods -A --kubeconfig=<kubeconfig>
+kubectl get nodes -A --kubeconfig=<kubeconfig>
+kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
+....
+```
+Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
+
+### Bootstrap cluster fails to come up
+If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
+
+You may also access the logs from your bootstrap cluster directly as below:
+```bash
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
+```
+
+It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
+
+## Bare Metal troubleshooting
+
+### Bootstrap cluster fails to come up
+
+```
+Error: creating bootstrap cluster: executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"
+, try rerunning with —force-cleanup to force delete previously created bootstrap cluster
+```
+
+Cluster creation fails because a cluster of the same name already exists.
+Try running the `eksctl anywhere create cluster` again, adding the `--force-cleanup` option.
+
+If that doesn't work, you can manually delete the old cluster:
+
+```bash
+kind delete cluster --name cluster-name
+```
+
+### Creating new workload cluster hangs or fails
+
+Cluster creation appears to be hung waiting for the Control Plane to be ready.
+If the CLI is hung on this message for over 30 mins, something likely failed during the OS provisioning:
+
+```
+Waiting for Control Plane to be ready
+```
+
+Or if cluster creation times out on this step and fails with the following messages:
+
+```
+Support bundle archive created {"path": "support-bundle-2022-06-28T00_41_24.tar.gz"}
+Analyzing support bundle {"bundle": "CLUSTER_NAME/generated/bootstrap-cluster-2022-06-28T00:41:24Z-bundle.yaml", "archive": "support-bundle-2022-06-28T00_41_24.tar.gz"}
+Analysis output generated {"path": "CLUSTER_NAME/generated/bootstrap-cluster-2022-06-28T00:43:40Z-analysis.yaml"}
+collecting workload cluster diagnostics
+Error: waiting for workload cluster control plane to be ready: executing wait: error: timed out waiting for the condition on clusters/CLUSTER_NAME
+```
+In either of those cases, the following steps can help you determine the problem:
+
+1. Export the kind cluster’s kubeconfig file:
+
+    ```bash
+    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+    ```
+1. If you have provided BMC information:
+
+    * Check all of the machines that the EKS Anywhere CLI has picked up from the pool of hardware in the CSV file:
+
+        ```bash
+        kubectl get machines -A
+        ```
+    * Check if those nodes are powered on. If any of those nodes are not powered on after a while then it could be possible that BMC credentials are invalid. You can verify it by checking the logs:
+
+        ```bash
+        kubectl get bmt -n eksa-system
+        kubectl get bmt <bmt-name> -n eksa-system -o yaml
+        ```
+
+    Validate BMC credentials are correct if a connection error is observed on the `bmt` resource. Note that "IPMI over LAN" must be enabled in the BMC configuration for the `bmt` resource to communicate successfully.
+
+1. If the machine is powered on but you see linuxkit is not running, then Tinkerbell failed to serve the node via iPXE. In this case, you would want to:
+
+    * Check the boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
+
+        ```bash 
+        docker logs boots
+        ```
+    * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. Other DHCP servers on the network can result in race conditions and should be avoided by configuring the other server to block all MAC addresses and exclude all IP addresses used by EKS Anywhere.
+
+1. If you see `Welcome to LinuxKit`, click enter in the BMC console to access the LinuxKit terminal. Run the following commands to check if the tink-worker container is running.
+
+    ```bash
+    docker ps -a
+    docker logs <container-id>
+    ```
+
+1. If the machine has already started provisioning the OS and it’s in irrecoverable state, get the workflow of the provisioning/provisioned machine using:
+
+    ```bash
+    kubectl get workflows -n eksa-system
+    kubectl describe workflow/<workflow-name> -n eksa-system 
+    ```
+
+    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec. 
+
+
+## vSphere troubleshooting
+
 ### EKSA_VSPHERE_USERNAME is not set or is empty
 ```
 ❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", "remediation": ""}
@@ -87,57 +263,6 @@ export EKSA_VSPHERE_USERNAME='<vSphere-username>'
 export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
 ```
 
-### error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
-```
-Error: loading config file "cluster.yaml": error unmarshaling JSON: while decoding JSON: json: unknown field "spec"
-```
-Use `eksctl anywhere create cluster -f cluster.yaml` instead of `eksctl create cluster -f cluster.yaml` to create an EKS Anywhere cluster.
-
-### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
-```
-Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
-```
-The `my-cluster` directory already exists in the current directory.
-Either use a different cluster name or move the directory.
-
-### failed to create cluster: node(s) already exist for a cluster with the name
-```
-Performing provider setup and validations
-Creating new bootstrap cluster
-Error create bootstrapcluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
-Failed to create cluster	{"error": "error creating bootstrap cluster: error executing create cluster: ERROR: failed to create cluster: node(s) already exist for a cluster with the name \"cluster-name\"\n, try rerunning with --force-cleanup to force delete previously created bootstrap cluster"}ry rerunning with --force-cleanup to force delete previously created bootstrap cluster"}
-```
-A bootstrap cluster already exists with the same name. If you are sure the cluster is not being used, you may use the `--force-cleanup` option to `eksctl anywhere` to delete the cluster or you may delete the cluster with `kind delete cluster --name <cluster-name>`. If you do not have `kind` installed, you may use `docker stop` to stop the docker container running the KinD cluster.
-
-### Bootstrap cluster fails to come up
-If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
-
-You may also access the logs from your bootstrap cluster directly as below:
-```bash
-export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
-kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
-```
-
-It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
-
-### Memory or disk resource problem
-There are various disk and memory issues that can cause problems.
-Make sure docker is configured with enough memory.
-Make sure the system wide Docker memory configuration provides enough RAM for the bootstrap cluster.
-
-Make sure you do not have unneeded KinD clusters running `kind get clusters`.
-You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`.
-If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
- 
-Make sure you do not have any unneeded Docker containers running with `docker ps`.
-Terminate any unneeded Docker containers.
-   
-Make sure Docker isn't out of disk resources.
-If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
-
-You may want to restart Docker.
-To restart Docker on Ubuntu `sudo systemctl restart docker`.
-
 ### Issues detected with selected template
 ```
 Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
@@ -145,12 +270,11 @@ Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No suppo
 Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
 Make sure your ESXi hosts are also up to date.
 
-### Waiting for cert-manager to be available... Error: timed out waiting for the condition
+### Waiting for external etcd to be ready
 ```
-Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
+2022-01-19T15:56:57.734Z        V3      Waiting for external etcd to be ready   {"cluster": "mgmt"}
 ```
-This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
-You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
+Debug this problem using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
 ### Timed out waiting for the condition on deployments/capv-controller-manager
 ```
@@ -186,26 +310,12 @@ kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 Make sure you are choosing an ip in your network range that does not conflict with other VMs.
 https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
 
-
-### The connection to the server localhost:8080 was refused 
-```
-Performing provider setup and validations
-Creating new bootstrap cluster
-Installing cluster-api providers on bootstrap cluster
-Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
-Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
-```
-This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
-
 ### Generic cluster unavailable
-Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
+The first thing to look at is: were virtual machines created on your target provider? In the case of vSphere, you should see some VMs in your folder and they should be up. Check the console and if you see:
 ```
-kubectl get pods -A --kubeconfig=<kubeconfig>
-kubectl get nodes -A --kubeconfig=<kubeconfig>
-kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
-....
+[FAILED] Failed to start Wait for Network to be Configured.
 ```
-Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
+Make sure your DHCP server is up and working.
 
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.

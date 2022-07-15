@@ -424,7 +424,7 @@ func (p *provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *provider) GenerateMHC() ([]byte, error) {
+func (p *provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	return []byte{}, nil
 }
 
@@ -521,16 +521,6 @@ func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec 
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
-}
-
-func (p *provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
 }
 
 func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {

@@ -37,6 +37,16 @@ func newConfigurationTest(t *testing.T) *configurationTest {
 							Default:  "",
 							Required: false,
 						},
+						{
+							Name:     "expose.tls.enabled",
+							Default:  "false",
+							Required: false,
+						},
+						{
+							Name:     "expose.tls.auto.commonName",
+							Default:  "localhost",
+							Required: false,
+						},
 					},
 				},
 			},
@@ -60,7 +70,7 @@ func TestGetConfigurationsFromBundleSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
 	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
-	tt.Expect(len(configs)).To(Equal(3))
+	tt.Expect(len(configs)).To(Equal(5))
 }
 
 func TestGetConfigurationsFromBundleFail(t *testing.T) {
@@ -104,9 +114,14 @@ func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
 	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
-	output := curatedpackages.GenerateAllValidConfigurations(configs)
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
-		"sourceRegistry", "localhost:8080")
+	output, err := curatedpackages.GenerateAllValidConfigurations(configs)
+	tt.Expect(err).To(BeNil())
+
+	expectedOutput := fmt.Sprintf(
+		"%s:\n  %s:\n    %s:\n      %s: %s\n    %s: %s\n%s: %s\n",
+		"expose", "tls", "auto", "commonName", "localhost", "enabled", "false",
+		"sourceRegistry", "localhost:8080",
+	)
 
 	tt.Expect(output).To(Equal(expectedOutput))
 }

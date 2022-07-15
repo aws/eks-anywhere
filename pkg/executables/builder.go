@@ -13,56 +13,66 @@ import (
 
 const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1864"
 
-type ExecutableBuilder struct {
-	useDocker  bool
-	image      string
-	mountDirs  []string
-	workingDir string
-	container  *dockerContainer
+type ExecutableBuilder interface {
+	Init(ctx context.Context) (Closer, error)
+	Build(binaryPath string) Executable
 }
 
-func (b *ExecutableBuilder) BuildKindExecutable(writer filewriter.FileWriter) *Kind {
-	return NewKind(b.buildExecutable(kindPath), writer)
+type ExecutablesBuilder struct {
+	executableBuilder ExecutableBuilder
 }
 
-func (b *ExecutableBuilder) BuildClusterAwsAdmExecutable() *Clusterawsadm {
-	return NewClusterawsadm(b.buildExecutable(clusterAwsAdminPath))
+func NewExecutablesBuilder(executableBuilder ExecutableBuilder) *ExecutablesBuilder {
+	return &ExecutablesBuilder{
+		executableBuilder: executableBuilder,
+	}
 }
 
-func (b *ExecutableBuilder) BuildClusterCtlExecutable(writer filewriter.FileWriter) *Clusterctl {
-	return NewClusterctl(b.buildExecutable(clusterCtlPath), writer)
+func (b *ExecutablesBuilder) BuildKindExecutable(writer filewriter.FileWriter) *Kind {
+	return NewKind(b.executableBuilder.Build(kindPath), writer)
 }
 
-func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
-	return NewKubectl(b.buildExecutable(kubectlPath))
+func (b *ExecutablesBuilder) BuildClusterAwsAdmExecutable() *Clusterawsadm {
+	return NewClusterawsadm(b.executableBuilder.Build(clusterAwsAdminPath))
 }
 
-func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
-	return NewGovc(b.buildExecutable(govcPath), writer, opts...)
+func (b *ExecutablesBuilder) BuildClusterCtlExecutable(writer filewriter.FileWriter) *Clusterctl {
+	return NewClusterctl(b.executableBuilder.Build(clusterCtlPath), writer)
 }
 
-func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, execConfig decoder.CloudStackExecConfig) *Cmk {
-	return NewCmk(b.buildExecutable(cmkPath), writer, execConfig)
+func (b *ExecutablesBuilder) BuildKubectlExecutable() *Kubectl {
+	return NewKubectl(b.executableBuilder.Build(kubectlPath))
 }
 
-func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {
-	return NewAwsCli(b.buildExecutable(awsCliPath))
+func (b *ExecutablesBuilder) BuildGovcExecutable(writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
+	return NewGovc(b.executableBuilder.Build(govcPath), writer, opts...)
 }
 
-func (b *ExecutableBuilder) BuildFluxExecutable() *Flux {
-	return NewFlux(b.buildExecutable(fluxPath))
+func (b *ExecutablesBuilder) BuildCmkExecutable(writer filewriter.FileWriter, configs []decoder.CloudStackProfileConfig) *Cmk {
+	return NewCmk(b.executableBuilder.Build(cmkPath), writer, configs)
 }
 
-func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
-	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
+func (b *ExecutablesBuilder) BuildAwsCli() *AwsCli {
+	return NewAwsCli(b.executableBuilder.Build(awsCliPath))
 }
 
-func (b *ExecutableBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
-	return NewHelm(b.buildExecutable(helmPath), opts...)
+func (b *ExecutablesBuilder) BuildFluxExecutable() *Flux {
+	return NewFlux(b.executableBuilder.Build(fluxPath))
 }
 
-func (b *ExecutableBuilder) Close(ctx context.Context) *Troubleshoot {
-	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
+func (b *ExecutablesBuilder) BuildTroubleshootExecutable() *Troubleshoot {
+	return NewTroubleshoot(b.executableBuilder.Build(troubleshootPath))
+}
+
+func (b *ExecutablesBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
+	return NewHelm(b.executableBuilder.Build(helmPath), opts...)
+}
+
+// Init initializes the executable builder and returns a Closer
+// that needs to be called once the executables are not in used anymore
+// The closer will cleanup and free all internal resources
+func (b *ExecutablesBuilder) Init(ctx context.Context) (Closer, error) {
+	return b.executableBuilder.Init(ctx)
 }
 
 func BuildSonobuoyExecutable() *Sonobuoy {
@@ -77,67 +87,49 @@ func BuildDockerExecutable() *Docker {
 	})
 }
 
-func (b *ExecutableBuilder) buildExecutable(cli string) Executable {
-	if !b.useDocker {
-		return NewExecutable(cli)
-	} else {
-		return NewDockerExecutable(cli, b.container)
-	}
-}
-
-// this is suppose to be only called by executables.builder
-func checkMRToolsDisabled() bool {
+// RunExecutablesInDocker determines if binary executables should be ran
+// from a docker container or native binaries from the host path
+// It reads MR_TOOLS_DISABLE variable
+func ExecutablesInDocker() bool {
 	if env, ok := os.LookupEnv("MR_TOOLS_DISABLE"); ok && strings.EqualFold(env, "true") {
 		logger.Info("Warning: eks-a tools image disabled, using client's executables")
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
-func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutableBuilder, Closer, error) {
+// InitInDockerExecutablesBuilder builds and inits a default ExecutablesBuilder to run executables in a docker container
+// that will make use of a long running docker container
+func InitInDockerExecutablesBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutablesBuilder, Closer, error) {
+	b, err := NewInDockerExecutablesBuilder(BuildDockerExecutable(), image, mountDirs...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	closer, err := b.Init(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return b, closer, nil
+}
+
+// NewInDockerExecutablesBuilder builds an executables builder for docker
+func NewInDockerExecutablesBuilder(dockerClient DockerClient, image string, mountDirs ...string) (*ExecutablesBuilder, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting current directory: %v", err)
+		return nil, fmt.Errorf("getting current directory: %v", err)
 	}
-
 	mountDirs = append(mountDirs, currentDir)
 
-	useDocker := !checkMRToolsDisabled()
-	e := &ExecutableBuilder{
-		useDocker:  useDocker,
-		image:      image,
-		mountDirs:  mountDirs,
-		workingDir: currentDir,
-	}
+	dockerContainer := newDockerContainer(image, currentDir, mountDirs, dockerClient)
+	dockerExecutableBuilder := NewDockerExecutableBuilder(dockerContainer)
 
-	if useDocker {
-		// We build, init and store the container in the builder so we reuse the same one for all the executables
-		container := newDockerContainer(image, e.workingDir, e.mountDirs, BuildDockerExecutable())
-		if err := container.Init(ctx); err != nil {
-			return nil, nil, err
-		}
-		e.container = container
-	}
-
-	return e, e.closer(), nil
+	return NewExecutablesBuilder(dockerExecutableBuilder), nil
 }
 
-func (e *ExecutableBuilder) closer() Closer {
-	c := e.container
-
-	return func(ctx context.Context) error {
-		if c != nil {
-			return c.close(ctx)
-		}
-		return nil
-	}
-}
-
-func NewLocalExecutableBuilder() *ExecutableBuilder {
-	return &ExecutableBuilder{
-		useDocker: false,
-		image:     "",
-	}
+func NewLocalExecutablesBuilder() *ExecutablesBuilder {
+	return NewExecutablesBuilder(newLocalExecutableBuilder())
 }
 
 func DefaultEksaImage() string {

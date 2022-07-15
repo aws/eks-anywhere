@@ -324,7 +324,7 @@ func (p *Provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *Provider) GenerateMHC() ([]byte, error) {
+func (p *Provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -357,9 +359,23 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 			},
 			Name:      collectorPath,
 			Namespace: constants.EksaDiagnosticsNamespace,
-			Image:     c.DiagnosticCollectorImage,
-			Command:   command,
-			Args:      args,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    collectorPath,
+					Image:   c.DiagnosticCollectorImage,
+					Command: command,
+					Args:    args,
+				}},
+				// It's possible for networking to not be working on the cluster or the nodes
+				// not being ready, so adding tolerations and running the pod on host networking
+				// to be able to pull the resources from the cluster
+				HostNetwork: true,
+				Tolerations: []v1.Toleration{{
+					Key:    "node.kubernetes.io",
+					Value:  "not-ready",
+					Effect: "NoSchedule",
+				}},
+			},
 		},
 	}
 }

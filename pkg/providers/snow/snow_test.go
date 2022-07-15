@@ -187,6 +187,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.large",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 		"test-wn": {
@@ -199,6 +203,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.xlarge",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 	}
@@ -216,8 +224,8 @@ func givenEmptyClusterSpec() *cluster.Spec {
 
 func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient) *snow.SnowProvider {
 	awsClients := snow.AwsClientMap{
-		"device-1": mockaws,
-		"device-2": mockaws,
+		"1.2.3.4": mockaws,
+		"1.2.3.5": mockaws,
 	}
 	validator := snow.NewValidatorFromAwsClientMap(awsClients)
 	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, nil, nil)
@@ -422,7 +430,7 @@ func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 			return nil
 		})
 
-	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, nil, tt.cluster, nil, tt.clusterSpec)
+	gotCp, gotMd, err := tt.provider.GenerateCAPISpecForUpgrade(tt.ctx, tt.cluster, nil, nil, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 	test.AssertContentToFile(t, string(gotCp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(gotMd), "testdata/expected_results_main_md.yaml")
@@ -472,6 +480,13 @@ func TestMachineConfigs(t *testing.T) {
 	tt := newSnowTest(t)
 	want := tt.provider.MachineConfigs(tt.clusterSpec)
 	tt.Expect(len(want)).To(Equal(2))
+}
+
+func TestGenerateMHC(t *testing.T) {
+	tt := newSnowTest(t)
+	got, err := tt.provider.GenerateMHC(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(got), "testdata/expected_results_machine_health_check.yaml")
 }
 
 func TestDeleteResources(t *testing.T) {

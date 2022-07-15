@@ -244,7 +244,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
 1. Refer to the initial config described earlier for the required and optional settings.
    The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
 
-1. Modify the generated workload cluster config parameters same way you did in the generated configuration file of the management cluster. The only differences are with the following fileds:
+1. Modify the generated workload cluster config parameters same way you did in the generated configuration file of the management cluster. The only differences are with the following fields:
 
    * controlPlaneConfiguration.endpoint.host:
    That you will use a different IP address for the Cluster filed `controlPlaneConfiguration.endpoint.host` for each workload cluster as with the initial cluster. Notice here that you use a different IP address from this one that was used with the management cluster.

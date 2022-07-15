@@ -19,7 +19,7 @@ func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
 	assert.Equal(t, constants.CapcSystemNamespace, collectors[0].Logs.Namespace)
 	assert.Equal(t, fmt.Sprintf("logs/%s", constants.CapcSystemNamespace), collectors[0].Logs.Name)
 	for _, collector := range collectors[1:] {
-		assert.Equal(t, []string{"kubectl"}, collector.Run.Command)
+		assert.Equal(t, []string{"kubectl"}, collector.Run.PodSpec.Containers[0].Command)
 		assert.Equal(t, "eksa-diagnostics", collector.Run.Namespace)
 	}
 }
@@ -32,7 +32,7 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 	assert.Equal(t, constants.CaptSystemNamespace, collectors[0].Logs.Namespace)
 	assert.Equal(t, fmt.Sprintf("logs/%s", constants.CaptSystemNamespace), collectors[0].Logs.Name)
 	for _, collector := range collectors[1:] {
-		assert.Equal(t, []string{"kubectl"}, collector.Run.Command)
+		assert.Equal(t, []string{"kubectl"}, collector.Run.PodSpec.Containers[0].Command)
 		assert.Equal(t, "eksa-diagnostics", collector.Run.Namespace)
 	}
 }

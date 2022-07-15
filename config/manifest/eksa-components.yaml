@@ -4363,6 +4363,12 @@ spec:
               amiID:
                 description: The AMI ID from which to create the machine instance.
                 type: string
+              devices:
+                description: Devices contains a device ip list assigned by the user
+                  to provision machines.
+                items:
+                  type: string
+                type: array
               instanceType:
                 description: 'InstanceType is the type of instance to create. Valid
                   values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
@@ -4974,10 +4980,58 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - fluxconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - gitopsconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
   - oidcconfigs
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - snowdatacenterconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - snowmachineconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - distro.eks.amazonaws.com
@@ -5354,6 +5408,56 @@ spec:
   selfSigned: {}
 ---
 apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
+  name: eksa-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster
+  failurePolicy: Fail
+  name: mutation.cluster.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-snowmachineconfig
+  failurePolicy: Fail
+  name: mutation.snowmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowmachineconfigs
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
@@ -5506,6 +5610,27 @@ webhooks:
     - UPDATE
     resources:
     - oidcconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowmachineconfig
+  failurePolicy: Fail
+  name: validation.snowmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowmachineconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1

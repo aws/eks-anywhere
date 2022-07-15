@@ -35,12 +35,11 @@ type Provider interface {
 	MachineResourceType() string
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	GenerateMHC() ([]byte, error)
+	GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
-	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
 	InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error
 	PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error
 }

@@ -158,18 +158,18 @@ func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2,
 }
 
 // GenerateMHC mocks base method.
-func (m *MockProvider) GenerateMHC() ([]byte, error) {
+func (m *MockProvider) GenerateMHC(arg0 *cluster.Spec) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateMHC")
+	ret := m.ctrl.Call(m, "GenerateMHC", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateMHC indicates an expected call of GenerateMHC.
-func (mr *MockProviderMockRecorder) GenerateMHC() *gomock.Call {
+func (mr *MockProviderMockRecorder) GenerateMHC(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateMHC", reflect.TypeOf((*MockProvider)(nil).GenerateMHC))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateMHC", reflect.TypeOf((*MockProvider)(nil).GenerateMHC), arg0)
 }
 
 // GenerateStorageClass mocks base method.
@@ -240,20 +240,6 @@ func (m *MockProvider) MachineConfigs(arg0 *cluster.Spec) []providers.MachineCon
 func (mr *MockProviderMockRecorder) MachineConfigs(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs), arg0)
-}
-
-// MachineDeploymentsToDelete mocks base method.
-func (m *MockProvider) MachineDeploymentsToDelete(arg0 *types.Cluster, arg1, arg2 *cluster.Spec) []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineDeploymentsToDelete", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// MachineDeploymentsToDelete indicates an expected call of MachineDeploymentsToDelete.
-func (mr *MockProviderMockRecorder) MachineDeploymentsToDelete(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeploymentsToDelete", reflect.TypeOf((*MockProvider)(nil).MachineDeploymentsToDelete), arg0, arg1, arg2)
 }
 
 // MachineResourceType mocks base method.

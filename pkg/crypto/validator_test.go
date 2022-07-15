@@ -122,7 +122,7 @@ invalidCert
 `
 )
 
-func TestHasSelfSignedCert(t *testing.T) {
+func TestIsSignedByUnknownAuthority(t *testing.T) {
 	certSvr, err := runTestServerWithCert(serverCert, serverKey)
 	if err != nil {
 		t.Fatalf("starting test server with certs: %v", err)
@@ -160,12 +160,12 @@ func TestHasSelfSignedCert(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.testName, func(t *testing.T) {
 			tv := crypto.NewTlsValidator()
-			hasCert, err := tv.HasSelfSignedCert(tc.endpoint, tc.port)
+			hasCert, err := tv.IsSignedByUnknownAuthority(tc.endpoint, tc.port)
 			if (err != nil) != tc.wantError {
-				t.Fatalf("HasSelfSignedCert() error = %v, wantError %v", err, tc.wantError)
+				t.Fatalf("IsSignedByUnknownAuthority() error = %v, wantError %v", err, tc.wantError)
 			}
 			if hasCert != tc.wantCert {
-				t.Fatalf("HasSelfSignedCert() returned %v, want %v", hasCert, tc.wantCert)
+				t.Fatalf("IsSignedByUnknownAuthority() returned %v, want %v", hasCert, tc.wantCert)
 			}
 		})
 	}
