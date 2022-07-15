@@ -806,6 +806,10 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Images: []*assettypes.Image{
 			{
 				RepoName: "tinkerbell-chart",
+				TrimVersionSignifier: true,
+				ImageTagConfiguration: assettypes.ImageTagConfiguration{
+					SourceLatestTagFromECR: true,
+				},
 			},
 		},
 		ImageRepoPrefix: "tinkerbell",
