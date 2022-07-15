@@ -82,6 +82,7 @@ type Dependencies struct {
 	BundleRegistry            curatedpackages.BundleRegistry
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	CertManagerClient         *curatedpackages.CertManagerClient
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -641,6 +642,21 @@ func (f *Factory) WithHelmInsecure() *Factory {
 	return f
 }
 
+func (f *Factory) WithCertManagerClient(kubeconfig string) *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CertManagerClient != nil {
+			return nil
+		}
+		certManagerClient := curatedpackages.NewCertManagerClient(f.dependencies.Kubectl, kubeconfig)
+		f.dependencies.CertManagerClient = certManagerClient
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
 	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
@@ -843,8 +859,8 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 	return f
 }
 
-func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeconfig string) *Factory {
+	f.WithHelmInsecure().WithKubectl().WithCertManagerClient(kubeconfig)
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
@@ -855,6 +871,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 			f.dependencies.Kubectl,
 			spec,
 			packagesLocation,
+			f.dependencies.CertManagerClient,
 		)
 		return nil
 	})

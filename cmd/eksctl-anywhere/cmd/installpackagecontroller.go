@@ -60,14 +60,7 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	// If cert-manager does not exist, instruct users to follow instructions in
-	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	certManagerClient := curatedpackages.NewCertManagerClient(
-		deps.Kubectl,
-		kubeConfig,
-	)
-
-	certManagerExists, err := certManagerClient.CertManagerExists(ctx)
+	certManagerExists, err := deps.CertManagerClient.CertManagerExists(ctx)
 	if err != nil {
 		return err
 	}

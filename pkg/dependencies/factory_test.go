@@ -187,7 +187,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 		WithLocalExecutables().
 		WithHelmInsecure().
 		WithKubectl().
-		WithPackageInstaller(spec, "/test/packages.yaml").
+		WithPackageInstaller(spec, "/test/packages.yaml", spec.Cluster.Name).
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageInstaller).NotTo(BeNil())

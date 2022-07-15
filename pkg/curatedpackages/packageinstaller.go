@@ -30,14 +30,12 @@ type Installer struct {
 	certManager       CertManager
 }
 
-func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
+func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string, cm *CertManagerClient) *Installer {
 	pcc := newPackageController(installer, runner, spec)
 
 	pc := NewPackageClient(
 		runner,
 	)
-
-	cm := newCertManager(runner, spec)
 
 	return &Installer{
 		spec:              spec,
@@ -54,12 +52,6 @@ func newPackageController(installer ChartInstaller, runner KubectlRunner, spec *
 	chart := spec.VersionsBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
 	return NewPackageControllerClient(installer, runner, kubeConfig, imageUrl, chart.Name, chart.Tag())
-}
-
-func newCertManager(runner KubectlRunner, spec *cluster.Spec) *CertManagerClient {
-	kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
-
-	return NewCertManagerClient(runner, kubeConfig)
 }
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {

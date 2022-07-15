@@ -151,7 +151,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
-		WithPackageInstaller(clusterSpec, cc.installPackages).
+		WithPackageInstaller(clusterSpec, cc.installPackages, kubeconfigPath).
 		Build(ctx)
 	if err != nil {
 		return err

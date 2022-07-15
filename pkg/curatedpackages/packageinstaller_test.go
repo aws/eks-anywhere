@@ -34,6 +34,7 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 	k := mocks.NewMockKubectlRunner(ctrl)
 	c := mocks.NewMockChartInstaller(ctrl)
 	packagesPath := "/test/package.yaml"
+
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
 			Cluster: &anywherev1.Cluster{
@@ -53,6 +54,7 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 			},
 		},
 	}
+	kubeConfigPath := kubeconfig.FromClusterName(spec.Cluster.Name)
 	return &packageInstallerTest{
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
@@ -60,7 +62,7 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 		kubectlRunner:  k,
 		spec:           spec,
 		packagePath:    packagesPath,
-		command:        curatedpackages.NewInstaller(c, k, spec, packagesPath),
+		command:        curatedpackages.NewInstaller(c, k, spec, packagesPath, curatedpackages.NewCertManagerClient(k, kubeConfigPath)),
 	}
 }
 
