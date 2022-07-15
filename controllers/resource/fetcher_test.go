@@ -187,20 +187,16 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 			args: args{
 				csCluster: &cloudstackv1.CloudStackCluster{
 					Spec: cloudstackv1.CloudStackClusterSpec{
-						FailureDomains: []cloudstackv1.CloudStackFailureDomain{
+						FailureDomains: []cloudstackv1.CloudStackFailureDomainSpec{
 							{
-								Spec: cloudstackv1.CloudStackFailureDomainSpec{
-									Zone: cloudstackv1.CloudStackZone{
-										Spec: cloudstackv1.CloudStackZoneSpec{
-											Name: "zone",
-											Network: cloudstackv1.Network{
-												Name: "network",
-											},
-										},
+								Zone: cloudstackv1.CloudStackZoneSpec{
+									Name: "zone",
+									Network: cloudstackv1.Network{
+										Name: "network",
 									},
-									Account: "account",
-									Domain:  "domain",
 								},
+								Account: "account",
+								Domain:  "domain",
 							},
 						},
 					},

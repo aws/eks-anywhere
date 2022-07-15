@@ -43,7 +43,7 @@ spec:
         name: {{ $az.Zone.Network.Name }}
     domain: {{ $az.Domain }}
     account: {{ $az.Account }}
-    managementApiEndpointRef:
+    acsendpoint:
       name: {{ $az.CredentialsRef }}
 {{- end }}
 ---

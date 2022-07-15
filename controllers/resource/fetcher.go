@@ -593,15 +593,15 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 	for _, fd := range csCluster.Spec.FailureDomains {
 		azs = append(azs, anywherev1.CloudStackAvailabilityZone{
 			Name:           fd.Name,
-			CredentialsRef: fd.Spec.ACSEndpoint,
+			CredentialsRef: fd.ACSEndpoint.Name,
 			Zone: anywherev1.CloudStackZone{
-				Name: fd.Spec.Zone.Spec.Name,
+				Name: fd.Zone.Name,
 				Network: anywherev1.CloudStackResourceIdentifier{
-					Name: fd.Spec.Zone.Spec.Network.Name,
+					Name: fd.Zone.Network.Name,
 				},
 			},
-			Domain:  fd.Spec.Domain,
-			Account: fd.Spec.Account,
+			Domain:  fd.Domain,
+			Account: fd.Account,
 		})
 	}
 	csSpec.Spec.AvailabilityZones = azs

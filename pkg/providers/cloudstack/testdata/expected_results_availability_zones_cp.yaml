@@ -41,8 +41,8 @@ spec:
         name: network-1
     domain: domain-1
     account: account-1
-    managementApiEndpointRef:
-      name: secret-1
+    acsendpoint:
+      name: global
   - name: az-2
     zone:
       name: zone-2
@@ -50,8 +50,8 @@ spec:
         name: network-2
     domain: domain-2
     account: account-2
-    managementApiEndpointRef:
-      name: secret-2
+    acsendpoint:
+      name: global
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
