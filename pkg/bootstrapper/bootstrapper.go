@@ -52,8 +52,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		KubeconfigFile: kubeconfigFile,
 	}
 
-	err = b.clusterClient.CreateNamespaceIfNotPresent(ctx, c.KubeconfigFile, constants.EksaSystemNamespace)
-	if err != nil {
+	if err = b.clusterClient.CreateNamespaceIfNotPresent(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
 		return nil, err
 	}
 

@@ -572,24 +572,19 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
 }
 
-// GetSecret mocks base method.
-func (m *MockProviderKubectlClient) GetSecret(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1.Secret, error) {
+// GetSecretFromNamespace mocks base method.
+func (m *MockProviderKubectlClient) GetSecretFromNamespace(arg0 context.Context, arg1, arg2, arg3 string) (*v1.Secret, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetSecret", varargs...)
+	ret := m.ctrl.Call(m, "GetSecretFromNamespace", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1.Secret)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSecret indicates an expected call of GetSecret.
-func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+// GetSecretFromNamespace indicates an expected call of GetSecretFromNamespace.
+func (mr *MockProviderKubectlClientMockRecorder) GetSecretFromNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecretFromNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecretFromNamespace), arg0, arg1, arg2, arg3)
 }
 
 // LoadSecret mocks base method.

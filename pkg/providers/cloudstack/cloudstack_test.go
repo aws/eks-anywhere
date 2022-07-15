@@ -15,7 +15,9 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -365,7 +367,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New(""))
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest(""))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -385,7 +387,7 @@ func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testin
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("not found"))
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	tt.Expect(err).To(BeNil())
@@ -407,7 +409,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	modifiedSecret := expectedSecret.DeepCopy()
 	modifiedSecret.Data["apikey"] = []byte("updated-api-key")
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -813,7 +815,7 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 		}
 
 		kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
-		kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
+		kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
 		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
 		_ = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1440,7 +1442,7 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 	setupContext(t)
 
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
@@ -1462,7 +1464,7 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
@@ -1484,7 +1486,7 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1507,7 +1509,7 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1834,7 +1836,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			}
 
 			kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
-			kubectl.EXPECT().GetSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
+			kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
 			if test.getSecretError != nil {
 				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml).Return(test.applyError)
 			}

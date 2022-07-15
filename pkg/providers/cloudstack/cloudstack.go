@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -112,18 +112,17 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 func (p *cloudstackProvider) generateSecrets(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
 	secrets := [][]byte{}
 	for _, profile := range p.execConfig.Profiles {
-		_, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		_, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
 		if err == nil {
 			// When a secret already exists with the profile name we skip creating it
 			continue
 		}
 
-		secret := generateSecret(profile)
-		if bytes, err := yaml.Marshal(secret); err == nil {
-			secrets = append(secrets, bytes)
-		} else {
+		bytes, err := yaml.Marshal(generateSecret(profile))
+		if err != nil {
 			return nil, fmt.Errorf("marshalling secret for profile %s: %v", profile.Name, err)
 		}
+		secrets = append(secrets, bytes)
 	}
 	return templater.AppendYamlResources(secrets...), nil
 }
@@ -249,7 +248,7 @@ type ProviderKubectlClient interface {
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmv1beta1.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1beta1.EtcdadmCluster, error)
-	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error)
 	SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error)
@@ -393,7 +392,6 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var cloudStackB64EncodedSecret string
 	var ok bool
-	var err error
 
 	if cloudStackB64EncodedSecret, ok = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
 		if err := os.Setenv(decoder.CloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
@@ -429,9 +427,9 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 // TODO: Consider to move this functionality to validator.go
 func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
 	for _, profile := range p.execConfig.Profiles {
-		secret, err := p.providerKubectlClient.GetSecret(ctx, profile.Name, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		secret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if apierrors.IsNotFound(err) {
 				// When the secret is not found we allow for new secrets
 				continue
 			}
