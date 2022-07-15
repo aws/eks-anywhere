@@ -113,16 +113,6 @@ func TestSnowValidate(t *testing.T) {
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
 		},
-		{
-			name: "empty devices",
-			obj: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{
-					AMIID:        "ami-1",
-					InstanceType: DefaultSnowInstanceType,
-				},
-			},
-			wantErr: "Devices must contain at least one device IP",
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
