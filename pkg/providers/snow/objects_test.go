@@ -353,6 +353,70 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 	g.Expect(got).To(Equal([]runtime.Object{md, kct, mt}))
 }
 
+func TestWorkersObjectsLabelsUpdated(t *testing.T) {
+	g := newSnowTest(t)
+	mt := wantSnowMachineTemplate()
+	g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Labels = map[string]string{
+		"label1": "val1",
+		"label2": "val2",
+	}
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test-md-0",
+			constants.EksaSystemNamespace,
+			&clusterv1.MachineDeployment{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
+			wantMachineDeployment().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+				"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+				"node-labels": "label1=val2,label2=val1",
+			}
+			return nil
+		})
+	g.kubeconfigClient.EXPECT().
+		Get(
+			g.ctx,
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&snowv1.AWSSnowMachineTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
+			mt.DeepCopyInto(obj)
+			return nil
+		})
+
+	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
+
+	md := wantMachineDeployment()
+	md.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-2"
+	md.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-2"
+	kct := wantKubeadmConfigTemplate()
+	kct.SetName("snow-test-md-0-2")
+	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
+		"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+		"node-labels": "label1=val1,label2=val2",
+	}
+	mt.SetName("snow-test-md-0-2")
+
+	g.Expect(err).To(Succeed())
+	g.Expect(got[1]).To(Equal(kct))
+}
+
 func TestWorkersObjectsGetMachineDeploymentError(t *testing.T) {
 	g := newSnowTest(t)
 	g.kubeconfigClient.EXPECT().
