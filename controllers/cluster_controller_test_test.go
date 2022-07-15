@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -18,8 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 )
 
 func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
@@ -67,7 +65,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	r := controllers.NewClusterReconciler(cl, nullLog(), cl.Scheme(), nil, nil, newDummyProviderReconcilerBuilder())
+	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
 	_, err := r.Reconcile(ctx, clusterRequest(cluster))
 	g.Expect(err).NotTo(HaveOccurred())
 
@@ -84,35 +82,24 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 
 func TestClusterReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewClusterReconciler(client, logf.Log, client.Scheme(), nil, nil, newDummyProviderReconcilerBuilder())
+	r := controllers.NewClusterReconciler(client, logf.Log, newRegistryForDummyProviderReconciler())
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
 }
 
-func TestBuildProviderReconcilerVSphere(t *testing.T) {
-	g := NewWithT(t)
-	cl := fake.NewClientBuilder().WithRuntimeObjects().Build()
-
-	got, err := controllers.BuildProviderReconciler(anywherev1.VSphereDatacenterKind, cl, nullLog(), &vsphere.Validator{}, &vsphere.Defaulter{}, &remote.ClusterCacheTracker{})
-
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(got).To(BeAssignableToTypeOf(&reconciler.VSphereClusterReconciler{}))
-}
-
-func TestBuildProviderReconcilerUnknown(t *testing.T) {
-	g := NewWithT(t)
-	cl := fake.NewClientBuilder().WithRuntimeObjects().Build()
-
-	_, err := controllers.BuildProviderReconciler("unknown-datacenter", cl, nullLog(), &vsphere.Validator{}, &vsphere.Defaulter{}, &remote.ClusterCacheTracker{})
-
-	g.Expect(err).To(MatchError(ContainSubstring("invalid data center type unknown-datacenter")))
-}
-
-func newDummyProviderReconcilerBuilder() controllers.ProviderReconcilerBuilder {
-	return func(datacenterKind string, client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) (controllers.ProviderClusterReconciler, error) {
-		return dummyProviderReconciler{}, nil
+func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
+	return dummyProviderReconcilerRegistry{
+		reconciler: dummyProviderReconciler{},
 	}
+}
+
+type dummyProviderReconcilerRegistry struct {
+	reconciler clusters.ProviderClusterReconciler
+}
+
+func (d dummyProviderReconcilerRegistry) Get(_ string) clusters.ProviderClusterReconciler {
+	return d.reconciler
 }
 
 type dummyProviderReconciler struct{}

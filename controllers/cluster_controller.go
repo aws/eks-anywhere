@@ -2,17 +2,14 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,13 +21,9 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/handlers"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
 
 const (
@@ -40,33 +33,20 @@ const (
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
-	client                  client.Client
-	log                     logr.Logger
-	validator               *vsphere.Validator
-	defaulter               *vsphere.Defaulter
-	tracker                 *remote.ClusterCacheTracker
-	buildProviderReconciler ProviderReconcilerBuilder
+	client                     client.Client
+	log                        logr.Logger
+	providerReconcilerRegistry ProviderClusterReconcilerRegistry
 }
 
-type ProviderClusterReconciler interface {
-	Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error)
+type ProviderClusterReconcilerRegistry interface {
+	Get(datacenterKind string) clusters.ProviderClusterReconciler
 }
 
-// TODO: this is not ideal and will need a refactor. I will follow up but for now this
-// allows us to decouple the cluster reconciler main logic from provider specific logic
-type ProviderReconcilerBuilder func(datacenterKind string, client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) (ProviderClusterReconciler, error)
-
-func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc, tracker *remote.ClusterCacheTracker, buildProviderReconciler ProviderReconcilerBuilder) *ClusterReconciler {
-	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
-	defaulter := vsphere.NewDefaulter(govc)
-
+func NewClusterReconciler(client client.Client, log logr.Logger, registry ProviderClusterReconcilerRegistry) *ClusterReconciler {
 	return &ClusterReconciler{
-		client:                  client,
-		log:                     log,
-		validator:               validator,
-		defaulter:               defaulter,
-		tracker:                 tracker,
-		buildProviderReconciler: buildProviderReconciler,
+		client:                     client,
+		log:                        log,
+		providerReconcilerRegistry: registry,
 	}
 }
 
@@ -177,10 +157,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 }
 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
-	clusterProviderReconciler, err := r.buildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter, r.tracker)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
+	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
 	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, cluster)
 	if err != nil {
@@ -240,12 +217,4 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 	}
 
 	return nil
-}
-
-func BuildProviderReconciler(datacenterKind string, client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) (ProviderClusterReconciler, error) {
-	switch datacenterKind {
-	case anywherev1.VSphereDatacenterKind:
-		return reconciler.NewVSphereReconciler(client, log, validator, defaulter, tracker), nil
-	}
-	return nil, fmt.Errorf("invalid data center type %s", datacenterKind)
 }
