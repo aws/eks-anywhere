@@ -56,9 +56,12 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}
 
-	if len(config.Spec.Devices) == 0 {
-		return errors.New("SnowMachineConfig Devices must contain at least one device IP")
-	}
+	// TODO: temporarily remove this validation since `devices` is a newly added, required field.
+	// This validation runs in snowmachineconfig webhook and ValidateUpdate fails when upgrading from older eks-a version
+	// without the `devices` field. We will add this validation back once users update their clusters to latest version.
+	// if len(config.Spec.Devices) == 0 {
+	// 	return errors.New("SnowMachineConfig Devices must contain at least one device IP")
+	// }
 	return nil
 }
 

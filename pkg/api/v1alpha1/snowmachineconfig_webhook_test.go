@@ -40,17 +40,6 @@ func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
 
-func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
-	g := NewWithT(t)
-
-	sOld := snowMachineConfig()
-	sNew := sOld.DeepCopy()
-	sNew.Spec.AMIID = "testAMI"
-	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
-
-	g.Expect(sNew.ValidateUpdate(&sOld)).NotTo(Succeed())
-}
-
 func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	g := NewWithT(t)
 
