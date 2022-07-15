@@ -362,3 +362,24 @@ func TestSnowKubernetes121SimpleFlow(t *testing.T) {
 	)
 	runSimpleFlow(test)
 }
+
+func TestSnowKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runSimpleFlow(test)
+}
+
+func TestSnowKubernetes123SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu123()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+	runSimpleFlow(test)
+}

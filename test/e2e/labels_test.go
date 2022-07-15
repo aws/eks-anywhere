@@ -123,6 +123,44 @@ func TestVSphereKubernetes123LabelsBottlerocket(t *testing.T) {
 	)
 }
 
+func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
+	provider := framework.NewSnow(t,
+		framework.WithSnowWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(1), api.WithLabel(key1, val1)),
+		),
+		framework.WithSnowWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1), api.WithLabel(key2, val2)),
+		),
+		framework.WithSnowUbuntu123(),
+	)
+
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+
+	runLabelsUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(
+			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val2)),
+			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val1)),
+			api.WithControlPlaneLabel(cpKey1, cpVal1),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+}
+
 func ubuntu123ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
