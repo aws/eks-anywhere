@@ -17,7 +17,7 @@ const (
 	redactMask = "*****"
 )
 
-var redactedEnvKeys = []string{vSphereUsernameKey, vSpherePasswordKey, decoder.CloudStackCloudConfigB64SecretKey}
+var redactedEnvKeys = []string{vSphereUsernameKey, vSpherePasswordKey, decoder.CloudStackCloudConfigB64SecretKey, eksaGithubTokenEnv}
 
 type executable struct {
 	cli string
