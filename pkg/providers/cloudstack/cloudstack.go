@@ -12,8 +12,11 @@ import (
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -64,6 +67,7 @@ type cloudstackProvider struct {
 	templateBuilder       *CloudStackTemplateBuilder
 	skipIpCheck           bool
 	validator             *Validator
+	execConfig            *decoder.CloudStackExecConfig
 }
 
 func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
@@ -71,7 +75,8 @@ func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *typ
 }
 
 func (p *cloudstackProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return nil
+	logger.Info("Installing secrets on bootstrap cluster")
+	return p.UpdateSecrets(ctx, cluster)
 }
 
 func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
@@ -87,7 +92,58 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+	if err := p.providerKubectlClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return err
+	}
+
+	contents, err := p.generateSecrets(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("creating secrets object: %v", err)
+	}
+
+	if len(contents) > 0 {
+		if err := p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents); err != nil {
+			return fmt.Errorf("applying secrets object: %v", err)
+		}
+	}
 	return nil
+}
+
+func (p *cloudstackProvider) generateSecrets(ctx context.Context, cluster *types.Cluster) ([]byte, error) {
+	secrets := [][]byte{}
+	for _, profile := range p.execConfig.Profiles {
+		_, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
+		if err == nil {
+			// When a secret already exists with the profile name we skip creating it
+			continue
+		}
+
+		bytes, err := yaml.Marshal(generateSecret(profile))
+		if err != nil {
+			return nil, fmt.Errorf("marshalling secret for profile %s: %v", profile.Name, err)
+		}
+		secrets = append(secrets, bytes)
+	}
+	return templater.AppendYamlResources(secrets...), nil
+}
+
+func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: corev1.SchemeGroupVersion.Version,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: constants.EksaSystemNamespace,
+			Name:      profile.Name,
+		},
+		StringData: map[string]string{
+			"uri":       profile.ManagementUrl,
+			"apikey":    profile.ApiKey,
+			"secretkey": profile.SecretKey,
+			"verifyssl": profile.VerifySsl,
+		},
+	}
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
@@ -174,7 +230,7 @@ func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
@@ -182,7 +238,7 @@ type ProviderKubectlClient interface {
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmv1beta1.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1beta1.EtcdadmCluster, error)
-	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error)
 	SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error)
@@ -348,6 +404,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 				instance.Name, instance.ManagementUrl, err)
 		}
 	}
+	p.execConfig = execConfig
 
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
@@ -355,6 +412,31 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// TODO: Consider to move this functionality to validator.go
+func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
+	for _, profile := range p.execConfig.Profiles {
+		secret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				// When the secret is not found we allow for new secrets
+				continue
+			}
+			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
+		}
+		if secretDifferentFromProfile(secret, profile) {
+			return fmt.Errorf("profile '%s' is different from the secret", profile.Name)
+		}
+	}
+	return nil
+}
+
+func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
+	return string(secret.Data["uri"]) != profile.ManagementUrl ||
+		string(secret.Data["apikey"]) != profile.ApiKey ||
+		string(secret.Data["secretkey"]) != profile.SecretKey ||
+		string(secret.Data["verifyssl"]) != profile.VerifySsl
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
@@ -429,6 +511,11 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	if err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec); err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
+
+	if err := p.validateSecretsUnchanged(ctx, cluster); err != nil {
+		return fmt.Errorf("validating secrets unchanged: %v", err)
+	}
+
 	return nil
 }
 

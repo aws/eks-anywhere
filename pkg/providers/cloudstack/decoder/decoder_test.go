@@ -66,7 +66,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 						VerifySsl:     "false",
 					},
 					{
-						Name:          "Instance2",
+						Name:          "instance2",
 						ApiKey:        "test-key2",
 						SecretKey:     "test-secret2",
 						ManagementUrl: "http://127.16.0.2:8080/client/api",

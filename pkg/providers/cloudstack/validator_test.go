@@ -41,7 +41,7 @@ func thenErrorExpected(t *testing.T, expected string, err error) {
 
 func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 	ctx := context.Background()
-	setupContext()
+	setupContext(t)
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk)
 
@@ -60,7 +60,7 @@ func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 
 func TestValidateCloudStackDatacenterConfigWithAZ(t *testing.T) {
 	ctx := context.Background()
-	setupContext()
+	setupContext(t)
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk)
 
@@ -91,7 +91,7 @@ func TestValidateCloudStackConnection(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 
-	cmk.EXPECT().ValidateCloudStackConnection(ctx, "Global").Return(nil)
+	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(nil)
 	if err := validator.validateCloudStackAccess(ctx, datacenterConfig); err != nil {
 		t.Fatalf("failed to validate CloudStackDataCenterConfig: %v", err)
 	}
@@ -106,9 +106,9 @@ func TestValidateCloudStackConnectionFailure(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 
-	cmk.EXPECT().ValidateCloudStackConnection(ctx, "Global").Return(errors.New("exception"))
+	cmk.EXPECT().ValidateCloudStackConnection(ctx, "global").Return(errors.New("exception"))
 	err = validator.validateCloudStackAccess(ctx, datacenterConfig)
-	thenErrorExpected(t, "validating connection to cloudstack Global: exception", err)
+	thenErrorExpected(t, "validating connection to cloudstack global: exception", err)
 }
 
 func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
@@ -135,7 +135,7 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 
 func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 	ctx := context.Background()
-	setupContext()
+	setupContext(t)
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
@@ -181,7 +181,7 @@ func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
 
 func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
 	ctx := context.Background()
-	setupContext()
+	setupContext(t)
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {

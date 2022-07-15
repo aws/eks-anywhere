@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"gopkg.in/ini.v1"
 )
@@ -13,8 +14,8 @@ const (
 	EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	EksaCloudStackHostPathToMount         = "EKSA_CLOUDSTACK_HOST_PATHS_TO_MOUNT"
-	CloudStackGlobalAZ                    = "Global"
 	defaultVerifySslValue                 = "true"
+	CloudStackGlobalAZ                    = "global"
 )
 
 // ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
@@ -59,7 +60,7 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 			}
 		}
 		cloudstackProfiles = append(cloudstackProfiles, CloudStackProfileConfig{
-			Name:          section.Name(),
+			Name:          strings.ToLower(section.Name()),
 			ApiKey:        apiKey.Value(),
 			SecretKey:     secretKey.Value(),
 			ManagementUrl: apiUrl.Value(),
