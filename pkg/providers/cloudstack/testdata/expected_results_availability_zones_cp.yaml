@@ -43,6 +43,7 @@ spec:
     account: account-1
     acsendpoint:
       name: global
+      namespace: eksa-system
   - name: az-2
     zone:
       name: zone-2
@@ -52,6 +53,7 @@ spec:
     account: account-2
     acsendpoint:
       name: global
+      namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
