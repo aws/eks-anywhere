@@ -303,6 +303,11 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			testName: "worker node count equals  0",
+			fileName: "testdata/cluster_invalid_worker_node_count.yaml",
+			wantErr:  true,
+		},
+		{
 			testName: "namespace mismatch between cluster and datacenter",
 			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
 			wantErr:  true,
