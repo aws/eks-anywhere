@@ -947,6 +947,44 @@ func TestKubectlLoadSecret(t *testing.T) {
 	}
 }
 
+func TestKubectlGetSecretFromNamespaceSuccess(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"secret",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetSecretFromNamespace(tt.ctx, tt.kubeconfig, tt.name, tt.namespace)
+	}).withJsonFromFile(
+		"testdata/kubectl_secret.json",
+	).andWant(
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "vsphere-csi-controller",
+				Namespace: "eksa-system",
+			},
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "v1",
+				Kind:       "Secret",
+			},
+			Data: map[string][]byte{
+				"data": []byte(`apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vsphere-csi-controller
+  namespace: kube-system
+`),
+			},
+			Type: corev1.SecretType("addons.cluster.x-k8s.io/resource-set"),
+		},
+	).testSuccess()
+}
+
+func TestKubectlGetSecretFromNamespaceError(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"secret",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetSecretFromNamespace(tt.ctx, tt.kubeconfig, tt.name, tt.namespace)
+	}).testError()
+}
+
 func TestKubectlGetSecret(t *testing.T) {
 	tests := []struct {
 		testName     string
