@@ -18,8 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const BundlesKind = "Bundles"
-
 // BundlesSpec defines the desired state of Bundles
 type BundlesSpec struct {
 	// Monotonically increasing release number

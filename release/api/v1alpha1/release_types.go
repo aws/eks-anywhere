@@ -18,8 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const ReleaseKind = "Release"
-
 // ReleaseSpec defines the desired state of Release
 type ReleaseSpec struct {
 	// +kubebuilder:validation:Required
