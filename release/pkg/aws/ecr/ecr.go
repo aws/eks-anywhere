@@ -112,7 +112,7 @@ func GetLatestImageSha(ecrClient *ecr.ECR, repoName string) (string, error) {
 		return "", errors.Cause(err)
 	}
 
-	var latest *ecr.ImageDetail
+	latest := &ecr.ImageDetail{}
 	latest.ImagePushedAt = &time.Time{}
 	for _, detail := range imageDetails {
 		if detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 || *detail.ImageManifestMediaType != "application/vnd.oci.image.manifest.v1+json" {
