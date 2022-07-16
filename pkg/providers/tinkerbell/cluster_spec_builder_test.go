@@ -8,16 +8,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 )
 
-type ValidClusterSpecBuilder struct {
+type ClusterSpecBuilder struct {
 	ControlPlaneMachineName    string
 	ExternalEtcdMachineName    string
 	WorkerNodeGroupMachineName string
 	Namespace                  string
 	IncludeHardwareSelectors   bool
+	AdditionalNodeGroups       []v1alpha1.WorkerNodeGroupConfiguration
 }
 
-func NewDefaultValidClusterSpecBuilder() ValidClusterSpecBuilder {
-	return ValidClusterSpecBuilder{
+func DefaultClusterSpecBuilder() ClusterSpecBuilder {
+	return ClusterSpecBuilder{
 		ControlPlaneMachineName:    "control-plane",
 		ExternalEtcdMachineName:    "external-etcd",
 		WorkerNodeGroupMachineName: "worker-node-group",
@@ -26,11 +27,19 @@ func NewDefaultValidClusterSpecBuilder() ValidClusterSpecBuilder {
 	}
 }
 
-func (b *ValidClusterSpecBuilder) WithoutHardwareSelectors() {
+func DefaultClusterSpec() *tinkerbell.ClusterSpec {
+	return DefaultClusterSpecBuilder().Build()
+}
+
+func (b *ClusterSpecBuilder) WithoutHardwareSelectors() {
 	b.IncludeHardwareSelectors = false
 }
 
-func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
+func (b *ClusterSpecBuilder) WithAdditionalNodeGroups(groups ...v1alpha1.WorkerNodeGroupConfiguration) {
+	b.AdditionalNodeGroups = groups
+}
+
+func (b ClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 	spec := &tinkerbell.ClusterSpec{
 		Spec: &cluster.Spec{
 			Config: &cluster.Config{
@@ -56,6 +65,14 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 							{
 								Name:  "worker-node-group-0",
+								Count: 1,
+								MachineGroupRef: &v1alpha1.Ref{
+									Kind: v1alpha1.TinkerbellMachineConfigKind,
+									Name: b.WorkerNodeGroupMachineName,
+								},
+							},
+							{
+								Name:  "worker-node-group-1",
 								Count: 1,
 								MachineGroupRef: &v1alpha1.Ref{
 									Kind: v1alpha1.TinkerbellMachineConfigKind,
@@ -119,6 +136,11 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 			config.Spec.HardwareSelector = v1alpha1.HardwareSelector{}
 		}
 	}
+
+	spec.Config.Cluster.Spec.WorkerNodeGroupConfigurations = append(
+		spec.Config.Cluster.Spec.WorkerNodeGroupConfigurations,
+		b.AdditionalNodeGroups...,
+	)
 
 	return spec
 }
