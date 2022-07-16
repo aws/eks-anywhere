@@ -101,8 +101,6 @@ IMAGE_IMPORT_CACHE = type=registry,ref=$(CLUSTER_CONTROLLER_LATEST_IMAGE) type=r
 
 MANIFEST_IMAGE_NAME_OVERRIDE="$(IMAGE_REPO)/eks-anywhere-cluster-controller"
 MANIFEST_IMAGE_TAG_OVERRIDE=${IMAGE_TAG}
-KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE="${IMAGE_REPO}/brancz/kube-rbac-proxy"
-KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE="latest"
 KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 
 CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
@@ -531,8 +529,6 @@ help:  ## Display this help
 update-kustomization-yaml:
 	yq e ".images[] |= select(.name == \"controller\") |= .newName = \"${MANIFEST_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 	yq e ".images[] |= select(.name == \"controller\") |= .newTag = \"${MANIFEST_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
-	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newName = \"${KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
-	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newTag = \"${KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 
 .PHONY: generate-manifests
 generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
