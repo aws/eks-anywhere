@@ -444,7 +444,7 @@ func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {
 func TestProviderGenerateCAPISpecForCreateWithMultiAvailabilityZones(t *testing.T) {
 	clusterSpecManifest := "cluster_availability_zones.yaml"
 	mockCtrl := gomock.NewController(t)
-	setupContext()
+	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)

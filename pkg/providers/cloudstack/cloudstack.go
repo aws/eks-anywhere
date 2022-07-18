@@ -138,10 +138,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"uri":       profile.ManagementUrl,
-			"apikey":    profile.ApiKey,
-			"secretkey": profile.SecretKey,
-			"verifyssl": profile.VerifySsl,
+			"api-url":    profile.ManagementUrl,
+			"api-key":    profile.ApiKey,
+			"secret-key": profile.SecretKey,
+			"verify-ssl": profile.VerifySsl,
 		},
 	}
 }
