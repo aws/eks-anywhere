@@ -7,7 +7,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -63,9 +62,7 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 	return false
 }
 
-func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
-
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentClusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		return ErrExternalEtcdUnsupported
 	}
@@ -73,8 +70,6 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if err := p.configureSshKeys(); err != nil {
 		return err
 	}
-
-	tinkerbellClusterSpec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	// If we've been given a CSV with additional hardware for the cluster, validate it and
 	// write it to the catalogue so it can be used for further processing.
@@ -114,11 +109,23 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		}
 	}
 
-	// Construct a spec validator and apply assertions specific to upgrade. The validation
-	// must take place last so as to ensure the catalogue is populated with available hardware.
-	clusterSpecValidator := NewClusterSpecValidator()
+	return p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec)
+}
 
-	// TODO(chrisdoherty4) Apply assertions specific to upgrade.
+func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
+	clusterSpecValidator := NewClusterSpecValidator(
+		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
+	)
+
+	rollingUpgrade := false
+	if currentSpec.Cluster.Spec.KubernetesVersion != newClusterSpec.Cluster.Spec.KubernetesVersion {
+		clusterSpecValidator.Register(ExtraHardwareAvailableAssertionForRollingUpgrade(p.catalogue, maxSurgeForRollingUpgrade))
+		rollingUpgrade = true
+	}
+
+	clusterSpecValidator.Register(AssertionsForScaleUpDown(p.catalogue, currentSpec, rollingUpgrade))
+
+	tinkerbellClusterSpec := NewClusterSpec(newClusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := clusterSpecValidator.Validate(tinkerbellClusterSpec); err != nil {
 		return err

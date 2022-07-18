@@ -125,7 +125,7 @@ func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.C
 	return nil
 }
 
-func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
 	return nil
 }
 

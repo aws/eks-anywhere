@@ -117,19 +117,6 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
-	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-
-	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
-	// constructing the validations rather than injecting flags into the provider.
-	clusterSpecValidator := NewClusterSpecValidator(
-		MinimumHardwareAvailableAssertionForCreate(p.catalogue),
-		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
-	)
-
-	if !p.skipIpCheck {
-		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
-	}
-
 	if p.datacenterConfig.Spec.OSImageURL != "" {
 		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.OSImageURL); err != nil {
 			return fmt.Errorf("parsing osImageOverride: %v", err)
@@ -141,6 +128,19 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 			return fmt.Errorf("parsing hookOverride: %v", err)
 		}
 		logger.Info("hook path override set", "path", p.datacenterConfig.Spec.HookImagesURLPath)
+	}
+
+	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
+	// constructing the validations rather than injecting flags into the provider.
+	clusterSpecValidator := NewClusterSpecValidator(
+		MinimumHardwareAvailableAssertionForCreate(p.catalogue),
+		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
+	)
+
+	if !p.skipIpCheck {
+		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
 	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
