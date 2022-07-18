@@ -19,7 +19,7 @@ type PackageHandler interface {
 }
 
 type CertManager interface {
-	CertManagerExists(ctx context.Context) (bool, error)
+	CertManagerExists(ctx context.Context) bool
 }
 
 type Installer struct {
@@ -59,16 +59,12 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 
 	// If cert-manager does not exist, instruct users to follow instructions in
 	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	certManagerExists, err := pi.certManager.CertManagerExists(ctx)
-	if err != nil {
-		return err
-	}
-	if !certManagerExists {
+	if !pi.certManager.CertManagerExists(ctx) {
 		PrintCertManagerDoesNotExistMsg()
 		return errors.New("Error when installing curated packages on workload cluster; cert manager doesn't exist")
 	}
 
-	err = pi.installPackagesController(ctx)
+	err := pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return err

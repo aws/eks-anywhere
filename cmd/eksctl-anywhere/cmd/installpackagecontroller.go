@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -60,13 +61,11 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	certManagerExists, err := deps.CertManagerClient.CertManagerExists(ctx)
-	if err != nil {
-		return err
-	}
-	if !certManagerExists {
+	// If cert-manager does not exist, instruct users to follow instructions in
+	// PrintCertManagerDoesNotExistMsg to install packages manually.
+	if !deps.CertManagerClient.CertManagerExists(ctx) {
 		curatedpackages.PrintCertManagerDoesNotExistMsg()
-		return nil
+		return errors.New("cert-manager is not present in the cluster")
 	}
 
 	versionBundle, err := curatedpackages.GetVersionBundle(deps.ManifestReader, version.Get().GitVersion, clusterSpec)
