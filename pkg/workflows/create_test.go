@@ -3,6 +3,7 @@ package workflows_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -112,6 +113,9 @@ func (c *createTestSetup) expectCreateWorkload() {
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
+		),
+		c.clusterManager.EXPECT().CreateEKSANamespace(
+			c.ctx, c.workloadCluster,
 		),
 		c.clusterManager.EXPECT().InstallCAPI(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
@@ -336,6 +340,7 @@ func TestCreateWorkloadClusterTaskCreateWorkloadClusterFailure(t *testing.T) {
 		test.clusterManager.EXPECT().SaveLogsWorkloadCluster(
 			test.ctx, test.provider, test.clusterSpec, nil,
 		),
+		test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any()),
 	)
 	err := task.NewTaskRunner(&workflows.CreateWorkloadClusterTask{}, test.writer).RunTask(test.ctx, &commandContext)
 	if err == nil {
@@ -365,6 +370,7 @@ func TestCreateWorkloadClusterTaskRunPostCreateWorkloadClusterFailure(t *testing
 		test.clusterManager.EXPECT().SaveLogsWorkloadCluster(
 			test.ctx, test.provider, test.clusterSpec, test.workloadCluster,
 		),
+		test.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", test.clusterSpec.Cluster.Name), gomock.Any()),
 	)
 	err := task.NewTaskRunner(&workflows.CreateWorkloadClusterTask{}, test.writer).RunTask(test.ctx, &commandContext)
 	if err == nil {

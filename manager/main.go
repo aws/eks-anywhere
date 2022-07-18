@@ -16,6 +16,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -44,6 +46,7 @@ func init() {
 	utilruntime.Must(anywherev1.AddToScheme(scheme))
 	utilruntime.Must(releasev1.AddToScheme(scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
+	utilruntime.Must(clusterctlv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
 	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
@@ -55,7 +58,7 @@ func init() {
 }
 
 func initFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	fs.StringVar(&metricsAddr, "metrics-bind-address", "localhost:8080", "The address the metric endpoint binds to.")
 	fs.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	fs.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -106,8 +109,15 @@ func main() {
 
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
+		setupLog.Info("Reading CAPI providers")
+		providers, err := clusterapi.GetProviders(ctx, mgr.GetAPIReader())
+		if err != nil {
+			setupLog.Error(err, "unable to read installed providers")
+			os.Exit(1)
+		}
+
 		factory := controllers.NewFactory(ctrl.Log, mgr).
-			WithClusterReconciler().
+			WithClusterReconciler(providers).
 			WithVSphereDatacenterReconciler()
 
 		reconcilers, err := factory.Build(ctx)

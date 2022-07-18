@@ -19,7 +19,7 @@ func TestVSphereKubernetes123BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			framework.WithWorkerNodeGroup("workers-1", api.WithCount(2)),
 		),
 		framework.WithVSphereWorkerNodeGroup(
-			"worker-1",
+			"worker-2",
 			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
 		),
 		framework.WithBottleRocket123(),
@@ -91,5 +91,48 @@ func TestCloudStackKubernetes121RedhatAndRemoveWorkerNodeGroups(t *testing.T) {
 				api.WithCount(1),
 			),
 		),
+	)
+}
+
+func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
+	provider := framework.NewSnow(t,
+		framework.WithSnowWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+		),
+		framework.WithSnowWorkerNodeGroup(
+			worker1,
+			framework.WithWorkerNodeGroup(worker1, api.WithCount(1)),
+		),
+		framework.WithSnowUbuntu123(),
+	)
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(anywherev1.Kube123),
+			api.WithControlPlaneCount(1),
+			api.RemoveAllWorkerNodeGroups(),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+
+	runSimpleUpgradeFlow(
+		test,
+		anywherev1.Kube123,
+		framework.WithClusterUpgrade(
+			api.RemoveWorkerNodeGroup(worker1),
+			api.WithWorkerNodeGroup(worker0, api.WithCount(1)),
+		),
+		provider.WithNewSnowWorkerNodeGroup(
+			worker0,
+			framework.WithWorkerNodeGroup(
+				worker2,
+				api.WithCount(1),
+			),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }

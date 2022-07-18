@@ -906,6 +906,10 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
+func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {
+	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+}
+
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
 ) error {

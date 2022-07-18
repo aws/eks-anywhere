@@ -92,10 +92,6 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	if err := p.providerKubectlClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-		return err
-	}
-
 	contents, err := p.generateSecrets(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("creating secrets object: %v", err)
@@ -116,6 +112,9 @@ func (p *cloudstackProvider) generateSecrets(ctx context.Context, cluster *types
 		if err == nil {
 			// When a secret already exists with the profile name we skip creating it
 			continue
+		}
+		if !apierrors.IsNotFound(err) {
+			return nil, fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
 		}
 
 		bytes, err := yaml.Marshal(generateSecret(profile))
@@ -418,11 +417,11 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, cluster *types.Cluster) error {
 	for _, profile := range p.execConfig.Profiles {
 		secret, err := p.providerKubectlClient.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, profile.Name, constants.EksaSystemNamespace)
+		if apierrors.IsNotFound(err) {
+			// When the secret is not found we allow for new secrets
+			continue
+		}
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				// When the secret is not found we allow for new secrets
-				continue
-			}
 			return fmt.Errorf("getting secret for profile %s: %v", profile.Name, err)
 		}
 		if secretDifferentFromProfile(secret, profile) {
@@ -493,7 +492,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	return nil
 }
 
-func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error {
 	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
 	}

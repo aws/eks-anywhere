@@ -43,6 +43,8 @@ const (
 	defaultCloudStackCloudConfigPath    = "testdata/cloudstack_config_valid.ini"
 )
 
+var notFoundError = apierrors.NewNotFound(schema.GroupResource{}, "")
+
 var expectedSecret = &v1.Secret{
 	TypeMeta: metav1.TypeMeta{
 		Kind:       "Secret",
@@ -292,7 +294,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T)
 	}
 
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -349,7 +351,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidClusterSpec(t *te
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -369,7 +371,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnGetSecretFailure(t *test
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewBadRequest(""))
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -411,7 +413,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
@@ -841,7 +843,7 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 		}
 
 		kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
-		kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.New("not found"))
+		kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, notFoundError)
 		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
 		_ = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1470,7 +1472,7 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1492,7 +1494,7 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	cluster := &types.Cluster{}
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1515,7 +1517,7 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1538,7 +1540,7 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(expectedSecret, nil)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1559,7 +1561,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
@@ -1578,7 +1580,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
@@ -1597,7 +1599,7 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	thenErrorExpected(t, "setting up SSH keys: ssh: no key found", err)
 }
 
@@ -1809,7 +1811,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			testName:                "valid single profile",
 			configPath:              defaultCloudStackCloudConfigPath,
 			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
-			getSecretError:          errors.New("not found"),
+			getSecretError:          notFoundError,
 			applyError:              nil,
 			wantErr:                 false,
 		},
@@ -1817,7 +1819,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			testName:                "valid multiple profiles",
 			configPath:              "testdata/cloudstack_config_multiple_profiles.ini",
 			expectedSecretsYamlPath: "testdata/expected_secrets_multiple.yaml",
-			getSecretError:          errors.New("not found"),
+			getSecretError:          notFoundError,
 			applyError:              nil,
 			wantErr:                 false,
 		},
@@ -1833,7 +1835,7 @@ func TestProviderUpdateSecrets(t *testing.T) {
 			testName:                "valid single profile",
 			configPath:              defaultCloudStackCloudConfigPath,
 			expectedSecretsYamlPath: "testdata/expected_secrets_single.yaml",
-			getSecretError:          errors.New("not found"),
+			getSecretError:          notFoundError,
 			applyError:              errors.New("exception"),
 			wantErr:                 true,
 		},
@@ -1861,7 +1863,6 @@ func TestProviderUpdateSecrets(t *testing.T) {
 				t.Fatalf("Failed to read embed eksd release: %s", err)
 			}
 
-			kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
 			kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, test.getSecretError)
 			if test.getSecretError != nil {
 				kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml).Return(test.applyError)

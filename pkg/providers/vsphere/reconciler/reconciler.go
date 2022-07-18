@@ -19,14 +19,13 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
-	clustercontrollers "github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
-	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const defaultRequeueTime = time.Minute
@@ -52,7 +51,6 @@ type VSphereReconciler struct {
 
 type VSphereClusterReconciler struct {
 	VSphereReconciler
-	*clustercontrollers.ProviderClusterReconciler
 }
 
 func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) *VSphereClusterReconciler {
@@ -64,7 +62,6 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			Defaulter: defaulter,
 			tracker:   tracker,
 		},
-		ProviderClusterReconciler: clustercontrollers.NewProviderClusterReconciler(client),
 	}
 }
 
@@ -104,21 +101,6 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 	return nil
 }
 
-func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
-	clusterBundle := &releasev1alpha1.Bundles{}
-	bundleName := types.NamespacedName{Namespace: namespace, Name: name}
-
-	if err := v.Client.Get(ctx, bundleName, clusterBundle); err != nil {
-		return nil, err
-	}
-
-	return clusterBundle, nil
-}
-
-func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.GetEksdRelease, nil, nil, nil)
-}
-
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error) {
 	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
 	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
@@ -151,22 +133,11 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	v.Log.V(4).Info("Fetching bundle", "cluster name", cluster.Spec.ManagementCluster.Name)
-	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, "default")
+	v.Log.V(4).Info("Fetching cluster spec")
+	specWithBundles, err := c.BuildSpec(ctx, clientutil.NewKubeClient(v.Client), cluster)
 	if err != nil {
 		return controller.Result{}, err
 	}
-	versionsBundle, err := c.GetVersionsBundle(cluster, bundles)
-	if err != nil {
-		return controller.Result{}, err
-	}
-	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
-	eksd, err := v.GetEksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, c.WithEksdRelease(eksd))
 
 	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 

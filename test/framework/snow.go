@@ -5,11 +5,15 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 const (
 	snowAMIIDUbuntu120   = "T_SNOW_AMIID_UBUNTU_1_20"
 	snowAMIIDUbuntu121   = "T_SNOW_AMIID_UBUNTU_1_21"
+	snowAMIIDUbuntu122   = "T_SNOW_AMIID_UBUNTU_1_22"
+	snowAMIIDUbuntu123   = "T_SNOW_AMIID_UBUNTU_1_23"
+	snowDevices          = "T_SNOW_DEVICES"
 	snowControlPlaneCidr = "T_SNOW_CONTROL_PLANE_CIDR"
 	snowPodCidr          = "T_SNOW_POD_CIDR"
 	snowCredentialsFile  = "EKSA_AWS_CREDENTIALS_FILE"
@@ -19,6 +23,8 @@ const (
 var requiredSnowEnvVars = []string{
 	snowAMIIDUbuntu120,
 	snowAMIIDUbuntu121,
+	snowAMIIDUbuntu122,
+	snowAMIIDUbuntu123,
 	snowControlPlaneCidr,
 	snowCredentialsFile,
 	snowCertificatesFile,
@@ -39,7 +45,7 @@ func NewSnow(t *testing.T, opts ...SnowOpt) *Snow {
 	s := &Snow{
 		t: t,
 		fillers: []api.SnowFiller{
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu120, api.WithSnowAMIID),
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu120, api.WithSnowAMIIDForAllMachines),
 		},
 	}
 
@@ -89,10 +95,83 @@ func (s *Snow) customizeProviderConfig(file string, fillers ...api.SnowFiller) [
 	return providerOutput
 }
 
+func (s *Snow) WithProviderUpgrade(fillers ...api.SnowFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+	}
+}
+
 func WithSnowUbuntu121() SnowOpt {
-	return func(v *Snow) {
-		v.fillers = append(v.fillers,
-			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIID),
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
 		)
 	}
+}
+
+func WithSnowUbuntu122() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu122, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+		)
+	}
+}
+
+func WithSnowUbuntu123() SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers,
+			api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines),
+			api.WithSnowStringFromEnvVar(snowDevices, api.WithSnowDevicesForAllMachines),
+		)
+	}
+}
+
+func WithSnowWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.SnowMachineConfigFiller) SnowOpt {
+	return func(s *Snow) {
+		s.fillers = append(s.fillers, snowMachineConfig(name, fillers...))
+
+		s.clusterFillers = append(s.clusterFillers, buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+	}
+}
+
+func (s *Snow) WithNewSnowWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.SnowMachineConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = s.customizeProviderConfig(e.ClusterConfigLocation, snowMachineConfig(name, fillers...))
+		var err error
+		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildSnowWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+		if err != nil {
+			e.T.Fatalf("Error filling cluster config: %v", err)
+		}
+	}
+}
+
+func snowMachineConfig(name string, fillers ...api.SnowMachineConfigFiller) api.SnowFiller {
+	f := make([]api.SnowMachineConfigFiller, 0, len(fillers)+2)
+	f = append(f,
+		api.WithSnowMachineDefaultValues(),
+		api.WithSnowDevices(os.Getenv(snowDevices)),
+	)
+	f = append(f, fillers...)
+
+	return api.WithSnowMachineConfig(name, f...)
+}
+
+func buildSnowWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
+	workerNodeGroup.MachineConfigKind = anywherev1.SnowMachineConfigKind
+	workerNodeGroup.MachineConfigName = machineConfigName
+	return workerNodeGroup.ClusterFiller()
+}
+
+func UpdateSnowUbuntuTemplate121Var() api.SnowFiller {
+	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu121, api.WithSnowAMIIDForAllMachines)
+}
+
+func UpdateSnowUbuntuTemplate122Var() api.SnowFiller {
+	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu122, api.WithSnowAMIIDForAllMachines)
+}
+
+func UpdateSnowUbuntuTemplate123Var() api.SnowFiller {
+	return api.WithSnowStringFromEnvVar(snowAMIIDUbuntu123, api.WithSnowAMIIDForAllMachines)
 }

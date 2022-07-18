@@ -456,3 +456,49 @@ func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
 	)
 }
+
+func TestSnowKubernetes121To122UbuntuUpgrade(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateSnowUbuntuTemplate122Var()),
+	)
+}
+
+func TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu122())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithControlPlaneCount(3),
+			api.WithWorkerNodeCount(1),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(
+			api.WithControlPlaneCount(1),
+			api.WithWorkerNodeCount(2),
+		),
+		provider.WithProviderUpgrade(
+			framework.UpdateSnowUbuntuTemplate123Var(),
+			api.WithSnowInstanceTypeForAllMachines(v1alpha1.SbeCXLarge),
+			api.WithSnowPhysicalNetworkConnectorForAllMachines(v1alpha1.QSFP),
+		),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+}

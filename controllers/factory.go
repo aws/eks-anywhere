@@ -4,10 +4,14 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
 
 type Manager = manager.Manager
@@ -16,11 +20,14 @@ type Factory struct {
 	buildSteps        []buildStep
 	dependencyFactory *dependencies.Factory
 	manager           Manager
+	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers       Reconcilers
 
-	tracker *remote.ClusterCacheTracker
-	logger  logr.Logger
-	deps    *dependencies.Dependencies
+	tracker                  *remote.ClusterCacheTracker
+	registry                 *clusters.ProviderClusterReconcilerRegistry
+	vsphereClusterReconciler *vspherereconciler.VSphereClusterReconciler
+	logger                   logr.Logger
+	deps                     *dependencies.Dependencies
 }
 
 type Reconcilers struct {
@@ -58,9 +65,9 @@ func (f *Factory) Build(ctx context.Context) (*Reconcilers, error) {
 	return &f.reconcilers, nil
 }
 
-func (f *Factory) WithClusterReconciler() *Factory {
+func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
 	f.dependencyFactory.WithGovc()
-	f.withTracker()
+	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.ClusterReconciler != nil {
@@ -70,10 +77,7 @@ func (f *Factory) WithClusterReconciler() *Factory {
 		f.reconcilers.ClusterReconciler = NewClusterReconciler(
 			f.manager.GetClient(),
 			f.logger,
-			f.manager.GetScheme(),
-			f.deps.Govc,
-			f.tracker,
-			BuildProviderReconciler,
+			f.registry,
 		)
 
 		return nil
@@ -123,5 +127,65 @@ func (f *Factory) withTracker() *Factory {
 
 		return nil
 	})
+	return f
+}
+
+const (
+	snowProviderName    = "snow"
+	vSphereProviderName = "vsphere"
+)
+
+func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterctlv1.Provider) *Factory {
+	f.registryBuilder = clusters.NewProviderClusterReconcilerRegistryBuilder()
+
+	for _, p := range capiProviders {
+		if p.Type != string(clusterctlv1.InfrastructureProviderType) {
+			continue
+		}
+
+		switch p.ProviderName {
+		case snowProviderName:
+			// TODO: implement
+			// f.withSnowClusterReconciler()
+		case vSphereProviderName:
+			f.withVSphereClusterReconciler()
+		default:
+			f.logger.Info("Found unknown CAPI provider, ignoring", "providerName", p.ProviderName)
+		}
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.registry != nil {
+			return nil
+		}
+
+		r := f.registryBuilder.Build()
+		f.registry = &r
+
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) withVSphereClusterReconciler() *Factory {
+	f.dependencyFactory.WithVSphereDefaulter().WithVSphereValidator()
+	f.withTracker()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.vsphereClusterReconciler != nil {
+			return nil
+		}
+
+		f.vsphereClusterReconciler = vspherereconciler.NewVSphereReconciler(
+			f.manager.GetClient(),
+			f.logger,
+			f.deps.VSphereValidator,
+			f.deps.VSphereDefaulter,
+			f.tracker,
+		)
+		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)
+
+		return nil
+	})
+
 	return f
 }
