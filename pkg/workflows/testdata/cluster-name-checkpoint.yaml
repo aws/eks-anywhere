@@ -1,0 +1,38 @@
+completedTasks:
+  bootstrap-cluster-init:
+    checkpoint:
+      ExistingManagement: false
+      KubeconfigFile: kubeconfig.yaml
+      Name: bootstrap
+  capi-management-move-to-bootstrap:
+    checkpoint: null
+  ensure-etcd-capi-components-exist:
+    checkpoint: null
+  install-capi:
+    checkpoint: null
+  pause-controllers-reconcile:
+    checkpoint: null
+  setup-and-validate:
+    checkpoint: null
+  update-secrets:
+    checkpoint: null
+  upgrade-core-components:
+    checkpoint:
+      components:
+        - name: cilium
+          newVersion: v0.0.1
+          oldVersion: v0.0.2
+        - name: vsphere
+          newVersion: v0.0.1
+          oldVersion: v0.0.2
+        - name: Flux
+          newVersion: v0.0.1
+          oldVersion: v0.0.2
+        - name: eks-a
+          newVersion: v0.0.1
+          oldVersion: v0.0.2
+        - name: eks-d
+          newVersion: v0.0.1
+          oldVersion: v0.0.2
+  upgrade-needed:
+    checkpoint: null

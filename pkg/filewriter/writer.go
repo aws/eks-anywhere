@@ -9,7 +9,8 @@ import (
 )
 
 type writer struct {
-	dir string
+	dir     string
+	tempDir string
 }
 
 func NewWriter(dir string) (FileWriter, error) {
@@ -20,7 +21,7 @@ func NewWriter(dir string) (FileWriter, error) {
 			return nil, fmt.Errorf("creating directory [%s]: %v", dir, err)
 		}
 	}
-	return &writer{dir: dir}, nil
+	return &writer{dir: dir, tempDir: newFolder}, nil
 }
 
 func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (string, error) {
@@ -30,7 +31,7 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 	}
 	var currentDir string
 	if op.IsTemp {
-		currentDir = t.dir + "/" + DefaultTmpFolder
+		currentDir = t.tempDir
 	} else {
 		currentDir = t.dir
 	}
@@ -51,6 +52,10 @@ func (t *writer) Dir() string {
 	return t.dir
 }
 
+func (t *writer) TempDir() string {
+	return t.tempDir
+}
+
 func (t *writer) CleanUp() {
 	_, err := os.Stat(t.dir)
 	if err == nil {
@@ -59,9 +64,8 @@ func (t *writer) CleanUp() {
 }
 
 func (t *writer) CleanUpTemp() {
-	currentDir := filepath.Join(t.dir, DefaultTmpFolder)
-	_, err := os.Stat(currentDir)
+	_, err := os.Stat(t.tempDir)
 	if err == nil {
-		os.RemoveAll(currentDir)
+		os.RemoveAll(t.tempDir)
 	}
 }
