@@ -5,6 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
@@ -60,11 +61,11 @@ func MachineHealthCheckForControlPlane(clusterSpec *cluster.Spec) *clusterv1.Mac
 	return mhc
 }
 
-func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec) map[string]*clusterv1.MachineHealthCheck {
-	m := make(map[string]*clusterv1.MachineHealthCheck, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+func MachineHealthCheckForWorkers(clusterSpec *cluster.Spec) []*clusterv1.MachineHealthCheck {
+	m := make([]*clusterv1.MachineHealthCheck, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		mhc := machineHealthCheckForWorker(clusterSpec, workerNodeGroupConfig)
-		m[workerNodeGroupConfig.Name] = mhc
+		m = append(m, mhc)
 	}
 	return m
 }
@@ -76,4 +77,14 @@ func machineHealthCheckForWorker(clusterSpec *cluster.Spec, workerNodeGroupConfi
 	maxUnhealthy := intstr.Parse(maxUnhealthyWorker)
 	mhc.Spec.MaxUnhealthy = &maxUnhealthy
 	return mhc
+}
+
+// MachineHealthCheckObjects creates MachineHealthCheck resources for control plane and all the worker node groups.
+func MachineHealthCheckObjects(clusterSpec *cluster.Spec) []runtime.Object {
+	mhcWorkers := MachineHealthCheckForWorkers(clusterSpec)
+	o := make([]runtime.Object, 0, len(mhcWorkers)+1)
+	for _, item := range mhcWorkers {
+		o = append(o, item)
+	}
+	return append(o, MachineHealthCheckForControlPlane(clusterSpec))
 }

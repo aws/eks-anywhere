@@ -952,27 +952,33 @@ func TestGetMHCSuccess(t *testing.T) {
 	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
-  name: test-node-unhealthy-5m
+  creationTimestamp: null
+  name: test-md-0-worker-unhealthy
   namespace: %[1]s
 spec:
   clusterName: test
   maxUnhealthy: 40%%
-  nodeStartupTimeout: 10m
   selector:
     matchLabels:
-      cluster.x-k8s.io/deployment-name: "test-md-0"
+      cluster.x-k8s.io/deployment-name: test-md-0
   unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: 300s
-    - type: Ready
-      status: "False"
-      timeout: 300s
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
-  name: test-kcp-unhealthy-5m
+  creationTimestamp: null
+  name: test-kcp-unhealthy
   namespace: %[1]s
 spec:
   clusterName: test
@@ -981,15 +987,21 @@ spec:
     matchLabels:
       cluster.x-k8s.io/control-plane: ""
   unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: 300s
-    - type: Ready
-      status: "False"
-      timeout: 300s
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
 `, constants.EksaSystemNamespace)
 
-	mch, err := provider.GenerateMHC(nil)
+	mch, err := provider.GenerateMHC(givenClusterSpec(t, testClusterConfigMainFilename))
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }

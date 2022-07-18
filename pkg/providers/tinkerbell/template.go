@@ -27,9 +27,6 @@ var defaultCAPIConfigCP string
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
 
-//go:embed config/machine-health-check-template.yaml
-var mhcTemplate []byte
-
 type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
 	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
@@ -324,16 +321,8 @@ func (p *Provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *Provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
-	data := map[string]string{
-		"clusterName":         p.clusterConfig.Name,
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-	}
-	mhc, err := templater.Execute(string(mhcTemplate), data)
-	if err != nil {
-		return nil, err
-	}
-	return mhc, nil
+func (p *Provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {

@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -226,7 +227,7 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 }
 
 func (p *SnowProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(MachineHealthCheckObjects(clusterSpec)...)
+	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
