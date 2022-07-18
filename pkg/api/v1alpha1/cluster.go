@@ -598,7 +598,7 @@ func validateProxyData(proxy string) error {
 	}
 	_, err = net.DefaultResolver.LookupIPAddr(context.Background(), host)
 	if err != nil && net.ParseIP(host) == nil {
-		return fmt.Errorf("proxy endpoint %s is invalid, please provide a valid proxy domain name or ip", host)
+		return fmt.Errorf("proxy endpoint %s is invalid, please provide a valid proxy domain name or ip: %v", host, err)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
 		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
