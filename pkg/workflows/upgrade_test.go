@@ -3,6 +3,7 @@ package workflows_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -95,7 +97,11 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 
 func newUpgradeSelfManagedClusterTest(t *testing.T) *upgradeTestSetup {
 	tt := newUpgradeTest(t)
-	tt.bootstrapCluster = &types.Cluster{Name: "bootstrap"}
+	tt.bootstrapCluster = &types.Cluster{
+		Name:               "bootstrap",
+		ExistingManagement: false,
+		KubeconfigFile:     "kubeconfig.yaml",
+	}
 	tt.managementCluster = tt.workloadCluster
 	return tt
 }
@@ -114,10 +120,14 @@ func newUpgradeManagedClusterTest(t *testing.T) *upgradeTestSetup {
 	return tt
 }
 
-func (c *upgradeTestSetup) expectSetup(expectedCluster *types.Cluster) {
-	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name)
+func (c *upgradeTestSetup) expectSetup() {
 	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec, c.currentClusterSpec)
 	c.provider.EXPECT().Name()
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(c.currentClusterSpec, nil)
+}
+
+func (c *upgradeTestSetup) expectSetupToFail() {
+	c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, gomock.Any(), c.newClusterSpec.Cluster.Name).Return(nil, errors.New("failed setup"))
 }
 
 func (c *upgradeTestSetup) expectUpdateSecrets(expectedCluster *types.Cluster) {
@@ -129,7 +139,6 @@ func (c *upgradeTestSetup) expectUpdateSecrets(expectedCluster *types.Cluster) {
 func (c *upgradeTestSetup) expectEnsureEtcdCAPIComponentsExistTask(expectedCluster *types.Cluster) {
 	currentSpec := c.currentClusterSpec
 	gomock.InOrder(
-		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name).Return(currentSpec, nil),
 		c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, expectedCluster, c.provider, currentSpec),
 	)
 }
@@ -347,6 +356,12 @@ func (c *upgradeTestSetup) expectSaveLogs(expectedWorkloadCluster *types.Cluster
 	)
 }
 
+func (c *upgradeTestSetup) expectWriteCheckpointFile() {
+	gomock.InOrder(
+		c.writer.EXPECT().Write(fmt.Sprintf("%s-checkpoint.yaml", c.newClusterSpec.Cluster.Name), gomock.Any()),
+	)
+}
+
 func (c *upgradeTestSetup) run() error {
 	return c.workflow.Run(c.ctx, c.newClusterSpec, c.managementCluster, c.workloadCluster, c.validator, c.forceCleanup)
 }
@@ -385,7 +400,7 @@ func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
 
 func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup(test.managementCluster)
+	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -404,7 +419,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 
 func TestUpgradeRunSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup(test.managementCluster)
+	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -436,7 +451,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 
 func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup(test.managementCluster)
+	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -467,7 +482,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 
 func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test := newUpgradeSelfManagedClusterTest(t)
-	test.expectSetup(test.managementCluster)
+	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
@@ -479,8 +494,8 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
-	test.expectMoveManagementToWorkload()
 	test.expectSaveLogs(test.workloadCluster)
+	test.expectWriteCheckpointFile()
 
 	err := test.run()
 	if err == nil {
@@ -490,7 +505,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 
 func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test := newUpgradeManagedClusterTest(t)
-	test.expectSetup(test.managementCluster)
+	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.managementCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.managementCluster)
@@ -517,5 +532,68 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestUpgradeWithCheckpointFirstRunFailed(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.CheckpointEnabledEnvVar, "true")
+
+	test := newUpgradeSelfManagedClusterTest(t)
+	test.writer.EXPECT().TempDir()
+	test.expectSetupToFail()
+	test.expectWriteCheckpointFile()
+
+	err := test.run()
+	if err == nil {
+		t.Fatal("Upgrade.Run() err = nil, want err not nil")
+	}
+}
+
+func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.CheckpointEnabledEnvVar, "true")
+
+	test := newUpgradeSelfManagedClusterTest(t)
+	test.writer.EXPECT().TempDir()
+	test.expectSetup()
+	test.expectPreflightValidationsToPass()
+	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
+	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
+	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
+	test.expectVerifyClusterSpecChanged(test.workloadCluster)
+	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
+	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectCreateBootstrap()
+	test.expectMoveManagementToBootstrap()
+	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
+	test.expectSaveLogs(test.workloadCluster)
+	test.expectWriteCheckpointFile()
+
+	err := test.run()
+	if err == nil {
+		t.Fatal("Upgrade.Run() err = nil, want err not nil")
+	}
+
+	test2 := newUpgradeSelfManagedClusterTest(t)
+	test2.writer.EXPECT().TempDir().Return("testdata")
+	test2.expectSetup()
+	test2.expectUpgradeWorkload(test2.bootstrapCluster, test2.workloadCluster)
+	test2.expectMoveManagementToWorkload()
+	test2.expectWriteClusterConfig()
+	test2.expectDeleteBootstrap()
+	test2.expectDatacenterConfig()
+	test2.expectMachineConfigs()
+	test2.expectCreateEKSAResources(test2.workloadCluster)
+	test2.expectInstallEksdManifest(test2.workloadCluster)
+	test2.expectResumeEKSAControllerReconcile(test2.workloadCluster)
+	test2.expectUpdateGitEksaSpec()
+	test2.expectForceReconcileGitRepo(test2.workloadCluster)
+	test2.expectResumeGitOpsKustomization(test2.workloadCluster)
+
+	err = test2.run()
+	if err != nil {
+		t.Fatalf("Upgrade.Run() err = %v, want nil", err)
 	}
 }
