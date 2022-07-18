@@ -133,7 +133,7 @@ func (s *setupAndValidateTasks) validations(ctx context.Context, commandContext 
 	return []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name: fmt.Sprintf("%s is provider setup valid", commandContext.Provider.Name()),
+				Name: fmt.Sprintf("%s provider validation", commandContext.Provider.Name()),
 				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.CurrentClusterSpec),
 			}
 		},
