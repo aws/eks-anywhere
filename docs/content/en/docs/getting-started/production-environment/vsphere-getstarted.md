@@ -202,6 +202,11 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
+   {{% alert title="Note" color="primary" %}}
+
+   Curated packages installation at workload cluster creation is currently not supported. Refer to [install curated packages](#install-curated-packages) section for how to install curated packages after cluster creation.
+   {{% /alert %}}
+
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
@@ -218,6 +223,21 @@ Follow these steps if you want to use your initial cluster to create and manage 
 1. Add more workload clusters:
 
    To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
+
+1. ###### Install curated packages:
+
+   [cert-manager](https://cert-manager.io/) installation is required before installing curated packages on workload clusters. You can install cert-manager using the command below, then complete the curated packages installation by following instructions [here]({{< relref "../../tasks/packages" >}}).
+
+   ```bash
+   helm repo add jetstack https://charts.jetstack.io
+   helm repo update
+   helm install \
+      cert-manager jetstack/cert-manager \
+      --namespace cert-manager \
+      --create-namespace \
+      --version v1.8.0 \
+      --set installCRDs=true
+   ```
 
 ## Next steps:
 * See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section for more information on common operational tasks like scaling and deleting the cluster.
