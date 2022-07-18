@@ -399,6 +399,14 @@ capd-test-all: capd-test capd-test-120
 capd-test-%: e2e ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
+
+PACKAGES_E2E_TESTS ?= TestVSphereKubernetes121PackagesInstallSimpleFlow
+ifeq ($(PACKAGES_E2E_TESTS),all)
+PACKAGES_E2E_TESTS='TestCPackages.*'
+endif
+packages-e2e-test: e2e ## Run Curated Packages tests
+	./bin/e2e.test -test.v -test.run $(PACKAGES_E2E_TESTS)
+
 .PHONY: mocks
 mocks: export PATH := $(GO_VERSION):$(PATH)
 mocks: ## Generate mocks
