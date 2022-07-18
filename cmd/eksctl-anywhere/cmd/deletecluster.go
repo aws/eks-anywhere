@@ -20,9 +20,10 @@ import (
 
 type deleteClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceCleanup     bool
-	hardwareFileName string
+	wConfig               string
+	forceCleanup          bool
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var dc = &deleteClusterOptions{}
@@ -102,8 +103,9 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
@@ -114,9 +116,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
-	}
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
 	}
 
 	deleteCluster := workflows.NewDelete(

@@ -63,7 +63,16 @@ key2: values2
 func TestHelmTemplateSuccess(t *testing.T) {
 	tt := newHelmTemplateTest(t)
 	expectCommand(
-		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
+	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
+
+	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
+}
+
+func TestHelmTemplateSuccessWithInsecure(t *testing.T) {
+	tt := newHelmTemplateTest(t, executables.WithInsecure())
+	expectCommand(
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "--kube-version", "1.22", "--insecure-skip-tls-verify", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
@@ -73,7 +82,7 @@ func TestHelmTemplateSuccessWithRegistryMirror(t *testing.T) {
 	tt := newHelmTemplateTest(t, executables.WithRegistryMirror("1.2.3.4:443"))
 	ociRegistryMirror := "oci://1.2.3.4:443/account/charts"
 	expectCommand(
-		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
+		tt.e, tt.ctx, "template", ociRegistryMirror, "--version", tt.version, "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, ociRegistryMirror, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
@@ -88,7 +97,7 @@ func TestHelmTemplateSuccessWithEnv(t *testing.T) {
 		"HELM_EXPERIMENTAL_OCI": "1",
 	}
 	expectCommand(
-		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "--kube-version", "1.22", "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(expectedEnv).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values, "1.22")).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
@@ -109,7 +118,19 @@ func TestHelmSaveChartSuccess(t *testing.T) {
 	version := "1.1"
 	destinationFolder := "folder"
 	expectCommand(
-		tt.e, tt.ctx, "pull", url, "--version", version, "--insecure-skip-tls-verify", "--destination", destinationFolder,
+		tt.e, tt.ctx, "pull", url, "--version", version, "--destination", destinationFolder,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.SaveChart(tt.ctx, url, version, destinationFolder)).To(Succeed())
+}
+
+func TestHelmSaveChartSuccessWithInsecure(t *testing.T) {
+	tt := newHelmTest(t, executables.WithInsecure())
+	url := "url"
+	version := "1.1"
+	destinationFolder := "folder"
+	expectCommand(
+		tt.e, tt.ctx, "pull", url, "--version", version, "--destination", destinationFolder, "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.SaveChart(tt.ctx, url, version, destinationFolder)).To(Succeed())
@@ -123,7 +144,21 @@ func TestHelmInstallChartSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--insecure-skip-tls-verify", "--set", "key1=value1", "--kubeconfig", kubeconfig,
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, values)).To(Succeed())
+}
+
+func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
+	tt := newHelmTest(t, executables.WithInsecure())
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	values := []string{"key1=value1"}
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, values)).To(Succeed())
@@ -153,4 +188,32 @@ func TestHelmGetValueArgs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestHelmInstallChartWithValuesFileSuccess(t *testing.T) {
+	tt := newHelmTest(t)
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	valuesFileName := "values.yaml"
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
+}
+
+func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
+	tt := newHelmTest(t, executables.WithInsecure())
+	chart := "chart"
+	url := "url"
+	version := "1.1"
+	kubeconfig := "/root/.kube/config"
+	valuesFileName := "values.yaml"
+	expectCommand(
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--insecure-skip-tls-verify",
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
 }

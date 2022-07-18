@@ -25,7 +25,8 @@ func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineCo
 			Name: name,
 		},
 		Spec: TinkerbellMachineConfigSpec{
-			OSFamily: Ubuntu,
+			HardwareSelector: HardwareSelector{},
+			OSFamily:         Bottlerocket,
 			Users: []UserConfiguration{
 				{
 					Name:              "ec2-user",

@@ -42,15 +42,15 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	// Deprecated: This field has no function and is going to be removed in a future release.
-	OverrideClusterSpecFile string         `json:"overrideClusterSpecFile,omitempty"`
-	ClusterNetwork          ClusterNetwork `json:"clusterNetwork,omitempty"`
+	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
+	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
 
 func (n *Cluster) Equal(o *Cluster) bool {
@@ -93,6 +93,10 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if !n.ManagementClusterEqual(o) {
 		return false
 	}
+	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+
 	return true
 }
 
@@ -321,6 +325,7 @@ type ClusterNetwork struct {
 	// CNIConfig specifies the CNI plugin to be installed in the cluster
 	CNIConfig *CNIConfig `json:"cniConfig,omitempty"`
 	DNS       DNS        `json:"dns,omitempty"`
+	Nodes     *Nodes     `json:"nodes,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -526,6 +531,11 @@ type ResolvConf struct {
 	Path string `json:"path,omitempty"`
 }
 
+type Nodes struct {
+	// CIDRMaskSize defines the mask size for node cidr in the cluster, default for ipv4 is 24. This is an optional field
+	CIDRMaskSize *int `json:"cidrMaskSize,omitempty"`
+}
+
 func (n *ResolvConf) Equal(o *ResolvConf) bool {
 	if n == o {
 		return true
@@ -606,6 +616,23 @@ type EksdReleaseRef struct {
 	Name string `json:"name"`
 	// Namespace refers to the namespace for the EKS-D release resources
 	Namespace string `json:"namespace"`
+}
+
+type BundlesRef struct {
+	// APIVersion refers to the Bundles APIVersion
+	APIVersion string `json:"apiVersion"`
+	// Name refers to the name of the Bundles object in the cluster
+	Name string `json:"name"`
+	// Namespace refers to the Bundles's namespace
+	Namespace string `json:"namespace"`
+}
+
+func (b *BundlesRef) Equal(o *BundlesRef) bool {
+	if b == nil || o == nil {
+		return b == o
+	}
+
+	return b.APIVersion == o.APIVersion && b.Name == o.Name && b.Namespace == o.Namespace
 }
 
 type Ref struct {

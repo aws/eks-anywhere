@@ -426,3 +426,50 @@ func TestAppend(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeCIDRMaskExtraArgs(t *testing.T) {
+	nodeCidrMaskSize := new(int)
+	*nodeCidrMaskSize = 28
+	tests := []struct {
+		testName       string
+		clusterNetwork *v1alpha1.ClusterNetwork
+		want           clusterapi.ExtraArgs
+	}{
+		{
+			testName:       "no cluster network config",
+			clusterNetwork: nil,
+			want:           nil,
+		},
+		{
+			testName: "no nodes config",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Pods: v1alpha1.Pods{CidrBlocks: []string{"test", "test"}},
+			},
+			want: nil,
+		},
+		{
+			testName: "with nodes config",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{CIDRMaskSize: nodeCidrMaskSize},
+			},
+			want: clusterapi.ExtraArgs{
+				"node-cidr-mask-size": "28",
+			},
+		},
+		{
+			testName: "with nodes config empty",
+			clusterNetwork: &v1alpha1.ClusterNetwork{
+				Nodes: &v1alpha1.Nodes{},
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.NodeCIDRMaskExtraArgs(tt.clusterNetwork); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NodeCIDRMaskExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

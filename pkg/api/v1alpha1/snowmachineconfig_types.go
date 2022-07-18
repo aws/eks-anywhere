@@ -35,6 +35,9 @@ type SnowMachineConfigSpec struct {
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
 	SshKeyName string `json:"sshKeyName,omitempty"`
+
+	// Devices contains a device ip list assigned by the user to provision machines.
+	Devices []string `json:"devices,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {

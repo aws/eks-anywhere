@@ -15,6 +15,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
@@ -123,7 +124,7 @@ func (pc *DummyProviderGovcClient) CreateLibrary(ctx context.Context, datastore,
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error {
+func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error {
 	return nil
 }
 
@@ -1476,17 +1477,18 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		"vsphereServer":     datacenterConfig.Spec.Server,
 		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
 		"vsphereNetwork":    datacenterConfig.Spec.Network,
+		"eksaLicense":       "",
 	}
 
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	template, err := template.New("test").Parse(defaultSecretObject)
+	tpl, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
 	}
-	err = template.Execute(&bytes.Buffer{}, values)
+	err = tpl.Execute(&bytes.Buffer{}, values)
 	if err != nil {
 		t.Fatalf("template execute error: %v", err)
 	}
@@ -1524,7 +1526,7 @@ func TestProviderUpdateSecret(t *testing.T) {
 	kubectl.EXPECT().CreateNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace)
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
 
-	template, err := template.New("test").Parse(defaultSecretObject)
+	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
 	}
@@ -2434,7 +2436,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
 					KubeVip: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
+						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
 					Driver: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b",
@@ -2746,7 +2748,7 @@ spec:
       timeout: 300s
 `, constants.EksaSystemNamespace)
 
-	mch, err := provider.GenerateMHC()
+	mch, err := provider.GenerateMHC(nil)
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }

@@ -42,11 +42,7 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: test
 spec:
-  tinkerbellCertURL: "http://1.2.3.4/cert"
-  tinkerbellGRPCAuth: "1.2.3.4:0000"
-  tinkerbellHegelURL: "http://1.2.3.4:50051"
   tinkerbellIP: "1.2.3.4"
-  tinkerbellPBnJGRPCAuth: "1.2.3.4:00000"
   idont: "belonghere"
 
 ---
@@ -84,7 +80,7 @@ spec:
           IMG_URL: ""
         image: image2disk:v1.0.0
         name: stream-image
-        timeout: 360
+        timeout: 600
         idont: "belonghere"
     version: "0.1"
     idont: "belonghere"

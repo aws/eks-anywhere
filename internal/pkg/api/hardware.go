@@ -16,6 +16,10 @@ const (
 	HardwareVendorHP          = "hp"
 	HardwareVendorSuperMicro  = "supermicro"
 	HardwareVendorUnspecified = "unspecified"
+	HardwareLabelTypeKeyName  = "type"
+	ControlPlane              = "control-plane"
+	Worker                    = "worker"
+	ExternalEtcd              = "etcd"
 )
 
 // Alias for backwards compatibility.
@@ -52,8 +56,8 @@ func HardwareSliceToMap(slice []*Hardware) map[string]*Hardware {
 	hardwareMap := make(map[string]*Hardware)
 
 	for _, h := range slice {
-		if _, exists := hardwareMap[h.ID]; !exists {
-			hardwareMap[h.ID] = h
+		if _, exists := hardwareMap[h.MACAddress]; !exists {
+			hardwareMap[h.MACAddress] = h
 		}
 	}
 
@@ -92,4 +96,22 @@ func HardwareMapToSlice(hardware map[string]*Hardware) []*Hardware {
 func WriteHardwareMapToCSV(hardware map[string]*Hardware, csvFile string) error {
 	slice := HardwareMapToSlice(hardware)
 	return WriteHardwareSliceToCSV(slice, csvFile)
+}
+
+func SplitHardware(slice []*Hardware, chunkSize int) [][]*Hardware {
+	var chunks [][]*Hardware
+	for i := 0; i < len(slice); i += chunkSize {
+		end := i + chunkSize
+
+		// check slice capacity
+		if end > len(slice) {
+			end = len(slice)
+			finalChunk := append(chunks[len(chunks)-1], slice[i:end]...)
+			chunks[len(chunks)-1] = finalChunk
+		} else {
+			chunks = append(chunks, slice[i:end])
+		}
+	}
+
+	return chunks
 }

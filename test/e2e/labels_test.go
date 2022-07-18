@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -33,14 +34,14 @@ func runLabelsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
-func TestDockerKubernetes122Labels(t *testing.T) {
+func TestDockerKubernetes123Labels(t *testing.T) {
 	provider := framework.NewDocker(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithKubernetesVersion(v1alpha1.Kube123),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -50,73 +51,79 @@ func TestDockerKubernetes122Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube122,
+		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
-func TestVSphereKubernetes122Labels(t *testing.T) {
-	provider := ubuntu122ProviderWithLabels(t)
+func TestVSphereKubernetes123Labels(t *testing.T) {
+	provider := ubuntu123ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithKubernetesVersion(v1alpha1.Kube123),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube122,
+		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
-func TestVSphereKubernetes122LabelsBottlerocket(t *testing.T) {
-	provider := bottlerocket122ProviderWithLabels(t)
+func TestVSphereKubernetes123LabelsBottlerocket(t *testing.T) {
+	provider := bottlerocket123ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube122),
+			api.WithKubernetesVersion(v1alpha1.Kube123),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube122,
+		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
+		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
-func ubuntu122ProviderWithLabels(t *testing.T) *framework.VSphere {
+func ubuntu123ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -132,11 +139,11 @@ func ubuntu122ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithUbuntu122(),
+		framework.WithUbuntu123(),
 	)
 }
 
-func bottlerocket122ProviderWithLabels(t *testing.T) *framework.VSphere {
+func bottlerocket123ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -152,6 +159,6 @@ func bottlerocket122ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithBottleRocket122(),
+		framework.WithBottleRocket123(),
 	)
 }

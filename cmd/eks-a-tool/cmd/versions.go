@@ -28,7 +28,7 @@ func init() {
 }
 
 func versions(ctx context.Context) error {
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}

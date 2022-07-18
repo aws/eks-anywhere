@@ -30,12 +30,11 @@ var describePackagesCommand = &cobra.Command{
 
 func describeResources(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := curatedpackages.NewDependenciesForPackages(ctx, kubeConfig)
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	packages := curatedpackages.NewPackageClient(
-		nil,
 		deps.Kubectl,
 	)
 

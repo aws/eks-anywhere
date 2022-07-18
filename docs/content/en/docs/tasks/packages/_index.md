@@ -2,7 +2,7 @@
 title: "EKS Anywhere curated package management"
 linkTitle: "Package management"
 date: 2022-04-12
-weight: 20
+weight: 40
 description: >
   Common tasks for managing curated packages.
 ---
@@ -31,7 +31,7 @@ Skip the following installation steps if the returned result is not empty.
 
 1. Install the package controller
     ```bash
-    eksctl anywhere install packagecontroller --kube-version 1.21
+    eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
     ```
 
 1. Check the package controller

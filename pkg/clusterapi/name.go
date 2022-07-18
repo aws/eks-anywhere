@@ -50,3 +50,19 @@ func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroup
 func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
+
+func ControlPlaneMachineTemplateName(clusterSpec *cluster.Spec) string {
+	return DefaultObjectName(fmt.Sprintf("%s-control-plane", clusterSpec.Cluster.Name))
+}
+
+func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return DefaultObjectName(fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name))
+}
+
+func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec))
+}
+
+func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
+}

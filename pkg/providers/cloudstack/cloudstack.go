@@ -78,6 +78,10 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
+func (p *cloudstackProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -163,16 +167,6 @@ func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *typ
 	}
 }
 
-func (p *cloudstackProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
-}
-
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	// Nothing to do
 	return nil
@@ -198,19 +192,6 @@ type ProviderKubectlClient interface {
 }
 
 func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
-	return NewProviderCustomNet(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		providerKubectlClient,
-		providerCmkClient,
-		writer,
-		now,
-		skipIpCheck,
-	)
-}
-
-func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -357,12 +338,17 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.ManagementUrl) <= 0 {
-		return errors.New("cloudstack management api url is not set or is empty")
+	if len(execConfig.Profiles) <= 0 {
+		return errors.New("cloudstack instances are not defined")
 	}
-	if err := p.validateManagementApiEndpoint(execConfig.ManagementUrl); err != nil {
-		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is invalid")
+
+	for _, instance := range execConfig.Profiles {
+		if err := p.validateManagementApiEndpoint(instance.ManagementUrl); err != nil {
+			return fmt.Errorf("CloudStack instance %s's managementApiEndpoint %s is invalid: %v",
+				instance.Name, instance.ManagementUrl, err)
+		}
 	}
+
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
@@ -371,26 +357,30 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
-func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-
-	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-
-	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
+func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
+	if err := p.validator.validateCloudStackAccess(ctx, p.datacenterConfig); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
 		return err
 	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if err := p.validateEnv(ctx); err != nil {
+		return fmt.Errorf("validating environment variables: %v", err)
+	}
+
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
+		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("setting up SSH keys: %v", err)
 	}
 
 	if clusterSpec.Cluster.IsManaged() {
@@ -420,28 +410,19 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+	if err := p.validateEnv(ctx); err != nil {
+		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
-		return err
-	}
-	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
-		return err
-	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
-		return err
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
+		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForUpgrade(); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("setting up SSH keys: %v", err)
 	}
 
-	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
-	if err != nil {
+	if err := p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec); err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
 	}
 	return nil
@@ -450,7 +431,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+		return fmt.Errorf("validating environment variables: %v", err)
 	}
 	return nil
 }
@@ -543,6 +524,14 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 			return true
 		}
 	}
+	if len(oldCsmc.Spec.Symlinks) != len(newCsmc.Spec.Symlinks) {
+		return true
+	}
+	for key, value := range oldCsmc.Spec.Symlinks {
+		if value != newCsmc.Spec.Symlinks[key] {
+			return true
+		}
+	}
 	return false
 }
 
@@ -616,6 +605,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	values := map[string]interface{}{
 		"clusterName":                                  clusterSpec.Cluster.Name,
@@ -638,6 +629,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDomain":                             datacenterConfigSpec.Domain,
 		"cloudstackZones":                              datacenterConfigSpec.Zones,
 		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
 		"cloudstackControlPlaneDiskOfferingName":       controlPlaneMachineSpec.DiskOffering.Name,
@@ -651,6 +643,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackControlPlaneTemplateOfferingId":     controlPlaneMachineSpec.Template.Id,
 		"cloudstackControlPlaneTemplateOfferingName":   controlPlaneMachineSpec.Template.Name,
 		"cloudstackControlPlaneCustomDetails":          controlPlaneMachineSpec.UserCustomDetails,
+		"cloudstackControlPlaneSymlinks":               controlPlaneMachineSpec.Symlinks,
 		"cloudstackControlPlaneAffinity":               controlPlaneMachineSpec.Affinity,
 		"cloudstackControlPlaneAffinityGroupIds":       controlPlaneMachineSpec.AffinityGroupIds,
 		"cloudstackEtcdDiskOfferingProvided":           len(etcdMachineSpec.DiskOffering.Id) > 0 || len(etcdMachineSpec.DiskOffering.Name) > 0,
@@ -666,6 +659,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackEtcdTemplateOfferingId":             etcdMachineSpec.Template.Id,
 		"cloudstackEtcdTemplateOfferingName":           etcdMachineSpec.Template.Name,
 		"cloudstackEtcdCustomDetails":                  etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdSymlinks":                       etcdMachineSpec.Symlinks,
 		"cloudstackEtcdAffinity":                       etcdMachineSpec.Affinity,
 		"cloudstackEtcdAffinityGroupIds":               etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                      controlPlaneMachineSpec.Users[0].Name,
@@ -675,7 +669,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"kubeletExtraArgs":                             kubeletExtraArgs.ToPartialYaml(),
 		"etcdExtraArgs":                                etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":                             crypto.SecureCipherSuitesString(),
-		"controllermanagerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs":                   controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                           sharedExtraArgs.ToPartialYaml(),
 		"format":                                       format,
 		"externalEtcdVersion":                          bundle.KubeDistro.EtcdVersion,
@@ -683,6 +677,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"eksaSystemNamespace":                          constants.EksaSystemNamespace,
 		"auditPolicy":                                  common.GetAuditPolicy(),
 	}
+	values["cloudstackControlPlaneAnnotations"] = values["cloudstackControlPlaneDiskOfferingProvided"].(bool) || len(controlPlaneMachineSpec.Symlinks) > 0
+	values["cloudstackEtcdAnnotations"] = values["cloudstackEtcdDiskOfferingProvided"].(bool) || len(etcdMachineSpec.Symlinks) > 0
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -702,7 +698,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -743,6 +739,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
+		"cloudstackAnnotationSuffix":       constants.CloudstackAnnotationSuffix,
 		"cloudstackTemplateId":             workerNodeGroupMachineSpec.Template.Id,
 		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
@@ -756,6 +753,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackDiskOfferingFilesystem": workerNodeGroupMachineSpec.DiskOffering.Filesystem,
 		"cloudstackDiskOfferingLabel":      workerNodeGroupMachineSpec.DiskOffering.Label,
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
+		"cloudstackSymlinks":               workerNodeGroupMachineSpec.Symlinks,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   workerNodeGroupConfiguration.Count,
@@ -767,6 +765,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"workerNodeGroupName":              fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":            workerNodeGroupConfiguration.Taints,
 	}
+	values["cloudstackAnnotations"] = values["cloudstackDiskOfferingProvided"].(bool) || len(workerNodeGroupMachineSpec.Symlinks) > 0
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -786,7 +785,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -1022,7 +1021,7 @@ func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *
 	return false, nil
 }
 
-func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
+func (p *cloudstackProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
@@ -1227,4 +1226,8 @@ func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func (p *cloudstackProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	return nil
 }

@@ -73,7 +73,7 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 		ProjectPath:       etcdadmProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
+	artifacts := []Artifact{{Archive: archiveArtifact}}
 
 	return artifacts, nil
 }

@@ -85,6 +85,9 @@ func givenClusterSpec() *cluster.Spec {
 		s.VersionsBundle.KubeDistro.AwsIamAuthImage = bundlev1.Image{
 			URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
 		}
+		s.VersionsBundle.Eksa.DiagnosticCollector = bundlev1.Image{
+			URI: "public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10",
+		}
 		s.AWSIamConfig = &v1alpha1.AWSIamConfig{
 			Spec: v1alpha1.AWSIamConfigSpec{
 				AWSRegion:   "test-region",

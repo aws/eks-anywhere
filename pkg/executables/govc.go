@@ -36,13 +36,20 @@ const (
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
-	deployOptsFile       = "deploy-opts.json"
+	DeployOptsFile       = "deploy-opts.json"
 )
 
 var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure}
 
-//go:embed config/deploy-opts.json
-var deployOpts []byte
+type networkMapping struct {
+	Name    string `json:"Name,omitempty"`
+	Network string `json:"Network,omitempty"`
+}
+
+type deployOption struct {
+	DiskProvisioning string           `json:"DiskProvisioning,omitempty"`
+	NetworkMapping   []networkMapping `json:"NetworkMapping,omitempty"`
+}
 
 type FolderType string
 
@@ -58,17 +65,32 @@ type Govc struct {
 	Executable
 	*retrier.Retrier
 	requiredEnvs *syncSlice
+	envMap       map[string]string
 }
 
-func NewGovc(executable Executable, writer filewriter.FileWriter) *Govc {
+type GovcOpt func(*Govc)
+
+func NewGovc(executable Executable, writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
 	envVars := newSyncSlice()
 	envVars.append(requiredEnvs...)
 
-	return &Govc{
+	g := &Govc{
 		writer:       writer,
 		Executable:   executable,
 		Retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		requiredEnvs: envVars,
+	}
+
+	for _, opt := range opts {
+		opt(g)
+	}
+
+	return g
+}
+
+func WithGovcEnvMap(envMap map[string]string) GovcOpt {
+	return func(g *Govc) {
+		g.envMap = envMap
 	}
 }
 
@@ -269,9 +291,10 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 	return nil
 }
 
-func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error {
+func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeBRDisk bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
-	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, datastore, resourcePool); err != nil {
+
+	if err := g.DeployTemplate(ctx, library, templateName, templateName, templateDir, datacenter, datastore, network, resourcePool, nil); err != nil {
 		return err
 	}
 
@@ -343,7 +366,7 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 	return nil
 }
 
-func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, datastore, resourcePool string) error {
+func (g *Govc) DeployTemplate(ctx context.Context, library, templateName, vmName, deployFolder, datacenter, datastore, network, resourcePool string, deployOptionsOverride []byte) error {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return fmt.Errorf("failed govc validations: %v", err)
@@ -354,7 +377,16 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		templateInLibraryPath = fmt.Sprintf("/%s", templateInLibraryPath)
 	}
 
-	deployOptsPath, err := g.writer.Write(deployOptsFile, deployOpts, filewriter.PersistentFile)
+	deployOpts, err := getDeployOptions(network)
+	if err != nil {
+		return err
+	}
+
+	if len(deployOptionsOverride) > 0 {
+		deployOpts = deployOptionsOverride
+	}
+
+	deployOptsPath, err := g.writer.Write(DeployOptsFile, deployOpts, filewriter.PersistentFile)
 	if err != nil {
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
@@ -395,7 +427,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,
-		templateInLibraryPath, templateName,
+		templateInLibraryPath, vmName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
 		return fmt.Errorf("deploying template: %v", err)
@@ -454,6 +486,10 @@ func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) 
 }
 
 func (g *Govc) getEnvMap() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	envMap := make(map[string]string)
 	for key := range g.requiredEnvs.iterate() {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
@@ -638,7 +674,7 @@ func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) 
 		return nil
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed checking '%s' network", filepath.Base(network))
+		return false, fmt.Errorf("failed checking if network '%s' exists: %v", network, err)
 	}
 
 	return exists, nil
@@ -896,4 +932,27 @@ func (g *Govc) createCategory(ctx context.Context, name string, objectTypes []ob
 		return fmt.Errorf("govc returned error when creating category %s: %v", name, err)
 	}
 	return nil
+}
+
+func getDeployOptions(network string) ([]byte, error) {
+	deployOptsStruct := deployOption{
+		DiskProvisioning: "thin",
+		NetworkMapping: []networkMapping{
+			{
+				Name:    "nic0", // needed for Ubuntu
+				Network: network,
+			},
+			{
+				Name:    "VM Network", // needed for Bottlerocket
+				Network: network,
+			},
+		},
+	}
+
+	deployOpts, err := json.Marshal(deployOptsStruct)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling template deployment options: %v", err)
+	}
+
+	return deployOpts, err
 }

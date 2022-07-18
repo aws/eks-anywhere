@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting"
-weight: 55
+weight: 45
 description: >
   Troubleshooting reference for your EKS Anywhere Cluster
 url: /tasks/troubleshoot 

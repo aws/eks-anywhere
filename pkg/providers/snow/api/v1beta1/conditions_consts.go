@@ -136,6 +136,8 @@ const (
 	WaitingForBootstrapDataReason = "WaitingForBootstrapData"
 )
 
+// TODO add Snowball Device conditions, e.g., direct-network-interface ready condition
+
 const (
 	// SecurityGroupsReadyCondition indicates the security groups are up to date on the AWSMachine.
 	SecurityGroupsReadyCondition clusterv1.ConditionType = "SecurityGroupsReady"

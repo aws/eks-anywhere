@@ -1,24 +1,18 @@
 {
-    "items": [
-        {
-            "apiVersion": "tinkerbell.org/v1alpha1",
-            "kind": "Hardware",
-            "metadata": {
-              "labels": {
-                "v1alpha1.tinkerbell.org/ownerName": "tink-test-md-0-clc85"
-              },
-              "name": "hw1"
-            }
-        },
-        {
-            "apiVersion": "tinkerbell.org/v1alpha1",
-            "kind": "Hardware",
-            "metadata": {
-              "labels": {
-                "v1alpha1.tinkerbell.org/ownerName": "tink-test-controlplane-0-ccl90"
-              },
-              "name": "hw2"
-            }
-        }
-    ]
+  "items": [
+    {
+      "apiVersion": "tinkerbell.org/v1alpha1",
+      "kind": "Hardware",
+      "metadata": {
+        "name": "hw1"
+      }
+    },
+    {
+      "apiVersion": "tinkerbell.org/v1alpha1",
+      "kind": "Hardware",
+      "metadata": {
+        "name": "hw2"
+      }
+    }
+  ]
 }

@@ -13,6 +13,7 @@ type ValidClusterSpecBuilder struct {
 	ExternalEtcdMachineName    string
 	WorkerNodeGroupMachineName string
 	Namespace                  string
+	IncludeHardwareSelectors   bool
 }
 
 func NewDefaultValidClusterSpecBuilder() ValidClusterSpecBuilder {
@@ -21,11 +22,16 @@ func NewDefaultValidClusterSpecBuilder() ValidClusterSpecBuilder {
 		ExternalEtcdMachineName:    "external-etcd",
 		WorkerNodeGroupMachineName: "worker-node-group",
 		Namespace:                  "namespace",
+		IncludeHardwareSelectors:   true,
 	}
 }
 
+func (b *ValidClusterSpecBuilder) WithoutHardwareSelectors() {
+	b.IncludeHardwareSelectors = false
+}
+
 func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
-	return &tinkerbell.ClusterSpec{
+	spec := &tinkerbell.ClusterSpec{
 		Spec: &cluster.Spec{
 			Config: &cluster.Config{
 				Cluster: &v1alpha1.Cluster{
@@ -81,7 +87,8 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Namespace: b.Namespace,
 				},
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
-					OSFamily: v1alpha1.Ubuntu,
+					HardwareSelector: v1alpha1.HardwareSelector{"type": "cp"},
+					OSFamily:         v1alpha1.Ubuntu,
 				},
 			},
 			b.ExternalEtcdMachineName: {
@@ -90,7 +97,8 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Namespace: b.Namespace,
 				},
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
-					OSFamily: v1alpha1.Ubuntu,
+					HardwareSelector: v1alpha1.HardwareSelector{"type": "etcd"},
+					OSFamily:         v1alpha1.Ubuntu,
 				},
 			},
 			b.WorkerNodeGroupMachineName: {
@@ -99,9 +107,18 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 					Namespace: b.Namespace,
 				},
 				Spec: v1alpha1.TinkerbellMachineConfigSpec{
-					OSFamily: v1alpha1.Ubuntu,
+					HardwareSelector: v1alpha1.HardwareSelector{"type": "worker"},
+					OSFamily:         v1alpha1.Ubuntu,
 				},
 			},
 		},
 	}
+
+	if !b.IncludeHardwareSelectors {
+		for _, config := range spec.MachineConfigs {
+			config.Spec.HardwareSelector = v1alpha1.HardwareSelector{}
+		}
+	}
+
+	return spec
 }

@@ -151,6 +151,10 @@ func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1
 	return nil
 }
 
+func (p *SnowProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *SnowProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -221,8 +225,8 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *SnowProvider) GenerateMHC() ([]byte, error) {
-	return nil, nil
+func (p *SnowProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
@@ -271,10 +275,10 @@ func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Clu
 	return nil
 }
 
-func (p *SnowProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
 
-func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *SnowProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

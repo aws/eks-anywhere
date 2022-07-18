@@ -8,10 +8,10 @@ spec:
     cni: cilium
     pods:
       cidrBlocks:
-      - 192.168.0.0/16
+        - 192.168.0.0/16
     services:
       cidrBlocks:
-      - 10.96.0.0/12
+        - 10.96.0.0/12
   controlPlaneConfiguration:
     count: 1
     endpoint:
@@ -31,10 +31,10 @@ spec:
   managementCluster:
     name: test
   workerNodeGroupConfigurations:
-  - count: 1
-    machineGroupRef:
-      name: test-md
-      kind: TinkerbellMachineConfig
+    - count: 1
+      machineGroupRef:
+        name: test-md
+        kind: TinkerbellMachineConfig
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -42,11 +42,7 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: test
 spec:
-  tinkerbellCertURL: "http://1.2.3.4/cert"
-  tinkerbellGRPCAuth: "1.2.3.4:0000"
-  tinkerbellHegelURL: "http://1.2.3.4:50051"
   tinkerbellIP: "1.2.3.4"
-  tinkerbellPBnJGRPCAuth: "1.2.3.4:00000"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -75,18 +71,18 @@ spec:
     id: ""
     name: tink-test
     tasks:
-    - actions:
-      - environment:
-          COMPRESSED: "true"
-          DEST_DISK: /dev/sda
-          IMG_URL: ""
-        image: image2disk:v1.0.0
-        name: stream-image
-        timeout: 360
-      name: tink-test
-      volumes:
-      - /dev:/dev
-      - /dev/console:/dev/console
-      - /lib/firmware:/lib/firmware:ro
-      worker: '{{.device_1}}'
+      - actions:
+          - environment:
+              COMPRESSED: "true"
+              DEST_DISK: /dev/sda
+              IMG_URL: ""
+            image: image2disk:v1.0.0
+            name: stream-image
+            timeout: 600
+        name: tink-test
+        volumes:
+          - /dev:/dev
+          - /dev/console:/dev/console
+          - /lib/firmware:/lib/firmware:ro
+        worker: "{{.device_1}}"
     version: "0.1"

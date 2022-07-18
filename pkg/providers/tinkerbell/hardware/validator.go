@@ -8,6 +8,7 @@ import (
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
@@ -52,10 +53,6 @@ var (
 // StaticMachineAssertions defines all static data assertions performed on a Machine.
 func StaticMachineAssertions() MachineAssertion {
 	return func(m Machine) error {
-		if m.ID == "" {
-			return newEmptyFieldError("ID")
-		}
-
 		if m.IPAddress == "" {
 			return newEmptyFieldError("IPAddress")
 		}
@@ -135,26 +132,7 @@ func StaticMachineAssertions() MachineAssertion {
 			if m.BMCPassword == "" {
 				return newEmptyFieldError("BMCPassword")
 			}
-
-			if m.BMCVendor == "" {
-				return newEmptyFieldError("BMCVendor")
-			}
 		}
-
-		return nil
-	}
-}
-
-// UniqueIDs asserts a given Machine instance has a unique ID field relative to previously seen Machine instances.
-// It is not thread safe. It has a 1 time use.
-func UniqueIDs() MachineAssertion {
-	ids := make(map[string]struct{})
-	return func(m Machine) error {
-		if _, seen := ids[m.ID]; seen {
-			return fmt.Errorf("duplicate ID: %v", m.ID)
-		}
-
-		ids[m.ID] = struct{}{}
 
 		return nil
 	}
@@ -216,7 +194,7 @@ func UniqueBMCIPAddress() MachineAssertion {
 		}
 
 		if m.BMCIPAddress == "" {
-			return fmt.Errorf("missing BMCIPAddress (id=\"%v\")", m.ID)
+			return fmt.Errorf("missing BMCIPAddress (mac=\"%v\")", m.MACAddress)
 		}
 
 		if _, seen := ips[m.BMCIPAddress]; seen {
@@ -234,7 +212,6 @@ func UniqueBMCIPAddress() MachineAssertion {
 func RegisterDefaultAssertions(validator *DefaultMachineValidator) {
 	validator.Register([]MachineAssertion{
 		StaticMachineAssertions(),
-		UniqueIDs(),
 		UniqueIPAddress(),
 		UniqueMACAddress(),
 		UniqueHostnames(),
@@ -254,4 +231,58 @@ func validateLabelValue(v string) error {
 		return fmt.Errorf("%v", strings.Join(errs, "; "))
 	}
 	return nil
+}
+
+// MatchingDisksForSelectors returns an assertion that ensures all machines matching a given entry
+// in selectors specify the same Disk value.
+func MatchingDisksForSelectors(selectors []v1alpha1.HardwareSelector) MachineAssertion {
+	diskCaches := make([]struct {
+		Selector v1alpha1.HardwareSelector
+		Disk     string
+	}, 0, len(selectors))
+
+	for _, selector := range selectors {
+		diskCaches = append(diskCaches, struct {
+			Selector v1alpha1.HardwareSelector
+			Disk     string
+		}{Selector: selector})
+	}
+
+	// For each selector check if the machine matches the selector and whether it matches
+	// any previously observed disks erroring if not.
+	return func(machine Machine) error {
+		for i, cache := range diskCaches {
+			switch {
+			// If we don't match the selector do nothing.
+			case !LabelsMatchSelector(cache.Selector, machine.Labels):
+
+			// If this is the first machine we've observed matching the selector, configure the
+			// disk cache.
+			case cache.Disk == "":
+				diskCaches[i].Disk = machine.Disk
+
+			// We have a machine that matches the selector and we've already cached a disk for
+			// the selector, so ensure the disk for this machine matches the cache.
+			case cache.Disk != machine.Disk:
+				return fmt.Errorf(
+					"disk value's must be the same for all machines matching selector: %v",
+					cache.Selector,
+				)
+			}
+		}
+
+		return nil
+	}
+}
+
+// LabelsMatchSelector ensures all selector key-value pairs can be found in labels.
+// If selector is empty true is always returned.
+func LabelsMatchSelector(selector v1alpha1.HardwareSelector, labels Labels) bool {
+	for expectKey, expectValue := range selector {
+		labelValue, hasLabel := labels[expectKey]
+		if !hasLabel || labelValue != expectValue {
+			return false
+		}
+	}
+	return true
 }

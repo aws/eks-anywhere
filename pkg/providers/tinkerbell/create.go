@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -34,19 +36,26 @@ func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 		opts = append(opts, bootstrapper.WithEnv(env))
 	}
 
-	if p.setupTinkerbell {
-		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
-	}
+	opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
 
 	return opts, nil
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if p.setupTinkerbell {
-		logger.V(4).Info("Installing Tinkerbell stack on the bootstrap cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, true); err != nil {
-			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
-		}
+	logger.V(4).Info("Installing Tinkerbell stack on bootstrap cluster")
+
+	err := p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell,
+		p.tinkerbellIp,
+		cluster.KubeconfigFile,
+		p.datacenterConfig.Spec.HookImagesURLPath,
+		stack.WithNamespaceCreate(false),
+		stack.WithBootsOnDocker(),
+		stack.WithHostPortEnabled(true),
+	)
+	if err != nil {
+		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
 	}
 
 	return nil
@@ -65,25 +74,36 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 }
 
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if p.setupTinkerbell {
+	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
-		logger.V(4).Info("Installing Tinkerbell stack on the workload cluster")
-		if err := p.InstallTinkerbellStack(ctx, cluster, clusterSpec, false); err != nil {
-			return fmt.Errorf("install tinkerbell stack on workload cluster: %v", err)
-		}
-
-		logger.V(4).Info("Removing local boots container")
-		if err := p.docker.ForceRemove(ctx, bootsContainerName); err != nil {
-			return fmt.Errorf("remove local boots container: %v", err)
-		}
+	err := p.stackInstaller.Install(
+		ctx,
+		clusterSpec.VersionsBundle.Tinkerbell,
+		p.templateBuilder.datacenterSpec.TinkerbellIP,
+		cluster.KubeconfigFile,
+		p.datacenterConfig.Spec.HookImagesURLPath,
+		stack.WithNamespaceCreate(true),
+		stack.WithBootsOnKubernetes(),
+		stack.WithHostPortEnabled(false),
+		stack.WithLoadBalancer(),
+	)
+	if err != nil {
+		return fmt.Errorf("installing stack on workload cluster: %v", err)
 	}
+
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		return ErrExternalEtcdUnsupported
+	}
 
-	if err := hardware.ParseYAMLCatalogueFromFile(p.catalogue, p.hardwareManifestPath); err != nil {
+	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {
 		return err
 	}
 
@@ -93,21 +113,76 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		return err
 	}
 
+	if err := p.readCSVToCatalogue(); err != nil {
+		return err
+	}
+
 	spec := NewClusterSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	// TODO(chrisdoherty4) Look to inject the validator. Possibly look to use a builder for
 	// constructing the validations rather than injecting flags into the provider.
-	validator := NewClusterSpecValidator(
-		NewMinimumHardwareAvailableAssertion(p.catalogue),
+	clusterSpecValidator := NewClusterSpecValidator(
+		MinimumHardwareAvailableAssertionForCreate(p.catalogue),
+		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
 
 	if !p.skipIpCheck {
-		validator.Register(NewIPNotInUseAssertion(p.netClient))
+		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
-	if err := validator.Validate(spec); err != nil {
+	if p.datacenterConfig.Spec.OSImageURL != "" {
+		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.OSImageURL); err != nil {
+			return fmt.Errorf("parsing osImageOverride: %v", err)
+		}
+	}
+
+	if p.datacenterConfig.Spec.HookImagesURLPath != "" {
+		if _, err := url.ParseRequestURI(p.datacenterConfig.Spec.HookImagesURLPath); err != nil {
+			return fmt.Errorf("parsing hookOverride: %v", err)
+		}
+		logger.Info("hook path override set", "path", p.datacenterConfig.Spec.HookImagesURLPath)
+	}
+
+	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
+	if err := clusterSpecValidator.Validate(spec); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (p *Provider) readCSVToCatalogue() error {
+	// Create a catalogue writer used to write hardware to the catalogue.
+	catalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+	// Combine disk extraction with catalogue writing. Disk extraction will be used for rendering
+	// templates.
+	writer := hardware.MultiMachineWriter(catalogueWriter, &p.diskExtractor)
+
+	machineValidator := hardware.NewDefaultMachineValidator()
+
+	// Build a set of selectors from machine configs.
+	selectors := selectorsFromMachineConfigs(p.machineConfigs)
+	machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
+
+	// Translate all Machine instances from the p.machines source into Kubernetes object types.
+	// The PostBootstrapSetup() call invoked elsewhere in the program serializes the catalogue
+	// and submits it to the clsuter.
+	machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
+	if err != nil {
+		return err
+	}
+
+	return hardware.TranslateAll(machines, writer, machineValidator)
+}
+
+// selectorsFromMachineConfigs extracts all selectors from TinkerbellMachineConfigs returning them
+// as a slice. It doesn't need the map, it only accepts that for ease as that's how we manage them
+// in the provider construct.
+func selectorsFromMachineConfigs(configs map[string]*v1alpha1.TinkerbellMachineConfig) []v1alpha1.HardwareSelector {
+	selectors := make([]v1alpha1.HardwareSelector, 0, len(configs))
+	for _, s := range configs {
+		selectors = append(selectors, s.Spec.HardwareSelector)
+	}
+	return selectors
 }

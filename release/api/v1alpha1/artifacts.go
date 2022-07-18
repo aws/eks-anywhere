@@ -102,10 +102,15 @@ func (vb *VersionsBundle) DockerImages() []Image {
 }
 
 func (vb *VersionsBundle) SnowImages() []Image {
-	return []Image{
-		vb.Snow.KubeVip,
-		vb.Snow.Manager,
+	i := make([]Image, 0, 2)
+	if vb.Snow.KubeVip.URI != "" {
+		i = append(i, vb.Snow.KubeVip)
 	}
+	if vb.Snow.Manager.URI != "" {
+		i = append(i, vb.Snow.Manager)
+	}
+
+	return i
 }
 
 func (vb *VersionsBundle) SharedImages() []Image {
@@ -127,6 +132,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.EksD.KindNode,
 		vb.Eksa.CliTools,
 		vb.Eksa.ClusterController,
+		vb.Eksa.DiagnosticCollector,
 		vb.Flux.HelmController,
 		vb.Flux.KustomizeController,
 		vb.Flux.NotificationController,

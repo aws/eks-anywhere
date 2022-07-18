@@ -24,7 +24,8 @@ import (
 	"testing"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -33,9 +34,9 @@ import (
 )
 
 const (
-	releaseFolder             = "release"
-	testdataFolder            = "pkg/test/testdata"
-	artifactsDownloadLocation = "downloaded-artifacts"
+	releaseFolder         = "release"
+	testdataFolder        = "pkg/test/testdata"
+	generatedBundleFolder = "generated-bundles"
 )
 
 var releaseConfig = &ReleaseConfig{
@@ -74,27 +75,16 @@ func TestGenerateBundleManifest(t *testing.T) {
 			cliMaxVersion:       "v0.7.2",
 		},
 		{
-			testName:            "Dev-release from release-0.8",
-			buildRepoBranchName: "release-0.8",
-			cliRepoBranchName:   "release-0.8",
-			cliMinVersion:       "v0.8.0",
-			cliMaxVersion:       "v0.8.0",
+			testName:            "Dev-release from release-0.10",
+			buildRepoBranchName: "release-0.10",
+			cliRepoBranchName:   "release-0.10",
+			cliMinVersion:       "v0.10.0",
+			cliMaxVersion:       "v0.10.0",
 		},
 	}
 
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			bundle := &anywherev1alpha1.Bundles{
-				Spec: anywherev1alpha1.BundlesSpec{
-					Number:        releaseConfig.BundleNumber,
-					CliMinVersion: tt.cliMinVersion,
-					CliMaxVersion: tt.cliMaxVersion,
-				},
-			}
-			bundle.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			bundle.Kind = anywherev1alpha1.BundlesKind
-			bundle.CreationTimestamp = v1.Time{Time: releaseConfig.ReleaseDate}
-
 			homeDir, err := os.UserHomeDir()
 			if err != nil {
 				t.Fatalf("Error getting home directory: %v\n", err)
@@ -111,9 +101,13 @@ func TestGenerateBundleManifest(t *testing.T) {
 				t.Fatalf("Error getting top-level Git directory: %v\n", err)
 			}
 
+			generatedBundlePath := filepath.Join(gitRoot, releaseFolder, generatedBundleFolder)
+			if err := os.MkdirAll(generatedBundlePath, 0o755); err != nil {
+				t.Fatalf("Error creating directory at %s for bundle generation: %v\n", generatedBundleFolder, err)
+			}
+
 			releaseConfig.BuildRepoBranchName = tt.buildRepoBranchName
 			releaseConfig.CliRepoBranchName = tt.cliRepoBranchName
-			releaseConfig.ArtifactDir = filepath.Join(gitRoot, releaseFolder, artifactsDownloadLocation)
 
 			releaseVersion, err := releaseConfig.GetCurrentEksADevReleaseVersion(releaseConfig.ReleaseVersion)
 			if err != nil {
@@ -139,15 +133,14 @@ func TestGenerateBundleManifest(t *testing.T) {
 			}
 			releaseConfig.BundleArtifactsTable = bundleArtifactsTable
 
-			err = releaseConfig.PrepareBundleRelease()
-			if err != nil {
-				t.Fatalf("Error preparing bundle release: %v\n", err)
-			}
-
 			imageDigests, err := releaseConfig.GenerateImageDigestsTable(bundleArtifactsTable)
 			if err != nil {
 				t.Fatalf("Error generating image digests table: %+v\n", err)
 			}
+
+			bundle := releaseConfig.NewBaseBundles()
+			bundle.Spec.CliMinVersion = tt.cliMinVersion
+			bundle.Spec.CliMaxVersion = tt.cliMaxVersion
 
 			err = releaseConfig.GenerateBundleSpec(bundle, imageDigests)
 			if err != nil {
@@ -160,7 +153,7 @@ func TestGenerateBundleManifest(t *testing.T) {
 			}
 
 			expectedBundleManifestFile := filepath.Join(gitRoot, releaseFolder, testdataFolder, fmt.Sprintf("%s-bundle-release.yaml", tt.buildRepoBranchName))
-			generatedBundleManifestFile := filepath.Join(releaseConfig.ArtifactDir, fmt.Sprintf("%s-dry-run-bundle-release.yaml", tt.buildRepoBranchName))
+			generatedBundleManifestFile := filepath.Join(generatedBundlePath, fmt.Sprintf("%s-dry-run-bundle-release.yaml", tt.buildRepoBranchName))
 			err = ioutil.WriteFile(generatedBundleManifestFile, bundleManifest, 0o644)
 			if err != nil {
 				t.Fatalf("Error writing bundles manifest file to disk: %v\n", err)
@@ -169,4 +162,57 @@ func TestGenerateBundleManifest(t *testing.T) {
 			test.CheckFilesEquals(t, generatedBundleManifestFile, expectedBundleManifestFile, *update)
 		})
 	}
+}
+
+func TestReleaseConfigNewBundlesName(t *testing.T) {
+	testCases := []struct {
+		testName      string
+		releaseConfig *ReleaseConfig
+		want          string
+	}{
+		{
+			testName: "number 2",
+			releaseConfig: &ReleaseConfig{
+				BundleNumber: 2,
+			},
+			want: "bundles-2",
+		},
+		{
+			testName:      "no bundle number",
+			releaseConfig: &ReleaseConfig{},
+			want:          "bundles-0",
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+
+			g.Expect(tt.releaseConfig.NewBundlesName()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestReleaseConfigNewBaseBundles(t *testing.T) {
+	g := NewWithT(t)
+	now := time.Now()
+	releaseConfig := &ReleaseConfig{
+		BundleNumber: 10,
+		ReleaseDate:  now,
+	}
+	wantBundles := &anywherev1alpha1.Bundles{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+			Kind:       "Bundles",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "bundles-10",
+			CreationTimestamp: metav1.Time{Time: now},
+		},
+		Spec: anywherev1alpha1.BundlesSpec{
+			Number: 10,
+		},
+	}
+
+	g.Expect(releaseConfig.NewBaseBundles()).To(Equal(wantBundles))
 }

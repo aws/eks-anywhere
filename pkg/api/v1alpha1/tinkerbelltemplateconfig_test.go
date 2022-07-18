@@ -29,12 +29,6 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 			wantErr:     true,
 		},
 		{
-			testName:    "invalid kind",
-			fileName:    "testdata/cluster_invalid_kinds_tinkerbell.yaml",
-			wantConfigs: nil,
-			wantErr:     true,
-		},
-		{
 			testName: "valid tinkerbell template config",
 			fileName: "testdata/cluster_1_21_valid_tinkerbell.yaml",
 			wantConfigs: map[string]*TinkerbellTemplateConfig{
@@ -65,7 +59,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",
@@ -112,7 +106,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",
@@ -152,7 +146,7 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 										{
 											Name:    "stream-image",
 											Image:   "image2disk:v1.0.0",
-											Timeout: 360,
+											Timeout: 600,
 											Environment: map[string]string{
 												"IMG_URL":    "",
 												"DEST_DISK":  "/dev/sda",

@@ -40,7 +40,9 @@ func wantCAPICluster() *clusterv1.Cluster {
 			Name:      "snow-test",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "snow-test",
+				"cluster.x-k8s.io/cluster-name":                        "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
 		Spec: clusterv1.ClusterSpec{
@@ -73,7 +75,7 @@ func wantCAPICluster() *clusterv1.Cluster {
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := snow.SnowCluster(tt.clusterSpec)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	kubeadmControlPlane, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -97,7 +99,7 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 				InfrastructureRef: v1.ObjectReference{
 					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 					Kind:       "AWSSnowMachineTemplate",
-					Name:       "test-cp-1",
+					Name:       "snow-test-control-plane-1",
 				},
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
@@ -128,28 +130,30 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: tlsCipherSuitesArgs(),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{
-							"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 						KubeletExtraArgs: map[string]string{
-							"provider-id": "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"provider-id":       "aws-snow:////'{{ ds.meta_data.instance_id }}'",
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
 						},
 					},
 				},
 				PreKubeadmCommands: []string{
-					"/etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
 				PostKubeadmCommands: []string{
-					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
+					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
 				Files: []bootstrapv1.File{},
 			},
@@ -169,7 +173,7 @@ func wantRegistryMirrorCommands() []string {
 
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := snow.SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	got, err := snow.KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	tt.Expect(err).To(Succeed())
 
@@ -177,64 +181,161 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
-	tests := []struct {
-		name                 string
-		registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
-		wantFiles            []bootstrapv1.File
-	}{
-		{
-			name: "with ca cert",
-			registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint:      "1.2.3.4",
-				Port:          "443",
-				CACertContent: "xyz",
-			},
-			wantFiles: []bootstrapv1.File{
-				{
-					Path:  "/etc/containerd/config_append.toml",
-					Owner: "root:root",
-					Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+var registryMirrorTests = []struct {
+	name                 string
+	registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
+	wantFiles            []bootstrapv1.File
+}{
+	{
+		name: "with ca cert",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:      "1.2.3.4",
+			Port:          "443",
+			CACertContent: "xyz",
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
   [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
-				},
-				{
-					Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
-					Owner:   "root:root",
-					Content: "xyz",
-				},
+			},
+			{
+				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
+				Owner:   "root:root",
+				Content: "xyz",
 			},
 		},
-		{
-			name: "without ca cert",
-			registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
-				Endpoint: "1.2.3.4",
-				Port:     "443",
+	},
+	{
+		name: "with insecure skip",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:           "1.2.3.4",
+			Port:               "443",
+			InsecureSkipVerify: true,
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    insecure_skip_verify = true`,
 			},
-			wantFiles: []bootstrapv1.File{
-				{
-					Path:  "/etc/containerd/config_append.toml",
-					Owner: "root:root",
-					Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+		},
+	},
+	{
+		name: "without ca cert",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint: "1.2.3.4",
+			Port:     "443",
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
   [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]`,
-				},
 			},
 		},
-	}
-	for _, tt := range tests {
+	},
+	{
+		name: "with ca cert and insecure skip",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:           "1.2.3.4",
+			Port:               "443",
+			CACertContent:      "xyz",
+			InsecureSkipVerify: true,
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+    insecure_skip_verify = true`,
+			},
+			{
+				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
+				Owner:   "root:root",
+				Content: "xyz",
+			},
+		},
+	},
+}
+
+func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
+	for _, tt := range registryMirrorTests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			controlPlaneMachineTemplate := snow.SnowMachineTemplate(g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 			got, err := snow.KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
 			g.Expect(err).To(Succeed())
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(wantRegistryMirrorCommands(), want.Spec.KubeadmConfigSpec.PreKubeadmCommands...)
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantRegistryMirrorCommands()...)
 			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func wantProxyConfigCommands() []string {
+	return []string{
+		"sudo systemctl daemon-reload",
+		"sudo systemctl restart containerd",
+	}
+}
+
+var proxyTests = []struct {
+	name      string
+	proxy     *v1alpha1.ProxyConfiguration
+	wantFiles []bootstrapv1.File
+}{
+	{
+		name: "with proxy, pods cidr, service cidr, cp endpoint",
+		proxy: &v1alpha1.ProxyConfiguration{
+			HttpProxy:  "1.2.3.4:8888",
+			HttpsProxy: "1.2.3.4:8888",
+			NoProxy: []string{
+				"1.2.3.4/0",
+				"1.2.3.5/0",
+			},
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/systemd/system/containerd.service.d/http-proxy.conf",
+				Owner: "root:root",
+				Content: `[Service]
+Environment="HTTP_PROXY=1.2.3.4:8888"
+Environment="HTTPS_PROXY=1.2.3.4:8888"
+Environment="NO_PROXY=10.1.0.0/16,10.96.0.0/12,1.2.3.4/0,1.2.3.5/0,localhost,127.0.0.1,.svc,1.2.3.4"`,
+			},
+		},
+	},
+}
+
+func TestKubeadmControlPlaneWithProxyConfig(t *testing.T) {
+	for _, tt := range proxyTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec.ProxyConfiguration = tt.proxy
+			controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+			got, err := snow.KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
+			g.Expect(err).To(Succeed())
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantProxyConfigCommands()...)
+			g.Expect(got.Spec.KubeadmConfigSpec.PreKubeadmCommands).To(Equal(want.Spec.KubeadmConfigSpec.PreKubeadmCommands))
 		})
 	}
 }
@@ -280,17 +381,6 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 	}
 }
 
-func TestKubeadmConfigTemplates(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
-		"md-0": wantKubeadmConfigTemplate(),
-	}
-	tt.Expect(got).To(Equal(want))
-}
-
 func wantMachineDeployment() *clusterv1.MachineDeployment {
 	wantVersion := "v1.21.5-eks-1-21-9"
 	wantReplicas := int32(3)
@@ -303,7 +393,9 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Name:      "snow-test-md-0",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "snow-test",
+				"cluster.x-k8s.io/cluster-name":                        "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "snow-test",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
@@ -329,7 +421,7 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 					InfrastructureRef: v1.ObjectReference{
 						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 						Kind:       "AWSSnowMachineTemplate",
-						Name:       "test-wn-1",
+						Name:       "snow-test-md-0-1",
 					},
 					Version: &wantVersion,
 				},
@@ -337,20 +429,6 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 			Replicas: &wantReplicas,
 		},
 	}
-}
-
-func TestMachineDeployments(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	kubeadmConfigTemplates, err := snow.KubeadmConfigTemplates(tt.clusterSpec)
-	tt.Expect(err).To(Succeed())
-
-	workerMachineTemplates := snow.SnowMachineTemplates(tt.clusterSpec)
-	got := snow.MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
-
-	want := map[string]*clusterv1.MachineDeployment{
-		"md-0": wantMachineDeployment(),
-	}
-	tt.Expect(got).To(Equal(want))
 }
 
 func wantSnowCluster() *snowv1.AWSSnowCluster {
@@ -389,7 +467,7 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 			Kind:       "AWSSnowMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-wn-1",
+			Name:      "snow-test-md-0-1",
 			Namespace: "eksa-system",
 		},
 		Spec: snowv1.AWSSnowMachineTemplateSpec{
@@ -405,6 +483,10 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 						InsecureSkipSecretsManager: true,
 					},
 					PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
+					Devices: []string{
+						"1.2.3.4",
+						"1.2.3.5",
+					},
 				},
 			},
 		},
@@ -413,16 +495,13 @@ func wantSnowMachineTemplate() *snowv1.AWSSnowMachineTemplate {
 
 func TestSnowMachineTemplate(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplate(tt.machineConfigs["test-wn"])
+	got := snow.SnowMachineTemplate("snow-test-control-plane-1", tt.machineConfigs["test-cp"])
 	want := wantSnowMachineTemplate()
+	want.SetName("snow-test-control-plane-1")
+	want.Spec.Template.Spec.InstanceType = "sbe-c.large"
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestSnowMachineTemplates(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got := snow.SnowMachineTemplates(tt.clusterSpec)
-	want := map[string]*snowv1.AWSSnowMachineTemplate{
-		"test-wn": wantSnowMachineTemplate(),
-	}
-	tt.Expect(got).To(Equal(want))
+func tlsCipherSuitesArgs() map[string]string {
+	return map[string]string{"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"}
 }

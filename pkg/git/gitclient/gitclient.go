@@ -218,6 +218,7 @@ func (g *GitClient) Branch(name string) error {
 		Name:   name,
 		Remote: gogit.DefaultRemoteName,
 		Merge:  localBranchRef,
+		Rebase: "true",
 	}
 
 	err = g.Client.CreateBranch(r, branchOpts)

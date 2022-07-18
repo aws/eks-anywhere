@@ -17,6 +17,7 @@ type test struct {
 	t                          *testing.T
 	datacenter                 string
 	datastore                  string
+	network                    string
 	resourcePool               string
 	templateLibrary            string
 	resizeDisk2                bool
@@ -47,6 +48,7 @@ func newTest(t *testing.T) *test {
 		t:                          t,
 		datacenter:                 "SDDC-Datacenter",
 		datastore:                  "datastore",
+		network:                    "sddc-cgw-network-1",
 		resourcePool:               "*/pool/",
 		templateLibrary:            "library",
 		resizeDisk2:                false,
@@ -61,6 +63,7 @@ func newTest(t *testing.T) *test {
 		test.govc,
 		test.datacenter,
 		test.datastore,
+		test.network,
 		test.resourcePool,
 		test.templateLibrary,
 	)
@@ -173,7 +176,7 @@ func TestFactoryCreateIfMissingErrorDeploy(t *testing.T) {
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName).Return(nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(ct.dummyError)
 
 	ct.assertErrorFromCreateIfMissing()
@@ -187,7 +190,7 @@ func TestFactoryCreateIfMissingErrorFromTagFactory(t *testing.T) {
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName).Return(nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(nil)
 
 	// expects for tagging
@@ -204,7 +207,7 @@ func TestFactoryCreateIfMissingSuccessLibraryDoesNotExist(t *testing.T) {
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName).Return(nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(nil)
 
 	// expects for tagging
@@ -221,7 +224,7 @@ func TestFactoryCreateIfMissingSuccessLibraryExists(t *testing.T) {
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentDoesNotExist, nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName).Return(nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(nil)
 
 	// expects for tagging
@@ -237,7 +240,7 @@ func TestFactoryCreateIfMissingSuccessTemplateInLibraryExists(t *testing.T) {
 	ct.govc.EXPECT().LibraryElementExists(ct.ctx, ct.templateLibrary).Return(true, nil)
 	ct.govc.EXPECT().GetLibraryElementContentVersion(ct.ctx, ct.templateInLibrary).Return(ct.libraryContentValid, nil)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(nil)
 
 	// expects for tagging
@@ -255,7 +258,7 @@ func TestFactoryCreateIfMissingSuccessTemplateInLibraryCorrupted(t *testing.T) {
 	ct.govc.EXPECT().DeleteLibraryElement(ct.ctx, ct.templateInLibrary).Return(nil)
 	ct.govc.EXPECT().ImportTemplate(ct.ctx, ct.templateLibrary, ct.ovaURL, ct.templateName)
 	ct.govc.EXPECT().DeployTemplateFromLibrary(
-		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.resourcePool, ct.resizeDisk2,
+		ct.ctx, ct.templateDir, ct.templateName, ct.templateLibrary, ct.datacenter, ct.datastore, ct.network, ct.resourcePool, ct.resizeDisk2,
 	).Return(nil)
 
 	// expects for tagging

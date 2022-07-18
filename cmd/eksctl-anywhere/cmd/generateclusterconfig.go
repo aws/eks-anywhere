@@ -12,13 +12,11 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 var removeFromDefaultConfig = []string{"spec.clusterNetwork.dns"}
@@ -52,7 +50,7 @@ func preRunGenerateClusterConfig(cmd *cobra.Command, args []string) {
 
 func init() {
 	generateCmd.AddCommand(generateClusterConfigCmd)
-	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (vsphere or docker)")
+	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (vsphere or tinkerbell or docker)")
 	err := generateClusterConfigCmd.MarkFlagRequired("provider")
 	if err != nil {
 		log.Fatalf("marking flag as required: %v", err)
@@ -63,7 +61,6 @@ func generateClusterConfig(clusterName string) error {
 	var resources [][]byte
 	var datacenterYaml []byte
 	var machineGroupYaml [][]byte
-	var tinkerbellTemplateYaml []byte
 	var clusterConfigOpts []v1alpha1.ClusterGenerateOpt
 	switch strings.ToLower(viper.GetString("provider")) {
 	case constants.DockerProviderName:
@@ -192,52 +189,35 @@ func generateClusterConfig(clusterName string) error {
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.TinkerbellProviderName:
-		if features.IsActive(features.TinkerbellProvider()) {
-			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
-			datacenterConfig := v1alpha1.NewTinkerbellDatacenterConfigGenerate(clusterName)
-			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
-			clusterConfigOpts = append(clusterConfigOpts,
-				v1alpha1.ControlPlaneConfigCount(1),
-				v1alpha1.WorkerNodeConfigCount(1),
-				v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
-			)
-			dcyaml, err := yaml.Marshal(datacenterConfig)
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-			datacenterYaml = dcyaml
-			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), v1alpha1.GetClusterDefaultKubernetesVersion())
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-
-			tinkTmpConfig := v1alpha1.NewDefaultTinkerbellTemplateConfigGenerate(clusterName, *versionBundle)
-			tinkTmpYaml, err := yaml.Marshal(tinkTmpConfig)
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-			tinkerbellTemplateYaml = tinkTmpYaml
-
-			cpMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName),
-				v1alpha1.WithTemplateRef(tinkTmpConfig))
-			workerMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(clusterName,
-				v1alpha1.WithTemplateRef(tinkTmpConfig))
-			clusterConfigOpts = append(clusterConfigOpts,
-				v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
-				v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
-			)
-			cpMcYaml, err := yaml.Marshal(cpMachineConfig)
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-			workerMcYaml, err := yaml.Marshal(workerMachineConfig)
-			if err != nil {
-				return fmt.Errorf("generating cluster yaml: %v", err)
-			}
-			machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
-		} else {
-			return fmt.Errorf("the tinkerbell infrastructure provider is still under development")
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
+		datacenterConfig := v1alpha1.NewTinkerbellDatacenterConfigGenerate(clusterName)
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(1),
+			v1alpha1.WorkerNodeConfigCount(1),
+			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
+		)
+		dcyaml, err := yaml.Marshal(datacenterConfig)
+		if err != nil {
+			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
+		datacenterYaml = dcyaml
+
+		cpMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
+		workerMachineConfig := v1alpha1.NewTinkerbellMachineConfigGenerate(clusterName)
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
+			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
+		)
+		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
+		if err != nil {
+			return fmt.Errorf("generating cluster yaml: %v", err)
+		}
+		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
+		if err != nil {
+			return fmt.Errorf("generating cluster yaml: %v", err)
+		}
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	default:
 		return fmt.Errorf("not a valid provider")
 	}
@@ -255,9 +235,7 @@ func generateClusterConfig(clusterName string) error {
 	if len(machineGroupYaml) > 0 {
 		resources = append(resources, machineGroupYaml...)
 	}
-	if len(tinkerbellTemplateYaml) > 0 {
-		resources = append(resources, tinkerbellTemplateYaml)
-	}
+
 	fmt.Println(string(templater.AppendYamlResources(resources...)))
 	return nil
 }

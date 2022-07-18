@@ -1,7 +1,10 @@
 package cluster
 
 import (
+	"reflect"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
 type Config struct {
@@ -79,4 +82,58 @@ func (c *Config) DeepCopy() *Config {
 	}
 
 	return c2
+}
+
+// ChildObjects returns all API objects in Config except the Cluster
+func (c *Config) ChildObjects() []kubernetes.Object {
+	objs := make(
+		[]kubernetes.Object,
+		0,
+		len(c.VSphereMachineConfigs)+len(c.SnowMachineConfigs)+len(c.CloudStackMachineConfigs)+4,
+		// machine configs length + datacenter + OIDC + IAM + gitops
+	)
+
+	objs = appendIfNotNil(objs,
+		c.CloudStackDatacenter,
+		c.VSphereDatacenter,
+		c.DockerDatacenter,
+		c.SnowDatacenter,
+		c.GitOpsConfig,
+		c.FluxConfig,
+	)
+
+	for _, e := range c.VSphereMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.CloudStackMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.SnowMachineConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.OIDCConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	for _, e := range c.AWSIAMConfigs {
+		objs = appendIfNotNil(objs, e)
+	}
+
+	return objs
+}
+
+func appendIfNotNil(objs []kubernetes.Object, elems ...kubernetes.Object) []kubernetes.Object {
+	for _, e := range elems {
+		// Since we receive interfaces, these will never be nil since they contain
+		// the type of the original implementing struct
+		// I can't find another clean option of doing this
+		if !reflect.ValueOf(e).IsNil() {
+			objs = append(objs, e)
+		}
+	}
+
+	return objs
 }

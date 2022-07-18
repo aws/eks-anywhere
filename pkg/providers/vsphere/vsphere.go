@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -115,7 +116,7 @@ type ProviderGovcClient interface {
 	DatacenterExists(ctx context.Context, datacenter string) (bool, error)
 	NetworkExists(ctx context.Context, network string) (bool, error)
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	GetTags(ctx context.Context, path string) (tags []string, err error)
 	ListTags(ctx context.Context) ([]string, error)
@@ -693,6 +694,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
 	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
@@ -750,7 +753,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"controllerManagerExtraArgs":           controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
 		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
 		"format":                               format,
@@ -785,7 +788,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -878,7 +881,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -1070,7 +1073,7 @@ func (p *vsphereProvider) GenerateStorageClass() []byte {
 	return defaultStorageClass
 }
 
-func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
+func (p *vsphereProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
@@ -1088,7 +1091,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 			return err
 		}
 	}
-	t, err := template.New("tmpl").Parse(defaultSecretObject)
+	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}
@@ -1113,6 +1116,10 @@ func (p *vsphereProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster
 }
 
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *vsphereProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 
@@ -1378,16 +1385,10 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
+func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
 }
 
-func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *vsphereProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

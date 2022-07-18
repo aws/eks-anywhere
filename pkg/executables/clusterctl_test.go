@@ -412,16 +412,16 @@ var versionBundle = &cluster.VersionsBundle{
 		},
 		CertManager: v1alpha1.CertManagerBundle{
 			Acmesolver: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0",
 			},
 			Cainjector: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0",
 			},
 			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0",
 			},
 			Webhook: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0",
 			},
 			Manifest: v1alpha1.Manifest{
 				URI: "testdata/fake_manifest.yaml",
@@ -483,6 +483,12 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
 			KubeProxy: kubeProxyVersion08,
+		},
+		Tinkerbell: v1alpha1.TinkerbellBundle{
+			Version: "v0.1.0",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-0.0.1.build.38",
+			},
 		},
 		CloudStack: v1alpha1.CloudStackBundle{
 			Version: "v0.7.8",

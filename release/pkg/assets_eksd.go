@@ -49,14 +49,14 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
 
 	for _, osName := range osNames {
 		for _, imageFormat := range imageFormats {
-			if osName == "bottlerocket" && (imageFormat == "raw" || !utils.SliceContains(bottlerocketSupportedK8sVersions, eksDReleaseChannel)) {
+			bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersionsByFormat(r, imageFormat)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			if osName == "bottlerocket" && !utils.SliceContains(bottlerocketSupportedK8sVersions, eksDReleaseChannel) {
 				continue
 			}
 			var sourceS3Key string
@@ -65,9 +65,13 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 			var releaseName string
 			sourcedFromBranch := r.BuildRepoBranchName
 			latestPath := getLatestUploadDestination(sourcedFromBranch)
+			imageExtension := imageExtensions[imageFormat]
+			if osName == "bottlerocket" && imageFormat == "raw" {
+				imageExtension = "img.gz"
+			}
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
-				sourceS3Key = fmt.Sprintf("%s.%s", osName, imageExtensions[imageFormat])
+				sourceS3Key = fmt.Sprintf("%s.%s", osName, imageExtension)
 				sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, imageFormat, osName, latestPath)
 			} else {
 				sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.%s",
@@ -77,7 +81,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 					eksDReleaseNumber,
 					r.BundleNumber,
 					arch,
-					imageExtensions[imageFormat],
+					imageExtension,
 				)
 				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, imageFormat, eksDReleaseChannel)
 			}
@@ -90,7 +94,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 					eksDReleaseNumber,
 					r.DevReleaseUriVersion,
 					arch,
-					imageExtensions[imageFormat],
+					imageExtension,
 				)
 				releaseS3Path = fmt.Sprintf("artifacts/%s/eks-distro/%s/%s/%s-%s",
 					r.DevReleaseUriVersion,
@@ -107,7 +111,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 					eksDReleaseNumber,
 					r.BundleNumber,
 					arch,
-					imageExtensions[imageFormat],
+					imageExtension,
 				)
 				releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, imageFormat, eksDReleaseChannel)
 			}
@@ -210,7 +214,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 
 			bundleArchiveArtifact := anywherev1alpha1.Archive{
 				Name:        archiveArtifact.ReleaseName,
-				Description: fmt.Sprintf("%s OVA for EKS-D %s-%s release", strings.Title(archiveArtifact.OSName), eksDReleaseChannel, eksDReleaseNumber),
+				Description: fmt.Sprintf("%s %s image for EKS-D %s-%s release", strings.Title(archiveArtifact.OSName), strings.Title(archiveArtifact.ImageFormat), eksDReleaseChannel, eksDReleaseNumber),
 				OS:          archiveArtifact.OS,
 				OSName:      archiveArtifact.OSName,
 				Arch:        archiveArtifact.Arch,
@@ -291,6 +295,9 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 			},
 		},
 		Raw: anywherev1alpha1.OSImageBundle{
+			Bottlerocket: anywherev1alpha1.OSImage{
+				Archive: bundleArchiveArtifacts["bottlerocket-raw"],
+			},
 			Ubuntu: anywherev1alpha1.OSImage{
 				Archive: bundleArchiveArtifacts["ubuntu-raw"],
 				Etcdadm: bundleArchiveArtifacts["etcdadm"],

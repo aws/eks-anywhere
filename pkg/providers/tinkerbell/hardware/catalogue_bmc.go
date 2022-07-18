@@ -4,6 +4,8 @@ import (
 	"github.com/tinkerbell/rufio/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 // IndexBMCs indexes BMC instances on index by extracfting the key using fn.
@@ -88,13 +90,15 @@ func baseboardManagementComputerFromMachine(m Machine) *v1alpha1.BaseboardManage
 	return &v1alpha1.BaseboardManagement{
 		TypeMeta: newBaseboardManagementTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{
-			Name: formatBMCRef(m),
+			Name:      formatBMCRef(m),
+			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: v1alpha1.BaseboardManagementSpec{
 			Connection: v1alpha1.Connection{
 				Host: m.BMCIPAddress,
 				AuthSecretRef: corev1.SecretReference{
-					Name: formatBMCSecretRef(m),
+					Name:      formatBMCSecretRef(m),
+					Namespace: constants.EksaSystemNamespace,
 				},
 				InsecureTLS: true,
 			},

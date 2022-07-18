@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -152,13 +153,24 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
-	var snowBundle anywherev1alpha1.SnowBundle
-	if r.DevRelease && r.BuildRepoBranchName == "main" {
+	var branchMinorVersion int
+	if strings.HasPrefix(r.BuildRepoBranchName, "release-") {
+		branchMinorVersion, err = strconv.Atoi(strings.Split(r.BuildRepoBranchName, ".")[1])
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error converting branch minor version to integer")
+		}
+	}
+
+	// TODO: change logic when we update major version to 1
+	if r.BuildRepoBranchName == "main" || branchMinorVersion > 9 {
 		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
 		}
+	}
 
+	var snowBundle anywherev1alpha1.SnowBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		snowBundle, err = r.GetSnowBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
@@ -281,16 +293,29 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"eks-anywhere-packages":           r.GetPackagesAssets,
 	}
 
-	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
+	var branchMinorVersion int
+	var err error
+	if strings.HasPrefix(r.BuildRepoBranchName, "release-") {
+		branchMinorVersion, err = strconv.Atoi(strings.Split(r.BuildRepoBranchName, ".")[1])
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error converting branch minor version to integer")
+		}
+	}
+	// TODO: change logic when we update major version to 1
+	if r.BuildRepoBranchName == "main" || branchMinorVersion > 9 {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
-		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
-		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
+		eksAArtifactsFuncs["rufio"] = r.GetRufioAssets
+		eksAArtifactsFuncs["tinkerbell-chart"] = r.GetTinkerbellChartAssets
+	}
+
+	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
+		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -407,6 +432,12 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				tagOptions["eksDReleaseChannel"],
 				tagOptions["eksDReleaseNumber"],
 				latestTag,
+			)
+		} else if name == "tinkerbell-chart" {
+			sourceImageUri = fmt.Sprintf("%s/%s:%s",
+				r.SourceContainerRegistry,
+				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s",
@@ -676,4 +707,24 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 		}
 	}
 	return semver, nil
+}
+
+func (r *ReleaseConfig) NewBundlesName() string {
+	return fmt.Sprintf("bundles-%d", r.BundleNumber)
+}
+
+func (r *ReleaseConfig) NewBaseBundles() *anywherev1alpha1.Bundles {
+	return &anywherev1alpha1.Bundles{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: anywherev1alpha1.GroupVersion.String(),
+			Kind:       anywherev1alpha1.BundlesKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              r.NewBundlesName(),
+			CreationTimestamp: metav1.Time{Time: r.ReleaseDate},
+		},
+		Spec: anywherev1alpha1.BundlesSpec{
+			Number: r.BundleNumber,
+		},
+	}
 }

@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -65,7 +64,7 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 		ProjectPath:       capiProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -166,11 +165,10 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.DockerBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}

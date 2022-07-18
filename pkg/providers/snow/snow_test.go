@@ -11,13 +11,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	kubemock "github.com/aws/eks-anywhere/pkg/clients/kubernetes/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -138,7 +138,7 @@ func givenClusterSpec() *cluster.Spec {
 					KubeVip: releasev1alpha1.Image{
 						Name:        "kube-vip",
 						OS:          "linux",
-						URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+						URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 						ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 						Description: "Container image for kube-vip image",
 						Arch:        []string{"amd64"},
@@ -187,6 +187,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.large",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 		"test-wn": {
@@ -199,6 +203,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				InstanceType:             "sbe-c.xlarge",
 				SshKeyName:               "default",
 				PhysicalNetworkConnector: "SFP_PLUS",
+				Devices: []string{
+					"1.2.3.4",
+					"1.2.3.5",
+				},
 			},
 		},
 	}
@@ -216,8 +224,8 @@ func givenEmptyClusterSpec() *cluster.Spec {
 
 func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient) *snow.SnowProvider {
 	awsClients := snow.AwsClientMap{
-		"device-1": mockaws,
-		"device-2": mockaws,
+		"1.2.3.4": mockaws,
+		"1.2.3.5": mockaws,
 	}
 	validator := snow.NewValidatorFromAwsClientMap(awsClients)
 	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, nil, nil)
@@ -336,7 +344,7 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			"snow-test",
 			constants.EksaSystemNamespace,
 			&controlplanev1.KubeadmControlPlane{},
 		).
@@ -359,52 +367,66 @@ func TestGenerateCAPISpecForCreate(t *testing.T) {
 
 func TestGenerateCAPISpecForUpgrade(t *testing.T) {
 	tt := newSnowTest(t)
+	mt := wantSnowMachineTemplate()
 	tt.kubeUnAuthClient.EXPECT().KubeconfigClient(tt.cluster.KubeconfigFile).Return(tt.kubeconfigClient)
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.KubeadmControlPlaneName(tt.clusterSpec),
+			"snow-test",
 			constants.EksaSystemNamespace,
 			&controlplanev1.KubeadmControlPlane{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *controlplanev1.KubeadmControlPlane) error {
-			obj.Spec.MachineTemplate.InfrastructureRef.Name = "test-cp-1"
+			obj.Spec.MachineTemplate.InfrastructureRef.Name = "snow-test-control-plane-1"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-cp-1",
+			"snow-test-control-plane-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
 			wantSnowMachineTemplate().DeepCopyInto(obj)
-			obj.SetName("test-cp-1")
+			obj.SetName("snow-test-control-plane-1")
 			obj.Spec.Template.Spec.InstanceType = "sbe-c.large"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			clusterapi.MachineDeploymentName(tt.clusterSpec, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]),
+			"snow-test-md-0",
 			constants.EksaSystemNamespace,
 			&clusterv1.MachineDeployment{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *clusterv1.MachineDeployment) error {
-			obj.Spec.Template.Spec.InfrastructureRef.Name = "test-wn-1"
+			wantMachineDeployment().DeepCopyInto(obj)
+			obj.Spec.Template.Spec.InfrastructureRef.Name = "snow-test-md-0-1"
+			obj.Spec.Template.Spec.Bootstrap.ConfigRef.Name = "snow-test-md-0-1"
 			return nil
 		})
 	tt.kubeconfigClient.EXPECT().
 		Get(
 			tt.ctx,
-			"test-wn-1",
+			"snow-test-md-0-1",
+			constants.EksaSystemNamespace,
+			&bootstrapv1.KubeadmConfigTemplate{},
+		).
+		DoAndReturn(func(_ context.Context, _, _ string, obj *bootstrapv1.KubeadmConfigTemplate) error {
+			wantKubeadmConfigTemplate().DeepCopyInto(obj)
+			return nil
+		})
+	tt.kubeconfigClient.EXPECT().
+		Get(
+			tt.ctx,
+			"snow-test-md-0-1",
 			constants.EksaSystemNamespace,
 			&snowv1.AWSSnowMachineTemplate{},
 		).
 		DoAndReturn(func(_ context.Context, _, _ string, obj *snowv1.AWSSnowMachineTemplate) error {
-			wantSnowMachineTemplate().DeepCopyInto(obj)
-			obj.SetName("test-wn-1")
+			mt.DeepCopyInto(obj)
+			obj.SetName("snow-test-md-0-1")
 			return nil
 		})
 
@@ -460,6 +482,13 @@ func TestMachineConfigs(t *testing.T) {
 	tt.Expect(len(want)).To(Equal(2))
 }
 
+func TestGenerateMHC(t *testing.T) {
+	tt := newSnowTest(t)
+	got, err := tt.provider.GenerateMHC(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+	test.AssertContentToFile(t, string(got), "testdata/expected_results_machine_health_check.yaml")
+}
+
 func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubeUnAuthClient.EXPECT().Delete(
@@ -508,7 +537,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip-diff",
 					OS:          "linux-diff",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433-diff",
 					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 					Description: "Container image for kube-vip image-diff",
 					Arch:        []string{"amd64-diff"},
@@ -531,7 +560,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip",
 					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 					ImageDigest: "sha256:diff",
 					Description: "Container image for kube-vip image",
 					Arch:        []string{"amd64"},
@@ -554,7 +583,7 @@ func TestUpgradeNeededBundle(t *testing.T) {
 				KubeVip: releasev1alpha1.Image{
 					Name:        "kube-vip",
 					OS:          "linux",
-					URI:         "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
+					URI:         "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433",
 					ImageDigest: "sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1",
 					Description: "Container image for kube-vip image",
 					Arch:        []string{"amd64"},

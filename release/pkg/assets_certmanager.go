@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -24,7 +23,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const certManagerProjectPath = "projects/jetstack/cert-manager"
+const certManagerProjectPath = "projects/cert-manager/cert-manager"
 
 // GetCertManagerAssets returns the eks-a artifacts for certmanager
 func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
@@ -37,12 +36,13 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 		"cert-manager-acmesolver",
 		"cert-manager-cainjector",
 		"cert-manager-controller",
+		"cert-manager-ctl",
 		"cert-manager-webhook",
 	}
 
 	artifacts := []Artifact{}
 	for _, image := range certImages {
-		repoName := fmt.Sprintf("jetstack/%s", image)
+		repoName := fmt.Sprintf("cert-manager/%s", image)
 		tagOptions := map[string]string{
 			"gitTag":      gitTag,
 			"projectPath": certManagerProjectPath,
@@ -154,11 +154,10 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 
 			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-			manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+			manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 			if err != nil {
 				return anywherev1alpha1.CertManagerBundle{}, err
 			}
-			manifestHash := generateManifestHash(manifestContents)
 			artifactHashes = append(artifactHashes, manifestHash)
 		}
 	}
@@ -181,6 +180,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		Acmesolver: bundleImageArtifacts["cert-manager-acmesolver"],
 		Cainjector: bundleImageArtifacts["cert-manager-cainjector"],
 		Controller: bundleImageArtifacts["cert-manager-controller"],
+		Ctl:        bundleImageArtifacts["cert-manager-ctl"],
 		Webhook:    bundleImageArtifacts["cert-manager-webhook"],
 		Manifest:   bundleManifestArtifacts["cert-manager.yaml"],
 	}

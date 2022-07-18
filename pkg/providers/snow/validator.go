@@ -59,3 +59,13 @@ func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alp
 
 	return nil
 }
+
+func (v *Validator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	for _, ip := range m.Spec.Devices {
+		if _, ok := v.awsClientMap[ip]; !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+	}
+
+	return nil
+}

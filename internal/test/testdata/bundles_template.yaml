@@ -32,13 +32,13 @@ spec:
       version: v0.3.19
     certManager:
       acmesolver:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       cainjector:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       controller:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       webhook:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
     cilium:
       cilium:
         uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
@@ -49,7 +49,7 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
@@ -135,7 +135,7 @@ spec:
       kubeProxy:
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       manager:
         uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       metadata:
@@ -178,13 +178,13 @@ spec:
       version: v0.3.19
     certManager:
       acmesolver:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       cainjector:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       controller:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       webhook:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
     cilium:
       cilium:
         uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
@@ -195,7 +195,7 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
@@ -281,7 +281,7 @@ spec:
       kubeProxy:
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       manager:
         uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       metadata:
@@ -324,13 +324,13 @@ spec:
       version: v0.3.19
     certManager:
       acmesolver:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       cainjector:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       controller:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
       webhook:
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
     cilium:
       cilium:
         uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
@@ -341,7 +341,7 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
@@ -423,7 +423,7 @@ spec:
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
       metadata:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
       version: v0.1.0+210860f
@@ -439,7 +439,7 @@ spec:
       kubeProxy:
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       manager:
         uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
       metadata:
@@ -518,7 +518,7 @@ spec:
         imageDigest: sha256:711a5ebd903a62707398a5a914daab5226a3416a4def36877dca8a3937c9b2e8
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-acmesolver:v1.1.0-eks-a-v0.0.0-dev-build.158
       cainjector:
         arch:
           - amd64
@@ -526,7 +526,7 @@ spec:
         imageDigest: sha256:7213acfc690ccef077c72d84d01c9b85e9e4eaa9065313681ab23ed849b4d0b7
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-cainjector:v1.1.0-eks-a-v0.0.0-dev-build.158
       controller:
         arch:
           - amd64
@@ -534,7 +534,7 @@ spec:
         imageDigest: sha256:ff95f4449c25e58405223ae7d1b6a9d8fa7528910277464d938badeec1f8d26d
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-controller:v1.1.0-eks-a-v0.0.0-dev-build.158
       webhook:
         arch:
           - amd64
@@ -542,7 +542,7 @@ spec:
         imageDigest: sha256:e6fbc2a1f498d5fc5c590e65e4c15ed0cdf6545426c0a9e3476d9f1510e2a11d
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/cert-manager/cert-manager-webhook:v1.1.0-eks-a-v0.0.0-dev-build.158
     cilium:
       cilium:
         arch:
@@ -566,7 +566,7 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
@@ -772,7 +772,7 @@ spec:
       components:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
       kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
       metadata:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
       version: v0.1.0+210860f
@@ -812,7 +812,7 @@ spec:
         imageDigest: sha256:204c63f246bd6eccc330be2875805cae0a1f6867ecac16c07732103429d312b7
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       manager:
         arch:
           - amd64

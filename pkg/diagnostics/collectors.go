@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -67,9 +69,23 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) [
 		return c.eksaDockerCollectors()
 	case v1alpha1.CloudStackDatacenterKind:
 		return c.eksaCloudstackCollectors()
+	case v1alpha1.TinkerbellDatacenterKind:
+		return c.eksaTinkerbellCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
+	tinkerbellLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CaptSystemNamespace,
+				Name:      logpath(constants.CaptSystemNamespace),
+			},
+		},
+	}
+	return append(tinkerbellLogs, c.tinkerbellCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
@@ -268,6 +284,24 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 	return c.generateCrdCollectors(mgmtCrds)
 }
 
+func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
+	captCrds := []string{
+		"baseboardmanagements.bmc.tinkerbell.org",
+		"bmcjobs.bmc.tinkerbell.org",
+		"bmctasks.bmc.tinkerbell.org",
+		"hardware.tinkerbell.org",
+		"templates.tinkerbell.org",
+		"tinkerbellclusters.infrastructure.cluster.x-k8s.io",
+		"tinkerbelldatacenterconfigs.anywhere.eks.amazonaws.com",
+		"tinkerbellmachineconfigs.anywhere.eks.amazonaws.com",
+		"tinkerbellmachines.infrastructure.cluster.x-k8s.io",
+		"tinkerbellmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"tinkerbelltemplateconfigs.anywhere.eks.amazonaws.com",
+		"workflows.tinkerbell.org",
+	}
+	return c.generateCrdCollectors(captCrds)
+}
+
 func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 	capvCrds := []string{
 		"vsphereclusteridentities.infrastructure.cluster.x-k8s.io",
@@ -325,9 +359,23 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 			},
 			Name:      collectorPath,
 			Namespace: constants.EksaDiagnosticsNamespace,
-			Image:     c.DiagnosticCollectorImage,
-			Command:   command,
-			Args:      args,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    collectorPath,
+					Image:   c.DiagnosticCollectorImage,
+					Command: command,
+					Args:    args,
+				}},
+				// It's possible for networking to not be working on the cluster or the nodes
+				// not being ready, so adding tolerations and running the pod on host networking
+				// to be able to pull the resources from the cluster
+				HostNetwork: true,
+				Tolerations: []v1.Toleration{{
+					Key:    "node.kubernetes.io",
+					Value:  "not-ready",
+					Effect: "NoSchedule",
+				}},
+			},
 		},
 	}
 }

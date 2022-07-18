@@ -35,10 +35,6 @@ func withCloudStackZoneId(zoneId string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("zoneid=\"%s\"", zoneId))
 }
 
-func withCloudStackNetworkType(networkType string) cmkCommandArgs {
-	return appendArgs(fmt.Sprintf("type=\"%s\"", networkType))
-}
-
 func withCloudStackId(id string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("id=\"%s\"", id))
 }

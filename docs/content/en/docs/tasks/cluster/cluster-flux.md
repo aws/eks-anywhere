@@ -7,6 +7,8 @@ description: >
   Use Flux to manage clusters with GitOps
 ---
 
+> **_NOTE_**: GitOps support is available for vSphere clusters, but is not yet available for Bare Metal clusters
+>
 ## GitOps Support (optional)
 
 EKS Anywhere supports a [GitOps](https://www.weave.works/technologies/gitops/) workflow for the management of your cluster.
@@ -109,7 +111,7 @@ If you have an existing repo you can set that as your repository name in the con
 If you specify a repo in your `FluxConfig` which does not exist EKS Anywhere will create it for you.
 If you would like to create a new repo you can [click here](https://github.new) to create a new repo.
 
-If your repository contains multiple cluster specification files, store them in sub-folders and specify the [configuration path]({{< relref "../../reference/clusterspec/gitops/#__clusterconfigpath__-optional" >}}) in your cluster specification.
+If your repository contains multiple cluster specification files, store them in sub-folders and specify the [configuration path]({{< relref "../../reference/clusterspec/optional/gitops/#__clusterconfigpath__-optional" >}}) in your cluster specification.
 
 In order to accommodate the management cluster feature, the CLI will now structure the repo directory following a new convention:
 
@@ -158,7 +160,7 @@ spec:
 ### Create a GitOps enabled cluster
 
 Generate your cluster configuration and add the GitOps configuration.
-For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
+For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/optional/gitops" >}}).
 
 >**_NOTE:_** After your cluster has been created the cluster configuration will automatically be committed to your git repo.
 
@@ -250,7 +252,7 @@ ssh-keyscan -t ecdsa example.com >> my_eksa_known_hosts
 This will generate a known hosts file which contains only the entry necessary to verify the identity of example.com when using an `ecdsa` based private key file.
 
 ### Example FluxConfig cluster configuration for a generic git provider
-For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
+For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/optional/gitops" >}}).
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

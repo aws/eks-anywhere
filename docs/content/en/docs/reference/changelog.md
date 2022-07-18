@@ -1,15 +1,38 @@
 ---
 title: "What's New?"
 linkTitle: "What's New?"
-weight: 55
-menu:
-  main:
-    weight: 10
+weight: 35
 ---
 
 ## Unreleased
 
+## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
+
+### Changed
+- Updated EKS Distro versions to latest release
+
+### Fixed
+- Fixed control plane nodes not upgraded for same kube version [#2636](https://github.com/aws/eks-anywhere/issues/2636)
+
+## [v0.10.0](https://github.com/aws/eks-anywhere/releases/tag/v0.10.0)
+
 ### Added
+- Added support for EKS Anywhere on bare metal with provider [tinkerbell](https://tinkerbell.org/). EKS Anywhere on bare metal supports complete provisioning cycle, including power on/off and PXE boot for standing up a cluster with the given hardware data.
+- Support for node CIDR mask config exposed via the cluster spec. [#488](https://github.com/aws/eks-anywhere/issues/488)
+
+### Changed
+- Upgraded cilium from 1.9 to 1.10. [#1124](https://github.com/aws/eks-anywhere/issues/1124)
+- Changes for EKS Anywhere packages [v0.10.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.10.0)
+
+### Fixed
+- Fix issue using self-signed certificates for registry mirror [#1857](https://github.com/aws/eks-anywhere/issues/1857)
+
+## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Fixed
+- Fix issue by avoiding processing Snow images when URI is empty
+
+## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
 ## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
 
@@ -22,7 +45,6 @@ menu:
 
 ### Fixed
 - Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)
-
 
 ## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
 

@@ -50,7 +50,7 @@ func (r *ReleaseConfig) GetKubeRbacProxyAssets() ([]Artifact, error) {
 		ProjectPath:       kubeRbacProxyProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	return artifacts, nil
 }

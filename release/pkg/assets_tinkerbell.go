@@ -16,8 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -35,6 +33,8 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
+		"rufio":                           r.BundleArtifactsTable["rufio"],
+		"tinkerbell-chart":                r.BundleArtifactsTable["tinkerbell-chart"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -72,11 +72,10 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.TinkerbellBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 
@@ -123,17 +122,12 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 				Kexec:       bundleImageArtifacts["kexec"],
 				ImageToDisk: bundleImageArtifacts["image2disk"],
 				OciToDisk:   bundleImageArtifacts["oci2disk"],
+				Reboot:      bundleImageArtifacts["reboot"],
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
-			Boots: anywherev1alpha1.TinkerbellServiceBundle{
-				Image:    bundleImageArtifacts["boots"],
-				Manifest: bundleManifestArtifacts["boots.yaml"],
-			},
+			Boots: bundleImageArtifacts["boots"],
 			Cfssl: bundleImageArtifacts["cfssl"],
-			Hegel: anywherev1alpha1.TinkerbellServiceBundle{
-				Image:    bundleImageArtifacts["hegel"],
-				Manifest: bundleManifestArtifacts["hegel.yaml"],
-			},
+			Hegel: bundleImageArtifacts["hegel"],
 			Hook: anywherev1alpha1.HookBundle{
 				Bootkit: bundleImageArtifacts["hook-bootkit"],
 				Docker:  bundleImageArtifacts["hook-docker"],
@@ -147,17 +141,13 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 					Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
 				},
 			},
-			Pbnj: anywherev1alpha1.TinkerbellServiceBundle{
-				Image:    bundleImageArtifacts["pbnj"],
-				Manifest: bundleManifestArtifacts["pbnj.yaml"],
-			},
+			Rufio: bundleImageArtifacts["rufio"],
 			Tink: anywherev1alpha1.TinkBundle{
-				TinkCli:        bundleImageArtifacts["tink-cli"],
 				TinkController: bundleImageArtifacts["tink-controller"],
 				TinkServer:     bundleImageArtifacts["tink-server"],
 				TinkWorker:     bundleImageArtifacts["tink-worker"],
-				Manifest:       bundleManifestArtifacts["tink.yaml"],
 			},
+			TinkebellChart: bundleImageArtifacts["tinkerbell-chart"],
 		},
 	}
 

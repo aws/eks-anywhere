@@ -106,7 +106,7 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 		CRDDirectoryPaths:     crdDirectoryPaths,
 		ErrorIfCRDPathMissing: true,
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
-			Paths: []string{filepath.Join("..", "..", "..", "config", "webhook")},
+			Paths: []string{filepath.Join(root, "config", "webhook")},
 		},
 	}
 
@@ -165,6 +165,11 @@ func (e *Environment) Client() client.Client {
 // APIReader returns a non cached reader client
 func (e *Environment) APIReader() client.Reader {
 	return e.apiReader
+}
+
+// Manager returns a Manager for the test environment
+func (e *Environment) Manager() manager.Manager {
+	return e.manager
 }
 
 func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) string {

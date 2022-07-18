@@ -38,6 +38,12 @@ spec:
             description: TinkerbellMachineConfigSpec defines the desired state of
               TinkerbellMachineConfig
             properties:
+              hardwareSelector:
+                additionalProperties:
+                  type: string
+                description: HardwareSelector models a simple key-value selector used
+                  in Tinkerbell providioning.
+                type: object
               osFamily:
                 type: string
               templateRef:
@@ -64,6 +70,7 @@ spec:
                   type: object
                 type: array
             required:
+            - hardwareSelector
             - osFamily
             type: object
           status:

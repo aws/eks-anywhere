@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -24,7 +23,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const etcdadmControllerProjectPath = "projects/mrajashree/etcdadm-controller"
+const etcdadmControllerProjectPath = "projects/aws/etcdadm-controller"
 
 // GetEtcdadmControllerAssets returns the eks-a artifacts for etcdadm controller
 func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
@@ -34,7 +33,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	}
 
 	name := "etcdadm-controller"
-	repoName := fmt.Sprintf("mrajashree/%s", name)
+	repoName := fmt.Sprintf("aws/%s", name)
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": etcdadmControllerProjectPath,
@@ -59,7 +58,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 		ProjectPath:       etcdadmControllerProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -159,11 +158,10 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				manifestHash, err := r.GenerateManifestHash(manifestArtifact)
 				if err != nil {
 					return anywherev1alpha1.EtcdadmControllerBundle{}, err
 				}
-				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}

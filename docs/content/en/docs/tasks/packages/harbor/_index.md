@@ -18,10 +18,10 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package harbor --source cluster > packages.yaml
+   eksctl anywhere generate package harbor --source cluster > harbor.yaml
    ```
 
-1. Add the desired configuration to `packages.yaml` 
+1. Add the desired configuration to `harbor.yaml` 
 
    Please see [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all configuration options and their default values.
 
@@ -74,7 +74,7 @@ If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you 
 1. Install Harbor
 
    ```bash
-   eksctl anywhere create packages -f packages.yaml
+   eksctl anywhere create packages -f harbor.yaml
    ```
 
 1. Check Harbor

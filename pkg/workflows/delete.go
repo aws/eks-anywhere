@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/task"
@@ -16,6 +17,7 @@ type Delete struct {
 	provider       providers.Provider
 	clusterManager interfaces.ClusterManager
 	addonManager   interfaces.AddonManager
+	writer         filewriter.FileWriter
 }
 
 func NewDelete(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
@@ -51,7 +53,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	return task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
+	return task.NewTaskRunner(&setupAndValidate{}, c.writer).RunTask(ctx, commandContext)
 }
 
 type setupAndValidate struct{}
@@ -82,6 +84,14 @@ func (s *setupAndValidate) Name() string {
 	return "setup-and-validate"
 }
 
+func (s *setupAndValidate) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *setupAndValidate) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
 		return &deleteWorkloadCluster{}
@@ -101,11 +111,25 @@ func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	return &installCAPI{}
 }
 
 func (s *createManagementCluster) Name() string {
 	return "management-cluster-init"
+}
+
+func (s *createManagementCluster) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *createManagementCluster) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 func (s *installCAPI) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -122,6 +146,14 @@ func (s *installCAPI) Name() string {
 	return "install-capi"
 }
 
+func (s *installCAPI) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *installCAPI) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload cluster")
 	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, commandContext.ClusterSpec, types.WithNodeRef())
@@ -134,6 +166,14 @@ func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.Co
 
 func (s *moveClusterManagement) Name() string {
 	return "cluster-management-move"
+}
+
+func (s *moveClusterManagement) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *moveClusterManagement) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 func (s *deleteWorkloadCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -151,6 +191,14 @@ func (s *deleteWorkloadCluster) Name() string {
 	return "delete-workload-cluster"
 }
 
+func (s *deleteWorkloadCluster) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *deleteWorkloadCluster) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Clean up Git Repo")
 	err := commandContext.AddonManager.CleanupGitRepo(ctx, commandContext.ClusterSpec)
@@ -164,6 +212,14 @@ func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandCo
 
 func (s *cleanupGitRepo) Name() string {
 	return "clean-up-git-repo"
+}
+
+func (s *cleanupGitRepo) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *cleanupGitRepo) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -186,4 +242,12 @@ func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.
 
 func (s *deleteManagementCluster) Name() string {
 	return "kind-cluster-delete"
+}
+
+func (s *deleteManagementCluster) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *deleteManagementCluster) Checkpoint() *task.CompletedTask {
+	return nil
 }

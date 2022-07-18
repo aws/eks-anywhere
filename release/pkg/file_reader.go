@@ -122,23 +122,37 @@ func getSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	return supportedK8sVersions, nil
 }
 
-func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
+func getBottlerocketSupportedK8sVersionsByFormat(r *ReleaseConfig, imageFormat string) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
-	var bottlerocketOvaReleaseMap map[string]interface{}
+	var bottlerocketReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
-	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_OVA_RELEASES")
+	bottlerocketReleasesFilename := "BOTTLEROCKET_RELEASES"
+	if r.BuildRepoBranchName == "release-0.9" {
+		bottlerocketReleasesFilename = "BOTTLEROCKET_OVA_RELEASES"
+	}
+	bottlerocketReleasesFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, bottlerocketReleasesFilename)
 
-	bottlerocketOvaReleaseFile, err := ioutil.ReadFile(bottlerocketOvaReleaseFilePath)
+	bottlerocketReleasesFileContents, err := ioutil.ReadFile(bottlerocketReleasesFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	err = yaml.Unmarshal(bottlerocketOvaReleaseFile, &bottlerocketOvaReleaseMap)
+	err = yaml.Unmarshal(bottlerocketReleasesFileContents, &bottlerocketReleaseMap)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
 
-	for channel := range bottlerocketOvaReleaseMap {
-		bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
+	for channel := range bottlerocketReleaseMap {
+		// new format for BR releases file
+		releaseVersionByFormat := bottlerocketReleaseMap[channel].(map[string]interface{})[fmt.Sprintf("%s-release-version", imageFormat)]
+		if releaseVersionByFormat != nil {
+			bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
+		} else if releaseVersionByFormat == nil && imageFormat == "ova" {
+			// old format for BR releases file for backward compatibility
+			releaseVersionByFormat = bottlerocketReleaseMap[channel].(map[string]interface{})["releaseVersion"]
+			if releaseVersionByFormat != nil {
+				bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
+			}
+		}
 	}
 
 	return bottlerocketSupportedK8sVersions, nil

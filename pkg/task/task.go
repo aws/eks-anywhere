@@ -16,6 +16,8 @@ import (
 type Task interface {
 	Run(ctx context.Context, commandContext *CommandContext) Task
 	Name() string
+	Checkpoint() *CompletedTask
+	Restore(ctx context.Context, commandContext *CommandContext, completedTask *CompletedTask) (Task, error)
 }
 
 // Command context maintains the mutable and shared entities
@@ -27,6 +29,7 @@ type CommandContext struct {
 	Validations        interfaces.Validator
 	Writer             filewriter.FileWriter
 	EksdInstaller      interfaces.EksdInstaller
+	PackageInstaller   interfaces.PackageInstaller
 	EksdUpgrader       interfaces.EksdUpgrader
 	CAPIManager        interfaces.CAPIManager
 	ClusterSpec        *cluster.Spec
@@ -100,7 +103,8 @@ func (pp *Profiler) logProfileSummary(taskName string) {
 
 // Manages Task execution
 type taskRunner struct {
-	task Task
+	task   Task
+	writer filewriter.FileWriter
 }
 
 // executes Task
@@ -127,8 +131,19 @@ func taskRunnerFinalBlock(startTime time.Time) {
 	logger.V(4).Info("Tasks completed", "duration", time.Since(startTime))
 }
 
-func NewTaskRunner(task Task) *taskRunner {
+func NewTaskRunner(task Task, writer filewriter.FileWriter) *taskRunner {
 	return &taskRunner{
-		task: task,
+		task:   task,
+		writer: writer,
 	}
+}
+
+type TaskCheckpoint interface{}
+
+type CheckpointInfo struct {
+	CompletedTasks map[string]*CompletedTask `json:"completedTasks"`
+}
+
+type CompletedTask struct {
+	Checkpoint TaskCheckpoint `json:"checkpoint"`
 }
