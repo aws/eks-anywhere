@@ -124,6 +124,20 @@ func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1)
 }
 
+// CreateEKSANamespace mocks base method.
+func (m *MockClusterManager) CreateEKSANamespace(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEKSANamespace", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateEKSANamespace indicates an expected call of CreateEKSANamespace.
+func (mr *MockClusterManagerMockRecorder) CreateEKSANamespace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEKSANamespace", reflect.TypeOf((*MockClusterManager)(nil).CreateEKSANamespace), arg0, arg1)
+}
+
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()

@@ -247,6 +247,13 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Creating EKS-A namespace")
+		err = commandContext.ClusterManager.CreateEKSANamespace(ctx, workloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+
 		logger.Info("Installing cluster-api providers on workload cluster")
 		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {

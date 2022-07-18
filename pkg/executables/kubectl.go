@@ -167,6 +167,13 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
+func (k *Kubectl) CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error {
+	if err := k.GetNamespace(ctx, kubeconfig, namespace); err != nil {
+		return k.CreateNamespace(ctx, kubeconfig, namespace)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
 	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
@@ -908,7 +915,12 @@ func (k *Kubectl) GetDeployments(ctx context.Context, opts ...KubectlOpt) ([]app
 }
 
 func (k *Kubectl) GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error) {
-	return k.GetSecret(ctx, name, WithKubeconfig(kubeconfigFile), WithNamespace(namespace))
+	obj := &corev1.Secret{}
+	if err := k.GetObject(ctx, "secret", name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts ...KubectlOpt) (*corev1.Secret, error) {
