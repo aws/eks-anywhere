@@ -27,7 +27,6 @@ import (
 const defaultRequeueTime = time.Second * 10
 
 type CiliumReconciler struct {
-	Client  client.Client
 	Log     logr.Logger
 	tracker *remote.ClusterCacheTracker
 }
@@ -234,11 +233,8 @@ func getCiliumDeployment(ctx context.Context, client client.Client) (*v1.Deploym
 	return deployment, nil
 }
 
-func NewCiliumReconciler(
-	client client.Client, log logr.Logger, tracker *remote.ClusterCacheTracker,
-) *CiliumReconciler {
+func NewCiliumReconciler(log logr.Logger, tracker *remote.ClusterCacheTracker) *CiliumReconciler {
 	return &CiliumReconciler{
-		Client:  client,
 		Log:     log,
 		tracker: tracker,
 	}

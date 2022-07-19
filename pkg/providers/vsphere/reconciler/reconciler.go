@@ -235,7 +235,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 }
 
 func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
-	cniReconciler, err := cni.BuildCNIReconciler("cilium", v.Client, v.Log, v.tracker)
+	cniReconciler, err := cni.BuildCNIReconciler("cilium", v.Log, v.tracker)
 	if err != nil {
 		return controller.Result{}, err
 	}
