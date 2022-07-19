@@ -507,10 +507,6 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 }
 
 func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	if err := p.providerKubectlClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-		return err
-	}
-
 	var contents bytes.Buffer
 	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {

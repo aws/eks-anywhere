@@ -391,7 +391,7 @@ func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testin
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).To(BeNil())
 }
 
@@ -842,7 +842,6 @@ func TestPreCAPIInstallOnBootstrap(t *testing.T) {
 			t.Fatalf("Failed to read embed eksd release: %s", err)
 		}
 
-		kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace)
 		kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, notFoundError)
 		kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), expectedSecretsYaml)
 		_ = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)

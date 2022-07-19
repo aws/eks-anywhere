@@ -1539,31 +1539,6 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 	}
 }
 
-func TestProviderUpdateSecretFailureOnCreateNamespaceFailure(t *testing.T) {
-	ctx := context.Background()
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterConfig, kubectl)
-	cluster := types.Cluster{
-		Name:           "test",
-		KubeconfigFile: "",
-	}
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	kubectl.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), constants.EksaSystemNamespace).Return(errors.New(""))
-
-	err := provider.UpdateSecrets(ctx, &cluster)
-	if err == nil {
-		t.Fatalf("UpdateSecrets error is nil")
-	}
-}
-
 func TestSetupAndValidateCreateClusterNoServer(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
