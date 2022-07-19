@@ -535,20 +535,6 @@ func (mr *MockAddonManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitEksaSpec", reflect.TypeOf((*MockAddonManager)(nil).UpdateGitEksaSpec), arg0, arg1, arg2, arg3)
 }
 
-// UpdateLegacyFileStructure mocks base method.
-func (m *MockAddonManager) UpdateLegacyFileStructure(arg0 context.Context, arg1, arg2 *cluster.Spec) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateLegacyFileStructure", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateLegacyFileStructure indicates an expected call of UpdateLegacyFileStructure.
-func (mr *MockAddonManagerMockRecorder) UpdateLegacyFileStructure(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLegacyFileStructure", reflect.TypeOf((*MockAddonManager)(nil).UpdateLegacyFileStructure), arg0, arg1, arg2)
-}
-
 // Upgrade mocks base method.
 func (m *MockAddonManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()

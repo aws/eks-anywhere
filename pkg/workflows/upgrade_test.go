@@ -173,7 +173,6 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 	gomock.InOrder(
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, workloadCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
-		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
 		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
