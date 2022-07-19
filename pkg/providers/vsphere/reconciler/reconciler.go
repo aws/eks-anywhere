@@ -227,19 +227,19 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, err
 	}
 
-	if result, err := v.reconcileCNI(ctx, cluster, capiCluster, specWithBundles); err != nil {
+	if result, err := v.reconcileCNI(ctx, v.Log, cluster, capiCluster, specWithBundles); err != nil {
 		return result, err
 	}
 
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
-	cniReconciler, err := cni.BuildCNIReconciler("cilium", v.Log, v.tracker)
+func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
+	cniReconciler, err := cni.BuildCNIReconciler("cilium", v.tracker)
 	if err != nil {
 		return controller.Result{}, err
 	}
-	return cniReconciler.Reconcile(ctx, cluster, capiCluster, specWithBundles)
+	return cniReconciler.Reconcile(ctx, log, cluster, capiCluster, specWithBundles)
 }
 
 func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {

@@ -27,12 +27,11 @@ import (
 const defaultRequeueTime = time.Second * 10
 
 type CiliumReconciler struct {
-	Log     logr.Logger
 	tracker *remote.ClusterCacheTracker
 }
 
-func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
-	cr.Log.Info("Getting remote client", "client for cluster", capiCluster.Name)
+func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
+	log.Info("Getting remote client", "client for cluster", capiCluster.Name)
 	key := client.ObjectKey{
 		Namespace: capiCluster.Namespace,
 		Name:      capiCluster.Name,
@@ -42,13 +41,13 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 		return controller.Result{}, err
 	}
 
-	cr.Log.Info("Applying CNI")
+	log.Info("Applying CNI")
 	ciliumDS := &v1.DaemonSet{}
 	ciliumDSName := types.NamespacedName{Namespace: "kube-system", Name: cilium.DaemonSetName}
 	err = remoteClient.Get(ctx, ciliumDSName, ciliumDS)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			cr.Log.Info("Deploying Cilium DS")
+			log.Info("Deploying Cilium DS")
 			helm := executables.NewHelm(executables.NewExecutable("helm"), executables.WithInsecure())
 
 			ci := cilium.NewCilium(nil, helm)
@@ -67,14 +66,14 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 	}
 
 	// upgrade cilium
-	cr.Log.Info("Upgrading Cilium")
-	needsUpgrade, err := ciliumNeedsUpgrade(ctx, cr.Log, remoteClient, specWithBundles)
+	log.Info("Upgrading Cilium")
+	needsUpgrade, err := ciliumNeedsUpgrade(ctx, log, remoteClient, specWithBundles)
 	if err != nil {
 		return controller.Result{}, err
 	}
 
 	if !needsUpgrade {
-		cr.Log.Info("Skipping Cilium")
+		log.Info("Skipping Cilium")
 		return controller.Result{}, nil
 	}
 
@@ -85,7 +84,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 		return controller.Result{}, err
 	}
 
-	cr.Log.Info("Installing Cilium upgrade preflight manifest")
+	log.Info("Installing Cilium upgrade preflight manifest")
 	if err := serverside.ReconcileYaml(ctx, remoteClient, preflight); err != nil {
 		return controller.Result{}, err
 	}
@@ -93,12 +92,12 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 	ciliumDS = &v1.DaemonSet{}
 	ciliumDSName = types.NamespacedName{Namespace: "kube-system", Name: "cilium"}
 	if err := remoteClient.Get(ctx, ciliumDSName, ciliumDS); err != nil {
-		cr.Log.Info("Cilium DS not found")
+		log.Info("Cilium DS not found")
 		return controller.Result{}, err
 	}
 
 	if err := cilium.CheckDaemonSetReady(ciliumDS); err != nil {
-		cr.Log.Info("Cilium DS not ready")
+		log.Info("Cilium DS not ready")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, nil
@@ -107,26 +106,26 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 	preFlightCiliumDS := &v1.DaemonSet{}
 	preFlightCiliumDSName := types.NamespacedName{Namespace: "kube-system", Name: cilium.PreflightDaemonSetName}
 	if err := remoteClient.Get(ctx, preFlightCiliumDSName, preFlightCiliumDS); err != nil {
-		cr.Log.Info("Preflight Cilium DS not found.")
+		log.Info("Preflight Cilium DS not found.")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
 	}
 
 	if err := cilium.CheckPreflightDaemonSetReady(ciliumDS, preFlightCiliumDS); err != nil {
-		cr.Log.Info("Preflight DS not ready ")
+		log.Info("Preflight DS not ready ")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
 	}
 
-	cr.Log.Info("Deleting Preflight Cilium objects")
+	log.Info("Deleting Preflight Cilium objects")
 	if err := serverside.DeleteYaml(ctx, remoteClient, preflight); err != nil {
-		cr.Log.Info("Error deleting Preflight Cilium objects")
+		log.Info("Error deleting Preflight Cilium objects")
 		return controller.Result{}, err
 	}
 
-	cr.Log.Info("Generating Cilium upgrade manifest")
+	log.Info("Generating Cilium upgrade manifest")
 	upgradeManifest, err := templater.GenerateUpgradeManifest(ctx, specWithBundles, specWithBundles)
 	if err != nil {
 		return controller.Result{}, err
@@ -233,9 +232,8 @@ func getCiliumDeployment(ctx context.Context, client client.Client) (*v1.Deploym
 	return deployment, nil
 }
 
-func NewCiliumReconciler(log logr.Logger, tracker *remote.ClusterCacheTracker) *CiliumReconciler {
+func NewCiliumReconciler(tracker *remote.ClusterCacheTracker) *CiliumReconciler {
 	return &CiliumReconciler{
-		Log:     log,
 		tracker: tracker,
 	}
 }

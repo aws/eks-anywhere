@@ -14,12 +14,12 @@ import (
 )
 
 type CNIReconciler interface {
-	Reconcile(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error)
+	Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error)
 }
 
-func BuildCNIReconciler(cniName string, log logr.Logger, tracker *remote.ClusterCacheTracker) (CNIReconciler, error) {
+func BuildCNIReconciler(cniName string, tracker *remote.ClusterCacheTracker) (CNIReconciler, error) {
 	if cniName == "cilium" {
-		return NewCiliumReconciler(log, tracker), nil
+		return NewCiliumReconciler(tracker), nil
 	}
 	return nil, fmt.Errorf("invalid CNI %s", cniName)
 }
