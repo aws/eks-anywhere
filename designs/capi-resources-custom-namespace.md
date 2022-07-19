@@ -33,7 +33,7 @@ This change would make it so customers would be able to put these resources virt
  
 ## Current state
 1. Top level eks-a resources (e.g. Cluster, *DatacenterConfig, *MachineConfig) all go into the "default" namespace by default but can be customized to any namespace. Ideally, customers should only ever interact with these top-level eks-a resources
-2. Underlying CAPI/CAPX and etcd resources are created in the eksa-system, to be hidden from customers as implementation details
+2. Underlying CAPI/CAPX and etcd resources are created in the eksa-system. Having them in a separate namespace facilitates "platform admins" to secure this namespace, giving access to users only for the eksa objects.
 
 ## Overview of Solution
 1. Introduce a attribute in the EKS-A Cluster CRD spec which allows users to indicate which namespace they would like the underlying resources for their new cluster to be created in
