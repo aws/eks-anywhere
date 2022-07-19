@@ -49,7 +49,8 @@ type AddonManager interface {
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 	CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) error
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error
+	Upgrade(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type Validator interface {

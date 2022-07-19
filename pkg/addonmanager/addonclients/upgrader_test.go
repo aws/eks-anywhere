@@ -11,10 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/git/factory"
+	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -69,18 +70,18 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 
 func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
-	f, _, _ := newAddonClient(t)
+	g := newAddonClient(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
-	f, _, _ := newAddonClient(t)
+	g := newAddonClient(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.1.0"
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
@@ -89,9 +90,9 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
-	f, m, g := newAddonClient(t)
+	g := newAddonClient(t)
 
-	if err := setupTestFiles(t, g); err != nil {
+	if err := setupTestFiles(t, g.gitTools); err != nil {
 		t.Errorf("setting up files: %v", err)
 	}
 
@@ -105,17 +106,17 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
-	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
+	g.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	g.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	g.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
-	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
-	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
-	m.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	g.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	g.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestFluxUpgradeError(t *testing.T) {
@@ -123,31 +124,38 @@ func TestFluxUpgradeError(t *testing.T) {
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
-	f, m, g := newAddonClient(t)
+	g := newAddonClient(t)
 
-	if err := setupTestFiles(t, g); err != nil {
+	if err := setupTestFiles(t, g.gitTools); err != nil {
 		t.Errorf("setting up files: %v", err)
 	}
 
-	m.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
-	m.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	m.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	m.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
-	m.gitClient.EXPECT().Push(tt.ctx).Return(nil)
+	g.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
+	g.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	g.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
-	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
-	m.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
+	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	g.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
-	_, err := f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt := newUpgraderTest(t)
-	f, _, _ := newAddonClient(t)
+	g := newAddonClient(t)
 	tt.newSpec.FluxConfig = nil
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+}
+
+func TestFluxUpgradeNewGitOpsConfig(t *testing.T) {
+	tt := newUpgraderTest(t)
+	g := newAddonClient(t)
+	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
+	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
@@ -164,4 +172,38 @@ func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
 		return fmt.Errorf("failed to write eksa-cluster.yaml in test: %v", err)
 	}
 	return nil
+}
+
+func TestInstallSuccess(t *testing.T) {
+	tt := newUpgraderTest(t)
+	c := addonclients.NewFluxAddonClient(nil, nil, nil)
+	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
+	tt.Expect(c.Install(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+}
+
+func TestInstallSkip(t *testing.T) {
+	tests := []struct {
+		name     string
+		new, old *v1alpha1.Ref
+	}{
+		{
+			name: "gitops ref removed",
+			new:  nil,
+			old:  &v1alpha1.Ref{Name: "name"},
+		},
+		{
+			name: "gitops ref not exists",
+			new:  nil,
+			old:  nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			test := newUpgraderTest(t)
+			g := newAddonClient(t)
+			test.currentSpec.Cluster.Spec.GitOpsRef = tt.old
+			test.newSpec.Cluster.Spec.GitOpsRef = tt.new
+			test.Expect(g.fluxAddonClient.Install(test.ctx, test.cluster, test.currentSpec, test.newSpec)).To(BeNil())
+		})
+	}
 }
