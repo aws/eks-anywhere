@@ -57,3 +57,7 @@ We would need to implement the ability to make namespace configurable in all of 
 We should add at least one E2E test for the whole flow:
 1. Specify custom namespace for eks-a Cluster, with all underlying resources being created in that same namespace for the cluster
 2. Create/upgrade/delete succeeds
+
+## Documentation
+
+We will need to add documentation instructing users how to use this new feature, as well as the security implications it may have relating to rbac and resource accessibility.
