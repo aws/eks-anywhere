@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -12,6 +13,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
@@ -159,13 +161,16 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 			resources = append(resources, r...)
 		}
 	}
-	return cor.applyTemplates(ctx, resources, dryRun)
+	return cor.applyTemplates(ctx, cs, resources, dryRun)
 }
 
-func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*unstructured.Unstructured, dryRun bool) error {
+func (cor *clusterReconciler) applyTemplates(ctx context.Context, cs *anywherev1.Cluster, resources []*unstructured.Unstructured, dryRun bool) error {
 	for _, resource := range resources {
 		kind := resource.GetKind()
 		name := resource.GetName()
+		if cs.IsSelfManaged() && (strings.HasPrefix(name, fmt.Sprintf("%s%s", cs.Name, constants.ControlPlaneTemplatePrefix)) || strings.HasPrefix(name, fmt.Sprintf("%s%s", cs.Name, constants.EtcdTemplatePrefix))) {
+			continue
+		}
 		cor.Log.Info("applying object", "kind", kind, "name", name, "dryRun", dryRun)
 		fetch, err := cor.Fetch(ctx, resource.GetName(), resource.GetNamespace(), resource.GetKind(), resource.GetAPIVersion())
 		if err == nil {
