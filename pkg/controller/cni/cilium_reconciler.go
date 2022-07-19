@@ -88,7 +88,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	if err := cilium.CheckDaemonSetReady(ciliumDS); err != nil {
-		log.Info("Cilium DS not ready")
+		log.Error(err, "error checking if Cilium DaemonSet is ready")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, nil
@@ -97,14 +97,14 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	preFlightCiliumDS := &v1.DaemonSet{}
 	preFlightCiliumDSName := types.NamespacedName{Namespace: "kube-system", Name: cilium.PreflightDaemonSetName}
 	if err := remoteClient.Get(ctx, preFlightCiliumDSName, preFlightCiliumDS); err != nil {
-		log.Info("Preflight Cilium DS not found.")
+		log.Error(err, "error getting Preflight Cilium DS")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
 	}
 
 	if err := cilium.CheckPreflightDaemonSetReady(ciliumDS, preFlightCiliumDS); err != nil {
-		log.Info("Preflight DS not ready ")
+		log.Error(err,"error checking if Preflight DS is ready ready")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
@@ -112,7 +112,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 
 	log.Info("Deleting Preflight Cilium objects")
 	if err := serverside.DeleteYaml(ctx, remoteClient, preflight); err != nil {
-		log.Info("Error deleting Preflight Cilium objects")
+		log.Error(err,"error deleting Preflight Cilium objects")
 		return controller.Result{}, err
 	}
 
