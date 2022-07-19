@@ -307,7 +307,6 @@ func TestPreCAPIInstallOnBootstrapSuccess(t *testing.T) {
 		"",
 		gomock.Any(),
 		gomock.Any(),
-		gomock.Any(),
 	)
 
 	err := provider.PreCAPIInstallOnBootstrap(ctx, cluster, clusterSpec)
@@ -341,7 +340,6 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 		testIP,
 		"test.kubeconfig",
 		"",
-		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
 		gomock.Any(),
