@@ -8,7 +8,7 @@
 2. High levels of load on a bootstrap cluster when executing an upgrade, since the clusterctl move operation will take all the CAPI components inside a namespace and instatiate them on the bootstrap cluster. This can result in heavy and unnecessary load on the bootstrap cluster
 
 This document aims to solve that, by allowing customers to instantiate the underlying CAPI/CAPX/etcd resources in a newly defined namespace, rather than all being dumped into `eksa-system`. 
-This change would make it so customers would be able to put these resources virtually in any namespace, despite the fact that they may be considered eks-a internal components.
+This change would make it so customers would be able to put these resources virtually in any namespace (except a few denylisted ones, discussed below), despite the fact that they may be considered eks-a internal components.
 
 ### Tenets
 
