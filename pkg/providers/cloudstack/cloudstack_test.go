@@ -389,7 +389,7 @@ func TestProviderSetupAndValidateUpgradeClusterSuccessOnSecretNotFound(t *testin
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
+	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, notFoundError)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).To(BeNil())
