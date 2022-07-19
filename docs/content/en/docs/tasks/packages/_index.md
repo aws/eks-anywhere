@@ -23,17 +23,7 @@ Skip the following installation steps if the returned result is not empty.
     ```bash
     eksctl anywhere version
     ```
-* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can install cert-manager using following commands:
-  ```bash
-   helm repo add jetstack https://charts.jetstack.io
-   helm repo update
-   helm install \
-      cert-manager jetstack/cert-manager \
-      --namespace cert-manager \
-      --create-namespace \
-      --version v1.8.0 \
-      --set installCRDs=true
-   ```
+* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager with Helm 3.8+ and follow the instructions below to finish the package controller installation.
 
 {{% /alert %}}
 
