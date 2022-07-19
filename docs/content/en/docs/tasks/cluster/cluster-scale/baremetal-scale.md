@@ -31,7 +31,7 @@ eksa-worker2                    type=worker-group-1
 If you don't have any available hardware that match this requirement in the cluster, you can [setup a new hardware CSV]({{< relref "../../../reference/baremetal/bare-preparation/#prepare-hardware-inventory" >}}) and then run the following command to push the additional hardware to your cluster
 
 ```bash
-eksctl generate hardware -z <hardware.csv> | kubectl apply -f -
+eksctl anywhere generate hardware -z <hardware.csv> | kubectl apply -f -
 ```
 
 Once you verify you have the additional hardware available, you are ready to scale your cluster.
