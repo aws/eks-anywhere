@@ -104,16 +104,10 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	if err := cilium.CheckPreflightDaemonSetReady(ciliumDS, preFlightCiliumDS); err != nil {
-		log.Error(err,"error checking if Preflight DS is ready ready")
+		log.Error(err, "error checking if Preflight DS is ready ready")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
-	}
-
-	log.Info("Deleting Preflight Cilium objects")
-	if err := serverside.DeleteYaml(ctx, remoteClient, preflight); err != nil {
-		log.Error(err,"error deleting Preflight Cilium objects")
-		return controller.Result{}, err
 	}
 
 	log.Info("Generating Cilium upgrade manifest")
@@ -125,6 +119,13 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	if err := serverside.ReconcileYaml(ctx, remoteClient, upgradeManifest); err != nil {
 		return controller.Result{}, err
 	}
+
+	log.Info("Deleting Preflight Cilium objects")
+	if err := serverside.DeleteYaml(ctx, remoteClient, preflight); err != nil {
+		log.Error(err, "error deleting Preflight Cilium objects")
+		return controller.Result{}, err
+	}
+
 	return controller.Result{}, nil
 }
 
