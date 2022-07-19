@@ -23,7 +23,7 @@ Skip the following installation steps if the returned result is not empty.
     ```bash
     eksctl anywhere version
     ```
-* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager with Helm 3.8+ and follow the instructions below to finish the package controller installation.
+* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager and follow the instructions below to finish the package controller installation.
 
 {{% /alert %}}
 
