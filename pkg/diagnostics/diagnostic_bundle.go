@@ -370,7 +370,9 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 	var sinceTimeValue time.Time
 	var err error
 	if sinceTime == "" && since == "" {
-		return &sinceTimeValue, nil
+		return &sinceTimeValue, nil // returning an uninitialized (zero) Time value here results in a
+		// sinceTimeValue of "0001-01-01 00:00:00 +0000 UTC"
+		// so all pod logs will be collected from the very beginning
 	} else if sinceTime != "" && since != "" {
 		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
 	} else if sinceTime != "" {
