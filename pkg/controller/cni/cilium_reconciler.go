@@ -42,9 +42,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	log.Info("Applying CNI")
-	ciliumDS := &v1.DaemonSet{}
-	ciliumDSName := types.NamespacedName{Namespace: "kube-system", Name: cilium.DaemonSetName}
-	err = remoteClient.Get(ctx, ciliumDSName, ciliumDS)
+	ciliumDS, err := getCiliumDS(ctx, remoteClient)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("Deploying Cilium DS")
@@ -86,13 +84,6 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 
 	log.Info("Installing Cilium upgrade preflight manifest")
 	if err := serverside.ReconcileYaml(ctx, remoteClient, preflight); err != nil {
-		return controller.Result{}, err
-	}
-
-	ciliumDS = &v1.DaemonSet{}
-	ciliumDSName = types.NamespacedName{Namespace: "kube-system", Name: "cilium"}
-	if err := remoteClient.Get(ctx, ciliumDSName, ciliumDS); err != nil {
-		log.Info("Cilium DS not found")
 		return controller.Result{}, err
 	}
 
