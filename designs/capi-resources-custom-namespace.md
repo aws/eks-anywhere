@@ -2,23 +2,27 @@
 
 ## Introduction
 
-**Problem:** Customers managing large scale EKS-A clusters (hundreds or thousands of workload clusters for a given management cluster) expect to have difficulty managing all these resources if they are all in the same namespace 
+**Problem:** Customers managing large scale EKS-A clusters (hundreds or thousands of workload clusters for a given management cluster) expect to have difficulty managing all these resources if they are all in the same namespace. Specifically, they expect to encounter two problems:
 
-This document aims to solve that, by allowing customers to specify a new flag on the cluster spec. If set, the underlying CAPI/CAPX/etcd resources will be created under the Cluster's namespace, rather than all dumped into `eksa-system`. 
+1. Difficulty troubleshooting issues for a single cluster when there are so many resources to sift through. 
+2. High levels of load on a bootstrap cluster when executing an upgrade, since the clusterctl move operation will take all the CAPI components inside a namespace and instatiate them on the bootstrap cluster. This can result in heavy and unnecessary load on the bootstrap cluster
+
+This document aims to solve that, by allowing customers to instantiate the underlying CAPI/CAPX/etcd resources under the Cluster's namespace, rather than all being dumped into `eksa-system`. 
 This change would make it so customers would be able to put these resources virtually in any namespace, despite the fact that they may be considered eks-a internal components.
 
 ### Tenets
 
-****Simple:**** make everything simple and secure by default, but give options to change those defaults if there is a need
+* ****Secure By Default:**** make everything simple and secure by default, but give options to change those defaults if there is a need
 
 ### Goals and Objectives
 
-As a EKS-A cluster administrator I want to organize/partition each cluster into a dedicated namespace so that I can more easily manage my workload clusters
+* As a EKS-A cluster administrator I want to quickly and easily query resources for a given cluster so that I can more easily troubleshooting cluster issues with many workload clusters present
+* As an EKS-A cluster administrator, I want to be able to perform cluster upgrades without having to move all the cluster resources onto the bootstrap cluster
 
 ### Statement of Scope
 
 **In scope**
-* Allow users to indicate whether they'd like all underlying cluster resources to fall into the Cluster's namespace
+* Allow users to indicate which namespace they'd like to use for their cluster resources
 
 **Not in scope**
 * Support for customizing which resources are going into which namespace at different layers (e.g. CAPC resources into ns1, CAPI resources into ns2, eks-a resources into ns3, etc.)
@@ -40,7 +44,7 @@ Currently, the `eksa-system` namespace is hardcoded throughout the entire codeba
 2. kubectl and clusterctl executables for interacting with the cluster and moving resources between clusters
 3. eks-a controller for retrieving capi resources with FetchObjectByName method
 
-We would need to implement the ability to make namespace configurable in all of these usages, to be extracted from the top level EKS-A Cluster object and checked against the boolean
+We would need to implement the ability to make namespace configurable in all of these usages, to be extracted from the top level EKS-A Cluster object
 
 ## Unknowns
 
@@ -50,5 +54,5 @@ We would need to implement the ability to make namespace configurable in all of 
 ## Testing
 
 We should add at least one E2E test for the whole flow:
-1. Specify custom namespace for eks-a Cluster, with flag set to indicate underlying resources to be created in the same namespace
-2. Create/delete succeeds
+1. Specify custom namespace for eks-a Cluster, with all underlying resources being created in that same namespace for the cluster
+2. Create/upgrade/delete succeeds
