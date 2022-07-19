@@ -7,7 +7,7 @@
 1. Difficulty troubleshooting issues for a single cluster when there are so many resources to sift through. 
 2. High levels of load on a bootstrap cluster when executing an upgrade, since the clusterctl move operation will take all the CAPI components inside a namespace and instatiate them on the bootstrap cluster. This can result in heavy and unnecessary load on the bootstrap cluster
 
-This document aims to solve that, by allowing customers to instantiate the underlying CAPI/CAPX/etcd resources under the Cluster's namespace, rather than all being dumped into `eksa-system`. 
+This document aims to solve that, by allowing customers to instantiate the underlying CAPI/CAPX/etcd resources in a newly defined namespace, rather than all being dumped into `eksa-system`. 
 This change would make it so customers would be able to put these resources virtually in any namespace, despite the fact that they may be considered eks-a internal components.
 
 ### Tenets
@@ -18,6 +18,7 @@ This change would make it so customers would be able to put these resources virt
 
 * As a EKS-A cluster administrator I want to quickly and easily query resources for a given cluster so that I can more easily troubleshooting cluster issues with many workload clusters present
 * As an EKS-A cluster administrator, I want to be able to perform cluster upgrades without having to move all the cluster resources onto the bootstrap cluster
+* As a cluster administrator I'd like to be able to specify exactly which namespace the components go in (and have EKS-A stop me if I try to put it in default or kube-system)
 
 ### Statement of Scope
 
@@ -35,7 +36,7 @@ This change would make it so customers would be able to put these resources virt
 2. Underlying CAPI/CAPX and etcd resources are created in the eksa-system, to be hidden from customers as implementation details
 
 ## Overview of Solution
-1. Introduce a new boolean flag in the EKS-A Cluster CRD spec which allows users to indicate whether they would like the underlying resources to be created in the same namespace as the eks-a Cluster resource
+1. Introduce a attribute in the EKS-A Cluster CRD spec which allows users to indicate which namespace they would like the underlying resources for their new cluster to be created in
 
 ## Implementation
 
