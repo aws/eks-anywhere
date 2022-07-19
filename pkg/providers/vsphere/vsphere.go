@@ -72,9 +72,6 @@ var defaultSecretObject string
 //go:embed config/defaultStorageClass.yaml
 var defaultStorageClass []byte
 
-//go:embed config/machine-health-check-template.yaml
-var mhcTemplate []byte
-
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -1072,16 +1069,8 @@ func (p *vsphereProvider) GenerateStorageClass() []byte {
 	return defaultStorageClass
 }
 
-func (p *vsphereProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
-	data := map[string]string{
-		"clusterName":         p.clusterConfig.Name,
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-	}
-	mhc, err := templater.Execute(string(mhcTemplate), data)
-	if err != nil {
-		return nil, err
-	}
-	return mhc, nil
+func (p *vsphereProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {

@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
@@ -57,8 +58,8 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
 	maxUnhealthy := intstr.Parse("40%")
-	want := map[string]*clusterv1.MachineHealthCheck{
-		"wng-1": {
+	want := []*clusterv1.MachineHealthCheck{
+		{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "cluster.x-k8s.io/v1beta1",
 				Kind:       "MachineHealthCheck",
@@ -93,4 +94,15 @@ func TestMachineHealthCheckForWorkers(t *testing.T) {
 
 	got := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec)
 	tt.Expect(got).To(Equal(want))
+}
+
+func TestMachineHealthCheckObjects(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{*tt.workerNodeGroupConfig}
+
+	wantWN := clusterapi.MachineHealthCheckForWorkers(tt.clusterSpec)
+	wantCP := clusterapi.MachineHealthCheckForControlPlane(tt.clusterSpec)
+
+	got := clusterapi.MachineHealthCheckObjects(tt.clusterSpec)
+	tt.Expect(got).To(Equal([]runtime.Object{wantWN[0], wantCP}))
 }

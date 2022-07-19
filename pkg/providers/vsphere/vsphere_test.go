@@ -2699,58 +2699,6 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 	assert.Error(t, err, "StoragePolicyName should be immutable")
 }
 
-func TestGetMHCSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  name: test-node-unhealthy-5m
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 40%%
-  nodeStartupTimeout: 10m
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/deployment-name: "test-md-0"
-  unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: 300s
-    - type: Ready
-      status: "False"
-      timeout: 300s
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  name: test-kcp-unhealthy-5m
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 100%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/control-plane: ""
-  unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: 300s
-    - type: Ready
-      status: "False"
-      timeout: 300s
-`, constants.EksaSystemNamespace)
-
-	mch, err := provider.GenerateMHC(nil)
-	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
-	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
-}
-
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
@@ -3147,5 +3095,30 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestGenerateMHCSuccess(t *testing.T) {
+	tests := []struct {
+		testName          string
+		wantMHCFile       string
+		clusterConfigFile string
+	}{
+		{
+			testName:          "generate machine health checks - 1 worker node group",
+			wantMHCFile:       "testdata/expected_results_machine_health_check.yaml",
+			clusterConfigFile: testClusterConfigMainFilename,
+		},
+		{
+			testName:          "generate machine health checks - multiple worker node groups",
+			wantMHCFile:       "testdata/expected_results_machine_health_check_multi_node_groups.yaml",
+			clusterConfigFile: "cluster_main_multiple_worker_node_groups.yaml",
+		},
+	}
+	for _, tt := range tests {
+		p := newProviderTest(t)
+		got, err := p.provider.GenerateMHC(givenClusterSpec(t, tt.clusterConfigFile))
+		p.Expect(err).To(Succeed())
+		test.AssertContentToFile(t, string(got), tt.wantMHCFile)
 	}
 }

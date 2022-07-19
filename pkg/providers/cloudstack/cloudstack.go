@@ -47,9 +47,6 @@ var defaultCAPIConfigCP string
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
 
-//go:embed config/machine-health-check-template.yaml
-var mhcTemplate []byte
-
 var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
@@ -1107,16 +1104,8 @@ func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *
 	return false, nil
 }
 
-func (p *cloudstackProvider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
-	data := map[string]string{
-		"clusterName":         p.clusterConfig.Name,
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-	}
-	mhc, err := templater.Execute(string(mhcTemplate), data)
-	if err != nil {
-		return nil, err
-	}
-	return mhc, nil
+func (p *cloudstackProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {

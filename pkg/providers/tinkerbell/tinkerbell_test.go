@@ -2,14 +2,17 @@ package tinkerbell
 
 import (
 	"context"
+	"fmt"
 	"path"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
@@ -417,4 +420,76 @@ func TestTinkerbellProviderGenerateDeploymentFileWithMinimalOIDC(t *testing.T) {
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_minimal_oidc.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+}
+
+func TestGetMHCSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: test-md-0-worker-unhealthy
+  namespace: %[1]s
+spec:
+  clusterName: test
+  maxUnhealthy: 40%%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: test-md-0
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: test-kcp-unhealthy
+  namespace: %[1]s
+spec:
+  clusterName: test
+  maxUnhealthy: 100%%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/control-plane: ""
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+`, constants.EksaSystemNamespace)
+
+	mch, err := provider.GenerateMHC(givenClusterSpec(t, clusterSpecManifest))
+	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
+	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }
