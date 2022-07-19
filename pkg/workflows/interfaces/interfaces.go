@@ -50,7 +50,6 @@ type AddonManager interface {
 	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 	CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) error
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
-	UpdateLegacyFileStructure(ctx context.Context, currentSpec, newSpec *cluster.Spec) error
 }
 
 type Validator interface {
