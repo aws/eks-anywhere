@@ -7,7 +7,7 @@
 1. Difficulty troubleshooting issues for a single cluster when there are so many resources to sift through. 
 2. High levels of load on a bootstrap cluster when executing an upgrade, since the clusterctl move operation will take all the CAPI components inside a namespace and instatiate them on the bootstrap cluster. This can result in heavy and unnecessary load on the bootstrap cluster
 
-This document aims to solve that, by allowing customers to instantiate the underlying CAPI/CAPX/etcd resources in a newly defined namespace, rather than all being dumped into `eksa-system`. 
+This document aims to solve that, by allowing customers to instantiate the underlying CAPI resources in a newly defined namespace, rather than all being dumped into `eksa-system`. 
 This change would make it so customers would be able to put these resources virtually in any namespace (except a few denylisted ones, discussed below), despite the fact that they may be considered eks-a internal components.
 
 ### Tenets
@@ -33,7 +33,7 @@ This change would make it so customers would be able to put these resources virt
  
 ## Current state
 1. Top level eks-a resources (e.g. Cluster, *DatacenterConfig, *MachineConfig) all go into the "default" namespace by default but can be customized to any namespace. Ideally, customers should only ever interact with these top-level eks-a resources
-2. Underlying CAPI/CAPX and etcd resources are created in the eksa-system. Having them in a separate namespace facilitates "platform admins" to secure this namespace, giving access to users only for the eksa objects.
+2. Underlying CAPI and etcd resources are created in the eksa-system. Having them in a separate namespace facilitates "platform admins" to secure this namespace, giving access to users only for the eksa objects.
 
 ## Overview of Solution
 1. Introduce a attribute in the EKS-A Cluster CRD spec which allows users to indicate which namespace they would like the underlying resources for their new cluster to be created in
@@ -61,3 +61,7 @@ We should add at least one E2E test for the whole flow:
 ## Documentation
 
 We will need to add documentation instructing users how to use this new feature, as well as the security implications it may have relating to rbac and resource accessibility.
+
+## Alternate Solutions Considered
+
+If the team decides that it is too risky to support keeping some CAPI resources on the management cluster while it's being upgraded, we could address the other use cases by adding cluster labels to the cluster's CAPI resources.
