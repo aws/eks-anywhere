@@ -94,6 +94,13 @@ func TestValidateEC2ImageExistsOnDevice(t *testing.T) {
 	g.Expect(err).To(Succeed())
 }
 
+func TestValidateEC2ImageExistsOnDeviceAmiIDEmpty(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.AMIID = ""
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	g.Expect(err).To(Succeed())
+}
+
 func TestValidateEC2ImageExistsOnDeviceNotExists(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(false, nil)

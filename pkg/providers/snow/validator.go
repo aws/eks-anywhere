@@ -47,6 +47,10 @@ func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1
 }
 
 func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	if m.Spec.AMIID == "" {
+		return nil
+	}
+
 	for ip, client := range v.awsClientMap {
 		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {

@@ -1,7 +1,6 @@
 package v1alpha1
 
 import (
-	"errors"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,10 +47,6 @@ func (s *SnowMachineConfigGenerate) Name() string {
 }
 
 func validateSnowMachineConfig(config *SnowMachineConfig) error {
-	if config.Spec.AMIID == "" {
-		return errors.New("SnowMachineConfig AMIID is a required field")
-	}
-
 	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}

@@ -26,7 +26,7 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 
-	g.Expect(sOld.ValidateCreate()).NotTo(Succeed())
+	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
 
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
