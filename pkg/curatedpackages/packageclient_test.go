@@ -41,14 +41,9 @@ func newPackageTest(t *testing.T) *packageTest {
 								{
 									Configurations: []packagesv1.VersionConfiguration{
 										{
-											Name:     "sourceRegistry",
-											Default:  "localhost:8080",
+											Name:     "schema",
+											Default:  "H4sIAAAAAAAAA5WQwU7DMBBE7/kKy+LYOCGnqld+AJUj4rA4m8StY5u1oypU/Xccx0WRgANHz77ZWc+1YIw/qJYfGB9CcP5QVQNqbUs8+xLMfBmQUDiQZ+jRi6gKGOHTGrh4Ie1YeTngCOLkreG7tG1VthuXYZlBS33VEnShauqmLh+bvGE1BxU0JuuPIzIwuzS37yeUYdUIPyZFuHziNb6j4u1EEo/YKx9o5lF82xUL6sg6pKDQR/j6K3zXN2FRV6ZPYUlvsYNJh2WkrQQ9WB8O+3pfbxEvSbmgYi0Re0kZjHII6yyxXKrgyXNbrd8N/OeIP2OfrAmgDBJLa+9RRY7j0LZqYUE/b4vpQHssbsUXOlsaYR4CAAA=",
 											Required: true,
-										},
-										{
-											Name:     "title",
-											Default:  "",
-											Required: false,
 										},
 									},
 								},
@@ -70,7 +65,7 @@ func TestGeneratePackagesSucceed(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
+	expectedOutput := fmt.Sprintf("%s: %s\n",
 		"sourceRegistry", "localhost:8080")
 
 	result, err := tt.command.GeneratePackages()

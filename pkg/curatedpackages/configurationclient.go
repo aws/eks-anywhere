@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages/types"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -16,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/types"
 )
 
 func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[string]*types.DisplayConfiguration {
@@ -23,19 +23,19 @@ func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[st
 	if bundlePackage == nil || len(bundlePackage.Source.Versions) < 1 {
 		return configs
 	}
-	jsonSchema, err := getPackagesJsonSchema(bundlePackage)
+	jsonSchema, err := getJsonSchemaFromBundle(bundlePackage)
 	if err != nil {
 		// TODO: Should probably log an error here
 		return configs
 	}
-	schemaStruct := &types.Schema{}
-	err = json.Unmarshal(jsonSchema, schemaStruct)
+	schemaObj := &types.Schema{}
+	err = json.Unmarshal(jsonSchema, schemaObj)
 	if err != nil {
 		// TODO: Should probably log an error here
 		return configs
 	}
 
-	for key, prop := range schemaStruct.Properties {
+	for key, prop := range schemaObj.Properties {
 		configs[key] = &types.DisplayConfiguration{
 			Type:        prop.Type,
 			Default:     prop.Default,
@@ -43,7 +43,7 @@ func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[st
 		}
 	}
 
-	for _, field := range schemaStruct.Required {
+	for _, field := range schemaObj.Required {
 		if v, found := configs[field]; found {
 			v.Required = true
 		}
@@ -139,7 +139,7 @@ func DisplayConfigurationOptions(configs map[string]*types.DisplayConfiguration)
 	}
 }
 
-func getPackagesJsonSchema(bundlePackage *packagesv1.BundlePackage) ([]byte, error) {
+func getJsonSchemaFromBundle(bundlePackage *packagesv1.BundlePackage) ([]byte, error) {
 	// The package configuration is gzipped and base64 encoded
 	// When processing the configuration, the reverse occurs: base64 decode, then unzip
 	configuration := bundlePackage.Source.Versions[0].Configurations[0].Default
@@ -155,9 +155,5 @@ func getPackagesJsonSchema(bundlePackage *packagesv1.BundlePackage) ([]byte, err
 		return nil, fmt.Errorf("error reading configurations %v", err)
 	}
 
-	jsonSchema, err := yaml.YAMLToJSON(output)
-	if err != nil {
-		return nil, fmt.Errorf("error converting yaml to json %v", err)
-	}
-	return jsonSchema, nil
+	return output, nil
 }

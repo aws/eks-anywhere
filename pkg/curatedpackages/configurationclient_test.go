@@ -23,29 +23,9 @@ func newConfigurationTest(t *testing.T) *configurationTest {
 				{
 					Configurations: []packagesv1.VersionConfiguration{
 						{
-							Name:     "sourceRegistry",
-							Default:  "localhost:8080",
+							Name:     "schema",
+							Default:  "H4sIAAAAAAAAA7WSP2/DIBDFd38KZHWMsZspytq9itqx6nC2zzYJ5lzAStMo372ASWXlj9QOHXm8e7/juGPCWPog6nTN0s7awazzvEMpKcOdyUAd9h1q5ANUO2jRcKdy6OGLFOwNr6jPTdVhD3xrSKWLkDYp80R/mUUj6TavNTQ2XxbLIntcxoSp2AorMZReNRENhyHcU7nFyk6axo9RaPSPeHNnpxgadYUv2Apj9SF14vsi8dZB04DaCjTOfLxpPuszmNOFagMs6DU2MErrryRVIDsydr0qVsXcYiotBivcWJztNTCYjhDWkGZxqDwNNaep9GcCf2niLvaJlAWhULMQe4EyY/lPtHPyBRA/BzLIrXSLpKCU/suuyCWRRFA30Q1Ig3czYbTkd7In9Qw93sj+zUfG+CQiUqhr4V8IcjNfntBKckq+Ab+VTzhCAwAA",
 							Required: true,
-						},
-						{
-							Name:     "title",
-							Default:  "",
-							Required: false,
-						},
-						{
-							Name:     "subtitle",
-							Default:  "",
-							Required: false,
-						},
-						{
-							Name:     "expose.tls.enabled",
-							Default:  "false",
-							Required: false,
-						},
-						{
-							Name:     "expose.tls.auto.commonName",
-							Default:  "localhost",
-							Required: false,
 						},
 					},
 				},
@@ -131,7 +111,7 @@ func TestGenerateDefaultConfigurationsSuccess(t *testing.T) {
 	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
 	output := curatedpackages.GenerateDefaultConfigurations(configs)
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
+	expectedOutput := fmt.Sprintf("%s: %s\n",
 		"sourceRegistry", "localhost:8080")
 
 	tt.Expect(output).To(Equal(expectedOutput))
