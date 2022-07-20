@@ -29,6 +29,15 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	g.Expect(sOld.ValidateCreate()).To(Succeed())
 }
 
+func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := snowMachineConfig()
+	sOld.Spec.InstanceType = "invalid-instance-type"
+
+	g.Expect(sOld.ValidateCreate()).NotTo(Succeed())
+}
+
 func TestSnowMachineConfigValidateCreate(t *testing.T) {
 	g := NewWithT(t)
 
