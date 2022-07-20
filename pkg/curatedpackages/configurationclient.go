@@ -2,7 +2,12 @@ package curatedpackages
 
 import (
 	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/types"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -13,20 +18,40 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 )
 
-func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[string]packagesv1.VersionConfiguration {
-	configs := make(map[string]packagesv1.VersionConfiguration)
+func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[string]*types.DisplayConfiguration {
+	configs := make(map[string]*types.DisplayConfiguration)
 	if bundlePackage == nil || len(bundlePackage.Source.Versions) < 1 {
 		return configs
 	}
-	packageConfigurations := bundlePackage.Source.Versions[0].Configurations
+	jsonSchema, err := getPackagesJsonSchema(bundlePackage)
+	if err != nil {
+		// TODO: Should probably log an error here
+		return configs
+	}
+	schemaStruct := &types.Schema{}
+	err = json.Unmarshal(jsonSchema, schemaStruct)
+	if err != nil {
+		// TODO: Should probably log an error here
+		return configs
+	}
 
-	for _, config := range packageConfigurations {
-		configs[config.Name] = config
+	for key, prop := range schemaStruct.Properties {
+		configs[key] = &types.DisplayConfiguration{
+			Type:        prop.Type,
+			Default:     prop.Default,
+			Description: prop.Description,
+		}
+	}
+
+	for _, field := range schemaStruct.Required {
+		if v, found := configs[field]; found {
+			v.Required = true
+		}
 	}
 	return configs
 }
 
-func UpdateConfigurations(originalConfigs map[string]packagesv1.VersionConfiguration, newConfigs map[string]string) error {
+func UpdateConfigurations(originalConfigs map[string]*types.DisplayConfiguration, newConfigs map[string]string) error {
 	for key, val := range newConfigs {
 		value, exists := originalConfigs[key]
 		if !exists {
@@ -38,7 +63,7 @@ func UpdateConfigurations(originalConfigs map[string]packagesv1.VersionConfigura
 	return nil
 }
 
-func GenerateAllValidConfigurations(configs map[string]packagesv1.VersionConfiguration) (string, error) {
+func GenerateAllValidConfigurations(configs map[string]*types.DisplayConfiguration) (string, error) {
 	data := map[string]interface{}{}
 	for key, val := range configs {
 		if val.Default != "" || val.Required {
@@ -74,14 +99,19 @@ func parse(data map[string]interface{}, keySegments []string, index int, val str
 	}
 }
 
-func GenerateDefaultConfigurations(configs map[string]packagesv1.VersionConfiguration) string {
-	b := new(bytes.Buffer)
+func GenerateDefaultConfigurations(configs map[string]*types.DisplayConfiguration) string {
+	data := map[string]interface{}{}
 	for key, val := range configs {
 		if val.Required {
-			fmt.Fprintf(b, "%s: \"%s\"\n", key, val.Default)
+			keySegments := strings.Split(key, ".")
+			parse(data, keySegments, 0, val.Default)
 		}
 	}
-	return b.String()
+	out, err := yaml.Marshal(data)
+	if err != nil {
+		return ""
+	}
+	return string(out)
 }
 
 func ParseConfigurations(configs []string) (map[string]string, error) {
@@ -98,7 +128,7 @@ func ParseConfigurations(configs []string) (map[string]string, error) {
 	return parsedConfigurations, nil
 }
 
-func DisplayConfigurationOptions(configs map[string]packagesv1.VersionConfiguration) {
+func DisplayConfigurationOptions(configs map[string]*types.DisplayConfiguration) {
 	w := new(tabwriter.Writer)
 	defer w.Flush()
 	w.Init(os.Stdout, minWidth, tabWidth, padding, padChar, flags)
@@ -107,4 +137,27 @@ func DisplayConfigurationOptions(configs map[string]packagesv1.VersionConfigurat
 	for key, val := range configs {
 		fmt.Fprintf(w, "%s\t%v\t%s\t \n", key, val.Required, val.Default)
 	}
+}
+
+func getPackagesJsonSchema(bundlePackage *packagesv1.BundlePackage) ([]byte, error) {
+	// The package configuration is gzipped and base64 encoded
+	// When processing the configuration, the reverse occurs: base64 decode, then unzip
+	configuration := bundlePackage.Source.Versions[0].Configurations[0].Default
+	decodedConfiguration, _ := base64.StdEncoding.DecodeString(configuration)
+	reader := bytes.NewReader(decodedConfiguration)
+	gzreader, err := gzip.NewReader(reader)
+	if err != nil {
+		return nil, fmt.Errorf("error when uncompressing configurations %v", err)
+	}
+
+	output, err := ioutil.ReadAll(gzreader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading configurations %v", err)
+	}
+
+	jsonSchema, err := yaml.YAMLToJSON(output)
+	if err != nil {
+		return nil, fmt.Errorf("error converting yaml to json %v", err)
+	}
+	return jsonSchema, nil
 }
