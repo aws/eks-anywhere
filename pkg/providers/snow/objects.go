@@ -25,7 +25,11 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 	}
 	name, err := NewMachineTemplateName(new, old)
 	if err != nil {
-		return nil, err
+		// To accommodate for the machine template name breaking change from beta version.
+		// In beta snowmachinetemplate name is equal to snowmachineconfig name, without the '-1' suffix.
+		// We will set to the default new machinetemplate name when detecting invalid name format.
+		// TODO: remove this once clusters are upgraded from beta.
+		name = new.GetName()
 	}
 	new.SetName(name)
 
@@ -98,17 +102,11 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 		}
 
 		// compare the old and new kubeadmConfigTemplate to determine whether to recreate new kubeadmConfigTemplate object
-		configName, err := NewKubeadmConfigTemplateName(newConfigTemplate, oldConfigTemplate)
-		if err != nil {
-			return nil, nil, err
-		}
+		configName := NewKubeadmConfigTemplateName(newConfigTemplate, oldConfigTemplate)
 
 		// compare the old and new machineTemplate as well as kubeadmConfigTemplate to determine whether to recreate
 		// new machineTemplate object
-		machineName, err := NewWorkerMachineTemplateName(newMachineTemplate, oldMachineTemplate, newConfigTemplate, oldConfigTemplate)
-		if err != nil {
-			return nil, nil, err
-		}
+		machineName := NewWorkerMachineTemplateName(newMachineTemplate, oldMachineTemplate, newConfigTemplate, oldConfigTemplate)
 
 		newConfigTemplate.SetName(configName)
 		newMachineTemplate.SetName(machineName)
@@ -132,36 +130,45 @@ func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) (string, er
 	return clusterapi.IncrementName(old.GetName())
 }
 
-func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) (string, error) {
+func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) string {
 	name, err := NewMachineTemplateName(newMt, oldMt)
 	if err != nil {
-		return "", err
+		// Same as control plane machine template, set to the default new machinetemplate name when detecting invalid name format.
+		// TODO: remove this once clusters are upgraded from beta.
+		name = newMt.GetName()
 	}
 
 	if oldKct == nil {
-		return name, nil
+		return name
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(newKct, oldKct) {
 		name, err = clusterapi.IncrementName(oldMt.GetName())
 		if err != nil {
-			return "", err
+			// TODO: remove this once clusters are upgraded from beta.
+			name = newMt.GetName()
 		}
 	}
 
-	return name, nil
+	return name
 }
 
-func NewKubeadmConfigTemplateName(new, old *bootstrapv1.KubeadmConfigTemplate) (string, error) {
+func NewKubeadmConfigTemplateName(new, old *bootstrapv1.KubeadmConfigTemplate) string {
 	if old == nil {
-		return new.GetName(), nil
+		// Set to the default new kubeadmConfigTemplateName name when detecting invalid name format.
+		// TODO: remove this once clusters are upgraded from beta.
+		return new.GetName()
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(new, old) {
-		return clusterapi.IncrementName(old.GetName())
+		name, err := clusterapi.IncrementName(old.GetName())
+		if err == nil {
+			return name
+		}
+		return new.GetName()
 	}
 
-	return old.GetName(), nil
+	return old.GetName()
 }
 
 func recreateKubeadmConfigTemplateNeeded(new, old *bootstrapv1.KubeadmConfigTemplate) bool {
