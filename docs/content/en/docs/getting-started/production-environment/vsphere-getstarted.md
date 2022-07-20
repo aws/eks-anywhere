@@ -202,6 +202,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
+   {{% alert title="Note" color="primary" %}}
+   Curated packages installation at workload cluster creation is currently not supported. Refer to instructions [here]({{< relref "../../tasks/packages" >}}) for how to install curated packages after cluster creation.
+   {{% /alert %}}
+
 1. Check the workload cluster:
 
    You can now use the workload cluster as you would any Kubernetes cluster.
