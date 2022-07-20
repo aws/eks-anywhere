@@ -87,7 +87,7 @@ func TestSnowValidate(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "valid config",
+			name: "valid config with amiID, instance type, devices",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
@@ -98,11 +98,13 @@ func TestSnowValidate(t *testing.T) {
 			wantErr: "",
 		},
 		{
-			name: "missing ami id",
+			name: "valid without ami and devices",
 			obj: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{},
+				Spec: SnowMachineConfigSpec{
+					InstanceType: DefaultSnowInstanceType,
+				},
 			},
-			wantErr: "AMIID is a required field",
+			wantErr: "",
 		},
 		{
 			name: "invalid instance type",

@@ -26,6 +26,15 @@ func TestSnowMachineConfigValidateCreateNoAMI(t *testing.T) {
 	sOld.Spec.InstanceType = v1alpha1.SbeCLarge
 	sOld.Spec.Devices = []string{"1.2.3.4"}
 
+	g.Expect(sOld.ValidateCreate()).To(Succeed())
+}
+
+func TestSnowMachineConfigValidateCreateInvalidInstanceType(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := snowMachineConfig()
+	sOld.Spec.InstanceType = "invalid-instance-type"
+
 	g.Expect(sOld.ValidateCreate()).NotTo(Succeed())
 }
 
