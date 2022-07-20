@@ -34,13 +34,23 @@ spec:
     host: 1.2.3.4
     port: 6443
   failureDomains:
-  - name: availability-zone-0
+  - name: az-1
     zone:
-      name: zone1
+      name: zone-1
       network:
-        name: net1
-    domain: domain1
-    account: admin
+        name: network-1
+    domain: domain-1
+    account: account-1
+    acsendpoint:
+      name: global
+      namespace: eksa-system
+  - name: az-2
+    zone:
+      name: zone-2
+      network:
+        name: network-2
+    domain: domain-2
+    account: account-2
     acsendpoint:
       name: global
       namespace: eksa-system
@@ -324,12 +334,6 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
-    - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://1.2.3.4"]
-      owner: root:root
-      path: "/etc/containerd/config_append.toml"
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -352,9 +356,6 @@ spec:
         taints: []
     preKubeadmCommands:
     - swapoff -a
-    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-    - sudo systemctl daemon-reload
-    - sudo systemctl restart containerd
     - hostname "{{ ds.meta_data.local_hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -401,8 +402,6 @@ spec:
       sshAuthorizedKeys:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
-    registryMirror:
-      endpoint: 1.2.3.4
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackMachineTemplate

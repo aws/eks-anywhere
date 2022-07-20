@@ -23,37 +23,6 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
       - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-      - >-
-        if [ ! -L /var/log/containers ] ;
-          then
-            mv /var/log/containers /var/log/containers-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
-            mkdir -p /data-small/var/log/containers && ln -s /data-small/var/log/containers /var/log/containers ;
-          else echo "/var/log/containers already symlnk" ;
-        fi
-      - >-
-        if [ ! -L /var/log/pods ] ;
-          then
-            mv /var/log/pods /var/log/pods-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
-            mkdir -p /data-small/var/log/pods && ln -s /data-small/var/log/pods /var/log/pods ;
-          else echo "/var/log/pods already symlnk" ;
-        fi
-      diskSetup:
-        filesystems:
-          - device: /dev/vdb1
-            overwrite: false
-            extraOpts:
-              - -E
-              - lazy_itable_init=1,lazy_journal_init=1
-            filesystem: ext4
-            label: data_disk
-        partitions:
-          - device: /dev/vdb
-            layout: true
-            overwrite: false
-            tableType: gpt
-      mounts:
-        - - LABEL=data_disk
-          - /data-small
       users:
       - name: mySshUsername
         sshAuthorizedKeys:
@@ -95,12 +64,6 @@ kind: CloudStackMachineTemplate
 metadata:
   name: test-md-0-1234567890000
   namespace: eksa-system
-  annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/containers:/data-small/var/log/containers,/var/log/pods:/data-small/var/log/pods
 spec:
   template:
     spec:
@@ -108,15 +71,7 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
-      diskOffering:
-        name: Small
-        mountPath: /data-small
-        device: /dev/vdb
-        filesystem: ext4
-        label: data_disk
       details:
         foo: bar
-      affinitygroupids:
-      - worker-affinity
 
 ---

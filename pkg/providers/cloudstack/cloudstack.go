@@ -134,10 +134,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"uri":       profile.ManagementUrl,
-			"apikey":    profile.ApiKey,
-			"secretkey": profile.SecretKey,
-			"verifyssl": profile.VerifySsl,
+			"api-url":    profile.ManagementUrl,
+			"api-key":    profile.ApiKey,
+			"secret-key": profile.SecretKey,
+			"verify-ssl": profile.VerifySsl,
 		},
 	}
 }
@@ -453,6 +453,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
+	p.datacenterConfig.SetDefaults()
+
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
@@ -491,6 +493,8 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	if err := p.validateEnv(ctx); err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
+
+	p.datacenterConfig.SetDefaults()
 
 	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
@@ -709,9 +713,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -782,9 +784,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		for _, az := range datacenterConfigSpec.AvailabilityZones {
+			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
+				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+			}
 		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -869,9 +872,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		for _, az := range datacenterConfigSpec.AvailabilityZones {
+			if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
+				noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+			}
 		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
