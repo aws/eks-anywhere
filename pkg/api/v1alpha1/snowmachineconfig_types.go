@@ -43,7 +43,7 @@ type SnowMachineConfigSpec struct {
 	// Devices contains a device ip list assigned by the user to provision machines.
 	Devices []string `json:"devices,omitempty"`
 
-	// ContainersVolume provides the configuration options for the containers data storage volumes.
+	// ContainersVolume provides the configuration options for the containers data storage volume.
 	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
 }
 
