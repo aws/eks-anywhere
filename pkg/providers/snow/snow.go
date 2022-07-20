@@ -184,7 +184,7 @@ func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, err
 
 func (p *SnowProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capas-system": {"capas-controller-manager"},
+		constants.CapasSystemNamespace: {"capas-controller-manager"},
 	}
 }
 

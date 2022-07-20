@@ -300,6 +300,7 @@ var providerNamespaces = map[string]string{
 	constants.DockerProviderName:     constants.CapdSystemNamespace,
 	constants.CloudStackProviderName: constants.CapcSystemNamespace,
 	constants.AWSProviderName:        constants.CapaSystemNamespace,
+	constants.SnowProviderName:       constants.CapasSystemNamespace,
 	etcdadmBootstrapProviderName:     constants.EtcdAdmBootstrapProviderSystemNamespace,
 	etcdadmControllerProviderName:    constants.EtcdAdmControllerSystemNamespace,
 	kubeadmBootstrapProviderName:     constants.CapiKubeadmBootstrapSystemNamespace,
