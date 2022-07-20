@@ -80,7 +80,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 		newMachineTemplate := SnowMachineTemplate(clusterapi.WorkerMachineTemplateName(clusterSpec, workerNodeGroupConfig), clusterSpec.SnowMachineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
 
 		// build worker kubeadmConfigTemplate with new clusterSpec
-		newConfigTemplate, err := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
+		newConfigTemplate, err := KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 		if err != nil {
 			return nil, nil, err
 		}

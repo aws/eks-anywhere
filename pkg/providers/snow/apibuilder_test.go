@@ -335,9 +335,27 @@ func TestKubeadmControlPlaneWithProxyConfig(t *testing.T) {
 			want := wantKubeadmControlPlane()
 			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
 			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantProxyConfigCommands()...)
-			g.Expect(got.Spec.KubeadmConfigSpec.PreKubeadmCommands).To(Equal(want.Spec.KubeadmConfigSpec.PreKubeadmCommands))
+			g.Expect(got).To(Equal(want))
 		})
 	}
+}
+
+func wantContainersVolumeCommands() []string {
+	return []string{
+		"/etc/eks/bootstrap-volume.sh",
+	}
+}
+
+func TestKubeadmControlPlaneWithContainersVolume(t *testing.T) {
+	g := newApiBuilerTest(t)
+	cpMachineConfig := g.machineConfigs[g.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	cpMachineConfig.Spec.ContainersVolume = &snowv1.Volume{Size: 8}
+	controlPlaneMachineTemplate := snow.SnowMachineTemplate("snow-test-control-plane-1", cpMachineConfig)
+	got, err := snow.KubeadmControlPlane(g.clusterSpec, controlPlaneMachineTemplate)
+	g.Expect(err).To(Succeed())
+	want := wantKubeadmControlPlane()
+	want.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(want.Spec.KubeadmConfigSpec.PreKubeadmCommands, wantContainersVolumeCommands()...)
+	g.Expect(got).To(Equal(want))
 }
 
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
@@ -379,6 +397,17 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 			},
 		},
 	}
+}
+
+func TestKubeadmConfigTemplateWithContainersVolume(t *testing.T) {
+	g := newApiBuilerTest(t)
+	workerNodeGroupConfig := g.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	g.clusterSpec.SnowMachineConfigs["test-wn"].Spec.ContainersVolume = &snowv1.Volume{Size: 8}
+	got, err := snow.KubeadmConfigTemplate(g.clusterSpec, workerNodeGroupConfig)
+	g.Expect(err).To(Succeed())
+	want := wantKubeadmConfigTemplate()
+	want.Spec.Template.Spec.PreKubeadmCommands = append(want.Spec.Template.Spec.PreKubeadmCommands, wantContainersVolumeCommands()...)
+	g.Expect(got).To(Equal(want))
 }
 
 func wantMachineDeployment() *clusterv1.MachineDeployment {
