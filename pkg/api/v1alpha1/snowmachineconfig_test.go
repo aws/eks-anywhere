@@ -5,6 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 func TestSnowSetDefaults(t *testing.T) {
@@ -112,6 +114,20 @@ func TestSnowValidate(t *testing.T) {
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
+		},
+		{
+			name: "invalid container volume",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					ContainersVolume: &snowv1.Volume{
+						Size: 7,
+					},
+				},
+			},
+			wantErr: "ContainersVolume.Size must be no smaller than 8 Gi",
 		},
 	}
 	for _, tt := range tests {

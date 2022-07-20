@@ -14,6 +14,7 @@ const (
 	DefaultSnowSshKeyName                   = "default"
 	DefaultSnowInstanceType                 = SbeCLarge
 	DefaultSnowPhysicalNetworkConnectorType = SFPPlus
+	MinimumContainerVolumeSize              = 8
 )
 
 // Used for generating yaml for generate clusterconfig command
@@ -54,6 +55,10 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 
 	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
+	}
+
+	if config.Spec.ContainersVolume != nil && config.Spec.ContainersVolume.Size < MinimumContainerVolumeSize {
+		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi", MinimumContainerVolumeSize)
 	}
 
 	// TODO: temporarily remove this validation since `devices` is a newly added, required field.

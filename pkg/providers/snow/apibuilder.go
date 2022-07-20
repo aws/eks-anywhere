@@ -45,6 +45,12 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	)
 
+	if snowMachineTemplate.Spec.Template.Spec.ContainersVolume != nil {
+		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
+			"/etc/eks/bootstrap-volume.sh",
+		)
+	}
+
 	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands,
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	)
@@ -63,7 +69,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 	return kcp, nil
 }
 
-func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
 	kct, err := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 	if err != nil {
 		return nil, fmt.Errorf("generating KubeadmConfigTemplate: %v", err)
@@ -75,6 +81,12 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
 		"/etc/eks/bootstrap.sh",
 	)
+
+	if clusterSpec.SnowMachineConfig(workerNodeGroupConfig.MachineGroupRef.Name).Spec.ContainersVolume != nil {
+		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
+			"/etc/eks/bootstrap-volume.sh",
+		)
+	}
 
 	if err := clusterapi.SetRegistryMirrorInKubeadmConfigTemplate(kct, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration); err != nil {
 		return nil, err
@@ -153,6 +165,7 @@ func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig)
 					},
 					PhysicalNetworkConnectorType: &networkConnector,
 					Devices:                      machineConfig.Spec.Devices,
+					ContainersVolume:             machineConfig.Spec.ContainersVolume,
 				},
 			},
 		},
