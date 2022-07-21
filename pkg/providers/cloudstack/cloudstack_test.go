@@ -102,6 +102,7 @@ func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.CloudStackDa
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file: %v", err)
 	}
+	datacenterConfig.SetDefaults()
 	return datacenterConfig
 }
 
