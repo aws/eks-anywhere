@@ -51,9 +51,9 @@ spec:
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -107,7 +107,7 @@ spec:
           os: linux
           sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
           sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
-          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-18/1-18-4/ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/0.0.1.build.38/eks-distro/ova/1-18/1-18-4/ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
         uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
@@ -147,9 +147,9 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
@@ -197,9 +197,9 @@ spec:
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -253,7 +253,7 @@ spec:
           os: linux
           sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
           sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
-          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-19/1-19-4/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/0.0.1.build.38/eks-distro/ova/1-19/1-19-4/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
         uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
@@ -293,9 +293,9 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
@@ -343,9 +343,9 @@ spec:
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
@@ -399,7 +399,7 @@ spec:
           os: linux
           sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
           sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
-          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-20/1-20-1/ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/0.0.1.build.38/eks-distro/ova/1-20/1-20-1/ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
         uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
@@ -419,13 +419,13 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-v0.0.0-dev-build.952
       clusterTemplate:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
       version: v0.1.0+210860f
     vSphere:
       clusterAPIController:
@@ -451,15 +451,15 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/cluster-template.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/cluster-template.yaml
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/infrastructure-components.yaml
       controller:
         arch:
           - amd64
@@ -477,11 +477,11 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/metadata.yaml
       version: v0.6.4
     bootstrap:
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/bootstrap-kubeadm/v0.3.23/bootstrap-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/bootstrap-kubeadm/v0.3.23/bootstrap-components.yaml
       controller:
         arch:
           - amd64
@@ -499,7 +499,7 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/bootstrap-kubeadm/v0.3.23/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/bootstrap-kubeadm/v0.3.23/metadata.yaml
       version: v0.3.23
     bottlerocketBootstrap:
       bootstrap:
@@ -553,7 +553,7 @@ spec:
         os: linux
         uri: public.ecr.aws/isovalent/cilium-eksa:v1.9.9-beta2
       manifest:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cilium/manifests/cilium/v1.9.9-beta2/cilium.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cilium/manifests/cilium/v1.9.9-beta2/cilium.yaml
       operator:
         arch:
           - amd64
@@ -568,13 +568,13 @@ spec:
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
     clusterAPI:
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/cluster-api/v0.3.23/core-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/cluster-api/v0.3.23/core-components.yaml
       controller:
         arch:
           - amd64
@@ -592,11 +592,11 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/metadata.yaml
       version: v0.3.23
     controlPlane:
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/control-plane-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/control-plane-components.yaml
       controller:
         arch:
           - amd64
@@ -614,13 +614,13 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/control-plane-kubeadm/v0.3.23/metadata.yaml
       version: v0.3.23
     docker:
       clusterTemplate:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/cluster-template-development.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/cluster-template-development.yaml
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/infrastructure-components-development.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/infrastructure-components-development.yaml
       kubeProxy:
         arch:
           - amd64
@@ -638,7 +638,7 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.23-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api/manifests/infrastructure-docker/v0.3.23/metadata.yaml
       version: v0.3.23
     eksD:
       channel: 1-21
@@ -664,7 +664,7 @@ spec:
           osName: bottlerocket
           sha256: a4400640c958dbb883500ad2a0214e515275e47b41af903c4148601c01b3688d
           sha512: 5542af26e45a653276b3d1bc27eefea37b54a34412692be29fd7fda008d799b25ec9ec31a8df43bdcd4fbe28612b1d845ceb0517a10db736423821c0860d28af
-          uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/eks-distro/ova/1-21/1-21-4/bottlerocket-v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158-amd64.ova
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/eks-distro/ova/1-21/1-21-4/bottlerocket-v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158-amd64.ova
         ubuntu:
           arch:
             - amd64
@@ -674,7 +674,7 @@ spec:
           osName: ubuntu
           sha256: 1f9294eb576765ccdbba0bfe72ae091aaa2d1abb44c6ac369d203fbfb9f231a6
           sha512: 3657be5002ada079d309193e3545e03666672675a699fb08ce152a15fd8fc589a78f1dbfc28b20143d56251be28b82715b8114a34935249a00bb33eb3099e4e3
-          uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/eks-distro/ova/1-21/1-21-4/ubuntu-v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158-amd64.ova
+          uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/eks-distro/ova/1-21/1-21-4/ubuntu-v1.21.2-eks-d-1-21-4-eks-a-v0.0.0-dev-build.158-amd64.ova
     eksa:
       cliTools:
         arch:
@@ -685,10 +685,10 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:eks-a-v0.0.0-dev-build.158
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/eks-anywhere/manifests/cluster-controller/e8aa98e09a30d56e3e1de7c81e4ae1e436333aeb/eksa-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/eks-anywhere/manifests/cluster-controller/e8aa98e09a30d56e3e1de7c81e4ae1e436333aeb/eksa-components.yaml
     etcdadmBootstrap:
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v0.1.0-beta-3.3/bootstrap-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v0.1.0-beta-3.3/bootstrap-components.yaml
       controller:
         arch:
           - amd64
@@ -706,11 +706,11 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v0.1.0-beta-3.3/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v0.1.0-beta-3.3/metadata.yaml
       version: v0.1.0-beta-3.3
     etcdadmController:
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v0.1.0-beta-3.5/bootstrap-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v0.1.0-beta-3.5/bootstrap-components.yaml
       controller:
         arch:
           - amd64
@@ -728,7 +728,7 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v0.1.0-beta-3.5/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v0.1.0-beta-3.5/metadata.yaml
       version: v0.1.0-beta-3.5
     flux:
       helmController:
@@ -768,13 +768,13 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-v0.0.0-dev-build.952
       clusterTemplate:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
       version: v0.1.0+210860f
     vSphere:
       clusterAPIController:
@@ -786,9 +786,9 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.10-eks-a-v0.0.0-dev-build.158
       clusterTemplate:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/cluster-template.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/cluster-template.yaml
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/infrastructure-components.yaml
       driver:
         arch:
           - amd64
@@ -822,7 +822,7 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.21.0-eks-d-1-21-eks-a-v0.0.0-dev-build.158
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v0.7.10/metadata.yaml
       syncer:
         arch:
           - amd64
@@ -836,8 +836,8 @@ spec:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
       components:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
       metadata:
-        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
       version: v0.4.0-alpha+e3b0c44
 status: {}
