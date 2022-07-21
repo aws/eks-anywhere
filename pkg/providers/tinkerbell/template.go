@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 
@@ -403,6 +404,13 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+		}
+	}
+
 	return values
 }
 
@@ -434,6 +442,13 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+	}
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+		}
 	}
 
 	return values
