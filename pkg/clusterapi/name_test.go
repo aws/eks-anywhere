@@ -42,6 +42,35 @@ func TestIncrementName(t *testing.T) {
 	}
 }
 
+func TestIncrementNameWithFallbackDefault(t *testing.T) {
+	tests := []struct {
+		name        string
+		oldName     string
+		defaultName string
+		want        string
+	}{
+		{
+			name:        "valid",
+			oldName:     "cluster-1",
+			defaultName: "default",
+			want:        "cluster-2",
+		},
+		{
+			name:        "invalid format",
+			oldName:     "cluster-1a",
+			defaultName: "default",
+			want:        "default",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := clusterapi.IncrementNameWithFallbackDefault(tt.oldName, tt.defaultName)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestObjectName(t *testing.T) {
 	tests := []struct {
 		name    string

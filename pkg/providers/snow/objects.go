@@ -23,15 +23,8 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 	if err != nil {
 		return nil, err
 	}
-	name, err := NewMachineTemplateName(new, old)
-	if err != nil {
-		// To accommodate for the machine template name breaking change from beta version.
-		// In beta snowmachinetemplate name is equal to snowmachineconfig name, without the '-1' suffix.
-		// We will set to the default new machinetemplate name when detecting invalid name format.
-		// TODO: remove this once clusters are upgraded from beta.
-		name = new.GetName()
-	}
-	new.SetName(name)
+
+	new.SetName(NewMachineTemplateName(new, old))
 
 	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, new)
 	if err != nil {
@@ -118,36 +111,27 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 	return machines, configs, nil
 }
 
-func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) (string, error) {
+func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) string {
 	if old == nil {
-		return new.GetName(), nil
+		return new.GetName()
 	}
 
 	if equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
-		return old.GetName(), nil
+		return old.GetName()
 	}
 
-	return clusterapi.IncrementName(old.GetName())
+	return clusterapi.IncrementNameWithFallbackDefault(old.GetName(), new.GetName())
 }
 
 func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) string {
-	name, err := NewMachineTemplateName(newMt, oldMt)
-	if err != nil {
-		// Same as control plane machine template, set to the default new machinetemplate name when detecting invalid name format.
-		// TODO: remove this once clusters are upgraded from beta.
-		name = newMt.GetName()
-	}
+	name := NewMachineTemplateName(newMt, oldMt)
 
 	if oldKct == nil {
 		return name
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(newKct, oldKct) {
-		name, err = clusterapi.IncrementName(oldMt.GetName())
-		if err != nil {
-			// TODO: remove this once clusters are upgraded from beta.
-			name = newMt.GetName()
-		}
+		name = clusterapi.IncrementNameWithFallbackDefault(oldMt.GetName(), newMt.GetName())
 	}
 
 	return name
@@ -155,17 +139,11 @@ func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, n
 
 func NewKubeadmConfigTemplateName(new, old *bootstrapv1.KubeadmConfigTemplate) string {
 	if old == nil {
-		// Set to the default new kubeadmConfigTemplateName name when detecting invalid name format.
-		// TODO: remove this once clusters are upgraded from beta.
 		return new.GetName()
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(new, old) {
-		name, err := clusterapi.IncrementName(old.GetName())
-		if err == nil {
-			return name
-		}
-		return new.GetName()
+		return clusterapi.IncrementNameWithFallbackDefault(old.GetName(), new.GetName())
 	}
 
 	return old.GetName()
