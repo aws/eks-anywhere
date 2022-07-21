@@ -50,6 +50,7 @@ type kindExecConfig struct {
 	RegistryCACertPath     string
 	ExtraPortMappings      []int
 	DockerExtraMounts      bool
+	CloudStackExtraMounts  []string
 	DisableDefaultCNI      bool
 }
 
@@ -131,6 +132,22 @@ func (k *Kind) WithExtraDockerMounts() bootstrapper.BootstrapClusterClientOption
 		}
 
 		k.execConfig.DockerExtraMounts = true
+		return nil
+	}
+}
+
+func (k *Kind) WithExtraCloudStackMounts(extraMounts []string) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		if len(extraMounts) == 0 {
+			return errors.New("no extraMounts found in the list")
+		}
+
+		k.execConfig.CloudStackExtraMounts = extraMounts
+
 		return nil
 	}
 }

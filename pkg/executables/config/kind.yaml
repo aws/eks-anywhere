@@ -45,6 +45,15 @@ nodes:
     - hostPath: /var/run/docker.sock
       containerPath: /var/run/docker.sock
 {{- end }}
+{{- if ne (len .CloudStackExtraMounts) 0 }}
+nodes:
+- role: control-plane
+  extraMounts:
+{{- range .CloudStackExtraMounts }}
+    - hostPath: {{ . }}
+      containerPath: {{ . }}
+{{- end }}
+{{- end }}
 {{- if ne (len .ExtraPortMappings) 0 }}
 nodes:
 - role: control-plane
