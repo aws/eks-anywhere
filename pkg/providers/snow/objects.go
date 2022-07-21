@@ -23,11 +23,8 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 	if err != nil {
 		return nil, err
 	}
-	name, err := NewMachineTemplateName(new, old)
-	if err != nil {
-		return nil, err
-	}
-	new.SetName(name)
+
+	new.SetName(NewMachineTemplateName(new, old))
 
 	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, new)
 	if err != nil {
@@ -98,17 +95,11 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 		}
 
 		// compare the old and new kubeadmConfigTemplate to determine whether to recreate new kubeadmConfigTemplate object
-		configName, err := NewKubeadmConfigTemplateName(newConfigTemplate, oldConfigTemplate)
-		if err != nil {
-			return nil, nil, err
-		}
+		configName := NewKubeadmConfigTemplateName(newConfigTemplate, oldConfigTemplate)
 
 		// compare the old and new machineTemplate as well as kubeadmConfigTemplate to determine whether to recreate
 		// new machineTemplate object
-		machineName, err := NewWorkerMachineTemplateName(newMachineTemplate, oldMachineTemplate, newConfigTemplate, oldConfigTemplate)
-		if err != nil {
-			return nil, nil, err
-		}
+		machineName := NewWorkerMachineTemplateName(newMachineTemplate, oldMachineTemplate, newConfigTemplate, oldConfigTemplate)
 
 		newConfigTemplate.SetName(configName)
 		newMachineTemplate.SetName(machineName)
@@ -120,48 +111,42 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 	return machines, configs, nil
 }
 
-func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) (string, error) {
+func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) string {
 	if old == nil {
-		return new.GetName(), nil
+		return new.GetName()
 	}
 
 	if equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
-		return old.GetName(), nil
+		return old.GetName()
 	}
 
-	return clusterapi.IncrementName(old.GetName())
+	return clusterapi.IncrementNameWithFallbackDefault(old.GetName(), new.GetName())
 }
 
-func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) (string, error) {
-	name, err := NewMachineTemplateName(newMt, oldMt)
-	if err != nil {
-		return "", err
-	}
+func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) string {
+	name := NewMachineTemplateName(newMt, oldMt)
 
 	if oldKct == nil {
-		return name, nil
+		return name
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(newKct, oldKct) {
-		name, err = clusterapi.IncrementName(oldMt.GetName())
-		if err != nil {
-			return "", err
-		}
+		name = clusterapi.IncrementNameWithFallbackDefault(oldMt.GetName(), newMt.GetName())
 	}
 
-	return name, nil
+	return name
 }
 
-func NewKubeadmConfigTemplateName(new, old *bootstrapv1.KubeadmConfigTemplate) (string, error) {
+func NewKubeadmConfigTemplateName(new, old *bootstrapv1.KubeadmConfigTemplate) string {
 	if old == nil {
-		return new.GetName(), nil
+		return new.GetName()
 	}
 
 	if recreateKubeadmConfigTemplateNeeded(new, old) {
-		return clusterapi.IncrementName(old.GetName())
+		return clusterapi.IncrementNameWithFallbackDefault(old.GetName(), new.GetName())
 	}
 
-	return old.GetName(), nil
+	return old.GetName()
 }
 
 func recreateKubeadmConfigTemplateNeeded(new, old *bootstrapv1.KubeadmConfigTemplate) bool {

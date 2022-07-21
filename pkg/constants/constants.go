@@ -13,6 +13,7 @@ const (
 	CapvSystemNamespace                     = "capv-system"
 	CaptSystemNamespace                     = "capt-system"
 	CapaSystemNamespace                     = "capa-system"
+	CapasSystemNamespace                    = "capas-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"
 	EtcdAdmBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"

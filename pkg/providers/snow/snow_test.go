@@ -739,3 +739,25 @@ func TestUpgradeNeededMachineConfigs(t *testing.T) {
 		})
 	}
 }
+
+func TestChangeDiffNoChange(t *testing.T) {
+	g := NewWithT(t)
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	g.Expect(provider.ChangeDiff(clusterSpec, clusterSpec)).To(BeNil())
+}
+
+func TestChangeDiffWithChange(t *testing.T) {
+	g := NewWithT(t)
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	newClusterSpec := clusterSpec.DeepCopy()
+	clusterSpec.VersionsBundle.Snow.Version = "v1.0.2"
+	newClusterSpec.VersionsBundle.Snow.Version = "v1.0.3"
+	want := &types.ComponentChangeDiff{
+		ComponentName: "snow",
+		NewVersion:    "v1.0.3",
+		OldVersion:    "v1.0.2",
+	}
+	g.Expect(provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(want))
+}

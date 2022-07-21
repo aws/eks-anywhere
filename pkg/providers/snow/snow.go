@@ -184,7 +184,7 @@ func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, err
 
 func (p *SnowProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capas-system": {"capas-controller-manager"},
+		constants.CapasSystemNamespace: {"capas-controller-manager"},
 	}
 }
 
@@ -231,7 +231,15 @@ func (p *SnowProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
 }
 
 func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	return nil
+	if currentSpec.VersionsBundle.Snow.Version == newSpec.VersionsBundle.Snow.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.SnowProviderName,
+		NewVersion:    newSpec.VersionsBundle.Snow.Version,
+		OldVersion:    currentSpec.VersionsBundle.Snow.Version,
+	}
 }
 
 func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
