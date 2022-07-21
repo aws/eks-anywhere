@@ -2,10 +2,8 @@ package curatedpackages
 
 import (
 	"context"
-	"errors"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -54,18 +52,14 @@ func newPackageController(installer ChartInstaller, runner KubectlRunner, spec *
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
 
-	// If cert-manager does not exist, instruct users to follow instructions in
-	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	// Note although we passed in a namespace parameter in the kubectl command, the GetResource command will be
-	// performed in all namespaces since CRDs are not bounded by namespaces.
 	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
-	certManagerExists, _ := pi.kubectl.GetResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig, constants.CertManagerNamespace)
-	if !certManagerExists {
-		PrintCertManagerDoesNotExistMsg()
-		return errors.New("cert-manager is not present in the cluster")
+
+	err := VerifyCertManagerExists(ctx, pi.kubectl, kubeConfig)
+	if err != nil {
+		return err
 	}
 
-	err := pi.installPackagesController(ctx)
+	err = pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return err

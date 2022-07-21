@@ -2,14 +2,12 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
@@ -81,14 +79,9 @@ func installPackageController(ctx context.Context) error {
 		helmChart.Tag(),
 	)
 
-	// If cert-manager does not exist, instruct users to follow instructions in
-	// PrintCertManagerDoesNotExistMsg to install packages manually.
-	// Note although we passed in a namespace parameter in the kubectl command, the GetResource command will be
-	// performed in all namespaces since CRDs are not bounded by namespaces.
-	certManagerExists, _ := deps.Kubectl.GetResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig, constants.CertManagerNamespace)
-	if !certManagerExists {
-		curatedpackages.PrintCertManagerDoesNotExistMsg()
-		return errors.New("cert-manager is not present in the cluster")
+	err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig)
+	if err != nil {
+		return err
 	}
 
 	if err = ctrlClient.ValidateControllerDoesNotExist(ctx); err != nil {
