@@ -38,7 +38,7 @@ func IncrementName(name string) (string, error) {
 func IncrementNameWithFallbackDefault(name, defaultName string) string {
 	n, err := IncrementName(name)
 	if err != nil {
-		logger.V(3).Info("Unable to increment object name (might due to changes of name format), fallback to the default name", "error", err.Error())
+		logger.V(4).Info("Unable to increment object name (might due to changes of name format), fallback to the default name", "error", err.Error())
 		return defaultName
 	}
 	return n
