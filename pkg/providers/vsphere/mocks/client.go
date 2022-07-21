@@ -601,6 +601,20 @@ func (mr *MockProviderKubectlClientMockRecorder) LoadSecret(arg0, arg1, arg2, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).LoadSecret), arg0, arg1, arg2, arg3, arg4)
 }
 
+// RemoveAnnotationInNamespace mocks base method.
+func (m *MockProviderKubectlClient) RemoveAnnotationInNamespace(arg0 context.Context, arg1, arg2, arg3 string, arg4 *types.Cluster, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveAnnotationInNamespace", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveAnnotationInNamespace indicates an expected call of RemoveAnnotationInNamespace.
+func (mr *MockProviderKubectlClientMockRecorder) RemoveAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationInNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).RemoveAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // SearchVsphereDatacenterConfig mocks base method.
 func (m *MockProviderKubectlClient) SearchVsphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()

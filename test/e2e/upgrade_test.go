@@ -4,31 +4,46 @@
 package e2e
 
 import (
+	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
 const (
-	vsphereCpVmNumCpuUpdateVar = 4
-	vsphereCpVmMemoryUpdate    = 16384
-	vsphereCpDiskGiBUpdateVar  = 40
-	vsphereWlVmNumCpuUpdateVar = 4
-	vsphereWlVmMemoryUpdate    = 16384
-	vsphereWlDiskGiBUpdate     = 40
-	vsphereFolderUpdateVar     = "/SDDC-Datacenter/vm/capv/e2eUpdate"
-	vsphereNetwork2UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-2"
-	vsphereNetwork3UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-3"
-	clusterNamespace           = "test-namespace"
+	vsphereCpVmNumCpuUpdateVar          = 4
+	vsphereCpVmMemoryUpdate             = 16384
+	vsphereCpDiskGiBUpdateVar           = 40
+	vsphereWlVmNumCpuUpdateVar          = 4
+	vsphereWlVmMemoryUpdate             = 16384
+	vsphereWlDiskGiBUpdate              = 40
+	vsphereFolderUpdateVar              = "/SDDC-Datacenter/vm/capv/e2eUpdate"
+	vsphereNetwork2UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-2"
+	vsphereNetwork3UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-3"
+	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
+	clusterNamespace                    = "test-namespace"
+	vsphereResourcePoolVar      		= "T_VSPHERE_RESOURCE_POOL"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.UpgradeCluster(clusterOpts)
+	test.ValidateCluster(updateVersion)
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
+func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts []framework.ClusterE2ETestOpt, clusterOpts2 []framework.ClusterE2ETestOpt) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.UpgradeCluster(clusterOpts)
+	test.StopIfSucceeded()
+	test.UpgradeCluster(clusterOpts2)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
 	test.DeleteCluster()
@@ -500,5 +515,29 @@ func TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade(t *testing.T) {
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
 		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
+	)
+}
+
+func TestVSphereKubernetes121UbuntuTo122UpgradeWithCheckpoint(t *testing.T) {
+	var clusterOpts []framework.ClusterE2ETestOpt
+	var clusterOpts2 []framework.ClusterE2ETestOpt
+
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(config.ExternalEtcdTimeoutEnv, "10m"))
+	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"))
+	runUpgradeFlowWithCheckpoint(
+		test,
+		v1alpha1.Kube122,
+		clusterOpts,
+		clusterOpts2,
 	)
 }

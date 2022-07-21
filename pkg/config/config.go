@@ -14,6 +14,7 @@ const (
 	EksaGitKnownHostsFileEnv    = "EKSA_GIT_KNOWN_HOSTS"
 	SshKnownHostsEnv            = "SSH_KNOWN_HOSTS"
 	EksaReplicasReadyTimeoutEnv = "EKSA_REPLICAS_READY_TIMEOUT"
+	ExternalEtcdTimeoutEnv      = "EKSA_EXTERNAL_ETCD_TIMEOUT"
 )
 
 type CliConfig struct {
@@ -23,7 +24,10 @@ type CliConfig struct {
 	MaxWaitPerMachine   time.Duration
 }
 
-const DefaultMaxWaitPerMachine = 10 * time.Minute
+const (
+	DefaultMaxWaitPerMachine = 10 * time.Minute
+	DefaultEtcdWaitStr       = "60m"
+)
 
 func GetMaxWaitPerMachine() time.Duration {
 	if env, found := os.LookupEnv(EksaReplicasReadyTimeoutEnv); found {
@@ -35,4 +39,14 @@ func GetMaxWaitPerMachine() time.Duration {
 		}
 	}
 	return DefaultMaxWaitPerMachine
+}
+
+func GetExternalEtcdTimeout() string {
+	if env, found := os.LookupEnv(ExternalEtcdTimeoutEnv); found {
+		if _, err := time.ParseDuration(env); err == nil {
+			return env
+		}
+		logger.V(3).Info(fmt.Sprintf("Invalid %s value: %s Use the default timeout: %s", ExternalEtcdTimeoutEnv, env, ExternalEtcdTimeoutEnv))
+	}
+	return DefaultEtcdWaitStr
 }
