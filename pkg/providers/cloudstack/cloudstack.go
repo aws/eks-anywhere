@@ -134,10 +134,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"uri":       profile.ManagementUrl,
-			"apikey":    profile.ApiKey,
-			"secretkey": profile.SecretKey,
-			"verifyssl": profile.VerifySsl,
+			"api-url":    profile.ManagementUrl,
+			"api-key":    profile.ApiKey,
+			"secret-key": profile.SecretKey,
+			"verify-ssl": profile.VerifySsl,
 		},
 	}
 }
@@ -709,9 +709,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -771,28 +769,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
-		noProxyList = append(noProxyList,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
+		fillProxyConfigurations(values, clusterSpec, datacenterConfigSpec)
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -810,6 +787,31 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	return values
+}
+
+func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec) {
+	values["proxyConfig"] = true
+	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+		len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
+	noProxyList := make([]string, 0, capacity)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+	noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
+
+	noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
+	for _, az := range datacenterConfigSpec.AvailabilityZones {
+		if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
+	}
+	noProxyList = append(noProxyList,
+		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+	)
+
+	values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+	values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
+	values["noProxy"] = noProxyList
 }
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
@@ -858,28 +860,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
-		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
-
-		// Add no-proxy defaults
-		noProxyList = append(noProxyList, clusterapi.NoProxyDefaults()...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
-		noProxyList = append(noProxyList,
-			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		)
-
-		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
-		values["noProxy"] = noProxyList
+		fillProxyConfigurations(values, clusterSpec, datacenterConfigSpec)
 	}
 
 	return values
