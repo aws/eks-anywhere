@@ -19,6 +19,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,21 +55,26 @@ var _ webhook.Validator = &Cluster{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
+	var allErrs []error
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
 	if r.IsReconcilePaused() {
 		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
 		return nil
 	}
 	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+		allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported"))
 	}
 	if r.IsSelfManaged() {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+		allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
 	}
 
-	if err := validateCNIPlugin(r.Spec.ClusterNetwork); err != nil {
-		return apierrors.NewBadRequest(err.Error())
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return apierrors.NewBadRequest(fmt.Sprintf("invalid cluster spec: %v", aggregate.Error()))
 	}
-
 	return nil
 }
 
