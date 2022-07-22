@@ -4283,6 +4283,10 @@ spec:
                   modifying this file NutanixEndpoint is the Endpoint of Nutanix Prism
                   Central'
                 type: string
+              nutanixInsecure:
+                description: NutanixInsecure is the protocol type to connect to Nutanix
+                  Prism Central
+                type: boolean
               nutanixPassword:
                 description: NutanixPassword is the Password for Nutanix Prism Central
                 type: string
@@ -4295,6 +4299,7 @@ spec:
                 type: string
             required:
             - nutanixEndpoint
+            - nutanixInsecure
             - nutanixPassword
             - nutanixPort
             - nutanixUser
