@@ -10,8 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/controllers/remote"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -26,23 +24,11 @@ import (
 
 const defaultRequeueTime = time.Second * 10
 
-type CiliumReconciler struct {
-	tracker *remote.ClusterCacheTracker
-}
+type CiliumReconciler struct{}
 
-func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
-	log.Info("Getting remote client", "client for cluster", capiCluster.Name)
-	key := client.ObjectKey{
-		Namespace: capiCluster.Namespace,
-		Name:      capiCluster.Name,
-	}
-	remoteClient, err := cr.tracker.GetClient(ctx, key)
-	if err != nil {
-		return controller.Result{}, err
-	}
-
+func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, client client.Client, specWithBundles *eksacluster.Spec) (controller.Result, error) {
 	log.Info("Applying CNI")
-	ciliumDS, err := getCiliumDS(ctx, remoteClient)
+	ciliumDS, err := getCiliumDS(ctx, client)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("Deploying Cilium DS")
@@ -54,7 +40,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 			if err != nil {
 				return controller.Result{}, err
 			}
-			if err := serverside.ReconcileYaml(ctx, remoteClient, ciliumSpec); err != nil {
+			if err := serverside.ReconcileYaml(ctx, client, ciliumSpec); err != nil {
 				return controller.Result{}, err
 			}
 			return controller.Result{}, err
@@ -65,7 +51,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 
 	// upgrade cilium
 	log.Info("Upgrading Cilium")
-	needsUpgrade, err := ciliumNeedsUpgrade(ctx, log, remoteClient, specWithBundles)
+	needsUpgrade, err := ciliumNeedsUpgrade(ctx, log, client, specWithBundles)
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -83,7 +69,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 	}
 
 	log.Info("Installing Cilium upgrade preflight manifest")
-	if err := serverside.ReconcileYaml(ctx, remoteClient, preflight); err != nil {
+	if err := serverside.ReconcileYaml(ctx, client, preflight); err != nil {
 		return controller.Result{}, err
 	}
 
@@ -96,7 +82,7 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 
 	preFlightCiliumDS := &v1.DaemonSet{}
 	preFlightCiliumDSName := types.NamespacedName{Namespace: "kube-system", Name: cilium.PreflightDaemonSetName}
-	if err := remoteClient.Get(ctx, preFlightCiliumDSName, preFlightCiliumDS); err != nil {
+	if err := client.Get(ctx, preFlightCiliumDSName, preFlightCiliumDS); err != nil {
 		log.Error(err, "error getting Preflight Cilium DS")
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
@@ -116,12 +102,12 @@ func (cr *CiliumReconciler) Reconcile(ctx context.Context, log logr.Logger, clus
 		return controller.Result{}, err
 	}
 
-	if err := serverside.ReconcileYaml(ctx, remoteClient, upgradeManifest); err != nil {
+	if err := serverside.ReconcileYaml(ctx, client, upgradeManifest); err != nil {
 		return controller.Result{}, err
 	}
 
 	log.Info("Deleting Preflight Cilium objects")
-	if err := serverside.DeleteYaml(ctx, remoteClient, preflight); err != nil {
+	if err := serverside.DeleteYaml(ctx, client, preflight); err != nil {
 		log.Error(err, "error deleting Preflight Cilium objects")
 		return controller.Result{}, err
 	}
@@ -224,8 +210,6 @@ func getCiliumDeployment(ctx context.Context, client client.Client) (*v1.Deploym
 	return deployment, nil
 }
 
-func NewCiliumReconciler(tracker *remote.ClusterCacheTracker) *CiliumReconciler {
-	return &CiliumReconciler{
-		tracker: tracker,
-	}
+func NewCiliumReconciler() *CiliumReconciler {
+	return &CiliumReconciler{}
 }
