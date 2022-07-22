@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -74,12 +75,12 @@ func GenerateSSHAuthKey(writer filewriter.FileWriter) (string, error) {
 
 func CPMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
+	return fmt.Sprintf("%s%s%d", clusterName, constants.ControlPlaneTemplatePrefix, t)
 }
 
 func EtcdMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
+	return fmt.Sprintf("%s%s%d", clusterName, constants.EtcdTemplatePrefix, t)
 }
 
 func WorkerMachineTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
