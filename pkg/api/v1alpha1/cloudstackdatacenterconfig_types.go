@@ -176,12 +176,12 @@ func (v *CloudStackDatacenterConfig) Validate() error {
 	if len(v.Spec.AvailabilityZones) == 0 {
 		return errors.New("availabilityZones must not be empty")
 	}
-	azSet := map[string]CloudStackAvailabilityZone{}
+	azSet := make(map[string]bool)
 	for _, az := range v.Spec.AvailabilityZones {
-		if _, exists := azSet[az.Name]; exists {
-			return errors.New(fmt.Sprintf("All availabilityZone names must be unique; found multiple %s", az.Name))
+		if exists := azSet[az.Name]; exists {
+			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
 		}
-		azSet[az.Name] = az
+		azSet[az.Name] = true
 	}
 
 	return nil
