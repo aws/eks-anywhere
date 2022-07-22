@@ -32,6 +32,8 @@ https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this 
 	width = 112
 )
 
+var userMsgSeparator = strings.Repeat("-", width)
+
 func CreateBundleManager(kubeVersion string) bundle.Manager {
 	major, minor, err := parseKubeVersion(kubeVersion)
 	if err != nil {
@@ -75,9 +77,9 @@ func PrintLicense() {
 	//the AWS Service Terms are extended to provide customers access to these features free of charge.
 	//These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
 	//----------------------------------------------------------------------------------------------------------------
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
 	fmt.Println(license)
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
 }
 
 func PrintCertManagerDoesNotExistMsg() {
@@ -88,9 +90,9 @@ func PrintCertManagerDoesNotExistMsg() {
 	//by an action to install Curated packages at a workload cluster. Refer to
 	//https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.
 	//----------------------------------------------------------------------------------------------------------------
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
 	fmt.Println(certManagerDoesNotExistMsg)
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
 }
 
 func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeConfig string) error {
