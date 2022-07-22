@@ -1,12 +1,22 @@
 ---
 title: "vSphere configuration"
-linkTitle: "vSphere"
-weight: 10
+linkTitle: "vSphere configuration"
+weight: 20
 description: >
   Full EKS Anywhere configuration reference for a VMware vSphere cluster.
 ---
 
-This is a generic template with detailed descriptions below for reference
+This is a generic template with detailed descriptions below for reference.
+The following additional optional configuration can also be included:
+
+* [CNI]({{< relref "optional/cni.md" >}})
+* [IAM for pods]({{< relref "optional/irsa.md" >}})
+* [IAM Authenticator]({{< relref "optional/iamauth.md" >}})
+* [OIDC]({{< relref "optional/oidc.md" >}})
+* [gitops]({{< relref "optional/gitops.md" >}})
+* [proxy]({{< relref "optional/proxy.md" >}})
+* [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
+
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -94,21 +104,17 @@ spec:
 
 ## Cluster Fields
 
-The following additional optional configuration can also be included.
-
-* [OIDC]({{< relref "oidc.md" >}})
-* [etcd]({{< relref "etcd.md" >}})
-* [proxy]({{< relref "proxy.md" >}})
-* [gitops]({{< relref "gitops.md" >}})
-
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
 
 ### clusterNetwork (required)
 Specific network configuration for your Kubernetes cluster.
 
-### clusterNetwork.cni (required)
-CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
+### clusterNetwork.cniConfig (required)
+CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
+
+### clusterNetwork.cniConfig.cilium.policyEnforcementMode
+Optionally, you may specify a policyEnforcementMode of default, always, never.
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.

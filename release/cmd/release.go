@@ -27,11 +27,15 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/aws/eks-anywhere/release/pkg"
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/pkg/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/clients"
-	"github.com/aws/eks-anywhere/release/pkg/utils"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
+	"github.com/aws/eks-anywhere/release/pkg/filereader"
+	"github.com/aws/eks-anywhere/release/pkg/operations"
+	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
+	artifactutils "github.com/aws/eks-anywhere/release/pkg/util/artifacts"
+	releaseutils "github.com/aws/eks-anywhere/release/pkg/util/release"
 )
 
 var (
@@ -85,7 +89,7 @@ var releaseCmd = &cobra.Command{
 			releaseVersion = cliMaxVersion
 		}
 
-		releaseConfig := &pkg.ReleaseConfig{
+		releaseConfig := &releasetypes.ReleaseConfig{
 			CliRepoSource:            cliRepoDir,
 			BuildRepoSource:          buildRepoDir,
 			CliRepoUrl:               cliRepoUrl,
@@ -107,7 +111,7 @@ var releaseCmd = &cobra.Command{
 			ReleaseEnvironment:       releaseEnvironment,
 		}
 
-		err := releaseConfig.SetRepoHeads()
+		err := operations.SetRepoHeads(releaseConfig)
 		if err != nil {
 			fmt.Printf("Error getting heads of code repositories: %v\n", err)
 			os.Exit(1)
@@ -121,7 +125,7 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("%s Successfully created dev release clients\n", pkg.SuccessIcon)
+			fmt.Printf("%s Successfully created dev release clients\n", constants.SuccessIcon)
 		}
 		if releaseEnvironment == "development" {
 			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
@@ -129,7 +133,7 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("%s Successfully created staging release clients\n", pkg.SuccessIcon)
+			fmt.Printf("%s Successfully created staging release clients\n", constants.SuccessIcon)
 		}
 		if releaseEnvironment == "production" {
 			sourceClients, releaseClients, err = clients.CreateProdReleaseClients()
@@ -137,14 +141,14 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("%s Successfully created dev release clients\n", pkg.SuccessIcon)
+			fmt.Printf("%s Successfully created dev release clients\n", constants.SuccessIcon)
 		}
 
 		releaseConfig.SourceClients = sourceClients
 		releaseConfig.ReleaseClients = releaseClients
 
 		if devRelease {
-			releaseVersion, err = releaseConfig.GetCurrentEksADevReleaseVersion(releaseVersion)
+			releaseVersion, err = filereader.GetCurrentEksADevReleaseVersion(releaseVersion, releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
 				os.Exit(1)
@@ -154,18 +158,11 @@ var releaseCmd = &cobra.Command{
 		releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
 		if devRelease || bundleRelease {
-			bundle := &anywherev1alpha1.Bundles{
-				Spec: anywherev1alpha1.BundlesSpec{
-					Number:        bundleNumber,
-					CliMinVersion: cliMinVersion,
-					CliMaxVersion: cliMaxVersion,
-				},
-			}
-			bundle.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			bundle.Kind = anywherev1alpha1.BundlesKind
-			bundle.CreationTimestamp = v1.Time{Time: releaseTime}
+			bundle := bundles.NewBaseBundles(releaseConfig)
+			bundle.Spec.CliMinVersion = cliMinVersion
+			bundle.Spec.CliMaxVersion = cliMaxVersion
 
-			bundleArtifactsTable, err := releaseConfig.GenerateBundleArtifactsTable()
+			bundleArtifactsTable, err := operations.GenerateBundleArtifactsTable(releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting bundle artifacts data: %v\n", err)
 				os.Exit(1)
@@ -173,26 +170,20 @@ var releaseCmd = &cobra.Command{
 			releaseConfig.BundleArtifactsTable = bundleArtifactsTable
 
 			// Download ECR images + S3 artifacts and rename them to the
-			// proper release URIs for manifest generation.
-			err = releaseConfig.PrepareBundleRelease()
+			// proper release URIs + Upload them to release destinations
+			err = operations.BundleArtifactsRelease(releaseConfig)
 			if err != nil {
-				fmt.Printf("Error preparing bundle release: %v\n", err)
+				fmt.Printf("Error releasing bundle artifacts: %v\n", err)
 				os.Exit(1)
 			}
 
-			err = releaseConfig.UploadArtifacts(bundleArtifactsTable)
-			if err != nil {
-				fmt.Printf("Error uploading bundle release artifacts: %v\n", err)
-				os.Exit(1)
-			}
-
-			imageDigests, err := releaseConfig.GenerateImageDigestsTable(bundleArtifactsTable)
+			imageDigests, err := operations.GenerateImageDigestsTable(releaseConfig)
 			if err != nil {
 				fmt.Printf("Error generating image digests table: %+v\n", err)
 				os.Exit(1)
 			}
 
-			err = releaseConfig.GenerateBundleSpec(bundle, imageDigests)
+			err = operations.GenerateBundleSpec(releaseConfig, bundle, imageDigests)
 			if err != nil {
 				fmt.Printf("Error generating bundles manifest: %+v\n", err)
 				os.Exit(1)
@@ -212,19 +203,19 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 
-				bundleReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.BundlesKind, releaseConfig.BuildRepoBranchName)
+				bundleReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, constants.BundlesKind, releaseConfig.BuildRepoBranchName)
 				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 					os.Exit(1)
 				}
-				fmt.Printf("%s Successfully completed bundle release\n", pkg.SuccessIcon)
+				fmt.Printf("%s Successfully completed bundle release\n", constants.SuccessIcon)
 			}
 
 		}
 
 		if devRelease || !bundleRelease {
-			release, err := releaseConfig.GetPreviousReleaseIfExists()
+			release, err := releaseutils.GetPreviousReleaseIfExists(releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A releases: %v\n", err)
 				os.Exit(1)
@@ -232,30 +223,24 @@ var releaseCmd = &cobra.Command{
 
 			release.Name = "eks-anywhere"
 			release.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			release.Kind = anywherev1alpha1.ReleaseKind
+			release.Kind = constants.ReleaseKind
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
 			release.Spec.LatestVersion = releaseVersion
 
-			eksAArtifactsTable, err := releaseConfig.GenerateEksAArtifactsTable()
+			eksAArtifactsTable, err := operations.GenerateEksAArtifactsTable(releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting EKS-A artifacts data: %v\n", err)
 				os.Exit(1)
 			}
 			releaseConfig.EksAArtifactsTable = eksAArtifactsTable
 
-			err = releaseConfig.PrepareEksARelease()
+			err = operations.EksAArtifactsRelease(releaseConfig)
 			if err != nil {
-				fmt.Printf("Error preparing EKS-A release: %v\n", err)
+				fmt.Printf("Error releasing EKS-A CLI artifacts: %v\n", err)
 				os.Exit(1)
 			}
 
-			err = releaseConfig.UploadArtifacts(eksAArtifactsTable)
-			if err != nil {
-				fmt.Printf("Error uploading EKS-A release artifacts: %v\n", err)
-				os.Exit(1)
-			}
-
-			currentEksARelease, err := releaseConfig.GetEksARelease()
+			currentEksARelease, err := bundles.GetEksARelease(releaseConfig)
 			if err != nil {
 				fmt.Printf("Error getting EKS-A release: %v\n", err)
 				os.Exit(1)
@@ -269,11 +254,11 @@ var releaseCmd = &cobra.Command{
 			fmt.Printf("\n%s\n", string(currentEksAReleaseYaml))
 
 			if dryRun {
-				fmt.Printf("%s Successfully completed dry-run of release process\n", pkg.SuccessIcon)
+				fmt.Printf("%s Successfully completed dry-run of release process\n", constants.SuccessIcon)
 				os.Exit(0)
 			}
 
-			previousReleases := pkg.EksAReleases(release.Spec.Releases)
+			previousReleases := releaseutils.EksAReleases(release.Spec.Releases)
 			release.Spec.Releases = previousReleases.AppendOrUpdateRelease(currentEksARelease)
 
 			releaseManifest, err := yaml.Marshal(release)
@@ -283,27 +268,25 @@ var releaseCmd = &cobra.Command{
 			}
 
 			// Push the manifest file and other artifacts to release locations
-			err = ioutil.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o755)
+			err = ioutil.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o644)
 			if err != nil {
 				fmt.Printf("Error writing EKS-A release manifest file to disk: %v\n", err)
 				os.Exit(1)
 			}
 
-			eksAReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.ReleaseKind, releaseConfig.BuildRepoBranchName)
+			eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, constants.ReleaseKind, releaseConfig.BuildRepoBranchName)
 			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)
 				os.Exit(1)
 			}
 
-			if devRelease {
-				err = releaseConfig.PutEksAReleaseVersion(releaseVersion)
-				if err != nil {
-					fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
-					os.Exit(1)
-				}
+			err = filereader.PutEksAReleaseVersion(releaseVersion, releaseConfig)
+			if err != nil {
+				fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
+				os.Exit(1)
 			}
-			fmt.Printf("%s Successfully completed EKS-A release\n", pkg.SuccessIcon)
+			fmt.Printf("%s Successfully completed EKS-A release\n", constants.SuccessIcon)
 		}
 	},
 }

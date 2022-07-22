@@ -37,6 +37,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: worker
       templateOverride: |
         global_timeout: 6000
         id: ""
@@ -150,6 +155,7 @@ spec:
             provider-id: PROVIDER_ID
             read-only-port: "0"
             anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       users:
       - name: tink-user
         sshAuthorizedKeys:
@@ -197,6 +203,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: worker
       templateOverride: |
         global_timeout: 6000
         id: ""
@@ -310,6 +321,7 @@ spec:
             provider-id: PROVIDER_ID
             read-only-port: "0"
             anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       users:
       - name: tink-user
         sshAuthorizedKeys:

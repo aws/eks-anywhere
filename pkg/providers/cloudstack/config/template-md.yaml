@@ -73,6 +73,15 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackSymlinks}}
+      - >-
+        if [ ! -L {{$dir}} ] ;
+          then
+            mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+          else echo "{{$dir}} already symlnk" ;
+        fi
+{{- end}}
 {{- if .cloudstackDiskOfferingProvided }}
       diskSetup:
         filesystems:
@@ -82,7 +91,7 @@ spec:
               - -E
               - lazy_itable_init=1,lazy_journal_init=1
             filesystem: {{ .cloudstackDiskOfferingFilesystem }}
-            label: data_disk
+            label: {{ .cloudstackDiskOfferingLabel }}
         partitions:
           - device: {{ .cloudstackDiskOfferingDevice }}
             layout: true
@@ -123,16 +132,28 @@ spec:
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: CloudStackMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .cloudstackAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:

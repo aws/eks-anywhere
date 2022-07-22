@@ -9,18 +9,18 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -43,9 +43,10 @@ var (
 	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
 	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -58,8 +59,6 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
-	captHardwareResourceType             = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
-	captBmcResourceType                  = fmt.Sprintf("bmc.%s", pbnjv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -168,6 +167,13 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
+func (k *Kubectl) CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error {
+	if err := k.GetNamespace(ctx, kubeconfig, namespace); err != nil {
+		return k.CreateNamespace(ctx, kubeconfig, namespace)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
 	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
@@ -258,6 +264,10 @@ func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
+func (k *Kubectl) WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready", fmt.Sprintf("%s/%s", capiClustersResourceType, clusterName), constants.EksaSystemNamespace)
+}
+
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
@@ -268,6 +278,54 @@ func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *type
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady=false", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
+// WaitForService blocks until an IP address is assigned.
+//
+// Until more generic status matching comes around (possibly in 1.23), poll
+// the service, checking for an IP address. Would you like to know more?
+// https://github.com/kubernetes/kubernetes/issues/83094
+func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig string, timeout string, target string, namespace string) error {
+	timeoutDur, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("parsing duration %q: %w", timeout, err)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, timeoutDur)
+	defer cancel()
+	timedOut := timeoutCtx.Done()
+
+	const pollInterval = time.Second
+	ticker := time.NewTicker(pollInterval)
+	defer ticker.Stop()
+
+	svc := &corev1.Service{}
+	for {
+		select {
+		case <-timedOut:
+			return timeoutCtx.Err()
+		case <-ticker.C:
+			err := k.GetObject(ctx, "service", target, namespace, kubeconfig, svc)
+			if err != nil {
+				logger.V(6).Info("failed to poll service", "target", target, "namespace", namespace, "error", err)
+				continue
+			}
+			for _, ingress := range svc.Status.LoadBalancer.Ingress {
+				if ingress.IP != "" {
+					logger.V(5).Info("found a load balancer:", "IP", svc.Spec.ClusterIP)
+					return nil
+				}
+			}
+			if svc.Spec.ClusterIP != "" {
+				logger.V(5).Info("found a ClusterIP:", "IP", svc.Spec.ClusterIP)
+				return nil
+			}
+		}
+	}
 }
 
 func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
@@ -482,24 +540,35 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	ready, total, err := k.CountMachineDeploymentReplicasReady(ctx, clusterName, kubeconfig)
 	if err != nil {
 		return err
 	}
+	if ready != total {
+		return fmt.Errorf("%d machine deployment replicas are not ready", total-ready)
+	}
+	return nil
+}
+
+func (k *Kubectl) CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfig string) (ready, total int, err error) {
+	logger.V(6).Info("counting ready machine deployment replicas", "cluster", clusterName)
+	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return 0, 0, err
+	}
 	for _, machineDeployment := range deployments {
 		if machineDeployment.Status.Phase != "Running" {
-			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
+			return 0, 0, fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
 		}
 
 		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+			return 0, 0, fmt.Errorf("%d machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
 		}
 
-		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
-			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
-		}
+		ready += int(machineDeployment.Status.ReadyReplicas)
+		total += int(machineDeployment.Status.Replicas)
 	}
-	return nil
+	return ready, total, nil
 }
 
 func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev1.VSphereMachineTemplate, error) {
@@ -846,7 +915,12 @@ func (k *Kubectl) GetDeployments(ctx context.Context, opts ...KubectlOpt) ([]app
 }
 
 func (k *Kubectl) GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error) {
-	return k.GetSecret(ctx, name, WithKubeconfig(kubeconfigFile), WithNamespace(namespace))
+	obj := &corev1.Secret{}
+	if err := k.GetObject(ctx, "secret", name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts ...KubectlOpt) (*corev1.Secret, error) {
@@ -1201,6 +1275,33 @@ func (k *Kubectl) GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbell
 	return response, nil
 }
 
+// GetUnprovisionedTinkerbellHardware retrieves unprovisioned Tinkerbell Hardware objects.
+// Unprovisioned objects are those without any owner reference information.
+func (k *Kubectl) GetUnprovisionedTinkerbellHardware(ctx context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error) {
+	// Retrieve hardware resources that don't have the `v1alpha1.tinkerbell.org/ownerName` label.
+	// This label is used to populate hardware when the CAPT controller acquires the Hardware
+	// resource for provisioning.
+	// See https://github.com/chrisdoherty4/cluster-api-provider-tinkerbell/blob/main/controllers/machine.go#L271
+	params := []string{
+		"get", TinkerbellHardwareResourceType,
+		"-l", "!v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", namespace,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	var list tinkv1alpha1.HardwareList
+	if err := json.Unmarshal(stdOut.Bytes(), &list); err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
+}
+
 func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1488,40 +1589,6 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	}
 
 	return obj, nil
-}
-
-// GetHardwareWithLabel gets the hardwares with given label.
-func (k *Kubectl) GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
-	params := []string{
-		"get", captHardwareResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, fmt.Sprintf("--selector=%s", label),
-	}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("getting hardware with selector: %v", err)
-	}
-
-	response := &tinkv1alpha1.HardwareList{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("parsing get hardware response: %v", err)
-	}
-
-	return response.Items, nil
-}
-
-// GetBmcsPowerState gets the .status.powerState for the Bmcs.
-func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error) {
-	params := []string{"get", captBmcResourceType}
-	params = append(params, bmcNames...)
-	params = append(params, "-o", "jsonpath={.items[*].status.powerState}", "--kubeconfig", kubeconfigFile, "-n", namespace)
-
-	buffer, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("executing get: %v", err)
-	}
-
-	return strings.Fields(buffer.String()), nil
 }
 
 func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {

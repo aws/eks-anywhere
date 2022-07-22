@@ -4,8 +4,7 @@ weight: 10
 ---
 
 EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
-Currently we support creating development clusters locally with Docker and production clusters using VMware vSphere.
-Other deployment targets will be added in the future, including bare metal support in 2022.
+Currently we support creating development clusters locally using Docker and production clusters using Bare Metal or VMware vSphere.
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
@@ -21,10 +20,13 @@ This will let you create a cluster in multiple providers for local development o
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
+- Administrative machine must be on the same Layer 2 network as the cluster machines (Bare Metal provider only).
 
    {{% alert title="Note" color="primary" %}}
    * If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
-   * If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+   * If you are using Docker Desktop, you need to know that:
+       * For EKS Anywhere Bare Metal, Docker Desktop is not supported
+       * For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
    * Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
    {{% /alert %}}
 
@@ -60,7 +62,7 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.9.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=12
+export EKSA_RELEASE="0.10.1" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=15
 curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
     | tar xz ./eksctl-anywhere

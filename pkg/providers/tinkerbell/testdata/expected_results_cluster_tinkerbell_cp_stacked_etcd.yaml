@@ -45,6 +45,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -53,6 +54,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
       - content: |
           apiVersion: v1
@@ -88,7 +90,7 @@ spec:
                 value: "2"
               - name: address
                 value: 1.2.3.4
-              image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+              image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
               imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
@@ -130,6 +132,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: cp
       templateOverride: |
         global_timeout: 6000
         id: ""

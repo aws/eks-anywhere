@@ -3,8 +3,20 @@ package cluster
 var defaultManager *ConfigManager
 
 func init() {
-	defaultManager = NewConfigManager()
-	err := defaultManager.Register(
+	var err error
+	defaultManager, err = NewDefaultConfigManager()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func manager() *ConfigManager {
+	return defaultManager
+}
+
+func NewDefaultConfigManager() (*ConfigManager, error) {
+	m := NewConfigManager()
+	err := m.Register(
 		clusterEntry(),
 		oidcEntry(),
 		awsIamEntry(),
@@ -18,10 +30,8 @@ func init() {
     nutanixEntry(),
 	)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-}
 
-func manager() *ConfigManager {
-	return defaultManager
+	return m, nil
 }

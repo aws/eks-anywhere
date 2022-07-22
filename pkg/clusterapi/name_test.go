@@ -42,6 +42,35 @@ func TestIncrementName(t *testing.T) {
 	}
 }
 
+func TestIncrementNameWithFallbackDefault(t *testing.T) {
+	tests := []struct {
+		name        string
+		oldName     string
+		defaultName string
+		want        string
+	}{
+		{
+			name:        "valid",
+			oldName:     "cluster-1",
+			defaultName: "default",
+			want:        "cluster-2",
+		},
+		{
+			name:        "invalid format",
+			oldName:     "cluster-1a",
+			defaultName: "default",
+			want:        "default",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			got := clusterapi.IncrementNameWithFallbackDefault(tt.oldName, tt.defaultName)
+			g.Expect(got).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestObjectName(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -134,6 +163,78 @@ func TestDefaultKubeadmConfigTemplateName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newApiBuilerTest(t)
 			g.Expect(clusterapi.DefaultKubeadmConfigTemplateName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestControlPlaneMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "test cluster",
+			want: "test-cluster-control-plane-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.ControlPlaneMachineTemplateName(g.clusterSpec)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestWorkerMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "wng 1",
+			want: "test-cluster-wng-1-1",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.WorkerMachineTemplateName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestControlPlaneMachineHealthCheckName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "cp",
+			want: "test-cluster-kcp-unhealthy",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.ControlPlaneMachineHealthCheckName(g.clusterSpec)).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestWorkerMachineHealthCheckName(t *testing.T) {
+	tests := []struct {
+		name string
+		want string
+	}{
+		{
+			name: "wng 1",
+			want: "test-cluster-wng-1-worker-unhealthy",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.Expect(clusterapi.WorkerMachineHealthCheckName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
 		})
 	}
 }

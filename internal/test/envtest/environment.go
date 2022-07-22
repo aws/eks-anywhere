@@ -20,6 +20,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -39,6 +40,7 @@ func init() {
 	// Register CRDs in Scheme in init so fake clients benefit from it
 	utilruntime.Must(releasev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
@@ -106,7 +108,7 @@ func newEnvironment(ctx context.Context) (*Environment, error) {
 		CRDDirectoryPaths:     crdDirectoryPaths,
 		ErrorIfCRDPathMissing: true,
 		WebhookInstallOptions: envtest.WebhookInstallOptions{
-			Paths: []string{filepath.Join("..", "..", "..", "config", "webhook")},
+			Paths: []string{filepath.Join(root, "config", "webhook")},
 		},
 	}
 
@@ -165,6 +167,11 @@ func (e *Environment) Client() client.Client {
 // APIReader returns a non cached reader client
 func (e *Environment) APIReader() client.Reader {
 	return e.apiReader
+}
+
+// Manager returns a Manager for the test environment
+func (e *Environment) Manager() manager.Manager {
+	return e.manager
 }
 
 func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) string {

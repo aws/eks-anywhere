@@ -18,6 +18,7 @@ type Bootstrapper interface {
 type ClusterManager interface {
 	MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error
 	CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error)
+	RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
 	UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error
 	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
@@ -27,12 +28,13 @@ type ClusterManager interface {
 	SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error
 	SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error
 	InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
+	CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (bool, error)
-	InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error
+	InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, provider providers.Provider) error
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
@@ -47,8 +49,8 @@ type AddonManager interface {
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	Validations(ctx context.Context, clusterSpec *cluster.Spec) []validations.Validation
 	CleanupGitRepo(ctx context.Context, clusterSpec *cluster.Spec) error
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
-	UpdateLegacyFileStructure(ctx context.Context, currentSpec, newSpec *cluster.Spec) error
+	Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error
+	Upgrade(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type Validator interface {
@@ -67,4 +69,8 @@ type EksdInstaller interface {
 
 type EksdUpgrader interface {
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+}
+
+type PackageInstaller interface {
+	InstallCuratedPackages(ctx context.Context) error
 }

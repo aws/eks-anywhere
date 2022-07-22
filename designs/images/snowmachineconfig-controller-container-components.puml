@@ -1,0 +1,24 @@
+@startuml snowmachineconfig-controller-container-components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component diagram for SnowMachineConfig controller
+
+Person(user, "EKS-A user", "Manages EKS-A clusters")
+Container(kubeApiServer, "Kubernetes API server", "Go", "Provides read/write access to the kubernetes API objects stored in the etcd server and allows to subscribe to events when they change")
+
+Container_Boundary(snowMachineConfigController, "Snow MachineConfig Controller") {
+    Component(snowMachineConfigReconciler, "SnowMachineConfig Reconciler", "K8s controller-runtime Reconciler", "Runs validations for SnowMAchineConfig that require external API calls (eg. Snow endpoint)")
+    Component(awsClient, "AWS API client", "aws-sdk-go-v2")
+
+    Rel(snowMachineConfigReconciler, awsClient, "Uses")
+}
+
+Component_Ext(snowAPI, "Snow API endpoint")
+Rel(awsClient, snowAPI, "Makes API calls", "JSON/HTTPS")
+
+Rel(user, kubeApiServer, "Writes EKS-A API objects", "JSON/HTTPS")
+
+Rel(snowMachineConfigReconciler, kubeApiServer, "Subscribes to API events", "controller-runtime JSON/HTTPS")
+
+SHOW_LEGEND()
+@enduml

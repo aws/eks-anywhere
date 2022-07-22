@@ -6,6 +6,7 @@ import (
 
 	"github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
@@ -217,6 +218,114 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 	}
 }
 
+func TestMatchingDisksForSelectors_SingleMachine_SingleLabelMatches(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{"type": "cp"},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_SingleMachine_MultipleLabelsMatch(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{"type": "cp", "foo": "bar"},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_SingleMachine_NoMatches(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machine := hardware.Machine{
+		Labels: map[string]string{},
+		Disk:   "/dev/sda",
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machine)
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_MultipleMachines_SameDisk(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machines := []hardware.Machine{
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machines[0])
+	g.Expect(err).To(gomega.Succeed())
+
+	err = assertion(machines[1])
+	g.Expect(err).To(gomega.Succeed())
+}
+
+func TestMatchingDisksForSelectors_MultipleMachines_DifferentDisk(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	selectors := []v1alpha1.HardwareSelector{
+		{"type": "cp"},
+	}
+
+	machines := []hardware.Machine{
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sda",
+		},
+		{
+			Labels: map[string]string{"type": "cp", "foo": "bar"},
+			Disk:   "/dev/sdb",
+		},
+	}
+
+	assertion := hardware.MatchingDisksForSelectors(selectors)
+
+	err := assertion(machines[0])
+	g.Expect(err).To(gomega.Succeed())
+
+	err = assertion(machines[1])
+	g.Expect(err).ToNot(gomega.Succeed())
+}
+
 func NewValidMachine() hardware.Machine {
 	return hardware.Machine{
 		IPAddress:    "10.10.10.10",
@@ -225,7 +334,7 @@ func NewValidMachine() hardware.Machine {
 		MACAddress:   "00:00:00:00:00:00",
 		Netmask:      "255.255.255.255",
 		Hostname:     "localhost",
-		Labels:       make(hardware.Labels),
+		Labels:       hardware.Labels{"type": "cp"},
 		Disk:         "/dev/sda",
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",

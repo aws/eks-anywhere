@@ -16,7 +16,7 @@ spec:
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
@@ -26,7 +26,7 @@ spec:
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: {{.clusterName}}
@@ -35,29 +35,36 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  zones:{{ range $zone := .cloudstackZones }}
-    - network:
-{{- if $zone.Network.Id }}
-        id: {{ $zone.Network.Id}}
-{{- end}}
-{{- if $zone.Network.Name }}
-        name: {{ $zone.Network.Name}}
-{{- end}}
-{{- if $zone.Id }}
-      id: {{ $zone.Id }}
-{{- end}}
-{{- if $zone.Name }}
-      name: {{ $zone.Name }}
-{{- end}}
-{{- end}}
-  {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
-  {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
+  failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
+  - name: {{ $az.Name }}
+    zone:
+      name: {{ $az.Zone.Name }}
+      network:
+        name: {{ $az.Zone.Network.Name }}
+    domain: {{ $az.Domain }}
+    account: {{ $az.Account }}
+    acsendpoint:
+      name: {{ $az.CredentialsRef }}
+      namespace: eksa-system
+{{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .cloudstackControlPlaneAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackControlPlaneSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -115,7 +122,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
@@ -373,6 +380,15 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackControlPlaneSymlinks}}
+    - >-
+      if [ ! -L {{$dir}} ] ;
+        then
+          mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+        else echo "{{$dir}} already symlnk";
+      fi
+{{- end}}
 {{- if .cloudstackControlPlaneDiskOfferingProvided }}
     diskSetup:
       filesystems:
@@ -382,7 +398,7 @@ spec:
             - -E
             - lazy_itable_init=1,lazy_journal_init=1
           filesystem: {{ .cloudstackControlPlaneDiskOfferingFilesystem }}
-          label: data_disk
+          label: {{ .cloudstackControlPlaneDiskOfferingLabel }}
       partitions:
         - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}
           layout: true
@@ -411,11 +427,16 @@ metadata:
 spec:
   replicas: {{.externalEtcdReplicas}}
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: {{.format}}
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
+      - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
     - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
@@ -423,6 +444,24 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackEtcdDiskOfferingProvided }}
+    - >-
+      echo "type=83" | sfdisk {{ .cloudstackEtcdDiskOfferingDevice }} &&
+      mkfs -t {{ .cloudstackEtcdDiskOfferingFilesystem }} {{ .cloudstackEtcdDiskOfferingDevice }}1 &&
+      mkdir -p {{ .cloudstackEtcdDiskOfferingPath }} &&
+      echo {{ .cloudstackEtcdDiskOfferingDevice }}1 {{ .cloudstackEtcdDiskOfferingPath }} {{ .cloudstackEtcdDiskOfferingFilesystem }} defaults 0 2 >> /etc/fstab &&
+      mount {{ .cloudstackEtcdDiskOfferingPath }}
+{{- end }}
+{{- range $dir, $target := .cloudstackEtcdSymlinks}}
+    - >-
+      if [ ! -L {{$dir}} ] ;
+        then
+          mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+        else
+          echo "{{$dir}} already symlnk" ;
+      fi
+{{- end}}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -448,15 +487,27 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
   namespace: '{{.eksaSystemNamespace}}'
+{{- if .cloudstackEtcdAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackEtcdSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:

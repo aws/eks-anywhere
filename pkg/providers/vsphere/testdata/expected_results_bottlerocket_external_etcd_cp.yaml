@@ -178,7 +178,7 @@ spec:
               value: "2"
             - name: address
               value: 1.2.3.4
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}

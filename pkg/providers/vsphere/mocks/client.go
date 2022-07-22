@@ -141,17 +141,17 @@ func (mr *MockProviderGovcClientMockRecorder) DeleteLibraryElement(arg0, arg1 in
 }
 
 // DeployTemplateFromLibrary mocks base method.
-func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5, arg6 string, arg7 bool) error {
+func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5, arg6, arg7 string, arg8 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployTemplateFromLibrary indicates an expected call of DeployTemplateFromLibrary.
-func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
+func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8)
 }
 
 // GetCertThumbprint mocks base method.
@@ -425,18 +425,18 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyTolerationsFromTaintsToDae
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyTolerationsFromTaintsToDaemonSet", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyTolerationsFromTaintsToDaemonSet), arg0, arg1, arg2, arg3, arg4)
 }
 
-// CreateNamespace mocks base method.
-func (m *MockProviderKubectlClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockProviderKubectlClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateNamespace indicates an expected call of CreateNamespace.
-func (mr *MockProviderKubectlClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockProviderKubectlClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespace), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
 }
 
 // DeleteEksaDatacenterConfig mocks base method.
@@ -572,38 +572,19 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
 }
 
-// GetNamespace mocks base method.
-func (m *MockProviderKubectlClient) GetNamespace(arg0 context.Context, arg1, arg2 string) error {
+// GetSecretFromNamespace mocks base method.
+func (m *MockProviderKubectlClient) GetSecretFromNamespace(arg0 context.Context, arg1, arg2, arg3 string) (*v1.Secret, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNamespace", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GetNamespace indicates an expected call of GetNamespace.
-func (mr *MockProviderKubectlClientMockRecorder) GetNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetNamespace), arg0, arg1, arg2)
-}
-
-// GetSecret mocks base method.
-func (m *MockProviderKubectlClient) GetSecret(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1.Secret, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetSecret", varargs...)
+	ret := m.ctrl.Call(m, "GetSecretFromNamespace", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1.Secret)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSecret indicates an expected call of GetSecret.
-func (mr *MockProviderKubectlClientMockRecorder) GetSecret(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+// GetSecretFromNamespace indicates an expected call of GetSecretFromNamespace.
+func (mr *MockProviderKubectlClientMockRecorder) GetSecretFromNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecret), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSecretFromNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetSecretFromNamespace), arg0, arg1, arg2, arg3)
 }
 
 // LoadSecret mocks base method.

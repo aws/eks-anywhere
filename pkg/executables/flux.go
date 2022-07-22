@@ -12,6 +12,7 @@ import (
 
 const (
 	fluxPath                   = "flux"
+	eksaGithubTokenEnv         = "EKSA_GITHUB_TOKEN"
 	githubTokenEnv             = "GITHUB_TOKEN"
 	githubProvider             = "github"
 	gitProvider                = "git"

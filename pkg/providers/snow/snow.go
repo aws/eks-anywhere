@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -81,7 +82,7 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
-func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("setting up credentials: %v", err)
 	}
@@ -135,8 +136,8 @@ func (p *SnowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 	return p.generateCAPISpec(ctx, cluster, clusterSpec)
 }
 
-func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, _, managementCluster *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return p.generateCAPISpec(ctx, managementCluster, clusterSpec)
+func (p *SnowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, _ *types.Cluster, _ *cluster.Spec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	return p.generateCAPISpec(ctx, bootstrapCluster, clusterSpec)
 }
 
 func (p *SnowProvider) GenerateStorageClass() []byte {
@@ -148,6 +149,10 @@ func (p *SnowProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *t
 }
 
 func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *SnowProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 
@@ -179,7 +184,7 @@ func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, err
 
 func (p *SnowProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capas-system": {"capas-controller-manager"},
+		constants.CapasSystemNamespace: {"capas-controller-manager"},
 	}
 }
 
@@ -221,12 +226,20 @@ func (p *SnowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (p *SnowProvider) GenerateMHC() ([]byte, error) {
-	return nil, nil
+func (p *SnowProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *SnowProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	return nil
+	if currentSpec.VersionsBundle.Snow.Version == newSpec.VersionsBundle.Snow.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.SnowProviderName,
+		NewVersion:    newSpec.VersionsBundle.Snow.Version,
+		OldVersion:    currentSpec.VersionsBundle.Snow.Version,
+	}
 }
 
 func (p *SnowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
@@ -271,10 +284,10 @@ func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Clu
 	return nil
 }
 
-func (p *SnowProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
 
-func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *SnowProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

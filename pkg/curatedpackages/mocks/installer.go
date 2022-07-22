@@ -34,16 +34,16 @@ func (m *MockChartInstaller) EXPECT() *MockChartInstallerMockRecorder {
 	return m.recorder
 }
 
-// InstallChartFromName mocks base method.
-func (m *MockChartInstaller) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, name, version string) error {
+// InstallChart mocks base method.
+func (m *MockChartInstaller) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallChartFromName", ctx, ociURI, kubeConfig, name, version)
+	ret := m.ctrl.Call(m, "InstallChart", ctx, chart, ociURI, version, kubeconfigFilePath, values)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// InstallChartFromName indicates an expected call of InstallChartFromName.
-func (mr *MockChartInstallerMockRecorder) InstallChartFromName(ctx, ociURI, kubeConfig, name, version interface{}) *gomock.Call {
+// InstallChart indicates an expected call of InstallChart.
+func (mr *MockChartInstallerMockRecorder) InstallChart(ctx, chart, ociURI, version, kubeconfigFilePath, values interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChartFromName", reflect.TypeOf((*MockChartInstaller)(nil).InstallChartFromName), ctx, ociURI, kubeConfig, name, version)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChart", reflect.TypeOf((*MockChartInstaller)(nil).InstallChart), ctx, chart, ociURI, version, kubeconfigFilePath, values)
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -23,14 +25,15 @@ import (
 )
 
 const (
-	govcUsername    = "GOVC_USERNAME"
-	govcPassword    = "GOVC_PASSWORD"
-	govcURL         = "GOVC_URL"
-	govcInsecure    = "GOVC_INSECURE"
-	vSphereUsername = "EKSA_VSPHERE_USERNAME"
-	vSpherePassword = "EKSA_VSPHERE_PASSWORD"
-	vSphereServer   = "VSPHERE_SERVER"
-	templateLibrary = "eks-a-templates"
+	govcUsername       = "GOVC_USERNAME"
+	govcPassword       = "GOVC_PASSWORD"
+	govcURL            = "GOVC_URL"
+	govcInsecure       = "GOVC_INSECURE"
+	vSphereUsername    = "EKSA_VSPHERE_USERNAME"
+	vSpherePassword    = "EKSA_VSPHERE_PASSWORD"
+	vSphereServer      = "VSPHERE_SERVER"
+	templateLibrary    = "eks-a-templates"
+	expectedDeployOpts = `{"DiskProvisioning":"thin","NetworkMapping":[{"Name":"nic0","Network":"/SDDC-Datacenter/network/sddc-cgw-network-1"},{"Name":"VM Network","Network":"/SDDC-Datacenter/network/sddc-cgw-network-1"}]}`
 )
 
 var govcEnvironment = map[string]string{
@@ -88,14 +91,14 @@ func setupContext(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) (govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
+func setup(t *testing.T) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
 	setupContext(t)
-	_, writer := test.NewWriter(t)
+	dir, writer := test.NewWriter(t)
 	mockCtrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	g := executables.NewGovc(executable, writer)
 
-	return g, executable, govcEnvironment
+	return dir, g, executable, govcEnvironment
 }
 
 type deployTemplateTest struct {
@@ -104,6 +107,8 @@ type deployTemplateTest struct {
 	env                      map[string]string
 	datacenter               string
 	datastore                string
+	dir                      string
+	network                  string
 	resourcePool             string
 	templatePath             string
 	ovaURL                   string
@@ -117,13 +122,15 @@ type deployTemplateTest struct {
 }
 
 func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
-	g, exec, env := setup(t)
+	dir, g, exec, env := setup(t)
 	return &deployTemplateTest{
 		govc:                     g,
 		mockExecutable:           exec,
 		env:                      env,
 		datacenter:               "SDDC-Datacenter",
 		datastore:                "/SDDC-Datacenter/datastore/WorkloadDatastore",
+		dir:                      dir,
+		network:                  "/SDDC-Datacenter/network/sddc-cgw-network-1",
 		resourcePool:             "*/Resources/Compute-ResourcePool",
 		templatePath:             "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6",
 		ovaURL:                   "https://aws.com/ova",
@@ -181,7 +188,7 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
 	gomock.InOrder(dt.expectations...)
-	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.datastore, dt.resourcePool, dt.resizeDisk2)
+	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.datastore, dt.network, dt.resourcePool, dt.resizeDisk2)
 }
 
 func (dt *deployTemplateTest) assertDeployTemplateSuccess(t *testing.T) {
@@ -196,11 +203,22 @@ func (dt *deployTemplateTest) assertDeployTemplateError(t *testing.T) {
 	}
 }
 
+func (dt *deployTemplateTest) assertDeployOptsMatches(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	actual, err := ioutil.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
+	if err != nil {
+		t.Fatalf("failed to read deploy options file: %v", err)
+	}
+
+	g.Expect(string(actual)).To(gomega.Equal(expectedDeployOpts))
+}
+
 func TestSearchTemplateItExists(t *testing.T) {
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	machineConfig := newMachineConfig(t)
 	machineConfig.Spec.Template = "/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6"
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString("[\"/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6\"]"), nil)
@@ -216,7 +234,7 @@ func TestSearchTemplateItDoesNotExists(t *testing.T) {
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString(""), nil)
 
 	templateFullPath, err := g.SearchTemplate(ctx, datacenter, machineConfig)
@@ -230,7 +248,7 @@ func TestSearchTemplateError(t *testing.T) {
 	ctx := context.Background()
 	datacenter := "SDDC-Datacenter"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	g.Retrier = retrier.NewWithMaxRetries(5, 0)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, gomock.Any()).Return(bytes.Buffer{}, errors.New("error from execute with env")).Times(5)
 
@@ -243,7 +261,7 @@ func TestSearchTemplateError(t *testing.T) {
 func TestLibraryElementExistsItExists(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.ls", templateLibrary).Return(*bytes.NewBufferString("testing"), nil)
 
 	exists, err := g.LibraryElementExists(ctx, templateLibrary)
@@ -258,7 +276,7 @@ func TestLibraryElementExistsItExists(t *testing.T) {
 func TestLibraryElementExistsItDoesNotExists(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.ls", templateLibrary).Return(*bytes.NewBufferString(""), nil)
 
 	exists, err := g.LibraryElementExists(ctx, templateLibrary)
@@ -273,7 +291,7 @@ func TestLibraryElementExistsItDoesNotExists(t *testing.T) {
 func TestLibraryElementExistsError(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.ls", templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	_, err := g.LibraryElementExists(ctx, templateLibrary)
@@ -291,7 +309,7 @@ func TestGetLibraryElementContentVersionSuccess(t *testing.T) {
 	]`
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(*bytes.NewBufferString(response), nil)
 
 	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
@@ -304,7 +322,7 @@ func TestGetLibraryElementContentVersionError(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
@@ -317,7 +335,7 @@ func TestDeleteLibraryElementSuccess(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(*bytes.NewBufferString(""), nil)
 
 	err := g.DeleteLibraryElement(ctx, libraryElement)
@@ -330,7 +348,7 @@ func TestDeleteLibraryElementError(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.DeleteLibraryElement(ctx, libraryElement)
@@ -416,6 +434,7 @@ func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 	tt.expectMarkAsTemplateToReturn(nil)
 
 	tt.assertDeployTemplateSuccess(t)
+	tt.assertDeployOptsMatches(t)
 }
 
 func TestDeployTemplateFromLibraryErrorDeploy(t *testing.T) {
@@ -542,7 +561,7 @@ func TestCreateLibrarySuccess(t *testing.T) {
 	datastore := "/SDDC-Datacenter/datastore/WorkloadDatastore"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil)
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
@@ -555,7 +574,7 @@ func TestCreateLibraryError(t *testing.T) {
 	datastore := "/SDDC-Datacenter/datastore/WorkloadDatastore"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
@@ -568,7 +587,7 @@ func TestGetTagsSuccessNoTags(t *testing.T) {
 	path := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(*bytes.NewBufferString("null"), nil)
 
 	tags, err := g.GetTags(ctx, path)
@@ -591,7 +610,7 @@ func TestGetTagsSuccessHasTags(t *testing.T) {
 	]`
 	wantTags := []string{"kubernetesChannel:1.19", "eksd:1.19-4"}
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(*bytes.NewBufferString(tagsReponse), nil)
 
 	gotTags, err := g.GetTags(ctx, path)
@@ -608,7 +627,7 @@ func TestGetTagsErrorGovc(t *testing.T) {
 	path := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	g.Retrier = retrier.NewWithMaxRetries(5, 0)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(bytes.Buffer{}, errors.New("error from exec")).Times(5)
 
@@ -622,7 +641,7 @@ func TestGetTagsErrorUnmarshalling(t *testing.T) {
 	path := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attached.ls", "-json", "-r", path).Return(*bytes.NewBufferString("invalid"), nil)
 
 	_, err := g.GetTags(ctx, path)
@@ -634,7 +653,7 @@ func TestGetTagsErrorUnmarshalling(t *testing.T) {
 func TestListTagsSuccessNoTags(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.ls", "-json").Return(*bytes.NewBufferString("null"), nil)
 
 	tags, err := g.ListTags(ctx)
@@ -664,7 +683,7 @@ func TestListTagsSuccessHasTags(t *testing.T) {
 	]`
 	wantTags := []string{"eksd:1.19-4", "kubernetesChannel:1.19"}
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.ls", "-json").Return(*bytes.NewBufferString(tagsReponse), nil)
 
 	gotTags, err := g.ListTags(ctx)
@@ -680,7 +699,7 @@ func TestListTagsSuccessHasTags(t *testing.T) {
 func TestListTagsErrorGovc(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.ls", "-json").Return(bytes.Buffer{}, errors.New("error from exec"))
 
 	_, err := g.ListTags(ctx)
@@ -692,7 +711,7 @@ func TestListTagsErrorGovc(t *testing.T) {
 func TestListTagsErrorUnmarshalling(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.ls", "-json").Return(*bytes.NewBufferString("invalid"), nil)
 
 	_, err := g.ListTags(ctx)
@@ -706,7 +725,7 @@ func TestAddTagSuccess(t *testing.T) {
 	path := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attach", tag, path).Return(*bytes.NewBufferString(""), nil)
 
 	err := g.AddTag(ctx, path, tag)
@@ -720,7 +739,7 @@ func TestAddTagError(t *testing.T) {
 	path := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.attach", tag, path).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.AddTag(ctx, path, tag)
@@ -734,7 +753,7 @@ func TestCreateTagSuccess(t *testing.T) {
 	tag := "tag"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.create", "-c", category, tag).Return(*bytes.NewBufferString(""), nil)
 
 	err := g.CreateTag(ctx, tag, category)
@@ -748,7 +767,7 @@ func TestCreateTagError(t *testing.T) {
 	tag := "tag"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.create", "-c", category, tag).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.CreateTag(ctx, tag, category)
@@ -760,7 +779,7 @@ func TestCreateTagError(t *testing.T) {
 func TestListCategoriesSuccessNoCategories(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.ls", "-json").Return(*bytes.NewBufferString("null"), nil)
 
 	gotCategories, err := g.ListCategories(ctx)
@@ -797,7 +816,7 @@ func TestListCategoriesSuccessHasCategories(t *testing.T) {
 	]`
 	wantCats := []string{"eksd", "kubernetesChannel"}
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.ls", "-json").Return(*bytes.NewBufferString(catsResponse), nil)
 
 	gotCats, err := g.ListCategories(ctx)
@@ -813,7 +832,7 @@ func TestListCategoriesSuccessHasCategories(t *testing.T) {
 func TestListCategoriesErrorGovc(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.ls", "-json").Return(bytes.Buffer{}, errors.New("error from exec"))
 
 	_, err := g.ListCategories(ctx)
@@ -825,7 +844,7 @@ func TestListCategoriesErrorGovc(t *testing.T) {
 func TestListCategoriesErrorUnmarshalling(t *testing.T) {
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.ls", "-json").Return(*bytes.NewBufferString("invalid"), nil)
 
 	_, err := g.ListCategories(ctx)
@@ -838,7 +857,7 @@ func TestCreateCategoryForVMSuccess(t *testing.T) {
 	category := "category"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.create", "-t", "VirtualMachine", category).Return(*bytes.NewBufferString(""), nil)
 
 	err := g.CreateCategoryForVM(ctx, category)
@@ -851,7 +870,7 @@ func TestCreateCategoryForVMError(t *testing.T) {
 	category := "category"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.category.create", "-t", "VirtualMachine", category).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.CreateCategoryForVM(ctx, category)
@@ -865,7 +884,7 @@ func TestImportTemplateSuccess(t *testing.T) {
 	name := "name"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.import", "-k", "-pull", "-n", name, templateLibrary, ovaURL).Return(*bytes.NewBufferString(""), nil)
 
 	if err := g.ImportTemplate(ctx, templateLibrary, ovaURL, name); err != nil {
@@ -878,7 +897,7 @@ func TestImportTemplateError(t *testing.T) {
 	name := "name"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.import", "-k", "-pull", "-n", name, templateLibrary, ovaURL).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	if err := g.ImportTemplate(ctx, templateLibrary, ovaURL, name); err == nil {
@@ -891,7 +910,7 @@ func TestDeleteTemplateSuccess(t *testing.T) {
 	resourcePool := "resourcePool"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.markasvm", "-pool", resourcePool, template).Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "snapshot.remove", "-vm", template, "*").Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.destroy", template).Return(*bytes.NewBufferString(""), nil)
@@ -906,7 +925,7 @@ func TestDeleteTemplateMarkAsVMError(t *testing.T) {
 	resourcePool := "resourcePool"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.markasvm", "-pool", resourcePool, template).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	if err := g.DeleteTemplate(ctx, resourcePool, template); err == nil {
@@ -919,7 +938,7 @@ func TestDeleteTemplateRemoveSnapshotError(t *testing.T) {
 	resourcePool := "resourcePool"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.markasvm", "-pool", resourcePool, template).Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "snapshot.remove", "-vm", template, "*").Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
@@ -933,7 +952,7 @@ func TestDeleteTemplateDeleteVMError(t *testing.T) {
 	resourcePool := "resourcePool"
 	ctx := context.Background()
 
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.markasvm", "-pool", resourcePool, template).Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "snapshot.remove", "-vm", template, "*").Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "vm.destroy", template).Return(bytes.Buffer{}, errors.New("error from execute with env"))
@@ -945,7 +964,7 @@ func TestDeleteTemplateDeleteVMError(t *testing.T) {
 
 func TestGovcLogoutSuccess(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout").Return(*bytes.NewBufferString(""), nil)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout", "-k").Return(*bytes.NewBufferString(""), nil)
@@ -958,7 +977,7 @@ func TestGovcLogoutSuccess(t *testing.T) {
 func TestGovcValidateVCenterConnectionSuccess(t *testing.T) {
 	ctx := context.Background()
 	ts := newHTTPSServer(t)
-	g, _, _ := setup(t)
+	_, g, _, _ := setup(t)
 
 	if err := g.ValidateVCenterConnection(ctx, strings.TrimPrefix(ts.URL, "https://")); err != nil {
 		t.Fatalf("Govc.ValidateVCenterConnection() err = %v, want err nil", err)
@@ -967,7 +986,7 @@ func TestGovcValidateVCenterConnectionSuccess(t *testing.T) {
 
 func TestGovcValidateVCenterAuthenticationSuccess(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "about", "-k").Return(*bytes.NewBufferString(""), nil)
 
@@ -978,7 +997,7 @@ func TestGovcValidateVCenterAuthenticationSuccess(t *testing.T) {
 
 func TestGovcIsCertSelfSignedTrue(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "about").Return(*bytes.NewBufferString(""), errors.New(""))
 
@@ -989,7 +1008,7 @@ func TestGovcIsCertSelfSignedTrue(t *testing.T) {
 
 func TestGovcIsCertSelfSignedFalse(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "about").Return(*bytes.NewBufferString(""), nil)
 
@@ -1000,7 +1019,7 @@ func TestGovcIsCertSelfSignedFalse(t *testing.T) {
 
 func TestGovcGetCertThumbprintSuccess(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	wantThumbprint := "AB:AB:AB"
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "about.cert", "-thumbprint", "-k").Return(*bytes.NewBufferString("server.com AB:AB:AB"), nil)
@@ -1017,7 +1036,7 @@ func TestGovcGetCertThumbprintSuccess(t *testing.T) {
 
 func TestGovcGetCertThumbprintBadOutput(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	wantErr := "invalid thumbprint format"
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "about.cert", "-thumbprint", "-k").Return(*bytes.NewBufferString("server.comAB:AB:AB"), nil)
@@ -1029,7 +1048,7 @@ func TestGovcGetCertThumbprintBadOutput(t *testing.T) {
 
 func TestGovcConfigureCertThumbprint(t *testing.T) {
 	ctx := context.Background()
-	g, _, _ := setup(t)
+	_, g, _, _ := setup(t)
 	server := "server.com"
 	thumbprint := "AB:AB:AB"
 	wantKnownHostsContent := "server.com AB:AB:AB"
@@ -1051,7 +1070,7 @@ func TestGovcConfigureCertThumbprint(t *testing.T) {
 
 func TestGovcDatacenterExistsTrue(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	datacenter := "datacenter_1"
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "datacenter.info", datacenter).Return(*bytes.NewBufferString(""), nil)
@@ -1068,7 +1087,7 @@ func TestGovcDatacenterExistsTrue(t *testing.T) {
 
 func TestGovcDatacenterExistsFalse(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	datacenter := "datacenter_1"
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "datacenter.info", datacenter).Return(*bytes.NewBufferString("datacenter_1 not found"), errors.New("exit code 1"))
@@ -1085,7 +1104,7 @@ func TestGovcDatacenterExistsFalse(t *testing.T) {
 
 func TestGovcNetworkExistsTrue(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	network := "/Networks/network_1"
 	networkName := "network_1"
 	networkDir := "/Networks"
@@ -1104,7 +1123,7 @@ func TestGovcNetworkExistsTrue(t *testing.T) {
 
 func TestGovcNetworkExistsFalse(t *testing.T) {
 	ctx := context.Background()
-	g, executable, env := setup(t)
+	_, g, executable, env := setup(t)
 	network := "/Networks/network_1"
 	networkName := "network_1"
 	networkDir := "/Networks"

@@ -1,7 +1,6 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
 	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
@@ -10,6 +9,7 @@ const (
 	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
 	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
+	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 )
 
 func FeedGates(featureGates []string) {
@@ -34,13 +34,6 @@ func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
-}
-
-func TinkerbellProvider() Feature {
-	return Feature{
-		Name:     "Tinkerbell provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
 	}
 }
 
@@ -83,5 +76,12 @@ func K8s123Support() Feature {
 	return Feature{
 		Name:     "Kubernetes version 1.23 support",
 		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
+	}
+}
+
+func CheckpointEnabled() Feature {
+	return Feature{
+		Name:     "Checkpoint to rerun commands enabled",
+		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
 	}
 }

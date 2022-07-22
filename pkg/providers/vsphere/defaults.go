@@ -130,7 +130,7 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	tags := requiredTemplateTagsByCategory(spec.Spec, machineConfig)
 
 	// TODO: figure out if it's worth refactoring the factory to be able to reuse across machine configs.
-	templateFactory := templates.NewFactory(d.govc, spec.datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)
+	templateFactory := templates.NewFactory(d.govc, spec.datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, spec.datacenterConfig.Spec.Network, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)
 
 	// TODO: remove the factory's dependency on a machineConfig
 	if err := templateFactory.CreateIfMissing(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig, ova.URI, tags); err != nil {

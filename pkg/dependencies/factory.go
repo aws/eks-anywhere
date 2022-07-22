@@ -19,15 +19,18 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -39,6 +42,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 type Dependencies struct {
@@ -55,7 +59,8 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
-	Helm                      *executables.Helm
+	HelmSecure                *executables.Helm
+	HelmInsecure              *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
@@ -73,6 +78,11 @@ type Dependencies struct {
 	FileReader                *files.Reader
 	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
+	CliConfig                 *config.CliConfig
+	PackageInstaller          interfaces.PackageInstaller
+	BundleRegistry            curatedpackages.BundleRegistry
+	VSphereValidator          *vsphere.Validator
+	VSphereDefaulter          *vsphere.Defaulter
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -97,15 +107,21 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 }
 
 type Factory struct {
-	executableBuilder        *executables.ExecutableBuilder
-	executablesImage         string
+	executablesConfig        *executablesConfig
 	registryMirror           string
 	proxyConfiguration       map[string]string
-	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
 	buildSteps               []buildStep
 	dependencies             Dependencies
+}
+
+type executablesConfig struct {
+	builder            *executables.ExecutablesBuilder
+	image              string
+	useDockerContainer bool
+	dockerClient       executables.DockerClient
+	mountDirs          []string
 }
 
 type buildStep func(ctx context.Context) error
@@ -113,7 +129,10 @@ type buildStep func(ctx context.Context) error
 func NewFactory() *Factory {
 	return &Factory{
 		writerFolder: "./",
-		buildSteps:   make([]buildStep, 0),
+		executablesConfig: &executablesConfig{
+			useDockerContainer: executables.ExecutablesInDocker(),
+		},
+		buildSteps: make([]buildStep, 0),
 	}
 }
 
@@ -149,7 +168,7 @@ func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory
 }
 
 func (f *Factory) UseExecutableImage(image string) *Factory {
-	f.executablesImage = image
+	f.executablesConfig.image = image
 	return f
 }
 
@@ -162,7 +181,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 	f.WithManifestReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executablesImage != "" {
+		if f.executablesConfig.image != "" {
 			return nil
 		}
 
@@ -171,7 +190,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
 		}
 
-		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
+		f.executablesConfig.image = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
 
@@ -179,34 +198,62 @@ func (f *Factory) WithExecutableImage() *Factory {
 }
 
 func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
-	f.executablesMountDirs = mountDirs
+	f.executablesConfig.mountDirs = mountDirs
+	return f
+}
+
+func (f *Factory) WithLocalExecutables() *Factory {
+	f.executablesConfig.useDockerContainer = false
+	return f
+}
+
+// UseExecutablesDockerClient forces a specific DockerClient to build
+// Executables as opposed to follow the normal building flow
+// This is only for testing
+func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *Factory {
+	f.executablesConfig.dockerClient = client
 	return f
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
-	f.WithExecutableImage()
+	if f.executablesConfig.useDockerContainer {
+		f.WithExecutableImage().WithDocker()
+	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.executableBuilder != nil {
+		if f.executablesConfig.builder != nil {
 			return nil
 		}
 
-		image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
-		b, close, err := executables.NewExecutableBuilder(ctx, image, f.executablesMountDirs...)
+		if f.executablesConfig.useDockerContainer {
+			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
+			b, err := executables.NewInDockerExecutablesBuilder(
+				f.executablesConfig.dockerClient,
+				image,
+				f.executablesConfig.mountDirs...,
+			)
+			if err != nil {
+				return err
+			}
+
+			f.executablesConfig.builder = b
+		} else {
+			f.executablesConfig.builder = executables.NewLocalExecutablesBuilder()
+		}
+
+		closer, err := f.executablesConfig.builder.Init(ctx)
 		if err != nil {
 			return err
 		}
+		f.dependencies.closers = append(f.dependencies.closers, closer)
 
-		f.dependencies.closers = append(f.dependencies.closers, close)
-
-		f.executableBuilder = b
 		return nil
 	})
 
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, skipPowerActions, setupTinkerbell, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareCSVPath string, force bool, tinkerbellBootstrapIp string) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -215,7 +262,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter()
+		f.WithDocker().WithKubectl().WithWriter().WithHelmSecure()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -289,19 +336,36 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			f.dependencies.Provider = tinkerbell.NewProvider(
+			tinkerbellIp := tinkerbellBootstrapIp
+			if tinkerbellIp == "" {
+				logger.V(4).Info("Inferring local Tinkerbell Bootstrap IP from environment")
+				localIp, err := networkutils.GetLocalIP()
+				if err != nil {
+					return err
+				}
+				tinkerbellIp = localIp.String()
+			}
+			logger.V(4).Info("Tinkerbell IP", "tinkerbell-ip", tinkerbellIp)
+
+			provider, err := tinkerbell.NewProvider(
 				datacenterConfig,
 				machineConfigs,
 				clusterConfig,
 				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
-				f.dependencies.Helm,
+				f.dependencies.HelmSecure,
 				f.dependencies.Kubectl,
+				tinkerbellIp,
 				time.Now,
+				force,
 				skipIpCheck,
-				setupTinkerbell,
 			)
+			if err != nil {
+				return err
+			}
+
+			f.dependencies.Provider = provider
 
 		case v1alpha1.DockerDatacenterKind:
 			datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFile)
@@ -343,30 +407,17 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithClusterAwsCli() *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ClusterAwsCli != nil {
-			return nil
-		}
-
-		f.dependencies.ClusterAwsCli = f.executableBuilder.BuildClusterAwsAdmExecutable()
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithDocker() *Factory {
-	f.WithExecutableBuilder()
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DockerClient != nil {
 			return nil
 		}
 
 		f.dependencies.DockerClient = executables.BuildDockerExecutable()
+		if f.executablesConfig.dockerClient == nil {
+			f.executablesConfig.dockerClient = f.dependencies.DockerClient
+		}
+
 		return nil
 	})
 
@@ -381,7 +432,7 @@ func (f *Factory) WithKubectl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kubectl = f.executableBuilder.BuildKubectlExecutable()
+		f.dependencies.Kubectl = f.executablesConfig.builder.BuildKubectlExecutable()
 		return nil
 	})
 
@@ -396,7 +447,7 @@ func (f *Factory) WithGovc() *Factory {
 			return nil
 		}
 
-		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		f.dependencies.Govc = f.executablesConfig.builder.BuildGovcExecutable(f.dependencies.Writer)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
 
 		return nil
@@ -412,12 +463,13 @@ func (f *Factory) WithCmk() *Factory {
 		if f.dependencies.Cmk != nil {
 			return nil
 		}
+
 		execConfig, err := decoder.ParseCloudStackSecret()
 		if err != nil {
 			return fmt.Errorf("building cmk executable: %v", err)
 		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
+		f.dependencies.Cmk = f.executablesConfig.builder.BuildCmkExecutable(f.dependencies.Writer, execConfig.Profiles)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 
 		return nil
@@ -508,7 +560,7 @@ func (f *Factory) WithKind() *Factory {
 			return nil
 		}
 
-		f.dependencies.Kind = f.executableBuilder.BuildKindExecutable(f.dependencies.Writer)
+		f.dependencies.Kind = f.executablesConfig.builder.BuildKindExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -523,7 +575,7 @@ func (f *Factory) WithClusterctl() *Factory {
 			return nil
 		}
 
-		f.dependencies.Clusterctl = f.executableBuilder.BuildClusterCtlExecutable(f.dependencies.Writer)
+		f.dependencies.Clusterctl = f.executablesConfig.builder.BuildClusterCtlExecutable(f.dependencies.Writer)
 		return nil
 	})
 
@@ -538,7 +590,7 @@ func (f *Factory) WithFlux() *Factory {
 			return nil
 		}
 
-		f.dependencies.Flux = f.executableBuilder.BuildFluxExecutable()
+		f.dependencies.Flux = f.executablesConfig.builder.BuildFluxExecutable()
 		return nil
 	})
 
@@ -553,18 +605,18 @@ func (f *Factory) WithTroubleshoot() *Factory {
 			return nil
 		}
 
-		f.dependencies.Troubleshoot = f.executableBuilder.BuildTroubleshootExecutable()
+		f.dependencies.Troubleshoot = f.executablesConfig.builder.BuildTroubleshootExecutable()
 		return nil
 	})
 
 	return f
 }
 
-func (f *Factory) WithHelm() *Factory {
+func (f *Factory) WithHelmSecure() *Factory {
 	f.WithExecutableBuilder()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Helm != nil {
+		if f.dependencies.HelmSecure != nil {
 			return nil
 		}
 
@@ -577,7 +629,31 @@ func (f *Factory) WithHelm() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
+		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithHelmInsecure() *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.HelmInsecure != nil {
+			return nil
+		}
+
+		opts := []executables.HelmOpt{executables.WithInsecure()}
+		if f.registryMirror != "" {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		}
+
+		if f.proxyConfiguration != nil {
+			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
+		}
+
+		f.dependencies.HelmInsecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -592,9 +668,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelm()
+		f.WithKubectl().WithHelmInsecure()
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.HelmInsecure)
 		}
 	}
 
@@ -656,6 +732,10 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
+		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
+		if f.dependencies.CliConfig != nil {
+			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
+		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
 			&clusterManagerClient{
@@ -666,10 +746,16 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
+			maxWaitPerMachine,
 		)
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithCliConfig(cliConfig *config.CliConfig) *Factory {
+	f.dependencies.CliConfig = cliConfig
 	return f
 }
 
@@ -773,6 +859,53 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 		return nil
 	})
 
+	return f
+}
+
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
+	f.WithHelmInsecure().WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageInstaller != nil {
+			return nil
+		}
+
+		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
+			f.dependencies.HelmInsecure,
+			f.dependencies.Kubectl,
+			spec,
+			packagesLocation,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
+	if registryName != "" {
+		f.WithHelmInsecure()
+	} else {
+		f.WithManifestReader()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.BundleRegistry != nil {
+			return nil
+		}
+
+		if registryName != "" {
+			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
+				f.dependencies.HelmInsecure,
+				registryName,
+			)
+		} else {
+			f.dependencies.BundleRegistry = curatedpackages.NewDefaultRegistry(
+				f.dependencies.ManifestReader,
+				kubeVersion,
+				version,
+			)
+		}
+		return nil
+	})
 	return f
 }
 
@@ -906,6 +1039,38 @@ func (f *Factory) WithUnAuthKubeClient() *Factory {
 		if err := f.dependencies.UnAuthKubeClient.Init(); err != nil {
 			return fmt.Errorf("building unauth kube client: %v", err)
 		}
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereValidator() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereValidator != nil {
+			return nil
+		}
+
+		f.dependencies.VSphereValidator = vsphere.NewValidator(f.dependencies.Govc, &networkutils.DefaultNetClient{})
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithVSphereDefaulter() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.VSphereDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
 
 		return nil
 	})

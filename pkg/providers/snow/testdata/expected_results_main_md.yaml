@@ -3,6 +3,8 @@ kind: MachineDeployment
 metadata:
   creationTimestamp: null
   labels:
+    cluster.anywhere.eks.amazonaws.com/cluster-name: snow-test
+    cluster.anywhere.eks.amazonaws.com/cluster-namespace: test-namespace
     cluster.x-k8s.io/cluster-name: snow-test
   name: snow-test-md-0
   namespace: eksa-system
@@ -24,7 +26,7 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: AWSSnowMachineTemplate
-        name: test-wn-1
+        name: snow-test-md-0-1
       version: v1.21.5-eks-1-21-9
 status:
   availableReplicas: 0
@@ -73,7 +75,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: AWSSnowMachineTemplate
 metadata:
   creationTimestamp: null
-  name: test-wn-1
+  name: snow-test-md-0-1
   namespace: eksa-system
 spec:
   template:
@@ -82,6 +84,9 @@ spec:
         id: eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea
       cloudInit:
         insecureSkipSecretsManager: true
+      devices:
+      - 1.2.3.4
+      - 1.2.3.5
       iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
       instanceType: sbe-c.xlarge
       physicalNetworkConnectorType: SFP_PLUS

@@ -13,7 +13,7 @@ type Provider interface {
 	Name() string
 	SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error
-	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
+	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster) error
 	GenerateCAPISpecForCreate(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
@@ -21,6 +21,7 @@ type Provider interface {
 	// PreCAPIInstallOnBootstrap is called after the bootstrap cluster is setup but before CAPI resources are installed on it. This allows us to do provider specific configuration on the bootstrap cluster.
 	PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
+	PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	// PostWorkloadInit is called after the workload cluster is created and initialized with a CNI. This allows us to do provider specific configuration on the workload cluster.
 	PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
@@ -34,12 +35,11 @@ type Provider interface {
 	MachineResourceType() string
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	GenerateMHC() ([]byte, error)
+	GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
-	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
 	InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error
 	PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error
 }

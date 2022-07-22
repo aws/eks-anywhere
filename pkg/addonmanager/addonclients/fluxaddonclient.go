@@ -383,14 +383,12 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
-	logger.V(3).Info("Generating eks-a cluster manifest files...")
 	err = fc.writeEksaSystemFiles()
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
 	if fc.clusterSpec.Cluster.IsSelfManaged() {
-		logger.V(3).Info("Generating flux custom manifest files...")
 		err = fc.writeFluxSystemFiles()
 		if err != nil {
 			return &ConfigVersionControlFailedError{Err: err}
@@ -440,17 +438,22 @@ func (fc *fluxForCluster) initEksaWriter() (filewriter.FileWriter, error) {
 }
 
 func (fc *fluxForCluster) writeEksaSystemFiles() error {
+	if fc.datacenterConfig == nil && fc.machineConfigs == nil {
+		return nil
+	}
+
+	logger.V(3).Info("Generating eks-a cluster manifest files...")
 	w, err := fc.initEksaWriter()
 	if err != nil {
 		return err
 	}
 
-	logger.V(3).Info("Generating eks-a cluster config file...")
+	logger.V(4).Info("Generating eks-a cluster config file...")
 	if err := fc.generateClusterConfigFile(w); err != nil {
 		return err
 	}
 
-	logger.V(3).Info("Generating eks-a kustomization file...")
+	logger.V(4).Info("Generating eks-a kustomization file...")
 	return fc.generateEksaKustomizeFile(w)
 }
 
@@ -487,6 +490,7 @@ func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
 }
 
 func (fc *fluxForCluster) writeFluxSystemFiles() (err error) {
+	logger.V(3).Info("Generating flux custom manifest files...")
 	w, err := fc.initFluxWriter()
 	if err != nil {
 		return err
@@ -494,12 +498,12 @@ func (fc *fluxForCluster) writeFluxSystemFiles() (err error) {
 
 	t := templater.New(w)
 
-	logger.V(3).Info("Generating flux-system kustomization file...")
+	logger.V(4).Info("Generating flux-system kustomization file...")
 	if err = fc.generateFluxKustomizeFile(t); err != nil {
 		return err
 	}
 
-	logger.V(3).Info("Generating flux-system sync file...")
+	logger.V(4).Info("Generating flux-system sync file...")
 	if err = fc.generateFluxSyncFile(t); err != nil {
 		return err
 	}

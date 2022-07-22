@@ -29,18 +29,21 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
+ifneq ($(PULL_BASE_REF),)
+	BRANCH_NAME=$(PULL_BASE_REF)
+endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
-BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/eks-a-release.yaml
+BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/bundle-release.yaml
+RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
 $(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
 DEV_GIT_VERSION:=v0.0.0-dev
-BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+BUNDLE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/bundle-release.yaml
+RELEASE_MANIFEST_URL?=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml
 $(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 LATEST=latest
 endif
@@ -82,9 +85,9 @@ endif
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
-CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
+CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat manager/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
-DOCKERFILE_FOLDER = ./controllers/docker/linux/eks-anywhere-cluster-controller
+DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
 
 IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
@@ -98,8 +101,6 @@ IMAGE_IMPORT_CACHE = type=registry,ref=$(CLUSTER_CONTROLLER_LATEST_IMAGE) type=r
 
 MANIFEST_IMAGE_NAME_OVERRIDE="$(IMAGE_REPO)/eks-anywhere-cluster-controller"
 MANIFEST_IMAGE_TAG_OVERRIDE=${IMAGE_TAG}
-KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE="${IMAGE_REPO}/brancz/kube-rbac-proxy"
-KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE="latest"
 KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 
 CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
@@ -118,6 +119,7 @@ ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_D
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
+E2E_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),e2e-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
@@ -137,12 +139,12 @@ build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 release: eks-a-release unit-test ## Generate release binary and run unit tests
 
 .PHONY: eks-a-binary
-eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)
+eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL) -s -w -buildid='' -extldflags -static
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
 eks-a-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
+	CGO_ENABLED=0 GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
@@ -259,7 +261,7 @@ eks-a-tool: ## Build eks-a-tool
 
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
-	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./controllers
+	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./manager
 
 # This target will copy LICENSE file from root to the release submodule
 # when fetching licenses for cluster-controller
@@ -282,7 +284,7 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 
 .PHONY: upload-artifacts
 upload-artifacts:
-	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
+	manager/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
 .PHONY: create-cluster-controller-binaries
 create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
@@ -299,11 +301,11 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	$(MAKE) create-cluster-controller-binaries
 	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
-	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./controllers"
+	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./manager"
 
 .PHONY: cluster-controller-tarballs
 cluster-controller-tarballs:  cluster-controller-binaries
-	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
+	manager/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
 
 .PHONY: cluster-controller-local-images
 cluster-controller-local-images: IMAGE_PLATFORMS = linux/amd64
@@ -346,7 +348,7 @@ ifeq ($(UNAME), Darwin)
 else
 	  find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 endif
-	rm -rf ./controllers/bin/*
+	rm -rf ./manager/bin/*
 	rm -rf ./hack/tools/bin
 	rm -rf vendor
 	rm -rf GIT_TAG
@@ -365,7 +367,7 @@ test: unit-test capd-test  ## Run unit and capd tests
 .PHONY: unit-test
 unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
-unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
@@ -384,7 +386,7 @@ capd-test: ## Run default e2e capd test locally
 
 .PHONY: docker-e2e-test
 docker-e2e-test: e2e ## Run docker integration test in new ec2 instance
-	scripts/e2e_test_docker.sh $(DOCKER_E2E_TEST)
+	scripts/e2e_test_docker.sh $(DOCKER_E2E_TEST) $(BRANCH_NAME)
 
 .PHONY: e2e-cleanup
 e2e-cleanup: e2e ## Clean up resources generated by e2e tests
@@ -402,7 +404,7 @@ mocks: export PATH := $(GO_VERSION):$(PATH)
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
-	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient
+	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable,DockerClient,DockerContainer
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,SSHAuthKeyGenerator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
@@ -415,12 +417,12 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GithubClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Client,ProviderClient
-	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader
+	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager,EksdInstaller,EksdUpgrader,PackageInstaller
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
 	${GOPATH}/bin/mockgen -destination=pkg/git/gitclient/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gitclient" GoGit
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
-	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/controllers/resource" ResourceFetcher,ResourceUpdater
-	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/reader.go -package=mocks "sigs.k8s.io/controller-runtime/pkg/client" Reader
+	${GOPATH}/bin/mockgen -destination=controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/resource" ResourceFetcher,ResourceUpdater
+	${GOPATH}/bin/mockgen -destination=controllers/resource/mocks/reader.go -package=mocks "sigs.k8s.io/controller-runtime/pkg/client" Reader
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
@@ -428,6 +430,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
+	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/fetch.go -package=mocks -source "pkg/clusterapi/fetch.go"
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
@@ -454,6 +457,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller
+	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
+	${GOPATH}/bin/mockgen -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -463,18 +468,19 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 		exit 1;\
 	fi
 
+.PHONY: e2e-cross-platform
+e2e-cross-platform: $(E2E_CROSS_PLATFORMS)
+
+.PHONY: e2e-cross-platform-%
+e2e-cross-platform-%: ## Generate binaries for Linux and MacOS
+e2e-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
+e2e-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
+e2e-cross-platform-%:
+	$(MAKE) e2e-tests-binary E2E_TAGS=e2e GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) E2E_OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/e2e.test
+
 .PHONY: e2e
 e2e: eks-a-e2e integration-test-binary ## Build integration tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
-
-.PHONY: conformance
-conformance:
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
-
-.PHONY: conformance-tests
-conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
-	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: eks-a-e2e
 eks-a-e2e:
@@ -494,12 +500,22 @@ eks-a-e2e:
 	fi
 
 .PHONY: e2e-tests-binary
+e2e-tests-binary: E2E_OUTPUT_FILE ?= bin/e2e.test
 e2e-tests-binary:
-	$(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/manifests/releases.manifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
-	$(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+
+.PHONY: conformance
+conformance:
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
+	./bin/e2e.test -test.v -test.run 'TestVSphereKubernetes121ThreeWorkersConformanc.*'
+
+.PHONY: conformance-tests
+conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: check-eksa-components-override
 check-eksa-components-override:
@@ -513,8 +529,6 @@ help:  ## Display this help
 update-kustomization-yaml:
 	yq e ".images[] |= select(.name == \"controller\") |= .newName = \"${MANIFEST_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 	yq e ".images[] |= select(.name == \"controller\") |= .newTag = \"${MANIFEST_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
-	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newName = \"${KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
-	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newTag = \"${KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 
 .PHONY: generate-manifests
 generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
@@ -525,6 +539,7 @@ generate-core-manifests: $(CONTROLLER_GEN) ## Generate manifests for the core pr
 	$(CONTROLLER_GEN) \
 		paths=./pkg/api/... \
 		paths=./controllers/... \
+		paths=./manager/... \
 		crd:crdVersions=v1 \
 		rbac:roleName=manager-role \
 		output:crd:dir=./config/crd/bases \
@@ -575,7 +590,7 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
-	tilt up --file controllers/Tiltfile
+	tilt up --file manager/Tiltfile
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 # originally copied from kubebuilder

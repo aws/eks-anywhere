@@ -11,6 +11,7 @@ const (
 	CapiSystemNamespace                     = "capi-system"
 	CapiWebhookSystemNamespace              = "capi-webhook-system"
 	CapvSystemNamespace                     = "capv-system"
+	CaptSystemNamespace                     = "capt-system"
 	CapaSystemNamespace                     = "capa-system"
 	CapasSystemNamespace                    = "capas-system"
 	CapxSystemNamespace                     = "capx-system"
@@ -39,5 +40,6 @@ const (
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
 
-	DefaultRegistry = "public.ecr.aws"
+	DefaultRegistry            = "public.ecr.aws"
+	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 )

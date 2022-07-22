@@ -158,18 +158,18 @@ func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2,
 }
 
 // GenerateMHC mocks base method.
-func (m *MockProvider) GenerateMHC() ([]byte, error) {
+func (m *MockProvider) GenerateMHC(arg0 *cluster.Spec) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateMHC")
+	ret := m.ctrl.Call(m, "GenerateMHC", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateMHC indicates an expected call of GenerateMHC.
-func (mr *MockProviderMockRecorder) GenerateMHC() *gomock.Call {
+func (mr *MockProviderMockRecorder) GenerateMHC(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateMHC", reflect.TypeOf((*MockProvider)(nil).GenerateMHC))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateMHC", reflect.TypeOf((*MockProvider)(nil).GenerateMHC), arg0)
 }
 
 // GenerateStorageClass mocks base method.
@@ -242,20 +242,6 @@ func (mr *MockProviderMockRecorder) MachineConfigs(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs), arg0)
 }
 
-// MachineDeploymentsToDelete mocks base method.
-func (m *MockProvider) MachineDeploymentsToDelete(arg0 *types.Cluster, arg1, arg2 *cluster.Spec) []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineDeploymentsToDelete", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// MachineDeploymentsToDelete indicates an expected call of MachineDeploymentsToDelete.
-func (mr *MockProviderMockRecorder) MachineDeploymentsToDelete(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeploymentsToDelete", reflect.TypeOf((*MockProvider)(nil).MachineDeploymentsToDelete), arg0, arg1, arg2)
-}
-
 // MachineResourceType mocks base method.
 func (m *MockProvider) MachineResourceType() string {
 	m.ctrl.T.Helper()
@@ -296,6 +282,20 @@ func (m *MockProvider) PostBootstrapSetup(arg0 context.Context, arg1 *v1alpha1.C
 func (mr *MockProviderMockRecorder) PostBootstrapSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetup", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetup), arg0, arg1, arg2)
+}
+
+// PostBootstrapSetupUpgrade mocks base method.
+func (m *MockProvider) PostBootstrapSetupUpgrade(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostBootstrapSetupUpgrade", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PostBootstrapSetupUpgrade indicates an expected call of PostBootstrapSetupUpgrade.
+func (mr *MockProviderMockRecorder) PostBootstrapSetupUpgrade(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetupUpgrade", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetupUpgrade), arg0, arg1, arg2)
 }
 
 // PostClusterDeleteValidate mocks base method.
@@ -383,17 +383,17 @@ func (mr *MockProviderMockRecorder) SetupAndValidateDeleteCluster(arg0, arg1 int
 }
 
 // SetupAndValidateUpgradeCluster mocks base method.
-func (m *MockProvider) SetupAndValidateUpgradeCluster(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+func (m *MockProvider) SetupAndValidateUpgradeCluster(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetupAndValidateUpgradeCluster", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "SetupAndValidateUpgradeCluster", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetupAndValidateUpgradeCluster indicates an expected call of SetupAndValidateUpgradeCluster.
-func (mr *MockProviderMockRecorder) SetupAndValidateUpgradeCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) SetupAndValidateUpgradeCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateUpgradeCluster", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateUpgradeCluster), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetupAndValidateUpgradeCluster", reflect.TypeOf((*MockProvider)(nil).SetupAndValidateUpgradeCluster), arg0, arg1, arg2, arg3)
 }
 
 // UpdateKubeConfig mocks base method.

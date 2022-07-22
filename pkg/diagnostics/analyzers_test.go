@@ -11,9 +11,10 @@ import (
 func TestManagementClusterAnalyzers(t *testing.T) {
 	factory := diagnostics.NewAnalyzerFactory()
 	analyzers := factory.ManagementClusterAnalyzers()
-	assert.Equal(t, len(analyzers), 11, "DataCenterConfigCollectors() mismatch between desired collectors and actual")
+	assert.Equal(t, len(analyzers), 12, "DataCenterConfigCollectors() mismatch between desired collectors and actual")
 	assert.NotNilf(t, getDeploymentStatusAnalyzer(analyzers, "capc-controller-manager"), "capc controller manager analyzer should be present")
 	assert.NotNilf(t, getDeploymentStatusAnalyzer(analyzers, "capv-controller-manager"), "capv controller manager analyzer should be present")
+	assert.NotNilf(t, getDeploymentStatusAnalyzer(analyzers, "capt-controller-manager"), "capt controller manager analyzer should be present")
 }
 
 func getDeploymentStatusAnalyzer(analyzers []*diagnostics.Analyze, name string) *diagnostics.Analyze {
@@ -24,4 +25,16 @@ func getDeploymentStatusAnalyzer(analyzers []*diagnostics.Analyze, name string) 
 	}
 
 	return nil
+}
+
+func TestEksaLogTextAnalyzers(t *testing.T) {
+	collectorFactory := diagnostics.NewDefaultCollectorFactory()
+	collectors := collectorFactory.ManagementClusterCollectors()
+	analyzerFactory := diagnostics.NewAnalyzerFactory()
+	expectAnalzyers := analyzerFactory.EksaLogTextAnalyzers(collectors)
+	for _, analyzer := range expectAnalzyers {
+		if analyzer == nil {
+			t.Errorf("EksaLogTextAnalyzers failed: return a nil analyzer")
+		}
+	}
 }

@@ -27,16 +27,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
-const tinkerbellHardwareCSVFlag = "hardware-csv"
-
 type createClusterOptions struct {
 	clusterOptions
-	forceClean       bool
-	skipIpCheck      bool
-	hardwareCSVPath  string
-	skipPowerActions bool
-	setupTinkerbell  bool
-	installPackages  string
+	forceClean            bool
+	skipIpCheck           bool
+	hardwareCSVPath       string
+	tinkerbellBootstrapIP string
+	installPackages       string
 }
 
 var cc = &createClusterOptions{}
@@ -53,11 +50,14 @@ var createClusterCmd = &cobra.Command{
 func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	if features.IsActive(features.TinkerbellProvider()) {
-		createClusterCmd.Flags().StringVar(&cc.hardwareCSVPath, tinkerbellHardwareCSVFlag, "", "A file path to a CSV file containing hardware data to be submitted to the cluster for provisioning")
-		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
-		createClusterCmd.Flags().BoolVar(&cc.setupTinkerbell, "setup-tinkerbell", false, "Setup Tinkerbell stack during baremetal cluster creation")
-	}
+	createClusterCmd.Flags().StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
+	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
@@ -93,7 +93,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(tinkerbellHardwareCSVFlag)
+		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
 
 		// If no flag was returned there is a developer error as the flag has been removed
 		// from the program rendering it invalid.
@@ -101,8 +101,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			panic("'hardwarefile' flag not configured")
 		}
 
-		if !viper.IsSet(tinkerbellHardwareCSVFlag) || viper.GetString(tinkerbellHardwareCSVFlag) == "" {
-			return fmt.Errorf("required flag \"%v\" not set", tinkerbellHardwareCSVFlag)
+		if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
+			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
 		}
 
 		if !validations.FileExists(cc.hardwareCSVPath) {
@@ -145,20 +145,18 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.skipPowerActions, cc.setupTinkerbell, cc.forceClean).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
+		WithPackageInstaller(clusterSpec, cc.installPackages).
 		Build(ctx)
 	if err != nil {
 		return err
 	}
 	defer close(ctx, deps)
-
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
-		return fmt.Errorf("provider tinkerbell is not supported in this release")
-	}
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("provider cloudstack is not supported in this release")
@@ -166,10 +164,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
-	}
-
-	if !features.IsActive(features.CuratedPackagesSupport()) && cc.installPackages != "" {
-		return fmt.Errorf("curated packages installation is not supported in this release")
 	}
 
 	if !features.IsActive(features.NutanixProvider()) && deps.Provider.Name() == constants.NutanixProviderName {
@@ -183,6 +177,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.FluxAddonClient,
 		deps.Writer,
 		deps.EksdInstaller,
+		deps.PackageInstaller,
 	)
 
 	var cluster *types.Cluster
@@ -211,7 +206,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean, cc.installPackages)
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+
 	cleanup(deps, &err)
 	return err
 }
@@ -222,6 +218,7 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
 		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
 		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
+		dirs = append(dirs, filepath.Dir(cc.installPackages))
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
@@ -241,7 +238,9 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{}
+	cliConfig := &config.CliConfig{
+		MaxWaitPerMachine: config.GetMaxWaitPerMachine(),
+	}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)

@@ -12,7 +12,7 @@ import (
 
 // manifestURL holds the url to the eksa releases manifest
 // this is injected at build time, this is just a sane default for development
-var manifestURL = "https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml"
+var manifestURL = "https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/eks-a-release.yaml"
 
 func ManifestURL() string {
 	return manifestURL

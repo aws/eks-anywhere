@@ -45,6 +45,14 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 		Validations: []cluster.Validation{
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
+					if err := cm.validator.ValidateMachineDeviceIPs(ctx, m); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *cluster.Config) error {
+				for _, m := range c.SnowMachineConfigs {
 					if err := cm.validator.ValidateEC2ImageExistsOnDevice(ctx, m); err != nil {
 						return err
 					}

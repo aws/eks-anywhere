@@ -5,6 +5,8 @@ import (
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 func TestSnowSetDefaults(t *testing.T) {
@@ -85,21 +87,24 @@ func TestSnowValidate(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "valid config",
+			name: "valid config with amiID, instance type, devices",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
 				},
 			},
 			wantErr: "",
 		},
 		{
-			name: "missing ami id",
+			name: "valid without ami and devices",
 			obj: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{},
+				Spec: SnowMachineConfigSpec{
+					InstanceType: DefaultSnowInstanceType,
+				},
 			},
-			wantErr: "AMIID is a required field",
+			wantErr: "",
 		},
 		{
 			name: "invalid instance type",
@@ -107,9 +112,24 @@ func TestSnowValidate(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: "invalid-instance-type",
+					Devices:      []string{"1.2.3.4"},
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
+		},
+		{
+			name: "invalid container volume",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					ContainersVolume: &snowv1.Volume{
+						Size: 7,
+					},
+				},
+			},
+			wantErr: "ContainersVolume.Size must be no smaller than 8 Gi",
 		},
 	}
 	for _, tt := range tests {

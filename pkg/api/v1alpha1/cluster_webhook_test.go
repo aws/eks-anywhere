@@ -8,8 +8,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestClusterDefault(t *testing.T) {
+	cOld := &v1alpha1.Cluster{}
+	cOld.SetSelfManaged()
+	cOld.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+		Port: "",
+	}
+	cOld.Default()
+	g := NewWithT(t)
+	g.Expect(cOld.Spec.ClusterNetwork.CNIConfig).To(Equal(&v1alpha1.CNIConfig{}))
+	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
+}
 
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{}
@@ -26,7 +39,8 @@ func TestClusterValidateUpdateManagementOldNilNewTrueSuccess(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -50,7 +64,8 @@ func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -104,7 +119,8 @@ func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -126,7 +142,8 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationEqual(t *testin
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -152,7 +169,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -319,7 +337,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 				MachineGroupRef: &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -360,7 +379,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRe
 				MachineGroupRef: nil,
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -401,7 +421,8 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRe
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -423,7 +444,8 @@ func TestClusterValidateUpdateDatacenterRefImmutableEqual(t *testing.T) {
 				Name: "test", Kind: "DatacenterConfig",
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -546,7 +568,8 @@ func TestClusterValidateUpdateClusterNetworkEqualOrder(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -666,7 +689,8 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -682,7 +706,8 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -768,7 +793,8 @@ func TestClusterValidateUpdateGitOpsRefImmutableNilEqual(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			GitOpsRef: nil,
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -859,7 +885,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -872,7 +899,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -891,7 +919,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -904,7 +933,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -923,7 +953,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -931,7 +962,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -945,7 +977,8 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -971,7 +1004,8 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testin
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -993,7 +1027,8 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameMgmtCluster(t *testing.T)
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1014,7 +1049,8 @@ func TestClusterValidateUpdateOIDCNameMutableUpdateNameUnchanged(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1034,7 +1070,8 @@ func TestClusterValidateUpdateOIDCNameMutableWorkloadCluster(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1044,7 +1081,8 @@ func TestClusterValidateUpdateOIDCNameMutableWorkloadCluster(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1064,7 +1102,8 @@ func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1073,7 +1112,8 @@ func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1087,7 +1127,8 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1102,7 +1143,8 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1117,7 +1159,8 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1131,7 +1174,8 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1145,7 +1189,8 @@ func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1181,7 +1226,8 @@ func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
 		Spec: v1alpha1.ClusterSpec{
 			KubernetesVersion: v1alpha1.Kube119,
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1290,7 +1336,8 @@ func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 				Taints: []v1.Taint{{
 					Key:    "test",
 					Value:  "test",
@@ -1314,7 +1361,8 @@ func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 				Taints: []v1.Taint{{
 					Key:    "test",
 					Value:  "test",
@@ -1334,7 +1382,8 @@ func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1349,7 +1398,8 @@ func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 				Labels: map[string]string{
 					"test": "val1",
 				},
@@ -1377,7 +1427,8 @@ func TestClusterUpdateControlPlaneTaintsAndLabelsSuccess(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}
@@ -1399,7 +1450,8 @@ func TestClusterUpdateControlPlaneLabelsInvalid(t *testing.T) {
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Name: "test",
+				Count: 1,
+				Name:  "test",
 			}},
 		},
 	}

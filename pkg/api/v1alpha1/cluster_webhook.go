@@ -36,6 +36,16 @@ func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &Cluster{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (r *Cluster) Default() {
+	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
+	r.SetDefaults()
+}
+
 // Change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=validation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 

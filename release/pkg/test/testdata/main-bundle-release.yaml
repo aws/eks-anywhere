@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Bundles
 metadata:
   creationTimestamp: "1970-01-01T00:00:00Z"
+  name: bundles-1
 spec:
   cliMaxVersion: v0.7.2
   cliMinVersion: v0.7.2
@@ -15,6 +16,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-aws-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-aws-controller
@@ -23,6 +25,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -37,6 +40,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-bootstrap-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
@@ -45,6 +49,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -58,55 +63,69 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:279ff0b939c8ebfae8fb5086751de831edee4c1ef307b6f0a27b553b1c2c9b52
+        imageDigest: sha256:d7a394014cd60caa821d7c748637d1bf21ed955eb06a8cef7864c9a5f2e75b02
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.8.0
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
     bottlerocketBootstrap:
       bootstrap:
         arch:
         - amd64
+        - arm64
         description: Container image for bottlerocket-bootstrap image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-16-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-18-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-acmesolver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-acmesolver:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.8.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-cainjector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-cainjector:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.8.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
+      ctl:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cert-manager-ctl image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cert-manager-ctl
+        os: linux
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.8.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.5.3/cert-manager.yaml
-      version: v1.5.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.8.2/cert-manager.yaml
+      version: v1.8.2+abcdef1
       webhook:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-webhook image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.8.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -136,30 +155,33 @@ spec:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-cloudstack-controller image
+        - arm64
+        description: Container image for cluster-api-provider-cloudstack image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-cloudstack-controller
+        name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/metadata.yaml
+      version: v0.4.5-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
@@ -168,6 +190,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -182,6 +205,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-control-plane-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
@@ -190,6 +214,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -206,6 +231,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -214,9 +240,10 @@ spec:
       manager:
         arch:
         - amd64
-        description: Container image for capd-manager image
+        - arm64
+        description: Container image for cluster-api-provider-docker image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: capd-manager
+        name: cluster-api-provider-docker
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.1.3-eks-a-v0.0.0-dev-build.1
       metadata:
@@ -229,27 +256,28 @@ spec:
       kindNode:
         arch:
         - amd64
+        - arm64
         description: Container image for kind-node image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.1
       kubeVersion: v1.20.15
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-16.yaml
-      name: kubernetes-1-20-eks-16
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-18.yaml
+      name: kubernetes-1-20-eks-18
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-20-16 release
+          description: Bottlerocket Ova image for EKS-D 1-20-18 release
           etcdadm: {}
-          name: bottlerocket-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-16/bottlerocket-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-18/bottlerocket-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -262,7 +290,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-16 release
+          description: Ubuntu Ova image for EKS-D 1-20-18 release
           etcdadm:
             arch:
             - amd64
@@ -272,12 +300,12 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-16/ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-18/ubuntu-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           crictl: {}
@@ -294,7 +322,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-20-16 release
+          description: Ubuntu Raw image for EKS-D 1-20-18 release
           etcdadm:
             arch:
             - amd64
@@ -304,122 +332,134 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-20/1-20-16/ubuntu-v1.20.15-eks-d-1-20-16-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-20/1-20-18/ubuntu-v1.20.15-eks-d-1-20-18-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cli-tools image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.10.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cluster-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.10.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-diagnostic-collector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.10.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-bootstrap-provider image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-bootstrap-provider:v1.0.0-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.3-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/metadata.yaml
-      version: v1.0.0-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/metadata.yaml
+      version: v1.0.3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.1-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
-      version: v1.0.0-rc9+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/metadata.yaml
+      version: v1.0.1+abcdef1
     flux:
       helmController:
         arch:
         - amd64
+        - arm64
         description: Container image for helm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.22.2-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
+        - arm64
         description: Container image for kustomize-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.26.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
+        - arm64
         description: Container image for notification-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.24.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
+        - arm64
         description: Container image for source-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
-      version: v0.29.4+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.25.9-eks-a-v0.0.0-dev-build.1
+      version: v0.31.3+abcdef1
     haproxy:
       image:
         arch:
         - amd64
+        - arm64
         description: Container image for haproxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
@@ -432,69 +472,75 @@ spec:
     kubeVersion: "1.20"
     packageController:
       helmChart:
-        description: 'Helm chart: eks-anywhere-packages-helm'
+        description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.14-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-packages image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.14-eks-a-v0.0.0-dev-build.1
+      version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-snow-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/metadata.yaml
-      version: v0.1.4+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
+      version: v0.1.5+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-provider-tinkerbell image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9e9c2a397288908f73a4f499ac00aaf96d15deb6-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
             arch:
             - amd64
+            - arm64
             description: Container image for cexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
@@ -503,6 +549,7 @@ spec:
           imageToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for image2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
@@ -511,6 +558,7 @@ spec:
           kexec:
             arch:
             - amd64
+            - arm64
             description: Container image for kexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
@@ -519,51 +567,62 @@ spec:
           ociToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for oci2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for reboot image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: reboot
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
+            - arm64
             description: Container image for writefile image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
+          - arm64
           description: Container image for cfssl image
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: cfssl
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-bootkit image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
@@ -572,6 +631,7 @@ spec:
           docker:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-docker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
@@ -591,6 +651,7 @@ spec:
           kernel:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-kernel image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
@@ -607,70 +668,61 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+          arch:
+          - amd64
+          - arm64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-controller image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-server image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-worker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.3-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-vsphere-controller image
+        - arm64
+        description: Container image for cluster-api-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-vsphere-controller
+        name: cluster-api-provider-vsphere
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
@@ -680,6 +732,7 @@ spec:
       driver:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-driver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
@@ -688,6 +741,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -696,24 +750,27 @@ spec:
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cloud-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.20.0-eks-d-1-20-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.20.1-eks-d-1-20-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.1.1/metadata.yaml
       syncer:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-syncer image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
@@ -728,6 +785,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-aws-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-aws-controller
@@ -736,6 +794,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -750,6 +809,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-bootstrap-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
@@ -758,6 +818,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -771,55 +832,69 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:279ff0b939c8ebfae8fb5086751de831edee4c1ef307b6f0a27b553b1c2c9b52
+        imageDigest: sha256:d7a394014cd60caa821d7c748637d1bf21ed955eb06a8cef7864c9a5f2e75b02
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.8.0
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
     bottlerocketBootstrap:
       bootstrap:
         arch:
         - amd64
+        - arm64
         description: Container image for bottlerocket-bootstrap image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-14-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-16-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-acmesolver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-acmesolver:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.8.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-cainjector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-cainjector:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.8.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
+      ctl:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cert-manager-ctl image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cert-manager-ctl
+        os: linux
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.8.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.5.3/cert-manager.yaml
-      version: v1.5.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.8.2/cert-manager.yaml
+      version: v1.8.2+abcdef1
       webhook:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-webhook image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.8.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -849,30 +924,33 @@ spec:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-cloudstack-controller image
+        - arm64
+        description: Container image for cluster-api-provider-cloudstack image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-cloudstack-controller
+        name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/metadata.yaml
+      version: v0.4.5-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
@@ -881,6 +959,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -895,6 +974,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-control-plane-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
@@ -903,6 +983,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -919,6 +1000,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -927,9 +1009,10 @@ spec:
       manager:
         arch:
         - amd64
-        description: Container image for capd-manager image
+        - arm64
+        description: Container image for cluster-api-provider-docker image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: capd-manager
+        name: cluster-api-provider-docker
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.1.3-eks-a-v0.0.0-dev-build.1
       metadata:
@@ -942,27 +1025,28 @@ spec:
       kindNode:
         arch:
         - amd64
+        - arm64
         description: Container image for kind-node image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.21.12
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-14.yaml
-      name: kubernetes-1-21-eks-14
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.21.13
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-16.yaml
+      name: kubernetes-1-21-eks-16
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-21-14 release
+          description: Bottlerocket Ova image for EKS-D 1-21-16 release
           etcdadm: {}
-          name: bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-14/bottlerocket-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-16/bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -975,7 +1059,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-14 release
+          description: Ubuntu Ova image for EKS-D 1-21-16 release
           etcdadm:
             arch:
             - amd64
@@ -985,16 +1069,25 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-14/ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-16/ubuntu-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-21-16 release
           etcdadm: {}
+          name: bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-16/bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -1007,7 +1100,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-21-14 release
+          description: Ubuntu Raw image for EKS-D 1-21-16 release
           etcdadm:
             arch:
             - amd64
@@ -1017,122 +1110,134 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-14/ubuntu-v1.21.12-eks-d-1-21-14-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-16/ubuntu-v1.21.13-eks-d-1-21-16-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cli-tools image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.10.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cluster-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.10.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-diagnostic-collector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.10.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-bootstrap-provider image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-bootstrap-provider:v1.0.0-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.3-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/metadata.yaml
-      version: v1.0.0-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/metadata.yaml
+      version: v1.0.3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.1-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
-      version: v1.0.0-rc9+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/metadata.yaml
+      version: v1.0.1+abcdef1
     flux:
       helmController:
         arch:
         - amd64
+        - arm64
         description: Container image for helm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.22.2-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
+        - arm64
         description: Container image for kustomize-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.26.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
+        - arm64
         description: Container image for notification-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.24.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
+        - arm64
         description: Container image for source-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
-      version: v0.29.4+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.25.9-eks-a-v0.0.0-dev-build.1
+      version: v0.31.3+abcdef1
     haproxy:
       image:
         arch:
         - amd64
+        - arm64
         description: Container image for haproxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
@@ -1145,69 +1250,75 @@ spec:
     kubeVersion: "1.21"
     packageController:
       helmChart:
-        description: 'Helm chart: eks-anywhere-packages-helm'
+        description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.14-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-packages image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.14-eks-a-v0.0.0-dev-build.1
+      version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-snow-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/metadata.yaml
-      version: v0.1.4+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
+      version: v0.1.5+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-provider-tinkerbell image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9e9c2a397288908f73a4f499ac00aaf96d15deb6-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
             arch:
             - amd64
+            - arm64
             description: Container image for cexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
@@ -1216,6 +1327,7 @@ spec:
           imageToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for image2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
@@ -1224,6 +1336,7 @@ spec:
           kexec:
             arch:
             - amd64
+            - arm64
             description: Container image for kexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
@@ -1232,51 +1345,62 @@ spec:
           ociToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for oci2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for reboot image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: reboot
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
+            - arm64
             description: Container image for writefile image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
+          - arm64
           description: Container image for cfssl image
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: cfssl
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-bootkit image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
@@ -1285,6 +1409,7 @@ spec:
           docker:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-docker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
@@ -1304,6 +1429,7 @@ spec:
           kernel:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-kernel image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
@@ -1320,70 +1446,61 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+          arch:
+          - amd64
+          - arm64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-controller image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-server image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-worker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.3-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-vsphere-controller image
+        - arm64
+        description: Container image for cluster-api-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-vsphere-controller
+        name: cluster-api-provider-vsphere
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
@@ -1393,6 +1510,7 @@ spec:
       driver:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-driver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
@@ -1401,6 +1519,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1409,24 +1528,27 @@ spec:
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cloud-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.21.0-eks-d-1-21-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.21.3-eks-d-1-21-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.1.1/metadata.yaml
       syncer:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-syncer image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
@@ -1441,6 +1563,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-aws-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-aws-controller
@@ -1449,6 +1572,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1463,6 +1587,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-bootstrap-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
@@ -1471,6 +1596,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1484,55 +1610,69 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:279ff0b939c8ebfae8fb5086751de831edee4c1ef307b6f0a27b553b1c2c9b52
+        imageDigest: sha256:d7a394014cd60caa821d7c748637d1bf21ed955eb06a8cef7864c9a5f2e75b02
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.8.0
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
     bottlerocketBootstrap:
       bootstrap:
         arch:
         - amd64
+        - arm64
         description: Container image for bottlerocket-bootstrap image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-9-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-acmesolver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-acmesolver:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.8.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-cainjector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-cainjector:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.8.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
+      ctl:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cert-manager-ctl image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cert-manager-ctl
+        os: linux
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.8.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.5.3/cert-manager.yaml
-      version: v1.5.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.8.2/cert-manager.yaml
+      version: v1.8.2+abcdef1
       webhook:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-webhook image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.8.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -1562,30 +1702,33 @@ spec:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-cloudstack-controller image
+        - arm64
+        description: Container image for cluster-api-provider-cloudstack image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-cloudstack-controller
+        name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/metadata.yaml
+      version: v0.4.5-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
@@ -1594,6 +1737,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1608,6 +1752,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-control-plane-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
@@ -1616,6 +1761,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1632,6 +1778,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -1640,9 +1787,10 @@ spec:
       manager:
         arch:
         - amd64
-        description: Container image for capd-manager image
+        - arm64
+        description: Container image for cluster-api-provider-docker image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: capd-manager
+        name: cluster-api-provider-docker
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.1.3-eks-a-v0.0.0-dev-build.1
       metadata:
@@ -1655,27 +1803,28 @@ spec:
       kindNode:
         arch:
         - amd64
+        - arm64
         description: Container image for kind-node image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.22.9
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-7.yaml
-      name: kubernetes-1-22-eks-7
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.22.10
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-9.yaml
+      name: kubernetes-1-22-eks-9
       ova:
         bottlerocket:
           arch:
           - amd64
           crictl: {}
-          description: Bottlerocket OVA for EKS-D 1-22-7 release
+          description: Bottlerocket Ova image for EKS-D 1-22-9 release
           etcdadm: {}
-          name: bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-7/bottlerocket-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -1688,7 +1837,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-7 release
+          description: Ubuntu Ova image for EKS-D 1-22-9 release
           etcdadm:
             arch:
             - amd64
@@ -1698,16 +1847,25 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-7/ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-9/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-22-9 release
           etcdadm: {}
+          name: bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -1720,7 +1878,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-22-7 release
+          description: Ubuntu Raw image for EKS-D 1-22-9 release
           etcdadm:
             arch:
             - amd64
@@ -1730,122 +1888,134 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-7/ubuntu-v1.22.9-eks-d-1-22-7-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-9/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cli-tools image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.10.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cluster-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.10.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-diagnostic-collector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.10.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-bootstrap-provider image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-bootstrap-provider:v1.0.0-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.3-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/metadata.yaml
-      version: v1.0.0-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/metadata.yaml
+      version: v1.0.3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.1-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
-      version: v1.0.0-rc9+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/metadata.yaml
+      version: v1.0.1+abcdef1
     flux:
       helmController:
         arch:
         - amd64
+        - arm64
         description: Container image for helm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.22.2-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
+        - arm64
         description: Container image for kustomize-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.26.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
+        - arm64
         description: Container image for notification-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.24.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
+        - arm64
         description: Container image for source-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
-      version: v0.29.4+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.25.9-eks-a-v0.0.0-dev-build.1
+      version: v0.31.3+abcdef1
     haproxy:
       image:
         arch:
         - amd64
+        - arm64
         description: Container image for haproxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
@@ -1858,69 +2028,75 @@ spec:
     kubeVersion: "1.22"
     packageController:
       helmChart:
-        description: 'Helm chart: eks-anywhere-packages-helm'
+        description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.14-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-packages image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.14-eks-a-v0.0.0-dev-build.1
+      version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-snow-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/metadata.yaml
-      version: v0.1.4+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
+      version: v0.1.5+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-provider-tinkerbell image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9e9c2a397288908f73a4f499ac00aaf96d15deb6-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
             arch:
             - amd64
+            - arm64
             description: Container image for cexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
@@ -1929,6 +2105,7 @@ spec:
           imageToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for image2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
@@ -1937,6 +2114,7 @@ spec:
           kexec:
             arch:
             - amd64
+            - arm64
             description: Container image for kexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
@@ -1945,51 +2123,62 @@ spec:
           ociToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for oci2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for reboot image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: reboot
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
+            - arm64
             description: Container image for writefile image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
+          - arm64
           description: Container image for cfssl image
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: cfssl
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-bootkit image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
@@ -1998,6 +2187,7 @@ spec:
           docker:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-docker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
@@ -2017,6 +2207,7 @@ spec:
           kernel:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-kernel image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
@@ -2033,70 +2224,61 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+          arch:
+          - amd64
+          - arm64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-controller image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-server image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-worker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.3-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-vsphere-controller image
+        - arm64
+        description: Container image for cluster-api-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-vsphere-controller
+        name: cluster-api-provider-vsphere
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
@@ -2106,6 +2288,7 @@ spec:
       driver:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-driver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
@@ -2114,6 +2297,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2122,24 +2306,27 @@ spec:
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cloud-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.22.5-eks-d-1-22-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.22.6-eks-d-1-22-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.1.1/metadata.yaml
       syncer:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-syncer image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
@@ -2154,6 +2341,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-aws-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-aws-controller
@@ -2162,6 +2350,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2176,6 +2365,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-bootstrap-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-bootstrap-controller
@@ -2184,6 +2374,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2197,55 +2388,69 @@ spec:
         arch:
         - amd64
         description: Container image for bottlerocket-admin image
-        imageDigest: sha256:279ff0b939c8ebfae8fb5086751de831edee4c1ef307b6f0a27b553b1c2c9b52
+        imageDigest: sha256:d7a394014cd60caa821d7c748637d1bf21ed955eb06a8cef7864c9a5f2e75b02
         name: bottlerocket-admin
         os: linux
-        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.8.0
+        uri: public.ecr.aws/bottlerocket/bottlerocket-admin:v0.9.0
     bottlerocketBootstrap:
       bootstrap:
         arch:
         - amd64
+        - arm64
         description: Container image for bottlerocket-bootstrap image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-3-eks-a-v0.0.0-dev-build.1
     certManager:
       acmesolver:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-acmesolver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-acmesolver
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-acmesolver:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-acmesolver:v1.8.2-eks-a-v0.0.0-dev-build.1
       cainjector:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-cainjector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-cainjector
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-cainjector:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-cainjector:v1.8.2-eks-a-v0.0.0-dev-build.1
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-controller:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-controller:v1.8.2-eks-a-v0.0.0-dev-build.1
+      ctl:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cert-manager-ctl image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cert-manager-ctl
+        os: linux
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-ctl:v1.8.2-eks-a-v0.0.0-dev-build.1
       manifest:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.5.3/cert-manager.yaml
-      version: v1.5.3+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cert-manager/manifests/v1.8.2/cert-manager.yaml
+      version: v1.8.2+abcdef1
       webhook:
         arch:
         - amd64
+        - arm64
         description: Container image for cert-manager-webhook image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cert-manager-webhook
         os: linux
-        uri: public.ecr.aws/release-container-registry/jetstack/cert-manager-webhook:v1.5.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/cert-manager/cert-manager-webhook:v1.8.2-eks-a-v0.0.0-dev-build.1
     cilium:
       cilium:
         arch:
@@ -2275,30 +2480,33 @@ spec:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-cloudstack-controller image
+        - arm64
+        description: Container image for cluster-api-provider-cloudstack image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-cloudstack-controller
+        name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.5-rc5-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc2/metadata.yaml
-      version: v0.4.5-rc2+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.5-rc5/metadata.yaml
+      version: v0.4.5-rc5+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.1.3/core-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-controller
@@ -2307,6 +2515,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2321,6 +2530,7 @@ spec:
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for kubeadm-control-plane-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kubeadm-control-plane-controller
@@ -2329,6 +2539,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2345,6 +2556,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2353,9 +2565,10 @@ spec:
       manager:
         arch:
         - amd64
-        description: Container image for capd-manager image
+        - arm64
+        description: Container image for cluster-api-provider-docker image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: capd-manager
+        name: cluster-api-provider-docker
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api/capd-manager:v1.1.3-eks-a-v0.0.0-dev-build.1
       metadata:
@@ -2368,18 +2581,28 @@ spec:
       kindNode:
         arch:
         - amd64
+        - arm64
         description: Container image for kind-node image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.23.6
-      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-2.yaml
-      name: kubernetes-1-23-eks-2
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.23.7
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-3.yaml
+      name: kubernetes-1-23-eks-3
       ova:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Ova image for EKS-D 1-23-3 release
           etcdadm: {}
+          name: bottlerocket-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.ova
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-3/bottlerocket-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.ova
         ubuntu:
           arch:
           - amd64
@@ -2392,7 +2615,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-2 release
+          description: Ubuntu Ova image for EKS-D 1-23-3 release
           etcdadm:
             arch:
             - amd64
@@ -2402,16 +2625,25 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
+          name: ubuntu-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.ova
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-3/ubuntu-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
+          arch:
+          - amd64
           crictl: {}
+          description: Bottlerocket Raw image for EKS-D 1-23-3 release
           etcdadm: {}
+          name: bottlerocket-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.img.gz
+          os: linux
+          osName: bottlerocket
+          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-3/bottlerocket-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.img.gz
         ubuntu:
           arch:
           - amd64
@@ -2424,7 +2656,7 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cri-tools/v1.20.0/cri-tools-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          description: Ubuntu OVA for EKS-D 1-23-2 release
+          description: Ubuntu Raw image for EKS-D 1-23-3 release
           etcdadm:
             arch:
             - amd64
@@ -2434,122 +2666,134 @@ spec:
             sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev+build.0-linux-amd64.tar.gz
-          name: ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
+          name: ubuntu-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.gz
           os: linux
           osName: ubuntu
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-2/ubuntu-v1.23.6-eks-d-1-23-2-eks-a-v0.0.0-dev-build.0-amd64.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-3/ubuntu-v1.23.7-eks-d-1-23-3-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cli-tools image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cli-tools
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cli-tools:v0.10.1-eks-a-v0.0.0-dev-build.1
       clusterController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-cluster-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-cluster-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.9.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-cluster-controller:v0.10.1-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/eksa-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-anywhere/manifests/cluster-controller/v0.10.1/eksa-components.yaml
       diagnosticCollector:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-diagnostic-collector image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-diagnostic-collector
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.7.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-diagnostic-collector:v0.10.1-eks-a-v0.0.0-dev-build.1
       version: v0.0.0-dev+build.0+abcdef1
     etcdadmBootstrap:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-bootstrap-provider image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-bootstrap-provider
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-bootstrap-provider:v1.0.0-rc6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-bootstrap-provider:v1.0.3-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.0-rc6/metadata.yaml
-      version: v1.0.0-rc6+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/v1.0.3/metadata.yaml
+      version: v1.0.3+abcdef1
     etcdadmController:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/bootstrap-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/bootstrap-components.yaml
       controller:
         arch:
         - amd64
+        - arm64
         description: Container image for etcdadm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: etcdadm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/mrajashree/etcdadm-controller:v1.0.0-rc9-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/etcdadm-controller:v1.0.1-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
         os: linux
         uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.0-rc9/metadata.yaml
-      version: v1.0.0-rc9+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm-controller/manifests/bootstrap-etcdadm-controller/v1.0.1/metadata.yaml
+      version: v1.0.1+abcdef1
     flux:
       helmController:
         arch:
         - amd64
+        - arm64
         description: Container image for helm-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: helm-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.20.1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/helm-controller:v0.22.2-eks-a-v0.0.0-dev-build.1
       kustomizeController:
         arch:
         - amd64
+        - arm64
         description: Container image for kustomize-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kustomize-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.24.3-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/kustomize-controller:v0.26.3-eks-a-v0.0.0-dev-build.1
       notificationController:
         arch:
         - amd64
+        - arm64
         description: Container image for notification-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: notification-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.23.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/fluxcd/notification-controller:v0.24.1-eks-a-v0.0.0-dev-build.1
       sourceController:
         arch:
         - amd64
+        - arm64
         description: Container image for source-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: source-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.24.2-eks-a-v0.0.0-dev-build.1
-      version: v0.29.4+abcdef1
+        uri: public.ecr.aws/release-container-registry/fluxcd/source-controller:v0.25.9-eks-a-v0.0.0-dev-build.1
+      version: v0.31.3+abcdef1
     haproxy:
       image:
         arch:
         - amd64
+        - arm64
         description: Container image for haproxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: haproxy
@@ -2562,69 +2806,75 @@ spec:
     kubeVersion: "1.23"
     packageController:
       helmChart:
-        description: 'Helm chart: eks-anywhere-packages-helm'
+        description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.10-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.1.14-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
+        - arm64
         description: Container image for eks-anywhere-packages image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.10-eks-a-v0.0.0-dev-build.1
-      version: v0.1.10+abcdef1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.1.14-eks-a-v0.0.0-dev-build.1
+      version: v0.1.14+abcdef1
     snow:
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-snow-controller image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-snow-controller
         os: linux
-        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.4-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/aws/cluster-api-provider-aws-snow/manager:v0.1.5-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.4/metadata.yaml
-      version: v0.1.4+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.5/metadata.yaml
+      version: v0.1.5+abcdef1
     tinkerbell:
       clusterAPIController:
         arch:
         - amd64
+        - arm64
         description: Container image for cluster-api-provider-tinkerbell image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-tinkerbell
         os: linux
-        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:ee045e095565f7943179a98f8d6567f56c3d3bcd-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/tinkerbell/cluster-api-provider-tinkerbell:9e9c2a397288908f73a4f499ac00aaf96d15deb6-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/cluster-template.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/cluster-template.yaml
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/infrastructure-components.yaml
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/ee045e095565f7943179a98f8d6567f56c3d3bcd/metadata.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/9e9c2a397288908f73a4f499ac00aaf96d15deb6/metadata.yaml
       tinkerbellStack:
         actions:
           cexec:
             arch:
             - amd64
+            - arm64
             description: Container image for cexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: cexec
@@ -2633,6 +2883,7 @@ spec:
           imageToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for image2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: image2disk
@@ -2641,6 +2892,7 @@ spec:
           kexec:
             arch:
             - amd64
+            - arm64
             description: Container image for kexec image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: kexec
@@ -2649,51 +2901,62 @@ spec:
           ociToDisk:
             arch:
             - amd64
+            - arm64
             description: Container image for oci2disk image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: oci2disk
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/oci2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
+          reboot:
+            arch:
+            - amd64
+            - arm64
+            description: Container image for reboot image
+            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+            name: reboot
+            os: linux
+            uri: public.ecr.aws/release-container-registry/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
           writeFile:
             arch:
             - amd64
+            - arm64
             description: Container image for writefile image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: writefile
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-v0.0.0-dev-build.1
         boots:
-          image:
-            arch:
-            - amd64
-            description: Container image for boots image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: boots
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/boots:ab716aac37cfff2869952ea2e44a67cb6d1fe1c1-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for boots image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: boots
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
         cfssl:
           arch:
           - amd64
+          - arm64
           description: Container image for cfssl image
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: cfssl
           os: linux
           uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
-          image:
-            arch:
-            - amd64
-            description: Container image for hegel image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: hegel
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
-          manifest: {}
+          arch:
+          - amd64
+          - arm64
+          description: Container image for hegel image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: hegel
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/hegel:7b286fdc8e8fa91a6e9a179a5494b6ee29fce17b-eks-a-v0.0.0-dev-build.1
         hook:
           bootkit:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-bootkit image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-bootkit
@@ -2702,6 +2965,7 @@ spec:
           docker:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-docker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-docker
@@ -2721,6 +2985,7 @@ spec:
           kernel:
             arch:
             - amd64
+            - arm64
             description: Container image for hook-kernel image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: hook-kernel
@@ -2737,70 +3002,61 @@ spec:
                 component
               name: vmlinuz-aarch64
               uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-aarch64
-        pbnj:
-          image:
-            arch:
-            - amd64
-            description: Container image for pbnj image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: pbnj
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.1
-          manifest: {}
         rufio:
-          image:
-            arch:
-            - amd64
-            description: Container image for rufio image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: rufio
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:7ab74dd6173a8f3ddf27cd1da0f624af9677adee-eks-a-v0.0.0-dev-build.1
-          manifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/rufio/manifests/infrastructure-rufio/7ab74dd6173a8f3ddf27cd1da0f624af9677adee/manifest.yaml
+          arch:
+          - amd64
+          - arm64
+          description: Container image for rufio image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: rufio
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/rufio:a4053e5c1e7f32fb5c0a9962846c219c3ef8aaf3-eks-a-v0.0.0-dev-build.1
         tink:
-          tinkCli:
-            arch:
-            - amd64
-            description: Container image for tink-cli image
-            imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            name: tink-cli
-            os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-cli:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
           tinkController:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-controller image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-controller
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
-          tinkManifest:
-            uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/tink/tink.yaml
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-controller:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkServer:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-server image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-server
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-server:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
           tinkWorker:
             arch:
             - amd64
+            - arm64
             description: Container image for tink-worker image
             imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
             name: tink-worker
             os: linux
-            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:7a8ca47540c5800c1d0cac075cf7e2c5da69b186-eks-a-v0.0.0-dev-build.1
+            uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
+        tinkerbellChart:
+          arch:
+          - amd64
+          - arm64
+          description: Container image for tinkerbell-chart image
+          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          name: tinkerbell-chart
+          os: linux
+          uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.3-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
       clusterAPIController:
         arch:
         - amd64
-        description: Container image for cluster-api-vsphere-controller image
+        - arm64
+        description: Container image for cluster-api-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        name: cluster-api-vsphere-controller
+        name: cluster-api-provider-vsphere
         os: linux
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v1.1.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
@@ -2810,6 +3066,7 @@ spec:
       driver:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-driver image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
@@ -2818,6 +3075,7 @@ spec:
       kubeProxy:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-rbac-proxy image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-rbac-proxy
@@ -2826,24 +3084,27 @@ spec:
       kubeVip:
         arch:
         - amd64
+        - arm64
         description: Container image for kube-vip image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kube-vip
         os: linux
-        uri: public.ecr.aws/release-container-registry/plunder-app/kube-vip:v0.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.4.4-eks-a-v0.0.0-dev-build.1
       manager:
         arch:
         - amd64
+        - arm64
         description: Container image for cloud-provider-vsphere image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cloud-provider-vsphere
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.23.0-eks-d-1-23-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes/cloud-provider-vsphere/cpi/manager:v1.23.1-eks-d-1-23-eks-a-v0.0.0-dev-build.1
       metadata:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/v1.1.1/metadata.yaml
       syncer:
         arch:
         - amd64
+        - arm64
         description: Container image for vsphere-csi-syncer image
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer

@@ -51,6 +51,10 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
 		return nil
 	}
+	if currentSpec.Cluster.Spec.GitOpsRef == nil && newSpec.Cluster.Spec.GitOpsRef != nil {
+		logger.V(1).Info("Skipping Flux upgrades, no previous flux installed in the cluster")
+		return nil
+	}
 	if currentSpec.Cluster.Spec.GitOpsRef == nil {
 		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
 		return nil
@@ -68,6 +72,13 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 				},
 			},
 		}
+	}
+	return nil
+}
+
+func (f *FluxAddonClient) Install(ctx context.Context, cluster *types.Cluster, oldSpec, newSpec *cluster.Spec) error {
+	if oldSpec.Cluster.Spec.GitOpsRef == nil && newSpec.Cluster.Spec.GitOpsRef != nil {
+		return f.InstallGitOps(ctx, cluster, newSpec, nil, nil)
 	}
 	return nil
 }

@@ -46,7 +46,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec, u.Opts.CliConfig),
 			},
 			validations.ValidationResult{
-				Name:        "validate identityproviders name",
+				Name:        "validate identity providers' name",
 				Remediation: "",
 				Err:         ValidateIdentityProviderNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
 			},

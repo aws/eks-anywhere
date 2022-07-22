@@ -29,8 +29,7 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
     ```
 
-2. Set up kube-vip service type: Load Balancer in your cluster by following the instructions [here]({{< relref "./loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
-Alternatively, you can set up MetalLB Load Balancer by following the instructions [here]({{< relref "./loadbalance#alternatives" >}})
+2. Set up a load balancer: Set up MetalLB Load Balancer by following the instructions [here]({{< relref "./loadbalance" >}})
 
 3. Install Ambassador CRDs and ClusterRoles and RoleBindings
 

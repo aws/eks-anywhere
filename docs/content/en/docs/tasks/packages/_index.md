@@ -2,7 +2,7 @@
 title: "EKS Anywhere curated package management"
 linkTitle: "Package management"
 date: 2022-04-12
-weight: 20
+weight: 40
 description: >
   Common tasks for managing curated packages.
 ---
@@ -23,7 +23,7 @@ Skip the following installation steps if the returned result is not empty.
     ```bash
     eksctl anywhere version
     ```
-* Make sure cert-manager is up and running in the cluster.
+* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager and follow the instructions below to finish the package controller installation.
 
 {{% /alert %}}
 
@@ -31,7 +31,7 @@ Skip the following installation steps if the returned result is not empty.
 
 1. Install the package controller
     ```bash
-    eksctl anywhere install packagecontroller --kube-version 1.21
+    eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
     ```
 
 1. Check the package controller

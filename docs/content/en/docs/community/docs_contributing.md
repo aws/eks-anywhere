@@ -1,5 +1,5 @@
 ---
-title: "Contributing to EKS Anywhere documentation"
+title: "Contributing to documentation"
 weight: 20
 description: >
   Guidelines for contributing to EKS Anywhere documentation
@@ -26,11 +26,11 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 
 * **Notes, Warnings, etc.**: You can use this form for notes:
 
-   ```   
-    {{% alert title="Note" color="primary" %}}
-    <put note here, multiple paragraphs are allowed>
-    {{% /alert %}}
-   ```
+    <b><tt>\{\{% alert title="Note" color="primary" %\}\}
+
+    <b><tt><put note here, multiple paragraphs are allowed></b></tt>
+
+    \{\{% /alert %\}\}</b></tt>
 
     {{% alert title="Note" color="primary" %}}
     <put note here, multiple paragraphs are allowed>
@@ -39,9 +39,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 * **Embedding content**: If you want to read in content from a separate file, you can use the following format.
   Do this if you think the content might be useful in multiple pages:
 
-   ```
-    {{% content "./newfile.md" %}}
-   ```
+  <b><tt>\{\{% content "./newfile.md" %\}\}</b></tt>
 
 * **General style issues**: Unless otherwise instructed, follow the [Kubernetes Documentation Style Guide](https://kubernetes.io/docs/contribute/style/style-guide/) for formatting and presentation guidance.
 
@@ -52,13 +50,8 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
   In kubectl examples, you can point to those files using: `https://anywhere.eks.amazonaws.com/manifests/whatever.yaml`
 * **Generic instructions for creating a cluster** should go into the [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) section in either:
    * [Install EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) installation guide: For prerequisites and procedures related to setting up the Administrative machine.
-   * [Creating a local cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/local-environment/) or [production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/): For simple instructions for a Docker or vSphere installation, respectively.
-* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Currently, [vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/) is the only supported provider.
-  * [Add integrations to cluster]({{< relref "../tasks/cluster/cluster-integrations/" >}}): Add names of suggested third-party tools. Then Link the names of providers to:
-    * EKS Anywhere docs instructions for configuring that feature, if instructions are available or
-    * Somewhere on the third-party site, if there are no instructions available on the EKS Anywhere site
-  * [Compare EKS Anywhere and EKS]({{< relref "../concepts/eksafeatures/" >}}): Add supported third-party solutions to the Amazon EKS Anywhere column.
-  Only link to the partner page for now.
+   * [Creating a local cluster]({{< relref "../getting-started/local-environment/" >}}) or [production cluster]({{< relref "../getting-started/production-environment/" >}}): For simple instructions for a Docker or Production (Bare Metal or vSphere) installation, respectively.
+* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Provider-specific sections are in the Reference sections for [Bare Metal]({{< relref "../reference/baremetal/" >}}) and [vSphere]({{< relref "../reference/vsphere/" >}}).
 * **Workshop content** should contain organized links to existing documentation pages.
   The workshop content should not duplicate existing documentation pages or contain guides that are not part of the main documentation.
 

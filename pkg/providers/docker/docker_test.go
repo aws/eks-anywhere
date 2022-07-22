@@ -656,3 +656,65 @@ func TestProviderGenerateCAPISpecForCreateWithStackedEtcd(t *testing.T) {
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/valid_deployment_cp_stacked_etcd_expected.yaml")
 }
+
+func TestGetMHCSuccess(t *testing.T) {
+	tt := newTest(t)
+
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: test-md-0-worker-unhealthy
+  namespace: %[1]s
+spec:
+  clusterName: test
+  maxUnhealthy: 40%%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: test-md-0
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: test-kcp-unhealthy
+  namespace: %[1]s
+spec:
+  clusterName: test
+  maxUnhealthy: 100%%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/control-plane: ""
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+`, constants.EksaSystemNamespace)
+	clusterSpec := test.NewClusterSpec()
+	clusterSpec.Cluster.Name = "test"
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Name: "md-0", Count: 1}}
+	mch, err := tt.provider.GenerateMHC(clusterSpec)
+	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
+	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
+}

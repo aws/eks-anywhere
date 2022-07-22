@@ -1,6 +1,6 @@
 package validations
 
 type TlsValidator interface {
-	ValidateCert(host, port, cert string) error
-	HasSelfSignedCert(host, port string) (bool, error)
+	ValidateCert(host, port, caCertContent string) error
+	IsSignedByUnknownAuthority(host, port string) (bool, error)
 }

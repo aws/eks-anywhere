@@ -42,9 +42,15 @@ spec:
 {{- if .externalEtcd }}
         external:
           endpoints: []
+{{- if (eq .format "bottlerocket") }}
+          caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
+          certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
+          keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
+{{- else }}
           caFile: "/etc/kubernetes/pki/etcd/ca.crt"
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+{{- end }}
 {{- else }}
         local:
           imageRepository: {{.etcdRepository}}
@@ -53,13 +59,48 @@ spec:
       dns:
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
+{{- if (eq .format "bottlerocket") }}
+      pause:
+        imageRepository: {{.pauseRepository}}
+        imageTag: {{.pauseVersion}}
+      bottlerocketBootstrap:
+        imageRepository: {{.bottlerocketBootstrapRepository}}
+        imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
+{{- if .apiserverExtraArgs }}
+      apiServer:
+        extraArgs:
+{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{- end }}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     joinConfiguration:
+{{- if (eq .format "bottlerocket") }}
+      pause:
+        imageRepository: {{.pauseRepository}}
+        imageTag: {{.pauseVersion}}
+      bottlerocketBootstrap:
+        imageRepository: {{.bottlerocketBootstrapRepository}}
+        imageTag: {{.bottlerocketBootstrapVersion}}
+{{- end }}
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
@@ -67,6 +108,20 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
     files:
       - content: |
           apiVersion: v1
@@ -147,6 +202,12 @@ spec:
   etcdadmConfigSpec:
     etcdadmBuiltin: true
     format: {{.format}}
+{{- if (eq .format "bottlerocket") }}
+    bottlerocketConfig:
+      etcdImage: {{.etcdImage}}
+      bootstrapImage: {{.bottlerocketBootstrapRepository}}:{{.bottlerocketBootstrapVersion}}
+      pauseImage: {{.pauseRepository}}:{{.pauseVersion}}
+{{- else}}
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
@@ -156,6 +217,7 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -178,6 +240,12 @@ spec:
   template:
     {{- if and .etcdTemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .etcdHardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.etcdTemplateOverride | indent 8}}
     {{- end }}
@@ -195,6 +263,12 @@ spec:
   template:
     {{- if and .controlPlanetemplateOverride (ne .format "")}}
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: {{ range $key, $value := .hardwareSelector}}
+              {{ $key }}: {{ $value}}
+            {{- end }}
       templateOverride: |
 {{.controlPlanetemplateOverride | indent 8}}
     {{- end }}

@@ -12,7 +12,7 @@ import (
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
@@ -20,7 +20,7 @@ import (
 type apiBuilerTest struct {
 	*WithT
 	clusterSpec             *cluster.Spec
-	workerNodeGroupConfig   *v1alpha1.WorkerNodeGroupConfiguration
+	workerNodeGroupConfig   *anywherev1.WorkerNodeGroupConfiguration
 	kubeadmConfigTemplate   *bootstrapv1.KubeadmConfigTemplate
 	providerCluster         clusterapi.APIObject
 	controlPlane            clusterapi.APIObject
@@ -47,25 +47,41 @@ func (c *providerMachineTemplate) DeepCopyObject() runtime.Object {
 
 func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster = &v1alpha1.Cluster{
+		s.Cluster = &anywherev1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "test-cluster",
+				Name:      "test-cluster",
+				Namespace: "my-namespace",
 			},
-			Spec: v1alpha1.ClusterSpec{
-				ClusterNetwork: v1alpha1.ClusterNetwork{
-					Pods: v1alpha1.Pods{
+			Spec: anywherev1.ClusterSpec{
+				ClusterNetwork: anywherev1.ClusterNetwork{
+					Pods: anywherev1.Pods{
 						CidrBlocks: []string{
 							"1.2.3.4/5",
 						},
 					},
-					Services: v1alpha1.Services{
+					Services: anywherev1.Services{
 						CidrBlocks: []string{
 							"1.2.3.4/5",
 						},
 					},
 				},
-				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+					Endpoint: &anywherev1.Endpoint{
+						Host: "1.2.3.4",
+					},
 					Count: 3,
+					Taints: []v1.Taint{
+						{
+							Key:       "key1",
+							Value:     "val1",
+							Effect:    v1.TaintEffectNoExecute,
+							TimeAdded: nil,
+						},
+					},
+					Labels: map[string]string{
+						"key1": "val1",
+						"key2": "val2",
+					},
 				},
 				KubernetesVersion: "1.21",
 			},
@@ -88,9 +104,20 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		},
 	}
 
-	workerNodeGroupConfig := &v1alpha1.WorkerNodeGroupConfiguration{
+	workerNodeGroupConfig := &anywherev1.WorkerNodeGroupConfiguration{
 		Name:  "wng-1",
 		Count: 3,
+		Taints: []v1.Taint{
+			{
+				Key:       "key2",
+				Value:     "val2",
+				Effect:    v1.TaintEffectNoSchedule,
+				TimeAdded: nil,
+			},
+		},
+		Labels: map[string]string{
+			"key3": "val3",
+		},
 	}
 
 	kubeadmConfigTemplate := &bootstrapv1.KubeadmConfigTemplate{
@@ -147,7 +174,9 @@ func TestCluster(t *testing.T) {
 			Name:      "test-cluster",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "test-cluster",
+				"cluster.x-k8s.io/cluster-name":                        "test-cluster",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "test-cluster",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "my-namespace",
 			},
 		},
 		Spec: clusterv1.ClusterSpec{
@@ -222,17 +251,39 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: tlsCipherSuitesArgs(),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: map[string]string{
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"node-labels":       "key1=val1,key2=val2",
+						},
+						Taints: []v1.Taint{
+							{
+								Key:       "key1",
+								Value:     "val1",
+								Effect:    v1.TaintEffectNoExecute,
+								TimeAdded: nil,
+							},
+						},
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: map[string]string{
+							"tls-cipher-suites": "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+							"node-labels":       "key1=val1,key2=val2",
+						},
+						Taints: []v1.Taint{
+							{
+								Key:       "key1",
+								Value:     "val1",
+								Effect:    v1.TaintEffectNoExecute,
+								TimeAdded: nil,
+							},
+						},
 					},
 				},
 				PreKubeadmCommands:  []string{},
@@ -252,21 +303,6 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(err).To(Succeed())
 	want := wantKubeadmControlPlane()
 	tt.Expect(got).To(Equal(want))
-}
-
-func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmControlPlane()
-			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
-			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
-			g.Expect(got).To(Equal(want))
-		})
-	}
 }
 
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
@@ -294,7 +330,17 @@ func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
 					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: map[string]string{},
+							KubeletExtraArgs: map[string]string{
+								"node-labels": "key3=val3",
+							},
+							Taints: []v1.Taint{
+								{
+									Key:       "key2",
+									Value:     "val2",
+									Effect:    v1.TaintEffectNoSchedule,
+									TimeAdded: nil,
+								},
+							},
 						},
 					},
 					PreKubeadmCommands:  []string{},
@@ -314,21 +360,6 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestKubeadmConfigTemplateWithRegistryMirror(t *testing.T) {
-	for _, tt := range registryMirrorTests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := newApiBuilerTest(t)
-			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
-			got, err := clusterapi.KubeadmConfigTemplate(g.clusterSpec, *g.workerNodeGroupConfig)
-			g.Expect(err).To(Succeed())
-			want := wantKubeadmConfigTemplate()
-			want.Spec.Template.Spec.Files = tt.wantFiles
-			want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
-			g.Expect(got).To(Equal(want))
-		})
-	}
-}
-
 func TestMachineDeployment(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.MachineDeployment(tt.clusterSpec, *tt.workerNodeGroupConfig, tt.kubeadmConfigTemplate, tt.providerMachineTemplate)
@@ -343,7 +374,9 @@ func TestMachineDeployment(t *testing.T) {
 			Name:      "test-cluster-wng-1",
 			Namespace: "eksa-system",
 			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name": "test-cluster",
+				"cluster.x-k8s.io/cluster-name":                        "test-cluster",
+				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "test-cluster",
+				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "my-namespace",
 			},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
@@ -378,4 +411,33 @@ func TestMachineDeployment(t *testing.T) {
 		},
 	}
 	tt.Expect(got).To(Equal(want))
+}
+
+func TestClusterName(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *anywherev1.Cluster
+		want    string
+	}{
+		{
+			name:    "no name",
+			cluster: &anywherev1.Cluster{},
+			want:    "",
+		},
+		{
+			name: "with name",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "my-cluster",
+				},
+			},
+			want: "my-cluster",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(clusterapi.ClusterName(tt.cluster)).To(Equal(tt.want))
+		})
+	}
 }

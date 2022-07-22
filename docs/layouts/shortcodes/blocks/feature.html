@@ -4,17 +4,18 @@
 {{- $order := .Get "order" -}}
 
 <!-- create a flex box and reverse the order if order==left -->
-<div class="d-md-flex text-xs-center text-sm-center text-md-left p-2 w-75 h-25 align-items-center justify-content-center mx-auto {{ if not (eq $order "left") }}flex-row-reverse{{ end }}"
-    style="max-width: 1000px;">
-    {{- if not (eq $image "") -}}
-    <div class="m-4 d-block mx-auto" style="width: 200px;"><img style="max-width:100%;" src="{{ $image }}"></div>
-    {{- end -}}
-    <div class="p-2 mx-lg-5 text-center text-md-left w-100">
-        {{- if not (eq $title "") -}}
-        <h3 class="display-5">{{ $title }}</h3>
+<div class="d-md-flex text-xs-center text-sm-center text-md-left p-2 w-75 h-25 align-items-center justify-content-center mx-auto {{ if not (eq $order "left") }}flex-row-reverse{{ end }}">
+    <div style="max-width:1000px;">
+        {{- if not (eq $image "") -}}
+        <div class="m-4 d-block mx-auto" style="width: 200px;"><img style="max-width:100%;" src="{{ $image }}"></div>
         {{- end -}}
-        <div class="{{ $class }}">
-            {{ $.Inner }}
+        <div class="p-2 mx-lg-5 text-center text-md-left w-100">
+            {{- if not (eq $title "") -}}
+            <h3 class="display-5">{{ $title }}</h3>
+            {{- end -}}
+            <div class="{{ $class }}">
+                {{ $.Inner }}
+            </div>
         </div>
     </div>
 </div>

@@ -101,6 +101,10 @@ type Instance struct {
 	// +optional
 	NonRootVolumes []*Volume `json:"nonRootVolumes,omitempty"`
 
+	// Configuration options for the containers data volume
+	// +optional
+	ContainersVolume *Volume `json:"containersVolume,omitempty"`
+
 	// Specifies ENIs attached to instance
 	NetworkInterfaces []string `json:"networkInterfaces,omitempty"`
 

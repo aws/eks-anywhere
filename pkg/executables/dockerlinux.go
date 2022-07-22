@@ -9,16 +9,16 @@ import (
 const containerNamePrefix = "eksa_"
 
 type linuxDockerExecutable struct {
-	*dockerContainer
-	cli string
+	cli           string
+	containerName string
 }
 
 // This currently returns a linuxDockerExecutable, but if we support other types of docker executables we can change
 // the name of this constructor
-func NewDockerExecutable(cli string, container *dockerContainer) Executable {
+func NewDockerExecutable(cli string, containerName string) Executable {
 	return &linuxDockerExecutable{
-		cli:             cli,
-		dockerContainer: container,
+		cli:           cli,
+		containerName: containerName,
 	}
 }
 

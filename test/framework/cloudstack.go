@@ -1,10 +1,12 @@
 package framework
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -129,6 +131,10 @@ func (c *CloudStack) Setup() {}
 
 func (c *CloudStack) CustomizeProviderConfig(file string) []byte {
 	return c.customizeProviderConfig(file, c.fillers...)
+}
+
+func (c *CloudStack) CleanupVMs(clusterName string) error {
+	return cleanup.CleanUpCloudstackTestResources(context.Background(), clusterName, false)
 }
 
 func (c *CloudStack) customizeProviderConfig(file string, fillers ...api.CloudStackFiller) []byte {

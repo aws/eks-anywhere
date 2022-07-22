@@ -8,23 +8,38 @@ import (
 )
 
 const (
-	httpProxyVar  = "T_HTTP_PROXY"
-	httpsProxyVar = "T_HTTPS_PROXY"
-	noProxyVar    = "T_NO_PROXY"
+	vsphereHttpProxyVar     = "T_HTTP_PROXY_VSPHERE"
+	vsphereHttpsProxyVar    = "T_HTTPS_PROXY_VSPHERE"
+	vsphereNoProxyVar       = "T_NO_PROXY_VSPHERE"
+	cloudstackHttpProxyVar  = "T_HTTP_PROXY_CLOUDSTACK"
+	cloudstackHttpsProxyVar = "T_HTTPS_PROXY_CLOUDSTACK"
+	cloudstackNoProxyVar    = "T_NO_PROXY_CLOUDSTACK"
 )
 
-var proxyRequiredEnvVars = []string{
-	httpProxyVar,
-	httpsProxyVar,
-	noProxyVar,
+var VsphereProxyRequiredEnvVars = ProxyRequiredEnvVars{
+	HttpProxy:  vsphereHttpProxyVar,
+	HttpsProxy: vsphereHttpsProxyVar,
+	NoProxy:    vsphereNoProxyVar,
 }
 
-func WithProxy() ClusterE2ETestOpt {
+var CloudstackProxyRequiredEnvVars = ProxyRequiredEnvVars{
+	HttpProxy:  cloudstackHttpProxyVar,
+	HttpsProxy: cloudstackHttpsProxyVar,
+	NoProxy:    cloudstackNoProxyVar,
+}
+
+type ProxyRequiredEnvVars struct {
+	HttpProxy  string
+	HttpsProxy string
+	NoProxy    string
+}
+
+func WithProxy(requiredEnvVars ProxyRequiredEnvVars) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, proxyRequiredEnvVars)
-		httpProxy := os.Getenv(httpProxyVar)
-		httpsProxy := os.Getenv(httpsProxyVar)
-		noProxies := os.Getenv(noProxyVar)
+		checkRequiredEnvVars(e.T, []string{requiredEnvVars.HttpProxy, requiredEnvVars.HttpsProxy, requiredEnvVars.NoProxy})
+		httpProxy := os.Getenv(requiredEnvVars.HttpProxy)
+		httpsProxy := os.Getenv(requiredEnvVars.HttpsProxy)
+		noProxies := os.Getenv(requiredEnvVars.NoProxy)
 		var noProxy []string
 		for _, data := range strings.Split(noProxies, ",") {
 			noProxy = append(noProxy, strings.TrimSpace(data))
@@ -34,8 +49,4 @@ func WithProxy() ClusterE2ETestOpt {
 			api.WithProxyConfig(httpProxy, httpsProxy, noProxy),
 		)
 	}
-}
-
-func RequiredProxyEnvVars() []string {
-	return proxyRequiredEnvVars
 }

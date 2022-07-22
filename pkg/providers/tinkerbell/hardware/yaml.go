@@ -3,15 +3,11 @@ package hardware
 import (
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
-	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 )
-
-// DefaultHardwareManifestYAMLFilename is the default file for writing yinkerbell yaml manifests
-const DefaultHardwareManifestYAMLFilename = "hardware.yaml"
 
 // TinkerbellManifestYAML is a MachineWriter that writes Tinkerbell manifests to a destination.
 type TinkerbellManifestYAML struct {
@@ -74,17 +70,27 @@ func (yw *TinkerbellManifestYAML) write(data []byte) error {
 // and BaseboardManagement types.
 
 func marshalTinkerbellHardwareYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(tinkv1alpha1.Hardware{})
+	return yaml.Marshal(hardwareFromMachine(m))
 }
 
 func marshalTinkerbellBMCYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(
-		pbnjv1alpha1.BMC{},
-	)
+	return yaml.Marshal(baseboardManagementComputerFromMachine(m))
 }
 
 func marshalSecretYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(
-		corev1.Secret{},
-	)
+	return yaml.Marshal(baseboardManagementSecretFromMachine(m))
+}
+
+// CreateOrStdout will create path and return an *os.File if path is not empty. If path is empty
+// os.Stdout is returned.
+func CreateOrStdout(path string) (*os.File, error) {
+	if path != "" {
+		dir := filepath.Dir(path)
+		err := os.MkdirAll(dir, 0o755)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create hardware yaml file: %v", err)
+		}
+		return os.Create(path)
+	}
+	return os.Stdout, nil
 }
