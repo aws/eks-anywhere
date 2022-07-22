@@ -79,8 +79,7 @@ func installPackageController(ctx context.Context) error {
 		helmChart.Tag(),
 	)
 
-	err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig)
-	if err != nil {
+	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
 		return err
 	}
 
