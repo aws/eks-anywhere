@@ -384,7 +384,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 func (c *collectorFactory) APIServerCollector(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.generateRunPodsCollector(controlPlaneIP)...)
-	//collectors = append(collectors, c.pingLogCollectors()...)
+	// collectors = append(collectors, c.pingLogCollectors()...)
 	return collectors
 }
 

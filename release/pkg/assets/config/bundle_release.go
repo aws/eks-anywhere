@@ -805,7 +805,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tinkerbell-chart",
 		Images: []*assettypes.Image{
 			{
-				RepoName: "tinkerbell-chart",
+				RepoName:             "tinkerbell-chart",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					SourceLatestTagFromECR: true,
