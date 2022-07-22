@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
@@ -16,19 +16,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	c "github.com/aws/eks-anywhere/pkg/cluster"
+	eksacluster "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/cni"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
-const defaultRequeueTime = time.Minute
+const defaultRequeueTime = time.Second * 10
 
 // TODO move these constants
 const (
@@ -36,7 +35,6 @@ const (
 	controlSpecPlaneAppliedCondition      clusterv1.ConditionType = "ControlPlaneSpecApplied"
 	workerNodeSpecPlaneAppliedCondition   clusterv1.ConditionType = "WorkerNodeSpecApplied"
 	extraObjectsSpecPlaneAppliedCondition clusterv1.ConditionType = "ExtraObjectsSpecApplied"
-	cniSpecAppliedCondition               clusterv1.ConditionType = "CNISpecApplied"
 	controlPlaneReadyCondition            clusterv1.ConditionType = "ControlPlaneReady"
 )
 
@@ -65,8 +63,8 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 	}
 }
 
-func VsphereCredentials(ctx context.Context, cli client.Client) (*apiv1.Secret, error) {
-	secret := &apiv1.Secret{}
+func VsphereCredentials(ctx context.Context, cli client.Client) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
 	secretKey := client.ObjectKey{
 		Namespace: "eksa-system",
 		Name:      vsphere.CredentialsObjectName,
@@ -133,8 +131,20 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	v.Log.V(4).Info("Fetching cluster spec")
-	specWithBundles, err := c.BuildSpec(ctx, clientutil.NewKubeClient(v.Client), cluster)
+	v.Log.V(4).Info("Fetching bundle", "cluster name", cluster.Spec.ManagementCluster.Name)
+
+	bundlesCluster := cluster
+	if cluster.Spec.BundlesRef == nil {
+		managementCluster := &anywherev1.Cluster{}
+		managementClusterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ManagementCluster.Name}
+		if err := v.Client.Get(ctx, managementClusterName, managementCluster); err != nil {
+			return controller.Result{}, err
+		}
+
+		bundlesCluster = managementCluster
+	}
+
+	specWithBundles, err := eksacluster.BuildSpec(ctx, clientutil.NewKubeClient(v.Client), bundlesCluster)
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -210,55 +220,41 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		v.Log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
-		}}, err
+		}}, nil
 	}
 
 	if result, err := v.reconcileExtraObjects(ctx, cluster, capiCluster, specWithBundles); err != nil {
 		return result, err
 	}
 
-	if result, err := v.reconcileCNI(ctx, cluster, capiCluster, specWithBundles); err != nil {
+	if result, err := v.reconcileCNI(ctx, v.Log, cluster, capiCluster, specWithBundles); err != nil {
 		return result, err
 	}
 
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec) (controller.Result, error) {
-	if !conditions.Has(cluster, cniSpecAppliedCondition) || conditions.IsFalse(capiCluster, cniSpecAppliedCondition) {
-		v.Log.Info("Getting remote client", "client for cluster", capiCluster.Name)
-		key := client.ObjectKey{
-			Namespace: capiCluster.Namespace,
-			Name:      capiCluster.Name,
-		}
-		remoteClient, err := v.tracker.GetClient(ctx, key)
-		if err != nil {
-			return controller.Result{}, err
-		}
-
-		v.Log.Info("About to apply CNI")
-
-		helm := executables.NewHelm(executables.NewExecutable("helm"), executables.WithInsecure())
-		cilium := cilium.NewCilium(nil, helm)
-
-		if err != nil {
-			return controller.Result{}, err
-		}
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{constants.CapvSystemNamespace})
-		if err != nil {
-			return controller.Result{}, err
-		}
-		if err := serverside.ReconcileYaml(ctx, remoteClient, ciliumSpec); err != nil {
-			return controller.Result{}, err
-		}
-		conditions.MarkTrue(cluster, cniSpecAppliedCondition)
+func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
+	cniReconciler, err := cni.BuildCNIReconciler("cilium")
+	if err != nil {
+		return controller.Result{}, err
 	}
-	return controller.Result{}, nil
+
+	key := client.ObjectKey{
+		Namespace: capiCluster.Namespace,
+		Name:      capiCluster.Name,
+	}
+	remoteClient, err := v.tracker.GetClient(ctx, key)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return cniReconciler.Reconcile(ctx, log, cluster, remoteClient, specWithBundles)
 }
 
-func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec) (controller.Result, error) {
+func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *eksacluster.Spec) (controller.Result, error) {
 	if !conditions.IsTrue(capiCluster, extraObjectsSpecPlaneAppliedCondition) {
-		extraObjects := c.BuildExtraObjects(specWithBundles)
+		extraObjects := eksacluster.BuildExtraObjects(specWithBundles)
 
 		for _, spec := range extraObjects.Values() {
 			if err := serverside.ReconcileYaml(ctx, v.Client, spec); err != nil {
@@ -285,7 +281,7 @@ func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *
 
 func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(
 	ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder,
-	specWithBundles *c.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
+	specWithBundles *eksacluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
 ) (controller.Result, error) {
 	if !conditions.IsTrue(cluster, workerNodeSpecPlaneAppliedCondition) {
 		workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames)
@@ -302,7 +298,7 @@ func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *c.Spec, cpOpt func(values map[string]interface{})) (controller.Result, error) {
+func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *eksacluster.Spec, cpOpt func(values map[string]interface{})) (controller.Result, error) {
 	if !conditions.IsTrue(cluster, controlSpecPlaneAppliedCondition) {
 		v.Log.Info("Applying control plane spec", "name", cluster.Name)
 		controlPlaneSpec, err := templateBuilder.GenerateCAPISpecControlPlane(specWithBundles, cpOpt)

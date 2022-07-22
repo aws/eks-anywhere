@@ -147,3 +147,84 @@ func updatedCluster(cluster *clusterapiv1.Cluster, f func(*clusterapiv1.Cluster)
 	f(copy)
 	return copy
 }
+
+func TestDeleteYaml(t *testing.T) {
+	cluster1 := newCluster("cluster-1")
+	cluster2 := newCluster("cluster-2")
+	tests := []struct {
+		name        string
+		initialObjs []*clusterapiv1.Cluster
+		yaml        []byte
+	}{
+		{
+			name: "delete single object",
+			initialObjs: []*clusterapiv1.Cluster{
+				cluster1.DeepCopy(),
+			},
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: cluster-1
+  namespace: #namespace#
+spec:
+  controlPlaneEndpoint:
+    host: 1.1.1.1
+    port: 8080`),
+		},
+		{
+			name: "delete multiple objects",
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: cluster-1
+  namespace: #namespace#
+spec:
+  paused: true
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: cluster-2
+  namespace: #namespace#
+spec:
+  paused: true`),
+			initialObjs: []*clusterapiv1.Cluster{
+				cluster1.DeepCopy(),
+				cluster2.DeepCopy(),
+			},
+		},
+	}
+
+	c := env.Client()
+	reader := env.APIReader()
+	ctx := context.Background()
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ns := env.CreateNamespaceForTest(ctx, t)
+
+			for _, o := range tt.initialObjs {
+				o.SetNamespace(ns)
+
+				if err := c.Create(ctx, o); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			tt.yaml = []byte(strings.ReplaceAll(string(tt.yaml), "#namespace#", ns))
+
+			g.Expect(serverside.DeleteYaml(ctx, c, tt.yaml)).To(Succeed(), "Failed to delete with DeleteYaml()")
+
+			for _, o := range tt.initialObjs {
+				key := client.ObjectKey{
+					Namespace: ns,
+					Name:      o.GetName(),
+				}
+
+				cluster := &clusterapiv1.Cluster{}
+				g.Expect(reader.Get(ctx, key, cluster)).NotTo(Succeed(), "Object should have been deleted")
+			}
+		})
+	}
+}
