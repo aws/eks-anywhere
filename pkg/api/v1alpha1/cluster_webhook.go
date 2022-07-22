@@ -16,9 +16,13 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,19 +58,21 @@ var _ webhook.Validator = &Cluster{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
-		return nil
-	}
-	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
-	}
-	if r.IsSelfManaged() {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+	var allErrs []error
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, fmt.Errorf("cluster is not valid: %v ", err))
 	}
 
-	if err := validateCNIPlugin(r.Spec.ClusterNetwork); err != nil {
-		return apierrors.NewBadRequest(err.Error())
+	if !r.IsReconcilePaused() {
+		if r.IsSelfManaged() {
+			allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
+		} else if !features.IsActive(features.FullLifecycleAPI()) {
+			allErrs = append(allErrs, fmt.Errorf("creating new managed cluster on existing cluster is not supported"))
+		}
+	}
+
+	if len(allErrs) > 0 {
+		return BuildStatusError(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	return nil
@@ -218,4 +224,31 @@ func (r *Cluster) ValidateDelete() error {
 	clusterlog.Info("validate delete", "name", r.Name)
 
 	return nil
+}
+
+func BuildStatusError(qualifiedKind schema.GroupKind, name string, errs []error) *apierrors.StatusError {
+	causes := make([]metav1.StatusCause, 0, len(errs))
+	for _, err := range errs {
+		causes = append(causes, metav1.StatusCause{
+			Message: err.Error(),
+		})
+	}
+
+	err := &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status: metav1.StatusFailure,
+		Code:   http.StatusUnprocessableEntity,
+		Reason: metav1.StatusReasonInvalid,
+		Details: &metav1.StatusDetails{
+			Group:  qualifiedKind.Group,
+			Kind:   qualifiedKind.Kind,
+			Name:   name,
+			Causes: causes,
+		},
+	}}
+	aggregatedErrs := utilerrors.NewAggregate(errs)
+
+	if aggregatedErrs != nil {
+		err.ErrStatus.Message = fmt.Sprintf("%s %q is invalid: %v", qualifiedKind.String(), name, aggregatedErrs)
+	}
+	return err
 }
