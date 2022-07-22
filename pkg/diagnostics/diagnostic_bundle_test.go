@@ -90,6 +90,11 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: eksav1alpha1.ClusterSpec{
+				ControlPlaneConfiguration: eksav1alpha1.ControlPlaneConfiguration{
+					Endpoint: &eksav1alpha1.Endpoint{
+						Host: "195.16.99.76",
+					},
+				},
 				DatacenterRef: eksav1alpha1.Ref{
 					Kind: eksav1alpha1.VSphereDatacenterKind,
 					Name: "testRef",
@@ -124,6 +129,8 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		host := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+		c.EXPECT().APIServerCollector(host).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -145,6 +152,11 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: eksav1alpha1.ClusterSpec{
+				ControlPlaneConfiguration: eksav1alpha1.ControlPlaneConfiguration{
+					Endpoint: &eksav1alpha1.Endpoint{
+						Host: "195.16.99.76",
+					},
+				},
 				DatacenterRef: eksav1alpha1.Ref{
 					Kind: eksav1alpha1.VSphereDatacenterKind,
 					Name: "testRef",
@@ -181,6 +193,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().APIServerCollector(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -199,6 +212,11 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: eksav1alpha1.ClusterSpec{
+				ControlPlaneConfiguration: eksav1alpha1.ControlPlaneConfiguration{
+					Endpoint: &eksav1alpha1.Endpoint{
+						Host: "195.16.99.76",
+					},
+				},
 				DatacenterRef: eksav1alpha1.Ref{
 					Kind: eksav1alpha1.VSphereDatacenterKind,
 					Name: "testRef",
@@ -235,6 +253,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().APIServerCollector(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -276,6 +295,11 @@ func TestBundleFromSpecComplete(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: eksav1alpha1.ClusterSpec{
+				ControlPlaneConfiguration: eksav1alpha1.ControlPlaneConfiguration{
+					Endpoint: &eksav1alpha1.Endpoint{
+						Host: "195.16.99.76",
+					},
+				},
 				DatacenterRef: eksav1alpha1.Ref{
 					Kind: eksav1alpha1.VSphereDatacenterKind,
 					Name: "testRef",
@@ -313,6 +337,7 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
 		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
+		c.EXPECT().APIServerCollector(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)

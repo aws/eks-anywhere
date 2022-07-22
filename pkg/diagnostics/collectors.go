@@ -380,6 +380,56 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	}
 }
 
+// APIServerCollector collect connection info when running a pod on an existing cluster
+func (c *collectorFactory) APIServerCollector(controlPlaneIP string) []*Collect {
+	var collectors []*Collect
+	collectors = append(collectors, c.generateRunPodsCollector(controlPlaneIP)...)
+	// collectors = append(collectors, c.pingLogCollectors()...)
+	return collectors
+}
+
+func (c *collectorFactory) generateRunPodsCollector(controlPlaneIP string) []*Collect {
+	return c.runPodsCollectors(controlPlaneIP)
+}
+
+func (c *collectorFactory) runPodsCollectors(controlPlaneIP string) []*Collect {
+	tempIPRequest := "yum install -y nmap && for port in 6443 22; do nc -z -v -w5 " + controlPlaneIP + " $port; done"
+	argsIP := []string{tempIPRequest}
+	tempPingRequest := "yum install -y iputils && ping -c5 " + controlPlaneIP + "; echo exit code: $?"
+	argsPing := []string{tempPingRequest}
+
+	return []*Collect{
+		{
+			RunPod: &runPod{
+				Name:       "run-ip",
+				Namespaces: constants.DefaultNamespace,
+				PodSpec: &v1.PodSpec{
+					Containers: []v1.Container{{
+						Name:    "run-ip",
+						Image:   c.DiagnosticCollectorImage,
+						Command: []string{"/bin/sh", "-c"},
+						Args:    argsIP,
+					}},
+				},
+			},
+		},
+		{
+			RunPod: &runPod{
+				Name:       "run-ping",
+				Namespaces: constants.DefaultNamespace,
+				PodSpec: &v1.PodSpec{
+					Containers: []v1.Container{{
+						Name:    "run-ping",
+						Image:   c.DiagnosticCollectorImage,
+						Command: []string{"/bin/sh", "-c"},
+						Args:    argsPing,
+					}},
+				},
+			},
+		},
+	}
+}
+
 func logpath(namespace string) string {
 	return fmt.Sprintf("logs/%s", namespace)
 }
