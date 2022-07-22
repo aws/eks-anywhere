@@ -76,7 +76,7 @@ In addition, we have collaborated with our hardware original equipment manufactu
 | Bare metal servers  | IPMI  | NIC     | OS      |
 |---------------------|-------|---------|---------|
 | Dell PowerEdge R740 | iDRAC9 |  Mellanox ConnectX-4 LX 25GbE  | Validated with Ubuntu v20.04.1 |
-| Dell PowerEdge R640 (PowerFlex)  | iDRAC9 | Mellanox ConnectX-4 LX 25GbE | Validated with Ubuntu v20.04.1 |
+| Dell PowerFlex (R640) | iDRAC9 | Mellanox ConnectX-4 LX 25GbE | Validated with Ubuntu v20.04.1 |
 | SuperServer SYS-510P-M | IPMI2.0/Redfish API | Intel® Ethernet Controller i350 2x 1GbE | Validated with Ubuntu v20.04.1 and Bottlerocket v1.8.0 |
 | Dell PowerEdge R240 | iDRAC9 | Broadcom 57414 Dual Port 10/25GbE | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
 | HPE ProLiant DL20 | iLO5 | HPE 361i 1G | Validated with Ubuntu v20.04 and Bottlerocket v1.8.0 |
