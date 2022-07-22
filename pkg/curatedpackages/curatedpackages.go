@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -24,8 +26,13 @@ const (
 (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
 the AWS Service Terms are extended to provide customers access to these features free of charge.
 These features will be subject to a service charge and fee structure at ”General Availability“ of the features.`
+	certManagerDoesNotExistMsg = `Curated packages cannot be installed as cert-manager is not present in the cluster. This is most likely caused
+by an action to install Curated packages at a workload cluster. Refer to
+https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.`
 	width = 112
 )
+
+var userMsgSeparator = strings.Repeat("-", width)
 
 func CreateBundleManager(kubeVersion string) bundle.Manager {
 	major, minor, err := parseKubeVersion(kubeVersion)
@@ -70,9 +77,41 @@ func PrintLicense() {
 	//the AWS Service Terms are extended to provide customers access to these features free of charge.
 	//These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
 	//----------------------------------------------------------------------------------------------------------------
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
 	fmt.Println(license)
-	fmt.Println(strings.Repeat("-", width))
+	fmt.Println(userMsgSeparator)
+}
+
+func PrintCertManagerDoesNotExistMsg() {
+	// Currently, use the width of the longest line to repeat the dashes
+	// Sample Output
+	//----------------------------------------------------------------------------------------------------------------
+	//Curated packages cannot be installed as cert-manager is not present in the cluster. This is most likely caused
+	//by an action to install Curated packages at a workload cluster. Refer to
+	//https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.
+	//----------------------------------------------------------------------------------------------------------------
+	fmt.Println(userMsgSeparator)
+	fmt.Println(certManagerDoesNotExistMsg)
+	fmt.Println(userMsgSeparator)
+}
+
+func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeConfig string) error {
+	// Note although we passed in a namespace parameter in the kubectl command, the GetResource command will be
+	// performed in all namespaces since CRDs are not bounded by namespaces.
+	certManagerExists, err := kubectl.GetResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig,
+		constants.CertManagerNamespace)
+	if err != nil {
+		return err
+	}
+
+	// If cert-manager does not exist, instruct users to follow instructions in
+	// PrintCertManagerDoesNotExistMsg to install packages manually.
+	if !certManagerExists {
+		PrintCertManagerDoesNotExistMsg()
+		return errors.New("cert-manager is not present in the cluster")
+	}
+
+	return nil
 }
 
 func Pull(ctx context.Context, art string) ([]byte, error) {

@@ -22,6 +22,7 @@ type Installer struct {
 	spec              *cluster.Spec
 	packageClient     PackageHandler
 	packagesLocation  string
+	kubectl           KubectlRunner
 }
 
 func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.Spec, packagesLocation string) *Installer {
@@ -36,6 +37,7 @@ func NewInstaller(installer ChartInstaller, runner KubectlRunner, spec *cluster.
 		packagesLocation:  packagesLocation,
 		packageController: pcc,
 		packageClient:     pc,
+		kubectl:           runner,
 	}
 }
 
@@ -49,7 +51,15 @@ func newPackageController(installer ChartInstaller, runner KubectlRunner, spec *
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
-	err := pi.installPackagesController(ctx)
+
+	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
+
+	err := VerifyCertManagerExists(ctx, pi.kubectl, kubeConfig)
+	if err != nil {
+		return err
+	}
+
+	err = pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return err
