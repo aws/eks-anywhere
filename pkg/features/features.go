@@ -7,6 +7,7 @@ const (
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
+	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
 	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 )
@@ -61,6 +62,13 @@ func CuratedPackagesSupport() Feature {
 	return Feature{
 		Name:     "Curated Packages Support",
 		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+	}
+}
+
+func NutanixProvider() Feature {
+	return Feature{
+		Name:     "Nutanix provider support",
+		IsActive: globalFeatures.isActiveForEnvVar(NutanixProviderEnvVar),
 	}
 }
 

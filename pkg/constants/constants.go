@@ -14,6 +14,7 @@ const (
 	CaptSystemNamespace                     = "capt-system"
 	CapaSystemNamespace                     = "capa-system"
 	CapasSystemNamespace                    = "capas-system"
+	CapxSystemNamespace                     = "capx-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"
 	EtcdAdmBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"
@@ -33,6 +34,7 @@ const (
 	SnowProviderName       = "snow"
 	TinkerbellProviderName = "tinkerbell"
 	CloudStackProviderName = "cloudstack"
+	NutanixProviderName    = "nutanix"
 
 	VSphereCredentialsName = "vsphere-credentials"
 	EksaLicenseName        = "eksa-license"
