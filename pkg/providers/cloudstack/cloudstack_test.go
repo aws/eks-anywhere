@@ -54,10 +54,10 @@ var expectedSecret = &v1.Secret{
 		Name:      "global",
 	},
 	Data: map[string][]byte{
-		"uri":       []byte("http://127.16.0.1:8080/client/api"),
-		"apikey":    []byte("test-key1"),
-		"secretkey": []byte("test-secret1"),
-		"verifyssl": []byte("false"),
+		"api-url":    []byte("http://127.16.0.1:8080/client/api"),
+		"api-key":    []byte("test-key1"),
+		"secret-key": []byte("test-secret1"),
+		"verify-ssl": []byte("false"),
 	},
 }
 
@@ -401,7 +401,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnSecretChanged(t *testing
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	modifiedSecret := expectedSecret.DeepCopy()
-	modifiedSecret.Data["apikey"] = []byte("updated-api-key")
+	modifiedSecret.Data["api-key"] = []byte("updated-api-key")
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetSecretFromNamespace(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(modifiedSecret, nil)
 

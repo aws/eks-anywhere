@@ -444,10 +444,10 @@ func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, clust
 }
 
 func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
-	return string(secret.Data["uri"]) != profile.ManagementUrl ||
-		string(secret.Data["apikey"]) != profile.ApiKey ||
-		string(secret.Data["secretkey"]) != profile.SecretKey ||
-		string(secret.Data["verifyssl"]) != profile.VerifySsl
+	return string(secret.Data["api-url"]) != profile.ManagementUrl ||
+		string(secret.Data["api-key"]) != profile.ApiKey ||
+		string(secret.Data["secret-key"]) != profile.SecretKey ||
+		string(secret.Data["verify-ssl"]) != profile.VerifySsl
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
