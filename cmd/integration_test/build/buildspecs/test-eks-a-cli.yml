@@ -162,6 +162,11 @@ phases:
         ./bin/test e2e cleanup vsphere
         -n ${NODE_PREFIX}
         -v 4
+      - >
+        ./cmd/test e2e cleanup aws
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -t EKSA-E2E
+        -v 4
 reports:
   e2e-reports:
     files:
