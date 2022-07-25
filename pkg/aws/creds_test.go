@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	credentialsFile = "testdata/valid_credentials"
+	credentialsFile  = "testdata/valid_credentials"
+	certificatesFile = "testdata/valid_certificates"
 )
 
 func setupContext(t *testing.T, key, val string) {
@@ -50,14 +51,14 @@ func TestAwsCredentialsFileNotExists(t *testing.T) {
 
 func TestAwsCABundlesFile(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, aws.EksaAwsCABundlesFileKey, "testdata/valid_certificates")
+	setupContext(t, aws.EksaAwsCABundlesFileKey, certificatesFile)
 	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To(Succeed())
 }
 
 func TestAwsCABundlesFileEnvNotSet(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, aws.EksaAwsCABundlesFileKey, "testdata/valid_certificates")
+	setupContext(t, aws.EksaAwsCABundlesFileKey, certificatesFile)
 	os.Unsetenv(aws.EksaAwsCABundlesFileKey)
 	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("env 'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty"))))

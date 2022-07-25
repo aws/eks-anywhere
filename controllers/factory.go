@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
@@ -33,6 +34,7 @@ type Factory struct {
 type Reconcilers struct {
 	ClusterReconciler           *ClusterReconciler
 	VSphereDatacenterReconciler *VSphereDatacenterReconciler
+	SnowMachineConfigReconciler *SnowMachineConfigReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -100,6 +102,22 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 			f.deps.VSphereDefaulter,
 		)
 
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.SnowMachineConfigReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
+			f.manager.GetClient(),
+			f.logger,
+			aws.NewSnowAwsClientBuilder(),
+		)
 		return nil
 	})
 	return f

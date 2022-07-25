@@ -82,6 +82,7 @@ type Dependencies struct {
 	BundleRegistry            curatedpackages.BundleRegistry
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	SnowValidator             *snow.Validator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -483,30 +484,12 @@ func (f *Factory) WithAwsSnow() *Factory {
 		if f.dependencies.SnowAwsClient != nil {
 			return nil
 		}
-		credsFile, err := aws.AwsCredentialsFile()
+
+		builder := aws.NewSnowAwsClientBuilder()
+		deviceClientMap, err := builder.BuildSnowAwsClientMap(ctx)
 		if err != nil {
-			return fmt.Errorf("fetching aws credentials from env: %v", err)
+			return err
 		}
-		certsFile, err := aws.AwsCABundlesFile()
-		if err != nil {
-			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
-		}
-
-		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
-		if err != nil {
-			return fmt.Errorf("getting device ips from aws credentials: %v", err)
-		}
-
-		deviceClientMap := make(aws.Clients, len(deviceIps))
-
-		for _, ip := range deviceIps {
-			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
-			if err != nil {
-				return fmt.Errorf("setting up aws client: %v", err)
-			}
-			deviceClientMap[ip] = aws.NewClient(ctx, config)
-		}
-
 		f.dependencies.SnowAwsClient = deviceClientMap
 
 		return nil
