@@ -166,10 +166,8 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return err
 	}
 
-	datacenter := clusterSpec.CloudStackDatacenter
-
 	oSpec := prevDatacenter.Spec
-	nSpec := datacenter.Spec
+	nSpec := clusterSpec.CloudStackDatacenter.Spec
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
@@ -523,7 +521,7 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, 
 	return nil
 }
 
-func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -536,7 +534,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCs
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc)
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
@@ -557,14 +555,14 @@ func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupC
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
-func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc)
 }
 
 func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, csdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
@@ -643,7 +641,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
-	values := buildTemplateMapCP(clusterSpec, clusterSpec.CloudStackDatacenter.Spec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
+	values := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -660,7 +658,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, clusterSpec.CloudStackDatacenter.Spec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values := buildTemplateMapMD(clusterSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -674,7 +672,8 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -768,7 +767,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec, clusterSpec.CloudStackDatacenter.Spec)
+		fillProxyConfigurations(values, clusterSpec)
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -788,7 +787,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	return values
 }
 
-func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec) {
+func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec) {
+	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	values["proxyConfig"] = true
 	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
 		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
@@ -813,7 +813,7 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 	values["noProxy"] = noProxyList
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -859,7 +859,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec, datacenterConfigSpec)
+		fillProxyConfigurations(values, clusterSpec)
 	}
 
 	return values
@@ -905,7 +905,7 @@ func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, csdc, newClusterSpec.CloudStackDatacenter, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, oldCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -968,7 +968,7 @@ func (p *cloudstackProvider) getEtcdTemplateNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewEtcdTemplate := needsNewEtcdTemplate(currentSpec, newClusterSpec, csdc, newClusterSpec.CloudStackDatacenter, etcdMachineVmc, etcdMachineConfig)
+	needsNewEtcdTemplate := needsNewEtcdTemplate(currentSpec, newClusterSpec, etcdMachineVmc, etcdMachineConfig)
 	if !needsNewEtcdTemplate {
 		etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
