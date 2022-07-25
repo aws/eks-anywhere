@@ -161,6 +161,9 @@ func WithNutanixSubnetName(value string) NutanixFiller {
 
 func WithNutanixPrismElementClusterName(value string) NutanixFiller {
 	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.Cluster = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
+		}
 	}
 }
 
