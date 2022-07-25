@@ -1,4 +1,4 @@
-package addonclients_test
+package flux_test
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -113,7 +113,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
-	g.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 	g.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
 	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
@@ -137,7 +137,7 @@ func TestFluxUpgradeError(t *testing.T) {
 	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
 
 	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
-	g.flux.EXPECT().BootstrapToolkitsComponentsGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
+	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
 	_, err := g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
@@ -176,7 +176,7 @@ func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
 
 func TestInstallSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
-	c := addonclients.NewFluxAddonClient(nil, nil, nil)
+	c := flux.NewFlux(nil, nil, nil)
 	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
 	tt.Expect(c.Install(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }

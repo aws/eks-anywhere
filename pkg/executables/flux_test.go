@@ -158,8 +158,8 @@ func TestFluxInstallGithubToolkitsSuccess(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.BootstrapToolkitsComponentsGithub(ctx, tt.cluster, tt.fluxConfig); err != nil {
-				t.Errorf("flux.BootstrapToolkitsComponentsGithub() error = %v, want nil", err)
+			if err := f.BootstrapGithub(ctx, tt.cluster, tt.fluxConfig); err != nil {
+				t.Errorf("flux.BootstrapGithub() error = %v, want nil", err)
 			}
 		})
 	}
@@ -221,8 +221,8 @@ func TestFluxUninstallGitOpsToolkitsComponents(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.UninstallToolkitsComponents(ctx, tt.cluster, tt.fluxConfig); err != nil {
-				t.Errorf("flux.UninstallToolkitsComponents() error = %v, want nil", err)
+			if err := f.Uninstall(ctx, tt.cluster, tt.fluxConfig); err != nil {
+				t.Errorf("flux.Uninstall() error = %v, want nil", err)
 			}
 		})
 	}
@@ -294,8 +294,8 @@ func TestFluxPauseKustomization(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.PauseKustomization(ctx, tt.cluster, tt.fluxConfig); err != nil {
-				t.Errorf("flux.PauseKustomization() error = %v, want nil", err)
+			if err := f.SuspendKustomization(ctx, tt.cluster, tt.fluxConfig); err != nil {
+				t.Errorf("flux.SuspendKustomization() error = %v, want nil", err)
 			}
 		})
 	}
@@ -575,8 +575,8 @@ func TestFluxInstallGitToolkitsSuccess(t *testing.T) {
 			).Return(bytes.Buffer{}, nil)
 
 			f := executables.NewFlux(executable)
-			if err := f.BootstrapToolkitsComponentsGit(ctx, tt.cluster, tt.fluxConfig, tt.cliConfig); err != nil {
-				t.Errorf("flux.BootstrapToolkitsComponentsGit() error = %v, want nil", err)
+			if err := f.BootstrapGit(ctx, tt.cluster, tt.fluxConfig, tt.cliConfig); err != nil {
+				t.Errorf("flux.BootstrapGit() error = %v, want nil", err)
 			}
 		})
 	}

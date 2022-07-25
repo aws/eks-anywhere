@@ -29,10 +29,10 @@ func NewFlux(executable Executable) *Flux {
 	}
 }
 
-// BootstrapToolkitsComponentsGithub creates the GitHub repository if it doesn’t exist, and commits the toolkit
+// BootstrapGithub creates the GitHub repository if it doesn’t exist, and commits the toolkit
 // components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
 // If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+func (f *Flux) BootstrapGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
@@ -64,10 +64,10 @@ func (f *Flux) BootstrapToolkitsComponentsGithub(ctx context.Context, cluster *t
 	return err
 }
 
-// BootstrapToolkitsComponentsGit commits the toolkit components manifests to the branch of a Git repository.
+// BootstrapGit commits the toolkit components manifests to the branch of a Git repository.
 // It then configures the target cluster to synchronize with the repository. If the toolkit components are present on the cluster, the
 // bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponentsGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error {
+func (f *Flux) BootstrapGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
@@ -112,7 +112,7 @@ func setUpCommonParamsBootstrap(cluster *types.Cluster, fluxConfig *v1alpha1.Flu
 	return params
 }
 
-func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+func (f *Flux) Uninstall(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
 	c := fluxConfig.Spec
 	params := []string{
 		"uninstall",
@@ -132,7 +132,7 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 	return err
 }
 
-func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+func (f *Flux) SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
 	c := fluxConfig.Spec
 	if c.SystemNamespace == "" {
 		return fmt.Errorf("executing flux suspend kustomization: namespace empty")
