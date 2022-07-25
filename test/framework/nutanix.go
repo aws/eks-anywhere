@@ -94,6 +94,10 @@ func (s *Nutanix) Name() string {
 
 func (s *Nutanix) Setup() {}
 
+func (s *Nutanix) CleanupVMs(_ string) error {
+	return nil
+}
+
 func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 	return s.customizeProviderConfig(file, s.fillers...)
 }
