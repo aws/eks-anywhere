@@ -103,6 +103,11 @@ func (p *nutanixProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *nutanixProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	// TODO: figure out if we need something else here
+	return nil
+}
+
 func (p *nutanixProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -148,7 +153,7 @@ func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context, clu
 	return nil
 }
 
-func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
 	// TODO: Add validations when this is supported
 	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -268,7 +273,7 @@ func (p *nutanixProvider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *nutanixProvider) GenerateMHC() ([]byte, error) {
+func (p *nutanixProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
