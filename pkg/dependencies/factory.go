@@ -7,12 +7,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	"github.com/aws/eks-anywhere/pkg/clients/flux"
+	"github.com/aws/eks-anywhere/pkg/clients/fluxclient"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -26,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -65,7 +65,7 @@ type Dependencies struct {
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
-	FluxAddonClient           *addonclients.FluxAddonClient
+	FluxAddonClient           *flux.Flux
 	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
@@ -828,8 +828,8 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 			return nil
 		}
 
-		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
-			&flux.FluxKubectl{
+		f.dependencies.FluxAddonClient = flux.NewFlux(
+			&fluxclient.FluxKubectl{
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,
 			},

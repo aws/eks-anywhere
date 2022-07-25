@@ -1,4 +1,4 @@
-package addonclients_test
+package flux_test
 
 import (
 	"context"
@@ -13,14 +13,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
-	addonClientMocks "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients/mocks"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitFactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	gitMocks "github.com/aws/eks-anywhere/pkg/git/mocks"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	fluxMocks "github.com/aws/eks-anywhere/pkg/gitops/flux/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -89,7 +89,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			g.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+			g.flux.EXPECT().BootstrapGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			g.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
@@ -158,7 +158,7 @@ func TestInstallGitOpsOnManagementClusterWithoutClusterSpec(t *testing.T) {
 			g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			g.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+			g.flux.EXPECT().BootstrapGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			g.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
@@ -197,7 +197,7 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	g := newAddonClient(t)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
-	g.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+	g.flux.EXPECT().BootstrapGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 	g.gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
@@ -283,7 +283,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			g.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+			g.flux.EXPECT().BootstrapGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			n := clusterSpec.FluxConfig.Spec.Github.Repository
 			o := clusterSpec.FluxConfig.Spec.Github.Owner
@@ -368,7 +368,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			g := newAddonClient(t)
 			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
-			g.flux.EXPECT().BootstrapToolkitsComponentsGithub(ctx, cluster, clusterSpec.FluxConfig)
+			g.flux.EXPECT().BootstrapGithub(ctx, cluster, clusterSpec.FluxConfig)
 
 			g.gitProvider.EXPECT().GetRepo(ctx).MaxTimes(2).Return(&git.Repository{Name: clusterSpec.FluxConfig.Spec.Github.Repository}, nil)
 
@@ -409,7 +409,7 @@ func TestFluxAddonClientPauseKustomization(t *testing.T) {
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	g := newAddonClient(t)
 
-	g.flux.EXPECT().PauseKustomization(ctx, cluster, clusterSpec.FluxConfig)
+	g.flux.EXPECT().SuspendKustomization(ctx, cluster, clusterSpec.FluxConfig)
 
 	err := g.fluxAddonClient.PauseGitOpsKustomization(ctx, cluster, clusterSpec)
 	if err != nil {
@@ -464,7 +464,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	flux := addonClientMocks.NewMockFlux(mockCtrl)
+	mocks := fluxMocks.NewMockFlux(mockCtrl)
 
 	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
 
@@ -483,7 +483,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, fGitOptions, nil)
+	f := flux.NewFlux(mocks, fGitOptions, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -595,7 +595,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecSkip(t *testing.T) {
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	f := addonclients.NewFluxAddonClient(nil, nil, nil)
+	f := flux.NewFlux(nil, nil, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
 	machineConfig := machineConfig(clusterName)
@@ -645,7 +645,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
+	f := flux.NewFlux(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -679,7 +679,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(nil, fGitOptions, nil)
+	f := flux.NewFlux(nil, fGitOptions, nil)
 
 	err := f.CleanupGitRepo(ctx, clusterSpec)
 	if err != nil {
@@ -705,7 +705,7 @@ func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 func TestFluxAddonClientValidationsSkipFLux(t *testing.T) {
 	tt := newTest(t)
 	tt.gitOptions = nil
-	tt.f = addonclients.NewFluxAddonClient(tt.flux, tt.gitOptions, nil)
+	tt.f = flux.NewFlux(tt.flux, tt.gitOptions, nil)
 
 	tt.Expect(tt.f.Validations(tt.ctx, tt.clusterSpec)).To(BeEmpty())
 }
@@ -746,8 +746,8 @@ func runValidations(validations []validations.Validation) error {
 type fluxTest struct {
 	*WithT
 	*testing.T
-	f           *addonclients.FluxAddonClient
-	flux        *addonClientMocks.MockFlux
+	f           *flux.Flux
+	flux        *fluxMocks.MockFlux
 	gitClient   *gitMocks.MockClient
 	gitProvider *gitMocks.MockProviderClient
 	clusterSpec *c.Spec
@@ -759,14 +759,14 @@ func newTest(t *testing.T) *fluxTest {
 	ctrl := gomock.NewController(t)
 	gitProvider := gitMocks.NewMockProviderClient(ctrl)
 	gitClient := gitMocks.NewMockClient(ctrl)
-	flux := addonClientMocks.NewMockFlux(ctrl)
+	mocks := fluxMocks.NewMockFlux(ctrl)
 	_, w := test.NewWriter(t)
 	gitOptions := &gitFactory.GitTools{
 		Provider: gitProvider,
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, gitOptions, nil)
+	f := flux.NewFlux(mocks, gitOptions, nil)
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
 		s.Cluster = clusterConfig
@@ -774,7 +774,7 @@ func newTest(t *testing.T) *fluxTest {
 	return &fluxTest{
 		T:           t,
 		f:           f,
-		flux:        flux,
+		flux:        mocks,
 		gitProvider: gitProvider,
 		gitClient:   gitClient,
 		clusterSpec: clusterSpec,
@@ -891,16 +891,16 @@ func fluxBundle() releasev1alpha1.FluxBundle {
 
 type addonTest struct {
 	*WithT
-	flux            *addonClientMocks.MockFlux
+	flux            *fluxMocks.MockFlux
 	gitProvider     *gitMocks.MockProviderClient
 	gitClient       *gitMocks.MockClient
 	gitTools        *gitFactory.GitTools
-	fluxAddonClient *addonclients.FluxAddonClient
+	fluxAddonClient *flux.Flux
 }
 
 func newAddonClient(t *testing.T) addonTest {
 	mockCtrl := gomock.NewController(t)
-	flux := addonClientMocks.NewMockFlux(mockCtrl)
+	mocks := fluxMocks.NewMockFlux(mockCtrl)
 	gitProvider := gitMocks.NewMockProviderClient(mockCtrl)
 	gitClient := gitMocks.NewMockClient(mockCtrl)
 	_, w := test.NewWriter(t)
@@ -909,14 +909,14 @@ func newAddonClient(t *testing.T) addonTest {
 		Client:   gitClient,
 		Writer:   w,
 	}
-	f := addonclients.NewFluxAddonClient(flux, gitTools, nil)
+	f := flux.NewFlux(mocks, gitTools, nil)
 	retrier := retrier.NewWithMaxRetries(2, 1)
 	f.SetRetier(retrier)
 
 	return addonTest{
 		WithT:           NewWithT(t),
 		fluxAddonClient: f,
-		flux:            flux,
+		flux:            mocks,
 		gitProvider:     gitProvider,
 		gitClient:       gitClient,
 		gitTools:        gitTools,
