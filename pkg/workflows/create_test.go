@@ -86,7 +86,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 	}
 
 	gomock.InOrder(
-		c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil),
+		c.provider.EXPECT().BootstrapClusterOpts(gomock.Any()).Return(opts, nil),
 		// Checking for not nil because in go you can't compare closures
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
 			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),

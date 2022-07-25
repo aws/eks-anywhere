@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -278,23 +277,13 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
-func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	env := map[string]string{}
-	if p.clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxyAddresses := []string{}
-		if p.datacenterConfig.Spec.ManagementApiEndpoint != "" {
-			noProxyAddresses = append(noProxyAddresses, p.datacenterConfig.Spec.ManagementApiEndpoint)
-		}
-		for _, az := range p.datacenterConfig.Spec.AvailabilityZones {
-			noProxyAddresses = append(noProxyAddresses, az.ManagementApiEndpoint)
-		}
-		noProxyAddresses = append(noProxyAddresses, p.clusterConfig.Spec.ProxyConfiguration.NoProxy...)
-
-		env["HTTP_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpProxy
-		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
-		env["NO_PROXY"] = strings.Join(noProxyAddresses, ",")
+func (p *cloudstackProvider) BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	endpoints := []string{}
+	for _, az := range clusterSpec.CloudStackDatacenter.Spec.AvailabilityZones {
+		endpoints = append(endpoints, az.ManagementApiEndpoint)
 	}
-	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
+
+	return common.BootstrapClusterOpts(p.clusterConfig, endpoints...)
 }
 
 func (p *cloudstackProvider) Name() string {

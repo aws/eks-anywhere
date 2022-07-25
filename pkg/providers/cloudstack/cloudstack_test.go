@@ -557,8 +557,9 @@ func TestBootstrapClusterOpts(t *testing.T) {
 	clusterSpecManifest := "cluster_minimal_proxy.yaml"
 	provider := givenProvider(t)
 	provider.clusterConfig = givenClusterConfig(t, clusterSpecManifest)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	bootstrapClusterOps, err := provider.BootstrapClusterOpts()
+	bootstrapClusterOps, err := provider.BootstrapClusterOpts(clusterSpec)
 	if err != nil {
 		t.Fatalf("failed BootstrapClusterOpts: %v", err)
 	}

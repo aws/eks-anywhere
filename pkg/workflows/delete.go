@@ -97,7 +97,7 @@ func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.
 		return &deleteWorkloadCluster{}
 	}
 	logger.Info("Creating management cluster")
-	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
+	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts(commandContext.ClusterSpec)
 	if err != nil {
 		logger.Error(err, "Error getting management options from provider")
 		commandContext.SetError(err)

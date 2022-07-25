@@ -160,7 +160,7 @@ func (p *SnowProvider) PostWorkloadInit(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (p *SnowProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *SnowProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return nil, nil
 }
 
