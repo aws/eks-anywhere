@@ -293,13 +293,13 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig).AnyTimes(),
 	)
 }
 
 func (c *upgradeTestSetup) expectMachineConfigs() {
 	gomock.InOrder(
-		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs).AnyTimes(),
 	)
 }
 
@@ -401,7 +401,11 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecNoChanges()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
+	test.expectUpdateGitEksaSpec()
+	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsKustomization(test.workloadCluster)
 	test.expectCreateBootstrapNotToBeCalled()
 

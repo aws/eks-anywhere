@@ -39,7 +39,4 @@ const (
 
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
-
-	ControlPlaneTemplatePrefix = "-control-plane-template-"
-	EtcdTemplatePrefix         = "-etcd-template-"
 )
