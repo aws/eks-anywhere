@@ -28,10 +28,5 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 		}
 	}
 
-	ipPool := e.ipPool.ToString()
-	if ipPool != "" {
-		e.testEnvVars[e2etests.VsphereClusterIPPoolEnvVar] = ipPool
-	}
-
 	return nil
 }

@@ -57,21 +57,19 @@ The following env variables need to be set:
 
 ```sh
 T_TINKERBELL_IP
-T_TINKERBELL_CERT_URL=http://${T_TINKERBELL_IP}:42114/cert
-T_TINKERBELL_HEGEL_URL=http://${T_TINKERBELL_IP}:50061
-T_TINKERBELL_GRPC_AUTHORITY=${T_TINKERBELL_IP}:42113
-T_TINKERBELL_PBNJ_GRPC_AUTHORITY=${T_TINKERBELL_IP}:50051
 T_TINKERBELL_IMAGE_UBUNTU_1_20
 T_TINKERBELL_IMAGE_UBUNTU_1_21
-T_TINKERBELL_NETWORK_CIDR
+T_TINKERBELL_IMAGE_UBUNTU_1_22
+T_TINKERBELL_IMAGE_UBUNTU_1_23
+T_TINKERBELL_CP_NETWORK_CIDR
 T_TINKERBELL_INVENTORY_CSV # path to hardware-inventory.csv file
 T_TINKERBELL_SSH_AUTHORIZED_KEY # ssh public key for connectioning to machines
 ```
 ## Tinkerbell hardware-inventory.csv example
 ```csv
-guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password
-bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password
-cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password
+guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password,labels,disk
+bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password,type=cp,/dev/sda
+cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password,type=worker,/dev/sda
 ```
 
 # CloudStack tests requisites

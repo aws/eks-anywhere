@@ -35,7 +35,6 @@ const (
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
 	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
-	VsphereClusterIPPoolEnvVar  = "T_VSPHERE_CLUSTER_IP_POOL"
 	cidrVar                     = "T_VSPHERE_CIDR"
 	privateNetworkCidrVar       = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
 	govcUrlVar                  = "VSPHERE_SERVER"
@@ -297,21 +296,10 @@ func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *Wo
 }
 
 func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
-	value, ok := os.LookupEnv(VsphereClusterIPPoolEnvVar)
-	var clusterIP string
-	var err error
-	if ok && value != "" {
-		clusterIP, err = PopIPFromEnv(VsphereClusterIPPoolEnvVar)
-		if err != nil {
-			v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
-		}
-	} else {
-		clusterIP, err = GenerateUniqueIp(v.cidr)
-		if err != nil {
-			v.t.Fatalf("failed to generate ip for vsphere cidr %s: %v", v.cidr, err)
-		}
+	clusterIP, err := GetIP(v.cidr, ClusterIPPoolEnvVar)
+	if err != nil {
+		v.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 	}
-
 	v.clusterFillers = append(v.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 	return v.clusterFillers
 }
