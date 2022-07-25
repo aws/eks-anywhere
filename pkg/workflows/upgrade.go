@@ -361,7 +361,7 @@ func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &upgradeWorkloadClusterTask{}
 	}
 	logger.Info("Creating bootstrap cluster")
-	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
+	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts(commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

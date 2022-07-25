@@ -61,7 +61,7 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 	}
 
 	gomock.InOrder(
-		c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil),
+		c.provider.EXPECT().BootstrapClusterOpts(c.clusterSpec).Return(opts, nil),
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
@@ -76,7 +76,7 @@ func (c *deleteTestSetup) expectNotToCreateBootstrap() {
 		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
 	}
 
-	c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil).Times(0)
+	c.provider.EXPECT().BootstrapClusterOpts(c.clusterSpec).Return(opts, nil).Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(
 		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 	).Return(c.bootstrapCluster, nil).Times(0)
