@@ -31,6 +31,7 @@ Skip the following installation steps if the returned result is not empty.
 
 1. Install the package controller
     ```bash
+    export CURATED_PACKAGES_SUPPORT=true
     eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
     ```
 
