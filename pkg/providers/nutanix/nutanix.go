@@ -206,7 +206,7 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clu
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *ntb.etcdMachineSpec
 	}
-	values := buildTemplateMapCP(clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
+	values := buildTemplateMapCP(ntb.datacenterSpec, clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -403,7 +403,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec, etcdMachineSpec v1alpha1.NutanixMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(datacenterSpec *v1alpha1.NutanixDatacenterConfigSpec, clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec, etcdMachineSpec v1alpha1.NutanixMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -426,6 +426,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
+		"nutanixEndpoint":              datacenterSpec.NutanixEndpoint,
+		"nutanixPort":                  datacenterSpec.NutanixPort,
+		"nutanixInsecure":              datacenterSpec.NutanixInsecure,
+		"nutanixUser":                  datacenterSpec.NutanixUser,
+		"nutanixPassword":              datacenterSpec.NutanixPassword,
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {

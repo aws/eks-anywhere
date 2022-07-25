@@ -4,10 +4,25 @@ metadata:
   name: "{{.clusterName}}"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
+  prismCentral:
+    address: "{{.nutanixEndpoint}}"
+    port: {{.nutanixPort}}
+    insecure: true
+    credentialRef:
+      name: "{{.clusterName}}"
+      kind: Secret
   controlPlaneEndpoint:
     host: "{{.controlPlaneEndpointIp}}"
     port: 6443
-
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: "{{.clusterName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+stringData:
+  NUTANIX_PASSWORD: "{{.nutanixPassword}}"
+  NUTANIX_USER: "{{.nutanixUser}}"
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster

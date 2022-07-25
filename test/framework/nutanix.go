@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -23,6 +24,10 @@ const (
 	nutanixPrismElementClusterName  = "T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME"
 	nutanixSSHAuthorizedKey         = "T_NUTANIX_SSH_AUTHORIZED_KEY"
 	nutanixSubnetName               = "T_NUTANIX_SUBNET_NAME"
+
+	nutanixControlPlaneEndpointIP = "T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP"
+	nutanixPodCidrVar             = "T_NUTANIX_POD_CIDR"
+	nutanixServiceCidrVar         = "T_NUTANIX_SERVICE_CIDR"
 )
 
 var requiredNutanixEnvVars = []string{
@@ -42,14 +47,19 @@ var requiredNutanixEnvVars = []string{
 	nutanixPrismElementClusterName,
 	nutanixSSHAuthorizedKey,
 	nutanixSubnetName,
+
+	nutanixControlPlaneEndpointIP,
+	nutanixPodCidrVar,
+	nutanixServiceCidrVar,
 }
 
 type Nutanix struct {
-	t              *testing.T
-	fillers        []api.NutanixFiller
-	clusterFillers []api.ClusterFiller
-	cpCidr         string
-	podCidr        string
+	t                      *testing.T
+	fillers                []api.NutanixFiller
+	clusterFillers         []api.ClusterFiller
+	controlPlaneEndpointIP string
+	podCidr                string
+	serviceCidr            string
 }
 
 type NutanixOpt func(*Nutanix)
@@ -78,8 +88,9 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 		},
 	}
 
-	// s.cpCidr = os.Getenv(nutanixControlPlaneCidr)
-	// s.podCidr = os.Getenv(nutanixPodCidr)
+	nutanixProvider.controlPlaneEndpointIP = os.Getenv(nutanixControlPlaneEndpointIP)
+	nutanixProvider.podCidr = os.Getenv(nutanixPodCidrVar)
+	nutanixProvider.serviceCidr = os.Getenv(nutanixServiceCidrVar)
 
 	for _, opt := range opts {
 		opt(nutanixProvider)
@@ -103,15 +114,18 @@ func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 }
 
 func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
-	// ip, err := GenerateUniqueIp(s.cpCidr)
-	// if err != nil {
-	// 	s.t.Fatalf("failed to generate control plane ip for nutanix [cidr=%s]: %v", s.cpCidr, err)
-	// }
-	// s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(ip))
+	//TODO generate unique IP everytime.
+	if s.controlPlaneEndpointIP != "" {
+		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
+	}
 
-	// if s.podCidr != "" {
-	// 	s.clusterFillers = append(s.clusterFillers, api.WithPodCidr(s.podCidr))
-	// }
+	if s.podCidr != "" {
+		s.clusterFillers = append(s.clusterFillers, api.WithPodCidr(s.podCidr))
+	}
+
+	if s.serviceCidr != "" {
+		s.clusterFillers = append(s.clusterFillers, api.WithServiceCidr(s.serviceCidr))
+	}
 
 	return s.clusterFillers
 }
