@@ -9,6 +9,89 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
+func TestValidateCreateOIDCConfigSuccess(t *testing.T) {
+	c := oidcConfig()
+	c.Spec.ClientId = "test"
+	c.Spec.IssuerUrl = "https://test.com"
+	o := NewWithT(t)
+
+	o.Expect(c.ValidateCreate()).To(Succeed())
+}
+
+func TestClusterValidateCreateInvalidOIDCConfig(t *testing.T) {
+	tests := []struct {
+		name   string
+		config v1alpha1.OIDCConfig
+		err    string
+	}{
+		{
+			name: "No clientID",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId: "",
+				},
+			},
+			err: "clientId is required",
+		},
+		{
+			name: "Null issuerID",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "",
+				},
+			},
+			err: "issuerUrl is required",
+		},
+		{
+			name: "Invalid issuer url",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "invalid-url",
+				},
+			},
+			err: "invalid URI for request",
+		},
+		{
+			name: "Issuer url, non https",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "http://test.com",
+				},
+			},
+			err: "issuerUrl should have HTTPS scheme",
+		},
+		{
+			name: "Extra required claims",
+			config: v1alpha1.OIDCConfig{
+				Spec: v1alpha1.OIDCConfigSpec{
+					ClientId:  "test",
+					IssuerUrl: "https://test.com",
+					RequiredClaims: []v1alpha1.OIDCConfigRequiredClaim{
+						{
+							Claim: "claim1",
+							Value: "val1",
+						},
+						{
+							Claim: "claim2",
+							Value: "val2",
+						},
+					},
+				},
+			},
+			err: "only one OIDConfig requiredClaim is supported at this time",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.config.ValidateCreate()).To(MatchError(ContainSubstring(tt.err)))
+		})
+	}
+}
+
 func TestValidateUpdateOIDCClientIdMgmtCluster(t *testing.T) {
 	ocOld := oidcConfig()
 	ocOld.Spec.ClientId = "test"
