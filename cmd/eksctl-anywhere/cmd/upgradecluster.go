@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -118,7 +119,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
 		WithEksdUpgrader().
@@ -131,7 +132,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	defer close(ctx, deps)
 
 	if deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: upgrade operation is not supported for provider tinkerbell")
+		return errors.New("upgrade operation is not supported for provider tinkerbell")
 	}
 
 	upgradeCluster := workflows.NewUpgrade(
@@ -139,7 +140,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		deps.Provider,
 		deps.CAPIManager,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
 		deps.Writer,
 		deps.EksdUpgrader,
 		deps.EksdInstaller,

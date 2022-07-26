@@ -267,7 +267,7 @@ That configuration is applied directly to the cluster:
 ```
 Installing EKS-A custom components (CRD and controller) on workload cluster
 Creating EKS-A CRDs instances on workload cluster
-Installing AddonManager and GitOps Toolkit on workload cluster
+Installing GitOps Toolkit on workload cluster
 
 ```
 If you did not specify GitOps support, starting the flux service is skipped:

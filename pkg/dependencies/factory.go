@@ -65,7 +65,7 @@ type Dependencies struct {
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
-	FluxAddonClient           *flux.Flux
+	GitOpsFlux                *flux.Flux
 	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
@@ -820,15 +820,15 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
+func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.FluxAddonClient != nil {
+		if f.dependencies.GitOpsFlux != nil {
 			return nil
 		}
 
-		f.dependencies.FluxAddonClient = flux.NewFlux(
+		f.dependencies.GitOpsFlux = flux.NewFlux(
 			&fluxclient.FluxKubectl{
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,

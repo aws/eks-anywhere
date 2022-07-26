@@ -1,7 +1,7 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: fluxAddonTestCluster
+  name: fluxTestCluster
   namespace: eksa-system
 spec:
   clusterNetwork:
@@ -13,18 +13,18 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: fluxAddonTestCluster
+    name: fluxTestCluster
     namespace: eksa-system
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerCluster
-    name: fluxAddonTestCluster
+    name: fluxTestCluster
     namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerCluster
 metadata:
-  name: fluxAddonTestCluster
+  name: fluxTestCluster
   namespace: eksa-system
 spec:
   loadBalancer:
@@ -47,7 +47,7 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: fluxAddonTestCluster
+  name: fluxTestCluster
   namespace: eksa-system
 spec:
   machineTemplate:
