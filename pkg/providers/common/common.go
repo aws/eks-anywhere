@@ -73,19 +73,31 @@ func GenerateSSHAuthKey(writer filewriter.FileWriter) (string, error) {
 	return key, nil
 }
 
+func CPMachineTemplateBase(clusterName string) string {
+	return fmt.Sprintf("%s-control-plane-template", clusterName)
+}
+
+func EtcdMachineTemplateBase(clusterName string) string {
+	return fmt.Sprintf("%s-etcd-template", clusterName)
+}
+
+func WorkerMachineTemplateBase(clusterName, workerNodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, workerNodeGroupName)
+}
+
 func CPMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%d", CPMachineTemplateBase(clusterName), t)
 }
 
 func EtcdMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%d", EtcdMachineTemplateBase(clusterName), t)
 }
 
 func WorkerMachineTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%d", WorkerMachineTemplateBase(clusterName, workerNodeGroupName), t)
 }
 
 func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {

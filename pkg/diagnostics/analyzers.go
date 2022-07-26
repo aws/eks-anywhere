@@ -220,6 +220,7 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
+		constants.EksaDiagnosticsNamespace:               a.eksaDiagnosticsLogAnalyzers(),
 	}
 }
 
@@ -246,6 +247,40 @@ func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze
 						Pass: &singleOutcome{
 							When:    "false",
 							Message: "API server pods launched correctly",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// EksaDiagnosticsLogAnalyzers currently can help to analyze whether user is using a valid control plane IP to connect
+// to API server
+func (a *analyzerFactory) eksaDiagnosticsLogAnalyzers() []*Analyze {
+	runPingPod := "run-ping"
+	runPingPodLog := fmt.Sprintf("%s.log", runPingPod)
+	fullRunPingPodLogPath := path.Join(runPingPod, runPingPodLog)
+	return []*Analyze{
+		{
+			TextAnalyze: &textAnalyze{
+				analyzeMeta: analyzeMeta{
+					CheckName: fmt.Sprintf("%s:  Destination Host Unreachable. Log: %s", logAnalysisAnalyzerPrefix, fullRunPingPodLogPath),
+				},
+				FileName:     fullRunPingPodLogPath,
+				RegexPattern: `exit code: 0`,
+				Outcomes: []*outcome{
+					{
+						Fail: &singleOutcome{
+							When:    "false",
+							Message: fmt.Sprintf("The control plane endpoint host is unavailable. See %s", fullRunPingPodLogPath),
+						},
+					},
+
+					{
+						Pass: &singleOutcome{
+							When:    "true",
+							Message: "Control plane IP verified.",
 						},
 					},
 				},
