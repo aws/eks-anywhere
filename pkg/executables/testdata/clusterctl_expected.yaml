@@ -92,13 +92,13 @@ images:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
   bootstrap-etcdadm-bootstrap/etcdadm-bootstrap-provider:
-    repository: public.ecr.aws/l0g8r8j6/mrajashree
+    repository: public.ecr.aws/l0g8r8j6/aws
     tag: v0.1.0
   bootstrap-etcdadm-bootstrap/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
   bootstrap-etcdadm-controller/etcdadm-controller:
-    repository: public.ecr.aws/l0g8r8j6/mrajashree
+    repository: public.ecr.aws/l0g8r8j6/aws
     tag: v0.1.0
   bootstrap-etcdadm-controller/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz

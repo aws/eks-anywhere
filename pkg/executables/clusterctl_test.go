@@ -517,7 +517,7 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "testdata/fake_manifest.yaml",
 			},
 			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/mrajashree/etcdadm-bootstrap-provider:v0.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/aws/etcdadm-bootstrap-provider:v0.1.0",
 			},
 			KubeProxy: kubeProxyVersion08,
 		},
@@ -530,7 +530,7 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "testdata/fake_manifest.yaml",
 			},
 			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/mrajashree/etcdadm-controller:v0.1.0",
+				URI: "public.ecr.aws/l0g8r8j6/aws/etcdadm-controller:v0.1.0",
 			},
 			KubeProxy: kubeProxyVersion08,
 		},

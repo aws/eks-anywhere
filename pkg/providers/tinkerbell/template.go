@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	etcdv1 "github.com/aws/etcdadm-controller/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
