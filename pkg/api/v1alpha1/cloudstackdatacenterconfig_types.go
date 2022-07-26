@@ -24,6 +24,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+const DefaultCloudStackAZPrefix = "default-availability-zone"
+
 // CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -192,7 +194,7 @@ func (v *CloudStackDatacenterConfig) SetDefaults() {
 		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
 		for index, csZone := range v.Spec.Zones {
 			az := CloudStackAvailabilityZone{
-				Name:                  fmt.Sprintf("availability-zone-%d", index),
+				Name:                  fmt.Sprintf("%s-%d", DefaultCloudStackAZPrefix, index),
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,

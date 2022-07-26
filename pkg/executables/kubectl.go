@@ -128,6 +128,7 @@ func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudst
 	if err != nil {
 		return nil, fmt.Errorf("getting eksa cloudstack datacenterconfig: %v", err)
 	}
+	response.SetDefaults()
 
 	return response, nil
 }

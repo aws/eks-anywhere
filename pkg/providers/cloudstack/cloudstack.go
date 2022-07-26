@@ -1003,6 +1003,7 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	if err != nil {
 		return nil, nil, err
 	}
+	currentSpec.CloudStackDatacenter = csdc
 
 	controlPlaneTemplateName, err = p.getControlPlaneNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
 	if err != nil {
@@ -1173,6 +1174,7 @@ func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, current
 	if err != nil {
 		return false, err
 	}
+	currentSpec.CloudStackDatacenter = existingCsdc
 	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
