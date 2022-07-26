@@ -293,13 +293,13 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig).AnyTimes(),
 	)
 }
 
 func (c *upgradeTestSetup) expectMachineConfigs() {
 	gomock.InOrder(
-		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs).AnyTimes(),
 	)
 }
 
@@ -380,14 +380,6 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	)
 }
 
-func (c *upgradeTestSetup) expectPauseEKSAControllerReconcileNotToBeCalled() {
-	c.clusterManager.EXPECT().PauseEKSAControllerReconcile(c.ctx, c.workloadCluster, c.newClusterSpec, c.provider).Times(0)
-}
-
-func (c *upgradeTestSetup) expectPauseGitOpsKustomizationNotToBeCalled() {
-	c.addonManager.EXPECT().PauseGitOpsKustomization(c.ctx, c.workloadCluster, c.newClusterSpec).Times(0)
-}
-
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
 	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
@@ -404,11 +396,17 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
+	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
+	test.expectPauseGitOpsKustomization(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecNoChanges()
-	test.expectPauseEKSAControllerReconcileNotToBeCalled()
-	test.expectPauseGitOpsKustomizationNotToBeCalled()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
+	test.expectUpdateGitEksaSpec()
+	test.expectForceReconcileGitRepo(test.workloadCluster)
+	test.expectResumeGitOpsKustomization(test.workloadCluster)
 	test.expectCreateBootstrapNotToBeCalled()
 
 	err := test.run()
