@@ -169,5 +169,13 @@ func WithNutanixPrismElementClusterName(value string) NutanixFiller {
 
 func WithNutanixSSHAuthorizedKey(value string) NutanixFiller {
 	return func(config NutanixConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.Users = []anywherev1.UserConfiguration{
+				{
+					Name:              "nutanix-user",
+					SshAuthorizedKeys: []string{value},
+				},
+			}
+		}
 	}
 }

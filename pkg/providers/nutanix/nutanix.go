@@ -459,9 +459,9 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
 		"memorySize":             workerNodeGroupMachineSpec.MemorySize.String(),
 		"systemDiskSize":         workerNodeGroupMachineSpec.SystemDiskSize.String(),
-		"imageName":              workerNodeGroupMachineSpec.Image.Name,   //TODO pass name or uuid
-		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, //TODO pass name or uuid
-		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  //TODO pass name or uuid
+		"imageName":              workerNodeGroupMachineSpec.Image.Name,   //TODO pass name or uuid based on type of identifier
+		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, //TODO pass name or uuid based on type of identifier
+		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  //TODO pass name or uuid based on type of identifier
 	}
 	return values
 }
