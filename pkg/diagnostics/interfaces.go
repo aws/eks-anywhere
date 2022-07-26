@@ -56,4 +56,5 @@ type CollectorFactory interface {
 	ManagementClusterCollectors() []*Collect
 	EksaHostCollectors(configs []providers.MachineConfig) []*Collect
 	DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect
+	APIServerCollectors(controlPlaneIP string) []*Collect
 }

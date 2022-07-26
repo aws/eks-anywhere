@@ -69,7 +69,12 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true).WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef)
+	b.WithDefaultCollectors().
+		WithDefaultAnalyzers().
+		WithManagementCluster(true).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host). // Add a collector here to runPod and ping control plane IP once bootstrap cluster was created
+		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -113,6 +118,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithPackagesCollectors().
+		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -296,6 +302,12 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
+	return e
+}
+
+// WithAPIServerCollectors aims to collect connection info from API server
+func (e *EksaDiagnosticBundle) WithAPIServerCollectors(controlPlaneIP string) *EksaDiagnosticBundle {
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.APIServerCollectors(controlPlaneIP)...)
 	return e
 }
 
