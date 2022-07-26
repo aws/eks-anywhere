@@ -50,6 +50,7 @@ const (
 	vSphereUsernameKey        = "VSPHERE_USERNAME"
 	vSpherePasswordKey        = "VSPHERE_PASSWORD"
 	vSphereServerKey          = "VSPHERE_SERVER"
+	govcDatacenterKey         = "GOVC_DATACENTER"
 	govcInsecure              = "GOVC_INSECURE"
 	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary    = "eks-a-templates"

@@ -139,6 +139,7 @@ phases:
         "amd64"
         $BRANCH_NAME
         false
+      - export GOVC_DATACENTER=${T_VSPHERE_DATACENTER}
       - >
         ./bin/test e2e cleanup vsphere
         -n ${CLUSTER_NAME_PREFIX}
@@ -151,6 +152,7 @@ phases:
       - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
       - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
       - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - export GOVC_DATACENTER=${TEST_RUNNER_GOVC_DATACENTER}
       - export NODE_PREFIX=eksa-e2e-$CODEBUILD_BUILD_ID
       - >
         if [[ ${#NODE_PREFIX} -gt 80 ]] ; then

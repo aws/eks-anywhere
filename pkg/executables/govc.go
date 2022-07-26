@@ -30,6 +30,7 @@ const (
 	govcPasswordKey      = "GOVC_PASSWORD"
 	govcURLKey           = "GOVC_URL"
 	govcInsecure         = "GOVC_INSECURE"
+	govcDatacenterKey    = "GOVC_DATACENTER"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
@@ -39,7 +40,7 @@ const (
 	DeployOptsFile       = "deploy-opts.json"
 )
 
-var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure}
+var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
 
 type networkMapping struct {
 	Name    string `json:"Name,omitempty"`
@@ -532,6 +533,9 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 		}
 	} else if govcURL, ok := os.LookupEnv(govcURLKey); !ok || len(govcURL) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcURLKey, ok)
+	}
+	if govcDatacenter, ok := os.LookupEnv(govcDatacenterKey); !ok || len(govcDatacenter) <= 0 {
+		return nil, fmt.Errorf("%s is not set or is empty: %t", govcDatacenterKey, ok)
 	}
 	envMap, err := g.getEnvMap()
 	if err != nil {
