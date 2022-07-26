@@ -405,7 +405,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	clusterSpec := test.NewClusterSpec()
 	clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
 	clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 0, MachineGroupRef: &v1alpha1.Ref{Name: "fluxAddonTestCluster"}, Name: "md-0"}}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 0, MachineGroupRef: &v1alpha1.Ref{Name: "fluxTestCluster"}, Name: "md-0"}}
 	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	cluster := &types.Cluster{
 		Name: "test",

@@ -87,7 +87,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       Moving cluster management from bootstrap to workload cluster
       Installing EKS-A custom components (CRD and controller) on workload cluster
       Creating EKS-A CRDs instances on workload cluster
-      Installing AddonManager and GitOps Toolkit on workload cluster
+      Installing GitOps Toolkit on workload cluster
       GitOps field not specified, bootstrap flux skipped
       Deleting bootstrap cluster
       🎉 Cluster created!
@@ -137,7 +137,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          Moving cluster management from bootstrap to workload cluster
          Installing EKS-A custom components (CRD and controller) on workload cluster
          Creating EKS-A CRDs instances on workload cluster
-         Installing AddonManager and GitOps Toolkit on workload cluster
+         Installing GitOps Toolkit on workload cluster
          GitOps field not specified, bootstrap flux skipped
          Deleting bootstrap cluster
          🎉 Cluster created!

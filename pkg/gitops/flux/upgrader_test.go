@@ -70,18 +70,18 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 
 func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.1.0"
 
-	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
@@ -90,7 +90,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 
 	if err := setupTestFiles(t, g.gitTools); err != nil {
 		t.Errorf("setting up files: %v", err)
@@ -116,7 +116,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 	g.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
-	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestFluxUpgradeError(t *testing.T) {
@@ -124,7 +124,7 @@ func TestFluxUpgradeError(t *testing.T) {
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 
 	if err := setupTestFiles(t, g.gitTools); err != nil {
 		t.Errorf("setting up files: %v", err)
@@ -139,23 +139,23 @@ func TestFluxUpgradeError(t *testing.T) {
 	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
-	_, err := g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt := newUpgraderTest(t)
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 	tt.newSpec.FluxConfig = nil
 
-	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNewGitOpsConfig(t *testing.T) {
 	tt := newUpgraderTest(t)
-	g := newAddonClient(t)
+	g := newFluxTest(t)
 	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
-	tt.Expect(g.fluxAddonClient.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
@@ -200,10 +200,10 @@ func TestInstallSkip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			test := newUpgraderTest(t)
-			g := newAddonClient(t)
+			g := newFluxTest(t)
 			test.currentSpec.Cluster.Spec.GitOpsRef = tt.old
 			test.newSpec.Cluster.Spec.GitOpsRef = tt.new
-			test.Expect(g.fluxAddonClient.Install(test.ctx, test.cluster, test.currentSpec, test.newSpec)).To(BeNil())
+			test.Expect(g.gitOpsFlux.Install(test.ctx, test.cluster, test.currentSpec, test.newSpec)).To(BeNil())
 		})
 	}
 }

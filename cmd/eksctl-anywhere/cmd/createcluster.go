@@ -148,7 +148,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
 		WithPackageInstaller(clusterSpec, cc.installPackages).
@@ -170,7 +170,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
 		deps.Writer,
 		deps.EksdInstaller,
 		deps.PackageInstaller,

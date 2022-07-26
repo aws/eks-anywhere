@@ -19,7 +19,7 @@ type deleteTestSetup struct {
 	t                *testing.T
 	bootstrapper     *mocks.MockBootstrapper
 	clusterManager   *mocks.MockClusterManager
-	addonManager     *mocks.MockAddonManager
+	gitOpsManager    *mocks.MockGitOpsManager
 	provider         *providermocks.MockProvider
 	workflow         *workflows.Delete
 	ctx              context.Context
@@ -33,15 +33,15 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 	mockCtrl := gomock.NewController(t)
 	mockBootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
-	addonManager := mocks.NewMockAddonManager(mockCtrl)
+	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
-	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, addonManager)
+	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, gitOpsManager)
 
 	return &deleteTestSetup{
 		t:                t,
 		bootstrapper:     mockBootstrapper,
 		clusterManager:   clusterManager,
-		addonManager:     addonManager,
+		gitOpsManager:    gitOpsManager,
 		provider:         provider,
 		workflow:         workflow,
 		ctx:              context.Background(),
@@ -106,7 +106,7 @@ func (c *deleteTestSetup) expectDeleteWorkload(cluster *types.Cluster) {
 
 func (c *deleteTestSetup) expectCleanupGitRepo() {
 	gomock.InOrder(
-		c.addonManager.EXPECT().CleanupGitRepo(
+		c.gitOpsManager.EXPECT().CleanupGitRepo(
 			c.ctx, c.clusterSpec,
 		).Return(nil),
 	)

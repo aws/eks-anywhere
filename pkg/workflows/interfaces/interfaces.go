@@ -41,7 +41,7 @@ type ClusterManager interface {
 	CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error
 }
 
-type AddonManager interface {
+type GitOpsManager interface {
 	InstallGitOps(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	PauseGitOpsKustomization(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	ResumeGitOpsKustomization(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error

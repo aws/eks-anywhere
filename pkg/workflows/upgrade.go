@@ -20,7 +20,7 @@ type Upgrade struct {
 	bootstrapper      interfaces.Bootstrapper
 	provider          providers.Provider
 	clusterManager    interfaces.ClusterManager
-	addonManager      interfaces.AddonManager
+	gitOpsManager     interfaces.GitOpsManager
 	writer            filewriter.FileWriter
 	capiManager       interfaces.CAPIManager
 	eksdInstaller     interfaces.EksdInstaller
@@ -30,14 +30,14 @@ type Upgrade struct {
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksdUpgrader interfaces.EksdUpgrader, eksdInstaller interfaces.EksdInstaller,
+	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager, writer filewriter.FileWriter, eksdUpgrader interfaces.EksdUpgrader, eksdInstaller interfaces.EksdInstaller,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
 		bootstrapper:      bootstrapper,
 		provider:          provider,
 		clusterManager:    clusterManager,
-		addonManager:      addonManager,
+		gitOpsManager:     gitOpsManager,
 		writer:            writer,
 		capiManager:       capiManager,
 		eksdUpgrader:      eksdUpgrader,
@@ -59,7 +59,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		Bootstrapper:      c.bootstrapper,
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,
-		AddonManager:      c.addonManager,
+		GitOpsManager:     c.gitOpsManager,
 		ManagementCluster: managementCluster,
 		WorkloadCluster:   workloadCluster,
 		ClusterSpec:       clusterSpec,
@@ -240,12 +240,12 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	if err = commandContext.AddonManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
+	if err = commandContext.GitOpsManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -336,7 +336,7 @@ func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.Info("Pausing Flux kustomization")
-	err = commandContext.AddonManager.PauseGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.PauseGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -579,21 +579,21 @@ func (s *resumeEksaAndFluxReconcile) Run(ctx context.Context, commandContext *ta
 	}
 
 	logger.Info("Updating Git Repo with new EKS-A cluster spec")
-	err = commandContext.AddonManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	err = commandContext.GitOpsManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
 	logger.Info("Forcing reconcile Git repo with latest commit")
-	err = commandContext.AddonManager.ForceReconcileGitRepo(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.ForceReconcileGitRepo(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
 	logger.Info("Resuming Flux kustomization")
-	err = commandContext.AddonManager.ResumeGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.ResumeGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &writeClusterConfigTask{}

@@ -30,7 +30,7 @@ type CommandContext struct {
 	Bootstrapper       interfaces.Bootstrapper
 	Provider           providers.Provider
 	ClusterManager     interfaces.ClusterManager
-	AddonManager       interfaces.AddonManager
+	GitOpsManager      interfaces.GitOpsManager
 	Validations        interfaces.Validator
 	Writer             filewriter.FileWriter
 	EksdInstaller      interfaces.EksdInstaller
