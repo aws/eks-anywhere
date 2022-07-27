@@ -40,6 +40,7 @@ const (
 	privateNetworkCidrVar       = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
 	govcUrlVar                  = "VSPHERE_SERVER"
 	govcInsecureVar             = "GOVC_INSECURE"
+	govcDatacenterVar           = "GOVC_DATACENTER"
 )
 
 var requiredEnvVars = []string{
@@ -69,6 +70,7 @@ var requiredEnvVars = []string{
 	privateNetworkCidrVar,
 	govcUrlVar,
 	govcInsecureVar,
+	govcDatacenterVar,
 }
 
 type VSphere struct {
