@@ -21,6 +21,7 @@ type PhysicalNetworkConnectorType string
 type SnowInstanceType string
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run "make generate" to regenerate code after modifying this file
 
 // SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec
 type SnowMachineConfigSpec struct {
@@ -59,7 +60,15 @@ func (s *SnowMachineConfig) OSFamily() OSFamily {
 }
 
 // SnowMachineConfigStatus defines the observed state of SnowMachineConfig
-type SnowMachineConfigStatus struct{}
+type SnowMachineConfigStatus struct {
+	// SpecValid is set to true if vspheredatacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
