@@ -99,6 +99,15 @@ spec:
             type: object
           status:
             description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              specValid:
+                description: SpecValid is set to true if vspheredatacenterconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true
