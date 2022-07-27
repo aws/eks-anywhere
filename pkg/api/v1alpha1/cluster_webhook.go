@@ -86,6 +86,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
 	}
 
+	if r.IsSelfManaged() && !r.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) {
+		return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
+	}
+
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
@@ -94,16 +98,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	// Test for both taints and labels
-	if err := validateWorkerNodeGroups(r); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "workerNodeGroupConfigurations"), r.Spec.WorkerNodeGroupConfigurations, err.Error()))
-	}
-
-	// Control plane configuration is mutable if workload cluster
-	if !r.IsSelfManaged() {
-		if err := validateControlPlaneLabels(r); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneConfiguration", "labels"), r.Spec, err.Error()))
-		}
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
