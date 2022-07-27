@@ -29,7 +29,7 @@ var _ webhook.Validator = &AWSIamConfig{}
 func (r *AWSIamConfig) ValidateCreate() error {
 	awsiamconfiglog.Info("validate create", "name", r.Name)
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -44,6 +44,9 @@ func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableAWSIamFields(r, oldAWSIamConfig)...)
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("AWSIamConfig"), r, err.Error()))
+	}
 
 	if len(allErrs) == 0 {
 		return nil
