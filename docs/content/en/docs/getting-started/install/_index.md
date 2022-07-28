@@ -16,7 +16,7 @@ This will let you create a cluster in multiple providers for local development o
 ### Administrative machine prerequisites
 
 - Docker 20.x.x
-- Mac OS (10.15) / Ubuntu (20.04.2 LTS)
+- Mac OS 10.15 / Ubuntu 20.04.2 LTS (newer Ubuntu versions with cgroup v2 enabled are not supported)
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
@@ -27,7 +27,6 @@ This will let you create a cluster in multiple providers for local development o
    * If you are using Docker Desktop, you need to know that:
        * For EKS Anywhere Bare Metal, Docker Desktop is not supported
        * For EKS Anywhere vSphere, if you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
-   * Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
    {{% /alert %}}
 
 
