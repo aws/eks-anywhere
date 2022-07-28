@@ -15,7 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *Provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	var opts []bootstrapper.BootstrapClusterOption
 
 	if p.clusterConfig.Spec.ProxyConfiguration != nil {

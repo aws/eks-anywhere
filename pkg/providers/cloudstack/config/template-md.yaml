@@ -132,12 +132,12 @@ spec:
           name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: CloudStackMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}

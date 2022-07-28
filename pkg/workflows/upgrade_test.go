@@ -186,7 +186,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 	}
 
 	gomock.InOrder(
-		c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Return(opts, nil),
+		c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil),
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
@@ -198,7 +198,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 }
 
 func (c *upgradeTestSetup) expectNotToCreateBootstrap() {
-	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
+	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(
 		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 	).Times(0)
@@ -381,7 +381,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 }
 
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
-	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
+	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
 	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }

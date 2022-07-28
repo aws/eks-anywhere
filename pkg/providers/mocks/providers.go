@@ -40,18 +40,18 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 }
 
 // BootstrapClusterOpts mocks base method.
-func (m *MockProvider) BootstrapClusterOpts(arg0 *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+func (m *MockProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BootstrapClusterOpts", arg0)
+	ret := m.ctrl.Call(m, "BootstrapClusterOpts")
 	ret0, _ := ret[0].([]bootstrapper.BootstrapClusterOption)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // BootstrapClusterOpts indicates an expected call of BootstrapClusterOpts.
-func (mr *MockProviderMockRecorder) BootstrapClusterOpts(arg0 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) BootstrapClusterOpts() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapClusterOpts", reflect.TypeOf((*MockProvider)(nil).BootstrapClusterOpts), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapClusterOpts", reflect.TypeOf((*MockProvider)(nil).BootstrapClusterOpts))
 }
 
 // ChangeDiff mocks base method.

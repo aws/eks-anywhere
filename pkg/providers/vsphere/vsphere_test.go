@@ -1055,9 +1055,8 @@ func TestUpdateKubeConfig(t *testing.T) {
 
 func TestBootstrapClusterOpts(t *testing.T) {
 	provider := givenProvider(t)
-	clusterSpec := givenEmptyClusterSpec()
 
-	bootstrapClusterOps, err := provider.BootstrapClusterOpts(clusterSpec)
+	bootstrapClusterOps, err := provider.BootstrapClusterOpts()
 	if err != nil {
 		t.Fatalf("failed BootstrapClusterOpts: %v", err)
 	}
