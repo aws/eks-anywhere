@@ -1170,6 +1170,81 @@ func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
 	}
 }
 
+var wantMHC = []byte(`apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: fluxTestCluster-worker-1-worker-unhealthy
+  namespace: eksa-system
+spec:
+  clusterName: fluxTestCluster
+  maxUnhealthy: 40%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: fluxTestCluster-worker-1
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  creationTimestamp: null
+  name: fluxTestCluster-kcp-unhealthy
+  namespace: eksa-system
+spec:
+  clusterName: fluxTestCluster
+  maxUnhealthy: 100%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/control-plane: ""
+  unhealthyConditions:
+  - status: Unknown
+    timeout: 5m0s
+    type: Ready
+  - status: "False"
+    timeout: 5m0s
+    type: Ready
+status:
+  currentHealthy: 0
+  expectedMachines: 0
+  remediationsAllowed: 0
+
+---
+`)
+
+func TestInstallMachineHealthChecks(t *testing.T) {
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC)
+
+	if err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster); err != nil {
+		t.Errorf("ClusterManager.InstallMachineHealthChecks() error = %v, wantErr nil", err)
+	}
+}
+
+func TestInstallMachineHealthChecksApplyError(t *testing.T) {
+	ctx := context.Background()
+	tt := newTest(t)
+	tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "worker-1"
+	tt.clusterManager.Retrier = retrier.NewWithMaxRetries(2, 1*time.Microsecond)
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, wantMHC).Return(errors.New("apply error")).MaxTimes(2)
+
+	if err := tt.clusterManager.InstallMachineHealthChecks(ctx, tt.clusterSpec, tt.cluster); err == nil {
+		t.Error("ClusterManager.InstallMachineHealthChecks() error = nil, wantErr apply error")
+	}
+}
+
 func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"

@@ -321,10 +321,6 @@ func (p *Provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *Provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
-}
-
 func (p *Provider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]

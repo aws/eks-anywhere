@@ -3098,28 +3098,3 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 		})
 	}
 }
-
-func TestGenerateMHCSuccess(t *testing.T) {
-	tests := []struct {
-		testName          string
-		wantMHCFile       string
-		clusterConfigFile string
-	}{
-		{
-			testName:          "generate machine health checks - 1 worker node group",
-			wantMHCFile:       "testdata/expected_results_machine_health_check.yaml",
-			clusterConfigFile: testClusterConfigMainFilename,
-		},
-		{
-			testName:          "generate machine health checks - multiple worker node groups",
-			wantMHCFile:       "testdata/expected_results_machine_health_check_multi_node_groups.yaml",
-			clusterConfigFile: "cluster_main_multiple_worker_node_groups.yaml",
-		},
-	}
-	for _, tt := range tests {
-		p := newProviderTest(t)
-		got, err := p.provider.GenerateMHC(givenClusterSpec(t, tt.clusterConfigFile))
-		p.Expect(err).To(Succeed())
-		test.AssertContentToFile(t, string(got), tt.wantMHCFile)
-	}
-}
