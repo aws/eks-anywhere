@@ -16,7 +16,7 @@ This will let you create a cluster in multiple providers for local development o
 ### Administrative machine prerequisites
 
 - Docker 20.x.x
-- Mac OS 10.15 / Ubuntu 20.04.2 LTS (newer Ubuntu versions with cgroup v2 enabled, such as 21.10, are not supported)
+- Mac OS 10.15 / Ubuntu 20.04.2 LTS (newer Ubuntu versions with cgroup v2 enabled are not supported)
 - 4 CPU cores
 - 16GB memory
 - 30GB free disk space
