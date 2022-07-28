@@ -37,9 +37,21 @@ func newPackageTest(t *testing.T) *packageTest {
 				Packages: []packagesv1.BundlePackage{
 					{
 						Name: "harbor-test",
+						Source: packagesv1.BundlePackageSource{
+							Versions: []packagesv1.SourceVersion{
+								{Name: "0.0.1"},
+								{Name: "0.0.2"},
+							},
+						},
 					},
 					{
 						Name: "redis-test",
+						Source: packagesv1.BundlePackageSource{
+							Versions: []packagesv1.SourceVersion{
+								{Name: "0.0.3"},
+								{Name: "0.0.4"},
+							},
+						},
 					},
 				},
 			},
@@ -243,4 +255,18 @@ func TestDescribePackagesWhenEmptyResources(t *testing.T) {
 
 	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig)
 	tt.Expect(err).To(MatchError(ContainSubstring("no resources found")))
+}
+
+func TestDisplayPackages(t *testing.T) {
+	tt := newPackageTest(t)
+	bundle := curatedpackages.WithBundle(tt.bundle)
+	pc := curatedpackages.NewPackageClient(nil, bundle)
+	buf := &bytes.Buffer{}
+	err := pc.DisplayPackages(buf)
+	tt.Expect(err).To(BeNil())
+	// The expected string needs to have whitespace at the end of the strings,
+	// which some editors will remove by default, so it's probably best to use
+	// this format, even though it's a little harder to read for humans.
+	expected := "Package\t\tVersion(s)\t\n-------\t\t----------\t\nharbor-test\t0.0.1, 0.0.2\t\nredis-test\t0.0.3, 0.0.4\t\n"
+	tt.Expect(buf.String()).To(Equal(expected))
 }
