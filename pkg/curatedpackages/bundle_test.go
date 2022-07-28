@@ -77,11 +77,9 @@ func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	result, err := tt.Command.GetLatestBundle(tt.ctx)
@@ -96,11 +94,9 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef).Return(tt.packageBundle, nil)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	result, err := tt.Command.GetLatestBundle(tt.ctx)
@@ -112,11 +108,9 @@ func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
 	tt := newBundleTest(t)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		"Unknown",
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx)
@@ -129,11 +123,9 @@ func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error reading bundle"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx)
@@ -145,11 +137,9 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return("", errors.New("registry doesn't exist"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx)
@@ -161,11 +151,9 @@ func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error fetching controller"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.kubeVersion,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
-		tt.cliVersion,
 		tt.registry,
 	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx)
