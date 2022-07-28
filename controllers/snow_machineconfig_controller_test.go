@@ -3,6 +3,8 @@ package controllers_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -171,11 +173,6 @@ func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
 
 	_, err := r.Reconcile(ctx, req)
 	g.Expect(err).To(HaveOccurred())
-	snowMachineConfig := &anywherev1.SnowMachineConfig{}
-	err = cl.Get(ctx, req.NamespacedName, snowMachineConfig)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(snowMachineConfig.Status.FailureMessage).NotTo(BeNil())
-	g.Expect(snowMachineConfig.Status.SpecValid).To(BeFalse())
 }
 
 func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
@@ -187,6 +184,12 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	config := createSnowMachineConfig()
 	for _, ip := range config.Spec.Devices {
 		client := awsMock.NewMockEC2Client(ctrl)
+		client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(&ec2.DescribeKeyPairsOutput{
+			KeyPairs: []ec2Types.KeyPairInfo{{
+				KeyName: &config.Spec.SshKeyName,
+			}},
+		}, nil)
+		client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, nil)
 		mockClients[ip] = aws.NewClientFromEC2(client)
 	}
 	config.Spec.Devices = append(config.Spec.Devices, "another-one")
@@ -228,6 +231,11 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	config.Spec.Devices = config.Spec.Devices[0:1]
 	client := awsMock.NewMockEC2Client(ctrl)
 	client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, errors.New("test error"))
+	client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(&ec2.DescribeKeyPairsOutput{
+		KeyPairs: []ec2Types.KeyPairInfo{{
+			KeyName: &config.Spec.SshKeyName,
+		}},
+	}, nil)
 	mockClients[config.Spec.Devices[0]] = aws.NewClientFromEC2(client)
 
 	objs := []runtime.Object{config}
@@ -288,12 +296,67 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	}
 
 	_, err := r.Reconcile(ctx, req)
+	fmt.Println("test")
+	fmt.Println(err.Error())
 	g.Expect(err).To(HaveOccurred())
 	snowMachineConfig := &anywherev1.SnowMachineConfig{}
 	err = cl.Get(ctx, req.NamespacedName, snowMachineConfig)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(snowMachineConfig.Status.FailureMessage).NotTo(BeNil())
 	g.Expect(snowMachineConfig.Status.SpecValid).To(BeFalse())
+}
+
+func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
+	g := NewWithT(t)
+	mockClients := make(map[string]*aws.Client)
+	ctrl := gomock.NewController(t)
+	ctx := context.Background()
+
+	config := createSnowMachineConfig()
+	// Save only the first element for testing purposes
+	config.Spec.Devices = config.Spec.Devices[0:1]
+	client := awsMock.NewMockEC2Client(ctrl)
+	client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(nil, errors.New("test error"))
+	client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, errors.New("test error"))
+	mockClients[config.Spec.Devices[0]] = aws.NewClientFromEC2(client)
+	config.Spec.Devices = append(config.Spec.Devices, "another-one")
+
+	objs := []runtime.Object{config}
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
+	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	_, err := r.Reconcile(ctx, req)
+	g.Expect(err).To(HaveOccurred())
+
+	// Now check to make sure error returned contains substring and right number of aggregate of errors
+	errorPrefix := "reconciling snowmachineconfig: "
+	g.Expect(err.Error()).To(ContainSubstring(errorPrefix))
+	result := strings.TrimPrefix(err.Error(), errorPrefix)
+	errors := strings.Split(result, ", ")
+	g.Expect(len(errors)).To(BeIdenticalTo(3))
+
+	snowMachineConfig := &anywherev1.SnowMachineConfig{}
+	err = cl.Get(ctx, req.NamespacedName, snowMachineConfig)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(snowMachineConfig.Status.SpecValid).To(BeFalse())
+
+	// Now check to make sure failure message status contains substring and right number of aggregate of errors
+	g.Expect(snowMachineConfig.Status.FailureMessage).NotTo(BeNil())
+	errors = strings.Split(*snowMachineConfig.Status.FailureMessage, ", ")
+	g.Expect(len(errors)).To(BeIdenticalTo(3))
 }
 
 func createSnowMachineConfig() *anywherev1.SnowMachineConfig {
