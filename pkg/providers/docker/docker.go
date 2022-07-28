@@ -424,10 +424,6 @@ func (p *provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
-}
-
 func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	// The Docker provider is for testing only. We don't want to change the interface just for the test
 	ctx := context.Background()

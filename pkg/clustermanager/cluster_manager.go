@@ -578,15 +578,12 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	return nil
 }
 
-func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, provider providers.Provider) error {
-	mhc, err := provider.GenerateMHC(clusterSpec)
+func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
+	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 	if err != nil {
 		return err
 	}
-	if len(mhc) == 0 {
-		logger.V(4).Info("Skipping machine health checks")
-		return nil
-	}
+
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
