@@ -750,7 +750,7 @@ func TestEnvMapOverride(t *testing.T) {
 	tag := "tag"
 	ctx := context.Background()
 
-	var envOverride = map[string]string{
+	envOverride := map[string]string{
 		govcUsername:   "override_vsphere_username",
 		govcPassword:   "override_vsphere_password",
 		govcURL:        "override_vsphere_server",
