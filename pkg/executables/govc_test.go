@@ -102,12 +102,12 @@ func setupContext(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
+func setup(t *testing.T, opts ...executables.GovcOpt) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
 	setupContext(t)
 	dir, writer := test.NewWriter(t)
 	mockCtrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	g := executables.NewGovc(executable, writer)
+	g := executables.NewGovc(executable, writer, opts...)
 
 	return dir, g, executable, govcEnvironment
 }
@@ -742,6 +742,28 @@ func TestAddTagSuccess(t *testing.T) {
 	err := g.AddTag(ctx, path, tag)
 	if err != nil {
 		t.Fatalf("Govc.AddTag() err = %v, want err nil", err)
+	}
+}
+
+func TestEnvMapOverride(t *testing.T) {
+	category := "category"
+	tag := "tag"
+	ctx := context.Background()
+
+	envOverride := map[string]string{
+		govcUsername:   "override_vsphere_username",
+		govcPassword:   "override_vsphere_password",
+		govcURL:        "override_vsphere_server",
+		govcDatacenter: "override_vsphere_datacenter",
+		govcInsecure:   "false",
+	}
+
+	_, g, executable, _ := setup(t, executables.WithGovcEnvMap(envOverride))
+	executable.EXPECT().ExecuteWithEnv(ctx, envOverride, "tags.create", "-c", category, tag).Return(*bytes.NewBufferString(""), nil)
+
+	err := g.CreateTag(ctx, tag, category)
+	if err != nil {
+		t.Fatalf("Govc.CreateTag() with envMap override err = %v, want err nil", err)
 	}
 }
 

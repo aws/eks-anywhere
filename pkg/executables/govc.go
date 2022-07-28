@@ -510,6 +510,10 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 }
 
 func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	var vSphereUsername, vSpherePassword, vSphereURL string
 	var ok bool
 	var envMap map[string]string
@@ -537,6 +541,7 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 	if govcDatacenter, ok := os.LookupEnv(govcDatacenterKey); !ok || len(govcDatacenter) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcDatacenterKey, ok)
 	}
+
 	envMap, err := g.getEnvMap()
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
