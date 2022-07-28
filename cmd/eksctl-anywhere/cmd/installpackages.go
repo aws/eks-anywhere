@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -93,7 +94,7 @@ func installPackages(ctx context.Context, args []string) error {
 
 	if ipo.showOptions {
 		configs := curatedpackages.GetConfigurationsFromBundle(p)
-		curatedpackages.DisplayConfigurationOptions(configs)
+		curatedpackages.DisplayConfigurationOptions(os.Stdout, configs)
 		return nil
 	}
 

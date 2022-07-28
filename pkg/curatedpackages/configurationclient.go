@@ -3,10 +3,9 @@ package curatedpackages
 import (
 	"bytes"
 	"fmt"
-	"os"
+	"io"
 	"strconv"
 	"strings"
-	"text/tabwriter"
 
 	"sigs.k8s.io/yaml"
 
@@ -98,13 +97,21 @@ func ParseConfigurations(configs []string) (map[string]string, error) {
 	return parsedConfigurations, nil
 }
 
-func DisplayConfigurationOptions(configs map[string]packagesv1.VersionConfiguration) {
-	w := new(tabwriter.Writer)
-	defer w.Flush()
-	w.Init(os.Stdout, minWidth, tabWidth, padding, padChar, flags)
-	fmt.Fprintf(w, "%s\t%s\t%s\t \n", "Configuration", "Required", "Default")
-	fmt.Fprintf(w, "%s\t%s\t%s\t \n", "-------------", "--------", "-------")
+// DisplayConfigurationOptions pretty-prints the given configuration values.
+func DisplayConfigurationOptions(w io.Writer, configs map[string]packagesv1.VersionConfiguration) {
+	lines := append([][]string{}, configurationHeaderLines...)
 	for key, val := range configs {
-		fmt.Fprintf(w, "%s\t%v\t%s\t \n", key, val.Required, val.Default)
+		req := fmt.Sprintf("%t", val.Required)
+		lines = append(lines, []string{key, req, val.Default})
 	}
+
+	tw := newCPTabwriter(w, nil)
+	defer tw.Flush()
+	tw.WriteTable(lines)
+}
+
+// configurationHeaderLines pretties-up the table of configuration values.
+var configurationHeaderLines = [][]string{
+	{"Configuration", "Required", "Default"},
+	{"-------------", "--------", "-------"},
 }
