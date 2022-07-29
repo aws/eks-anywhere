@@ -551,7 +551,7 @@ func TestGovcCleanupVms(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
 	var params []string
-	params = []string{"find", "-type", "VirtualMachine", "-name", clusterName + "*"}
+	params = []string{"find", "/" + env[govcDatacenter], "-type", "VirtualMachine", "-name", clusterName + "*"}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(clusterName), nil)
 
 	params = []string{"vm.power", "-off", "-force", vmName}
