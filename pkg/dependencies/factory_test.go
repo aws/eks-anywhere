@@ -116,7 +116,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCliConfig(&tt.cliConfig).
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
-		WithFluxAddonClient(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
+		WithGitOpsFlux(tt.clusterSpec.Cluster, tt.clusterSpec.FluxConfig, nil).
 		WithWriter().
 		WithEksdInstaller().
 		WithEksdUpgrader().
@@ -136,7 +136,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.Bootstrapper).NotTo(BeNil())
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
-	tt.Expect(deps.FluxAddonClient).NotTo(BeNil())
+	tt.Expect(deps.GitOpsFlux).NotTo(BeNil())
 	tt.Expect(deps.Writer).NotTo(BeNil())
 	tt.Expect(deps.EksdInstaller).NotTo(BeNil())
 	tt.Expect(deps.EksdUpgrader).NotTo(BeNil())

@@ -65,7 +65,7 @@ type Dependencies struct {
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
-	FluxAddonClient           *flux.Flux
+	GitOpsFlux                *flux.Flux
 	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
@@ -82,6 +82,7 @@ type Dependencies struct {
 	BundleRegistry            curatedpackages.BundleRegistry
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	SnowValidator             *snow.Validator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -483,30 +484,12 @@ func (f *Factory) WithAwsSnow() *Factory {
 		if f.dependencies.SnowAwsClient != nil {
 			return nil
 		}
-		credsFile, err := aws.AwsCredentialsFile()
+
+		builder := aws.NewSnowAwsClientBuilder()
+		deviceClientMap, err := builder.BuildSnowAwsClientMap(ctx)
 		if err != nil {
-			return fmt.Errorf("fetching aws credentials from env: %v", err)
+			return err
 		}
-		certsFile, err := aws.AwsCABundlesFile()
-		if err != nil {
-			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
-		}
-
-		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
-		if err != nil {
-			return fmt.Errorf("getting device ips from aws credentials: %v", err)
-		}
-
-		deviceClientMap := make(aws.Clients, len(deviceIps))
-
-		for _, ip := range deviceIps {
-			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
-			if err != nil {
-				return fmt.Errorf("setting up aws client: %v", err)
-			}
-			deviceClientMap[ip] = aws.NewClient(ctx, config)
-		}
-
 		f.dependencies.SnowAwsClient = deviceClientMap
 
 		return nil
@@ -820,15 +803,15 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
+func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.FluxAddonClient != nil {
+		if f.dependencies.GitOpsFlux != nil {
 			return nil
 		}
 
-		f.dependencies.FluxAddonClient = flux.NewFlux(
+		f.dependencies.GitOpsFlux = flux.NewFlux(
 			&fluxclient.FluxKubectl{
 				Flux:    f.dependencies.Flux,
 				Kubectl: f.dependencies.Kubectl,

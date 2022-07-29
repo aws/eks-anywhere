@@ -50,6 +50,7 @@ const (
 	vSphereUsernameKey        = "VSPHERE_USERNAME"
 	vSpherePasswordKey        = "VSPHERE_PASSWORD"
 	vSphereServerKey          = "VSPHERE_SERVER"
+	govcDatacenterKey         = "GOVC_DATACENTER"
 	govcInsecure              = "GOVC_INSECURE"
 	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary    = "eks-a-templates"
@@ -1067,10 +1068,6 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 
 func (p *vsphereProvider) GenerateStorageClass() []byte {
 	return defaultStorageClass
-}
-
-func (p *vsphereProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {

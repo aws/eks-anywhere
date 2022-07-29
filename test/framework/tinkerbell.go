@@ -11,7 +11,6 @@ import (
 const (
 	TinkerbellProviderName                  = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
-	tinkerbellNetworkCidrEnvVar             = "T_TINKERBELL_NETWORK_CIDR"
 	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
 	tinkerbellImageUbuntu120EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
@@ -23,7 +22,6 @@ const (
 )
 
 var requiredTinkerbellEnvVars = []string{
-	tinkerbellNetworkCidrEnvVar,
 	tinkerbellControlPlaneNetworkCidrEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
@@ -45,17 +43,16 @@ type Tinkerbell struct {
 	clusterFillers       []api.ClusterFiller
 	serverIP             string
 	cidr                 string
-	controlPlaneCidr     string
 	inventoryCsvFilePath string
 }
 
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
-	cidr := os.Getenv(tinkerbellNetworkCidrEnvVar)
+	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
 
-	serverIP, err := GenerateUniqueIp(cidr)
+	serverIP, err := GetIP(cidr, ClusterIPPoolEnvVar)
 	if err != nil {
-		t.Fatalf("failed to generate tinkerbell ip from cidr %s: %v", cidr, err)
+		t.Fatalf("failed to get tinkerbell ip for test environment: %v", err)
 	}
 
 	tink := &Tinkerbell{
@@ -70,7 +67,6 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	tink.serverIP = serverIP
 
 	tink.cidr = cidr
-	tink.controlPlaneCidr = os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
 
 	for _, opt := range opts {
@@ -103,10 +99,11 @@ func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.Tinkerb
 }
 
 func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
-	clusterIP, err := GenerateUniqueIp(t.controlPlaneCidr)
+	clusterIP, err := GetIP(t.cidr, ClusterIPPoolEnvVar)
 	if err != nil {
-		t.t.Fatalf("failed to generate cluster ip from cidr %s: %v", t.cidr, err)
+		t.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 	}
+
 	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 
 	return t.clusterFillers

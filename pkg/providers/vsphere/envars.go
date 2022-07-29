@@ -43,5 +43,8 @@ func SetupEnvVars(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
 	if err := os.Setenv(govcInsecure, strconv.FormatBool(datacenterConfig.Spec.Insecure)); err != nil {
 		return fmt.Errorf("unable to set %s: %v", govcInsecure, err)
 	}
+	if err := os.Setenv(govcDatacenterKey, datacenterConfig.Spec.Datacenter); err != nil {
+		return fmt.Errorf("unable to set %s: %v", govcDatacenterKey, err)
+	}
 	return nil
 }

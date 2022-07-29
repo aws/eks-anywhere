@@ -18,10 +18,10 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: fluxAddonTestCluster-md-0
+  name: fluxTestCluster-md-0
   namespace: eksa-system
 spec:
-  clusterName: fluxAddonTestCluster
+  clusterName: fluxTestCluster
   replicas: 0
   selector:
     matchLabels: null
@@ -33,7 +33,7 @@ spec:
           kind: KubeadmConfigTemplate
           name: test-md-0-original
           namespace: eksa-system
-      clusterName: fluxAddonTestCluster
+      clusterName: fluxTestCluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: DockerMachineTemplate

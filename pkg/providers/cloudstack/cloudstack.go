@@ -1088,10 +1088,6 @@ func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *
 	return false, nil
 }
 
-func (p *cloudstackProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
-}
-
 func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {
 	return nil
 }

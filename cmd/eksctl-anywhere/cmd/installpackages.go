@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type installPackageOptions struct {
@@ -69,11 +68,9 @@ func installPackages(ctx context.Context, args []string) error {
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
-		ipo.kubeVersion,
 		ipo.source,
 		deps.Kubectl,
 		bm,
-		version.Get(),
 		deps.BundleRegistry,
 	)
 

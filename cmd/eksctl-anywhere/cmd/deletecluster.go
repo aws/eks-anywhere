@@ -106,7 +106,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
-		WithFluxAddonClient(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
 	if err != nil {
@@ -122,7 +122,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
 	)
 
 	var cluster *types.Cluster

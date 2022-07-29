@@ -12,13 +12,14 @@ import (
 )
 
 const (
-	tinkerbellInventoryCsvFilePathEnvVar   = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellHardwareS3FileKeyEnvVar      = "T_TINKERBELL_S3_INVENTORY_CSV_KEY"
-	tinkerbellTestsRe                      = `^.*Tinkerbell.*$`
-	e2eHardwareCsvFilePath                 = "e2e-inventory.csv"
-	MaxHardwarePerE2ETestEnvVar            = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
-	TinkerbellDefaultMaxHardwarePerE2ETest = 4
-	tinkerbellBootstrapInterfaceEnvVar     = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
+	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellHardwareS3FileKeyEnvVar       = "T_TINKERBELL_S3_INVENTORY_CSV_KEY"
+	tinkerbellTestsRe                       = `^.*Tinkerbell.*$`
+	e2eHardwareCsvFilePath                  = "e2e-inventory.csv"
+	MaxHardwarePerE2ETestEnvVar             = "T_TINKERBELL_MAX_HARDWARE_PER_TEST"
+	TinkerbellDefaultMaxHardwarePerE2ETest  = 4
+	tinkerbellBootstrapInterfaceEnvVar      = "T_TINKERBELL_BOOTSTRAP_INTERFACE"
 )
 
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {

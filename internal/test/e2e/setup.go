@@ -136,6 +136,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	ipPool := e.ipPool.ToString()
+	if ipPool != "" {
+		e.testEnvVars[e2etests.ClusterIPPoolEnvVar] = ipPool
+	}
+
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)

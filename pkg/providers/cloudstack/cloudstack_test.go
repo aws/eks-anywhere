@@ -1020,68 +1020,31 @@ func TestGetDatacenterConfig(t *testing.T) {
 	}
 }
 
-func TestGetMHCSuccess(t *testing.T) {
+func TestProviderDeleteResources(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
-
-	provider := givenProvider(t)
+	ctx := context.Background()
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.ManagementCluster = &types.Cluster{
+		KubeconfigFile: "testKubeConfig",
+	}
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-md-0-worker-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 40%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/deployment-name: test-md-0
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	for _, mc := range machineConfigs {
+		kubectl.EXPECT().DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace)
+	}
+	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
 
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-kcp-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 100%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/control-plane: ""
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
-
----
-`, constants.EksaSystemNamespace)
-
-	mch, err := provider.GenerateMHC(givenClusterSpec(t, testClusterConfigMainFilename))
-	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
-	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
+	err := provider.DeleteResources(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
 }
 
 func TestChangeDiffNoChange(t *testing.T) {

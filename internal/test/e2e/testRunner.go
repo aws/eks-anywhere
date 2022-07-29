@@ -26,6 +26,7 @@ const (
 	govcPasswordKey            string = "GOVC_PASSWORD"
 	govcURLKey                 string = "GOVC_URL"
 	govcInsecure               string = "GOVC_INSECURE"
+	govcDatacenterKey          string = "GOVC_DATACENTER"
 	ssmActivationCodeKey       string = "ssm_activation_code"
 	ssmActivationIdKey         string = "ssm_activation_id"
 	ssmActivationRegionKey     string = "ssm_activation_region"
@@ -107,32 +108,20 @@ type VSphereTestRunner struct {
 func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 	envMap := make(map[string]string)
 	if vSphereUsername, ok := os.LookupEnv(testRunnerVCUserEnvVar); ok && len(vSphereUsername) > 0 {
-		if err := os.Setenv(govcUsernameKey, vSphereUsername); err != nil {
-			return nil, fmt.Errorf("unable to set %s: %v", govcUsernameKey, err)
-		}
 		envMap[govcUsernameKey] = vSphereUsername
 	} else {
 		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCUserEnvVar)
 	}
 
 	if vSpherePassword, ok := os.LookupEnv(testRunnerVCPasswordEnvVar); ok && len(vSpherePassword) > 0 {
-		if err := os.Setenv(govcPasswordKey, vSpherePassword); err != nil {
-			return nil, fmt.Errorf("unable to set %s: %v", govcPasswordKey, err)
-		}
 		envMap[govcPasswordKey] = vSpherePassword
 	} else {
 		return nil, fmt.Errorf("missing environment variable: %s", testRunnerVCPasswordEnvVar)
 	}
 
-	if err := os.Setenv(govcURLKey, v.Url); err != nil {
-		return nil, fmt.Errorf("unable to set %s: %v", govcURLKey, err)
-	}
 	envMap[govcURLKey] = v.Url
-
-	if err := os.Setenv(govcInsecure, strconv.FormatBool(v.Insecure)); err != nil {
-		return nil, fmt.Errorf("unable to set %s: %v", govcURLKey, err)
-	}
 	envMap[govcInsecure] = strconv.FormatBool(v.Insecure)
+	envMap[govcDatacenterKey] = v.Datacenter
 
 	v.envMap = envMap
 	return envMap, nil

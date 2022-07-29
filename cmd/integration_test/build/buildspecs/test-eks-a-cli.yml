@@ -20,6 +20,7 @@ env:
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
     VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
     T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
@@ -77,7 +78,6 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
     T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
-    T_TINKERBELL_NETWORK_CIDR: "tinkerbell_ci:network_cidr"
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
@@ -151,6 +151,7 @@ phases:
       - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
       - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
       - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - export GOVC_DATACENTER=${TEST_RUNNER_GOVC_DATACENTER}
       - export NODE_PREFIX=eksa-e2e-$CODEBUILD_BUILD_ID
       - >
         if [[ ${#NODE_PREFIX} -gt 80 ]] ; then

@@ -122,25 +122,25 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 			if newAz.ManagementApiEndpoint != oldAz.ManagementApiEndpoint {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "managementApiEndpoint"), newAz.ManagementApiEndpoint, "field is immutable"),
+					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "managementApiEndpoint"), newAz.ManagementApiEndpoint, "field is immutable"),
 				)
 			}
 			if newAz.Domain != oldAz.Domain {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "domain"), newAz.Domain, "field is immutable"),
+					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "domain"), newAz.Domain, "field is immutable"),
 				)
 			}
 			if newAz.Account != oldAz.Account {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "account"), newAz.Account, "field is immutable"),
+					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "account"), newAz.Account, "field is immutable"),
 				)
 			}
 			if !newAz.Zone.Equal(&oldAz.Zone) {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "zone"), newAz.Zone, "field is immutable"),
+					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "zone"), newAz.Zone, "field is immutable"),
 				)
 			}
 		}

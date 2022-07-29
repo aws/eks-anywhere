@@ -20,7 +20,7 @@ type Upgrade struct {
 	bootstrapper      interfaces.Bootstrapper
 	provider          providers.Provider
 	clusterManager    interfaces.ClusterManager
-	addonManager      interfaces.AddonManager
+	gitOpsManager     interfaces.GitOpsManager
 	writer            filewriter.FileWriter
 	capiManager       interfaces.CAPIManager
 	eksdInstaller     interfaces.EksdInstaller
@@ -30,14 +30,14 @@ type Upgrade struct {
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, eksdUpgrader interfaces.EksdUpgrader, eksdInstaller interfaces.EksdInstaller,
+	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager, writer filewriter.FileWriter, eksdUpgrader interfaces.EksdUpgrader, eksdInstaller interfaces.EksdInstaller,
 ) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
 		bootstrapper:      bootstrapper,
 		provider:          provider,
 		clusterManager:    clusterManager,
-		addonManager:      addonManager,
+		gitOpsManager:     gitOpsManager,
 		writer:            writer,
 		capiManager:       capiManager,
 		eksdUpgrader:      eksdUpgrader,
@@ -59,7 +59,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, management
 		Bootstrapper:      c.bootstrapper,
 		Provider:          c.provider,
 		ClusterManager:    c.clusterManager,
-		AddonManager:      c.addonManager,
+		GitOpsManager:     c.gitOpsManager,
 		ManagementCluster: managementCluster,
 		WorkloadCluster:   workloadCluster,
 		ClusterSpec:       clusterSpec,
@@ -109,7 +109,9 @@ type deleteBootstrapClusterTask struct {
 
 type updateClusterAndGitResources struct{}
 
-type resumeFluxReconcile struct{}
+type resumeEksaAndFluxReconcile struct {
+	eksaSpecDiff bool
+}
 
 type writeClusterConfigTask struct{}
 
@@ -204,7 +206,7 @@ func (s *ensureEtcdCAPIComponentsExistTask) Run(ctx context.Context, commandCont
 		commandContext.SetError(err)
 		return nil
 	}
-	return &upgradeCoreComponents{}
+	return &pauseEksaAndFluxReconcile{}
 }
 
 func (s *ensureEtcdCAPIComponentsExistTask) Name() string {
@@ -218,7 +220,7 @@ func (s *ensureEtcdCAPIComponentsExistTask) Checkpoint() *task.CompletedTask {
 }
 
 func (s *ensureEtcdCAPIComponentsExistTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &upgradeCoreComponents{}, nil
+	return &pauseEksaAndFluxReconcile{}, nil
 }
 
 func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -238,12 +240,12 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	if err = commandContext.AddonManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
+	if err = commandContext.GitOpsManager.Install(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec); err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.GitOpsManager.Upgrade(ctx, commandContext.ManagementCluster, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -295,7 +297,7 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 		return nil
 	} else if upgradeNeeded {
 		logger.V(3).Info("Provider needs a cluster upgrade")
-		return &pauseEksaAndFluxReconcile{}
+		return &createBootstrapClusterTask{}
 	}
 	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, commandContext.ManagementCluster, newSpec)
 	if err != nil {
@@ -305,10 +307,10 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 
 	if !diff {
 		logger.Info("No upgrades needed from cluster spec")
-		return nil
+		return &resumeEksaAndFluxReconcile{}
 	}
 
-	return &pauseEksaAndFluxReconcile{}
+	return &createBootstrapClusterTask{}
 }
 
 func (s *upgradeNeeded) Name() string {
@@ -322,7 +324,7 @@ func (s *upgradeNeeded) Checkpoint() *task.CompletedTask {
 }
 
 func (s *upgradeNeeded) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &pauseEksaAndFluxReconcile{}, nil
+	return &createBootstrapClusterTask{}, nil
 }
 
 func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -334,12 +336,12 @@ func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.Info("Pausing Flux kustomization")
-	err = commandContext.AddonManager.PauseGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.PauseGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	return &createBootstrapClusterTask{}
+	return &upgradeCoreComponents{}
 }
 
 func (s *pauseEksaAndFluxReconcile) Name() string {
@@ -353,7 +355,7 @@ func (s *pauseEksaAndFluxReconcile) Checkpoint() *task.CompletedTask {
 }
 
 func (s *pauseEksaAndFluxReconcile) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &createBootstrapClusterTask{}, nil
+	return &upgradeCoreComponents{}, nil
 }
 
 func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -544,21 +546,9 @@ func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-
-	logger.Info("Resuming EKS-A controller reconciliation")
-	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
+	return &resumeEksaAndFluxReconcile{
+		eksaSpecDiff: true,
 	}
-
-	logger.Info("Updating Git Repo with new EKS-A cluster spec")
-	err = commandContext.AddonManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
-	return &resumeFluxReconcile{}
 }
 
 func (s *updateClusterAndGitResources) Name() string {
@@ -572,37 +562,59 @@ func (s *updateClusterAndGitResources) Checkpoint() *task.CompletedTask {
 }
 
 func (s *updateClusterAndGitResources) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
-	return &resumeFluxReconcile{}, nil
+	return &resumeEksaAndFluxReconcile{
+		eksaSpecDiff: true,
+	}, nil
 }
 
-func (s *resumeFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+func (s *resumeEksaAndFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
+	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
+
+	logger.Info("Resuming EKS-A controller reconciliation")
+	err := commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec, commandContext.Provider)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
+	logger.Info("Updating Git Repo with new EKS-A cluster spec")
+	err = commandContext.GitOpsManager.UpdateGitEksaSpec(ctx, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+
 	logger.Info("Forcing reconcile Git repo with latest commit")
-	err := commandContext.AddonManager.ForceReconcileGitRepo(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.ForceReconcileGitRepo(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
 	logger.Info("Resuming Flux kustomization")
-	err = commandContext.AddonManager.ResumeGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
+	err = commandContext.GitOpsManager.ResumeGitOpsKustomization(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &writeClusterConfigTask{}
 	}
+	if !s.eksaSpecDiff {
+		return nil
+	}
 	return &writeClusterConfigTask{}
 }
 
-func (s *resumeFluxReconcile) Name() string {
-	return "resume-flux-kustomization"
+func (s *resumeEksaAndFluxReconcile) Name() string {
+	return "resume-eksa-and-flux-kustomization"
 }
 
-func (s *resumeFluxReconcile) Checkpoint() *task.CompletedTask {
+func (s *resumeEksaAndFluxReconcile) Checkpoint() *task.CompletedTask {
 	return &task.CompletedTask{
 		Checkpoint: nil,
 	}
 }
 
-func (s *resumeFluxReconcile) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+func (s *resumeEksaAndFluxReconcile) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
 	return &writeClusterConfigTask{}, nil
 }
 
