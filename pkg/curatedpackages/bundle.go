@@ -11,7 +11,6 @@ import (
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -30,21 +29,17 @@ type BundleRegistry interface {
 type BundleReader struct {
 	kubeConfig    string
 	source        BundleSource
-	kubeVersion   string
 	kubectl       KubectlRunner
 	bundleManager Manager
-	cliVersion    version.Info
 	registry      BundleRegistry
 }
 
-func NewBundleReader(kubeConfig, kubeVersion string, source BundleSource, k KubectlRunner, bm Manager, cli version.Info, reg BundleRegistry) *BundleReader {
+func NewBundleReader(kubeConfig string, source BundleSource, k KubectlRunner, bm Manager, reg BundleRegistry) *BundleReader {
 	return &BundleReader{
 		kubeConfig:    kubeConfig,
-		kubeVersion:   kubeVersion,
 		source:        source,
 		kubectl:       k,
 		bundleManager: bm,
-		cliVersion:    cli,
 		registry:      reg,
 	}
 }
