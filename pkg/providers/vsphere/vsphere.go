@@ -230,8 +230,8 @@ func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1a
 	return false, nil
 }
 
-func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.Server, p.clusterConfig)
+func (p *vsphereProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return common.BootstrapClusterOpts(p.clusterConfig, p.datacenterConfig.Spec.Server)
 }
 
 func (p *vsphereProvider) Name() string {

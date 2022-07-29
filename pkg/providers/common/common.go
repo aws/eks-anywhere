@@ -30,18 +30,19 @@ func GetAuditPolicy() string {
 	return auditPolicy
 }
 
-func BootstrapClusterOpts(serverEndpoint string, clusterConfig *v1alpha1.Cluster) ([]bootstrapper.BootstrapClusterOption, error) {
+func BootstrapClusterOpts(clusterConfig *v1alpha1.Cluster, serverEndpoints ...string) ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
 	if clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxy := fmt.Sprintf("%s,%s", clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, serverEndpoint)
+		noProxyes := append([]string{}, serverEndpoints...)
+		noProxyes = append(noProxyes, clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host)
 		for _, s := range clusterConfig.Spec.ProxyConfiguration.NoProxy {
 			if s != "" {
-				noProxy += "," + s
+				noProxyes = append(noProxyes, s)
 			}
 		}
 		env["HTTP_PROXY"] = clusterConfig.Spec.ProxyConfiguration.HttpProxy
 		env["HTTPS_PROXY"] = clusterConfig.Spec.ProxyConfiguration.HttpsProxy
-		env["NO_PROXY"] = noProxy
+		env["NO_PROXY"] = strings.Join(noProxyes, ",")
 	}
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }

@@ -563,8 +563,9 @@ func TestUpdateKubeConfig(t *testing.T) {
 
 func TestBootstrapClusterOpts(t *testing.T) {
 	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
 
-	bootstrapClusterOps, err := provider.BootstrapClusterOpts()
+	bootstrapClusterOps, err := provider.BootstrapClusterOpts(clusterSpec)
 	if err != nil {
 		t.Fatalf("failed BootstrapClusterOpts: %v", err)
 	}
@@ -1717,6 +1718,30 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	if err := provider.InstallCustomProviderComponents(ctx, kubeConfigFile); err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
+}
+
+func TestProviderDeleteResources(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.ManagementCluster = &types.Cluster{
+		KubeconfigFile: "testKubeConfig",
+	}
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	for _, mc := range machineConfigs {
+		kubectl.EXPECT().DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace)
+	}
+	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
+
+	provider.DeleteResources(ctx, clusterSpec)
 }
 
 func TestProviderUpdateSecrets(t *testing.T) {
