@@ -18,21 +18,22 @@ import (
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/types"
 )
 
-func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[string]*types.DisplayConfiguration {
+func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) (map[string]*types.DisplayConfiguration, error) {
 	configs := make(map[string]*types.DisplayConfiguration)
-	if bundlePackage == nil || len(bundlePackage.Source.Versions) < 1 {
-		return configs
+	if bundlePackage == nil {
+		return nil, fmt.Errorf("non existent package")
+	}
+	if len(bundlePackage.Source.Versions) < 1 {
+		return nil, fmt.Errorf("package %s doesn't have enough versions", bundlePackage.Name)
 	}
 	jsonSchema, err := getJsonSchemaFromBundle(bundlePackage)
 	if err != nil {
-		// TODO: Should probably log an error here
-		return configs
+		return nil, fmt.Errorf("parsing schema %v", err)
 	}
 	schemaObj := &types.Schema{}
 	err = json.Unmarshal(jsonSchema, schemaObj)
 	if err != nil {
-		// TODO: Should probably log an error here
-		return configs
+		return nil, fmt.Errorf("unmarshalling json schema to an object %v", err)
 	}
 
 	for key, prop := range schemaObj.Properties {
@@ -48,7 +49,7 @@ func GetConfigurationsFromBundle(bundlePackage *packagesv1.BundlePackage) map[st
 			v.Required = true
 		}
 	}
-	return configs
+	return configs, nil
 }
 
 func UpdateConfigurations(originalConfigs map[string]*types.DisplayConfiguration, newConfigs map[string]string) error {

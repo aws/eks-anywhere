@@ -48,32 +48,36 @@ func newConfigurationTest(t *testing.T) *configurationTest {
 
 func TestGetConfigurationsFromBundleSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
+	tt.Expect(err).To(BeNil())
 	tt.Expect(len(configs)).To(Equal(5))
 }
 
 func TestGetConfigurationsFromBundleFail(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(nil)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(nil)
 
-	tt.Expect(len(configs)).To(Equal(0))
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(configs).To(BeNil())
 }
 
 func TestGetConfigurationsFromBundleFailWhenNoConfigs(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.invalidbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.invalidbp)
 
-	tt.Expect(len(configs)).To(Equal(0))
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(configs).To(BeNil())
 }
 
 func TestUpdateConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	tt.Expect(err).To(BeNil())
 	newConfigs := make(map[string]string)
 	newConfigs["sourceRegistry"] = "127.0.0.1:8080"
 
-	err := curatedpackages.UpdateConfigurations(configs, newConfigs)
+	err = curatedpackages.UpdateConfigurations(configs, newConfigs)
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(configs["sourceRegistry"].Default).To(Equal(newConfigs["sourceRegistry"]))
@@ -81,18 +85,19 @@ func TestUpdateConfigurationsSuccess(t *testing.T) {
 
 func TestUpdateConfigurationsFail(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	tt.Expect(err).To(BeNil())
 	newConfigs := make(map[string]string)
 	newConfigs["registry"] = "127.0.0.1:8080"
 
-	err := curatedpackages.UpdateConfigurations(configs, newConfigs)
-
+	err = curatedpackages.UpdateConfigurations(configs, newConfigs)
 	tt.Expect(err).NotTo(BeNil())
 }
 
 func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	tt.Expect(err).To(BeNil())
 
 	output, err := curatedpackages.GenerateAllValidConfigurations(configs)
 	tt.Expect(err).To(BeNil())
@@ -108,7 +113,8 @@ func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 
 func TestGenerateDefaultConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
+	tt.Expect(err).To(BeNil())
 
 	output := curatedpackages.GenerateDefaultConfigurations(configs)
 	expectedOutput := fmt.Sprintf("%s: %s\n",

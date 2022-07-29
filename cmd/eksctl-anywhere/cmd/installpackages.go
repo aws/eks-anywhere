@@ -95,7 +95,10 @@ func installPackages(ctx context.Context, args []string) error {
 	}
 
 	if ipo.showOptions {
-		configs := curatedpackages.GetConfigurationsFromBundle(p)
+		configs, err := curatedpackages.GetConfigurationsFromBundle(p)
+		if err != nil {
+			return err
+		}
 		curatedpackages.DisplayConfigurationOptions(configs)
 		return nil
 	}

@@ -139,7 +139,10 @@ func (pc *PackageClient) getInstallConfigurations(bp *packagesv1.BundlePackage) 
 		return "", err
 	}
 
-	configs := GetConfigurationsFromBundle(bp)
+	configs, err := GetConfigurationsFromBundle(bp)
+	if err != nil {
+		return "", err
+	}
 
 	err = UpdateConfigurations(configs, installConfigs)
 	if err != nil {
@@ -151,7 +154,10 @@ func (pc *PackageClient) getInstallConfigurations(bp *packagesv1.BundlePackage) 
 }
 
 func (pc *PackageClient) getGenerateConfigurations(bp *packagesv1.BundlePackage) string {
-	configs := GetConfigurationsFromBundle(bp)
+	configs, err := GetConfigurationsFromBundle(bp)
+	if err != nil {
+		return ""
+	}
 	configString := GenerateDefaultConfigurations(configs)
 	return configString
 }
