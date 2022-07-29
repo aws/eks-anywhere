@@ -1741,7 +1741,10 @@ func TestProviderDeleteResources(t *testing.T) {
 	}
 	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
 
-	provider.DeleteResources(ctx, clusterSpec)
+	err := provider.DeleteResources(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
 }
 
 func TestProviderUpdateSecrets(t *testing.T) {
