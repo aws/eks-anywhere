@@ -4,6 +4,9 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+
+	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/cmdvalidations"
 )
 
 type validateOptions struct {
@@ -29,5 +32,12 @@ func init() {
 }
 
 func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
+
+	runner := validations.NewRunner()
+	runner.Register(cmdvalidations.PackageDockerValidations(ctx)...)
+	runner.StoreValidationResults()
+	runner.ReportResults()
+
 	return nil
 }
