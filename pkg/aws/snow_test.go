@@ -91,7 +91,7 @@ func TestBuildSnowAwsClientMap(t *testing.T) {
 			t.Setenv(aws.EksaAwsCredentialsFileKey, tt.credsFilePath)
 			t.Setenv(aws.EksaAwsCABundlesFileKey, tt.certsFilePath)
 
-			_, err := clientBuilder.BuildSnowAwsClientMap(ctx)
+			_, err := clientBuilder.Build(ctx)
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
 			} else {
