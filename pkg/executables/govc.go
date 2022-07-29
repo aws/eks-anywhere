@@ -559,7 +559,7 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 	var params []string
 	var result bytes.Buffer
 
-	params = strings.Fields("find -type VirtualMachine -name " + clusterName + "*")
+	params = strings.Fields("find /" + envMap[govcDatacenterKey] + " -type VirtualMachine -name " + clusterName + "*")
 	result, err = g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return fmt.Errorf("getting vm list: %v", err)
@@ -572,10 +572,18 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 			continue
 		}
 		params = strings.Fields("vm.power -off -force " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to power off vm ", "vm_name", vmName, "error", err)
+		}
+
 		params = strings.Fields("object.destroy " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
-		logger.Info("Deleted ", "vm_name", vmName)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to delete vm ", "vm_name", vmName, "error", err)
+		} else {
+			logger.Info("Deleted ", "vm_name", vmName)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
