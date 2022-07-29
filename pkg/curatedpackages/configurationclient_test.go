@@ -62,6 +62,14 @@ func TestGetConfigurationsFromBundleFail(t *testing.T) {
 	tt.Expect(configs).To(BeNil())
 }
 
+func TestGetConfigurationsFromBundleWhenNoVersions(t *testing.T) {
+	tt := newConfigurationTest(t)
+	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.invalidbp)
+
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(configs).To(BeNil())
+}
+
 func TestGetConfigurationsFromBundleFailWhenNoConfigs(t *testing.T) {
 	tt := newConfigurationTest(t)
 	configs, err := curatedpackages.GetConfigurationsFromBundle(tt.invalidbp)

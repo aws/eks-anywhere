@@ -144,7 +144,10 @@ func getJsonSchemaFromBundle(bundlePackage *packagesv1.BundlePackage) ([]byte, e
 	// The package configuration is gzipped and base64 encoded
 	// When processing the configuration, the reverse occurs: base64 decode, then unzip
 	configuration := bundlePackage.Source.Versions[0].Configurations[0].Default
-	decodedConfiguration, _ := base64.StdEncoding.DecodeString(configuration)
+	decodedConfiguration, err := base64.StdEncoding.DecodeString(configuration)
+	if err != nil {
+		return nil, fmt.Errorf("decoding configuration")
+	}
 	reader := bytes.NewReader(decodedConfiguration)
 	gzreader, err := gzip.NewReader(reader)
 	if err != nil {
