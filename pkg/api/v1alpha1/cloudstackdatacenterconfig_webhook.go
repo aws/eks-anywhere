@@ -110,41 +110,41 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	var allErrs field.ErrorList
 
 	// Check for CAPC v1beta1 -> CAPC v1beta2 upgrade
-	//if isCapcV1beta1ToV1beta2Upgrade(&new.Spec, &old.Spec) {
-	//	return allErrs
-	//}
-	//var newAzMap map[string]*CloudStackAvailabilityZone
-	//for _, az := range new.Spec.AvailabilityZones {
-	//	newAzMap[az.Name] = &az
-	//}
-	//for _, oldAz := range old.Spec.AvailabilityZones {
-	//	if newAz, ok := newAzMap[oldAz.Name]; ok {
-	//		if newAz.ManagementApiEndpoint != oldAz.ManagementApiEndpoint {
-	//			allErrs = append(
-	//				allErrs,
-	//				field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "managementApiEndpoint"), newAz.ManagementApiEndpoint, "field is immutable"),
-	//			)
-	//		}
-	//		if newAz.Domain != oldAz.Domain {
-	//			allErrs = append(
-	//				allErrs,
-	//				field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "domain"), newAz.Domain, "field is immutable"),
-	//			)
-	//		}
-	//		if newAz.Account != oldAz.Account {
-	//			allErrs = append(
-	//				allErrs,
-	//				field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "account"), newAz.Account, "field is immutable"),
-	//			)
-	//		}
-	//		if !newAz.Zone.Equal(&oldAz.Zone) {
-	//			allErrs = append(
-	//				allErrs,
-	//				field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "zone"), newAz.Zone, "field is immutable"),
-	//			)
-	//		}
-	//	}
-	//}
+	if isCapcV1beta1ToV1beta2Upgrade(&new.Spec, &old.Spec) {
+		return allErrs
+	}
+	newAzMap := make(map[string]*CloudStackAvailabilityZone)
+	for _, az := range new.Spec.AvailabilityZones {
+		newAzMap[az.Name] = &az
+	}
+	for _, oldAz := range old.Spec.AvailabilityZones {
+		if newAz, ok := newAzMap[oldAz.Name]; ok {
+			if newAz.ManagementApiEndpoint != oldAz.ManagementApiEndpoint {
+				allErrs = append(
+					allErrs,
+					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "managementApiEndpoint"), newAz.ManagementApiEndpoint, "field is immutable"),
+				)
+			}
+			if newAz.Domain != oldAz.Domain {
+				allErrs = append(
+					allErrs,
+					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "domain"), newAz.Domain, "field is immutable"),
+				)
+			}
+			if newAz.Account != oldAz.Account {
+				allErrs = append(
+					allErrs,
+					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "account"), newAz.Account, "field is immutable"),
+				)
+			}
+			if !newAz.Zone.Equal(&oldAz.Zone) {
+				allErrs = append(
+					allErrs,
+					field.Invalid(field.NewPath("spec","availabilityZone", oldAz.Name, "zone"), newAz.Zone, "field is immutable"),
+				)
+			}
+		}
+	}
 
 	return allErrs
 }

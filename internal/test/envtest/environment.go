@@ -6,6 +6,7 @@ import (
 	"path"
 	"path/filepath"
 	goruntime "runtime"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	"strings"
 	"testing"
 
@@ -43,6 +44,7 @@ func init() {
 	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))

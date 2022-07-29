@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -o main ./manager
 
 # Build
-ARG package=./controllers
+ARG package=./manager
 ARG ARCH
 ARG ldflags
 

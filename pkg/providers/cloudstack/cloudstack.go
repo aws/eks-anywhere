@@ -641,6 +641,9 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
+	if clusterSpec.CloudStackDatacenter == nil {
+		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to build template map CP")
+	}
 	values := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
