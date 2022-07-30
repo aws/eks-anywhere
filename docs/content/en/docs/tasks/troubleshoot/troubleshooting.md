@@ -61,6 +61,32 @@ Ensure you are running Docker Desktop 4.4.2 or newer and have set `"deprecatedCg
 "1"
 ```
 
+### cgroups v2 is not supported in Ubuntu 21.10+ and 22.04
+```
+ERROR: failed to create cluster: could not find a log line that matches "Reached target .*Multi-User System.*|detected cgroup v1"
+```
+It is recommended to use Ubuntu 20.04 for the Administrative Machine. This is because the EKS Anywhere Bootstrap cluster requires _cgroups v1_. Since Ubuntu 21.10 _cgroups v2_ is enabled by default. You can use Ubuntu 21.10 and 22.04 for the Administrative machine if you configure Ubuntu to use _cgroups v1_ instead.
+
+To verify cgroups version
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 2
+```
+To use _cgroups v1_ you need to _sudo_ and edit _/etc/default/grub_ to set _GRUB_CMDLINE_LINUX_ to "systemd.unified_cgroup_hierarchy=0" and reboot.
+```
+%sudo <editor> /etc/default/group
+GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"
+
+sudo reboot now
+```
+Then verify you are using _cgroups v1_.
+```
+% docker info | grep Cgroup
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 1
+```
+
 ### ECR access denied
 
 ```
