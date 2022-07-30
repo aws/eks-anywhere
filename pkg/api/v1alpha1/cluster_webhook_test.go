@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -1173,8 +1172,7 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 	cluster.SetSelfManaged()
 	err := cluster.ValidateCreate()
 	g.Expect(err).NotTo(Succeed())
-	g.Expect(err).To(MatchError(ContainSubstring("cluster on existing cluster is not supported")))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
 func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
@@ -1184,8 +1182,7 @@ func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
 	cluster.SetManagedBy("mgmt2")
 	err := cluster.ValidateCreate()
 	g.Expect(err).NotTo(Succeed())
-	g.Expect(err.Error()).To(ContainSubstring("cluster on existing cluster is not supported"))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err.Error()).To(ContainSubstring("creating new managed cluster on existing cluster is not supported"))
 }
 
 func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
@@ -1196,8 +1193,7 @@ func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 
 	g := NewWithT(t)
 	err := cluster.ValidateCreate()
-	g.Expect(err).To(MatchError(ContainSubstring("not supported for self managed clusters")))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
 func TestClusterValidateCreateInvalidCluster(t *testing.T) {
@@ -1215,13 +1211,6 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			featureGateEnabled: false,
 		},
 		{
-			name: "Unpaused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			}),
-			featureGateEnabled: false,
-		},
-		{
 			name: "Paused workload cluster, feature gate off",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
@@ -1230,24 +1219,10 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			featureGateEnabled: false,
 		},
 		{
-			name: "Unpaused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
-		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
-			}),
-			featureGateEnabled: true,
-		},
-		{
-			name: "Unpaused self-managed cluster, feature gate on",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
 			}),
 			featureGateEnabled: true,
 		},
@@ -1280,7 +1255,6 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			g := NewWithT(t)
 			err := tt.cluster.ValidateCreate()
 			g.Expect(err).To(MatchError(ContainSubstring("control plane node count must be positive")))
-			g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
 		})
 	}
 }
@@ -1589,17 +1563,6 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	g := NewWithT(t)
 	err := cNew.ValidateUpdate(cOld)
 	g.Expect(err).To(MatchError(ContainSubstring("upgrading self managed clusters is not supported")))
-}
-
-func TestBuildStatusError(t *testing.T) {
-	var allErrs []error
-	allErrs = append(allErrs, fmt.Errorf("cluster is not valid"))
-	allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
-
-	err := v1alpha1.BuildStatusError(v1alpha1.GroupVersion.WithKind(v1alpha1.ClusterKind).GroupKind(), "clusterName", allErrs)
-
-	ContainSubstring(err.Error(), "cluster is not valid", "creating new cluster on existing cluster is not supported for self managed clusters",
-		"clusterName is invalid")
 }
 
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
