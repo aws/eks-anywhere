@@ -104,7 +104,7 @@ func (d dummyProviderReconcilerRegistry) Get(_ string) clusters.ProviderClusterR
 
 type dummyProviderReconciler struct{}
 
-func (dummyProviderReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	return controller.Result{}, nil
 }
 

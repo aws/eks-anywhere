@@ -101,7 +101,7 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 	return nil
 }
 
-func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
 	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
 	if err := v.Client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
@@ -109,11 +109,11 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config
 	if err := SetupEnvVars(ctx, dataCenterConfig, v.Client); err != nil {
-		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
+		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return controller.Result{}, err
 	}
 	if !dataCenterConfig.Status.SpecValid {
-		v.Log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
+		log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
 		return controller.Result{
 			Result: &ctrl.Result{
 				Requeue:      true,
@@ -133,7 +133,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	v.Log.V(4).Info("Fetching cluster spec")
+	log.V(4).Info("Fetching cluster spec")
 	specWithBundles, err := c.BuildSpec(ctx, clientutil.NewKubeClient(v.Client), cluster)
 	if err != nil {
 		return controller.Result{}, err
@@ -181,9 +181,9 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 
 		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
 	}
-	v.Log.Info("cluster", "name", cluster.Name)
+	log.Info("cluster", "name", cluster.Name)
 
-	if result, err := v.reconcileControlPlaneSpec(ctx, cluster, templateBuilder, specWithBundles, cpOpt); err != nil {
+	if result, err := v.reconcileControlPlaneSpec(ctx, cluster, templateBuilder, specWithBundles, cpOpt, log); err != nil {
 		return result, err
 	}
 
@@ -191,7 +191,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, err
 	}
 
-	capiCluster, result, errCAPICLuster := v.getCAPICluster(ctx, cluster)
+	capiCluster, result, errCAPICLuster := v.getCAPICluster(ctx, cluster, log)
 	if errCAPICLuster != nil {
 		return result, errCAPICLuster
 	}
@@ -199,7 +199,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	// wait for etcd if necessary
 	if cluster.Spec.ExternalEtcdConfiguration != nil {
 		if !conditions.Has(capiCluster, managedEtcdReadyCondition) || conditions.IsFalse(capiCluster, managedEtcdReadyCondition) {
-			v.Log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
+			log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
 			return controller.Result{Result: &ctrl.Result{
 				RequeueAfter: defaultRequeueTime,
 			}}, nil
@@ -207,7 +207,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 
 	if !conditions.IsTrue(capiCluster, controlPlaneReadyCondition) {
-		v.Log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
+		log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
 		return controller.Result{Result: &ctrl.Result{
 			RequeueAfter: defaultRequeueTime,
 		}}, err
@@ -217,16 +217,16 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, err
 	}
 
-	if result, err := v.reconcileCNI(ctx, cluster, capiCluster, specWithBundles); err != nil {
+	if result, err := v.reconcileCNI(ctx, cluster, capiCluster, specWithBundles, log); err != nil {
 		return result, err
 	}
 
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec) (controller.Result, error) {
+func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec, log logr.Logger) (controller.Result, error) {
 	if !conditions.Has(cluster, cniSpecAppliedCondition) || conditions.IsFalse(capiCluster, cniSpecAppliedCondition) {
-		v.Log.Info("Getting remote client", "client for cluster", capiCluster.Name)
+		log.Info("Getting remote client", "client for cluster", capiCluster.Name)
 		key := client.ObjectKey{
 			Namespace: capiCluster.Namespace,
 			Name:      capiCluster.Name,
@@ -236,7 +236,7 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 			return controller.Result{}, err
 		}
 
-		v.Log.Info("About to apply CNI")
+		log.Info("About to apply CNI")
 
 		helm := executables.NewHelm(executables.NewExecutable("helm"), executables.WithInsecure())
 		cilium := cilium.NewCilium(nil, helm)
@@ -270,10 +270,10 @@ func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cl
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster) (*clusterv1.Cluster, controller.Result, error) {
+func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (*clusterv1.Cluster, controller.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
-	v.Log.Info("Searching for CAPI cluster", "name", cluster.Name)
+	log.Info("Searching for CAPI cluster", "name", cluster.Name)
 	if err := v.Client.Get(ctx, capiClusterName, capiCluster); err != nil {
 		return nil, controller.Result{Result: &ctrl.Result{
 			Requeue:      true,
@@ -302,9 +302,9 @@ func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(
 	return controller.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *c.Spec, cpOpt func(values map[string]interface{})) (controller.Result, error) {
+func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *c.Spec, cpOpt func(values map[string]interface{}), log logr.Logger) (controller.Result, error) {
 	if !conditions.IsTrue(cluster, controlSpecPlaneAppliedCondition) {
-		v.Log.Info("Applying control plane spec", "name", cluster.Name)
+		log.Info("Applying control plane spec", "name", cluster.Name)
 		controlPlaneSpec, err := templateBuilder.GenerateCAPISpecControlPlane(specWithBundles, cpOpt)
 		if err != nil {
 			return controller.Result{}, err
