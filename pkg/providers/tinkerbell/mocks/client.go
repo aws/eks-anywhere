@@ -288,7 +288,7 @@ func (mr *MockProviderKubectlClientMockRecorder) WaitForBaseboardManagements(arg
 }
 
 // WaitForDeployment mocks base method.
-func (m *MockProviderKubectlClient) WaitForDeployment(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4, arg5 string) error {
+func (m *MockProviderKubectlClient) WaitForDeployment(arg0 context.Context, arg1, arg2, arg3, arg4, arg5 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaitForDeployment", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)

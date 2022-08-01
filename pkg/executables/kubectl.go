@@ -338,8 +338,8 @@ func (k *Kubectl) WaitForService(ctx context.Context, kubeconfig string, timeout
 	}
 }
 
-func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
+func (k *Kubectl) WaitForDeployment(ctx context.Context, kubeconfig string, timeout string, condition string, target string, namespace string) error {
+	return k.Wait(ctx, kubeconfig, timeout, condition, "deployments/"+target, namespace)
 }
 
 func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {

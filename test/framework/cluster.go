@@ -161,7 +161,11 @@ func ExpectFailure(expected bool) ClusterE2ETestOpt {
 }
 
 func WithControlPlaneHardware(requiredCount int) ClusterE2ETestOpt {
-	return withHardware(requiredCount, api.ControlPlane, map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane})
+	return withHardware(
+		requiredCount,
+		api.ControlPlane,
+		map[string]string{api.HardwareLabelTypeKeyName: api.ControlPlane},
+	)
 }
 
 func WithWorkerHardware(requiredCount int) ClusterE2ETestOpt {
@@ -173,7 +177,11 @@ func WithCustomLabelHardware(requiredCount int, label string) ClusterE2ETestOpt 
 }
 
 func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
-	return withHardware(requiredCount, api.ExternalEtcd, map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd})
+	return withHardware(
+		requiredCount,
+		api.ExternalEtcd,
+		map[string]string{api.HardwareLabelTypeKeyName: api.ExternalEtcd},
+	)
 }
 
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
@@ -379,11 +387,22 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 			time.Sleep(5 * time.Second)
 			timeout = timeout - 5
 			powerState, err = bmcClient.GetPowerState(ctx)
-			e.T.Logf("hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s", h.MACAddress, h.Hostname, h.BMCIPAddress, powerState)
+			e.T.Logf(
+				"hardware power state (id=%s, hostname=%s, bmc_ip=%s): power_state=%s",
+				h.MACAddress,
+				h.Hostname,
+				h.BMCIPAddress,
+				powerState,
+			)
 		}
 
 		if !strings.EqualFold(powerState, string(rapi.Off)) {
-			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
+			e.T.Logf(
+				"failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s",
+				h.MACAddress,
+				h.Hostname,
+				h.BMCIPAddress,
+			)
 			failedToDecomm = append(failedToDecomm, h)
 		} else {
 			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.MACAddress, h.Hostname, h.BMCIPAddress)
@@ -452,7 +471,15 @@ func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opt
 }
 
 func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
-	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
+	generateClusterConfigArgs := []string{
+		"generate",
+		"clusterconfig",
+		e.ClusterName,
+		"-p",
+		e.Provider.Name(),
+		">",
+		e.ClusterConfigLocation,
+	}
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
@@ -821,7 +848,11 @@ func setEksctlVersionEnvVar() error {
 	if eksctlVersionEnv == "" {
 		err := os.Setenv(eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
 		if err != nil {
-			return fmt.Errorf("couldn't set eksctl version env var %s to value %s", eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
+			return fmt.Errorf(
+				"couldn't set eksctl version env var %s to value %s",
+				eksctlVersionEnvVar,
+				eksctlVersionEnvVarDummyVal,
+			)
 		}
 	}
 	return nil
@@ -961,7 +992,7 @@ func (e *ClusterE2ETest) VerifyHarborPackageInstalled(prefix string) {
 		go func(name string) {
 			defer wg.Done()
 			err := e.KubectlClient.WaitForDeployment(ctx,
-				e.cluster(), "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), ns)
+				e.cluster().KubeconfigFile, "5m", "Available", fmt.Sprintf("%s-harbor-%s", prefix, name), ns)
 			if err != nil {
 				errCh <- err
 			}
@@ -1004,7 +1035,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	// environments, the pod might not be running when the port-forward is
 	// attempted, and that will cause the port-forward to fail.
 	err = e.KubectlClient.WaitForDeployment(ctx,
-		e.cluster(), "5m", "Available", "hello-eks-anywhere", ns)
+		e.cluster().KubeconfigFile, "5m", "Available", "hello-eks-anywhere", ns)
 	if err != nil {
 		e.T.Fatalf("waiting for hello-eks-anywhere pod timed out: %s", err)
 	}

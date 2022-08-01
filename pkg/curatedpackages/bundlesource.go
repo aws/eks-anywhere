@@ -12,8 +12,8 @@ BundleSource implements Value interface from cobra to provide validation for cus
 type BundleSource string
 
 const (
-	Cluster  = "cluster"
-	Registry = "registry"
+	Cluster  BundleSource = "cluster"
+	Registry BundleSource = "registry"
 )
 
 func (b BundleSource) String() string {

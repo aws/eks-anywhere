@@ -139,14 +139,14 @@ func TestClusterManagerCAPIWaitForDeploymentStackedEtcd(t *testing.T) {
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecStackedEtcd, clusterObj, m.provider)
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
-			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	providerDeployments := map[string][]string{}
 	m.provider.EXPECT().GetDeployments().Return(providerDeployments)
 	for namespace, deployments := range providerDeployments {
 		for _, deployment := range deployments {
-			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	if err := c.InstallCAPI(ctx, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
@@ -164,19 +164,19 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecExternalEtcd, clusterObj, m.provider)
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
-			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	for namespace, deployments := range internal.ExternalEtcdDeployments {
 		for _, deployment := range deployments {
-			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	providerDeployments := map[string][]string{}
 	m.provider.EXPECT().GetDeployments().Return(providerDeployments)
 	for namespace, deployments := range providerDeployments {
 		for _, deployment := range deployments {
-			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	if err := c.InstallCAPI(ctx, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
@@ -470,7 +470,7 @@ func TestClusterManagerUpgradeSelfManagedClusterSuccess(t *testing.T) {
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
@@ -515,7 +515,7 @@ func TestClusterManagerUpgradeSelfManagedClusterWithUnstackedEtcdSuccess(t *test
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(8)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(8)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
@@ -560,7 +560,7 @@ func TestClusterManagerUpgradeSelfManagedClusterWithUnstackedEtcdTimeoutNotReady
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(8)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(8)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
@@ -660,7 +660,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, mCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
@@ -698,7 +698,7 @@ func TestClusterManagerUpgradeCloudStackWorkloadClusterSuccess(t *testing.T) {
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, mCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
@@ -736,7 +736,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMDReadyErrorOnce(t *testing.
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	// Fail once
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, mCluster.Name, mCluster.KubeconfigFile).Times(1).Return(0, 0, errors.New("error counting MD replicas"))
@@ -777,7 +777,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMDReadyUnreadyOnce(t *testin
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	// Return 0 and 1 for ready and total replicas once
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, mCluster.Name, mCluster.KubeconfigFile).Times(1).Return(0, 1, nil)
@@ -850,7 +850,7 @@ func TestClusterManagerUpgradeWorkloadClusterGetMachineDeploymentError(t *testin
 	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", mgmtClusterName)
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(nil, errors.New("get md err"))
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	tt.mocks.writer.EXPECT().Write(mgmtClusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, mCluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(nil, nil)
@@ -884,7 +884,7 @@ func TestClusterManagerUpgradeWorkloadClusterRemoveOldWorkerNodeGroupsError(t *t
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile).Return(errors.New("delete wng error"))
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
 	tt.mocks.writer.EXPECT().Write(mgmtClusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, mCluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(nil, nil)
@@ -924,7 +924,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesFailedWithUnhealthyN
 	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
 	tt.mocks.client.EXPECT().WaitForControlPlaneReady(tt.ctx, mCluster, "1h0m0s", clusterName).MaxTimes(5)
 	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", clusterName)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	// Return a machine with no nodeRef the rest of the retries
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).MinTimes(1).Return(machines, nil)
@@ -957,7 +957,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
 	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
-	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster.KubeconfigFile, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
 	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
@@ -1635,7 +1635,7 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 
 	for namespace, deployments := range internal.EksaDeployments {
 		for _, deployment := range deployments {
-			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
@@ -1655,7 +1655,7 @@ func TestClusterManagerInstallCustomComponentsSuccessWithFullLifecycleAPI(t *tes
 
 	for namespace, deployments := range internal.EksaDeployments {
 		for _, deployment := range deployments {
-			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster.KubeconfigFile, "30m", "Available", deployment, namespace)
 		}
 	}
 	tt.mocks.client.EXPECT().SetEksaControllerEnvVar(tt.ctx, features.FullLifecycleAPIEnvVar, "true", tt.cluster.KubeconfigFile)

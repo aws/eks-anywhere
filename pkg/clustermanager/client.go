@@ -18,7 +18,7 @@ func NewClient(clusterClient ClusterClient) *client {
 func (c *client) waitForDeployments(ctx context.Context, deploymentsByNamespace map[string][]string, cluster *types.Cluster) error {
 	for namespace, deployments := range deploymentsByNamespace {
 		for _, deployment := range deployments {
-			err := c.WaitForDeployment(ctx, cluster, deploymentWaitStr, "Available", deployment, namespace)
+			err := c.WaitForDeployment(ctx, cluster.KubeconfigFile, deploymentWaitStr, "Available", deployment, namespace)
 			if err != nil {
 				return fmt.Errorf("waiting for %s in namespace %s: %v", deployment, namespace, err)
 			}

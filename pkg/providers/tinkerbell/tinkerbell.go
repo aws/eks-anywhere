@@ -81,7 +81,7 @@ type ProviderKubectlClient interface {
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
-	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
+	WaitForDeployment(ctx context.Context, kubeconfig string, timeout string, condition string, target string, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetProvisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 	WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error

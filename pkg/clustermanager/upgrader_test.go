@@ -80,7 +80,7 @@ func TestUpgraderUpgradeSuccess(t *testing.T) {
 	}
 
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, []byte("test data")).Return(nil)
-	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m", "Available", "eksa-controller-manager", "eksa-system")
+	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster.KubeconfigFile, "30m", "Available", "eksa-controller-manager", "eksa-system")
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 

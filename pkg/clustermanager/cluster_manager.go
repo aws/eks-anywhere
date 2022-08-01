@@ -87,7 +87,7 @@ type ClusterClient interface {
 	DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error
 	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
-	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
+	WaitForDeployment(ctx context.Context, kubeconfig string, timeout string, condition string, target string, namespace string) error
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
 	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
