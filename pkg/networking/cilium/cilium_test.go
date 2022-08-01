@@ -65,21 +65,3 @@ func TestCiliumGenerateManifestSuccess(t *testing.T) {
 	_, err := tt.cilium.GenerateManifest(tt.ctx, tt.spec, []string{})
 	tt.Expect(err).To(Not(HaveOccurred()), "GenerateManifest() should succeed")
 }
-
-func TestCiliumGenerateManifestAndGenerateNetworkPolicySuccess(t *testing.T) {
-	tt := newCiliumTest(t)
-	/* templater tests already test whether templater.GenerateManifest returns expected values or not. This test ensures that cilium.GenerateManifest
-	calls the templater and does not try to load the static manifest like earlier version */
-	tt.h.EXPECT().Template(
-		tt.ctx, gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(""), gomock.AssignableToTypeOf(map[string]interface{}{}), gomock.AssignableToTypeOf(""),
-	).Return(tt.ciliumValues, nil)
-
-	/* templater tests already test network policy generation based on the infra provider, gitops, mgmt/workload cluster and k8s version.
-	adding only 1 test here to ensure that for "always" mode, GenerateNetworkPolicyManifest is called and
-	the cilium manifest gets appended to manifest returned by GenerateNetworkPolicyManifest */
-	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha12.CiliumPolicyModeAlways
-	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
-	content, err := tt.cilium.GenerateManifest(tt.ctx, tt.spec, []string{})
-	tt.Expect(err).To(Not(HaveOccurred()), "GenerateManifest() should succeed")
-	test.AssertContentToFile(t, string(content), "testdata/manifest_network_policy.yaml")
-}
