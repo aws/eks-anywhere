@@ -26,7 +26,7 @@ const (
 	vsphereNetwork3UpdateVar            = "/SDDC-Datacenter/network/sddc-cgw-network-3"
 	vsphereInvalidResourcePoolUpdateVar = "*/Resources/INVALID-ResourcePool"
 	clusterNamespace                    = "test-namespace"
-	vsphereResourcePoolVar      		= "T_VSPHERE_RESOURCE_POOL"
+	vsphereResourcePoolVar              = "T_VSPHERE_RESOURCE_POOL"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {

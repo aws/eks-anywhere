@@ -28,8 +28,11 @@ func getDeploymentStatusAnalyzer(analyzers []*diagnostics.Analyze, name string) 
 }
 
 func TestEksaLogTextAnalyzers(t *testing.T) {
+	controlPlaneIP := "1.1.1.1"
 	collectorFactory := diagnostics.NewDefaultCollectorFactory()
-	collectors := collectorFactory.ManagementClusterCollectors()
+	collectors := collectorFactory.DefaultCollectors()
+	collectors = append(collectors, collectorFactory.ManagementClusterCollectors()...)
+	collectors = append(collectors, collectorFactory.APIServerCollectors(controlPlaneIP)...)
 	analyzerFactory := diagnostics.NewAnalyzerFactory()
 	expectAnalzyers := analyzerFactory.EksaLogTextAnalyzers(collectors)
 	for _, analyzer := range expectAnalzyers {
