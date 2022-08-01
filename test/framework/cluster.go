@@ -693,6 +693,12 @@ func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
 	e.Run(binaryPath, args...)
 }
 
+func (e *ClusterE2ETest) StopIfSucceeded() {
+	if !e.T.Failed() {
+		e.T.FailNow()
+	}
+}
+
 func (e *ClusterE2ETest) StopIfFailed() {
 	if e.T.Failed() {
 		e.T.FailNow()
