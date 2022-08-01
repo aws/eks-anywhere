@@ -20,14 +20,10 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
-)
-
-const (
-	captProjectPath = "projects/tinkerbell/cluster-api-provider-tinkerbell"
-	HookProjectPath = "projects/tinkerbell/hook"
 )
 
 func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
@@ -107,7 +103,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, captProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CaptProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

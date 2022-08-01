@@ -20,11 +20,10 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const certManagerProjectPath = "projects/cert-manager/cert-manager"
 
 func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
 	artifacts := r.BundleArtifactsTable["cert-manager"]
@@ -75,7 +74,7 @@ func GetCertManagerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CertManagerProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

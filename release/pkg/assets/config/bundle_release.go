@@ -246,6 +246,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
 			},
 		},
+		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-docker artifacts
 	{
