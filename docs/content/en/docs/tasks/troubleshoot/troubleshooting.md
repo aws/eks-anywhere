@@ -270,6 +270,12 @@ Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No suppo
 Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
 Make sure your ESXi hosts are also up to date.
 
+### Waiting for external etcd to be ready
+```
+2022-01-19T15:56:57.734Z        V3      Waiting for external etcd to be ready   {"cluster": "mgmt"}
+```
+Debug this problem using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
+
 ### Timed out waiting for the condition on deployments/capv-controller-manager
 ```
 Failed to create cluster {"error": "error initializing capi in bootstrap cluster: error waiting for capv-controller-manager in namespace capv-system: error executing wait: error: timed out waiting for the condition on deployments/capv-controller-manager\n"}
@@ -303,6 +309,13 @@ kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 ```
 Make sure you are choosing an ip in your network range that does not conflict with other VMs.
 https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
+
+### Generic cluster unavailable
+The first thing to look at is: were virtual machines created on your target provider? In the case of vSphere, you should see some VMs in your folder and they should be up. Check the console and if you see:
+```
+[FAILED] Failed to start Wait for Network to be Configured.
+```
+Make sure your DHCP server is up and working.
 
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.
