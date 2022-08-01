@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -46,6 +47,7 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	// Fetch the SnowMachineConfig object
 	snowMachineConfig := &anywherev1.SnowMachineConfig{}
+	log.Info("Reconciling snowmachineconfig")
 	if err := r.client.Get(ctx, req.NamespacedName, snowMachineConfig); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -59,12 +61,9 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	defer func() {
 		// Always attempt to patch the object and status after each reconciliation.
 		patchOpts := []patch.Option{}
-		if reterr == nil {
-			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
-		}
+
 		if err := patchHelper.Patch(ctx, snowMachineConfig, patchOpts...); err != nil {
-			log.Error(reterr, "Failed to patch snowmachineconfig")
-			reterr = kerrors.NewAggregate([]error{reterr, err})
+			reterr = kerrors.NewAggregate([]error{reterr, fmt.Errorf("patching snowmachineconfig: %v", err)})
 		}
 	}()
 
@@ -75,37 +74,37 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	result, err := r.reconcile(ctx, snowMachineConfig)
 	if err != nil {
-		log.Error(err, "Failed to reconcile SnowMachineConfig")
-		reterr = kerrors.NewAggregate([]error{reterr, err})
+		reterr = kerrors.NewAggregate([]error{reterr, fmt.Errorf("reconciling snowmachineconfig: %v", err)})
 	}
 	return result, reterr
 }
 
 func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachineConfig *anywherev1.SnowMachineConfig) (_ ctrl.Result, reterr error) {
 	// TODO: need to figure out how to load creds in controller
+	var allErrs []error
 	deviceClientMap, err := r.clientBuilder.BuildSnowAwsClientMap(ctx)
 	if err != nil {
-		failureMessage := err.Error()
-		snowMachineConfig.Status.FailureMessage = &failureMessage
 		return ctrl.Result{}, err
 	}
 	// Setting the aws client map on every reconcile based on the secrets at that point of time
 	validator := snow.NewValidator(deviceClientMap)
 	if err := validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
-		failureMessage := err.Error()
-		snowMachineConfig.Status.FailureMessage = &failureMessage
-		return ctrl.Result{}, err
+		allErrs = append(allErrs, err)
 	}
 	if err := validator.ValidateEC2ImageExistsOnDevice(ctx, snowMachineConfig); err != nil {
-		failureMessage := err.Error()
-		snowMachineConfig.Status.FailureMessage = &failureMessage
-		return ctrl.Result{}, err
+		allErrs = append(allErrs, err)
 	}
 	if err := validator.ValidateEC2SshKeyNameExists(ctx, snowMachineConfig); err != nil {
-		failureMessage := err.Error()
+		allErrs = append(allErrs, err)
+	}
+	if len(allErrs) > 0 {
+		snowMachineConfig.Status.SpecValid = false
+		aggregate := kerrors.NewAggregate(allErrs)
+		failureMessage := aggregate.Error()
 		snowMachineConfig.Status.FailureMessage = &failureMessage
-		return ctrl.Result{}, err
+		return ctrl.Result{}, aggregate
 	}
 	snowMachineConfig.Status.SpecValid = true
+	snowMachineConfig.Status.FailureMessage = nil
 	return ctrl.Result{}, nil
 }
