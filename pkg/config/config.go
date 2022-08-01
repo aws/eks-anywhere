@@ -15,6 +15,9 @@ const (
 	SshKnownHostsEnv            = "SSH_KNOWN_HOSTS"
 	EksaReplicasReadyTimeoutEnv = "EKSA_REPLICAS_READY_TIMEOUT"
 	ExternalEtcdTimeoutEnv      = "EKSA_EXTERNAL_ETCD_TIMEOUT"
+	EksaAccessKeyIdEnv          = "EKSA_ACCESS_KEY_ID"
+	EksaSecretAcessKeyEnv       = "EKSA_SECRET_ACCESS_KEY"
+	EksaRegionEnv               = "EKSA_REGION"
 )
 
 type CliConfig struct {

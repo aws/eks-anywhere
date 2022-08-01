@@ -3,7 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -70,6 +72,8 @@ func installPackageController(ctx context.Context) error {
 	}
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
+	eksaAccessKeyId, eksaSecretAccessKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+
 	ctrlClient := curatedpackages.NewPackageControllerClient(
 		deps.HelmInsecure,
 		deps.Kubectl,
@@ -77,6 +81,9 @@ func installPackageController(ctx context.Context) error {
 		imageUrl,
 		helmChart.Name,
 		helmChart.Tag(),
+		curatedpackages.WithEKSAAccessKeyId(eksaAccessKeyId),
+		curatedpackages.WithEKSASecretAccessKey(eksaSecretAccessKey),
+		curatedpackages.WithEksaRegion(eksaRegion),
 	)
 
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
