@@ -11,7 +11,12 @@ linters:
     - gci
 linters-settings:
   gci:
-    local-prefixes: github.com/aws/eks-anywhere
+    sections:
+      - standard
+      - default
+      - prefix(github.com/aws/eks-anywhere)
+    custom-order: true
+    skip-generated: false
 issues:
   max-same-issues: 0
   max-issues-per-linter: 0
