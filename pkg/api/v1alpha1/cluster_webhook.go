@@ -117,44 +117,44 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if !old.ManagementClusterEqual(new) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "managementCluster"), new.Spec.ManagementCluster, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "managementCluster", new.Spec.ManagementCluster.Name), fmt.Sprintf("field is immutable %v", new.Spec.ManagementCluster)))
 	}
 
 	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.endpoint"), new.Spec.ControlPlaneConfiguration.Endpoint, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "ControlPlaneConfiguration.endpoint"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration.Endpoint)))
 	}
 
 	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "datacenterRef"), new.Spec.DatacenterRef, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "datacenterRef"), fmt.Sprintf("field is immutable %v", new.Spec.DatacenterRef)))
 	}
 
 	if !new.Spec.ClusterNetwork.Equal(&old.Spec.ClusterNetwork) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ClusterNetwork"), new.Spec.ClusterNetwork, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "ClusterNetwork"), fmt.Sprintf("field is immutable %v", new.Spec.ClusterNetwork)))
 	}
 
 	if !new.Spec.ProxyConfiguration.Equal(old.Spec.ProxyConfiguration) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ProxyConfiguration"), new.Spec.ProxyConfiguration, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "ProxyConfiguration"), fmt.Sprintf("field is immutable %v", new.Spec.ProxyConfiguration)))
 	}
 
 	if new.Spec.ExternalEtcdConfiguration != nil && old.Spec.ExternalEtcdConfiguration == nil {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec.externalEtcdConfiguration"), new.Spec.ExternalEtcdConfiguration, "cannot switch from local to external etcd topology"),
+			field.Forbidden(field.NewPath("spec.externalEtcdConfiguration"), "cannot switch from local to external etcd topology"),
 		)
 	}
 	if new.Spec.ExternalEtcdConfiguration != nil && old.Spec.ExternalEtcdConfiguration != nil {
 		if old.Spec.ExternalEtcdConfiguration.Count != new.Spec.ExternalEtcdConfiguration.Count {
 			allErrs = append(
 				allErrs,
-				field.Invalid(field.NewPath("spec.externalEtcdConfiguration.count"), new.Spec.ExternalEtcdConfiguration.Count, "field is immutable"),
+				field.Forbidden(field.NewPath("spec.externalEtcdConfiguration.count"), fmt.Sprintf("field is immutable %v", new.Spec.ExternalEtcdConfiguration.Count)),
 			)
 		}
 	}
@@ -162,7 +162,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if !new.Spec.GitOpsRef.Equal(old.Spec.GitOpsRef) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "GitOpsRef"), new.Spec.GitOpsRef, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "GitOpsRef"), fmt.Sprintf("field is immutable %v", new.Spec.GitOpsRef)))
 	}
 
 	if !old.IsSelfManaged() {
@@ -184,7 +184,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		if !oldAWSIamConfig.Equal(newAWSIamConfig) {
 			allErrs = append(
 				allErrs,
-				field.Invalid(field.NewPath("spec", "AWS Iam Config"), newAWSIamConfig.Kind, "field is immutable"))
+				field.Forbidden(field.NewPath("spec", "AWS Iam Config"), fmt.Sprintf("field is immutable %v", newAWSIamConfig.Kind)))
 		}
 		return allErrs
 	}
@@ -194,20 +194,20 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if !RefSliceEqual(new.Spec.IdentityProviderRefs, old.Spec.IdentityProviderRefs) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "IdentityProviderRefs"), fmt.Sprintf("field is immutable %v", new.Spec.IdentityProviderRefs)))
 	}
 
 	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "kubernetesVersion"), new.Spec.KubernetesVersion, "field is immutable"),
+			field.Forbidden(field.NewPath("spec", "kubernetesVersion"), fmt.Sprintf("field is immutable %v", new.Spec.KubernetesVersion)),
 		)
 	}
 
 	if !old.Spec.ControlPlaneConfiguration.Equal(&new.Spec.ControlPlaneConfiguration) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration"), new.Spec.ControlPlaneConfiguration, "field is immutable"))
+			field.Forbidden(field.NewPath("spec", "ControlPlaneConfiguration"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration)))
 	}
 
 	return allErrs
