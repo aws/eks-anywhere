@@ -29,7 +29,13 @@ var _ webhook.Validator = &OIDCConfig{}
 func (r *OIDCConfig) ValidateCreate() error {
 	oidcconfiglog.Info("validate create", "name", r.Name)
 
-	return nil
+	allErrs := r.Validate()
+
+	if len(allErrs) == 0 {
+		return nil
+	}
+
+	return apierrors.NewInvalid(GroupVersion.WithKind(OIDCConfigKind).GroupKind(), r.Name, allErrs)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
