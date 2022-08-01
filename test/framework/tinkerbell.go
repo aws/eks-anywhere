@@ -9,33 +9,30 @@ import (
 )
 
 const (
-	TinkerbellProviderName               = "tinkerbell"
-	tinkerbellServerEnvVar               = "T_TINKERBELL_IP"
-	tinkerbellNetworkCidrEnvVar          = "T_TINKERBELL_NETWORK_CIDR"
-	tinkerbellCertURLEnvVar              = "T_TINKERBELL_CERT_URL"
-	tinkerbellHegelURLEnvVar             = "T_TINKERBELL_HEGEL_URL"
-	tinkerbellGRPCAuthEnvVar             = "T_TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellPBnJGRPCAuthEnvVar         = "T_TINKERBELL_PBNJ_GRPC_AUTHORITY"
-	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
-	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
-	tinkerbellInventoryCsvFilePathEnvVar = "T_TINKERBELL_INVENTORY_CSV"
-	tinkerbellSSHAuthorizedKey           = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellProviderName                  = "tinkerbell"
+	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
+	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
+	tinkerbellImageUbuntu120EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
+	tinkerbellImageUbuntu121EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
+	tinkerbellImageUbuntu122EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
+	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
+	tinkerbellInventoryCsvFilePathEnvVar    = "T_TINKERBELL_INVENTORY_CSV"
+	tinkerbellSSHAuthorizedKey              = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
+	TinkerbellCIEnvironment                 = "T_TINKERBELL_CI_ENVIRONMENT"
 )
 
 var requiredTinkerbellEnvVars = []string{
-	tinkerbellServerEnvVar,
-	tinkerbellNetworkCidrEnvVar,
-	tinkerbellCertURLEnvVar,
-	tinkerbellHegelURLEnvVar,
-	tinkerbellGRPCAuthEnvVar,
+	tinkerbellControlPlaneNetworkCidrEnvVar,
 	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
+	tinkerbellImageUbuntu122EnvVar,
+	tinkerbellImageUbuntu123EnvVar,
 	tinkerbellInventoryCsvFilePathEnvVar,
 	tinkerbellSSHAuthorizedKey,
 }
 
 func RequiredTinkerbellEnvVars() []string {
-	return requiredEnvVars
+	return requiredTinkerbellEnvVars
 }
 
 type TinkerbellOpt func(*Tinkerbell)
@@ -44,25 +41,32 @@ type Tinkerbell struct {
 	t                    *testing.T
 	fillers              []api.TinkerbellFiller
 	clusterFillers       []api.ClusterFiller
+	serverIP             string
 	cidr                 string
 	inventoryCsvFilePath string
 }
 
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
+	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
+
+	serverIP, err := GetIP(cidr, ClusterIPPoolEnvVar)
+	if err != nil {
+		t.Fatalf("failed to get tinkerbell ip for test environment: %v", err)
+	}
+
 	tink := &Tinkerbell{
 		t: t,
 		fillers: []api.TinkerbellFiller{
-			api.WithStringFromEnvVarTinkerbell(tinkerbellServerEnvVar, api.WithTinkerbellServer),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellHegelURLEnvVar, api.WithTinkerbellHegelURL),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellCertURLEnvVar, api.WithTinkerbellCertURL),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellGRPCAuthEnvVar, api.WithTinkerbellGRPCAuthEndpoint),
-			api.WithStringFromEnvVarTinkerbell(tinkerbellPBnJGRPCAuthEnvVar, api.WithTinkerbellPBnJGRPCAuthEndpoint),
+			api.WithTinkerbellServer(serverIP),
 			api.WithStringFromEnvVarTinkerbell(tinkerbellSSHAuthorizedKey, api.WithSSHAuthorizedKeyForAllTinkerbellMachines),
+			api.WithHardwareSelectorLabels(),
 		},
 	}
 
-	tink.cidr = os.Getenv(tinkerbellNetworkCidrEnvVar)
+	tink.serverIP = serverIP
+
+	tink.cidr = cidr
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
 
 	for _, opt := range opts {
@@ -82,6 +86,10 @@ func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
 }
 
+func (t *Tinkerbell) CleanupVMs(_ string) error {
+	return nil
+}
+
 func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {
 	providerOutput, err := api.AutoFillTinkerbellProvider(file, fillers...)
 	if err != nil {
@@ -91,10 +99,11 @@ func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.Tinkerb
 }
 
 func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
-	clusterIP, err := GenerateUniqueIp(t.cidr)
+	clusterIP, err := GetIP(t.cidr, ClusterIPPoolEnvVar)
 	if err != nil {
-		t.t.Fatalf("failed to generate ip for tinkerbell cidr %s: %v", t.cidr, err)
+		t.t.Fatalf("failed to get cluster ip for test environment: %v", err)
 	}
+
 	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 
 	return t.clusterFillers
@@ -118,9 +127,50 @@ func WithUbuntu121Tinkerbell() TinkerbellOpt {
 	}
 }
 
+func WithUbuntu122Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+func WithCustomUbuntu122Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+func WithUbuntu123Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+func WithBottleRocketTinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
 func WithTinkerbellExternalEtcdTopology(count int) TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append([]api.TinkerbellFiller{api.WithTinkerbellEtcdMachineConfig()}, t.fillers...)
 		t.clusterFillers = append(t.clusterFillers, api.WithExternalEtcdTopology(count), api.WithExternalEtcdMachineRef(anywherev1.TinkerbellMachineConfigKind))
+	}
+}
+
+func WithCustomTinkerbellMachineConfig(selector string) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append([]api.TinkerbellFiller{api.WithCustomTinkerbellMachineConfig(selector)}, t.fillers...)
 	}
 }

@@ -36,7 +36,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-			client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+			client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
 			if err != nil {
@@ -60,7 +60,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().GetNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
+	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
 
 	got, err := b.CreateBootstrapCluster(ctx, clusterSpec)
@@ -70,6 +70,24 @@ func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
 
 	if !reflect.DeepEqual(got, wantCluster) {
 		t.Fatalf("Bootstrapper.CreateBootstrapCluster() cluster = %#v, want %#v", got, wantCluster)
+	}
+}
+
+func TestBootstrapperCreateBootstrapClusterFailureOnCreateNamespaceIfNotPresentFailure(t *testing.T) {
+	kubeconfigFile := "c.kubeconfig"
+	clusterName := "cluster-name"
+	clusterSpec, _ := given(t, clusterName, kubeconfigFile)
+	clusterSpec.VersionsBundle.KubeVersion = "1.20"
+	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
+
+	ctx := context.Background()
+	b, client := newBootstrapper(t)
+	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace).Return(errors.New(""))
+
+	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
+	if err == nil {
+		t.Fatalf("Bootstrapper.CreateBootstrapCluster() error == nil, wantErr %v", err)
 	}
 }
 

@@ -94,7 +94,7 @@ func RunCommand(session *session.Session, instanceId, command string, opts ...Co
 
 	logger.V(2).Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
-	r := retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
+	r := retrier.New(300*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
 	err = r.Retry(func() error {
 		var err error
 		commandOut, err = service.GetCommandInvocation(commandIn)
@@ -121,7 +121,7 @@ func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOp
 	in := &ssm.SendCommandInput{
 		DocumentName: aws.String("AWS-RunShellScript"),
 		InstanceIds:  []*string{aws.String(instanceId)},
-		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String("10800")}},
+		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String("18000")}},
 	}
 
 	for _, opt := range opts {
@@ -129,7 +129,7 @@ func sendCommand(service *ssm.SSM, instanceId, command string, opts ...CommandOp
 	}
 
 	var result *ssm.SendCommandOutput
-	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+	r := retrier.New(300*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		if request.IsErrorThrottle(err) && totalRetries < 60 {
 			return true, 60 * time.Second
 		}

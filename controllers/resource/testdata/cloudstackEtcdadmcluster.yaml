@@ -1,0 +1,36 @@
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: test-cluster-etcd
+  namespace: eksa-system
+spec:
+  replicas: 1
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+cloudInitConfig:
+  version: v3.4.14-eks-1-19-4
+  installDir: "/usr/bin"
+preEtcdadmCommands:
+  - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+  - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+  - echo "127.0.0.1   localhost" >>/etc/hosts
+  - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+  - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+  - mountPath=/data-small
+  - mountPathTemp=$(mktemp -d ${mountPath}-XXXXX)
+  - devname=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .name ')
+  - devfstype=$(lsblk -f -l -o NAME,FSTYPE -J | jq -r ' .blockdevices[-1] | .fstype ')
+  - rootfstype=$(lsblk -f -l -o NAME,FSTYPE,MOUNTPOINT -J | jq -r '.blockdevices[] | select(.mountpoint == "/") | .fstype ')
+  - if [ "${devfstype}" == "null" ]; then echo "type=83" | sfdisk /dev/${devname} && mkfs -t ${rootfstype} /dev/${devname}1 && mount /dev/${devname}1 ${mountPathTemp} && tempMounted=true ; else echo "data disk dev not found"; fi
+  - if [ "${tempMounted}" == "true" ] && [ -d ${mountPath} ]; then cp -rp ${mountPath}/* ${mountPathTemp} && umount ${mountPathTemp} && copied=true ; else "echo no need to copy"; fi
+  - if [ "${copied}" == "true" ]; then echo /dev/${devname}1 ${mountPath} ${rootfstype} defaults 0 0 >> /etc/fstab && mount /dev/${devname}1 ${mountPath} && rm -rf ${mountPathTemp} ; else "mount failed"; fi
+users:
+  - name: capc
+    sshAuthorizedKeys:
+      - 'ssh-rsa ssh_key_value'
+    sudo: ALL=(ALL) NOPASSWD:ALL
+infrastructureTemplate:
+  apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+  kind: CloudStackMachineTemplate
+  name: test-cluster-etcd-template-v1.19.8-eks-1-19-4

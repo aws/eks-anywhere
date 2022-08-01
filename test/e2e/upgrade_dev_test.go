@@ -1,3 +1,4 @@
+//go:build e2eDev
 // +build e2eDev
 
 package e2e
@@ -168,6 +169,25 @@ func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
 			api.WithNetwork(vsphereNetwork3UpdateVar),
+		),
+	)
+}
+
+func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube120,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(
+			framework.UpdateRedhatTemplate121Var(),
+			api.WithCloudStackComputeOfferingForAllMachines(cloudstackComputeOfferingUpdateVar),
 		),
 	)
 }

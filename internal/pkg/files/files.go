@@ -4,13 +4,13 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	untar "github.com/aws/eks-anywhere/pkg/tar"
 )
 
 // GzipFileDownloadExtract downloads and extracts a specific file to destination
@@ -33,34 +33,23 @@ func GzipFileDownloadExtract(uri, fileToExtract, destination string) error {
 	}
 	defer gzf.Close()
 
-	tarReader := tar.NewReader(gzf)
-	for {
-		header, err := tarReader.Next()
-		switch {
-		case err == io.EOF:
-			return fmt.Errorf("%s not found: %v", fileToExtract, err)
-		case err != nil:
-			return fmt.Errorf("reading archive: %v", err)
-		case header == nil:
-			continue
-		}
-		switch header.Typeflag {
-		case tar.TypeReg:
-			name := header.FileInfo().Name()
-			if strings.TrimPrefix(name, "./") == fileToExtract {
-				out, err := os.OpenFile(targetFile, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
-				if err != nil {
-					return fmt.Errorf("opening %s file: %v", fileToExtract, err)
-				}
-				defer out.Close()
-
-				_, err = io.Copy(out, tarReader)
-				if err != nil {
-					return fmt.Errorf("writing %s file: %v", fileToExtract, err)
-				}
-				logger.V(4).Info("Downloaded", "file", fileToExtract, "uri", uri)
-				return nil
-			}
-		}
+	router := singleFileRouter{
+		fileName: fileToExtract,
+		folder:   destination,
 	}
+
+	return untar.Untar(gzf, router)
+}
+
+type singleFileRouter struct {
+	folder   string
+	fileName string
+}
+
+func (s singleFileRouter) ExtractPath(header *tar.Header) string {
+	if strings.TrimPrefix(header.Name, "./") != s.fileName {
+		return ""
+	}
+
+	return filepath.Join(s.folder, header.FileInfo().Name())
 }

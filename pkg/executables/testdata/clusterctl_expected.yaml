@@ -3,6 +3,10 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml"
     type: "InfrastructureProvider"
     version: "v0.3.19"
+  - name: "tinkerbell"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.1.0"
   - name: "cloudstack"
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-cloudstack/v0.7.8/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -43,13 +47,13 @@ providers:
 overridesFolder: {{.dir}}/cluster-name/generated/overrides
 images:
   cert-manager/cert-manager-cainjector:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cert-manager/cert-manager-controller:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cert-manager/cert-manager-webhook:
-    repository: public.ecr.aws/l0g8r8j6/jetstack
+    repository: public.ecr.aws/l0g8r8j6/cert-manager
     tag: v1.1.0
   cluster-api/cluster-api-controller:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api

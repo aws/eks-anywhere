@@ -85,18 +85,34 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesWithNamespace), arg0, arg1, arg2, arg3)
 }
 
-// CreateNamespace mocks base method.
-func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+// CountMachineDeploymentReplicasReady mocks base method.
+func (m *MockClusterClient) CountMachineDeploymentReplicasReady(arg0 context.Context, arg1, arg2 string) (int, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CountMachineDeploymentReplicasReady", arg0, arg1, arg2)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CountMachineDeploymentReplicasReady indicates an expected call of CountMachineDeploymentReplicasReady.
+func (mr *MockClusterClientMockRecorder) CountMachineDeploymentReplicasReady(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountMachineDeploymentReplicasReady", reflect.TypeOf((*MockClusterClient)(nil).CountMachineDeploymentReplicasReady), arg0, arg1, arg2)
+}
+
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockClusterClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateNamespace indicates an expected call of CreateNamespace.
-func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockClusterClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
 }
 
 // DeleteAWSIamConfig mocks base method.
@@ -243,6 +259,36 @@ func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
 }
 
+// GetEksaCloudStackDatacenterConfig mocks base method.
+func (m *MockClusterClient) GetEksaCloudStackDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaCloudStackDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaCloudStackDatacenterConfig indicates an expected call of GetEksaCloudStackDatacenterConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaCloudStackDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCloudStackDatacenterConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCloudStackDatacenterConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetEksaCloudStackMachineConfig mocks base method.
+func (m *MockClusterClient) GetEksaCloudStackMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaCloudStackMachineConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaCloudStackMachineConfig indicates an expected call of GetEksaCloudStackMachineConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaCloudStackMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCloudStackMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCloudStackMachineConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaCluster mocks base method.
 func (m *MockClusterClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
@@ -256,6 +302,21 @@ func (m *MockClusterClient) GetEksaCluster(arg0 context.Context, arg1 *types.Clu
 func (mr *MockClusterClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCluster), arg0, arg1, arg2)
+}
+
+// GetEksaFluxConfig mocks base method.
+func (m *MockClusterClient) GetEksaFluxConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.FluxConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaFluxConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.FluxConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaFluxConfig indicates an expected call of GetEksaFluxConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaFluxConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaFluxConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaFluxConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaGitOpsConfig mocks base method.
@@ -368,20 +429,6 @@ func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1, arg2 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1, arg2)
 }
 
-// GetNamespace mocks base method.
-func (m *MockClusterClient) GetNamespace(arg0 context.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNamespace", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GetNamespace indicates an expected call of GetNamespace.
-func (mr *MockClusterClientMockRecorder) GetNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockClusterClient)(nil).GetNamespace), arg0, arg1, arg2)
-}
-
 // GetWorkloadKubeconfig mocks base method.
 func (m *MockClusterClient) GetWorkloadKubeconfig(arg0 context.Context, arg1 string, arg2 *types.Cluster) ([]byte, error) {
 	m.ctrl.T.Helper()
@@ -468,6 +515,20 @@ func (mr *MockClusterClientMockRecorder) SaveLog(arg0, arg1, arg2, arg3, arg4 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLog", reflect.TypeOf((*MockClusterClient)(nil).SaveLog), arg0, arg1, arg2, arg3, arg4)
 }
 
+// SetEksaControllerEnvVar mocks base method.
+func (m *MockClusterClient) SetEksaControllerEnvVar(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetEksaControllerEnvVar", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetEksaControllerEnvVar indicates an expected call of SetEksaControllerEnvVar.
+func (mr *MockClusterClientMockRecorder) SetEksaControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEksaControllerEnvVar", reflect.TypeOf((*MockClusterClient)(nil).SetEksaControllerEnvVar), arg0, arg1, arg2, arg3)
+}
+
 // UpdateAnnotationInNamespace mocks base method.
 func (m *MockClusterClient) UpdateAnnotationInNamespace(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 *types.Cluster, arg5 string) error {
 	m.ctrl.T.Helper()
@@ -524,6 +585,34 @@ func (mr *MockClusterClientMockRecorder) ValidateWorkerNodes(arg0, arg1, arg2 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockClusterClient)(nil).ValidateWorkerNodes), arg0, arg1, arg2)
 }
 
+// WaitForClusterReady mocks base method.
+func (m *MockClusterClient) WaitForClusterReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForClusterReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForClusterReady indicates an expected call of WaitForClusterReady.
+func (mr *MockClusterClientMockRecorder) WaitForClusterReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForClusterReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForClusterReady), arg0, arg1, arg2, arg3)
+}
+
+// WaitForControlPlaneNotReady mocks base method.
+func (m *MockClusterClient) WaitForControlPlaneNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneNotReady indicates an expected call of WaitForControlPlaneNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForControlPlaneNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForControlPlaneNotReady), arg0, arg1, arg2, arg3)
+}
+
 // WaitForControlPlaneReady mocks base method.
 func (m *MockClusterClient) WaitForControlPlaneReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
@@ -550,6 +639,20 @@ func (m *MockClusterClient) WaitForDeployment(arg0 context.Context, arg1 *types.
 func (mr *MockClusterClientMockRecorder) WaitForDeployment(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForDeployment", reflect.TypeOf((*MockClusterClient)(nil).WaitForDeployment), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// WaitForManagedExternalEtcdNotReady mocks base method.
+func (m *MockClusterClient) WaitForManagedExternalEtcdNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForManagedExternalEtcdNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForManagedExternalEtcdNotReady indicates an expected call of WaitForManagedExternalEtcdNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForManagedExternalEtcdNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForManagedExternalEtcdNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForManagedExternalEtcdNotReady), arg0, arg1, arg2, arg3)
 }
 
 // WaitForManagedExternalEtcdReady mocks base method.
@@ -602,6 +705,20 @@ func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Sp
 func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
+}
+
+// RunPostControlPlaneUpgradeSetup mocks base method.
+func (m *MockNetworking) RunPostControlPlaneUpgradeSetup(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostControlPlaneUpgradeSetup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostControlPlaneUpgradeSetup indicates an expected call of RunPostControlPlaneUpgradeSetup.
+func (mr *MockNetworkingMockRecorder) RunPostControlPlaneUpgradeSetup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostControlPlaneUpgradeSetup", reflect.TypeOf((*MockNetworking)(nil).RunPostControlPlaneUpgradeSetup), arg0, arg1)
 }
 
 // Upgrade mocks base method.

@@ -15,6 +15,18 @@ make container-serve
 Open http://127.0.0.1:1313 to see the local site.
 With the serve container running you can now edit the documentation in your git clone and changes will be rebuilt automatically.
 
+To serve documentation more permanently, detach the container from the current shell.
+One way to do that is to install the `tmux` package and run:
+
+```bash
+tmux
+make container-build
+make container-serve
+Ctrl-b d
+```
+This runs the commands in a tmux session, then detaches it from the current shell.
+To reopen the `tmux` session later, type `tmux attach`.
+
 ## Public development
 
 If you want to make a version of the docs site you can share with someone else you will need to follow these steps.

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -50,6 +49,10 @@ type provider struct {
 	templateBuilder       *DockerTemplateBuilder
 }
 
+func (p *provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
+
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
@@ -69,11 +72,23 @@ func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker Provide
 	}
 }
 
-func (p *provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil
 }
 
+func (p *provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return nil
+}
+
 func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 
@@ -93,6 +108,11 @@ func (p *provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
 	return nil
 }
 
+func (p *provider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
+}
+
 func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
@@ -101,11 +121,11 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	return nil
 }
 
-func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	return nil
 }
 
-func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
 	return nil
 }
 
@@ -122,26 +142,6 @@ func NewDockerTemplateBuilder(now types.NowFunc) providers.TemplateBuilder {
 
 type DockerTemplateBuilder struct {
 	now types.NowFunc
-}
-
-func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
-	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
-}
-
-func (d *DockerTemplateBuilder) CPMachineTemplateName(clusterName string) string {
-	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
-}
-
-func (d *DockerTemplateBuilder) EtcdMachineTemplateName(clusterName string) string {
-	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
-}
-
-func (vs *DockerTemplateBuilder) KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
@@ -162,12 +162,8 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
-		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		if workloadTemplateNames != nil && ok {
-			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		} else {
-			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
-		}
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -190,6 +186,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
 	values := map[string]interface{}{
 		"clusterName":                clusterSpec.Cluster.Name,
@@ -204,7 +202,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"etcdExtraArgs":              etcdExtraArgs.ToPartialYaml(),
 		"etcdCipherSuites":           crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
-		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs": controllerManagerExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
 		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
@@ -254,10 +252,15 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
-	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
 		return true
 	}
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
+}
+
+func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
+	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
 func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec) bool {
@@ -266,7 +269,7 @@ func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec) bool {
 
 func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := newClusterSpec.Cluster.Name
-	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
+	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec)
@@ -277,15 +280,37 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		}
 		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
-		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 
 	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
-		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok && !needsNewWorkloadTemplate {
+		needsNewWorkloadTemplate, err := p.needsNewMachineTemplate(currentSpec, newClusterSpec, workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if !needsNewKubeadmConfigTemplate {
+			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			kubeadmconfigTemplateName = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		} else {
+			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		}
+
+		if !needsNewWorkloadTemplate {
 			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
 			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -294,13 +319,12 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
-			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
+			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 	}
 
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		// TODO: replace controlPlaneMachineConfig with etcdMachineConfig once available in final GA spec
 		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, newClusterSpec.Cluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
@@ -320,7 +344,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			if err != nil {
 				return nil, nil, err
 			}
-			etcdTemplateName = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 		}
 	}
 
@@ -333,33 +357,55 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, nil)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
+		return needsNewWorkloadTemplate, nil
+	}
+	return true, nil
+}
+
+func (p *provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
+		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
+	}
+	return true, nil
+}
+
+func (p *provider) generateCAPISpecForCreate(ctx context.Context, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
-		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil, nil)
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
@@ -376,10 +422,6 @@ func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 
 func (p *provider) GenerateStorageClass() []byte {
 	return nil
-}
-
-func (p *provider) GenerateMHC() ([]byte, error) {
-	return []byte{}, nil
 }
 
 func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
@@ -465,7 +507,7 @@ func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	return nil
 }
 
-func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	return false, nil
 }
 
@@ -475,16 +517,6 @@ func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec 
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
-}
-
-func (p *provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
-	for _, group := range nodeGroupsToDelete {
-		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
-		machineDeployments = append(machineDeployments, mdName)
-	}
-	return machineDeployments
 }
 
 func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
@@ -498,4 +530,8 @@ func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
 	}
 
 	return haproxyImageRepo
+}
+
+func (p *provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+	return nil
 }

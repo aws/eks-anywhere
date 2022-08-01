@@ -157,7 +157,7 @@ spec:
       # init container to set permissions for the mount paths
       initContainers:
       - name: chown
-        image: busybox
+        image: {{.initContainerImage}}
         command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: cert

@@ -1,17 +1,69 @@
 ---
 title: "What's New?"
 linkTitle: "What's New?"
-weight: 55
-menu:
-  main:
-    weight: 10
+weight: 35
 ---
 
 ## Unreleased
 
-### Added
-- Add support for Kubernetes 1.22 [#1549](https://github.com/aws/eks-anywhere/pull/1549)
+## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
 
+### Changed
+- Updated EKS Distro versions to latest release
+
+### Fixed
+- Fixed control plane nodes not upgraded for same kube version [#2636](https://github.com/aws/eks-anywhere/issues/2636)
+
+## [v0.10.0](https://github.com/aws/eks-anywhere/releases/tag/v0.10.0)
+
+### Added
+- Added support for EKS Anywhere on bare metal with provider [tinkerbell](https://tinkerbell.org/). EKS Anywhere on bare metal supports complete provisioning cycle, including power on/off and PXE boot for standing up a cluster with the given hardware data.
+- Support for node CIDR mask config exposed via the cluster spec. [#488](https://github.com/aws/eks-anywhere/issues/488)
+
+### Changed
+- Upgraded cilium from 1.9 to 1.10. [#1124](https://github.com/aws/eks-anywhere/issues/1124)
+- Changes for EKS Anywhere packages [v0.10.0](https://github.com/aws/eks-anywhere-packages/releases/tag/v0.10.0)
+
+### Fixed
+- Fix issue using self-signed certificates for registry mirror [#1857](https://github.com/aws/eks-anywhere/issues/1857)
+
+## [v0.9.2](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Fixed
+- Fix issue by avoiding processing Snow images when URI is empty
+
+## [v0.9.1](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+## [v0.9.0](https://github.com/aws/eks-anywhere/releases/tag/v0.9.0)
+
+### Added
+- Adding support to EKS Anywhere for a generic git provider as the source of truth for GitOps configuration management. [#9](https://github.com/aws/eks-anywhere/projects/9)
+- Allow users to configure Cloud Provider and CSI Driver with different credentials. [#1730](https://github.com/aws/eks-anywhere/pull/1730)
+- Support to install, configure and maintain operational components that are secure and tested by Amazon on EKS Anywhere clusters.[#2083](https://github.com/aws/eks-anywhere/issues/2083)
+- A new Workshop section has been added to EKS Anywhere documentation.
+- Added support for curated packages behind a feature flag [#1893](https://github.com/aws/eks-anywhere/pull/1893)
+
+### Fixed
+- Fix issue specifying proxy configuration for helm template command [#2009](https://github.com/aws/eks-anywhere/issues/2009)
+
+## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
+
+### Fixed
+- Fix issue with upgrading cluster from a previous minor version [#1819](https://github.com/aws/eks-anywhere/issues/1819)
+
+## [v0.8.1](https://github.com/aws/eks-anywhere/releases/tag/v0.8.1)
+
+### Fixed
+- Fix issue with downloading artifacts [#1753](https://github.com/aws/eks-anywhere/issues/1753)
+
+## [v0.8.0](https://github.com/aws/eks-anywhere/releases/tag/v0.8.0)
+### Added
+- SSH keys and Users are now mutable [#1208](https://github.com/aws/eks-anywhere/issues/1208)
+- OIDC configuration is now mutable [#676](https://github.com/aws/eks-anywhere/issues/676)
+- Add support for Cilium's policy enforcement mode [#726](https://github.com/aws/eks-anywhere/issues/726)
+
+### Changed
+- Install Cilium networking through Helm instead of static manifest
 ## [v0.7.2](https://github.com/aws/eks-anywhere/releases/tag/v0.7.2) - 2022-02-28
 
 ### Fixed

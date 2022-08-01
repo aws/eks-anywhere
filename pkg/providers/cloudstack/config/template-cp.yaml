@@ -58,6 +58,18 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .cloudstackControlPlaneAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackControlPlaneSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -75,15 +87,34 @@ spec:
 {{- if .cloudstackControlPlaneTemplateOfferingName}}
         name: {{.cloudstackControlPlaneTemplateOfferingName}}
 {{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackControlPlaneDiskOfferingId}}
+        id: {{.cloudstackControlPlaneDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingName}}
+        name: {{.cloudstackControlPlaneDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackControlPlaneDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackControlPlaneDiskOfferingCustomSize}}
+{{- end}}
+        mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
+        device: {{.cloudstackControlPlaneDiskOfferingDevice}}
+        filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
+        label: {{.cloudstackControlPlaneDiskOfferingLabel}}
+{{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
-{{- if .affinityGroupIds }}
+{{- if .cloudstackControlPlaneAffinity }}
+      affinity: '{{ .cloudstackControlPlaneAffinity }}'
+{{- end }}
+{{- if .cloudstackControlPlaneAffinityGroupIds }}
       affinitygroupids:
-      {{- range .affinityGroupIds}}
+      {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
 {{- end }}
@@ -168,6 +199,62 @@ spec:
 {{ .schedulerExtraArgs.ToYaml | indent 10 }}
 {{- end }}
     files:
+{{- if .cloudstackKubeVip}}
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - manager
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_leaseduration
+              value: "15"
+            - name: vip_renewdeadline
+              value: "10"
+            - name: vip_retryperiod
+              value: "2"
+            - name: address
+              value: {{.controlPlaneEndpointHost}}
+            image: {{.kubeVipImage}}
+            imagePullPolicy: IfNotPresent
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - NET_RAW
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
+{{- end}}
     - content: |
 {{ .auditPolicy | indent 8 }}
       owner: root:root
@@ -298,6 +385,34 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackControlPlaneSymlinks}}
+    - >-
+      if [ ! -L {{$dir}} ] ;
+        then
+          mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+        else echo "{{$dir}} already symlnk";
+      fi
+{{- end}}
+{{- if .cloudstackControlPlaneDiskOfferingProvided }}
+    diskSetup:
+      filesystems:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}1
+          overwrite: false
+          extraOpts:
+            - -E
+            - lazy_itable_init=1,lazy_journal_init=1
+          filesystem: {{ .cloudstackControlPlaneDiskOfferingFilesystem }}
+          label: {{ .cloudstackControlPlaneDiskOfferingLabel }}
+      partitions:
+        - device: {{ .cloudstackControlPlaneDiskOfferingDevice }}
+          layout: true
+          overwrite: false
+          tableType: gpt
+    mounts:
+      - - LABEL={{ .cloudstackControlPlaneDiskOfferingLabel }}
+        - {{ .cloudstackControlPlaneDiskOfferingPath }}
+{{- end }}
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
@@ -317,11 +432,16 @@ metadata:
 spec:
   replicas: {{.externalEtcdReplicas}}
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: {{.format}}
     cloudInitConfig:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
+      - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
     - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
@@ -329,6 +449,24 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .cloudstackEtcdDiskOfferingProvided }}
+    - >-
+      echo "type=83" | sfdisk {{ .cloudstackEtcdDiskOfferingDevice }} &&
+      mkfs -t {{ .cloudstackEtcdDiskOfferingFilesystem }} {{ .cloudstackEtcdDiskOfferingDevice }}1 &&
+      mkdir -p {{ .cloudstackEtcdDiskOfferingPath }} &&
+      echo {{ .cloudstackEtcdDiskOfferingDevice }}1 {{ .cloudstackEtcdDiskOfferingPath }} {{ .cloudstackEtcdDiskOfferingFilesystem }} defaults 0 2 >> /etc/fstab &&
+      mount {{ .cloudstackEtcdDiskOfferingPath }}
+{{- end }}
+{{- range $dir, $target := .cloudstackEtcdSymlinks}}
+    - >-
+      if [ ! -L {{$dir}} ] ;
+        then
+          mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+        else
+          echo "{{$dir}} already symlnk" ;
+      fi
+{{- end}}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
 {{- end }}
@@ -363,6 +501,18 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
   namespace: '{{.eksaSystemNamespace}}'
+{{- if .cloudstackEtcdAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackEtcdSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackEtcdSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -380,12 +530,31 @@ spec:
 {{- if .cloudstackEtcdTemplateOfferingName}}
         name: {{.cloudstackEtcdTemplateOfferingName}}
 {{- end}}
+{{- if .cloudstackEtcdDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackEtcdDiskOfferingId}}
+        id: {{.cloudstackEtcdDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackEtcdDiskOfferingName}}
+        name: {{.cloudstackEtcdDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackEtcdDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackEtcdDiskOfferingCustomSize}}
+{{- end}}
+        mountPath: {{.cloudstackEtcdDiskOfferingPath}}
+        device: {{.cloudstackEtcdDiskOfferingDevice}}
+        filesystem: {{.cloudstackEtcdDiskOfferingFilesystem}}
+        label: {{.cloudstackEtcdDiskOfferingLabel}}
+{{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackEtcdCustomDetails}}
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackEtcdAffinity }}
+      affinity: '{{ .cloudstackEtcdAffinity }}'
+{{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackEtcdAffinityGroupIds }}

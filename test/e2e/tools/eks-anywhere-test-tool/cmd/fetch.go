@@ -13,6 +13,7 @@ type e2eFetchOptions struct {
 	forProject string
 	tests      []string
 	logTo      string
+	fetchAll   bool
 }
 
 var e2eFetchCommand = &cobra.Command{

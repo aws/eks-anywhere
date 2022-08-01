@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -16,21 +17,28 @@ import (
 )
 
 type Create struct {
-	bootstrapper   interfaces.Bootstrapper
-	provider       providers.Provider
-	clusterManager interfaces.ClusterManager
-	addonManager   interfaces.AddonManager
-	writer         filewriter.FileWriter
+	bootstrapper     interfaces.Bootstrapper
+	provider         providers.Provider
+	clusterManager   interfaces.ClusterManager
+	gitOpsManager    interfaces.GitOpsManager
+	writer           filewriter.FileWriter
+	eksdInstaller    interfaces.EksdInstaller
+	packageInstaller interfaces.PackageInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Create {
+	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
+	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
+	packageInstaller interfaces.PackageInstaller,
+) *Create {
 	return &Create{
-		bootstrapper:   bootstrapper,
-		provider:       provider,
-		clusterManager: clusterManager,
-		addonManager:   addonManager,
-		writer:         writer,
+		bootstrapper:     bootstrapper,
+		provider:         provider,
+		clusterManager:   clusterManager,
+		gitOpsManager:    gitOpsManager,
+		writer:           writer,
+		eksdInstaller:    eksdInstaller,
+		packageInstaller: packageInstaller,
 	}
 }
 
@@ -43,20 +51,24 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		}
 	}
 	commandContext := &task.CommandContext{
-		Bootstrapper:   c.bootstrapper,
-		Provider:       c.provider,
-		ClusterManager: c.clusterManager,
-		AddonManager:   c.addonManager,
-		ClusterSpec:    clusterSpec,
-		Writer:         c.writer,
-		Validations:    validator,
+		Bootstrapper:     c.bootstrapper,
+		Provider:         c.provider,
+		ClusterManager:   c.clusterManager,
+		GitOpsManager:    c.gitOpsManager,
+		ClusterSpec:      clusterSpec,
+		Writer:           c.writer,
+		Validations:      validator,
+		EksdInstaller:    c.eksdInstaller,
+		PackageInstaller: c.packageInstaller,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	return task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
+	err := task.NewTaskRunner(&SetAndValidateTask{}, c.writer).RunTask(ctx, commandContext)
+
+	return err
 }
 
 // task related entities
@@ -67,9 +79,11 @@ type SetAndValidateTask struct{}
 
 type CreateWorkloadClusterTask struct{}
 
+type InstallResourcesOnManagementTask struct{}
+
 type InstallEksaComponentsTask struct{}
 
-type InstallAddonManagerTask struct{}
+type InstallGitOpsManagerTask struct{}
 
 type MoveClusterManagementTask struct{}
 
@@ -79,6 +93,8 @@ type DeleteBootstrapClusterTask struct {
 	*CollectDiagnosticsTask
 }
 
+type InstallCuratedPackagesTask struct{}
+
 // CreateBootStrapClusterTask implementation
 
 func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -87,7 +103,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	logger.Info("Creating new bootstrap cluster")
 
-	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
+	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts(commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -99,6 +115,12 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return nil
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
+
+	logger.Info("Provider specific pre-capi-install-setup on bootstrap cluster")
+	if err = commandContext.Provider.PreCAPIInstallOnBootstrap(ctx, bootstrapCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
 
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
 	if err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
@@ -127,13 +149,21 @@ func (s *CreateBootStrapClusterTask) Name() string {
 	return "bootstrap-cluster-init"
 }
 
+func (s *CreateBootStrapClusterTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *CreateBootStrapClusterTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // SetAndValidateTask implementation
 
 func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Performing setup and validations")
 	runner := validations.NewRunner()
 	runner.Register(s.providerValidation(ctx, commandContext)...)
-	runner.Register(commandContext.AddonManager.Validations(ctx, commandContext.ClusterSpec)...)
+	runner.Register(commandContext.GitOpsManager.Validations(ctx, commandContext.ClusterSpec)...)
 	runner.Register(s.validations(ctx, commandContext)...)
 
 	err := runner.Run()
@@ -170,6 +200,14 @@ func (s *SetAndValidateTask) Name() string {
 	return "setup-validate"
 }
 
+func (s *SetAndValidateTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *SetAndValidateTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // CreateWorkloadClusterTask implementation
 
 func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -180,6 +218,11 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return &CollectDiagnosticsTask{}
 	}
 	commandContext.WorkloadCluster = workloadCluster
+
+	if err = commandContext.ClusterManager.RunPostCreateWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
 
 	logger.Info("Installing networking on workload cluster")
 	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
@@ -197,7 +240,6 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	logger.Info("Installing storage class on workload cluster")
 	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
@@ -205,6 +247,13 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Creating EKS-A namespace")
+		err = commandContext.ClusterManager.CreateEKSANamespace(ctx, workloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+
 		logger.Info("Installing cluster-api providers on workload cluster")
 		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
@@ -221,17 +270,51 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.V(4).Info("Installing machine health checks on bootstrap cluster")
-	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.BootstrapCluster, commandContext.Provider)
+	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &MoveClusterManagementTask{}
+	return &InstallResourcesOnManagementTask{}
 }
 
 func (s *CreateWorkloadClusterTask) Name() string {
 	return "workload-cluster-init"
+}
+
+func (s *CreateWorkloadClusterTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *CreateWorkloadClusterTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
+// InstallResourcesOnManagement implementation
+func (s *InstallResourcesOnManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster.ExistingManagement {
+		return &MoveClusterManagementTask{}
+	}
+	logger.Info("Installing resources on management cluster")
+
+	if err := commandContext.Provider.PostWorkloadInit(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	return &MoveClusterManagementTask{}
+}
+
+func (s *InstallResourcesOnManagementTask) Name() string {
+	return "install-resources-on-management-cluster"
+}
+
+func (s *InstallResourcesOnManagementTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallResourcesOnManagementTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 // MoveClusterManagementTask implementation
@@ -254,12 +337,26 @@ func (s *MoveClusterManagementTask) Name() string {
 	return "capi-management-move"
 }
 
+func (s *MoveClusterManagementTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *MoveClusterManagementTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // InstallEksaComponentsTask implementation
 
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
-		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+		logger.Info("Installing EKS-D components on workload cluster")
+		err = commandContext.EksdInstaller.InstallEksdCRDs(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}
@@ -283,24 +380,37 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
+	err = commandContext.EksdInstaller.InstallEksdManifest(ctx, commandContext.ClusterSpec, targetCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
 	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	return &InstallAddonManagerTask{}
+	return &InstallGitOpsManagerTask{}
 }
 
 func (s *InstallEksaComponentsTask) Name() string {
 	return "eksa-components-install"
 }
 
-// InstallAddonManagerTask implementation
+func (s *InstallEksaComponentsTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
 
-func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Installing AddonManager and GitOps Toolkit on workload cluster")
+func (s *InstallEksaComponentsTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
 
-	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
+// InstallGitOpsManagerTask implementation
+
+func (s *InstallGitOpsManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Installing GitOps Toolkit on workload cluster")
+
+	err := commandContext.GitOpsManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
 	if err != nil {
 		logger.MarkFail("Error when installing GitOps toolkits on workload cluster; EKS-A will continue with cluster creation, but GitOps will not be enabled", "error", err)
 		return &WriteClusterConfigTask{}
@@ -308,8 +418,16 @@ func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.
 	return &WriteClusterConfigTask{}
 }
 
-func (s *InstallAddonManagerTask) Name() string {
-	return "addon-manager-install"
+func (s *InstallGitOpsManagerTask) Name() string {
+	return "gitops-manager-install"
+}
+
+func (s *InstallGitOpsManagerTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallGitOpsManagerTask) Checkpoint() *task.CompletedTask {
+	return nil
 }
 
 func (s *WriteClusterConfigTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -326,6 +444,14 @@ func (s *WriteClusterConfigTask) Name() string {
 	return "write-cluster-config"
 }
 
+func (s *WriteClusterConfigTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *WriteClusterConfigTask) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 // DeleteBootstrapClusterTask implementation
 
 func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -339,17 +465,31 @@ func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess("Cluster created!")
 	}
-	return nil
+	return &InstallCuratedPackagesTask{}
 }
 
 func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
 }
 
-func getManagementCluster(commandContext *task.CommandContext) *types.Cluster {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
+func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if features.IsActive(features.CuratedPackagesSupport()) {
+		err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+		if err != nil {
+			logger.MarkFail("Curated Packages Installation Failed...")
+		}
 	}
-	return target
+	return nil
+}
+
+func (cp *InstallCuratedPackagesTask) Name() string {
+	return "install-curated-packages"
+}
+
+func (s *InstallCuratedPackagesTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *InstallCuratedPackagesTask) Checkpoint() *task.CompletedTask {
+	return nil
 }

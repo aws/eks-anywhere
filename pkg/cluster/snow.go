@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"context"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func snowEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -23,6 +27,7 @@ func snowEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			SetSnowMachineConfigsAnnotations,
 		},
 		Validations: []Validation{
 			func(c *Config) error {
@@ -79,4 +84,62 @@ func processSnowMachineConfig(c *Config, objects ObjectLookup, machineRef *anywh
 	}
 
 	c.SnowMachineConfigs[m.GetName()] = m.(*anywherev1.SnowMachineConfig)
+}
+
+func SetSnowMachineConfigsAnnotations(c *Config) error {
+	if c.SnowMachineConfigs == nil {
+		return nil
+	}
+
+	c.SnowMachineConfigs[c.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].SetControlPlaneAnnotation()
+
+	if c.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		c.SnowMachineConfigs[c.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].SetEtcdAnnotation()
+	}
+
+	if c.Cluster.IsManaged() {
+		for _, mc := range c.SnowMachineConfigs {
+			mc.SetManagedBy(c.Cluster.ManagedBy())
+		}
+	}
+	return nil
+}
+
+func getSnowDatacenter(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.SnowDatacenterKind {
+		return nil
+	}
+
+	datacenter := &anywherev1.SnowDatacenterConfig{}
+	if err := client.Get(ctx, c.Cluster.Spec.DatacenterRef.Name, c.Cluster.Namespace, datacenter); err != nil {
+		return err
+	}
+
+	c.SnowDatacenter = datacenter
+	return nil
+}
+
+func getSnowMachineConfigs(ctx context.Context, client Client, c *Config) error {
+	if c.Cluster.Spec.DatacenterRef.Kind != anywherev1.SnowDatacenterKind {
+		return nil
+	}
+
+	if c.SnowMachineConfigs == nil {
+		c.SnowMachineConfigs = map[string]*anywherev1.SnowMachineConfig{}
+	}
+
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind != anywherev1.SnowMachineConfigKind {
+			continue
+		}
+
+		machine := &anywherev1.SnowMachineConfig{}
+		if err := client.Get(ctx, machineRef.Name, c.Cluster.Namespace, machine); err != nil {
+			return err
+		}
+
+		c.SnowMachineConfigs[machine.Name] = machine
+	}
+
+	return nil
 }

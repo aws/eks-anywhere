@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -23,6 +24,12 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
 			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
 		},
+		{
+			Name:        "validate kubernetes version 1.23 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s123SupportEnvVar),
+			Err:         validations.ValidateK8s123Support(u.Opts.Spec),
+			Silent:      true,
+		},
 	}
 
 	if u.Opts.Spec.Cluster.IsManaged() {
@@ -36,10 +43,10 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			validations.ValidationResult{
 				Name:        "validate gitops",
 				Remediation: "",
-				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
+				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec, u.Opts.CliConfig),
 			},
 			validations.ValidationResult{
-				Name:        "validate identityproviders name",
+				Name:        "validate identity providers' name",
 				Remediation: "",
 				Err:         ValidateIdentityProviderNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
 			},

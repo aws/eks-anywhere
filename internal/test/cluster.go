@@ -27,7 +27,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 	s := cluster.NewSpec()
 	s.Cluster = &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "fluxAddonTestCluster",
+			Name: "fluxTestCluster",
 		},
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},

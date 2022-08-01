@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 )
@@ -17,6 +18,7 @@ import (
 type tlsTest struct {
 	*WithT
 	tlsValidator *mocks.MockTlsValidator
+	provider     *providermocks.MockProvider
 	clusterSpec  *cluster.Spec
 	certContent  string
 	host, port   string
@@ -29,6 +31,7 @@ func newTlsTest(t *testing.T) *tlsTest {
 	return &tlsTest{
 		WithT:        NewWithT(t),
 		tlsValidator: mocks.NewMockTlsValidator(ctrl),
+		provider:     providermocks.NewMockProvider(ctrl),
 		clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.Cluster.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{
 				Endpoint: host,
@@ -51,7 +54,7 @@ func TestValidateCertForRegistryMirrorNoRegistryMirror(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(errors.New("invalid cert"))
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
@@ -62,24 +65,38 @@ func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 func TestValidateCertForRegistryMirrorCertValid(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent = tt.certContent
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertNoSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorNoCertIsSignedByKnownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(false, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
-func TestValidateCertForRegistryMirrorNoCertSelfSigned(t *testing.T) {
+func TestValidateCertForRegistryMirrorIsSignedByUnknownAuthority(t *testing.T) {
 	tt := newTlsTest(t)
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(true, nil)
+	tt.tlsValidator.EXPECT().IsSignedByUnknownAuthority(tt.host, tt.port).Return(true, nil)
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("registry https://host.h is using self-signed certs, please provide the certificate using caCertContent field")),
 	)
+}
+
+func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
+
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
+}
+
+func TestValidateK8s123Support(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube123
+	tt.Expect(validations.ValidateK8s123Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.23 is not enabled. Please set the env variable K8S_1_23_SUPPORT")))
 }

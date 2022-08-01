@@ -1,3 +1,17 @@
+// Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package v1alpha1
 
 func (vb *VersionsBundle) Manifests() map[string][]*string {
@@ -41,6 +55,10 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Tinkerbell.ClusterTemplate.URI,
 			&vb.Tinkerbell.Metadata.URI,
 		},
+		"cluster-api-provider-snow": {
+			&vb.Snow.Components.URI,
+			&vb.Snow.Metadata.URI,
+		},
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
@@ -75,6 +93,7 @@ func (vb *VersionsBundle) Ovas() []Archive {
 func (vb *VersionsBundle) CloudStackImages() []Image {
 	return []Image{
 		vb.CloudStack.ClusterAPIController,
+		vb.CloudStack.KubeVip,
 	}
 }
 
@@ -96,6 +115,18 @@ func (vb *VersionsBundle) DockerImages() []Image {
 	}
 }
 
+func (vb *VersionsBundle) SnowImages() []Image {
+	i := make([]Image, 0, 2)
+	if vb.Snow.KubeVip.URI != "" {
+		i = append(i, vb.Snow.KubeVip)
+	}
+	if vb.Snow.Manager.URI != "" {
+		i = append(i, vb.Snow.Manager)
+	}
+
+	return i
+}
+
 func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
@@ -115,6 +146,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.EksD.KindNode,
 		vb.Eksa.CliTools,
 		vb.Eksa.ClusterController,
+		vb.Eksa.DiagnosticCollector,
 		vb.Flux.HelmController,
 		vb.Flux.KustomizeController,
 		vb.Flux.NotificationController,
@@ -128,22 +160,36 @@ func (vb *VersionsBundle) SharedImages() []Image {
 }
 
 func (vb *VersionsBundle) Images() []Image {
-	shared := vb.SharedImages()
-	docker := vb.DockerImages()
-	vsphere := vb.VsphereImages()
-	cloudstack := vb.CloudStackImages()
+	groupedImages := [][]Image{
+		vb.SharedImages(),
+		vb.DockerImages(),
+		vb.VsphereImages(),
+		vb.CloudStackImages(),
+		vb.SnowImages(),
+	}
 
-	images := make([]Image, 0, len(shared)+len(docker)+len(vsphere)+len(cloudstack))
-	images = append(images, shared...)
-	images = append(images, docker...)
-	images = append(images, vsphere...)
-	images = append(images, cloudstack...)
+	size := 0
+	for _, g := range groupedImages {
+		size += len(g)
+	}
+
+	images := make([]Image, 0, size)
+	for _, g := range groupedImages {
+		images = append(images, g...)
+	}
 
 	return images
 }
 
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
-		"cilium": &vb.Cilium.HelmChart,
+		"cilium":                &vb.Cilium.HelmChart,
+		"eks-anywhere-packages": &vb.PackageController.HelmChart,
+	}
+}
+
+func (vb *VersionsBundle) PackageControllerImage() []Image {
+	return []Image{
+		vb.PackageController.Controller,
 	}
 }

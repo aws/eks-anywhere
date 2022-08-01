@@ -41,11 +41,20 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Setup Go
+GOLANG_VERSION?="1.17"
+GO_VERSION ?= $(shell source ../scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= $(GO_VERSION)/go
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+
+TOOLS_BIN_DIR := ../hack/tools/bin
+CONTROLLER_GEN_BIN := controller-gen
+CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
 all: build
 
@@ -74,26 +83,27 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 	## Copy only the bundles crd to root config kustomization folder
 	cp -f config/crd/bases/anywhere.eks.amazonaws.com_bundles.yaml ../config/crd/bases/
+	@echo "Make sure to update the test bundle with \`make update-bundle-golden-files\`"
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 fmt: ## Run go fmt against code.
-	go fmt ./...
+	$(GO) fmt ./...
 
 vet: ## Run go vet against code.
-	go vet ./...
+	$(GO) vet ./...
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.2/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); $(GO) test ./... -coverprofile cover.out
 
 ##@ Build
 
 build: clean fmt vet ## Build release binary.
-	go build -o bin/eks-anywhere-release main.go
+	$(GO) build -o bin/eks-anywhere-release main.go
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -104,8 +114,18 @@ bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat $(REPO_ROOT)/.github/workf
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
+unit-test: ## Run go test against code.
+	$(GO) test -count=1 ./...
+
+update-bundle-golden-files: ## Updates testdata files located under pkg/test/testdata
+	$(GO) test -count=1 ./pkg/operations -update
+	$(eval DIFF_LINE_COUNT=$(shell git diff pkg/test/testdata | wc -l))
+	@if [[ $(DIFF_LINE_COUNT) != 0 ]]; then \
+		printf "\n\033[33mWarning:\033[0m Testdata files have been updated! Ensure that these changes were intentional.\n"; \
+	fi
+
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run ./main.go
+	$(GO) run ./main.go
 
 ##@ Release
 
@@ -133,7 +153,6 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
 	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 

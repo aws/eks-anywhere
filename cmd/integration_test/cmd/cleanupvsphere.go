@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/internal/test/e2e"
+	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -56,7 +56,7 @@ func init() {
 
 func cleanUpVsphereTestResources(ctx context.Context) error {
 	clusterName := viper.GetString(clusterNameFlagName)
-	err := e2e.CleanUpVsphereTestResources(ctx, clusterName)
+	err := cleanup.CleanUpVsphereTestResources(ctx, clusterName)
 	if err != nil {
 		return fmt.Errorf("running cleanup for vsphere vcenter vms: %v", err)
 	}

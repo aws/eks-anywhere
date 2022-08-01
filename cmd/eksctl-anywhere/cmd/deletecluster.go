@@ -20,9 +20,10 @@ import (
 
 type deleteClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceCleanup     bool
-	hardwareFileName string
+	wConfig               string
+	forceCleanup          bool
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var dc = &deleteClusterOptions{}
@@ -94,30 +95,34 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, false, dc.tinkerbellBootstrapIP).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
-	}
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
 	}
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,
 		deps.Provider,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
 	)
 
 	var cluster *types.Cluster
@@ -134,5 +139,6 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+	cleanup(deps, &err)
 	return err
 }

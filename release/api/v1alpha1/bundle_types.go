@@ -18,8 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const BundlesKind = "Bundles"
-
 // BundlesSpec defines the desired state of Bundles
 type BundlesSpec struct {
 	// Monotonically increasing release number
@@ -42,6 +40,10 @@ type Bundles struct {
 
 	Spec   BundlesSpec   `json:"spec,omitempty"`
 	Status BundlesStatus `json:"status,omitempty"`
+}
+
+func (b *Bundles) DefaultEksAToolsImage() Image {
+	return b.Spec.VersionsBundles[0].Eksa.CliTools
 }
 
 //+kubebuilder:object:root=true
@@ -140,6 +142,7 @@ type CertManagerBundle struct {
 	Acmesolver Image    `json:"acmesolver"`
 	Cainjector Image    `json:"cainjector"`
 	Controller Image    `json:"controller"`
+	Ctl        Image    `json:"ctl"`
 	Webhook    Image    `json:"webhook"`
 	Manifest   Manifest `json:"manifest"`
 }
@@ -202,6 +205,7 @@ type DockerBundle struct {
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 }
@@ -230,6 +234,7 @@ type FluxBundle struct {
 type PackageBundle struct {
 	Version    string `json:"version,omitempty"`
 	Controller Image  `json:"packageController"`
+	HelmChart  Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {
@@ -256,35 +261,35 @@ type EtcdadmControllerBundle struct {
 	Metadata   Manifest `json:"metadata"`
 }
 
-type TinkerbellBundle struct {
-	Version              string   `json:"version"`
-	ClusterAPIController Image    `json:"clusterAPIController"`
-	KubeVip              Image    `json:"kubeVip"`
-	TinkServer           Image    `json:"tinkServer"`
-	TinkWorker           Image    `json:"tinkWorker"`
-	TinkCli              Image    `json:"tinkCli"`
-	Hegel                Image    `json:"hegel"`
-	Cfssl                Image    `json:"cfssl"`
-	Pbnj                 Image    `json:"pbnj"`
-	Boots                Image    `json:"boots"`
-	Actions              Actions  `json:"actions"`
-	Components           Manifest `json:"components"`
-	Metadata             Manifest `json:"metadata"`
-	ClusterTemplate      Manifest `json:"clusterTemplate"`
-	Hook                 Hook     `json:"hook"`
+type TinkerbellStackBundle struct {
+	Actions        ActionsBundle `json:"actions"`
+	Boots          Image         `json:"boots"`
+	Cfssl          Image         `json:"cfssl"`
+	Hegel          Image         `json:"hegel"`
+	TinkebellChart Image         `json:"tinkerbellChart"`
+	Hook           HookBundle    `json:"hook"`
+	Rufio          Image         `json:"rufio"`
+	Tink           TinkBundle    `json:"tink"`
 }
 
 // Tinkerbell Template Actions
-type Actions struct {
+type ActionsBundle struct {
 	Cexec       Image `json:"cexec"`
 	Kexec       Image `json:"kexec"`
 	ImageToDisk Image `json:"imageToDisk"`
 	OciToDisk   Image `json:"ociToDisk"`
 	WriteFile   Image `json:"writeFile"`
+	Reboot      Image `json:"reboot"`
+}
+
+type TinkBundle struct {
+	TinkController Image `json:"tinkController"`
+	TinkServer     Image `json:"tinkServer"`
+	TinkWorker     Image `json:"tinkWorker"`
 }
 
 // Tinkerbell hook OS
-type Hook struct {
+type HookBundle struct {
 	Bootkit   Image    `json:"bootkit"`
 	Docker    Image    `json:"docker"`
 	Kernel    Image    `json:"kernel"`
@@ -295,6 +300,16 @@ type Hook struct {
 type HookArch struct {
 	Arm Archive `json:"arm"`
 	Amd Archive `json:"amd"`
+}
+
+type TinkerbellBundle struct {
+	Version              string                `json:"version"`
+	ClusterAPIController Image                 `json:"clusterAPIController"`
+	KubeVip              Image                 `json:"kubeVip"`
+	Components           Manifest              `json:"components"`
+	Metadata             Manifest              `json:"metadata"`
+	ClusterTemplate      Manifest              `json:"clusterTemplate"`
+	TinkerbellStack      TinkerbellStackBundle `json:"tinkerbellStack,omitempty"`
 }
 
 type HaproxyBundle struct {

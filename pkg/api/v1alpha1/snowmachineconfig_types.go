@@ -1,6 +1,10 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
+)
 
 const (
 	SFPPlus PhysicalNetworkConnectorType = "SFP_PLUS"
@@ -17,6 +21,7 @@ type PhysicalNetworkConnectorType string
 type SnowInstanceType string
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run "make generate" to regenerate code after modifying this file
 
 // SnowMachineConfigSpec defines the desired state of SnowMachineConfigSpec
 type SnowMachineConfigSpec struct {
@@ -35,6 +40,12 @@ type SnowMachineConfigSpec struct {
 
 	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
 	SshKeyName string `json:"sshKeyName,omitempty"`
+
+	// Devices contains a device ip list assigned by the user to provision machines.
+	Devices []string `json:"devices,omitempty"`
+
+	// ContainersVolume provides the configuration options for the containers data storage volume.
+	ContainersVolume *snowv1.Volume `json:"containersVolume,omitempty"`
 }
 
 func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
@@ -49,7 +60,15 @@ func (s *SnowMachineConfig) OSFamily() OSFamily {
 }
 
 // SnowMachineConfigStatus defines the observed state of SnowMachineConfig
-type SnowMachineConfigStatus struct{}
+type SnowMachineConfigStatus struct {
+	// SpecValid is set to true if vspheredatacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -69,6 +88,22 @@ func (s *SnowMachineConfig) SetDefaults() {
 
 func (s *SnowMachineConfig) Validate() error {
 	return validateSnowMachineConfig(s)
+}
+
+func (s *SnowMachineConfig) SetControlPlaneAnnotation() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[controlPlaneAnnotation] = "true"
+}
+
+func (s *SnowMachineConfig) SetEtcdAnnotation() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[etcdAnnotation] = "true"
 }
 
 // +kubebuilder:object:generate=false
@@ -101,4 +136,17 @@ func (s *SnowMachineConfig) ConvertConfigToConfigGenerateStruct() *SnowMachineCo
 
 func (s *SnowMachineConfig) Marshallable() Marshallable {
 	return s.ConvertConfigToConfigGenerateStruct()
+}
+
+//+kubebuilder:object:root=true
+
+// SnowMachineConfigList contains a list of SnowMachineConfig
+type SnowMachineConfigList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []SnowMachineConfig `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&SnowMachineConfig{}, &SnowMachineConfigList{})
 }

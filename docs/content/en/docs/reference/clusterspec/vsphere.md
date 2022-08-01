@@ -1,12 +1,22 @@
 ---
 title: "vSphere configuration"
-linkTitle: "vSphere"
-weight: 10
+linkTitle: "vSphere configuration"
+weight: 20
 description: >
   Full EKS Anywhere configuration reference for a VMware vSphere cluster.
 ---
 
-This is a generic template with detailed descriptions below for reference
+This is a generic template with detailed descriptions below for reference.
+The following additional optional configuration can also be included:
+
+* [CNI]({{< relref "optional/cni.md" >}})
+* [IAM for pods]({{< relref "optional/irsa.md" >}})
+* [IAM Authenticator]({{< relref "optional/iamauth.md" >}})
+* [OIDC]({{< relref "optional/oidc.md" >}})
+* [gitops]({{< relref "optional/gitops.md" >}})
+* [proxy]({{< relref "optional/proxy.md" >}})
+* [Registry Mirror]({{< relref "optional/registrymirror.md" >}})
+
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -15,7 +25,8 @@ metadata:
    name: my-cluster-name
 spec:
    clusterNetwork:
-      cni: "cilium"
+      cniConfig:
+         cilium: {}
       pods:
          cidrBlocks:
             - 192.168.0.0/16
@@ -44,7 +55,7 @@ spec:
      machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.21"
+   kubernetesVersion: "1.22"
    workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -93,21 +104,17 @@ spec:
 
 ## Cluster Fields
 
-The following additional optional configuration can also be included.
-
-* [OIDC]({{< relref "oidc.md" >}})
-* [etcd]({{< relref "etcd.md" >}})
-* [proxy]({{< relref "proxy.md" >}})
-* [gitops]({{< relref "gitops.md" >}})
-
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
 
 ### clusterNetwork (required)
 Specific network configuration for your Kubernetes cluster.
 
-### clusterNetwork.cni (required)
-CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
+### clusterNetwork.cniConfig (required)
+CNI plugin configuration to be used in the cluster. The only supported configuration at the moment is `cilium`.
+
+### clusterNetwork.cniConfig.cilium.policyEnforcementMode
+Optionally, you may specify a policyEnforcementMode of default, always, never.
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
@@ -192,7 +199,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.20`, `1.21`
+The Kubernetes version you want to use for your cluster. Supported values: `1.22`, `1.21`, `1.20`
 
 ## VSphereDatacenterConfig Fields
 
@@ -291,3 +298,18 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 
 ### storagePolicyName (optional)
 The storage policy name associated with your VMs.
+
+## Optional VSphere Credentials 
+Use the following environment variables to configure Cloud Provider and CSI Driver with different credentials.
+
+### EKSA_VSPHERE_CP_USERNAME
+Username for Cloud Provider (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CP_PASSWORD
+Password for Cloud Provider (Default: $EKSA_VSPHERE_PASSWORD).
+
+### EKSA_VSPHERE_CSI_USERNAME
+Username for CSI Driver (Default: $EKSA_VSPHERE_USERNAME).
+
+### EKSA_VSPHERE_CSI_PASSWORD
+Password for CSI Driver (Default: $EKSA_VSPHERE_PASSWORD).

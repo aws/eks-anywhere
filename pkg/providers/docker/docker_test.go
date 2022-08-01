@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
@@ -172,7 +173,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_md_taints_expected.yaml",
 		},
 		{
-			testName: "valid config multiple worker node groups with machine deplyoment taints",
+			testName: "valid config multiple worker node groups with machine deployment taints",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster.Name = "test-cluster"
 				s.Cluster.Spec.KubernetesVersion = "1.19"
@@ -303,6 +304,25 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			bootstrapCluster := &types.Cluster{
 				Name: "bootstrap-test",
 			}
+			for _, nodeGroup := range tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+				md := &clusterv1.MachineDeployment{
+					Spec: clusterv1.MachineDeploymentSpec{
+						Template: clusterv1.MachineTemplateSpec{
+							Spec: clusterv1.MachineSpec{
+								Bootstrap: clusterv1.Bootstrap{
+									ConfigRef: &v1.ObjectReference{
+										Name: fmt.Sprintf("%s-%s-template-1234567890000", tt.clusterSpec.Cluster.Name, nodeGroup.Name),
+									},
+								},
+							},
+						},
+					},
+				}
+				machineDeploymentName := fmt.Sprintf("%s-%s", tt.clusterSpec.Cluster.Name, nodeGroup.Name)
+				kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName,
+					gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster)),
+					gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
+			}
 			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", tt.clusterSpec.Cluster.Name),
 				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.Any(), gomock.Any())
 			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, tt.clusterSpec)
@@ -315,6 +335,68 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 	}
 }
 
+func TestProviderGenerateDeploymentFileSuccessUpdateKubeadmConfigTemplate(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := test.NewClusterSpec()
+
+	var cpTaints, wnTaints []v1.Taint
+	cpTaints = append(cpTaints, v1.Taint{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil})
+	cpTaints = append(cpTaints, v1.Taint{Key: "key2", Value: "val2", Effect: "PreferNoSchedule", TimeAdded: nil})
+	cpTaints = append(cpTaints, v1.Taint{Key: "key3", Value: "val3", Effect: "NoExecute", TimeAdded: nil})
+	wnTaints = append(wnTaints, v1.Taint{Key: "key2", Value: "val2", Effect: "PreferNoSchedule", TimeAdded: nil})
+
+	clusterSpec.Cluster.Name = "test-cluster"
+	clusterSpec.Cluster.Spec.KubernetesVersion = "1.19"
+	clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+	clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints = cpTaints
+	clusterSpec.VersionsBundle = versionsBundle
+	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}, Name: "md-0"}}
+
+	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	cluster := &types.Cluster{
+		Name: "test-cluster",
+	}
+	currentSpec := clusterSpec.DeepCopy()
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints = wnTaints
+	bootstrapCluster := &types.Cluster{
+		Name: "bootstrap-test",
+	}
+
+	cp := &controlplanev1.KubeadmControlPlane{
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-cluster-control-plane-template-1234567890000",
+				},
+			},
+		},
+	}
+	etcdadm := &etcdv1.EtcdadmCluster{
+		Spec: etcdv1.EtcdadmClusterSpec{
+			InfrastructureTemplate: v1.ObjectReference{
+				Name: "test-cluster-etcd-template-1234567890000",
+			},
+		},
+	}
+
+	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
+	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadm, nil)
+
+	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, clusterSpec)
+	if err != nil {
+		t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
+	}
+
+	test.AssertContentToFile(t, string(cpContent), "testdata/valid_deployment_cp_taints_expected.yaml")
+	test.AssertContentToFile(t, string(mdContent), "testdata/valid_deployment_md_taints_expected.yaml")
+}
+
 func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
@@ -323,7 +405,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	clusterSpec := test.NewClusterSpec()
 	clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
 	clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 0, MachineGroupRef: &v1alpha1.Ref{Name: "fluxAddonTestCluster"}, Name: "md-0"}}
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 0, MachineGroupRef: &v1alpha1.Ref{Name: "fluxTestCluster"}, Name: "md-0"}}
 	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	cluster := &types.Cluster{
 		Name: "test",
@@ -346,6 +428,11 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 		Spec: clusterv1.MachineDeploymentSpec{
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							Name: "test-md-0-original",
+						},
+					},
 					InfrastructureRef: v1.ObjectReference{
 						Name: "test-md-0-original",
 					},
@@ -356,7 +443,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	machineDeploymentName := fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name)
 
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
-	kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
+	kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil).Times(2)
 
 	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, clusterSpec)
 	if err != nil {

@@ -20,8 +20,8 @@ The solutions listed on this page have not been tested by AWS and are not covere
 | Feature                       | Example third-party tools                 |
 |-------------------------------|-------------------------------------------|
 | Ingress controller            | [Gloo Edge](https://www.solo.io/products/gloo-edge/), [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
-| Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance/kubevip/_index.md#current-recommendation-kube-vip" >}}) or [MetalLB]({{< relref "../workload/loadbalance/metallb.md#alternatives" >}})|
-| Local container repository    | [Harbor](https://goharbor.io/)                                    |
+| Service type load balancer    | [MetalLB]({{< relref "../workload/loadbalance/" >}})|
+| Local container repository    | [Harbor]({{< relref "../packages/harbor" >}})                                    |
 | Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/), [Grafana](https://grafana.com/), [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/), or [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide) |
 | Logging                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html) or [Fluentbit](https://fluentbit.io/kubernetes/)                                    |
 | Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |

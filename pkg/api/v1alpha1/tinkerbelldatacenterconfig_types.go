@@ -7,17 +7,21 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // TinkerbellDatacenterConfigSpec defines the desired state of TinkerbellDatacenterConfig
+//
+// Important: Run "make generate" to regenerate code after modifying this file
 type TinkerbellDatacenterConfigSpec struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
-	TinkerbellIP           string `json:"tinkerbellIP"`
-	TinkerbellCertURL      string `json:"tinkerbellCertURL"`
-	TinkerbellGRPCAuth     string `json:"tinkerbellGRPCAuth"`
-	TinkerbellPBnJGRPCAuth string `json:"tinkerbellPBnJGRPCAuth"`
+	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell servies.
+	TinkerbellIP string `json:"tinkerbellIP"`
+	// OSImageURL can be used to override the default OS image path to pull from a local server
+	OSImageURL string `json:"osImageURL,omitempty"`
+	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server
+	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig
-type TinkerbellDatacenterConfigStatus struct { // Important: Run "make generate" to regenerate code after modifying this file
-}
+//
+// Important: Run "make generate" to regenerate code after modifying this file
+type TinkerbellDatacenterConfigStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

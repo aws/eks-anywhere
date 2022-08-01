@@ -147,7 +147,7 @@ spec:
       # init container to set permissions for the mount paths
       initContainers:
       - name: chown
-        image: busybox
+        image: public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10
         command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: cert
@@ -192,14 +192,14 @@ metadata:
   namespace: kube-system
 data:
   mapRoles: |
-    - groups:
-      - group1
-      - group2
-      roleARN: test-role-arn
+    - rolearn: test-role-arn
       username: test
+      groups:
+        - group1
+        - group2
   mapUsers: |
-    - groups:
-      - group1
-      - group2
-      userARN: test-user-arn
+    - userarn: test-user-arn
       username: test
+      groups:
+        - group1
+        - group2

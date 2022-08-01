@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 
@@ -53,8 +54,12 @@ func (c *Cloudwatch) getLogs(logGroupName string, logStreamName string, startTim
 	for {
 		l, err := c.getLogSegment(logGroupName, logStreamName, startTime, endTime, nextToken)
 		if err != nil {
-			logger.Info("error fetching cloudwatch logs", "group", logGroupName, "stream", logStreamName, "err", err)
-			return nil, err
+			if isInvalidParameterError(err) {
+				logger.Info("log stream does not exist. Proceeding to fetch next log events", "logStream", logStreamName)
+			} else {
+				logger.Info("error fetching cloudwatch logs", "group", logGroupName, "stream", logStreamName, "err", err)
+				return nil, err
+			}
 		}
 		if l.NextForwardToken == nil || nextToken != nil && *nextToken == *l.NextForwardToken {
 			logger.Info("finished fetching logs", "logGroup", logGroupName, "logStream", logStreamName)
@@ -84,4 +89,11 @@ func (c Cloudwatch) getLogSegment(logGroupName string, logStreamName string, sta
 		input.EndTime = endTime
 	}
 	return c.svc.GetLogEvents(input)
+}
+
+func isInvalidParameterError(err error) bool {
+	if awsErr, ok := err.(awserr.Error); ok {
+		return awsErr.Code() == cloudwatchlogs.ErrCodeInvalidParameterException
+	}
+	return false
 }

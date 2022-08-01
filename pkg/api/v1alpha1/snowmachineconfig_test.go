@@ -4,6 +4,9 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 func TestSnowSetDefaults(t *testing.T) {
@@ -20,7 +23,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -35,7 +37,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             "instance-type-1",
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -66,7 +67,6 @@ func TestSnowSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					PhysicalNetworkConnector: "network-1",
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 				},
 			},
 		},
@@ -87,21 +87,24 @@ func TestSnowValidate(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "valid config",
+			name: "valid config with amiID, instance type, devices",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
 				},
 			},
 			wantErr: "",
 		},
 		{
-			name: "missing ami id",
+			name: "valid without ami and devices",
 			obj: &SnowMachineConfig{
-				Spec: SnowMachineConfigSpec{},
+				Spec: SnowMachineConfigSpec{
+					InstanceType: DefaultSnowInstanceType,
+				},
 			},
-			wantErr: "AMIID is a required field",
+			wantErr: "",
 		},
 		{
 			name: "invalid instance type",
@@ -109,9 +112,24 @@ func TestSnowValidate(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					AMIID:        "ami-1",
 					InstanceType: "invalid-instance-type",
+					Devices:      []string{"1.2.3.4"},
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
+		},
+		{
+			name: "invalid container volume",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
+					ContainersVolume: &snowv1.Volume{
+						Size: 7,
+					},
+				},
+			},
+			wantErr: "ContainersVolume.Size must be no smaller than 8 Gi",
 		},
 	}
 	for _, tt := range tests {
@@ -125,4 +143,38 @@ func TestSnowValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSetControlPlaneAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	m := &SnowMachineConfig{}
+	m.SetControlPlaneAnnotation()
+	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/control-plane": "true"}))
+}
+
+func TestSetEtcdAnnotation(t *testing.T) {
+	g := NewWithT(t)
+	m := &SnowMachineConfig{}
+	m.SetEtcdAnnotation()
+	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/etcd": "true"}))
+}
+
+func TestNewSnowMachineConfigGenerate(t *testing.T) {
+	g := NewWithT(t)
+	want := &SnowMachineConfigGenerate{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       SnowMachineConfigKind,
+			APIVersion: SchemeBuilder.GroupVersion.String(),
+		},
+		ObjectMeta: ObjectMeta{
+			Name: "snow-cluster",
+		},
+		Spec: SnowMachineConfigSpec{
+			AMIID:                    "",
+			InstanceType:             DefaultSnowInstanceType,
+			SshKeyName:               DefaultSnowSshKeyName,
+			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
+		},
+	}
+	g.Expect(NewSnowMachineConfigGenerate("snow-cluster")).To(Equal(want))
 }

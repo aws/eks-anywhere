@@ -13,18 +13,20 @@ import (
 
 func TestParseConfig(t *testing.T) {
 	tests := []struct {
-		name                      string
-		yamlManifest              []byte
-		wantCluster               *anywherev1.Cluster
-		wantVsphereDatacenter     *anywherev1.VSphereDatacenterConfig
-		wantDockerDatacenter      *anywherev1.DockerDatacenterConfig
-		wantSnowDatacenter        *anywherev1.SnowDatacenterConfig
-		wantVsphereMachineConfigs []*anywherev1.VSphereMachineConfig
-		wantSnowMachineConfigs    []*anywherev1.SnowMachineConfig
-		wantOIDCConfigs           []*anywherev1.OIDCConfig
-		wantAWSIamConfigs         []*anywherev1.AWSIamConfig
-		wantGitOpsConfig          *anywherev1.GitOpsConfig
-		wantFluxConfig            *anywherev1.FluxConfig
+		name                         string
+		yamlManifest                 []byte
+		wantCluster                  *anywherev1.Cluster
+		wantCloudStackDatacenter     *anywherev1.CloudStackDatacenterConfig
+		wantVsphereDatacenter        *anywherev1.VSphereDatacenterConfig
+		wantDockerDatacenter         *anywherev1.DockerDatacenterConfig
+		wantSnowDatacenter           *anywherev1.SnowDatacenterConfig
+		wantVsphereMachineConfigs    []*anywherev1.VSphereMachineConfig
+		wantCloudStackMachineConfigs []*anywherev1.CloudStackMachineConfig
+		wantSnowMachineConfigs       []*anywherev1.SnowMachineConfig
+		wantOIDCConfigs              []*anywherev1.OIDCConfig
+		wantAWSIamConfigs            []*anywherev1.AWSIamConfig
+		wantGitOpsConfig             *anywherev1.GitOpsConfig
+		wantFluxConfig               *anywherev1.FluxConfig
 	}{
 		{
 			name:         "vsphere cluster",
@@ -125,6 +127,100 @@ func TestParseConfig(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
+					},
+				},
+			},
+		},
+		{
+			name:         "cloudstack cluster",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/cluster_1_20_cloudstack.yaml")),
+			wantCluster: &anywherev1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.ClusterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.20",
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count:    3,
+						Endpoint: &anywherev1.Endpoint{Host: "test-ip"},
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "CloudStackMachineConfig",
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							Count: 3,
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "CloudStackMachineConfig",
+								Name: "eksa-unit-test",
+							},
+						},
+					},
+					DatacenterRef: anywherev1.Ref{
+						Kind: "CloudStackDatacenterConfig",
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+						CNI: "cilium",
+					},
+				},
+			},
+			wantCloudStackDatacenter: &anywherev1.CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.CloudStackDatacenterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.CloudStackDatacenterConfigSpec{
+					Account: "admin",
+					Domain:  "domain1",
+					Zones: []anywherev1.CloudStackZone{
+						{
+							Name: "zone1",
+							Network: anywherev1.CloudStackResourceIdentifier{
+								Name: "net1",
+							},
+						},
+					},
+					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+				},
+			},
+			wantCloudStackMachineConfigs: []*anywherev1.CloudStackMachineConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.CloudStackMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: anywherev1.CloudStackMachineConfigSpec{
+						ComputeOffering: anywherev1.CloudStackResourceIdentifier{
+							Name: "m4-large",
+						},
+						Template: anywherev1.CloudStackResourceIdentifier{
+							Name: "centos7-k8s-120",
+						},
+						Users: []anywherev1.UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Affinity:          "pro",
+						UserCustomDetails: map[string]string{"foo": "bar"},
+						Symlinks:          map[string]string{"/var/log/kubernetes": "/data/var/log/kubernetes"},
 					},
 				},
 			},
@@ -293,6 +389,21 @@ func TestParseConfig(t *testing.T) {
 							Owner:      "janedoe",
 							Repository: "flux-fleet",
 						},
+					},
+				},
+			},
+			wantFluxConfig: &anywherev1.FluxConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "FluxConfig",
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.FluxConfigSpec{
+					Github: &anywherev1.GithubProviderConfig{
+						Owner:      "janedoe",
+						Repository: "flux-fleet",
 					},
 				},
 			},

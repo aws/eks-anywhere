@@ -5,7 +5,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"reflect"
+	"strconv"
+	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -14,11 +15,13 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -29,15 +32,17 @@ import (
 )
 
 const (
-	maxRetries        = 30
-	backOffPeriod     = 5 * time.Second
-	machineMaxWait    = 10 * time.Minute
-	machineBackoff    = 1 * time.Second
-	machinesMinWait   = 30 * time.Minute
-	moveCAPIWait      = 15 * time.Minute
-	ctrlPlaneWaitStr  = "60m"
-	etcdWaitStr       = "60m"
-	deploymentWaitStr = "30m"
+	maxRetries             = 30
+	backOffPeriod          = 5 * time.Second
+	machineBackoff         = 1 * time.Second
+	machinesMinWait        = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	clusterWaitStr         = "60m"
+	ctrlPlaneWaitStr       = "60m"
+	etcdWaitStr            = "60m"
+	deploymentWaitStr      = "30m"
+	ctrlPlaneInProgressStr = "1m"
+	etcdInProgressStr      = "1m"
 )
 
 type ClusterManager struct {
@@ -58,10 +63,14 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
+	WaitForClusterReady(ctx context.Context, cluster *types.Cluster, timeout string, clusterName string) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
 	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
@@ -75,14 +84,17 @@ type ClusterClient interface {
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
+	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
+	CountMachineDeploymentReplicasReady(ctx context.Context, clusterName string, kubeconfigFile string) (int, int, error)
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
@@ -95,6 +107,7 @@ type ClusterClient interface {
 type Networking interface {
 	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error)
+	RunPostControlPlaneUpgradeSetup(ctx context.Context, cluster *types.Cluster) error
 }
 
 type AwsIamAuth interface {
@@ -105,7 +118,7 @@ type AwsIamAuth interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, maxWaitPerMachine time.Duration, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -115,7 +128,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		networking:         networking,
 		Retrier:            retrier,
 		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     machineMaxWait,
+		machineMaxWait:     maxWaitPerMachine,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
 		awsIamAuth:         awsIamAuth,
@@ -147,6 +160,11 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
+		return err
+	}
+
+	logger.V(3).Info("Waiting for all clusters to be ready before move")
+	if err := c.waitForAllClustersReady(ctx, from, clusterWaitStr); err != nil {
 		return err
 	}
 
@@ -199,7 +217,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("generating capi spec: %v", err)
 	}
@@ -229,47 +247,21 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
 	}
 
-	logger.V(3).Info("Waiting for workload kubeconfig secret to be ready", "cluster", workloadCluster.Name)
-	err = c.Retrier.Retry(
-		func() error {
-			found, err := c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
-			if err == nil && !found {
-				err = fmt.Errorf("kubeconfig secret does not exist")
-			}
-			return err
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("checking availability of kubeconfig secret: %v", err)
-	}
-
-	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
-	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-	if err != nil {
-		return nil, fmt.Errorf("generating workload kubeconfig: %v", err)
-	}
-
-	logger.V(3).Info("Run post control plane creation operations")
-	err = provider.RunPostControlPlaneCreation(ctx, clusterSpec, workloadCluster)
-	if err != nil {
-		return nil, fmt.Errorf("running post control plane creation operations: %v", err)
-	}
-
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
-	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef()); err != nil {
-		return nil, err
-	}
-
-	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
+	err = c.Retrier.Retry(
+		func() error {
+			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+			return err
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("applying extra resources to workload cluster: %v", err)
+		return nil, fmt.Errorf("waiting for workload kubeconfig: %v", err)
 	}
 
 	return workloadCluster, nil
@@ -290,6 +282,19 @@ func (c *ClusterManager) generateWorkloadKubeconfig(ctx context.Context, cluster
 		return "", fmt.Errorf("writing workload kubeconfig: %v", err)
 	}
 	return writtenFile, nil
+}
+
+func (c *ClusterManager) RunPostCreateWorkloadCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err := c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef()); err != nil {
+		return err
+	}
+
+	if err := cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec); err != nil {
+		return fmt.Errorf("applying extra resources to workload cluster: %v", err)
+	}
+	return nil
 }
 
 func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
@@ -326,18 +331,27 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 				}
 			}
 
-			return c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete)
+			if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
+				return err
+			}
+
+			return provider.PostClusterDeleteValidate(ctx, managementCluster)
 		},
 	)
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, provider providers.Provider) error {
-	currentSpec, err := c.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Cluster.Name)
+	eksaMgmtCluster := workloadCluster
+	if managementCluster != nil && managementCluster.ExistingManagement {
+		eksaMgmtCluster = managementCluster
+	}
+
+	currentSpec, err := c.GetCurrentClusterSpec(ctx, eksaMgmtCluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("getting current cluster spec: %v", err)
 	}
 
-	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, currentSpec, newClusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, eksaMgmtCluster, currentSpec, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("generating capi spec: %v", err)
 	}
@@ -345,7 +359,6 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if err = c.writeCAPISpecFile(newClusterSpec.Cluster.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
-
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
@@ -357,6 +370,16 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 
 	var externalEtcdTopology bool
 	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		logger.V(3).Info("Waiting for external etcd upgrade to be in progress")
+		err = c.clusterClient.WaitForManagedExternalEtcdNotReady(ctx, managementCluster, etcdInProgressStr, newClusterSpec.Cluster.Name)
+		if err != nil {
+			if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
+				return fmt.Errorf("error waiting for external etcd upgrade not ready: %v", err)
+			} else {
+				logger.V(3).Info("Timed out while waiting for external etcd to be in progress, likely caused by no external etcd upgrade")
+			}
+		}
+
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
 		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, newClusterSpec.Cluster.Name); err != nil {
 			return fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
@@ -365,6 +388,15 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("External etcd is ready")
 	}
 
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
+	if err != nil {
+		if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
+			return fmt.Errorf("error waiting for control plane not ready: %v", err)
+		} else {
+			logger.V(3).Info("Timed out while waiting for control plane to be in progress, likely caused by no control plane upgrade")
+		}
+	}
 	logger.V(3).Info("Run post control plane upgrade operations")
 	err = provider.RunPostControlPlaneUpgrade(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
 	if err != nil {
@@ -386,6 +418,11 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Running CNI post control plane upgrade operations")
+	if err = c.networking.RunPostControlPlaneUpgradeSetup(ctx, workloadCluster); err != nil {
+		return fmt.Errorf("running CNI post control plane upgrade operations: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")
@@ -419,19 +456,19 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCAPI(ctx, workloadCluster, provider, externalEtcdTopology)
+	err = c.waitForCAPI(ctx, eksaMgmtCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster capi components to be ready: %v", err)
 	}
 
-	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, newClusterSpec); err != nil {
+	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, eksaMgmtCluster, newClusterSpec); err != nil {
 		return fmt.Errorf("applying extra resources to workload cluster: %v", err)
 	}
 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
 	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
@@ -459,62 +496,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same, checking provider spec")
-	// compare provider spec
-	switch cc.Spec.DatacenterRef.Kind {
-	case v1alpha1.VSphereDatacenterKind:
-		machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		vdc := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
-		if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
-			logger.V(3).Info("New provider spec is different from the new spec")
-			return true, nil
-		}
-
-		for _, config := range machineConfigs {
-			mc := config.(*v1alpha1.VSphereMachineConfig)
-			machineConfigMap[mc.Name] = mc
-		}
-		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		cpVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
-			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
-			return true, nil
-		}
-		for _, workerNodeGroupConfiguration := range cc.Spec.WorkerNodeGroupConfigurations {
-			existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			wnVmc := machineConfigMap[workerNodeGroupConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
-				logger.V(3).Info("New worker node machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			etcdVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
-				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-	default:
-		// Run upgrade flow
-		return true, nil
-	}
-
+	logger.V(3).Info("Clusters are the same")
 	return false, nil
 }
 
@@ -584,6 +566,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 		return nil
 	}
 
+	logger.Info("Installing storage class on cluster")
 	err := c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
@@ -595,15 +578,12 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	return nil
 }
 
-func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error {
-	mhc, err := provider.GenerateMHC()
+func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
+	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 	if err != nil {
 		return err
 	}
-	if len(mhc) == 0 {
-		logger.V(4).Info("Skipping machine health checks")
-		return nil
-	}
+
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
@@ -675,7 +655,7 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 	return nil
 }
 
-func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error {
 	if cluster == nil {
 		return nil
 	}
@@ -684,9 +664,9 @@ func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster 
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(spec, cluster.KubeconfigFile)
 	if err != nil {
-		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
+		logger.V(5).Info("Error generating support bundle for management cluster", "error", err)
 		return nil
 	}
 	return collectDiagnosticBundle(ctx, bundle)
@@ -701,7 +681,7 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleWorkloadCluster(spec, provider, cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
 		return nil
@@ -712,8 +692,8 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 
 func collectDiagnosticBundle(ctx context.Context, bundle diagnostics.DiagnosticBundle) error {
 	var sinceTimeValue *time.Time
-	oneHour := "1h"
-	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(oneHour)
+	threeHours := "3h"
+	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(threeHours)
 	if err != nil {
 		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
 		return nil
@@ -749,17 +729,25 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 }
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	ready, total := 0, 0
+	policy := func(_ int, _ error) (bool, time.Duration) {
+		return true, c.machineBackoff * time.Duration(total-ready)
+	}
+
 	var machineDeploymentReplicasCount int
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
 	}
 
-	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
-	}
-
-	err := isMdReady()
-	if err == nil {
+	areMdReplicasReady := func() error {
+		var err error
+		ready, total, err = c.clusterClient.CountMachineDeploymentReplicasReady(ctx, clusterSpec.Cluster.Name, managementCluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+		if ready != total {
+			return fmt.Errorf("%d machine deployment replicas are not ready", total-ready)
+		}
 		return nil
 	}
 
@@ -768,8 +756,8 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.New(timeout)
-	if err := r.Retry(isMdReady); err != nil {
+	r := retrier.New(timeout, retrier.WithRetryPolicy(policy))
+	if err := r.Retry(areMdReplicasReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
@@ -860,8 +848,34 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 	return nil
 }
 
+func (c *ClusterManager) waitForAllClustersReady(ctx context.Context, cluster *types.Cluster, waitStr string) error {
+	clusters, err := c.clusterClient.GetClusters(ctx, cluster)
+	if err != nil {
+		return fmt.Errorf("getting clusters: %v", err)
+	}
+
+	for _, clu := range clusters {
+		err = c.clusterClient.WaitForClusterReady(ctx, cluster, waitStr, clu.Metadata.Name)
+		if err != nil {
+			return fmt.Errorf("waiting for cluster %s to be ready: %v", clu.Metadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func machineDeploymentsToDelete(currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
+	for _, group := range nodeGroupsToDelete {
+		mdName := clusterapi.MachineDeploymentName(newSpec, group)
+		machineDeployments = append(machineDeployments, mdName)
+	}
+	return machineDeployments
+}
+
 func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
-	machineDeployments := provider.MachineDeploymentsToDelete(workloadCluster, currentSpec, newSpec)
+	machineDeployments := machineDeploymentsToDelete(currentSpec, newSpec)
 	for _, machineDeploymentName := range machineDeployments {
 		machineDeployment, err := c.clusterClient.GetMachineDeployment(ctx, machineDeploymentName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -875,21 +889,30 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 	return nil
 }
 
-func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster)
+func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	fullLifecycleAPI := features.IsActive(features.FullLifecycleAPI())
+	if fullLifecycleAPI {
+		err := c.clusterClient.SetEksaControllerEnvVar(ctx, features.FullLifecycleAPIEnvVar, strconv.FormatBool(fullLifecycleAPI), cluster.KubeconfigFile)
+		if err != nil {
+			return err
+		}
+	}
+	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
-func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installEksdComponents(ctx, clusterSpec, cluster)
+func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types.Cluster) error {
+	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 }
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
-	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
+) error {
 	if clusterSpec.Cluster.Namespace != "" {
-		if err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
-			if err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
-				return err
-			}
+		if err := c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace); err != nil {
+			return err
 		}
 	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
@@ -901,15 +924,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
 		return err
 	}
-	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
-		return err
-	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	clusterSpec.Bundles.Name = clusterSpec.Cluster.Name
-	clusterSpec.Bundles.Namespace = clusterSpec.Cluster.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("outputting bundle yaml: %v", err)
@@ -1019,7 +1037,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -1037,6 +1055,12 @@ func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.Eksd
 func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
 		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
+func (c *ClusterManager) fluxConfigFetcher(cluster *types.Cluster) cluster.FluxConfigFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.FluxConfig, error) {
+		return c.clusterClient.GetEksaFluxConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 

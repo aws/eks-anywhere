@@ -117,9 +117,9 @@ func WithOIDCIdentityProviderRef(name string) ClusterFiller {
 	}
 }
 
-func WithGitOpsRef(name string) ClusterFiller {
+func WithGitOpsRef(name, kind string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: anywherev1.GitOpsConfigKind}
+		c.Spec.GitOpsRef = &anywherev1.Ref{Name: name, Kind: kind}
 	}
 }
 
@@ -129,6 +129,14 @@ func WithExternalEtcdTopology(count int) ClusterFiller {
 			c.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{}
 		}
 		c.Spec.ExternalEtcdConfiguration.Count = count
+	}
+}
+
+func WithEtcdCountIfExternal(count int) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ExternalEtcdConfiguration != nil {
+			c.Spec.ExternalEtcdConfiguration.Count = count
+		}
 	}
 }
 

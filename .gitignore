@@ -18,3 +18,4 @@ eks-anywhere-downloads*
 hardware-manifests/
 *.env
 support-bundle*
+/.ignore

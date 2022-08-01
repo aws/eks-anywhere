@@ -4,6 +4,8 @@ import (
 	"bytes"
 	stdcsv "encoding/csv"
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 	"testing/iotest"
 
@@ -13,7 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
-func TestCsvReaderReads(t *testing.T) {
+func TestCSVReaderReads(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	buf := NewBufferedCSV()
@@ -23,7 +25,7 @@ func TestCsvReaderReads(t *testing.T) {
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	reader, err := hardware.NewCsvReader(buf.Buffer)
+	reader, err := hardware.NewCSVReader(buf.Buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
@@ -31,36 +33,115 @@ func TestCsvReaderReads(t *testing.T) {
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
 }
 
-func TestCsvReaderReadsWithNoIdSpecified(t *testing.T) {
+func TestCSVReaderWithMultipleLabels(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	buf := NewBufferedCSV()
 
 	expect := NewValidMachine()
-	expect.Id = ""
+	expect.Labels["foo"] = "bar"
+	expect.Labels["qux"] = "baz"
 
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	const uuid = "unique-id"
-	reader, err := hardware.NewCsvReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
+	reader, err := hardware.NewCSVReader(buf.Buffer)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
-
-	expect.Id = uuid // patch the expected machine with the expected uuid
 	g.Expect(machine).To(gomega.BeEquivalentTo(expect))
 }
 
-func TestNewCsvReaderWithIOReaderError(t *testing.T) {
+func TestCSVReaderFromFile(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(machine).To(gomega.Equal(
+		hardware.Machine{
+			Labels:       map[string]string{"type": "cp"},
+			Nameservers:  []string{"1.1.1.1"},
+			Gateway:      "10.10.10.1",
+			Netmask:      "255.255.255.0",
+			IPAddress:    "10.10.10.10",
+			MACAddress:   "00:00:00:00:00:01",
+			Hostname:     "worker1",
+			Disk:         "/dev/sda",
+			BMCIPAddress: "192.168.0.10",
+			BMCUsername:  "Admin",
+			BMCPassword:  "admin",
+		},
+	))
+}
+
+func TestNewCSVReaderWithIOReaderError(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	expect := errors.New("read err")
 
-	_, err := hardware.NewCsvReader(iotest.ErrReader(expect))
+	_, err := hardware.NewCSVReader(iotest.ErrReader(expect))
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
+}
+
+func TestCSVReaderWithoutBMCHeaders(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	reader, err := hardware.NewNormalizedCSVReaderFromFile("./testdata/hardware_no_bmc_headers.csv")
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine, err := reader.Read()
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	g.Expect(machine).To(gomega.Equal(
+		hardware.Machine{
+			Labels:       map[string]string{"type": "cp"},
+			Nameservers:  []string{"1.1.1.1"},
+			Gateway:      "10.10.10.1",
+			Netmask:      "255.255.255.0",
+			IPAddress:    "10.10.10.10",
+			MACAddress:   "00:00:00:00:00:01",
+			Hostname:     "worker1",
+			Disk:         "/dev/sda",
+			BMCIPAddress: "",
+			BMCUsername:  "",
+			BMCPassword:  "",
+		},
+	))
+}
+
+func TestCSVReaderWithMissingRequiredColumns(t *testing.T) {
+	allHeaders := []string{
+		"hostname",
+		"ip_address",
+		"netmask",
+		"gateway",
+		"nameservers",
+		"mac",
+		"disk",
+		"labels",
+	}
+
+	for i, missing := range allHeaders {
+		t.Run(fmt.Sprintf("Missing_%v", missing), func(t *testing.T) {
+			// Create the set of included headers based on the current iteration.
+			included := make([]string, len(allHeaders))
+			copy(included, allHeaders)
+			included = append(included[0:i], included[i+1:]...)
+
+			// Create a buffer containing the included headers so the CSV reader can pull them.
+			buf := bytes.NewBufferString(fmt.Sprintf("%v", strings.Join(included, ",")))
+
+			g := gomega.NewWithT(t)
+			_, err := hardware.NewCSVReader(buf)
+			g.Expect(err).To(gomega.HaveOccurred())
+			g.Expect(err.Error()).To(gomega.ContainSubstring(missing))
+		})
+	}
 }
 
 // BufferedCSV is an in-memory CSV that satisfies io.Reader and io.Writer.

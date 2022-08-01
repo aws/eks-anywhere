@@ -33,31 +33,31 @@ func (m *MockTlsValidator) EXPECT() *MockTlsValidatorMockRecorder {
 	return m.recorder
 }
 
-// HasSelfSignedCert mocks base method.
-func (m *MockTlsValidator) HasSelfSignedCert(host, port string) (bool, error) {
+// IsSignedByUnknownAuthority mocks base method.
+func (m *MockTlsValidator) IsSignedByUnknownAuthority(host, port string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasSelfSignedCert", host, port)
+	ret := m.ctrl.Call(m, "IsSignedByUnknownAuthority", host, port)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// HasSelfSignedCert indicates an expected call of HasSelfSignedCert.
-func (mr *MockTlsValidatorMockRecorder) HasSelfSignedCert(host, port interface{}) *gomock.Call {
+// IsSignedByUnknownAuthority indicates an expected call of IsSignedByUnknownAuthority.
+func (mr *MockTlsValidatorMockRecorder) IsSignedByUnknownAuthority(host, port interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasSelfSignedCert", reflect.TypeOf((*MockTlsValidator)(nil).HasSelfSignedCert), host, port)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsSignedByUnknownAuthority", reflect.TypeOf((*MockTlsValidator)(nil).IsSignedByUnknownAuthority), host, port)
 }
 
 // ValidateCert mocks base method.
-func (m *MockTlsValidator) ValidateCert(host, port, cert string) error {
+func (m *MockTlsValidator) ValidateCert(host, port, caCertContent string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateCert", host, port, cert)
+	ret := m.ctrl.Call(m, "ValidateCert", host, port, caCertContent)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateCert indicates an expected call of ValidateCert.
-func (mr *MockTlsValidatorMockRecorder) ValidateCert(host, port, cert interface{}) *gomock.Call {
+func (mr *MockTlsValidatorMockRecorder) ValidateCert(host, port, caCertContent interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCert", reflect.TypeOf((*MockTlsValidator)(nil).ValidateCert), host, port, cert)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCert", reflect.TypeOf((*MockTlsValidator)(nil).ValidateCert), host, port, caCertContent)
 }

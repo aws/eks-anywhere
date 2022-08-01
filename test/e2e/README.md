@@ -20,6 +20,13 @@ or
 go test -tags e2e -run [test name regex]
 ```
 
+### Using bundle overrides
+In order to use bundle overrides, take your bundle overrides yaml file and move it to `ROOT_DIR/bin/local-bundle-release.yaml`.
+You will also need to set the environment variable `T_BUNDLES_OVERRIDE=true`
+
+### Cleaning up VM's after a test run
+In order to clean up VM's after a test runs automatically, set `T_CLEANUP_VMS=true`
+
 # VSphere tests requisites
 The following env variables need to be set:
 
@@ -35,6 +42,7 @@ T_VSPHERE_TEMPLATE_UBUNTU_1_19
 T_VSPHERE_TEMPLATE_UBUNTU_1_20
 T_VSPHERE_TEMPLATE_UBUNTU_1_21
 T_VSPHERE_TEMPLATE_UBUNTU_1_22
+T_VSPHERE_TEMPLATE_UBUNTU_1_23
 T_VSPHERE_TLS_INSECURE
 T_VSPHERE_TLS_THUMBPRINT
 VSPHERE_USERNAME
@@ -49,22 +57,53 @@ The following env variables need to be set:
 
 ```sh
 T_TINKERBELL_IP
-T_TINKERBELL_CERT_URL=http://${T_TINKERBELL_IP}:42114/cert
-T_TINKERBELL_HEGEL_URL=http://${T_TINKERBELL_IP}:50061
-T_TINKERBELL_GRPC_AUTHORITY=${T_TINKERBELL_IP}:42113
-T_TINKERBELL_PBNJ_GRPC_AUTHORITY=${T_TINKERBELL_IP}:50051
 T_TINKERBELL_IMAGE_UBUNTU_1_20
 T_TINKERBELL_IMAGE_UBUNTU_1_21
-T_TINKERBELL_NETWORK_CIDR
+T_TINKERBELL_IMAGE_UBUNTU_1_22
+T_TINKERBELL_IMAGE_UBUNTU_1_23
+T_TINKERBELL_CP_NETWORK_CIDR
 T_TINKERBELL_INVENTORY_CSV # path to hardware-inventory.csv file
 T_TINKERBELL_SSH_AUTHORIZED_KEY # ssh public key for connectioning to machines
 ```
-
 ## Tinkerbell hardware-inventory.csv example
 ```csv
-guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password
-bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password
-cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password
+guid,ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,bmc_password,labels,disk
+bb341bc6-546f-4b38-s584-bb4f0e5f8934,10.24.32.110,10.24.32.1,8.8.8.8,255.255.255.0,3c:ec:ef:6e:a4:82,eksa-node01,supermicro,10.24.32.10,admin,password,type=cp,/dev/sda
+cc5619b8-a894-4db0-bf1a-fd04d5964d54,10.24.32.111,10.24.32.1,8.8.8.8,,255.255.255.0,3c:ec:ef:6e:a5:7c,eksa-node02,supermicro,10.24.32.11,admin,password,type=worker,/dev/sda
+```
+
+# CloudStack tests requisites
+
+The following env variables need to be set:
+```
+T_CLOUDSTACK_DOMAIN
+T_CLOUDSTACK_ZONE
+T_CLOUDSTACK_ACCOUNT
+T_CLOUDSTACK_NETWORK
+T_CLOUDSTACK_MANAGEMENT_SERVER
+T_CLOUDSTACK_SSH_AUTHORIZED_KEY
+T_CLOUDSTACK_TEMPLATE_REDHAT_1_20
+T_CLOUDSTACK_TEMPLATE_REDHAT_1_21
+T_CLOUDSTACK_COMPUTE_OFFERING_LARGE
+T_CLOUDSTACK_COMPUTE_OFFERING_LARGER
+T_CLOUDSTACK_POD_CIDR
+T_CLOUDSTACK_SERVICE_CIDR
+T_CLOUDSTACK_CLUSTER_IP_POOL # Comma separated list of control plane IP's
+
+EKSA_CLOUDSTACK_B64ENCODED_SECRET
+CLOUDSTACK_PROVIDER=true (while cloudstack provider is under development)
+```
+
+# Snow tests requisites
+The following env variables need to be set:
+
+```sh
+T_SNOW_AMIID_UBUNTU_1_20
+T_SNOW_AMIID_UBUNTU_1_21
+T_SNOW_CONTROL_PLANE_CIDR
+T_SNOW_POD_CIDR
+EKSA_AWS_CREDENTIALS_FILE
+EKSA_AWS_CA_BUNDLES_FILE
 ```
 
 # OIDC tests requisites
@@ -90,10 +129,18 @@ The [oidc](https://github.com/aws/eks-anywhere/blob/main/internal/pkg/oidc/serve
 # Proxy test requisites
 The following env variables need to be set:
 
+For VSphere proxy:
 ```sh
-T_HTTP_PROXY
-T_HTTPS_PROXY
-T_NO_PROXY
+T_HTTP_PROXY_VSPHERE
+T_HTTPS_PROXY_VSPHERE
+T_NO_PROXY_VSPHERE
+```
+
+For CloudStack proxy:
+```sh
+T_HTTP_PROXY_CLOUDSTACK
+T_HTTPS_PROXY_CLOUDSTACK
+T_NO_PROXY_CLOUDSTACK
 ```
 
 # Registry test requisites

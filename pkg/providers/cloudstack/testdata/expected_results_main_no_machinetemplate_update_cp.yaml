@@ -35,14 +35,22 @@ spec:
     port: 6443
   zones:
     - network:
-        name: "net1"
-      name: "zone1"
+        name: net1
+      name: zone1
+  domain: domain1
+  account: admin
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
   name: test-control-plane-template-original
   namespace: eksa-system
+  annotations:
+    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
+    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
+    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
 spec:
   template:
     spec:
@@ -50,6 +58,12 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
+      diskOffering:
+        name: Small
+        mountPath: /data-small
+        device: /dev/vdb
+        filesystem: ext4
+        label: data_disk
       affinitygroupids:
       - control-plane-anti-affinity
 ---
@@ -59,10 +73,11 @@ metadata:
   name: test
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: CloudStackMachineTemplate
-    name: test-control-plane-template-original
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: CloudStackMachineTemplate
+      name: test-control-plane-template-original
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -84,6 +99,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -99,9 +115,11 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
         apiVersion: v1
@@ -113,23 +131,31 @@ spec:
         spec:
           containers:
           - args:
-            - start
+            - manager
             env:
             - name: vip_arp
               value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
             - name: vip_leaderelection
               value: "true"
-            - name: vip_address
-              value: 1.2.3.4
-            - name: vip_interface
-              value: ens3
             - name: vip_leaseduration
               value: "15"
             - name: vip_renewdeadline
               value: "10"
             - name: vip_retryperiod
               value: "2"
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            - name: address
+              value: 1.2.3.4
+            image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}
@@ -137,7 +163,7 @@ spec:
               capabilities:
                 add:
                 - NET_ADMIN
-                - SYS_TIME
+                - NET_RAW
             volumeMounts:
             - mountPath: /etc/kubernetes/admin.conf
               name: kubeconfig
@@ -145,7 +171,6 @@ spec:
           volumes:
           - hostPath:
               path: /etc/kubernetes/admin.conf
-              type: FileOrCreate
             name: kubeconfig
         status: {}
       owner: root:root
@@ -315,7 +340,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -323,7 +350,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     preKubeadmCommands:
     - swapoff -a
     - hostname "{{ ds.meta_data.local_hostname }}"
@@ -331,6 +360,30 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - >-
+      if [ ! -L /var/log/kubernetes ] ;
+        then
+          mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
+        else echo "/var/log/kubernetes already symlnk";
+      fi
+    diskSetup:
+      filesystems:
+        - device: /dev/vdb1
+          overwrite: false
+          extraOpts:
+            - -E
+            - lazy_itable_init=1,lazy_journal_init=1
+          filesystem: ext4
+          label: data_disk
+      partitions:
+        - device: /dev/vdb
+          layout: true
+          overwrite: false
+          tableType: gpt
+    mounts:
+      - - LABEL=data_disk
+        - /data-small
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -349,11 +402,16 @@ metadata:
 spec:
   replicas: 3
   etcdadmConfigSpec:
-    etcdadmBuiltin: true
+    etcdadmBuiltin: false
     format: cloud-config
     cloudInitConfig:
       version: 3.4.16
       installDir: "/usr/bin"
+    etcdadmInstallCommands:
+      - echo this line exists so that etcdadmInstallCommands is not empty
+      - echo etcdadmInstallCommands can be removed once etcdadm bootstrap and controller fix the bug
+      - echo that preEtcdadmCommands not run unless etcdadmBuiltin is false
+      - echo https://github.com/mrajashree/etcdadm-bootstrap-provider/issues/13
     preEtcdadmCommands:
     - swapoff -a
     - hostname "{{ ds.meta_data.local_hostname }}"
@@ -361,6 +419,21 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - >-
+      echo "type=83" | sfdisk /dev/vdb &&
+      mkfs -t ext4 /dev/vdb1 &&
+      mkdir -p /data-small &&
+      echo /dev/vdb1 /data-small ext4 defaults 0 2 >> /etc/fstab &&
+      mount /data-small
+    - >-
+      if [ ! -L /var/lib/ ] ;
+        then
+          mv /var/lib/ /var/lib/-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p /data-small/var/lib && ln -s /data-small/var/lib /var/lib/ ;
+        else
+          echo "/var/lib/ already symlnk" ;
+      fi
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -376,6 +449,12 @@ kind: CloudStackMachineTemplate
 metadata:
   name: test-etcd-template-original
   namespace: 'eksa-system'
+  annotations:
+    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
+    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
+    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
 spec:
   template:
     spec:
@@ -383,6 +462,11 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
+      diskOffering:
+        name: Small
+        mountPath: /data-small
+        device: /dev/vdb
+        filesystem: ext4
+        label: data_disk
       affinitygroupids:
       - etcd-affinity
----

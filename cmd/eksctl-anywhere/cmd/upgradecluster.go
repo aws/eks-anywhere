@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -20,9 +21,10 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
-	wConfig          string
-	forceClean       bool
-	hardwareFileName string
+	wConfig               string
+	forceClean            bool
+	hardwareCSVPath       string
+	tinkerbellBootstrapIP string
 }
 
 var uc = &upgradeClusterOptions{}
@@ -34,7 +36,7 @@ var upgradeClusterCmd = &cobra.Command{
 	PreRunE:      preRunUpgradeCluster,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := uc.upgradeCluster(cmd.Context()); err != nil {
+		if err := uc.upgradeCluster(cmd); err != nil {
 			return fmt.Errorf("failed to upgrade cluster: %v", err)
 		}
 		return nil
@@ -58,13 +60,46 @@ func init() {
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	err := upgradeClusterCmd.MarkFlagRequired("filename")
-	if err != nil {
+	upgradeClusterCmd.Flags().StringVarP(
+		&cc.hardwareCSVPath,
+		TinkerbellHardwareCSVFlagName,
+		TinkerbellHardwareCSVFlagAlias,
+		"",
+		TinkerbellHardwareCSVFlagDescription,
+	)
+
+	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 }
 
-func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
+func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
+	ctx := cmd.Context()
+
+	clusterConfigFileExist := validations.FileExists(uc.fileName)
+	if !clusterConfigFileExist {
+		return fmt.Errorf("the cluster config file %s does not exist", uc.fileName)
+	}
+
+	clusterConfig, err := v1alpha1.GetAndValidateClusterConfig(uc.fileName)
+	if err != nil {
+		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
+	}
+
+	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
+
+		// If no flag was returned there is a developer error as the flag has been removed
+		// from the program rendering it invalid.
+		if flag == nil {
+			panic("'hardwarefile' flag not configured")
+		}
+
+		if len(uc.hardwareCSVPath) != 0 && !validations.FileExists(uc.hardwareCSVPath) {
+			return fmt.Errorf("hardware config file %s does not exist", uc.hardwareCSVPath)
+		}
+	}
+
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
@@ -73,22 +108,31 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
+	cliConfig := buildCliConfig(clusterSpec)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	if err != nil {
+		return err
+	}
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
+		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions).
-		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
+		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithCAPIManager().
+		WithEksdUpgrader().
+		WithEksdInstaller().
 		WithKubectl().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, &err)
+	defer close(ctx, deps)
 
 	if deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: upgrade operation is not supported for provider tinkerbell")
+		return errors.New("upgrade operation is not supported for provider tinkerbell")
 	}
 
 	upgradeCluster := workflows.NewUpgrade(
@@ -96,8 +140,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.Provider,
 		deps.CAPIManager,
 		deps.ClusterManager,
-		deps.FluxAddonClient,
+		deps.GitOpsFlux,
 		deps.Writer,
+		deps.EksdUpgrader,
+		deps.EksdInstaller,
 	)
 
 	workloadCluster := &types.Cluster{
@@ -105,29 +151,24 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 	}
 
-	var cluster *types.Cluster
+	var managementCluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
-		}
+		managementCluster = workloadCluster
 	} else {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.ManagementCluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
-		}
+		managementCluster = clusterSpec.ManagementCluster
 	}
 
 	validationOpts := &validations.Opts{
 		Kubectl:           deps.Kubectl,
 		Spec:              clusterSpec,
 		WorkloadCluster:   workloadCluster,
-		ManagementCluster: cluster,
+		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean)
+	err = upgradeCluster.Run(ctx, clusterSpec, managementCluster, workloadCluster, upgradeValidations, uc.forceClean)
+	cleanup(deps, &err)
 	return err
 }
 

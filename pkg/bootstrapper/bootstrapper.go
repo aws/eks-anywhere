@@ -19,6 +19,7 @@ type ClusterClient interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterClientOption) (kubeconfig string, err error)
 	DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error
 	WithExtraDockerMounts() BootstrapClusterClientOption
+	WithExtraPortMappings([]int) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
 	WithDefaultCNIDisabled() BootstrapClusterClientOption
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
@@ -26,8 +27,7 @@ type ClusterClient interface {
 	GetKubeconfig(ctx context.Context, clusterName string) (string, error)
 	ClusterExists(ctx context.Context, clusterName string) (bool, error)
 	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateNamespaceIfNotPresent(ctx context.Context, kubeconfig string, namespace string) error
 }
 
 type (
@@ -52,11 +52,8 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		KubeconfigFile: kubeconfigFile,
 	}
 
-	err = b.clusterClient.GetNamespace(ctx, c.KubeconfigFile, constants.EksaSystemNamespace)
-	if err != nil {
-		if err := b.clusterClient.CreateNamespace(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
-			return nil, err
-		}
+	if err = b.clusterClient.CreateNamespaceIfNotPresent(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return nil, err
 	}
 
 	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)
@@ -124,6 +121,12 @@ func (b *Bootstrapper) getClientOptions(opts []BootstrapClusterOption) []Bootstr
 func WithExtraDockerMounts() BootstrapClusterOption {
 	return func(b *Bootstrapper) BootstrapClusterClientOption {
 		return b.clusterClient.WithExtraDockerMounts()
+	}
+}
+
+func WithExtraPortMappings(ports []int) BootstrapClusterOption {
+	return func(b *Bootstrapper) BootstrapClusterClientOption {
+		return b.clusterClient.WithExtraPortMappings(ports)
 	}
 }
 

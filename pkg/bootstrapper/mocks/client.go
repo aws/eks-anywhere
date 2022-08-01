@@ -86,18 +86,18 @@ func (mr *MockClusterClientMockRecorder) CreateBootstrapCluster(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBootstrapCluster", reflect.TypeOf((*MockClusterClient)(nil).CreateBootstrapCluster), varargs...)
 }
 
-// CreateNamespace mocks base method.
-func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+// CreateNamespaceIfNotPresent mocks base method.
+func (m *MockClusterClient) CreateNamespaceIfNotPresent(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreateNamespaceIfNotPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateNamespace indicates an expected call of CreateNamespace.
-func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+// CreateNamespaceIfNotPresent indicates an expected call of CreateNamespaceIfNotPresent.
+func (mr *MockClusterClientMockRecorder) CreateNamespaceIfNotPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespaceIfNotPresent", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespaceIfNotPresent), arg0, arg1, arg2)
 }
 
 // DeleteBootstrapCluster mocks base method.
@@ -142,20 +142,6 @@ func (m *MockClusterClient) GetKubeconfig(arg0 context.Context, arg1 string) (st
 func (mr *MockClusterClientMockRecorder) GetKubeconfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKubeconfig", reflect.TypeOf((*MockClusterClient)(nil).GetKubeconfig), arg0, arg1)
-}
-
-// GetNamespace mocks base method.
-func (m *MockClusterClient) GetNamespace(arg0 context.Context, arg1, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetNamespace", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GetNamespace indicates an expected call of GetNamespace.
-func (mr *MockClusterClientMockRecorder) GetNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockClusterClient)(nil).GetNamespace), arg0, arg1, arg2)
 }
 
 // ValidateClustersCRD mocks base method.
@@ -212,4 +198,18 @@ func (m *MockClusterClient) WithExtraDockerMounts() bootstrapper.BootstrapCluste
 func (mr *MockClusterClientMockRecorder) WithExtraDockerMounts() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExtraDockerMounts", reflect.TypeOf((*MockClusterClient)(nil).WithExtraDockerMounts))
+}
+
+// WithExtraPortMappings mocks base method.
+func (m *MockClusterClient) WithExtraPortMappings(arg0 []int) bootstrapper.BootstrapClusterClientOption {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithExtraPortMappings", arg0)
+	ret0, _ := ret[0].(bootstrapper.BootstrapClusterClientOption)
+	return ret0
+}
+
+// WithExtraPortMappings indicates an expected call of WithExtraPortMappings.
+func (mr *MockClusterClientMockRecorder) WithExtraPortMappings(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExtraPortMappings", reflect.TypeOf((*MockClusterClient)(nil).WithExtraPortMappings), arg0)
 }

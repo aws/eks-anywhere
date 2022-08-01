@@ -19,8 +19,9 @@ import (
 )
 
 type generateSupportBundleOptions struct {
-	fileName         string
-	hardwareFileName string
+	fileName              string
+	hardwareFileName      string
+	tinkerbellBootstrapIP string
 }
 
 var gsbo = &generateSupportBundleOptions{}
@@ -93,7 +94,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, cc.skipPowerActions).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, false, gsbo.tinkerbellBootstrapIP).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {
@@ -101,5 +102,5 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 	defer close(ctx, deps)
 
-	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleWorkloadCluster(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
 }

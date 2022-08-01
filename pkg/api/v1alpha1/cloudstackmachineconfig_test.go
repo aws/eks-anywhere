@@ -4,8 +4,41 @@ import (
 	"reflect"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
+	Template: CloudStackResourceIdentifier{
+		Name: "template1",
+	},
+	ComputeOffering: CloudStackResourceIdentifier{
+		Name: "offering1",
+	},
+	DiskOffering: CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+			Name: "diskOffering1",
+		},
+		MountPath:  "/data",
+		Device:     "/dev/vdb",
+		Filesystem: "ext4",
+		Label:      "data_disk",
+	},
+	Users: []UserConfiguration{
+		{
+			Name:              "zone1",
+			SshAuthorizedKeys: []string{"key"},
+		},
+	},
+	UserCustomDetails: map[string]string{
+		"foo": "bar",
+	},
+	Symlinks: map[string]string{
+		"/var/log/kubernetes": "/data/var/log/kubernetes",
+	},
+	AffinityGroupIds: []string{"affinityGroupId1"},
+	Affinity:         "pro",
+}
 
 func TestGetCloudStackMachineConfigs(t *testing.T) {
 	tests := []struct {
@@ -72,6 +105,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						},
 						ComputeOffering: CloudStackResourceIdentifier{
 							Id: "m4-large-id",
+						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+								Name: "Small",
+							},
+							MountPath:  "/data-small",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -157,6 +199,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: CloudStackResourceIdentifier{
 							Name: "m4-large",
 						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+								Name: "Small",
+							},
+							MountPath:  "/data-small",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
+						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -177,6 +228,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						},
 						ComputeOffering: CloudStackResourceIdentifier{
 							Name: "m5-xlarge",
+						},
+						DiskOffering: CloudStackResourceDiskOffering{
+							CloudStackResourceIdentifier: CloudStackResourceIdentifier{
+								Name: "Medium",
+							},
+							MountPath:  "/data-medium",
+							Device:     "/dev/vdb",
+							Filesystem: "ext4",
+							Label:      "data_disk",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -205,4 +265,138 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCloudStackMachineConfigSpecEqual(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeTrue(), "deep copy CloudStackMachineConfigSpec showing as non-equal")
+}
+
+func TestCloudStackMachineNotEqualTemplateName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Template.Name = "newName"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualTemplateId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Template.Id = "newId"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualComputeOfferingName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.ComputeOffering.Name = "newComputeOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualComputeOfferingId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Name = "newDiskOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Id = "newDiskOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingMountPath(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.MountPath = "newDiskOfferingPath"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering path comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingDevice(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Device = "/dev/sdb"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering device comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingLabel(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Label = "data_disk_new"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering label comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualDiskOfferingFilesystem(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Filesystem = "ext3"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering filesystem comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualAffinity(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Affinity = "anti"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Affinity comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUsersNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Users = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUsers(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Users = append(cloudStackMachineConfigSpec2.Users, UserConfiguration{Name: "newUser", SshAuthorizedKeys: []string{"newKey"}})
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUserCustomDetailsNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.UserCustomDetails = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualSymlinksNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Symlinks = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUserCustomDetails(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.UserCustomDetails["i"] = "j"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualSymlinks(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Symlinks["i"] = "j"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualSymlinksDifferentTargetSameKey(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	for k, v := range cloudStackMachineConfigSpec2.Symlinks {
+		cloudStackMachineConfigSpec2.Symlinks[k] = "/different" + v
+	}
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Symlinks comparison in CloudStackMachineConfigSpec not detected")
 }

@@ -42,15 +42,15 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	// Deprecated: This field has no function and is going to be removed in a future release.
-	OverrideClusterSpecFile string         `json:"overrideClusterSpecFile,omitempty"`
-	ClusterNetwork          ClusterNetwork `json:"clusterNetwork,omitempty"`
+	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
+	// BundlesRef contains a reference to the Bundles containing the desired dependencies for the cluster
+	BundlesRef *BundlesRef `json:"bundlesRef,omitempty"`
 }
 
 func (n *Cluster) Equal(o *Cluster) bool {
@@ -93,6 +93,10 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	if !n.ManagementClusterEqual(o) {
 		return false
 	}
+	if !n.Spec.BundlesRef.Equal(o.Spec.BundlesRef) {
+		return false
+	}
+
 	return true
 }
 
@@ -134,6 +138,11 @@ type RegistryMirrorConfiguration struct {
 
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
+
+	// InsecureSkipVerify skips the registry certificate verification.
+	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
@@ -143,7 +152,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
 }
 
 type ControlPlaneConfiguration struct {
@@ -316,6 +325,7 @@ type ClusterNetwork struct {
 	// CNIConfig specifies the CNI plugin to be installed in the cluster
 	CNIConfig *CNIConfig `json:"cniConfig,omitempty"`
 	DNS       DNS        `json:"dns,omitempty"`
+	Nodes     *Nodes     `json:"nodes,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -401,6 +411,25 @@ func (n *KindnetdConfig) Equal(o *KindnetdConfig) bool {
 	}
 	if n == nil || o == nil {
 		return false
+	}
+	return true
+}
+
+func UsersSliceEqual(a, b []UserConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string][]string, len(a))
+	for _, v := range a {
+		m[v.Name] = v.SshAuthorizedKeys
+	}
+	for _, v := range b {
+		if _, ok := m[v.Name]; !ok {
+			return false
+		}
+		if !SliceEqual(v.SshAuthorizedKeys, m[v.Name]) {
+			return false
+		}
 	}
 	return true
 }
@@ -502,6 +531,11 @@ type ResolvConf struct {
 	Path string `json:"path,omitempty"`
 }
 
+type Nodes struct {
+	// CIDRMaskSize defines the mask size for node cidr in the cluster, default for ipv4 is 24. This is an optional field
+	CIDRMaskSize *int `json:"cidrMaskSize,omitempty"`
+}
+
 func (n *ResolvConf) Equal(o *ResolvConf) bool {
 	if n == o {
 		return true
@@ -520,6 +554,7 @@ const (
 	Kube120 KubernetesVersion = "1.20"
 	Kube121 KubernetesVersion = "1.21"
 	Kube122 KubernetesVersion = "1.22"
+	Kube123 KubernetesVersion = "1.23"
 )
 
 type CNI string
@@ -581,6 +616,23 @@ type EksdReleaseRef struct {
 	Name string `json:"name"`
 	// Namespace refers to the namespace for the EKS-D release resources
 	Namespace string `json:"namespace"`
+}
+
+type BundlesRef struct {
+	// APIVersion refers to the Bundles APIVersion
+	APIVersion string `json:"apiVersion"`
+	// Name refers to the name of the Bundles object in the cluster
+	Name string `json:"name"`
+	// Namespace refers to the Bundles's namespace
+	Namespace string `json:"namespace"`
+}
+
+func (b *BundlesRef) Equal(o *BundlesRef) bool {
+	if b == nil || o == nil {
+		return b == o
+	}
+
+	return b.APIVersion == o.APIVersion && b.Name == o.Name && b.Namespace == o.Namespace
 }
 
 type Ref struct {
@@ -703,29 +755,29 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
-func (s *Cluster) IsSelfManaged() bool {
-	return s.Spec.ManagementCluster.Name == "" || s.Spec.ManagementCluster.Name == s.Name
+func (c *Cluster) IsSelfManaged() bool {
+	return c.Spec.ManagementCluster.Name == "" || c.Spec.ManagementCluster.Name == c.Name
 }
 
-func (s *Cluster) SetManagedBy(managementClusterName string) {
-	if s.Annotations == nil {
-		s.Annotations = map[string]string{}
+func (c *Cluster) SetManagedBy(managementClusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
 	}
 
-	s.Annotations[managementAnnotation] = managementClusterName
-	s.Spec.ManagementCluster.Name = managementClusterName
+	c.Annotations[managementAnnotation] = managementClusterName
+	c.Spec.ManagementCluster.Name = managementClusterName
 }
 
-func (s *Cluster) SetSelfManaged() {
-	s.Spec.ManagementCluster.Name = s.Name
+func (c *Cluster) SetSelfManaged() {
+	c.Spec.ManagementCluster.Name = c.Name
 }
 
 func (c *ClusterGenerate) SetSelfManaged() {
 	c.Spec.ManagementCluster.Name = c.Name
 }
 
-func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
+func (c *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
+	return c.IsSelfManaged() && s2.IsSelfManaged() || c.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {

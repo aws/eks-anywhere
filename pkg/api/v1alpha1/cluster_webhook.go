@@ -16,9 +16,13 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net/http"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -36,6 +40,16 @@ func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=mutation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &Cluster{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (r *Cluster) Default() {
+	clusterlog.Info("Setting up Cluster defaults", "name", r.Name, "namespace", r.Namespace)
+	r.SetDefaults()
+}
+
 // Change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=clusters,verbs=create;update,versions=v1alpha1,name=validation.cluster.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
@@ -44,19 +58,21 @@ var _ webhook.Validator = &Cluster{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *Cluster) ValidateCreate() error {
 	clusterlog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
-		return nil
-	}
-	if !features.IsActive(features.FullLifecycleAPI()) {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
-	}
-	if r.IsSelfManaged() {
-		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+	var allErrs []error
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, fmt.Errorf("cluster is not valid: %v ", err))
 	}
 
-	if err := validateCNIPlugin(r.Spec.ClusterNetwork); err != nil {
-		return apierrors.NewBadRequest(err.Error())
+	if !r.IsReconcilePaused() {
+		if r.IsSelfManaged() {
+			allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
+		} else if !features.IsActive(features.FullLifecycleAPI()) {
+			allErrs = append(allErrs, fmt.Errorf("creating new managed cluster on existing cluster is not supported"))
+		}
+	}
+
+	if len(allErrs) > 0 {
+		return BuildStatusError(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
 	return nil
@@ -70,6 +86,10 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
 	}
 
+	if r.IsSelfManaged() && !r.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) {
+		return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
+	}
+
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
@@ -78,16 +98,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	// Test for both taints and labels
-	if err := validateWorkerNodeGroups(r); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "workerNodeGroupConfigurations"), r.Spec.WorkerNodeGroupConfigurations, err.Error()))
-	}
-
-	// Control plane configuration is mutable if workload cluster
-	if !r.IsSelfManaged() {
-		if err := validateControlPlaneLabels(r); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneConfiguration", "labels"), r.Spec, err.Error()))
-		}
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
 	}
 
 	if len(allErrs) != 0 {
@@ -208,4 +220,31 @@ func (r *Cluster) ValidateDelete() error {
 	clusterlog.Info("validate delete", "name", r.Name)
 
 	return nil
+}
+
+func BuildStatusError(qualifiedKind schema.GroupKind, name string, errs []error) *apierrors.StatusError {
+	causes := make([]metav1.StatusCause, 0, len(errs))
+	for _, err := range errs {
+		causes = append(causes, metav1.StatusCause{
+			Message: err.Error(),
+		})
+	}
+
+	err := &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status: metav1.StatusFailure,
+		Code:   http.StatusUnprocessableEntity,
+		Reason: metav1.StatusReasonInvalid,
+		Details: &metav1.StatusDetails{
+			Group:  qualifiedKind.Group,
+			Kind:   qualifiedKind.Kind,
+			Name:   name,
+			Causes: causes,
+		},
+	}}
+	aggregatedErrs := utilerrors.NewAggregate(errs)
+
+	if aggregatedErrs != nil {
+		err.ErrStatus.Message = fmt.Sprintf("%s %q is invalid: %v", qualifiedKind.String(), name, aggregatedErrs)
+	}
+	return err
 }

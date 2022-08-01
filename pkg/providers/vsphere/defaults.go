@@ -130,7 +130,7 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	tags := requiredTemplateTagsByCategory(spec.Spec, machineConfig)
 
 	// TODO: figure out if it's worth refactoring the factory to be able to reuse across machine configs.
-	templateFactory := templates.NewFactory(d.govc, spec.datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)
+	templateFactory := templates.NewFactory(d.govc, spec.datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, spec.datacenterConfig.Spec.Network, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)
 
 	// TODO: remove the factory's dependency on a machineConfig
 	if err := templateFactory.CreateIfMissing(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig, ova.URI, tags); err != nil {
@@ -162,7 +162,8 @@ func (d *Defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 
 func (d *Defaulter) setTemplateFullPath(ctx context.Context,
 	datacenterConfig *anywherev1.VSphereDatacenterConfig,
-	machine *anywherev1.VSphereMachineConfig) error {
+	machine *anywherev1.VSphereMachineConfig,
+) error {
 	templateFullPath, err := d.govc.SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machine)
 	if err != nil {
 		return fmt.Errorf("setting template full path: %v", err)

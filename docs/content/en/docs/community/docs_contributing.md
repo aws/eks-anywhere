@@ -1,5 +1,5 @@
 ---
-title: "Contributing to EKS Anywhere documentation"
+title: "Contributing to documentation"
 weight: 20
 description: >
   Guidelines for contributing to EKS Anywhere documentation
@@ -8,7 +8,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 
 * View the published EKS Anywhere [user documentation](https://anywhere.eks.amazonaws.com/docs/).
 * Fork and clone the [eks-anywhere](https://github.com/aws/eks-anywhere) project.
-* See [EKS Anywhere Documentation](https://github.com/aws/eks-anywhere/tree/main/docs) to set up your own docs test site.
+* See [EKS Anywhere Documentation](https://github.com/aws/eks-anywhere/tree/main/docs#eks-anywhere-documentation) to set up your own docs test site.
 * See the [General Guidelines](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/community/contributing.md) for contributing to the EKS Anywhere project
 * Create EKS Anywhere documentation [Issues](https://github.com/aws/eks-anywhere/issues) and [Pull Requests](https://github.com/aws/eks-anywhere/pulls).
 
@@ -18,21 +18,29 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 * **Line breaks**: Put each sentence on its own line and don’t do a line break in the middle of a sentence. 
   We are using a modified [Semantic Line Breaking](https://sembr.org/) in that we are requiring a break at the end of every sentence, but not at commas or other semantic boundaries.
 * **Headings**: Use sentence case in headings. So do “Cluster specification reference” and not “Cluster Specification Reference”
-* **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. For example:
+* **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. Here is an example of a cross reference (code and results):
    ```
-     [troubleshooting section]({{< relref "../tasks/troubleshoot" >}})
+     See the [troubleshooting section]({{< relref "../tasks/troubleshoot" >}}) page.
    ```
+     See the [troubleshooting section]({{< relref "../tasks/troubleshoot" >}}) page.
+
 * **Notes, Warnings, etc.**: You can use this form for notes:
-    
+
+    <b><tt>\{\{% alert title="Note" color="primary" %\}\}
+
+    <b><tt><put note here, multiple paragraphs are allowed></b></tt>
+
+    \{\{% /alert %\}\}</b></tt>
+
     {{% alert title="Note" color="primary" %}}
     <put note here, multiple paragraphs are allowed>
     {{% /alert %}}
 
 * **Embedding content**: If you want to read in content from a separate file, you can use the following format.
   Do this if you think the content might be useful in multiple pages:
-  ```
-  {{% content "./newfile.md" %}}
-  ```
+
+  <b><tt>\{\{% content "./newfile.md" %\}\}</b></tt>
+
 * **General style issues**: Unless otherwise instructed, follow the [Kubernetes Documentation Style Guide](https://kubernetes.io/docs/contribute/style/style-guide/) for formatting and presentation guidance.
 
 ## Where to put content
@@ -42,13 +50,8 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
   In kubectl examples, you can point to those files using: `https://anywhere.eks.amazonaws.com/manifests/whatever.yaml`
 * **Generic instructions for creating a cluster** should go into the [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) section in either:
    * [Install EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) installation guide: For prerequisites and procedures related to setting up the Administrative machine.
-   * [Creating a local cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/local-environment/) or [production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/): For simple instructions for a Docker or vSphere installation, respectively.
-* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Currently, [vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/) is the only supported provider.
-  * [Add integrations to cluster]({{< relref "../tasks/cluster/cluster-integrations/" >}}): Add names of suggested third-party tools. Then Link the names of providers to:
-    * EKS Anywhere docs instructions for configuring that feature, if instructions are available or
-    * Somewhere on the third-party site, if there are no instructions available on the EKS Anywhere site
-  * [Compare EKS Anywhere and EKS]({{< relref "../concepts/eksafeatures/" >}}): Add supported third-party solutions to the Amazon EKS Anywhere column.
-  Only link to the partner page for now.
+   * [Creating a local cluster]({{< relref "../getting-started/local-environment/" >}}) or [production cluster]({{< relref "../getting-started/production-environment/" >}}): For simple instructions for a Docker or Production (Bare Metal or vSphere) installation, respectively.
+* **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Provider-specific sections are in the Reference sections for [Bare Metal]({{< relref "../reference/baremetal/" >}}) and [vSphere]({{< relref "../reference/vsphere/" >}}).
 * **Workshop content** should contain organized links to existing documentation pages.
   The workshop content should not duplicate existing documentation pages or contain guides that are not part of the main documentation.
 
@@ -83,4 +86,4 @@ In line with these general guidelines, we recommend that even acceptable third-p
 * **Not be marketing oriented**. The content shouldn’t sell a third-party products or make vague claims of quality.
 * **Not outside the scope of EKS Anywhere**:  Just because some projects or products of a partner are appropriate for EKS Anywhere docs, it doesn’t mean that any project or product by that partner can be documented in EKS Anywhere.
 * **Stick to the facts**:  So, for example, docs about third-party software could say: “To set up load balancer ABC, do XYZ” or “Make these modifications to improve speed and efficiency.” It should not make blanket statements like: “ABC load balancer is the best one in the industry.”
-* **EKS features**: Features that relate to EKS which runs in AWS or requires an AWS account should link to [the official documentation](https://docs.aws.amazon.com/eks/latest/) as much as possible.
+* **EKS features**: Features that relate to EKS which runs in AWS or requires an AWS account should link to [the official documentation](https://docs.aws.amazon.com/eks/) as much as possible.

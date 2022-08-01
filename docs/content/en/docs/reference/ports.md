@@ -1,6 +1,6 @@
 ---
 title: "Ports and protocols"
-weight: 55
+weight: 60
 description: >
   Ports used with an EKS Anywhere cluster
 ---
@@ -53,6 +53,18 @@ Use the following to access the SSH service on the worker nodes:
 | Protocol | Direction | Port Range | Purpose                 | Used By                   |
 |----------|-----------|------------|-------------------------|---------------------------|
 | TCP      | Inbound   | 22         | SSHD server             | SSH clients               |
+
+## Bare Metal provider
+
+On the Admin machine for a Bare Metal provider, the following ports need to be accessible to all the nodes in the cluster, from the same level 2 network, for initially PXE booting:
+
+| Protocol | Direction | Port Range | Purpose                 | Used By                       |
+|----------|-----------|------------|-------------------------|-------------------------------|
+| TCP      | Inbound   | 67         | boots DHCP              | All nodes, for network boot   |
+| TCP      | Inbound   | 69         | boots TFTP              | All nodes, for network boot   |
+| TCP      | Inbound   | 80         | boots HTTP              | All nodes, for network boot   |
+| TCP      | Inbound   | 42113      | tink-server gRCP        | All nodes, talk to Tinkerbell |
+| TCP      | Inbound   | 50061      | hegl HTTP               | All nodes, talk to Tinkerbell |
 
 ## VMware provider
 

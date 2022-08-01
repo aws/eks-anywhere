@@ -35,6 +35,10 @@ func MaxLogging() bool {
 	return l.V(maxLogging).Enabled()
 }
 
+func MaxLoggingLevel() int {
+	return maxLogging
+}
+
 // Fatal is equivalent to Get().Error() followed by a call to os.Exit(1).
 func Fatal(err error, msg string) {
 	l.Error(err, msg)

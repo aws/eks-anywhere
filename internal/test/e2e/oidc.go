@@ -25,12 +25,14 @@ func (e *E2ESession) setupOIDC(testRegex string) error {
 		return nil
 	}
 
-	folder := e.jobId
+	logger.V(2).Info("Creating OIDC server for the instance.")
+
+	folder := fmt.Sprintf("%s/%s", e.jobId, "generated-artifacts")
 	bucketUrl := s3.GetBucketPublicURL(e.session, e.storageBucket)
 	issuerURL := fmt.Sprintf("%s/%s/%s", bucketUrl, folder, "oidc")
 
 	logger.V(1).Info("OIDC test found. Checking if OIDC folder present in bucket")
-	oidcPresent, err := s3.ObjectPresent(e.session, filepath.Join(e.jobId, keysPath), e.storageBucket)
+	oidcPresent, err := s3.ObjectPresent(e.session, filepath.Join(folder, keysPath), e.storageBucket)
 	if err != nil {
 		return fmt.Errorf("checking if oidc is present in bucket: %v", err)
 	}

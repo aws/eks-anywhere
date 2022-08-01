@@ -6,6 +6,8 @@ date: 2017-01-05
 description: >
   How to perform a cluster version upgrade
 ---
+> **_NOTE_**: Cluster upgrade is supported for vSphere clusters, but is not yet available for Bare Metal clusters
+>
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
@@ -50,9 +52,18 @@ Anywhere components mentioned above to their latest available versions. All upgr
 ### Check upgrade components
 Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
 
+**Management Cluster**
+
 ```bash
-eksctl anywhere upgrade plan cluster -f cluster.yaml
+eksctl anywhere upgrade plan cluster -f mgmt-cluster.yaml
 ```
+
+**Workload Cluster**
+
+```bash
+eksctl anywhere upgrade plan cluster -f workload-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+```
+
 The output should appear similar to the following:
 
 ```
@@ -99,8 +110,16 @@ spec:
 
 and then you will run the command
 
+**Management Cluster**
+
 ```
-eksctl anywhere upgrade cluster -f cluster.yaml
+eksctl anywhere upgrade cluster -f mgmt-cluster.yaml
+```
+
+**Workload Cluster**
+
+```
+eksctl anywhere upgrade cluster -f workload-cluster.yaml --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
 ```
 
 This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.

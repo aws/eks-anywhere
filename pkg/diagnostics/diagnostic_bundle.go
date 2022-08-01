@@ -46,7 +46,7 @@ type EksaDiagnosticBundle struct {
 	analysis         []*executables.SupportBundleAnalysis
 }
 
-func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, client BundleClient,
 	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
 ) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
@@ -69,7 +69,12 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
+	b.WithDefaultCollectors().
+		WithDefaultAnalyzers().
+		WithManagementCluster(true).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host). // Add a collector here to runPod and ping control plane IP once bootstrap cluster was created
+		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -112,6 +117,8 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
+		WithPackagesCollectors().
+		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -255,6 +262,12 @@ func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDi
 	return e
 }
 
+func (e *EksaDiagnosticBundle) WithPackagesCollectors() *EksaDiagnosticBundle {
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.PackageAnalyzers()...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.PackagesCollectors()...)
+	return e
+}
+
 func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DataCenterConfigAnalyzers(config)...)
 	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config)...)
@@ -289,6 +302,12 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
+	return e
+}
+
+// WithAPIServerCollectors aims to collect connection info from API server
+func (e *EksaDiagnosticBundle) WithAPIServerCollectors(controlPlaneIP string) *EksaDiagnosticBundle {
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.APIServerCollectors(controlPlaneIP)...)
 	return e
 }
 
@@ -363,7 +382,9 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 	var sinceTimeValue time.Time
 	var err error
 	if sinceTime == "" && since == "" {
-		return &sinceTimeValue, nil
+		return &sinceTimeValue, nil // returning an uninitialized (zero) Time value here results in a
+		// sinceTimeValue of "0001-01-01 00:00:00 +0000 UTC"
+		// so all pod logs will be collected from the very beginning
 	} else if sinceTime != "" && since != "" {
 		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
 	} else if sinceTime != "" {

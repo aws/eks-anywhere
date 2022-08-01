@@ -52,7 +52,7 @@ The software you need to obtain includes:
 * **Cluster components and controllers**: These include [artifacts]({{< relref "../reference/artifacts" >}}) such as OVAs for different operating systems and Kubernetes versions to [Import to vSphere]({{< relref "../reference/vsphere/vsphere-ovas" >}}).
 
 The sites to which the administrative machine and the target workload environment need access are listed in the [Requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) section. 
-If you are operating behind a firewall that limits access to the Internet, you can configure EKS Anywhere to identify the location of the [proxy service]({{< relref "../reference/clusterspec/proxy" >}}) you choose to connect to the Internet.
+If you are operating behind a firewall that limits access to the Internet, you can configure EKS Anywhere to identify the location of the [proxy service]({{< relref "../reference/clusterspec/optional/proxy" >}}) you choose to connect to the Internet.
 
 For more information on the software used in EKS Distro, which includes the Kubernetes release and related software in EKS Anywhere, see the [EKS Distro Releases](https://distro.eks.amazonaws.com/#releases) GitHub page.
 For information on the Ubuntu and Bottlerocket operating systems used with EKS Anywhere, see the EKS Anywhere [Artifacts]({{< relref "../reference/artifacts" >}}) page.
@@ -79,7 +79,7 @@ This section steps through an example of an EKS Anywhere cluster being created o
 Once you understand this process, you can use the following documentation to create your own cluster:
 
 * [Create production cluster]({{< relref "../getting-started/production-environment" >}}) for the exact procedure to create a cluster on vSphere.
-* [Troubleshooting]({{< relref "../tasks/troubleshoot/_troubleshooting" >}}) if you encounter problems along the way.
+* [Troubleshooting]({{< relref "../tasks/troubleshoot/troubleshooting" >}}) if you encounter problems along the way.
 
 ### Starting the process
 
@@ -106,14 +106,14 @@ The result of this command is a config file template that you need to modify for
 #### 2. Modify the EKS Anywhere config file
 
 Using the generated cluster config file, make modifications to suit your situation.
-Details about this config file are contained in the [vSphere Config]({{< relref "../reference/clusterspec" >}})
+Details about this config file are contained in the [vSphere Config]({{< relref "../reference/clusterspec/vsphere.md" >}})
 There are several things to consider when modifying the cluster config file:
 
 * [vSphere configuration]({{< relref "../reference/clusterspec/vsphere" >}}) describes general vSphere cluster configuration information.
-* [etcd configuration]({{< relref "../reference/clusterspec/etcd" >}}) describes different etcd topologies.
-* [OIDC configuration]({{< relref "../reference/clusterspec/oidc" >}}) describes choices for identity providers.
-* [GitOps configuration]({{< relref "../reference/clusterspec/gitops" >}}) describes how to manage your cluster using GitOps.
-* [Proxy configuration]({{< relref "../reference/clusterspec/proxy" >}}) describes how to configure EKS Anywhere to point to a proxy service, if you need to configure your cluster to connect to the Internet through a proxy server.
+* [etcd configuration]({{< relref "../reference/clusterspec/optional/etcd" >}}) describes different etcd topologies.
+* [OIDC configuration]({{< relref "../reference/clusterspec/optional/oidc" >}}) describes choices for identity providers.
+* [GitOps configuration]({{< relref "../reference/clusterspec/optional/gitops" >}}) describes how to manage your cluster using GitOps.
+* [Proxy configuration]({{< relref "../reference/clusterspec/optional/proxy" >}}) describes how to configure EKS Anywhere to point to a proxy service, if you need to configure your cluster to connect to the Internet through a proxy server.
 
 Pay particular attention to which settings are optional and which are required.
 Also, not all properties can be upgraded, so it is important to get those settings right at cluster creation.
@@ -267,7 +267,7 @@ That configuration is applied directly to the cluster:
 ```
 Installing EKS-A custom components (CRD and controller) on workload cluster
 Creating EKS-A CRDs instances on workload cluster
-Installing AddonManager and GitOps Toolkit on workload cluster
+Installing GitOps Toolkit on workload cluster
 
 ```
 If you did not specify GitOps support, starting the flux service is skipped:
@@ -317,7 +317,7 @@ All control plane and nodes are on the same network.
 * **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint, to provide access to the Cluster API.
 It should have been set up to not conflict with any other node IP addresses in the cluster.
 This is a specific requirement of CAPI, not EKS Anywhere.
-* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the internet.
+* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/optional/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the internet.
 
 Networking for the cluster itself has the following attributes:
 
@@ -328,7 +328,7 @@ Refer to the clusterNetwork section of your configuration file to see how the ci
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
 
-* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) and [MetalLB]({{< relref "../tasks/workload/loadbalance/metallb.md" >}}).
+* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [MetalLB]({{< relref "../tasks/workload/loadbalance/" >}}).
 * **Ingress controller**: You can add a Kubernetes ingress controller to EKS Anywhere.
 The project documents the use of [Emissary-ingress]({{< relref "../tasks/workload/ingress" >}}) ingress controller.
 

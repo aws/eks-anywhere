@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -302,6 +303,69 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			testName: "worker node count equals  0",
+			fileName: "testdata/cluster_invalid_worker_node_count.yaml",
+			wantErr:  true,
+		},
+		{
+			testName: "namespace mismatch between cluster and datacenter",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
+			wantErr:  true,
+		},
+		{
+			testName: "namespace mismatch between cluster and machineconfigs",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_machineconfigs",
+			wantErr:  true,
+		},
+		{
+			testName: "valid 1.20 with non eksa resources",
+			fileName: "testdata/cluster_1_20_with_non_eksa_resources.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube120,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: 3,
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			testName: "valid different machine configs",
 			fileName: "testdata/cluster_different_machine_configs.yaml",
 			wantCluster: &Cluster{
@@ -454,7 +518,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "with valid proxy configuration",
+			testName: "with valid ip proxy configuration",
 			fileName: "testdata/cluster_valid_proxy.yaml",
 			wantCluster: &Cluster{
 				TypeMeta: metav1.TypeMeta{
@@ -500,6 +564,59 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					ProxyConfiguration: &ProxyConfiguration{
 						HttpProxy:  "http://0.0.0.0:1",
 						HttpsProxy: "0.0.0.0:1",
+						NoProxy:    []string{"localhost"},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "with valid domain name proxy configuration",
+			fileName: "testdata/cluster_valid_domainname_proxy.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: 3,
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "http://google.com:1",
+						HttpsProxy: "google.com:1",
 						NoProxy:    []string{"localhost"},
 					},
 				},
@@ -1033,7 +1150,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("converting YAML to JSON: yaml: did not find expected node content"),
+			matchError: fmt.Errorf("unable to parse testdata/invalid_format.yaml file: error converting YAML to JSON: yaml: did not find expected node content"),
 		},
 		{
 			name: "Invalid spec field",
@@ -1752,7 +1869,9 @@ func TestRefEquals(t *testing.T) {
 	}
 }
 
-func TestValidateNetworkingCNIPlugin(t *testing.T) {
+func TestValidateNetworking(t *testing.T) {
+	nodeCidrMaskSize := new(int)
+	*nodeCidrMaskSize = 28
 	tests := []struct {
 		name    string
 		wantErr error
@@ -1819,6 +1938,131 @@ func TestValidateNetworkingCNIPlugin(t *testing.T) {
 							},
 						},
 						CNI:       "",
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size valid",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/24",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid",
+			wantErr: fmt.Errorf("the size of pod subnet with mask 30 is smaller than the size of node subnet with mask 28"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/30",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "node cidr mask size invalid diff",
+			wantErr: fmt.Errorf("pod subnet mask (6) and node-mask (28) difference is greater than 16"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid pods CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block format for Pods: {[1.2.3]}. Please specify a valid CIDR block for pod subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid services CIDR block",
+			wantErr: fmt.Errorf("invalid CIDR block for Services: {[1.2.3]}. Please specify a valid CIDR block for service subnet"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3",
+							},
+						},
+						Nodes: &Nodes{
+							CIDRMaskSize: nodeCidrMaskSize,
+						},
+						CNI:       Cilium,
 						CNIConfig: nil,
 					},
 				},
@@ -1921,6 +2165,159 @@ func TestValidateCNIConfig(t *testing.T) {
 			if !reflect.DeepEqual(tt.wantErr, got) {
 				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
 			}
+		})
+	}
+}
+
+func TestValidateMirrorConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "registry mirror not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: nil,
+				},
+			},
+		},
+		{
+			name:    "endpoint not specified",
+			wantErr: "no value set for RegistryMirrorConfiguration.Endpoint",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid port",
+			wantErr: "registry mirror port 65536 is invalid",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "65536",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on non snow provider",
+			wantErr: "insecureSkipVerify is only supported for snow provider",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: "nonsnow",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on snow provider",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: SnowDatacenterKind,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMirrorConfig(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestClusterRegistryMirror(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    string
+	}{
+		{
+			name: "with registry mirror",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: "1.2.3.4:443",
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
+		})
+	}
+}
+
+func TestClusterProxyConfiguration(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    map[string]string
+	}{
+		{
+			name: "with proxy configuration",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ProxyConfiguration: &ProxyConfiguration{
+						HttpProxy:  "test-http",
+						HttpsProxy: "test-https",
+						NoProxy:    []string{"test-noproxy-1", "test-noproxy-2", "test-noproxy-3"},
+					},
+				},
+			},
+			want: map[string]string{
+				"HTTP_PROXY":  "test-http",
+				"HTTPS_PROXY": "test-https",
+				"NO_PROXY":    "test-noproxy-1,test-noproxy-2,test-noproxy-3",
+			},
+		},
+		{
+			name:    "without proxy configuration",
+			cluster: &Cluster{},
+			want:    nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.ProxyConfiguration()).To(Equal(tt.want))
 		})
 	}
 }

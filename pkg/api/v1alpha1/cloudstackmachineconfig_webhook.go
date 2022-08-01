@@ -5,9 +5,12 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -30,6 +33,17 @@ var _ webhook.Validator = &CloudStackMachineConfig{}
 func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 
+	if !features.IsActive(features.CloudStackProvider()) {
+		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackMachineConfig resource creation")
+	}
+
+	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("disk offering %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+	}
+	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+		return apierrors.NewBadRequest(fmt.Sprintf("symlinks %s:%v, preventing CloudStackMachineConfig resource creation", fieldName, fieldValue))
+	}
+
 	return nil
 }
 
@@ -47,7 +61,63 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return nil
 	}
 
+	if oldCloudStackMachineConfig.IsManagement() {
+		cloudstackmachineconfiglog.Info("Machine config is associated with workload cluster", "name", oldCloudStackMachineConfig.Name)
+		return nil
+	}
+
+	var allErrs field.ErrorList
+	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
+
+	if err, fieldName, fieldValue := r.Spec.DiskOffering.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "diskOffering", fieldName), fieldValue, err.Error()),
+		)
+	}
+	if err, fieldName, fieldValue := r.Spec.Symlinks.Validate(); err != nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "symlinks", fieldName), fieldValue, err.Error()),
+		)
+	}
+
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
+	}
+
 	return nil
+}
+
+func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineConfig) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if old.Spec.Affinity != new.Spec.Affinity {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "affinity"), new.Spec.Affinity, "field is immutable"),
+		)
+	}
+
+	affinityGroupIdsMutated := false
+	if len(old.Spec.AffinityGroupIds) != len(new.Spec.AffinityGroupIds) {
+		affinityGroupIdsMutated = true
+	} else {
+		for index, id := range old.Spec.AffinityGroupIds {
+			if id != new.Spec.AffinityGroupIds[index] {
+				affinityGroupIdsMutated = true
+				break
+			}
+		}
+	}
+	if affinityGroupIdsMutated {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "affinityGroupIdsMutated"), new.Spec.AffinityGroupIds, "field is immutable"),
+		)
+	}
+
+	return allErrs
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

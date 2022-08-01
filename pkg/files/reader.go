@@ -97,7 +97,7 @@ func (r *Reader) readEmbedFile(url *url.URL) ([]byte, error) {
 func readLocalFile(filename string) ([]byte, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed reading local file [%s] for cluster spec: %v", filename, err)
+		return nil, fmt.Errorf("failed reading local file [%s]: %v", filename, err)
 	}
 
 	return data, nil

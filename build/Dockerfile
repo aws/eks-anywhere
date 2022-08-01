@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.1-experimental
 
 # Build the manager binary
-FROM golang:1.16.2 as builder
+FROM golang:1.17.8 as builder
 WORKDIR /workspace
 
 # Run this with docker build --build_arg $(go env GOPROXY) to override the goproxy
@@ -26,7 +26,7 @@ COPY ./ ./
 # Cache the go build into the the Go’s compiler cache folder so we take benefits of compiler caching across docker build calls
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
-    go build -o main ./controllers
+    go build -o main ./manager
 
 # Build
 ARG package=./controllers

@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: {{.clusterName}}-md-0
+  name: {{.workloadkubeadmconfigTemplateName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -9,12 +9,24 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+{{- if .workerNodeGroupTaints }}
+          taints:{{ range .workerNodeGroupTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- else}}
+          taints: []
+{{- end }}
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
             read-only-port: "0"
             anonymous-auth: "false"
-{{- if .cgroupDriverSystemd}}
-            cgroup-driver: systemd
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{`{{ ds.meta_data.local_hostname }}`}}'
 {{- if or .proxyConfig .registryMirrorConfiguration }}
@@ -61,6 +73,34 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- range $dir, $target := .cloudstackSymlinks}}
+      - >-
+        if [ ! -L {{$dir}} ] ;
+          then
+            mv {{$dir}} {{$dir}}-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+            mkdir -p {{$target}} && ln -s {{$target}} {{$dir}} ;
+          else echo "{{$dir}} already symlnk" ;
+        fi
+{{- end}}
+{{- if .cloudstackDiskOfferingProvided }}
+      diskSetup:
+        filesystems:
+          - device: {{ .cloudstackDiskOfferingDevice }}1
+            overwrite: false
+            extraOpts:
+              - -E
+              - lazy_itable_init=1,lazy_journal_init=1
+            filesystem: {{ .cloudstackDiskOfferingFilesystem }}
+            label: {{ .cloudstackDiskOfferingLabel }}
+        partitions:
+          - device: {{ .cloudstackDiskOfferingDevice }}
+            layout: true
+            overwrite: false
+            tableType: gpt
+      mounts:
+        - - LABEL={{ .cloudstackDiskOfferingLabel }}
+          - {{ .cloudstackDiskOfferingPath }}
+{{- end }}
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
@@ -73,7 +113,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.clusterName}}-md-0
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
@@ -89,7 +129,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: {{.clusterName}}-md-0
+          name: {{.workloadkubeadmconfigTemplateName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -102,6 +142,18 @@ kind: CloudStackMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .cloudstackAnnotations}}
+  annotations:
+{{- end }}
+{{- if .cloudstackDiskOfferingProvided}}
+    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingPath}}
+    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingDevice}}
+    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingFilesystem}}
+    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackDiskOfferingLabel}}
+{{- end }}
+{{- if .cloudstackSymlinks }}
+    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
+{{- end}}
 spec:
   template:
     spec:
@@ -119,12 +171,31 @@ spec:
 {{- if .cloudstackTemplateName }}
         name: {{.cloudstackTemplateName}}
 {{- end}}
+{{- if .cloudstackDiskOfferingProvided}}
+      diskOffering:
+{{- if .cloudstackDiskOfferingId }}
+        id: {{.cloudstackDiskOfferingId}}
+{{- end}}
+{{- if .cloudstackDiskOfferingName }}
+        name: {{.cloudstackDiskOfferingName}}
+{{- end}}
+{{- if gt .cloudstackDiskOfferingCustomSize 0}}
+        customSizeInGB: {{.cloudstackDiskOfferingCustomSize}}
+{{- end}}
+        mountPath: {{.cloudstackDiskOfferingPath}}
+        device: {{.cloudstackDiskOfferingDevice}}
+        filesystem: {{.cloudstackDiskOfferingFilesystem}}
+        label: {{.cloudstackDiskOfferingLabel}}
+{{- end}}
 {{- if .cloudstackCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackCustomDetails}}
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackAffinity }}
+      affinity: '{{ .cloudstackAffinity }}'
+{{- end }}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}

@@ -3,17 +3,8 @@ package cluster
 var defaultManager *ConfigManager
 
 func init() {
-	defaultManager = NewConfigManager()
-	err := defaultManager.Register(
-		clusterEntry(),
-		oidcEntry(),
-		awsIamEntry(),
-		gitOpsEntry(),
-		fluxEntry(),
-		vsphereEntry(),
-		dockerEntry(),
-		snowEntry(),
-	)
+	var err error
+	defaultManager, err = NewDefaultConfigManager()
 	if err != nil {
 		panic(err)
 	}
@@ -21,4 +12,25 @@ func init() {
 
 func manager() *ConfigManager {
 	return defaultManager
+}
+
+func NewDefaultConfigManager() (*ConfigManager, error) {
+	m := NewConfigManager()
+	err := m.Register(
+		clusterEntry(),
+		oidcEntry(),
+		awsIamEntry(),
+		gitOpsEntry(),
+		fluxEntry(),
+		vsphereEntry(),
+		cloudstackEntry(),
+		dockerEntry(),
+		snowEntry(),
+		tinkerbellEntry(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }

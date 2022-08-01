@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 const kindPath = "kind"
@@ -47,6 +48,7 @@ type kindExecConfig struct {
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
 	RegistryCACertPath     string
+	ExtraPortMappings      []int
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
 }
@@ -133,6 +135,22 @@ func (k *Kind) WithExtraDockerMounts() bootstrapper.BootstrapClusterClientOption
 	}
 }
 
+func (k *Kind) WithExtraPortMappings(ports []int) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		if len(ports) == 0 {
+			return errors.New("no ports found in the list")
+		}
+
+		k.execConfig.ExtraPortMappings = ports
+
+		return nil
+	}
+}
+
 func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClientOption {
 	return func() error {
 		if k.execConfig == nil {
@@ -185,7 +203,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            clusterSpec.Cluster.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
+		KindImage:            urls.ReplaceHost(bundle.EksD.KindNode.VersionedImage(), clusterSpec.Cluster.RegistryMirror()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,

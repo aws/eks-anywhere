@@ -45,6 +45,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
@@ -53,6 +54,7 @@ spec:
           provider-id: PROVIDER_ID
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
       - content: |
           apiVersion: v1
@@ -70,8 +72,6 @@ spec:
                 value: "true"
               - name: port
                 value: "6443"
-              - name: vip_interface
-                value: eno1
               - name: vip_cidr
                 value: "32"
               - name: cp_enable
@@ -83,15 +83,15 @@ spec:
               - name: vip_leaderelection
                 value: "true"
               - name: vip_leaseduration
-                value: "5"
+                value: "15"
               - name: vip_renewdeadline
-                value: "3"
+                value: "10"
               - name: vip_retryperiod
-                value: "1"
+                value: "2"
               - name: address
                 value: 1.2.3.4
-              image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
-              imagePullPolicy: Always
+              image: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+              imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
               securityContext:
@@ -102,10 +102,6 @@ spec:
               volumeMounts:
               - mountPath: /etc/kubernetes/admin.conf
                 name: kubeconfig
-            hostAliases:
-            - hostnames:
-              - kubernetes
-              ip: 127.0.0.1
             hostNetwork: true
             volumes:
             - hostPath:
@@ -136,6 +132,11 @@ metadata:
 spec:
   template:
     spec:
+      hardwareAffinity:
+        required:
+        - labelSelector:
+            matchLabels: 
+              type: cp
       templateOverride: |
         global_timeout: 6000
         id: ""
@@ -150,7 +151,7 @@ spec:
             name: stream-image
             timeout: 360
           - environment:
-              BLOCK_DEVICE: /dev/sda1
+              BLOCK_DEVICE: /dev/sda2
               CHROOT: "y"
               CMD_LINE: apt -y update && apt -y install openssl
               DEFAULT_INTERPRETER: /bin/sh -c
@@ -172,7 +173,7 @@ spec:
                           dhcp4: true
                       eno4:
                           dhcp4: true
-              DEST_DISK: /dev/sda1
+              DEST_DISK: /dev/sda2
               DEST_PATH: /etc/netplan/config.yaml
               DIRMODE: "0755"
               FS_TYPE: ext4
@@ -185,19 +186,19 @@ spec:
           - environment:
               CONTENTS: |
                 datasource:
-                Ec2:
-                  metadata_urls: ["http://1.2.3.4:50061"]
-                  strict_id: false
+                  Ec2:
+                    metadata_urls: []
+                    strict_id: false
                 system_info:
-                default_user:
-                  name: tink
-                  groups: [wheel, adm]
-                  sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                  shell: /bin/bash
+                  default_user:
+                    name: tink
+                    groups: [wheel, adm]
+                    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                    shell: /bin/bash
                 manage_etc_hosts: localhost
                 warnings:
-                dsid_missing_source: off
-              DEST_DISK: /dev/sda1
+                  dsid_missing_source: off
+              DEST_DISK: /dev/sda2
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"
               FS_TYPE: ext4
@@ -209,7 +210,7 @@ spec:
           - environment:
               CONTENTS: |
                 datasource: Ec2
-              DEST_DISK: /dev/sda1
+              DEST_DISK: /dev/sda2
               DEST_PATH: /etc/cloud/ds-identify.cfg
               DIRMODE: "0700"
               FS_TYPE: ext4
@@ -220,7 +221,7 @@ spec:
             name: add-tink-cloud-init-ds-config
             timeout: 90
           - environment:
-              BLOCK_DEVICE: /dev/sda1
+              BLOCK_DEVICE: /dev/sda2
               FS_TYPE: ext4
             image: kexec:v1.0.0
             name: kexec-image

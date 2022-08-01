@@ -1,0 +1,15 @@
+{
+  "count": 1,
+  "diskoffering": [
+    {
+      "created": "2021-11-01T14:57:05-0400",
+      "displayoffering": true,
+      "displaytext": "Custom Disk",
+      "id": "1cfbf649-b30d-462b-83dc-085f612ced70",
+      "iscustomized": true,
+      "name": "Custom",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    }
+  ]
+}

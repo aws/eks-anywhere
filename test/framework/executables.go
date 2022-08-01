@@ -16,11 +16,11 @@ func buildKubectl(t *testing.T) *executables.Kubectl {
 }
 
 func buildLocalKubectl() *executables.Kubectl {
-	return executables.NewLocalExecutableBuilder().BuildKubectlExecutable()
+	return executables.NewLocalExecutablesBuilder().BuildKubectlExecutable()
 }
 
-func executableBuilder(t *testing.T, ctx context.Context) *executables.ExecutableBuilder {
-	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+func executableBuilder(t *testing.T, ctx context.Context) *executables.ExecutablesBuilder {
+	executableBuilder, close, err := executables.InitInDockerExecutablesBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		t.Fatalf("Unable initialize executable builder: %v", err)
 	}
@@ -49,4 +49,11 @@ func buildGovc(t *testing.T) *executables.Govc {
 
 func buildDocker(t *testing.T) *executables.Docker {
 	return executables.BuildDockerExecutable()
+}
+
+func buildHelm(t *testing.T) *executables.Helm {
+	ctx := context.Background()
+	helm := executableBuilder(t, ctx).BuildHelmExecutable(executables.WithInsecure())
+
+	return helm
 }

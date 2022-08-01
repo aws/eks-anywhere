@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -21,9 +22,10 @@ import (
 )
 
 const (
-	ClusterKind         = "Cluster"
-	YamlSeparator       = "\n---\n"
-	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
+	ClusterKind              = "Cluster"
+	YamlSeparator            = "\n---\n"
+	RegistryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
+	podSubnetNodeMaskMaxDiff = 16
 )
 
 // +kubebuilder:object:generate=false
@@ -164,6 +166,10 @@ func NewCluster(clusterName string) *Cluster {
 
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
+	// TODO(chrisdoherty) Uncomment and fix unit tests. This broke _lots_ of unit tests so will
+	// return shortly.
+	// validateControlPlaneEndpoint,
+	// validateControlPlaneMachineRef,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
@@ -246,15 +252,20 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	return nil
 }
 
+type kindObject struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+		k := &kindObject{}
+		if err := yaml.Unmarshal([]byte(c), k); err != nil {
 			return err
 		}
 
-		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
+		if k.Kind == clusterConfig.ExpectedKind() {
 			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
@@ -275,12 +286,25 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) UseImageMirror(defaultImage string) string {
+func (c *Cluster) RegistryMirror() string {
 	if c.Spec.RegistryMirrorConfiguration == nil {
-		return defaultImage
+		return ""
 	}
-	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port) + imageUrl.Path
+
+	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+}
+
+func (c *Cluster) ProxyConfiguration() map[string]string {
+	if c.Spec.ProxyConfiguration == nil {
+		return nil
+	}
+	noProxyList := append(c.Spec.ProxyConfiguration.NoProxy, c.Spec.ClusterNetwork.Pods.CidrBlocks...)
+	noProxyList = append(noProxyList, c.Spec.ClusterNetwork.Services.CidrBlocks...)
+	return map[string]string{
+		"HTTP_PROXY":  c.Spec.ProxyConfiguration.HttpProxy,
+		"HTTPS_PROXY": c.Spec.ProxyConfiguration.HttpsProxy,
+		"NO_PROXY":    strings.Join(noProxyList[:], ","),
+	}
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -320,6 +344,25 @@ func validateClusterConfigName(clusterConfig *Cluster) error {
 	return nil
 }
 
+// func validateControlPlaneEndpoint(cluster *Cluster) error {
+// 	if cluster.Spec.ControlPlaneConfiguration.Endpoint.Host == "" {
+// 		return errors.New("control plane endpoint host cannot be empty")
+// 	}
+
+// 	if err := networkutils.ValidateIP(cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+// 		return fmt.Errorf("invalid control plane endpoint host: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+// func validateControlPlaneMachineRef(cluster *Cluster) error {
+// 	if cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
+// 		return errors.New("control plane machine group ref cannot be nil")
+// 	}
+// 	return nil
+// }
+
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count <= 0 {
 		return errors.New("control plane node count must be positive")
@@ -351,15 +394,22 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
+
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
 	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
 	for i, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+
+		if workerNodeGroupConfig.Count <= 0 {
+			return errors.New("worker node count must be positive")
+		}
+
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
 			return errors.New("worker node group names must be unique")
 		}
+
 		if len(workerNodeGroupConfig.Taints) != 0 {
 			for _, taint := range workerNodeGroupConfig.Taints {
 				if taint.Effect == "NoExecute" || taint.Effect == "NoSchedule" {
@@ -367,15 +417,24 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 				}
 			}
 		}
+
 		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
 		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
 			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
 		}
+
+		// TODO(chrisdoherty4) uncomment and fix
+		// if workerNodeGroupConfig.MachineGroupRef == nil {
+		// 	return fmt.Errorf("worker node group missing machineg roup ref: name=%v", workerNodeGroupConfig.Name)
+		// }
+
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
+
 	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
 		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
 	}
+
 	return nil
 }
 
@@ -410,28 +469,45 @@ func validateEtcdReplicas(clusterConfig *Cluster) error {
 }
 
 func validateNetworking(clusterConfig *Cluster) error {
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) <= 0 {
+	clusterNetwork := clusterConfig.Spec.ClusterNetwork
+
+	if len(clusterNetwork.Pods.CidrBlocks) <= 0 {
 		return errors.New("pods CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) <= 0 {
+	if len(clusterNetwork.Services.CidrBlocks) <= 0 {
 		return errors.New("services CIDR block not specified or empty")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) > 1 {
+	if len(clusterNetwork.Pods.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Pods are not yet supported")
 	}
-	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) > 1 {
+	if len(clusterNetwork.Services.CidrBlocks) > 1 {
 		return fmt.Errorf("multiple CIDR blocks for Services are not yet supported")
 	}
-	_, _, err := net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0])
+	_, podCIDRIpNet, err := net.ParseCIDR(clusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterConfig.Spec.ClusterNetwork.Pods)
+		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterNetwork.Pods)
 	}
-	_, _, err = net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks[0])
+	_, _, err = net.ParseCIDR(clusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
+		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterNetwork.Services)
 	}
 
-	return validateCNIPlugin(clusterConfig.Spec.ClusterNetwork)
+	if clusterNetwork.Nodes != nil && clusterNetwork.Nodes.CIDRMaskSize != nil {
+		podMaskSize, _ := podCIDRIpNet.Mask.Size()
+		nodeCidrMaskSize := clusterNetwork.Nodes.CIDRMaskSize
+		// the pod subnet mask needs to allow one or multiple node-masks
+		// i.e. if it has a /24 the node mask must be between 24 and 32 for ipv4
+		// the below validations are run by kubeadm and we are bubbling those up here for better customer experience
+		if podMaskSize > *nodeCidrMaskSize {
+			return fmt.Errorf("the size of pod subnet with mask %d is smaller than the size of node subnet with mask %d", podMaskSize, *nodeCidrMaskSize)
+		} else if (*nodeCidrMaskSize - podMaskSize) > podSubnetNodeMaskMaxDiff {
+			// PodSubnetNodeMaskMaxDiff is limited to 16 due to an issue with uncompressed IP bitmap in core
+			// The node subnet mask size must be no more than the pod subnet mask size + 16
+			return fmt.Errorf("pod subnet mask (%d) and node-mask (%d) difference is greater than %d", podMaskSize, *nodeCidrMaskSize, podSubnetNodeMaskMaxDiff)
+		}
+	}
+
+	return validateCNIPlugin(clusterNetwork)
 }
 
 func validateCNIPlugin(network ClusterNetwork) error {
@@ -520,12 +596,13 @@ func validateProxyData(proxy string) error {
 	} else {
 		proxyHost = proxy
 	}
-	ip, port, err := net.SplitHostPort(proxyHost)
+	host, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
-		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
+		return fmt.Errorf("proxy endpoint %s is invalid (%s), please provide a valid proxy address", proxy, err)
 	}
-	if net.ParseIP(ip) == nil {
-		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
+	_, err = net.DefaultResolver.LookupIPAddr(context.Background(), host)
+	if err != nil && net.ParseIP(host) == nil {
+		return fmt.Errorf("proxy endpoint %s is invalid, please provide a valid proxy domain name or ip: %v", host, err)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
 		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
@@ -538,13 +615,16 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return errors.New("no value set for ECRMirror.Endpoint")
+		return errors.New("no value set for RegistryMirrorConfiguration.Endpoint")
 	}
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
+		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
 	return nil
 }
 
@@ -569,11 +649,15 @@ func validateGitOps(clusterConfig *Cluster) error {
 	if gitOpsRef == nil {
 		return nil
 	}
-	if gitOpsRef.Kind != GitOpsConfigKind {
-		return errors.New("only GitOpsConfig Kind is supported at this time")
+
+	gitOpsRefKind := gitOpsRef.Kind
+
+	if gitOpsRefKind != GitOpsConfigKind && gitOpsRefKind != FluxConfigKind {
+		return errors.New("only GitOpsConfig or FluxConfig Kind are supported at this time")
 	}
+
 	if gitOpsRef.Name == "" {
-		return errors.New("GitOpsConfig name can't be empty; specify a valid name for GitOpsConfig")
+		return errors.New("GitOpsRef name can't be empty; specify a valid GitOpsConfig name")
 	}
 	return nil
 }

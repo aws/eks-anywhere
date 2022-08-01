@@ -13,6 +13,7 @@ const (
 	DefaultSnowSshKeyName                   = "default"
 	DefaultSnowInstanceType                 = SbeCLarge
 	DefaultSnowPhysicalNetworkConnectorType = SFPPlus
+	MinimumContainerVolumeSize              = 8
 )
 
 // Used for generating yaml for generate clusterconfig command
@@ -26,9 +27,10 @@ func NewSnowMachineConfigGenerate(name string) *SnowMachineConfigGenerate {
 			Name: name,
 		},
 		Spec: SnowMachineConfigSpec{
-			AMIID:        "",
-			InstanceType: DefaultSnowInstanceType,
-			SshKeyName:   DefaultSnowSshKeyName,
+			AMIID:                    "",
+			InstanceType:             DefaultSnowInstanceType,
+			SshKeyName:               DefaultSnowSshKeyName,
+			PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 		},
 	}
 }
@@ -46,13 +48,20 @@ func (s *SnowMachineConfigGenerate) Name() string {
 }
 
 func validateSnowMachineConfig(config *SnowMachineConfig) error {
-	if config.Spec.AMIID == "" {
-		return fmt.Errorf("SnowMachineConfig AMIID is a required field")
-	}
-
 	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}
+
+	if config.Spec.ContainersVolume != nil && config.Spec.ContainersVolume.Size < MinimumContainerVolumeSize {
+		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi", MinimumContainerVolumeSize)
+	}
+
+	// TODO: temporarily remove this validation since `devices` is a newly added, required field.
+	// This validation runs in snowmachineconfig webhook and ValidateUpdate fails when upgrading from older eks-a version
+	// without the `devices` field. We will add this validation back once users update their clusters to latest version.
+	// if len(config.Spec.Devices) == 0 {
+	// 	return errors.New("SnowMachineConfig Devices must contain at least one device IP")
+	// }
 	return nil
 }
 
@@ -60,11 +69,6 @@ func setSnowMachineConfigDefaults(config *SnowMachineConfig) {
 	if config.Spec.InstanceType == "" {
 		config.Spec.InstanceType = DefaultSnowInstanceType
 		logger.V(1).Info("SnowMachineConfig InstanceType is empty. Using default", "default instance type", DefaultSnowInstanceType)
-	}
-
-	if config.Spec.SshKeyName == "" {
-		config.Spec.SshKeyName = DefaultSnowSshKeyName
-		logger.V(1).Info("SnowMachineConfig SshKeyName is empty. Using default", "default SSH key name", DefaultSnowSshKeyName)
 	}
 
 	if config.Spec.PhysicalNetworkConnector == "" {

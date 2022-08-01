@@ -1,0 +1,15 @@
+coverage:
+  status:
+    patch:
+      default:
+        target: 80%
+    project:
+      default:
+        target: auto
+        threshold: 0.5%
+        informational: true
+
+ignore:
+  - internal/test/e2e
+  - "**/zz_generated.deepcopy.go"
+  - "test/framework" 

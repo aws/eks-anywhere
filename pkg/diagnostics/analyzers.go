@@ -48,11 +48,46 @@ func (a *analyzerFactory) managementClusterCrdAnalyzers() []*Analyze {
 	return a.generateCrdAnalyzers(crds)
 }
 
+func (a *analyzerFactory) PackageAnalyzers() []*Analyze {
+	var analyzers []*Analyze
+	analyzers = append(analyzers, a.packageDeploymentAnalyzers()...)
+	return append(analyzers, a.packageCrdAnalyzers()...)
+}
+
+func (a *analyzerFactory) packageCrdAnalyzers() []*Analyze {
+	crds := []string{
+		"packagebundlecontrollers.packages.eks.amazonaws.com",
+		"packagebundles.packages.eks.amazonaws.com",
+		"packagecontrollers.packages.eks.amazonaws.com",
+		"packages.packages.eks.amazonaws.com",
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) packageDeploymentAnalyzers() []*Analyze {
+	d := []eksaDeployment{
+		{
+			Name:             "eks-anywhere-packages",
+			Namespace:        constants.EksaPackagesName,
+			ExpectedReplicas: 1,
+		},
+	}
+	return a.generateDeploymentAnalyzers(d)
+}
+
 func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
+			Name:             "capt-controller-manager",
+			Namespace:        constants.CaptSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
 			Name:             "capv-controller-manager",
 			Namespace:        constants.CapvSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapcSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager-webhook",
@@ -122,6 +157,8 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 		return a.eksaVsphereAnalyzers()
 	case v1alpha1.DockerDatacenterKind:
 		return a.eksaDockerAnalyzers()
+	case v1alpha1.CloudStackDatacenterKind:
+		return a.eksaCloudstackAnalyzers()
 	default:
 		return nil
 	}
@@ -131,6 +168,14 @@ func (a *analyzerFactory) eksaVsphereAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) eksaCloudstackAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
 }
@@ -175,12 +220,13 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
+		constants.EksaDiagnosticsNamespace:               a.eksaDiagnosticsLogAnalyzers(),
 	}
 }
 
 func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
 	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
-	capiCpManagerContainerLogFile := path.Join(capiCpManagerPod, "manager.log")
+	capiCpManagerContainerLogFile := capiCpManagerPod + ".log"
 	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerContainerLogFile)
 	return []*Analyze{
 		{
@@ -188,9 +234,8 @@ func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze
 				analyzeMeta: analyzeMeta{
 					CheckName: fmt.Sprintf("%s: API server pod missing. Log: %s", logAnalysisAnalyzerPrefix, fullManagerPodLogPath),
 				},
-				CollectorName: constants.CapiKubeadmControlPlaneSystemNamespace,
-				FileName:      capiCpManagerContainerLogFile,
-				RegexPattern:  `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
+				FileName:     fullManagerPodLogPath,
+				RegexPattern: `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
 				Outcomes: []*outcome{
 					{
 						Fail: &singleOutcome{
@@ -202,6 +247,40 @@ func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze
 						Pass: &singleOutcome{
 							When:    "false",
 							Message: "API server pods launched correctly",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// EksaDiagnosticsLogAnalyzers currently can help to analyze whether user is using a valid control plane IP to connect
+// to API server
+func (a *analyzerFactory) eksaDiagnosticsLogAnalyzers() []*Analyze {
+	runPingPod := "run-ping"
+	runPingPodLog := fmt.Sprintf("%s.log", runPingPod)
+	fullRunPingPodLogPath := path.Join(runPingPod, runPingPodLog)
+	return []*Analyze{
+		{
+			TextAnalyze: &textAnalyze{
+				analyzeMeta: analyzeMeta{
+					CheckName: fmt.Sprintf("%s:  Destination Host Unreachable. Log: %s", logAnalysisAnalyzerPrefix, fullRunPingPodLogPath),
+				},
+				FileName:     fullRunPingPodLogPath,
+				RegexPattern: `exit code: 0`,
+				Outcomes: []*outcome{
+					{
+						Fail: &singleOutcome{
+							When:    "false",
+							Message: fmt.Sprintf("The control plane endpoint host is unavailable. See %s", fullRunPingPodLogPath),
+						},
+					},
+
+					{
+						Pass: &singleOutcome{
+							When:    "true",
+							Message: "Control plane IP verified.",
 						},
 					},
 				},

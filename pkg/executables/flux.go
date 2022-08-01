@@ -5,15 +5,18 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
-	fluxPath            = "flux"
-	githubTokenEnv      = "GITHUB_TOKEN"
-	gitProvider         = "github"
-	privateKeyAlgorithm = "ecdsa"
+	fluxPath                   = "flux"
+	eksaGithubTokenEnv         = "EKSA_GITHUB_TOKEN"
+	githubTokenEnv             = "GITHUB_TOKEN"
+	githubProvider             = "github"
+	gitProvider                = "git"
+	defaultPrivateKeyAlgorithm = "ecdsa"
 )
 
 type Flux struct {
@@ -26,31 +29,23 @@ func NewFlux(executable Executable) *Flux {
 	}
 }
 
-// BootstrapToolkitsComponents creates the GitHub repository if it doesn’t exist, and commits the toolkit
+// BootstrapGithub creates the GitHub repository if it doesn’t exist, and commits the toolkit
 // components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
 // If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
-func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+func (f *Flux) BootstrapGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{
 		"bootstrap",
-		gitProvider,
-		"--repository", c.Repository,
-		"--owner", c.Owner,
+		githubProvider,
+		"--repository", c.Github.Repository,
+		"--owner", c.Github.Owner,
 		"--path", c.ClusterConfigPath,
-		"--ssh-key-algorithm", privateKeyAlgorithm,
+		"--ssh-key-algorithm", defaultPrivateKeyAlgorithm,
 	}
+	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
 
-	if cluster.KubeconfigFile != "" {
-		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
-	}
-	if c.Personal {
+	if c.Github.Personal {
 		params = append(params, "--personal")
-	}
-	if c.Branch != "" {
-		params = append(params, "--branch", c.Branch)
-	}
-	if c.FluxSystemNamespace != "" {
-		params = append(params, "--namespace", c.FluxSystemNamespace)
 	}
 
 	token, err := github.GetGithubAccessTokenFromEnv()
@@ -63,14 +58,62 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 
 	_, err = f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
-		return fmt.Errorf("executing flux bootstrap: %v", err)
+		return fmt.Errorf("executing flux bootstrap github: %v", err)
 	}
 
 	return err
 }
 
-func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+// BootstrapGit commits the toolkit components manifests to the branch of a Git repository.
+// It then configures the target cluster to synchronize with the repository. If the toolkit components are present on the cluster, the
+// bootstrap command will perform an upgrade if needed.
+func (f *Flux) BootstrapGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error {
+	c := fluxConfig.Spec
+	params := []string{
+		"bootstrap",
+		gitProvider,
+		"--url", c.Git.RepositoryUrl,
+		"--path", c.ClusterConfigPath,
+		"--private-key-file", cliConfig.GitPrivateKeyFile,
+		"--silent",
+	}
+
+	params = setUpCommonParamsBootstrap(cluster, fluxConfig, params)
+	if fluxConfig.Spec.Git.SshKeyAlgorithm != "" {
+		params = append(params, "--ssh-key-algorithm", fluxConfig.Spec.Git.SshKeyAlgorithm)
+	} else {
+		params = append(params, "--ssh-key-algorithm", defaultPrivateKeyAlgorithm)
+	}
+
+	if cliConfig.GitSshKeyPassphrase != "" {
+		params = append(params, "--password", cliConfig.GitSshKeyPassphrase)
+	}
+
+	env := make(map[string]string)
+	env["SSH_KNOWN_HOSTS"] = cliConfig.GitKnownHostsFile
+	_, err := f.ExecuteWithEnv(ctx, env, params...)
+	if err != nil {
+		return fmt.Errorf("executing flux bootstrap git: %v", err)
+	}
+	return err
+}
+
+func setUpCommonParamsBootstrap(cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, params []string) []string {
+	c := fluxConfig.Spec
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	if c.Branch != "" {
+		params = append(params, "--branch", c.Branch)
+	}
+	if c.SystemNamespace != "" {
+		params = append(params, "--namespace", c.SystemNamespace)
+	}
+	return params
+}
+
+func (f *Flux) Uninstall(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{
 		"uninstall",
 		"--silent",
@@ -78,8 +121,8 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
-	if c.FluxSystemNamespace != "" {
-		params = append(params, "--namespace", c.FluxSystemNamespace)
+	if c.SystemNamespace != "" {
+		params = append(params, "--namespace", c.SystemNamespace)
 	}
 
 	_, err := f.Execute(ctx, params...)
@@ -89,12 +132,12 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 	return err
 }
 
-func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
-	if c.FluxSystemNamespace == "" {
+func (f *Flux) SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
+	if c.SystemNamespace == "" {
 		return fmt.Errorf("executing flux suspend kustomization: namespace empty")
 	}
-	params := []string{"suspend", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
+	params := []string{"suspend", "ks", c.SystemNamespace, "--namespace", c.SystemNamespace}
 
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -108,12 +151,12 @@ func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, g
 	return err
 }
 
-func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
-	if c.FluxSystemNamespace == "" {
+func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
+	if c.SystemNamespace == "" {
 		return fmt.Errorf("executing flux resume kustomization: namespace empty")
 	}
-	params := []string{"resume", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
+	params := []string{"resume", "ks", c.SystemNamespace, "--namespace", c.SystemNamespace}
 
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -127,12 +170,12 @@ func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, 
 	return err
 }
 
-func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
+	c := fluxConfig.Spec
 	params := []string{"reconcile", "source", "git"}
 
-	if c.FluxSystemNamespace != "" {
-		params = append(params, c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace)
+	if c.SystemNamespace != "" {
+		params = append(params, c.SystemNamespace, "--namespace", c.SystemNamespace)
 	} else {
 		params = append(params, "flux-system")
 	}

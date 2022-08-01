@@ -1,0 +1,9 @@
+{
+    "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+    "kind": "TinkerbellDatacenterConfig",
+    "metadata": {
+        "name": "mycluster"
+    },
+    "spec": {
+        "tinkerbellIP": "1.2.3.4",
+}

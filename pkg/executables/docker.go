@@ -40,15 +40,6 @@ func (d *Docker) PullImage(ctx context.Context, image string) error {
 	}
 }
 
-func (d *Docker) SetUpCLITools(ctx context.Context, image string) error {
-	logger.V(1).Info("Setting up cli docker dependencies")
-	if err := d.PullImage(ctx, image); err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
 func (d *Docker) Version(ctx context.Context) (int, error) {
 	cmdOutput, err := d.Execute(ctx, "version", "--format", "{{.Client.Version}}")
 	if err != nil {
@@ -131,4 +122,40 @@ func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...stri
 	}
 
 	return nil
+}
+
+func (d *Docker) Run(ctx context.Context, image string, name string, cmd []string, flags ...string) error {
+	params := []string{"run", "-d", "-i"}
+	params = append(params, flags...)
+	params = append(params, "--name", name, image)
+	params = append(params, cmd...)
+
+	if _, err := d.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("running docker container %s with image %s: %v", name, image, err)
+	}
+	return nil
+}
+
+func (d *Docker) ForceRemove(ctx context.Context, name string) error {
+	params := []string{"rm", "-f", name}
+
+	if _, err := d.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("force removing docker container %s: %v", name, err)
+	}
+	return nil
+}
+
+// CheckContainerExistence checks whether a Docker container with the provided name exists
+// It returns true if a container with the name exists, false if it doesn't and an error if it encounters some other error
+func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool, error) {
+	params := []string{"container", "inspect", name}
+
+	_, err := d.Execute(ctx, params...)
+	if err == nil {
+		return true, nil
+	} else if strings.Contains(err.Error(), "No such container") {
+		return false, nil
+	}
+
+	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
 }

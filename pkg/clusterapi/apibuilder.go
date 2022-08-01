@@ -10,7 +10,7 @@ import (
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -21,6 +21,8 @@ const (
 	etcdadmClusterKind        = "EtcdadmCluster"
 	kubeadmConfigTemplateKind = "KubeadmConfigTemplate"
 	machineDeploymentKind     = "MachineDeployment"
+	EKSAClusterLabelName      = "cluster.anywhere.eks.amazonaws.com/cluster-name"
+	EKSAClusterLabelNamespace = "cluster.anywhere.eks.amazonaws.com/cluster-namespace"
 )
 
 var (
@@ -39,8 +41,42 @@ func InfrastructureAPIVersion() string {
 	return fmt.Sprintf("infrastructure.%s/%s", clusterv1.GroupVersion.Group, clusterv1.GroupVersion.Version)
 }
 
-func clusterLabels(clusterName string) map[string]string {
-	return map[string]string{clusterv1.ClusterLabelName: clusterName}
+func eksaClusterLabels(clusterSpec *cluster.Spec) map[string]string {
+	return map[string]string{
+		EKSAClusterLabelName:      clusterSpec.Cluster.Name,
+		EKSAClusterLabelNamespace: clusterSpec.Cluster.Namespace,
+	}
+}
+
+func capiClusterLabel(clusterSpec *cluster.Spec) map[string]string {
+	return map[string]string{
+		clusterv1.ClusterLabelName: ClusterName(clusterSpec.Cluster),
+	}
+}
+
+func capiObjectLabels(clusterSpec *cluster.Spec) map[string]string {
+	return mergeLabels(eksaClusterLabels(clusterSpec), capiClusterLabel(clusterSpec))
+}
+
+func mergeLabels(labels ...map[string]string) map[string]string {
+	size := 0
+	for _, l := range labels {
+		size += len(l)
+	}
+
+	merged := make(map[string]string, size)
+	for _, l := range labels {
+		for k, v := range l {
+			merged[k] = v
+		}
+	}
+
+	return merged
+}
+
+// ClusterName generates the CAPI cluster name for an EKSA Cluster
+func ClusterName(cluster *anywherev1.Cluster) string {
+	return cluster.Name
 }
 
 func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject APIObject) *clusterv1.Cluster {
@@ -53,7 +89,7 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
 			Namespace: constants.EksaSystemNamespace,
-			Labels:    clusterLabels(clusterName),
+			Labels:    capiObjectLabels(clusterSpec),
 		},
 		Spec: clusterv1.ClusterSpec{
 			ClusterNetwork: &clusterv1.ClusterNetwork{
@@ -112,7 +148,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 			Kind:       kubeadmControlPlaneKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterSpec.Cluster.GetName(),
+			Name:      KubeadmControlPlaneName(clusterSpec),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
@@ -135,21 +171,26 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 					Etcd: etcd,
 					APIServer: bootstrapv1.APIServer{
 						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
-							ExtraArgs: map[string]string{},
+							ExtraArgs:    map[string]string{},
+							ExtraVolumes: []bootstrapv1.HostPathMount{},
 						},
 					},
 					ControllerManager: bootstrapv1.ControlPlaneComponent{
-						ExtraArgs: map[string]string{},
+						ExtraArgs: ControllerManagerArgs(clusterSpec),
 					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
+							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)),
+						Taints: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-						KubeletExtraArgs: map[string]string{},
+						KubeletExtraArgs: SecureTlsCipherSuitesExtraArgs().
+							Append(ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration)),
+						Taints: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 					},
 				},
 				PreKubeadmCommands:  []string{},
@@ -161,25 +202,19 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		},
 	}
 
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
-		}
-		kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
-		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, containerdCommands...)
-	}
+	SetIdentityAuthInKubeadmControlPlane(kcp, clusterSpec)
+
 	return kcp, nil
 }
 
-func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
 	kct := &bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: bootstrapAPIVersion,
 			Kind:       kubeadmConfigTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workerNodeGroupConfig.Name, // TODO: diff
+			Name:      DefaultKubeadmConfigTemplateName(clusterSpec, workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
@@ -197,7 +232,8 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
-							KubeletExtraArgs: map[string]string{},
+							KubeletExtraArgs: WorkerNodeLabelsExtraArgs(workerNodeGroupConfig),
+							Taints:           workerNodeGroupConfig.Taints,
 						},
 					},
 					PreKubeadmCommands:  []string{},
@@ -207,18 +243,11 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			},
 		},
 	}
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
-		if err != nil {
-			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
-		}
-		kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
-		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, containerdCommands...)
-	}
+
 	return kct, nil
 }
 
-func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
+func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
 	clusterName := clusterSpec.Cluster.GetName()
 	replicas := int32(workerNodeGroupConfig.Count)
 	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
@@ -229,9 +258,9 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      workerNodeGroupConfig.Name,
+			Name:      MachineDeploymentName(clusterSpec, workerNodeGroupConfig),
 			Namespace: constants.EksaSystemNamespace,
-			Labels:    clusterLabels(clusterName),
+			Labels:    capiObjectLabels(clusterSpec),
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: clusterName,
@@ -240,7 +269,7 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 			},
 			Template: clusterv1.MachineTemplateSpec{
 				ObjectMeta: clusterv1.ObjectMeta{
-					Labels: clusterLabels(clusterName),
+					Labels: capiClusterLabel(clusterSpec),
 				},
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{

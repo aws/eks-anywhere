@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "apiVersion": "tinkerbell.org/v1alpha1",
+      "kind": "Hardware",
+      "metadata": {
+        "name": "hw1"
+      }
+    },
+    {
+      "apiVersion": "tinkerbell.org/v1alpha1",
+      "kind": "Hardware",
+      "metadata": {
+        "name": "hw2"
+      }
+    }
+  ]
+}

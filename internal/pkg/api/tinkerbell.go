@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -88,23 +87,9 @@ func WithTinkerbellServer(value string) TinkerbellFiller {
 	}
 }
 
-func WithTinkerbellCertURL(value string) TinkerbellFiller {
+func WithTinkerbellOSImageURL(value string) TinkerbellFiller {
 	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellCertURL = value
-		return nil
-	}
-}
-
-func WithTinkerbellGRPCAuthEndpoint(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellGRPCAuth = value
-		return nil
-	}
-}
-
-func WithTinkerbellPBnJGRPCAuthEndpoint(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		config.datacenterConfig.Spec.TinkerbellPBnJGRPCAuth = value
+		config.datacenterConfig.Spec.OSImageURL = value
 		return nil
 	}
 }
@@ -117,22 +102,6 @@ func WithOsFamilyForAllTinkerbellMachines(value anywherev1.OSFamily) TinkerbellF
 	return func(config TinkerbellConfig) error {
 		for _, m := range config.machineConfigs {
 			m.Spec.OSFamily = value
-		}
-		return nil
-	}
-}
-
-func WithTinkerbellHegelURL(value string) TinkerbellFiller {
-	return func(config TinkerbellConfig) error {
-		for _, t := range config.templateConfigs {
-			for _, task := range t.Spec.Template.Tasks {
-				for _, action := range task.Actions {
-					if action.Name == "add-tink-cloud-init-config" {
-						contents := action.Environment["CONTENTS"]
-						action.Environment["CONTENTS"] = strings.ReplaceAll(contents, "http://<REPLACE WITH TINKERBELL IP>:50061", value)
-					}
-				}
-			}
 		}
 		return nil
 	}
@@ -167,6 +136,24 @@ func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
 	}
 }
 
+func WithHardwareSelectorLabels() TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		clusterName := config.clusterConfig.Name
+		cpName := providers.GetControlPlaneNodeName(clusterName)
+		workerName := clusterName
+
+		cpMachineConfig := config.machineConfigs[cpName]
+		cpMachineConfig.Spec.HardwareSelector = map[string]string{HardwareLabelTypeKeyName: ControlPlane}
+		config.machineConfigs[cpName] = cpMachineConfig
+
+		workerMachineConfig := config.machineConfigs[workerName]
+		workerMachineConfig.Spec.HardwareSelector = map[string]string{HardwareLabelTypeKeyName: Worker}
+		config.machineConfigs[workerName] = workerMachineConfig
+
+		return nil
+	}
+}
+
 func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 	return func(config TinkerbellConfig) error {
 		clusterName := config.clusterConfig.Name
@@ -183,6 +170,7 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 					Name: name,
 				},
 				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: ExternalEtcd},
 					TemplateRef: anywherev1.Ref{
 						Name: clusterName,
 						Kind: anywherev1.TinkerbellTemplateConfigKind,
@@ -190,6 +178,27 @@ func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
 				},
 			}
 			config.machineConfigs[name] = m
+		}
+		return nil
+	}
+}
+
+func WithCustomTinkerbellMachineConfig(selector string) TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		if _, ok := config.machineConfigs[selector]; !ok {
+			m := &anywherev1.TinkerbellMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.TinkerbellMachineConfigKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: selector,
+				},
+				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					HardwareSelector: map[string]string{HardwareLabelTypeKeyName: selector},
+				},
+			}
+			config.machineConfigs[selector] = m
 		}
 		return nil
 	}

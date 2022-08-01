@@ -30,19 +30,27 @@ const (
 	govcPasswordKey      = "GOVC_PASSWORD"
 	govcURLKey           = "GOVC_URL"
 	govcInsecure         = "GOVC_INSECURE"
+	govcDatacenterKey    = "GOVC_DATACENTER"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
-	deployOptsFile       = "deploy-opts.json"
+	DeployOptsFile       = "deploy-opts.json"
 )
 
-var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure}
+var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
 
-//go:embed config/deploy-opts.json
-var deployOpts []byte
+type networkMapping struct {
+	Name    string `json:"Name,omitempty"`
+	Network string `json:"Network,omitempty"`
+}
+
+type deployOption struct {
+	DiskProvisioning string           `json:"DiskProvisioning,omitempty"`
+	NetworkMapping   []networkMapping `json:"NetworkMapping,omitempty"`
+}
 
 type FolderType string
 
@@ -56,19 +64,34 @@ const (
 type Govc struct {
 	writer filewriter.FileWriter
 	Executable
-	retrier      *retrier.Retrier
+	*retrier.Retrier
 	requiredEnvs *syncSlice
+	envMap       map[string]string
 }
 
-func NewGovc(executable Executable, writer filewriter.FileWriter) *Govc {
+type GovcOpt func(*Govc)
+
+func NewGovc(executable Executable, writer filewriter.FileWriter, opts ...GovcOpt) *Govc {
 	envVars := newSyncSlice()
 	envVars.append(requiredEnvs...)
 
-	return &Govc{
+	g := &Govc{
 		writer:       writer,
 		Executable:   executable,
-		retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		Retrier:      retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		requiredEnvs: envVars,
+	}
+
+	for _, opt := range opts {
+		opt(g)
+	}
+
+	return g
+}
+
+func WithGovcEnvMap(envMap map[string]string) GovcOpt {
+	return func(g *Govc) {
+		g.envMap = envMap
 	}
 }
 
@@ -106,7 +129,13 @@ func (g *Govc) Logout(ctx context.Context) error {
 
 func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
 	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
-	templateResponse, err := g.exec(ctx, params...)
+
+	var templateResponse bytes.Buffer
+	var err error
+	err = g.Retry(func() error {
+		templateResponse, err = g.exec(ctx, params...)
+		return err
+	})
 	if err != nil {
 		return "", fmt.Errorf("getting template: %v", err)
 	}
@@ -263,9 +292,10 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 	return nil
 }
 
-func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error {
+func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, network, resourcePool string, resizeBRDisk bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
-	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, datastore, resourcePool); err != nil {
+
+	if err := g.DeployTemplate(ctx, library, templateName, templateName, templateDir, datacenter, datastore, network, resourcePool, nil); err != nil {
 		return err
 	}
 
@@ -337,7 +367,7 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 	return nil
 }
 
-func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, datastore, resourcePool string) error {
+func (g *Govc) DeployTemplate(ctx context.Context, library, templateName, vmName, deployFolder, datacenter, datastore, network, resourcePool string, deployOptionsOverride []byte) error {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return fmt.Errorf("failed govc validations: %v", err)
@@ -348,14 +378,23 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		templateInLibraryPath = fmt.Sprintf("/%s", templateInLibraryPath)
 	}
 
-	deployOptsPath, err := g.writer.Write(deployOptsFile, deployOpts, filewriter.PersistentFile)
+	deployOpts, err := getDeployOptions(network)
+	if err != nil {
+		return err
+	}
+
+	if len(deployOptionsOverride) > 0 {
+		deployOpts = deployOptionsOverride
+	}
+
+	deployOptsPath, err := g.writer.Write(DeployOptsFile, deployOpts, filewriter.PersistentFile)
 	if err != nil {
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
 
 	bFolderNotFound := false
 	params := []string{"folder.info", deployFolder}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		errBuffer, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		errString := strings.ToLower(errBuffer.String())
 		if err != nil {
@@ -369,7 +408,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 	})
 	if err != nil || bFolderNotFound {
 		params = []string{"folder.create", deployFolder}
-		err = g.retrier.Retry(func() error {
+		err = g.Retry(func() error {
 			errBuffer, err := g.ExecuteWithEnv(ctx, envMap, params...)
 			errString := strings.ToLower(errBuffer.String())
 			if err != nil && !strings.Contains(errString, "already exists") {
@@ -389,7 +428,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,
-		templateInLibraryPath, templateName,
+		templateInLibraryPath, vmName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
 		return fmt.Errorf("deploying template: %v", err)
@@ -448,6 +487,10 @@ func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) 
 }
 
 func (g *Govc) getEnvMap() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	envMap := make(map[string]string)
 	for key := range g.requiredEnvs.iterate() {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
@@ -467,6 +510,10 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 }
 
 func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	var vSphereUsername, vSpherePassword, vSphereURL string
 	var ok bool
 	var envMap map[string]string
@@ -491,6 +538,10 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 	} else if govcURL, ok := os.LookupEnv(govcURLKey); !ok || len(govcURL) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcURLKey, ok)
 	}
+	if govcDatacenter, ok := os.LookupEnv(govcDatacenterKey); !ok || len(govcDatacenter) <= 0 {
+		return nil, fmt.Errorf("%s is not set or is empty: %t", govcDatacenterKey, ok)
+	}
+
 	envMap, err := g.getEnvMap()
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
@@ -508,7 +559,7 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 	var params []string
 	var result bytes.Buffer
 
-	params = strings.Fields("find -type VirtualMachine -name " + clusterName + "*")
+	params = strings.Fields("find /" + envMap[govcDatacenterKey] + " -type VirtualMachine -name " + clusterName + "*")
 	result, err = g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return fmt.Errorf("getting vm list: %v", err)
@@ -521,10 +572,18 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 			continue
 		}
 		params = strings.Fields("vm.power -off -force " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to power off vm ", "vm_name", vmName, "error", err)
+		}
+
 		params = strings.Fields("object.destroy " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
-		logger.Info("Deleted ", "vm_name", vmName)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to delete vm ", "vm_name", vmName, "error", err)
+		} else {
+			logger.Info("Deleted ", "vm_name", vmName)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -546,7 +605,7 @@ func (g *Govc) ValidateVCenterConnection(ctx context.Context, server string) err
 }
 
 func (g *Govc) ValidateVCenterAuthentication(ctx context.Context) error {
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		_, err := g.exec(ctx, "about", "-k")
 		return err
 	})
@@ -593,7 +652,7 @@ func (g *Govc) ConfigureCertThumbprint(ctx context.Context, server, thumbprint s
 
 func (g *Govc) DatacenterExists(ctx context.Context, datacenter string) (bool, error) {
 	exists := false
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		result, err := g.exec(ctx, "datacenter.info", datacenter)
 		if err == nil {
 			exists = true
@@ -617,7 +676,7 @@ func (g *Govc) DatacenterExists(ctx context.Context, datacenter string) (bool, e
 func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) {
 	exists := false
 
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		networkResponse, err := g.exec(ctx, "find", "-maxdepth=1", filepath.Dir(network), "-type", "n", "-name", filepath.Base(network))
 		if err != nil {
 			return err
@@ -632,7 +691,7 @@ func (g *Govc) NetworkExists(ctx context.Context, network string) (bool, error) 
 		return nil
 	})
 	if err != nil {
-		return false, fmt.Errorf("failed checking '%s' network", filepath.Base(network))
+		return false, fmt.Errorf("failed checking if network '%s' exists: %v", network, err)
 	}
 
 	return exists, nil
@@ -648,7 +707,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		return err
 	}
 	params := []string{"datastore.info", machineConfig.Spec.Datastore}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		_, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
 			datastorePath := filepath.Dir(machineConfig.Spec.Datastore)
@@ -673,7 +732,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 			return err
 		}
 		params = []string{"folder.info", machineConfig.Spec.Folder}
-		err = g.retrier.Retry(func() error {
+		err = g.Retry(func() error {
 			_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 			if err != nil {
 				err = g.createFolder(ctx, envMap, machineConfig)
@@ -699,7 +758,7 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 
 	var poolInfoResponse bytes.Buffer
 	params = []string{"find", "-json", "/" + datacenterConfig.Spec.Datacenter, "-type", "p", "-name", filepath.Base(machineConfig.Spec.ResourcePool)}
-	err = g.retrier.Retry(func() error {
+	err = g.Retry(func() error {
 		poolInfoResponse, err = g.ExecuteWithEnv(ctx, envMap, params...)
 		return err
 	})
@@ -756,7 +815,7 @@ func prependPath(folderType FolderType, folderPath string, datacenter string) (s
 
 func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, machineConfig *v1alpha1.VSphereMachineConfig) error {
 	params := []string{"folder.create", machineConfig.Spec.Folder}
-	err := g.retrier.Retry(func() error {
+	err := g.Retry(func() error {
 		_, err := g.ExecuteWithEnv(ctx, envMap, params...)
 		if err != nil {
 			return fmt.Errorf("creating folder: %v", err)
@@ -773,7 +832,12 @@ func (g *Govc) isValidPath(ctx context.Context, envMap map[string]string, path s
 }
 
 func (g *Govc) GetTags(ctx context.Context, path string) ([]string, error) {
-	tagsResponse, err := g.exec(ctx, "tags.attached.ls", "-json", "-r", path)
+	var tagsResponse bytes.Buffer
+	var err error
+	err = g.Retry(func() error {
+		tagsResponse, err = g.exec(ctx, "tags.attached.ls", "-json", "-r", path)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("govc returned error when listing tags for %s: %v", path, err)
 	}
@@ -885,4 +949,27 @@ func (g *Govc) createCategory(ctx context.Context, name string, objectTypes []ob
 		return fmt.Errorf("govc returned error when creating category %s: %v", name, err)
 	}
 	return nil
+}
+
+func getDeployOptions(network string) ([]byte, error) {
+	deployOptsStruct := deployOption{
+		DiskProvisioning: "thin",
+		NetworkMapping: []networkMapping{
+			{
+				Name:    "nic0", // needed for Ubuntu
+				Network: network,
+			},
+			{
+				Name:    "VM Network", // needed for Bottlerocket
+				Network: network,
+			},
+		},
+	}
+
+	deployOpts, err := json.Marshal(deployOptsStruct)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling template deployment options: %v", err)
+	}
+
+	return deployOpts, err
 }

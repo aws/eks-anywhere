@@ -1,7 +1,12 @@
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://{{.registryMirrorAddress}}"]
+{{- if or .registryCACert .insecureSkip }}
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorAddress}}".tls]
 {{- if .registryCACert }}
-    [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorAddress}}".tls]
     ca_file = "/etc/containerd/certs.d/{{.registryMirrorAddress}}/ca.crt"
+{{- end }}
+{{- if .insecureSkip }}
+    insecure_skip_verify = {{.insecureSkip}}
+{{- end }}
 {{- end }}
