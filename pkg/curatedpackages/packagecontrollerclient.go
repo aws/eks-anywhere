@@ -5,7 +5,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"os"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -23,15 +26,12 @@ const (
 type PackageControllerClientOpt func(*PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig          string
-	uri                 string
-	chartName           string
-	chartVersion        string
-	chartInstaller      ChartInstaller
-	kubectl             KubectlRunner
-	eksaAccessKeyId     string
-	eksaSecretAccessKey string
-	eksaRegion          string
+	kubeConfig     string
+	uri            string
+	chartName      string
+	chartVersion   string
+	chartInstaller ChartInstaller
+	kubectl        KubectlRunner
 }
 
 type ChartInstaller interface {
@@ -39,7 +39,7 @@ type ChartInstaller interface {
 }
 
 func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
-	pcc := &PackageControllerClient{
+	return &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		uri:            uri,
 		chartName:      chartName,
@@ -47,10 +47,6 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
 	}
-	for _, o := range options {
-		o(pcc)
-	}
-	return pcc
 }
 
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
@@ -58,7 +54,21 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	registry := GetRegistry(pc.uri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	values := []string{sourceRegistry}
-	return pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
+	if err != nil {
+		return err
+	}
+
+	err = pc.ApplySecret(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+	}
+
+	err = pc.TriggerCronJob(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
+	}
+	return nil
 }
 
 func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Context) error {
@@ -70,10 +80,15 @@ func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Co
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
+	eksaAccessKeyId, eksaSecretAccessKey := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv)
+	eksaRegion := eksaDefaultRegion
+	if region, found := os.LookupEnv(config.EksaRegionEnv); found {
+		eksaRegion = region
+	}
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     pc.eksaAccessKeyId,
-		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
-		"eksaRegion":          pc.eksaRegion,
+		"eksaAccessKeyId":     eksaAccessKeyId,
+		"eksaSecretAccessKey": eksaSecretAccessKey,
+		"eksaRegion":          eksaRegion,
 	}
 
 	result, err := templater.Execute(awsSecretYaml, templateValues)
@@ -99,26 +114,4 @@ func (pc *PackageControllerClient) TriggerCronJob(ctx context.Context) error {
 	}
 	fmt.Println(stdOut)
 	return nil
-}
-
-func WithEKSAAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
-	return func(config *PackageControllerClient) {
-		config.eksaAccessKeyId = eksaAccessKeyId
-	}
-}
-
-func WithEKSASecretAccessKey(eksaSecretAccessKey string) func(client *PackageControllerClient) {
-	return func(config *PackageControllerClient) {
-		config.eksaSecretAccessKey = eksaSecretAccessKey
-	}
-}
-
-func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
-	return func(config *PackageControllerClient) {
-		if eksaRegion == "" {
-			config.eksaRegion = eksaDefaultRegion
-		} else {
-			config.eksaRegion = eksaRegion
-		}
-	}
 }

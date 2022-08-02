@@ -3,12 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/logger"
-	"log"
-	"os"
-
 	"github.com/spf13/cobra"
+	"log"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -73,7 +69,6 @@ func installPackageController(ctx context.Context) error {
 	}
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
-	eksaAccessKeyId, eksaSecretAccessKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 
 	ctrlClient := curatedpackages.NewPackageControllerClient(
 		deps.HelmInsecure,
@@ -82,9 +77,6 @@ func installPackageController(ctx context.Context) error {
 		imageUrl,
 		helmChart.Name,
 		helmChart.Tag(),
-		curatedpackages.WithEKSAAccessKeyId(eksaAccessKeyId),
-		curatedpackages.WithEKSASecretAccessKey(eksaSecretAccessKey),
-		curatedpackages.WithEksaRegion(eksaRegion),
 	)
 
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
@@ -101,14 +93,5 @@ func installPackageController(ctx context.Context) error {
 		return err
 	}
 
-	err = ctrlClient.ApplySecret(ctx)
-	if err != nil {
-		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
-	}
-
-	err = ctrlClient.TriggerCronJob(ctx)
-	if err != nil {
-		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
-	}
 	return nil
 }
