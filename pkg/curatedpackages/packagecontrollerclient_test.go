@@ -7,12 +7,14 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -92,6 +94,32 @@ func TestInstallControllerSuccess(t *testing.T) {
 	}
 }
 
+func TestInstallControllerSuccessWhenRegionSpecified(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	templateValues := map[string]string{
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(tt.eksaRegion)),
+	}
+	os.Setenv(config.EksaRegionEnv, tt.eksaRegion)
+	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.Expect(err).To(BeNil())
+	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+
+	err = tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when installation passes")
+	}
+}
+
 func TestInstallControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -114,8 +142,8 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 	values := []string{sourceRegistry}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte("")),
-		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
@@ -139,8 +167,8 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	values := []string{sourceRegistry}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte("")),
-		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
