@@ -16,6 +16,8 @@ var awsSecretYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
+	cronJobName       = "cronjob/ecr-refresher"
+	jobName           = "eksa-auth-refresher"
 )
 
 type PackageControllerClientOpt func(*PackageControllerClient)
@@ -86,6 +88,16 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	}
 
 	fmt.Print(&stdOut)
+	return nil
+}
+
+func (pc *PackageControllerClient) TriggerCronJob(ctx context.Context) error {
+	params := []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName}
+	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("executing cron job %v", err)
+	}
+	fmt.Println(stdOut)
 	return nil
 }
 

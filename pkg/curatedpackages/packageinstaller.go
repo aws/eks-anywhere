@@ -11,6 +11,8 @@ import (
 
 type PackageController interface {
 	InstallController(ctx context.Context) error
+	ApplySecret(ctx context.Context) error
+	TriggerCronJob(ctx context.Context) error
 }
 
 type PackageHandler interface {
@@ -69,6 +71,16 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere create packages command", "error", err)
 		return err
+	}
+
+	err = pi.packageController.ApplySecret(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+	}
+
+	err = pi.packageController.TriggerCronJob(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
 	}
 	return nil
 }

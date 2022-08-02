@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"log"
 	"os"
 
@@ -100,5 +101,14 @@ func installPackageController(ctx context.Context) error {
 		return err
 	}
 
+	err = ctrlClient.ApplySecret(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+	}
+
+	err = ctrlClient.TriggerCronJob(ctx)
+	if err != nil {
+		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
+	}
 	return nil
 }
