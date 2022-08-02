@@ -3,7 +3,6 @@ package dependencies
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"time"
 
 	"github.com/google/uuid"
@@ -26,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"

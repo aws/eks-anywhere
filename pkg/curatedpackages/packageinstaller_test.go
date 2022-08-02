@@ -20,7 +20,6 @@ import (
 type packageInstallerTest struct {
 	*WithT
 	ctx                     context.Context
-	chartInstaller          *mocks.MockChartInstaller
 	kubectlRunner           *mocks.MockKubectlRunner
 	packageClient           *mocks.MockPackageHandler
 	packageControllerClient *mocks.MockPackageController

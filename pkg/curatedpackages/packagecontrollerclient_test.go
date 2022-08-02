@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 //go:embed config/awssecret.yaml
@@ -79,6 +79,7 @@ func TestInstallControllerSuccess(t *testing.T) {
 		"eksaRegion":          eksaDefaultRegion,
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
@@ -117,6 +118,7 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 		"eksaRegion":          eksaDefaultRegion,
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
@@ -141,6 +143,7 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 		"eksaRegion":          eksaDefaultRegion,
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
@@ -172,8 +175,4 @@ func TestGetActiveControllerFail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Get Active Controller should succeed when controller doesn't exist")
 	}
-}
-
-func TestApplySecret(t *testing.T) {
-
 }

@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -69,7 +70,6 @@ func installPackageController(ctx context.Context) error {
 	}
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
-
 	ctrlClient := curatedpackages.NewPackageControllerClient(
 		deps.HelmInsecure,
 		deps.Kubectl,
