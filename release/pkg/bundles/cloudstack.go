@@ -30,6 +30,7 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 	cloudstackBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
 		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
+		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	var sourceBranch string
@@ -91,6 +92,7 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-cloudstack"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
+		KubeProxy:            bundleImageArtifacts["kube-rbac-proxy"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
 	}
