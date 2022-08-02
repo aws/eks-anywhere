@@ -118,6 +118,7 @@ func TestInstallControllerSuccessWhenRegionSpecified(t *testing.T) {
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
+	os.Unsetenv(config.EksaRegionEnv)
 }
 
 func TestInstallControllerFail(t *testing.T) {
