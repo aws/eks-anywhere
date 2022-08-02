@@ -4423,6 +4423,15 @@ spec:
             type: object
           status:
             description: SnowMachineConfigStatus defines the observed state of SnowMachineConfig
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              specValid:
+                description: SpecValid is set to true if vspheredatacenterconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true
@@ -5399,6 +5408,27 @@ metadata:
     cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
   name: eksa-mutating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig
+  failurePolicy: Fail
+  name: mutation.awsiamconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awsiamconfigs
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1
