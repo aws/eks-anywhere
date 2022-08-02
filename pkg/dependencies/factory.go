@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	"github.com/aws/eks-anywhere/pkg/clients/fluxclient"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -811,14 +810,7 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 			return nil
 		}
 
-		f.dependencies.GitOpsFlux = flux.NewFlux(
-			&fluxclient.FluxKubectl{
-				Flux:    f.dependencies.Flux,
-				Kubectl: f.dependencies.Kubectl,
-			},
-			f.dependencies.Git,
-			cliConfig,
-		)
+		f.dependencies.GitOpsFlux = flux.NewFlux(f.dependencies.Flux, f.dependencies.Kubectl, f.dependencies.Git, cliConfig)
 
 		return nil
 	})
