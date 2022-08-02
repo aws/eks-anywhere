@@ -39,7 +39,7 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string) *PackageControllerClient {
 	return &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		uri:            uri,
