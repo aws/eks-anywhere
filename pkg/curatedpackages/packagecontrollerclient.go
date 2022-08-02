@@ -24,8 +24,6 @@ const (
 	jobName           = "eksa-auth-refresher"
 )
 
-type PackageControllerClientOpt func(*PackageControllerClient)
-
 type PackageControllerClient struct {
 	kubeConfig     string
 	uri            string
