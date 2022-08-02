@@ -20,12 +20,11 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const capaProjectPath = "projects/kubernetes-sigs/cluster-api-provider-aws"
 
 func GetAwsBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.AwsBundle, error) {
 	awsBundleArtifacts := map[string][]releasetypes.Artifact{
@@ -82,7 +81,7 @@ func GetAwsBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string)
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capaProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapaProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

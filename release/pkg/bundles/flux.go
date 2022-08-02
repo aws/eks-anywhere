@@ -20,14 +20,10 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
-)
-
-const (
-	fluxcdRootPath   = "projects/fluxcd"
-	flux2ProjectPath = "projects/fluxcd/flux2"
 )
 
 func GetFluxBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.FluxBundle, error) {
@@ -70,8 +66,8 @@ func GetFluxBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string
 	}
 	version, err := version.BuildComponentVersion(
 		version.NewMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
-			fluxcdRootPath,
-			flux2ProjectPath,
+			constants.FluxcdRootPath,
+			constants.Flux2ProjectPath,
 			sourceBranch,
 			r,
 		),
