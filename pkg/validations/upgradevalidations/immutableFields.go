@@ -145,6 +145,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	for _, oIdentityProvider := range oSpec.IdentityProviderRefs {
 		switch oIdentityProvider.Kind {
 		case v1alpha1.AWSIamConfigKind:
+			oIdentityProvider := oIdentityProvider // new variable scoped to the for loop Ref: https://github.com/golang/go/wiki/CommonMistakes#using-reference-to-loop-iterator-variable
 			oldAWSIamConfigRef = &oIdentityProvider
 		}
 	}
