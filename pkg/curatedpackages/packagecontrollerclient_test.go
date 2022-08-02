@@ -1,9 +1,12 @@
 package curatedpackages_test
 
 import (
+	"bytes"
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -13,6 +16,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
+)
+
+//go:embed config/awssecret.yaml
+var awsSecretYaml string
+
+const (
+	eksaDefaultRegion = "us-west-2"
+	cronJobName       = "cronjob/ecr-refresher"
+	jobName           = "eksa-auth-refresher"
 )
 
 type packageControllerTest struct {
@@ -25,6 +37,9 @@ type packageControllerTest struct {
 	ociUri         string
 	chartName      string
 	chartVersion   string
+	eksaAccessId   string
+	eksaAccessKey  string
+	eksaRegion     string
 }
 
 func newPackageControllerTest(t *testing.T) *packageControllerTest {
@@ -45,6 +60,9 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 		ociUri:         uri,
 		chartName:      chartName,
 		chartVersion:   chartVersion,
+		eksaAccessId:   "test-access-id",
+		eksaAccessKey:  "test-access-key",
+		eksaRegion:     "test-region",
 	}
 }
 
@@ -54,9 +72,19 @@ func TestInstallControllerSuccess(t *testing.T) {
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	values := []string{sourceRegistry}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	templateValues := map[string]string{
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
+		"eksaRegion":          eksaDefaultRegion,
+	}
+	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
 
-	err := tt.command.InstallController(tt.ctx)
+	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
@@ -73,6 +101,54 @@ func TestInstallControllerFail(t *testing.T) {
 	err := tt.command.InstallController(tt.ctx)
 	if err == nil {
 		t.Errorf("Install Controller Should fail when installation fails")
+	}
+}
+
+func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	templateValues := map[string]string{
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
+		"eksaRegion":          eksaDefaultRegion,
+	}
+	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+
+	err = tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when secret creation fails")
+	}
+}
+
+func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	values := []string{sourceRegistry}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	templateValues := map[string]string{
+		"eksaAccessKeyId":     "",
+		"eksaSecretAccessKey": "",
+		"eksaRegion":          eksaDefaultRegion,
+	}
+	result, err := templater.Execute(awsSecretYaml, templateValues)
+	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+
+	err = tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
 }
 
@@ -96,4 +172,8 @@ func TestGetActiveControllerFail(t *testing.T) {
 	if err != nil {
 		t.Errorf("Get Active Controller should succeed when controller doesn't exist")
 	}
+}
+
+func TestApplySecret(t *testing.T) {
+
 }

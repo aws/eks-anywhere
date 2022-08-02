@@ -3,6 +3,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"time"
 
 	"github.com/google/uuid"
@@ -79,6 +80,8 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
+	PackageControllerClient   curatedpackages.PackageController
+	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
 	SnowValidator             *snow.Validator
@@ -819,17 +822,58 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 }
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+	f.WithHelmInsecure().WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
-			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
+			f.dependencies.PackageClient,
+			f.dependencies.PackageControllerClient,
 			spec,
 			packagesLocation,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
+	f.WithHelmInsecure().WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageControllerClient != nil {
+			return nil
+		}
+		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+
+		chart := spec.VersionsBundle.PackageController.HelmChart
+		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.HelmInsecure,
+			f.dependencies.Kubectl,
+			kubeConfig,
+			imageUrl,
+			chart.Name,
+			chart.Tag(),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPackageClient() *Factory {
+	f.WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageClient != nil {
+			return nil
+		}
+
+		f.dependencies.PackageClient = curatedpackages.NewPackageClient(
+			f.dependencies.Kubectl,
 		)
 		return nil
 	})
