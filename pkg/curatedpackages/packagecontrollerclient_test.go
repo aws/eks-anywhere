@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
@@ -76,7 +77,7 @@ func TestInstallControllerSuccess(t *testing.T) {
 	templateValues := map[string]string{
 		"eksaAccessKeyId":     "",
 		"eksaSecretAccessKey": "",
-		"eksaRegion":          eksaDefaultRegion,
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
 	tt.Expect(err).To(BeNil())
@@ -113,9 +114,9 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 	values := []string{sourceRegistry}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     "",
-		"eksaSecretAccessKey": "",
-		"eksaRegion":          eksaDefaultRegion,
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
 	tt.Expect(err).To(BeNil())
@@ -138,9 +139,9 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	values := []string{sourceRegistry}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     "",
-		"eksaSecretAccessKey": "",
-		"eksaRegion":          eksaDefaultRegion,
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte("")),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
 	tt.Expect(err).To(BeNil())

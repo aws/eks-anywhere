@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -85,10 +86,11 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	if region, found := os.LookupEnv(config.EksaRegionEnv); found {
 		eksaRegion = region
 	}
+
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     eksaAccessKeyId,
-		"eksaSecretAccessKey": eksaSecretAccessKey,
-		"eksaRegion":          eksaRegion,
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(eksaAccessKeyId)),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(eksaSecretAccessKey)),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaRegion)),
 	}
 
 	result, err := templater.Execute(awsSecretYaml, templateValues)
