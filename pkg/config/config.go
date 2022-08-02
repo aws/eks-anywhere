@@ -46,7 +46,7 @@ func GetExternalEtcdTimeout() string {
 		if _, err := time.ParseDuration(env); err == nil {
 			return env
 		}
-		logger.V(3).Info(fmt.Sprintf("Invalid %s value: %s Use the default timeout: %s", ExternalEtcdTimeoutEnv, env, ExternalEtcdTimeoutEnv))
+		logger.V(3).Info(fmt.Sprintf("Invalid %s value: %s Use the default timeout: %s", ExternalEtcdTimeoutEnv, env, DefaultEtcdWaitStr))
 	}
 	return DefaultEtcdWaitStr
 }
