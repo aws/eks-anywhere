@@ -195,7 +195,6 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 
 		f.vsphereClusterReconciler = vspherereconciler.NewVSphereReconciler(
 			f.manager.GetClient(),
-			f.logger,
 			f.deps.VSphereValidator,
 			f.deps.VSphereDefaulter,
 			f.tracker,

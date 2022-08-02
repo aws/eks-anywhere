@@ -51,7 +51,6 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 
 	reconciler := vspherereconciler.NewVSphereReconciler(
 		cl,
-		logf.Log,
 		validator,
 		defaulter,
 		nil,
