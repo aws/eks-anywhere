@@ -3,6 +3,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -822,7 +823,7 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 }
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelmInsecure().WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
+	f.WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
@@ -851,6 +852,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
@@ -858,6 +860,9 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			imageUrl,
 			chart.Name,
 			chart.Tag(),
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
+			curatedpackages.WithEksaRegion(eksaRegion),
 		)
 		return nil
 	})

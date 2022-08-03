@@ -6,10 +6,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -24,21 +22,26 @@ const (
 	jobName           = "eksa-auth-refresher"
 )
 
+type PackageControllerClientOpt func(client *PackageControllerClient)
+
 type PackageControllerClient struct {
-	kubeConfig     string
-	uri            string
-	chartName      string
-	chartVersion   string
-	chartInstaller ChartInstaller
-	kubectl        KubectlRunner
+	kubeConfig          string
+	uri                 string
+	chartName           string
+	chartVersion        string
+	chartInstaller      ChartInstaller
+	kubectl             KubectlRunner
+	eksaAccessKeyId     string
+	eksaSecretAccessKey string
+	eksaRegion          string
 }
 
 type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string) *PackageControllerClient {
-	return &PackageControllerClient{
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
 		uri:            uri,
 		chartName:      chartName,
@@ -46,6 +49,11 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 		chartInstaller: chartInstaller,
 		kubectl:        kubectl,
 	}
+
+	for _, o := range options {
+		o(pcc)
+	}
+	return pcc
 }
 
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
@@ -62,7 +70,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
 	}
 
-	if err = pc.TriggerCronJob(ctx); err != nil {
+	if err = pc.CreateCronJob(ctx); err != nil {
 		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
 	}
 	return nil
@@ -77,16 +85,10 @@ func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Co
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
-	eksaAccessKeyId, eksaSecretAccessKey := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv)
-	eksaRegion := eksaDefaultRegion
-	if region, found := os.LookupEnv(config.EksaRegionEnv); found {
-		eksaRegion = region
-	}
-
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(eksaAccessKeyId)),
-		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(eksaSecretAccessKey)),
-		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaRegion)),
+		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyId)),
+		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
+		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
 	}
 
 	result, err := templater.Execute(awsSecretYaml, templateValues)
@@ -104,7 +106,7 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	return nil
 }
 
-func (pc *PackageControllerClient) TriggerCronJob(ctx context.Context) error {
+func (pc *PackageControllerClient) CreateCronJob(ctx context.Context) error {
 	params := []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", pc.kubeConfig, "--namespace", constants.EksaPackagesName}
 	stdOut, err := pc.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -112,4 +114,26 @@ func (pc *PackageControllerClient) TriggerCronJob(ctx context.Context) error {
 	}
 	fmt.Println(stdOut)
 	return nil
+}
+
+func WithEksaAccessKeyId(eksaAccessKeyId string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.eksaAccessKeyId = eksaAccessKeyId
+	}
+}
+
+func WithEksaSecretAccessKey(eksaSecretAccessKey string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.eksaSecretAccessKey = eksaSecretAccessKey
+	}
+}
+
+func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		if eksaRegion != "" {
+			config.eksaRegion = eksaRegion
+		} else {
+			config.eksaRegion = eksaDefaultRegion
+		}
+	}
 }
