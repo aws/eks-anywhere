@@ -7,7 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 
+	cpv1alpha1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -85,6 +90,7 @@ type Dependencies struct {
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
 	SnowValidator             *snow.AwsClientValidator
+	KubeRESTClient            rest.Interface
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -908,6 +914,28 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 				version,
 			)
 		}
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithKubeRESTClient(kubeConfigFilename string) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		loader := clientcmd.NewDefaultClientConfigLoadingRules()
+		loader.ExplicitPath = kubeConfigFilename
+		config, err := clientcmd.BuildConfigFromKubeconfigGetter("", loader.Load)
+		if err != nil {
+			return err
+		}
+		config.GroupVersion = &cpv1alpha1.GroupVersion
+		config.APIPath = "/apis"
+		config.NegotiatedSerializer = serializer.NewCodecFactory(runtime.NewScheme())
+		config.UserAgent = rest.DefaultKubernetesUserAgent()
+		client, err := rest.RESTClientFor(config)
+		if err != nil {
+			return err
+		}
+		f.dependencies.KubeRESTClient = client
 		return nil
 	})
 	return f

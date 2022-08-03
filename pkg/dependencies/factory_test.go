@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	gomegatypes "github.com/onsi/gomega/types"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -20,8 +24,29 @@ import (
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-type factoryTest struct {
+type GomegaAndTempDir interface {
+	gomegatypes.Gomega
+	// It would be nice to include testing.TB here, but the Gomega interface
+	// conflicts with testing.TB, so I'll just grab the part of testing.T that
+	// I need which Gomega didn't include for some reason.
+	// testing.TB
+	Cleanup(func())
+	Fatalf(string, ...interface{})
+	Setenv(string, string)
+	TempDir() string
+}
+
+type gomegaAndTempDir struct {
 	*WithT
+	*testing.T
+}
+
+func (g gomegaAndTempDir) Fail(message string, callerSkip ...int) {
+	g.WithT.Fail(message, callerSkip...)
+}
+
+type factoryTest struct {
+	GomegaAndTempDir
 	clusterConfigFile     string
 	clusterSpec           *cluster.Spec
 	ctx                   context.Context
@@ -49,11 +74,27 @@ func newTest(t *testing.T, p provider) *factoryTest {
 	}
 
 	return &factoryTest{
-		WithT:             NewGomegaWithT(t),
+		GomegaAndTempDir:  &gomegaAndTempDir{WithT: NewGomegaWithT(t), T: t},
 		clusterConfigFile: clusterConfigFile,
 		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
 		ctx:               context.Background(),
 	}
+}
+
+// tempFile creates a temporary file with the given basename.
+//
+// The file is created within a test-specific temporary directory. It is
+// closed and removed automatically. If an error occurs, the current test will
+// be failed, but execution will continue with the next test.
+func (t *factoryTest) tempFile(basename string) *os.File {
+	f, err := ioutil.TempFile(t.TempDir(), basename)
+	if err != nil {
+		t.Fatalf("opening temporary file: %s", err)
+		return nil
+	}
+	t.Cleanup(func() { f.Close() })
+
+	return f
 }
 
 func TestFactoryBuildWithProvidervSphere(t *testing.T) {
@@ -304,6 +345,37 @@ func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Govc).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithRESTClient(t *testing.T) {
+	tt := newTest(t, vsphere)
+	f := tt.tempFile("kubeconfig")
+	fmt.Fprint(f, `
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: https://127.0.0.1:12345
+  name: test
+contexts:
+- context:
+    cluster: test
+    user: test-admin
+  name: test-admin@test
+current-context: test-admin@test
+kind: Config
+preferences: {}
+users:
+- name: test-admin
+  user:
+`)
+	tt.Setenv("KUBECONFIG", f.Name())
+	deps, err := dependencies.NewFactory().
+		WithKubeRESTClient(f.Name()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.KubeRESTClient).NotTo(BeNil())
 }
 
 type dummyDockerClient struct{}

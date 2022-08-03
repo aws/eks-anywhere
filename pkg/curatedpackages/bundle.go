@@ -2,17 +2,27 @@ package curatedpackages
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
-	"sigs.k8s.io/yaml"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+var scheme = runtime.NewScheme()
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(packagesv1.AddToScheme(scheme))
+}
 
 const (
 	ImageRepositoryName = "eks-anywhere-packages-bundles"
@@ -29,18 +39,20 @@ type BundleRegistry interface {
 type BundleReader struct {
 	kubeConfig    string
 	source        BundleSource
-	kubectl       KubectlRunner
 	bundleManager Manager
 	registry      BundleRegistry
+	restClient    rest.Interface
 }
 
-func NewBundleReader(kubeConfig string, source BundleSource, k KubectlRunner, bm Manager, reg BundleRegistry) *BundleReader {
+func NewBundleReader(kubeConfig string, source BundleSource,
+	restClient rest.Interface, bm Manager, reg BundleRegistry,
+) *BundleReader {
 	return &BundleReader{
 		kubeConfig:    kubeConfig,
 		source:        source,
-		kubectl:       k,
 		bundleManager: bm,
 		registry:      reg,
+		restClient:    restClient,
 	}
 }
 
@@ -64,7 +76,6 @@ func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context, kubeVers
 }
 
 func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*packagesv1.PackageBundle, error) {
-	// Active BundleReader is set at the bundle Controller
 	bundleController, err := b.GetActiveController(ctx)
 	if err != nil {
 		return nil, err
@@ -76,49 +87,53 @@ func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*package
 	return bundle, nil
 }
 
-func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string) (*packagesv1.PackageBundle, error) {
-	params := []string{"get", "packageBundle", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, activeBundle}
-	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
+func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string) (
+	*packagesv1.PackageBundle, error,
+) {
+	pb := &packagesv1.PackageBundle{}
+	err := b.restClient.Get().Namespace(constants.EksaPackagesName).
+		Resource("packagebundles").Name(activeBundle).Do(ctx).Into(pb)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting package bundle: %w", err)
 	}
-	obj := &packagesv1.PackageBundle{}
-	if err := json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("unmarshaling package bundle: %w", err)
-	}
-	return obj, nil
+
+	return pb, nil
 }
 
 func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
-	params := []string{"get", "kubeadmcontrolplane", "--no-headers", "-o", "custom-columns=:metadata.name", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaSystemNamespace}
-	activeCluster, err := b.kubectl.ExecuteCommand(ctx, params...)
+	// There's some question around how this will handle multiple
+	// kubeadmcontrolplanes. This is being tracked in
+	// https://github.com/aws/eks-anywhere-packages/issues/425
+	kcp := &controlplanev1.KubeadmControlPlane{}
+	err := b.restClient.Get().Namespace(constants.EksaSystemNamespace).
+		Resource("kubeadmcontrolplane").Do(ctx).Into(kcp)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting kubeadm control plane: %w", err)
 	}
-	params = []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, strings.TrimSuffix(activeCluster.String(), "\n")}
-	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
+
+	pbc := &packagesv1.PackageBundleController{}
+	err = b.restClient.Get().Namespace(constants.EksaPackagesName).
+		Resource(strings.TrimSpace(kcp.Name)).
+		Name(packagesv1.PackageBundleControllerName).Do(ctx).Into(pbc)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting package bundle controller: %w", err)
 	}
-	obj := &packagesv1.PackageBundleController{}
-	if err := json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("unmarshaling active package bundle controller: %w", err)
-	}
-	return obj, nil
+
+	return pbc, nil
 }
 
 func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1.PackageBundleController, newBundle string) error {
 	controller.Spec.ActiveBundle = newBundle
-	controllerYaml, err := yaml.Marshal(controller)
+	err := b.restClient.Put().
+		Namespace(constants.EksaPackagesName).
+		Resource("packagebundlecontrollers").
+		Name(packagesv1.PackageBundleControllerName).
+		Body(controller).
+		Do(ctx).Error()
 	if err != nil {
 		return err
 	}
-	params := []string{"apply", "-f", "-", "--kubeconfig", b.kubeConfig}
-	stdOut, err := b.kubectl.ExecuteFromYaml(ctx, controllerYaml, params...)
-	if err != nil {
-		return err
-	}
-	fmt.Print(&stdOut)
+
 	return nil
 }
 

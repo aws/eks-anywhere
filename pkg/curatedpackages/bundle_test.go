@@ -5,10 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest/fake"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
@@ -19,23 +28,25 @@ import (
 
 type bundleTest struct {
 	*WithT
-	ctx           context.Context
-	kubeConfig    string
-	kubeVersion   string
-	kubectl       *mocks.MockKubectlRunner
-	bundleManager *mocks.MockManager
-	Command       *curatedpackages.BundleReader
-	activeBundle  string
-	bundleCtrl    *packagesv1.PackageBundleController
-	packageBundle *packagesv1.PackageBundle
-	registry      *mocks.MockBundleRegistry
-	cliVersion    version.Info
-	activeCluster string
+	ctx            context.Context
+	kubeConfig     string
+	kubeVersion    string
+	kubeRESTClient *fake.RESTClient
+	kubectl        *mocks.MockKubectlRunner
+	bundleManager  *mocks.MockManager
+	Command        *curatedpackages.BundleReader
+	activeBundle   string
+	bundleCtrl     *packagesv1.PackageBundleController
+	packageBundle  *packagesv1.PackageBundle
+	registry       *mocks.MockBundleRegistry
+	cliVersion     version.Info
+	activeCluster  string
 }
 
 func newBundleTest(t *testing.T) *bundleTest {
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
+	fakeRestClient := fakeRESTClient()
 	bm := mocks.NewMockManager(ctrl)
 	kubeConfig := "test.kubeconfig"
 	kubeVersion := "1.21"
@@ -59,35 +70,43 @@ func newBundleTest(t *testing.T) *bundleTest {
 	}
 
 	return &bundleTest{
-		WithT:         NewWithT(t),
-		ctx:           context.Background(),
-		kubeConfig:    kubeConfig,
-		kubeVersion:   kubeVersion,
-		kubectl:       k,
-		bundleManager: bm,
-		bundleCtrl:    &bundleCtrl,
-		packageBundle: &packageBundle,
-		activeBundle:  activeBundle,
-		registry:      registry,
-		cliVersion:    cliVersion,
-		activeCluster: activeCluster,
+		WithT:          NewWithT(t),
+		ctx:            context.Background(),
+		kubeConfig:     kubeConfig,
+		kubeVersion:    kubeVersion,
+		kubeRESTClient: fakeRestClient,
+		kubectl:        k,
+		bundleManager:  bm,
+		bundleCtrl:     &bundleCtrl,
+		packageBundle:  &packageBundle,
+		activeBundle:   activeBundle,
+		registry:       registry,
+		cliVersion:     cliVersion,
+		activeCluster:  activeCluster,
 	}
 }
 
 func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 	tt := newBundleTest(t)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.activeCluster), nil)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundleCtrl), nil)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.packageBundle), nil)
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Cluster,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
-	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+
+	// Three requests are expected:
+	//     1st- a request to find the name of the packages bundle controller
+	//     2nd- a request for the packages bundle controller
+	//     3rd- the active bundle references by the packages bundle controller
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusOK, mockBodyActiveCluster(tt.activeCluster)),
+		fakeResponse(http.StatusOK, mockBodyPBC("v1-22-33")),
+		fakeResponse(http.StatusOK, mockBodyPackageBundle("harbor")),
+	)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, "v1-22-33")
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
 }
@@ -100,7 +119,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Registry,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
@@ -114,7 +133,7 @@ func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		"Unknown",
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
@@ -124,17 +143,29 @@ func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
 
 func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 	tt := newBundleTest(t)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundleCtrl), nil)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error reading bundle"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Cluster,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
+
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusOK, mockBodyKubeadmControlPlane(tt.activeCluster)),
+		fakeResponse(http.StatusOK, mockBodyPBC("v1-22-33")),
+		fakeResponse(http.StatusInternalServerError, mockBodyf("error reading bundle")),
+	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("error reading bundle")))
+
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusOK, mockBodyKubeadmControlPlane(tt.activeCluster)),
+		fakeResponse(http.StatusOK, mockBodyPBC("v1-22-33")),
+		fakeResponse(http.StatusNotFound, nil),
+	)
+	_, err = tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	tt.Expect(err).To(MatchError(ContainSubstring("the server could not find the requested resource")))
 }
 
 func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
@@ -143,7 +174,7 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Registry,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
@@ -153,70 +184,206 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 
 func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 	tt := newBundleTest(t)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error fetching controller"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Cluster,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusOK, mockBodyKubeadmControlPlane(tt.activeCluster)),
+		fakeResponse(http.StatusInternalServerError, nil),
+	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
-	tt.Expect(err).To(MatchError(ContainSubstring("error fetching controller")))
+	tt.Expect(err).To(MatchError(ContainSubstring("getting package bundle controller")))
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusNotFound, nil),
+	)
+	_, err = tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	tt.Expect(err).To(MatchError(ContainSubstring("could not find the requested resource")))
 }
 
 func TestUpgradeBundleSucceeds(t *testing.T) {
 	tt := newBundleTest(t)
-	params := []string{"apply", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	newBundle := "new-bundle"
-	expectedCtrl := packagesv1.PackageBundleController{
-		Spec: packagesv1.PackageBundleControllerSpec{
-			ActiveBundle: newBundle,
-		},
-	}
-	ctrl, err := yaml.Marshal(expectedCtrl)
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, ctrl, params).Return(bytes.Buffer{}, nil)
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Cluster,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
 
+	copy := tt.bundleCtrl.DeepCopy()
+	copy.Spec.ActiveBundle = newBundle
+	resp, err := yaml.Marshal(copy)
+	tt.Expect(err).To(BeNil())
+	tt.kubeRESTClient.GroupVersion = packagesv1.GroupVersion
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusOK,
+			io.NopCloser(bytes.NewBuffer(resp))),
+	)
 	err = tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
 	tt.Expect(err).To(BeNil())
-	tt.Expect(tt.bundleCtrl.Spec.ActiveBundle).To(Equal(newBundle))
 }
 
 func TestUpgradeBundleFails(t *testing.T) {
 	tt := newBundleTest(t)
-	params := []string{"apply", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	newBundle := "new-bundle"
-	expectedCtrl := packagesv1.PackageBundleController{
-		Spec: packagesv1.PackageBundleControllerSpec{
-			ActiveBundle: newBundle,
-		},
-	}
-	ctrl, err := yaml.Marshal(expectedCtrl)
-	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, ctrl, params).Return(bytes.Buffer{}, errors.New("unable to apply yaml"))
-
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Cluster,
-		tt.kubectl,
+		tt.kubeRESTClient,
 		tt.bundleManager,
 		tt.registry,
 	)
+	tt.kubeRESTClient.Client = fakedResponses(
+		fakeResponse(http.StatusInternalServerError, nil),
+	)
 
-	err = tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
+	err := tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
 	tt.Expect(err).NotTo(BeNil())
 }
 
 func convertJsonToBytes(obj interface{}) bytes.Buffer {
 	b, _ := json.Marshal(obj)
 	return *bytes.NewBuffer(b)
+}
+
+func fakeRESTClient() *fake.RESTClient {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(packagesv1.AddToScheme(scheme))
+
+	return &fake.RESTClient{
+		GroupVersion:         packagesv1.GroupVersion,
+		NegotiatedSerializer: serializer.NewCodecFactory(scheme),
+	}
+}
+
+// fakedResponses is a simple http.RoundTripper.
+//
+// It simply returns each response in sequence. This is an attempt to remain
+// resilient in the face of changing paths or names.  It will panic if you ask
+// for more responses than it has. This is considered a feature.
+func fakedResponses(responses ...*http.Response) *http.Client {
+	idx := 0
+	return fake.CreateHTTPClient(func(r *http.Request) (*http.Response, error) {
+		defer func() { idx++ }()
+		return responses[idx], nil
+	})
+}
+
+// fakeResponse helps build *http.Response objects.
+func fakeResponse(code int, body io.ReadCloser) *http.Response {
+	return &http.Response{
+		StatusCode: code,
+		Body:       body,
+	}
+}
+
+// mockBodyPBC builds an http response body containing a minimal packages
+// bundle controller with the provided active bundle.
+func mockBodyPBC(activeBundleName string) io.ReadCloser {
+	jsonSafe := "unknown"
+	data, err := json.Marshal(activeBundleName)
+	if err != nil {
+		log.Printf("failed to marshal active bundle name, using default: %s", err)
+	} else {
+		jsonSafe = string(data)
+	}
+
+	return mockBodyf(`
+{
+  "apiVersion": "packages.eks.amazonaws.com/v1alpha1",
+  "kind": "PackageBundleController",
+  "spec": {
+    "activeBundle": %s
+  }
+}
+`, jsonSafe)
+}
+
+// mockBodyf wraps a string body into a io.ReadCloser for use as an
+// http.Response.Body.
+func mockBodyf(template string, args ...interface{}) io.ReadCloser {
+	return io.NopCloser(bytes.NewBufferString(fmt.Sprintf(template, args...)))
+}
+
+// mockBodyPackageBundle builds an http response body containing a minimal
+// package bundle with the provided package names.
+func mockBodyPackageBundle(packageNames ...string) io.ReadCloser {
+	list := []struct {
+		Name string `json:"name"`
+	}{}
+	for _, name := range packageNames {
+		list = append(list, struct {
+			Name string `json:"name"`
+		}{name})
+	}
+	jsonSafe := "[]"
+	data, err := json.Marshal(list)
+	if err != nil {
+		log.Printf("failed to marshal packages bundle, using fallback: %s", err)
+	} else {
+		jsonSafe = string(data)
+	}
+
+	return mockBodyf(`
+{
+    "apiVersion": "packages.eks.amazonaws.com/v1alpha1",
+    "kind": "PackageBundle",
+    "spec": {"packages": %s}
+}
+`, jsonSafe)
+}
+
+// mockBodyActiveCluster builds an http response body containing a minimal
+// packages bundle controller with the provided name.
+func mockBodyActiveCluster(clusterName string) io.ReadCloser {
+	jsonSafe := "unknown"
+	data, err := json.Marshal(clusterName)
+	if err != nil {
+		log.Printf("failed to marshal cluster name, using default: %s", err)
+	} else {
+		jsonSafe = string(data)
+	}
+
+	return mockBodyf(`
+{
+  "apiVersion": "packages.eks.amazonaws.com/v1alpha1",
+  "kind": "PackageBundleController",
+  "metadata":{
+    "name": %s
+  },
+  "spec": {}
+}
+`, jsonSafe)
+}
+
+// mockBodyKubeadmControlPlane builds an http response body containing a
+// minimal kubeadmcontrolplate response with the provided name.
+func mockBodyKubeadmControlPlane(clusterName string) io.ReadCloser {
+	jsonSafe := "unknown"
+	data, err := json.Marshal(clusterName)
+	if err != nil {
+		log.Printf("failed to marshal cluster name, using default: %s", err)
+	} else {
+		jsonSafe = string(data)
+	}
+
+	return mockBodyf(`
+{
+    "apiVersion": "controlplane.cluster.x-k8s.io/v1beta1",
+    "kind": "KubeadmControlPlane",
+    "metadata": {
+        "name": %s,
+        "namespace": "eksa-system"
+    },
+    "spec": {},
+    "status": {}
+}
+`, jsonSafe)
 }

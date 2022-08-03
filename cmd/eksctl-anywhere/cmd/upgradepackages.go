@@ -45,11 +45,10 @@ func upgradePackages(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
 		ipo.source,
-		deps.Kubectl,
+		deps.KubeRESTClient,
 		nil,
 		nil,
 	)

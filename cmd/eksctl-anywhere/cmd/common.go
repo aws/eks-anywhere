@@ -38,6 +38,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithKubectl().
 		WithHelm(executables.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
+		WithKubeRESTClient(config.kubeConfigFilename).
 		Build(ctx)
 }
 
@@ -47,6 +48,8 @@ type PackageConfig struct {
 	registryName string
 	kubeVersion  string
 	mountPaths   []string
+	// kubeConfigFilename optional filename from which to load a kube config.
+	kubeConfigFilename string
 }
 
 func New(options ...PackageOpt) *PackageConfig {

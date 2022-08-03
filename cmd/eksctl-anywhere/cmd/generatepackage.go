@@ -58,7 +58,7 @@ func generatePackages(ctx context.Context, args []string) error {
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
 		gpOptions.source,
-		deps.Kubectl,
+		deps.KubeRESTClient,
 		bm,
 		deps.BundleRegistry,
 	)

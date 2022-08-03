@@ -59,7 +59,7 @@ func listPackages(ctx context.Context) error {
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
 		lpo.source,
-		deps.Kubectl,
+		deps.KubeRESTClient,
 		bm,
 		deps.BundleRegistry,
 	)
