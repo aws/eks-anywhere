@@ -58,8 +58,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		return err
 	}
 
-	err = pc.ApplySecret(ctx)
-	if err != nil {
+	if err = pc.ApplySecret(ctx); err != nil {
 		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
 	}
 
