@@ -34,6 +34,9 @@ func dockerEntry() *ConfigManagerEntry {
 func processDockerDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.DockerDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
+		if datacenter == nil {
+			return
+		}
 		c.DockerDatacenter = datacenter.(*anywherev1.DockerDatacenterConfig)
 	}
 }
