@@ -49,7 +49,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
 	defaulter := vsphere.NewDefaulter(govcClient)
 
-	reconciler := vspherereconciler.NewVSphereReconciler(
+	reconciler := vspherereconciler.New(
 		cl,
 		validator,
 		defaulter,
