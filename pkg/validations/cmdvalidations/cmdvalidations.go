@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -13,8 +14,19 @@ func PackageDockerValidations(ctx context.Context) []validations.Validation {
 	return []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name: "valid docker executable",
+				Name: "validate docker executable",
 				Err:  validateDockerExecutable(ctx),
+			}
+		},
+	}
+}
+
+func PackageKubeConfigPath(clusterName string) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "validate kubeconfig path",
+				Err:  validateKubeConfigPath(clusterName),
 			}
 		},
 	}
@@ -33,6 +45,18 @@ func validateDockerExecutable(ctx context.Context) error {
 		}
 	}
 	validations.CheckDockerAllocatedMemory(ctx, docker)
+
+	return nil
+}
+
+func validateKubeConfigPath(clusterName string) error {
+	kubeconfigPath := kubeconfig.FromClusterName(clusterName)
+	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return fmt.Errorf(
+			"old cluster config file exists under %s, please use a different clusterName to proceed",
+			clusterName,
+		)
+	}
 
 	return nil
 }
