@@ -79,19 +79,19 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	err := runner.StoreValidationResults()
 
 	// Config parse
-	clusterConfig, err := v1alpha1.GetClusterConfig(valOpt.fileName)
+	clusterConfig, err := cluster.ParseConfigFromFile(valOpt.fileName)
 	if err != nil {
 		return runner.ExitError(err)
 	}
-	runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig)...)
+	runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig.Cluster)...)
 	err = runner.StoreValidationResults()
 	if err != nil {
 		return runner.ExitError(err)
 	}
 
-	runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Name)...)
+	runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Cluster.Name)...)
 
-	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+	if clusterConfig.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
 
 		// If no flag was returned there is a developer error as the flag has been removed
