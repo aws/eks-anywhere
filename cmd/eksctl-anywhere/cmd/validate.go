@@ -176,7 +176,8 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	runner.StoreValidationResults()
 	runner.ReportResults()
 
-	return nil
+	cleanup(deps, &err)
+	return err
 }
 
 func (valOpt *validateOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
