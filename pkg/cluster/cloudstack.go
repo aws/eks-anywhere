@@ -62,6 +62,9 @@ func cloudstackEntry() *ConfigManagerEntry {
 func processCloudStackDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.CloudStackDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
+		if datacenter == nil {
+			return
+		}
 		c.CloudStackDatacenter = datacenter.(*anywherev1.CloudStackDatacenterConfig)
 	}
 }
