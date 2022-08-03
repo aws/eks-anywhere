@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 type templaterTest struct {
@@ -218,9 +219,13 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 	}
 
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+	tt.spec.Cluster.Spec.ManagementCluster.Name = "managed"
 	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
-	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
+
+	gotManifest, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	tt.Expect(err).NotTo(HaveOccurred())
+	test.AssertContentToFile(t, string(gotManifest), "testdata/manifest_network_policy.yaml")
 }
 
 func TestTemplaterGenerateManifestError(t *testing.T) {
@@ -240,8 +245,37 @@ func TestTemplaterGenerateManifestInvalidKubeVersion(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
 }
 
-func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
-	wantValues := map[string]interface{}{
+func TestTemplaterGenerateManifestUpgradeSameKubernetesVersionSuccess(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.22").Return(tt.manifest, nil)
+
+	oldCiliumVersion, err := semver.New(tt.currentSpec.VersionsBundle.Cilium.Version)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	tt.Expect(
+		tt.t.GenerateManifest(tt.ctx, tt.spec,
+			cilium.WithUpgradeFromVersion(*oldCiliumVersion),
+		),
+	).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateManifestUpgradeNewKubernetesVersionSuccess(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.expectHelmTemplateWith(eqMap(wantUpgradeValues()), "1.21").Return(tt.manifest, nil)
+
+	oldCiliumVersion, err := semver.New(tt.currentSpec.VersionsBundle.Cilium.Version)
+	tt.Expect(err).NotTo(HaveOccurred())
+
+	tt.Expect(
+		tt.t.GenerateManifest(tt.ctx, tt.spec,
+			cilium.WithKubeVersion("1.21"),
+			cilium.WithUpgradeFromVersion(*oldCiliumVersion),
+		),
+	).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
+}
+
+func wantUpgradeValues() map[string]interface{} {
+	return map[string]interface{}{
 		"cni": map[string]interface{}{
 			"chainingMode": "portmap",
 		},
@@ -269,29 +303,6 @@ func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
 		},
 		"upgradeCompatibility": "1.9",
 	}
-
-	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(eqMap(wantValues), "1.22").Return(tt.manifest, nil)
-
-	tt.Expect(tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
-}
-
-func TestTemplaterGenerateUpgradeManifestError(t *testing.T) {
-	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
-
-	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
-	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
-	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
-}
-
-func TestTemplaterGenerateUpgradeManifestInvalidKubeVersion(t *testing.T) {
-	tt := newtemplaterTest(t)
-	tt.currentSpec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
-
-	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
-	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
-	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
 }
 
 func TestTemplaterGenerateNetworkPolicy(t *testing.T) {

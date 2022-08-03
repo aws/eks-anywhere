@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -28,7 +29,7 @@ func NewTemplater(helm Helm) *Templater {
 	}
 }
 
-func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
+func (t *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
 	v := templateValues(spec)
 	v.set(true, "preflight", "enabled")
 	v.set(spec.VersionsBundle.Cilium.Cilium.Image(), "preflight", "image", "repository")
@@ -43,7 +44,7 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 		return nil, err
 	}
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
+	manifest, err := t.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -51,49 +52,73 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	return manifest, nil
 }
 
-func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, newSpec *cluster.Spec) ([]byte, error) {
-	currentVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
-	if err != nil {
-		return nil, fmt.Errorf("invalid version for Cilium in current spec: %v", err)
-	}
+// ManifestOpt allows to modify options for a cilium manifest
+type ManifestOpt func(*ManifestConfig)
 
-	v := templateValues(newSpec)
-	v.set(fmt.Sprintf("%d.%d", currentVersion.Major, currentVersion.Minor), "upgradeCompatibility")
-
-	uri, version := getChartUriAndVersion(newSpec)
-
-	kubeVersion, err := getKubeVersionString(currentSpec)
-	if err != nil {
-		return nil, err
-	}
-
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
-	if err != nil {
-		return nil, fmt.Errorf("failed generating cilium upgrade manifest: %v", err)
-	}
-
-	return manifest, nil
+type ManifestConfig struct {
+	values      values
+	kubeVersion string
+	namespaces  []string
 }
 
-func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
-	v := templateValues(spec)
+// WithKubeVersion allows to generate the Cilium manifest for a different kubernetes version
+// than the one specified in the cluster spec. Useful for upgrades scenarios where Cilium is upgraded before
+// the kubernetes components
+func WithKubeVersion(kubeVersion string) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.kubeVersion = kubeVersion
+	}
+}
 
-	uri, version := getChartUriAndVersion(spec)
+// WithUpgradeFromVersion allows to specify the compatibility Cilium version to use in the manifest.
+// This is necessary for Cilium upgrades
+func WithUpgradeFromVersion(version semver.Version) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.values.set(fmt.Sprintf("%d.%d", version.Major, version.Minor), "upgradeCompatibility")
+	}
+}
 
+// WithPolicyAllowedNamespaces allows to specify which namespaces traffic should be allowed when using
+// and "Always" policy enforcement mode
+func WithPolicyAllowedNamespaces(namespaces []string) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.namespaces = namespaces
+	}
+}
+
+func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error) {
 	kubeVersion, err := getKubeVersionString(spec)
 	if err != nil {
 		return nil, err
 	}
 
-	manifest, err := c.helm.Template(ctx, uri, version, namespace, v, kubeVersion)
+	c := &ManifestConfig{
+		values:      templateValues(spec),
+		kubeVersion: kubeVersion,
+	}
+	for _, o := range opts {
+		o(c)
+	}
+
+	uri, version := getChartUriAndVersion(spec)
+
+	manifest, err := t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
+	}
+
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == anywherev1.CiliumPolicyModeAlways {
+		networkPolicyManifest, err := t.GenerateNetworkPolicyManifest(spec, c.namespaces)
+		if err != nil {
+			return nil, err
+		}
+		manifest = templater.AppendYamlResources(manifest, networkPolicyManifest)
 	}
 
 	return manifest, nil
 }
 
-func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces []string) ([]byte, error) {
+func (t *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces []string) ([]byte, error) {
 	values := map[string]interface{}{
 		"managementCluster":  spec.Cluster.IsSelfManaged(),
 		"providerNamespaces": namespaces,
