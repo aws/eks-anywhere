@@ -5,9 +5,15 @@ import (
 	"fmt"
 	"runtime"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
 func PackageDockerValidations(ctx context.Context) []validations.Validation {
@@ -27,6 +33,50 @@ func PackageKubeConfigPath(clusterName string) []validations.Validation {
 			return &validations.ValidationResult{
 				Name: "validate kubeconfig path",
 				Err:  validateKubeConfigPath(clusterName),
+			}
+		},
+	}
+}
+
+func PackageActiveProvider(provider providers.Provider) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "validate active provider",
+				Err:  validateActiveProvider(provider),
+			}
+		},
+	}
+}
+
+func PackageCreatePreflight(ctx context.Context, createValidations interfaces.Validator) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "create preflight validations pass",
+				Err:  createValidations.PreflightValidations(ctx),
+			}
+		},
+	}
+}
+
+func PackageProviderValidations(ctx context.Context, clusterSpec *cluster.Spec, provider providers.Provider) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: fmt.Sprintf("%s Provider setup is valid", provider.Name()),
+				Err:  provider.SetupAndValidateCreateCluster(ctx, clusterSpec),
+			}
+		},
+	}
+}
+
+func PackageClusterValidation(cluster *v1alpha1.Cluster) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "validate cluster",
+				Err:  cluster.Validate(),
 			}
 		},
 	}
@@ -57,6 +107,23 @@ func validateKubeConfigPath(clusterName string) error {
 			clusterName,
 		)
 	}
+
+	return nil
+}
+
+func validateActiveProvider(provider providers.Provider) error {
+	if !features.IsActive(features.CloudStackProvider()) && provider.Name() == constants.CloudStackProviderName {
+		return fmt.Errorf("provider cloudstack is not supported in this release")
+	}
+
+	if !features.IsActive(features.SnowProvider()) && provider.Name() == constants.SnowProviderName {
+		return fmt.Errorf("provider snow is not supported in this release")
+	}
+
+	return nil
+}
+
+func validateClusterConfig(provider providers.Provider) error {
 
 	return nil
 }
