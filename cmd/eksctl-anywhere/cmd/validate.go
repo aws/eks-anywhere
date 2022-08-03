@@ -136,7 +136,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	}
 	defer close(ctx, deps)
 
-	runner.Register(cmdvalidations.PackageActiveProvider(deps.Provider)...)
+	runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
 	err = runner.StoreValidationResults()
 	if err != nil {
 		return runner.ExitError(err)
@@ -177,6 +177,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	runner.ReportResults()
 
 	cleanup(deps, &err)
+	deps.Writer.CleanUp()
 	return err
 }
 

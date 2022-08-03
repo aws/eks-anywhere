@@ -38,12 +38,12 @@ func PackageKubeConfigPath(clusterName string) []validations.Validation {
 	}
 }
 
-func PackageActiveProvider(provider providers.Provider) []validations.Validation {
+func PackageSupportedProvider(provider providers.Provider) []validations.Validation {
 	return []validations.Validation{
 		func() *validations.ValidationResult {
 			return &validations.ValidationResult{
-				Name: "validate active provider",
-				Err:  validateActiveProvider(provider),
+				Name: "validate supported provider",
+				Err:  validateSupportedProvider(provider),
 			}
 		},
 	}
@@ -111,7 +111,7 @@ func validateKubeConfigPath(clusterName string) error {
 	return nil
 }
 
-func validateActiveProvider(provider providers.Provider) error {
+func validateSupportedProvider(provider providers.Provider) error {
 	if !features.IsActive(features.CloudStackProvider()) && provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("provider cloudstack is not supported in this release")
 	}
@@ -119,11 +119,6 @@ func validateActiveProvider(provider providers.Provider) error {
 	if !features.IsActive(features.SnowProvider()) && provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
 	}
-
-	return nil
-}
-
-func validateClusterConfig(provider providers.Provider) error {
 
 	return nil
 }
