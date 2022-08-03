@@ -88,8 +88,9 @@ func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 }
 
 func (fc *fluxForCluster) initializeProviderRepositoryIfNotExists(ctx context.Context) (*git.Repository, error) {
-	if fc.clusterSpec.FluxConfig.Spec.Github == nil {
-		return nil, nil
+	// If git provider, the repository should be pre-initialized by the user.
+	if fc.clusterSpec.FluxConfig.Spec.Git != nil {
+		return &git.Repository{}, nil
 	}
 
 	r, err := fc.gitClient.GetRepo(ctx)

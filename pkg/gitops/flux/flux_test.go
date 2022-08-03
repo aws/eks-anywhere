@@ -405,7 +405,30 @@ func TestInstallGitOpsBootstrapError(t *testing.T) {
 	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, nil, nil)).To(MatchError(ContainSubstring("error in bootstrap")))
 }
 
-func TestInstallGitOpsSCommitFilesError(t *testing.T) {
+func TestInstallGitOpsGitProviderSuccess(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterName := "management-cluster"
+	clusterConfig := v1alpha1.NewCluster(clusterName)
+	g := newFluxTest(t)
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	clusterSpec.FluxConfig.Spec.Git = &v1alpha1.GitProviderConfig{RepositoryUrl: "git.xyz"}
+	clusterSpec.FluxConfig.Spec.Github = nil
+
+	g.flux.EXPECT().BootstrapGit(g.ctx, cluster, clusterSpec.FluxConfig, nil)
+	g.git.EXPECT().Clone(g.ctx).Return(nil)
+	g.git.EXPECT().Branch(clusterSpec.FluxConfig.Spec.Branch).Return(nil)
+	g.git.EXPECT().Add(path.Dir("clusters/management-cluster")).Return(nil)
+	g.git.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.git.EXPECT().Push(g.ctx).Return(nil)
+	g.git.EXPECT().Pull(g.ctx, clusterSpec.FluxConfig.Spec.Branch).Return(nil)
+
+	datacenterConfig := datacenterConfig(clusterName)
+	machineConfig := machineConfig(clusterName)
+
+	g.Expect(g.gitOpsFlux.InstallGitOps(g.ctx, cluster, clusterSpec, datacenterConfig, []providers.MachineConfig{machineConfig})).To(Succeed())
+}
+
+func TestInstallGitOpsCommitFilesError(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterName := "test-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
