@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -66,6 +67,32 @@ func TestClusterValidateUpdateFluxSubtractionImmutable(t *testing.T) {
 	c.Spec = v1alpha1.FluxConfigSpec{}
 	f := NewWithT(t)
 	f.Expect(c.ValidateUpdate(&fOld)).NotTo(Succeed())
+}
+
+func TestValidateCreateHasValidatedSpec(t *testing.T) {
+	fNew := fluxConfig()
+	fNew.Spec.Git = &v1alpha1.GitProviderConfig{}
+	fNew.Spec.Github = &v1alpha1.GithubProviderConfig{}
+
+	f := NewWithT(t)
+	err := fNew.ValidateCreate()
+
+	f.Expect(apierrors.IsInvalid(err)).To(BeTrue())
+	f.Expect(err).To(MatchError(ContainSubstring("must specify only one provider")))
+}
+
+func TestValidateUpdateHasValidatedSpec(t *testing.T) {
+	fOld := fluxConfig()
+	fOld.Spec.Github = &v1alpha1.GithubProviderConfig{
+		Repository: "oldRepo",
+	}
+	c := fOld.DeepCopy()
+	c.Spec.Git = &v1alpha1.GitProviderConfig{}
+
+	f := NewWithT(t)
+	err := c.ValidateUpdate(&fOld)
+	f.Expect(apierrors.IsInvalid(err)).To(BeTrue())
+	f.Expect(err).To(MatchError(ContainSubstring("must specify only one provider")))
 }
 
 func fluxConfig() v1alpha1.FluxConfig {
