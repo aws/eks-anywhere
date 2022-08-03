@@ -70,14 +70,11 @@ func TestGeneratePackagesSucceed(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
-		"sourceRegistry", "localhost:8080")
 
 	result, err := tt.command.GeneratePackages()
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result[0].Name).To(BeEquivalentTo(curatedpackages.CustomName + packages[0]))
-	tt.Expect(result[0].Spec.Config).To(Equal(expectedOutput))
 }
 
 func TestGeneratePackagesFail(t *testing.T) {
@@ -134,16 +131,6 @@ func TestInstallPackagesFailsWhenInvalidConfigs(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	customConfigs := []string{"test"}
-	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages), curatedpackages.WithCustomConfigs(customConfigs))
-
-	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
-	tt.Expect(err).NotTo(BeNil())
-}
-
-func TestInstallPackagesFailsWhenConfigsDontExist(t *testing.T) {
-	tt := newPackageTest(t)
-	packages := []string{"harbor-test"}
-	customConfigs := []string{"test=notexist"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages), curatedpackages.WithCustomConfigs(customConfigs))
 
 	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")

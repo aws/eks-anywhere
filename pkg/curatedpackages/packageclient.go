@@ -33,7 +33,6 @@ type PackageClient struct {
 	customPackages []string
 	kubectl        KubectlRunner
 	customConfigs  []string
-	showOptions    bool
 }
 
 func NewPackageClient(kubectl KubectlRunner, options ...PackageClientOpt) *PackageClient {
@@ -75,8 +74,7 @@ func (pc *PackageClient) GeneratePackages() ([]packagesv1.Package, error) {
 			return nil, fmt.Errorf("unknown package %q", p)
 		}
 		name := CustomName + strings.ToLower(bundlePackage.Name)
-		configString := pc.getGenerateConfigurations(&bundlePackage)
-		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion, configString))
+		packages = append(packages, convertBundlePackageToPackage(bundlePackage, name, pc.bundle.APIVersion, ""))
 	}
 	return packages, nil
 }
@@ -113,7 +111,7 @@ func (pc *PackageClient) packageMap() map[string]packagesv1.BundlePackage {
 }
 
 func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.BundlePackage, customName string, kubeConfig string) error {
-	configString, err := pc.getInstallConfigurations(bp)
+	configString, err := pc.getInstallConfigurations()
 	if err != nil {
 		return err
 	}
@@ -133,27 +131,12 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	return nil
 }
 
-func (pc *PackageClient) getInstallConfigurations(bp *packagesv1.BundlePackage) (string, error) {
+func (pc *PackageClient) getInstallConfigurations() (string, error) {
 	installConfigs, err := ParseConfigurations(pc.customConfigs)
 	if err != nil {
 		return "", err
 	}
-
-	configs := GetConfigurationsFromBundle(bp)
-
-	err = UpdateConfigurations(configs, installConfigs)
-	if err != nil {
-		return "", err
-	}
-
-	configString, err := GenerateAllValidConfigurations(configs)
-	return configString, err
-}
-
-func (pc *PackageClient) getGenerateConfigurations(bp *packagesv1.BundlePackage) string {
-	configs := GetConfigurationsFromBundle(bp)
-	configString := GenerateDefaultConfigurations(configs)
-	return configString
+	return GenerateAllValidConfigurations(installConfigs)
 }
 
 func (pc *PackageClient) ApplyPackages(ctx context.Context, fileName string, kubeConfig string) error {
@@ -238,11 +221,5 @@ func WithCustomPackages(customPackages []string) func(*PackageClient) {
 func WithCustomConfigs(customConfigs []string) func(*PackageClient) {
 	return func(config *PackageClient) {
 		config.customConfigs = customConfigs
-	}
-}
-
-func WithShowOptions(showOptions bool) func(client *PackageClient) {
-	return func(config *PackageClient) {
-		config.showOptions = showOptions
 	}
 }

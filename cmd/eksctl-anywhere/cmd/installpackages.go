@@ -17,7 +17,6 @@ type installPackageOptions struct {
 	packageName   string
 	registry      string
 	customConfigs []string
-	showOptions   bool
 }
 
 var ipo = &installPackageOptions{}
@@ -34,7 +33,6 @@ func init() {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
-	installPackageCommand.Flags().BoolVar(&ipo.showOptions, "show-options", false, "Used to specify the package options to be used for configuration")
 	installPackageCommand.Flags().StringArrayVar(&ipo.customConfigs, "set", []string{}, "Provide custom configurations for curated packages. Format key:value")
 }
 
@@ -83,18 +81,11 @@ func installPackages(ctx context.Context, args []string) error {
 		deps.Kubectl,
 		curatedpackages.WithBundle(bundle),
 		curatedpackages.WithCustomConfigs(ipo.customConfigs),
-		curatedpackages.WithShowOptions(ipo.showOptions),
 	)
 
 	p, err := packages.GetPackageFromBundle(args[0])
 	if err != nil {
 		return err
-	}
-
-	if ipo.showOptions {
-		configs := curatedpackages.GetConfigurationsFromBundle(p)
-		curatedpackages.DisplayConfigurationOptions(configs)
-		return nil
 	}
 
 	curatedpackages.PrintLicense()
