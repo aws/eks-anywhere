@@ -163,6 +163,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.6-rc1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.6-rc1/infrastructure-components.yaml
+      kubeRbacProxy:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-rbac-proxy image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-rbac-proxy
+        os: linux
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -932,6 +941,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.6-rc1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.6-rc1/infrastructure-components.yaml
+      kubeRbacProxy:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-rbac-proxy image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-rbac-proxy
+        os: linux
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -1710,6 +1728,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.6-rc1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.6-rc1/infrastructure-components.yaml
+      kubeRbacProxy:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-rbac-proxy image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-rbac-proxy
+        os: linux
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64
@@ -2488,6 +2515,15 @@ spec:
         uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.6-rc1-eks-a-v0.0.0-dev-build.1
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.6-rc1/infrastructure-components.yaml
+      kubeRbacProxy:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-rbac-proxy image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-rbac-proxy
+        os: linux
+        uri: public.ecr.aws/release-container-registry/brancz/kube-rbac-proxy:v0.13.0-eks-a-v0.0.0-dev-build.1
       kubeVip:
         arch:
         - amd64

@@ -273,6 +273,7 @@ func (in *CiliumBundle) DeepCopy() *CiliumBundle {
 func (in *CloudStackBundle) DeepCopyInto(out *CloudStackBundle) {
 	*out = *in
 	in.ClusterAPIController.DeepCopyInto(&out.ClusterAPIController)
+	in.KubeRbacProxy.DeepCopyInto(&out.KubeRbacProxy)
 	in.KubeVip.DeepCopyInto(&out.KubeVip)
 	out.Components = in.Components
 	out.Metadata = in.Metadata
