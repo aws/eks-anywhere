@@ -165,7 +165,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
-	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, cluster)
+	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, log, cluster)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

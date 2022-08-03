@@ -3,12 +3,14 @@ package clusters
 import (
 	"context"
 
+	"github.com/go-logr/logr"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
 type ProviderClusterReconciler interface {
-	Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error)
+	Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error)
 }
 
 // ProviderClusterReconcilerRegistry holds a collection of cluster provider reconcilers
