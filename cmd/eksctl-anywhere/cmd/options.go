@@ -8,6 +8,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
+type timeoutOptions struct {
+	cpWaitTimeout           string
+	externalEtcdWaitTimeout string
+	perMachineWaitTimeout   string
+}
+
 type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string

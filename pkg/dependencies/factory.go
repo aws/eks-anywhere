@@ -678,16 +678,12 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
 	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
 			return nil
-		}
-		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
-		if f.dependencies.CliConfig != nil {
-			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
 		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
@@ -699,7 +695,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			maxWaitPerMachine,
+			opts...,
 		)
 		return nil
 	})

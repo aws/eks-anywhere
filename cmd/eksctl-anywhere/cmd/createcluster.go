@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -14,12 +15,14 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -29,6 +32,7 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	forceClean            bool
 	skipIpCheck           bool
 	hardwareCSVPath       string
@@ -63,6 +67,21 @@ func init() {
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
+
+	createClusterCmd.Flags().StringVar(&cc.timeoutOptions.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWaitStr, "Override the default control plane wait timeout (60m).")
+	if err := createClusterCmd.Flags().MarkHidden(cpWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + cpWaitTimeoutFlag)
+	}
+
+	createClusterCmd.Flags().StringVar(&cc.timeoutOptions.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWaitStr, "Override the default external etcd wait timeout (60m)")
+	if err := createClusterCmd.Flags().MarkHidden(externalEtcdWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + externalEtcdWaitTimeoutFlag)
+	}
+
+	createClusterCmd.Flags().StringVar(&cc.timeoutOptions.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultPerMachineWaitStr, "Override the default machine wait timeout (10m)/per machine ")
+	if err := createClusterCmd.Flags().MarkHidden(perMachineWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + perMachineWaitTimeoutFlag)
+	}
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -143,10 +162,30 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	if _, err = time.ParseDuration(cc.timeoutOptions.cpWaitTimeout); err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			cpWaitTimeoutFlag, cc.timeoutOptions.cpWaitTimeout, clustermanager.DefaultControlPlaneWaitStr))
+		cc.timeoutOptions.cpWaitTimeout = clustermanager.DefaultControlPlaneWaitStr
+	}
+
+	if _, err = time.ParseDuration(cc.timeoutOptions.externalEtcdWaitTimeout); err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			externalEtcdWaitTimeoutFlag, cc.timeoutOptions.externalEtcdWaitTimeout, clustermanager.DefaultEtcdWaitStr))
+		cc.timeoutOptions.externalEtcdWaitTimeout = clustermanager.DefaultEtcdWaitStr
+	}
+
+	perMachineWaitTimeout, err := time.ParseDuration(cc.timeoutOptions.perMachineWaitTimeout)
+	if err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			perMachineWaitTimeoutFlag, cc.timeoutOptions.perMachineWaitTimeout, clustermanager.DefaultPerMachineWaitStr))
+		perMachineWaitTimeout = clustermanager.DefaultMaxWaitPerMachine
+	}
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clustermanager.WithControlPlaneWaitTimeout(cc.timeoutOptions.cpWaitTimeout), clustermanager.WithExternalEtcdWaitTimeout(cc.timeoutOptions.externalEtcdWaitTimeout),
+			clustermanager.WithWaitForMachines(clustermanager.DefaultMachineBackoff, perMachineWaitTimeout, clustermanager.DefaultMachinesMinWait)).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -242,9 +281,7 @@ func (cc *createClusterOptions) extraDirectoriesToMount() ([]string, error) {
 }
 
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{
-		MaxWaitPerMachine: config.GetMaxWaitPerMachine(),
-	}
+	cliConfig := &config.CliConfig{}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)

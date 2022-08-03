@@ -249,6 +249,35 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerCreateWorkloadClusterTimeoutOverrideSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+
+	mgmtCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+
+	c, m := newClusterManager(t, clustermanager.WithControlPlaneWaitTimeout("20m"))
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "20m", clusterName)
+	kubeconfig := []byte("content")
+	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
+	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
+
+	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err != nil {
+		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
+	}
+}
+
 func TestClusterManagerRunPostCreateWorkloadClusterSuccess(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
@@ -293,6 +322,37 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, mgmtCluster, "60m", clusterName)
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
+	kubeconfig := []byte("content")
+	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
+	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
+
+	if _, err := c.CreateWorkloadCluster(ctx, mgmtCluster, clusterSpec, m.provider); err != nil {
+		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerCreateWorkloadClusterWithExternalEtcdTimeoutOverrideSuccess(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = clusterName
+		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+		s.Cluster.Spec.ControlPlaneConfiguration.Count = 2
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+
+	mgmtCluster := &types.Cluster{
+		Name:           clusterName,
+		KubeconfigFile: "mgmt-kubeconfig",
+	}
+
+	c, m := newClusterManager(t, clustermanager.WithExternalEtcdWaitTimeout("30m"))
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, mgmtCluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mgmtCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
+	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, mgmtCluster, "30m", clusterName)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mgmtCluster, "60m", clusterName)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, mgmtCluster).Return(kubeconfig, nil)
@@ -1664,7 +1724,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 	}
 
-	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, 0, opts...)
+	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, opts...)
 
 	return c, m
 }

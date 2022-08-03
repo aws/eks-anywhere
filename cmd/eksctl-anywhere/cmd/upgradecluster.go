@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
@@ -21,6 +24,7 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	wConfig               string
 	forceClean            bool
 	hardwareCSVPath       string
@@ -68,6 +72,21 @@ func init() {
 		TinkerbellHardwareCSVFlagDescription,
 	)
 
+	upgradeClusterCmd.Flags().StringVar(&uc.timeoutOptions.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWaitStr, "Override the default control plane wait timeout (60m)")
+	if err := upgradeClusterCmd.Flags().MarkHidden(cpWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + cpWaitTimeoutFlag)
+	}
+
+	upgradeClusterCmd.Flags().StringVar(&uc.timeoutOptions.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWaitStr, "Override the default external etcd wait timeout (60m)")
+	if err := upgradeClusterCmd.Flags().MarkHidden(externalEtcdWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + externalEtcdWaitTimeoutFlag)
+	}
+
+	upgradeClusterCmd.Flags().StringVar(&uc.timeoutOptions.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultPerMachineWaitStr, "Override the default machine wait timeout (10m)/per machine ")
+	if err := upgradeClusterCmd.Flags().MarkHidden(perMachineWaitTimeoutFlag); err != nil {
+		logger.V(5).Info("Warn: Failed to mark flag as hidden: " + perMachineWaitTimeoutFlag)
+	}
+
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -114,10 +133,30 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
+	if _, err = time.ParseDuration(uc.timeoutOptions.cpWaitTimeout); err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			cpWaitTimeoutFlag, uc.timeoutOptions.cpWaitTimeout, clustermanager.DefaultControlPlaneWaitStr))
+		uc.timeoutOptions.cpWaitTimeout = clustermanager.DefaultControlPlaneWaitStr
+	}
+
+	if _, err = time.ParseDuration(uc.externalEtcdWaitTimeout); err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			externalEtcdWaitTimeoutFlag, uc.timeoutOptions.externalEtcdWaitTimeout, clustermanager.DefaultEtcdWaitStr))
+		uc.timeoutOptions.externalEtcdWaitTimeout = clustermanager.DefaultEtcdWaitStr
+	}
+
+	perMachineWaitTimeout, err := time.ParseDuration(uc.timeoutOptions.perMachineWaitTimeout)
+	if err != nil {
+		logger.V(0).Info(fmt.Sprintf(timeoutWarningTemplate,
+			perMachineWaitTimeoutFlag, uc.timeoutOptions.perMachineWaitTimeout, clustermanager.DefaultPerMachineWaitStr))
+		perMachineWaitTimeout = clustermanager.DefaultMaxWaitPerMachine
+	}
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clustermanager.WithControlPlaneWaitTimeout(uc.timeoutOptions.cpWaitTimeout), clustermanager.WithExternalEtcdWaitTimeout(uc.timeoutOptions.externalEtcdWaitTimeout),
+			clustermanager.WithWaitForMachines(clustermanager.DefaultMachineBackoff, perMachineWaitTimeout, clustermanager.DefaultMachinesMinWait)).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().

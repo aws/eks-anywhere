@@ -19,7 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -34,29 +33,35 @@ import (
 )
 
 const (
-	maxRetries             = 30
-	backOffPeriod          = 5 * time.Second
-	machineBackoff         = 1 * time.Second
-	machinesMinWait        = 30 * time.Minute
-	moveCAPIWait           = 15 * time.Minute
-	clusterWaitStr         = "60m"
-	ctrlPlaneWaitStr       = "60m"
-	deploymentWaitStr      = "30m"
-	ctrlPlaneInProgressStr = "1m"
-	etcdInProgressStr      = "1m"
+	maxRetries                 = 30
+	DefaultBackOffPeriod       = 5 * time.Second
+	DefaultMachineBackoff      = 1 * time.Second
+	DefaultMachinesMinWait     = 30 * time.Minute
+	moveCAPIWait               = 15 * time.Minute
+	DefaultMaxWaitPerMachine   = 10 * time.Minute
+	clusterWaitStr             = "60m"
+	DefaultControlPlaneWaitStr = "60m"
+	deploymentWaitStr          = "30m"
+	controlPlaneInProgressStr  = "1m"
+	etcdInProgressStr          = "1m"
+	DefaultEtcdWaitStr         = "60m"
 )
+
+var DefaultPerMachineWaitStr = DefaultMaxWaitPerMachine.String()
 
 type ClusterManager struct {
 	*Upgrader
-	clusterClient      *retrierClient
-	writer             filewriter.FileWriter
-	networking         Networking
-	diagnosticsFactory diagnostics.DiagnosticBundleFactory
-	Retrier            *retrier.Retrier
-	machineMaxWait     time.Duration
-	machineBackoff     time.Duration
-	machinesMinWait    time.Duration
-	awsIamAuth         AwsIamAuth
+	clusterClient           *retrierClient
+	writer                  filewriter.FileWriter
+	networking              Networking
+	diagnosticsFactory      diagnostics.DiagnosticBundleFactory
+	Retrier                 *retrier.Retrier
+	machineMaxWait          time.Duration
+	machineBackoff          time.Duration
+	machinesMinWait         time.Duration
+	awsIamAuth              AwsIamAuth
+	controlPlaneWaitTimeout string
+	externalEtcdWaitTimeout string
 }
 
 type ClusterClient interface {
@@ -118,20 +123,22 @@ type AwsIamAuth interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, maxWaitPerMachine time.Duration, opts ...ClusterManagerOpt) *ClusterManager {
-	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+	retrier := retrier.NewWithMaxRetries(maxRetries, DefaultBackOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		Upgrader:           NewUpgrader(retrierClient),
-		clusterClient:      retrierClient,
-		writer:             writer,
-		networking:         networking,
-		Retrier:            retrier,
-		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     maxWaitPerMachine,
-		machineBackoff:     machineBackoff,
-		machinesMinWait:    machinesMinWait,
-		awsIamAuth:         awsIamAuth,
+		Upgrader:                NewUpgrader(retrierClient),
+		clusterClient:           retrierClient,
+		writer:                  writer,
+		networking:              networking,
+		Retrier:                 retrier,
+		diagnosticsFactory:      diagnosticBundleFactory,
+		machineMaxWait:          DefaultMaxWaitPerMachine,
+		machineBackoff:          DefaultMachineBackoff,
+		machinesMinWait:         DefaultMachinesMinWait,
+		awsIamAuth:              awsIamAuth,
+		controlPlaneWaitTimeout: DefaultControlPlaneWaitStr,
+		externalEtcdWaitTimeout: DefaultEtcdWaitStr,
 	}
 
 	for _, o := range opts {
@@ -139,6 +146,18 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 	}
 
 	return c
+}
+
+func WithControlPlaneWaitTimeout(timeout string) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.controlPlaneWaitTimeout = timeout
+	}
+}
+
+func WithExternalEtcdWaitTimeout(timeout string) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.externalEtcdWaitTimeout = timeout
+	}
 }
 
 func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Duration) ClusterManagerOpt {
@@ -239,7 +258,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", workloadCluster.Name)
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, config.GetExternalEtcdTimeout(), workloadCluster.Name)
+		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, c.externalEtcdWaitTimeout, workloadCluster.Name)
 		if err != nil {
 			return nil, fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
 		}
@@ -248,7 +267,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout, workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -381,8 +400,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		}
 
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
-		etcdWait := config.GetExternalEtcdTimeout()
-		if err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWait, newClusterSpec.Cluster.Name); err != nil {
+		if err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, c.externalEtcdWaitTimeout, newClusterSpec.Cluster.Name); err != nil {
 			if err := c.clusterClient.RemoveAnnotationInNamespace(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Cluster.Name),
 				etcdv1.UpgradeInProgressAnnotation,
 				managementCluster,
@@ -396,7 +414,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
-	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, controlPlaneInProgressStr, newClusterSpec.Cluster.Name)
 	if err != nil {
 		if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
 			return fmt.Errorf("error waiting for control plane not ready: %v", err)
@@ -411,7 +429,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -422,7 +440,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
