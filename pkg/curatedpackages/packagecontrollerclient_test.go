@@ -82,7 +82,7 @@ func TestInstallControllerSuccess(t *testing.T) {
 		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(eksaDefaultRegion)),
 	}
 	result, err := templater.Execute(awsSecretYaml, templateValues)
-	tt.Expect(err).To(BeNil())
+	tt.Expect(err).NotTo(HaveOcurred())
 	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, result, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
