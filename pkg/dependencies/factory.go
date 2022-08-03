@@ -3,6 +3,7 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -79,6 +81,8 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
+	PackageControllerClient   curatedpackages.PackageController
+	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
 	SnowValidator             *snow.Validator
@@ -819,17 +823,62 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 }
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+	f.WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
-			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
+			f.dependencies.PackageClient,
+			f.dependencies.PackageControllerClient,
 			spec,
 			packagesLocation,
+		)
+		return nil
+	})
+	return f
+}
+
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
+	f.WithHelmInsecure().WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageControllerClient != nil {
+			return nil
+		}
+		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+
+		chart := spec.VersionsBundle.PackageController.HelmChart
+		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.HelmInsecure,
+			f.dependencies.Kubectl,
+			kubeConfig,
+			imageUrl,
+			chart.Name,
+			chart.Tag(),
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
+			curatedpackages.WithEksaRegion(eksaRegion),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPackageClient() *Factory {
+	f.WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageClient != nil {
+			return nil
+		}
+
+		f.dependencies.PackageClient = curatedpackages.NewPackageClient(
+			f.dependencies.Kubectl,
 		)
 		return nil
 	})
