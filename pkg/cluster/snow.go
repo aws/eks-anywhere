@@ -61,7 +61,9 @@ func snowEntry() *ConfigManagerEntry {
 func processSnowDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.SnowDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		c.SnowDatacenter = datacenter.(*anywherev1.SnowDatacenterConfig)
+		if datacenter != nil {
+			c.SnowDatacenter = datacenter.(*anywherev1.SnowDatacenterConfig)
+		}
 	}
 }
 
