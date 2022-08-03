@@ -62,8 +62,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
 	}
 
-	err = pc.TriggerCronJob(ctx)
-	if err != nil {
+	if err = pc.TriggerCronJob(ctx); err != nil {
 		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
 	}
 	return nil
