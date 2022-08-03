@@ -16,7 +16,7 @@ To prepare a VMware vSphere environment to run EKS Anywhere, you need the follow
 * A vSphere 7+ environment running vCenter
 * Capacity to deploy 6-10 VMs
 * [DHCP service]({{< relref "./vsphere-dhcp/" >}}) running in vSphere environment in the primary VM network for your workload cluster
-* One network in vSphere to use for the cluster. This network must have inbound access into vCenter
+* One network in vSphere to use for the cluster. EKS Anywhere clusters need access to vCenter through the network to enable self-managing and storage capabilities.
 * An [OVA]({{< relref "./vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
 * User credentials to create VMs and attach networks, etc
 * One IP address routable from cluster but excluded from DHCP offering. 
