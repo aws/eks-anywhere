@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -86,9 +85,9 @@ func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Co
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	templateValues := map[string]string{
-		"eksaAccessKeyId":     base64.StdEncoding.EncodeToString([]byte(pc.eksaAccessKeyId)),
-		"eksaSecretAccessKey": base64.StdEncoding.EncodeToString([]byte(pc.eksaSecretAccessKey)),
-		"eksaRegion":          base64.StdEncoding.EncodeToString([]byte(pc.eksaRegion)),
+		"eksaAccessKeyId":     pc.eksaAccessKeyId,
+		"eksaSecretAccessKey": pc.eksaSecretAccessKey,
+		"eksaRegion":          pc.eksaRegion,
 	}
 
 	result, err := templater.Execute(awsSecretYaml, templateValues)
