@@ -76,7 +76,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 
 	runner := validations.NewRunner()
 	runner.Register(cmdvalidations.PackageDockerValidations(ctx)...)
-	runner.StoreValidationResults()
+	err := runner.StoreValidationResults()
 
 	// Config parse
 	clusterConfig, err := v1alpha1.GetClusterConfig(valOpt.fileName)
@@ -110,7 +110,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 		}
 	}
 
-	runner.StoreValidationResults()
+	err = runner.StoreValidationResults()
 	if err != nil {
 		return runner.ExitError(err)
 	}
@@ -173,7 +173,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	runner.Register(cmdvalidations.PackageProviderValidations(ctx, clusterSpec, deps.Provider)...)
 	runner.Register(deps.GitOpsFlux.Validations(ctx, clusterSpec)...)
 
-	runner.StoreValidationResults()
+	err = runner.StoreValidationResults()
 	runner.ReportResults()
 
 	cleanup(deps, &err)
