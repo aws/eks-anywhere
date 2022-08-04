@@ -13,44 +13,44 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 )
 
-type ValidateCmd struct {
+type Validate struct {
 	ctx    context.Context
-	Runner *validations.Runner
+	runner *validations.Runner
 }
 
-func NewValidate(ctx context.Context) *ValidateCmd {
+func NewValidate(ctx context.Context) *Validate {
 	runner := validations.NewRunner()
-	return &ValidateCmd{
+	return &Validate{
 		ctx:    ctx,
-		Runner: runner,
+		runner: runner,
 	}
 }
 
-func (v *ValidateCmd) RunConfigValidations(clusterConfig *cluster.Config) error {
-	v.Runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig.Cluster)...)
-	err := v.Runner.Run()
+func (v *Validate) RunConfigValidations(clusterConfig *cluster.Config) error {
+	v.runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig.Cluster)...)
+	err := v.runner.Run()
 	if err != nil {
 		return err
 	}
 
-	v.Runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Cluster.Name)...)
-	err = v.Runner.Run()
+	v.runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Cluster.Name)...)
+	err = v.runner.Run()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (v *ValidateCmd) RunDockerValidations() {
-	v.Runner.Register(cmdvalidations.PackageDockerValidations(v.ctx)...)
-	v.Runner.Run()
+func (v *Validate) RunDockerValidations() {
+	v.runner.Register(cmdvalidations.PackageDockerValidations(v.ctx)...)
+	v.runner.Run()
 }
 
-func (v *ValidateCmd) RunSpecValidations(clusterSpec *cluster.Spec, deps *dependencies.Dependencies,
+func (v *Validate) RunSpecValidations(clusterSpec *cluster.Spec, deps *dependencies.Dependencies,
 	cliConfig *config.CliConfig,
 ) error {
-	v.Runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
-	err := v.Runner.Run()
+	v.runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
+	err := v.runner.Run()
 	if err != nil {
 		return err
 	}
@@ -82,10 +82,10 @@ func (v *ValidateCmd) RunSpecValidations(clusterSpec *cluster.Spec, deps *depend
 
 	createValidations := createvalidations.New(validationOpts)
 
-	v.Runner.Register(cmdvalidations.PackageCreatePreflight(v.ctx, createValidations)...)
-	v.Runner.Register(cmdvalidations.PackageProviderValidations(v.ctx, clusterSpec, deps.Provider)...)
-	v.Runner.Register(deps.GitOpsFlux.Validations(v.ctx, clusterSpec)...)
-	err = v.Runner.Run()
+	v.runner.Register(cmdvalidations.PackageCreatePreflight(v.ctx, createValidations)...)
+	v.runner.Register(cmdvalidations.PackageProviderValidations(v.ctx, clusterSpec, deps.Provider)...)
+	v.runner.Register(deps.GitOpsFlux.Validations(v.ctx, clusterSpec)...)
+	err = v.runner.Run()
 
 	return err
 }
