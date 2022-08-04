@@ -77,13 +77,14 @@ func TestGenerateBundleManifest(t *testing.T) {
 			cliMinVersion:       "v0.7.2",
 			cliMaxVersion:       "v0.7.2",
 		},
-		{
-			testName:            "Dev-release from release-0.10",
-			buildRepoBranchName: "release-0.10",
-			cliRepoBranchName:   "release-0.10",
-			cliMinVersion:       "v0.10.0",
-			cliMaxVersion:       "v0.10.0",
-		},
+		// TODO: uncomment this in the next release
+		// {
+		// 	testName:            "Dev-release from release-0.10",
+		// 	buildRepoBranchName: "release-0.10",
+		// 	cliRepoBranchName:   "release-0.10",
+		// 	cliMinVersion:       "v0.10.0",
+		// 	cliMaxVersion:       "v0.10.0",
+		// },
 	}
 
 	for _, tt := range testCases {
