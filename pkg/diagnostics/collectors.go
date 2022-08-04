@@ -7,6 +7,7 @@ import (
 	"k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
@@ -61,10 +62,10 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	return collectors
 }
 
-func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect {
+func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
-		return c.eksaVsphereCollectors()
+		return c.eksaVsphereCollectors(spec)
 	case v1alpha1.DockerDatacenterKind:
 		return c.eksaDockerCollectors()
 	case v1alpha1.CloudStackDatacenterKind:
@@ -88,7 +89,8 @@ func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
 	return append(tinkerbellLogs, c.tinkerbellCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
+func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect {
+	var collectors []*Collect
 	vsphereLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -97,7 +99,10 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 			},
 		},
 	}
-	return append(vsphereLogs, c.vsphereCrdCollectors()...)
+	collectors = append(collectors, vsphereLogs...)
+	collectors = append(collectors, c.vsphereCrdCollectors()...)
+	collectors = append(collectors, c.apiServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)...)
+	return collectors
 }
 
 func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
@@ -380,8 +385,8 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	}
 }
 
-// APIServerCollectors collect connection info when running a pod on an existing cluster
-func (c *collectorFactory) APIServerCollectors(controlPlaneIP string) []*Collect {
+// apiServerCollectors collect connection info when running a pod on an existing cluster
+func (c *collectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
 	return collectors
@@ -402,11 +407,11 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 	argsIP := []string{tempIPRequest}
 	return &Collect{
 		RunPod: &runPod{
-			Name:       "run-ip",
-			Namespaces: constants.EksaDiagnosticsNamespace,
+			Name:      "check-host-port",
+			Namespace: constants.EksaDiagnosticsNamespace,
 			PodSpec: &v1.PodSpec{
 				Containers: []v1.Container{{
-					Name:    "run-ip",
+					Name:    "check-host-port",
 					Image:   c.DiagnosticCollectorImage,
 					Command: []string{"/bin/sh", "-c"},
 					Args:    argsIP,
@@ -421,11 +426,11 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 	argsPing := []string{tempPingRequest}
 	return &Collect{
 		RunPod: &runPod{
-			Name:       "run-ping",
-			Namespaces: constants.EksaDiagnosticsNamespace,
+			Name:      "ping-host-ip",
+			Namespace: constants.EksaDiagnosticsNamespace,
 			PodSpec: &v1.PodSpec{
 				Containers: []v1.Container{{
-					Name:    "run-ping",
+					Name:    "ping-host-ip",
 					Image:   c.DiagnosticCollectorImage,
 					Command: []string{"/bin/sh", "-c"},
 					Args:    argsPing,
