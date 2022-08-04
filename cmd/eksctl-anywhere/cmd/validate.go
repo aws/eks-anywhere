@@ -73,13 +73,12 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 
 	validateCluster := workflows.NewValidate(ctx)
 
-	runner := validateCluster.Runner
 	validateCluster.RunDockerValidations()
 
 	// Config parse
 	clusterConfig, err := cluster.ParseConfigFromFile(valOpt.fileName)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
 
 	err = validateCluster.RunConfigValidations(clusterConfig)
@@ -87,38 +86,39 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 		return err
 	}
 
-	if validateCluster.ClusterConfig.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+	if clusterConfig.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
 
 		// If no flag was returned there is a developer error as the flag has been removed
 		// from the program rendering it invalid.
 		if flag == nil {
-			runner.ReportResults()
 			panic("'hardwarefile' flag not configured")
 		}
 
 		if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
-			return runner.ExitError(fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName))
+			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
 		}
 
 		if !validations.FileExists(cc.hardwareCSVPath) {
-			return runner.ExitError(fmt.Errorf("hardware config file %s does not exist", valOpt.hardwareCSVPath))
+			return fmt.Errorf("hardware config file %s does not exist", valOpt.hardwareCSVPath)
 		}
 	}
 
 	clusterSpec, err := newClusterSpec(valOpt.clusterOptions)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
 	dirs, err := valOpt.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
 
-	// Get validation writer folder
-	tmpPath, _ := os.MkdirTemp("./", "tmpValidate")
+	tmpPath, err := os.MkdirTemp("./", "tmpValidate")
+	if err != nil {
+		return err
+	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithWriterFolder(tmpPath).
@@ -127,7 +127,7 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		Build(ctx)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
 	defer close(ctx, deps)
 

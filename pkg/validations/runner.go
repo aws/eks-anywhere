@@ -41,35 +41,3 @@ func (r *Runner) Run() error {
 
 	return nil
 }
-
-// Run registered validations and store results in runner
-func (r *Runner) StoreValidationResults() error {
-	failed := false
-	for _, v := range r.validations {
-		result := v()
-		r.results = append(r.results, result)
-
-		if result.Err != nil {
-			failed = true
-		}
-	}
-	r.validations = make([]Validation, 0)
-
-	if failed {
-		return errRunnerValidation
-	}
-	return nil
-}
-
-// Report all stored validation results
-func (r *Runner) ReportResults() {
-	for _, result := range r.results {
-		result.Report()
-	}
-}
-
-// Exit after reporting all validation results
-func (r *Runner) ExitError(err error) error {
-	r.ReportResults()
-	return err
-}

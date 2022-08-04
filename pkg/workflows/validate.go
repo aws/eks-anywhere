@@ -14,10 +14,8 @@ import (
 )
 
 type ValidateCmd struct {
-	ctx           context.Context
-	Runner        *validations.Runner
-	ClusterConfig *cluster.Config
-	ClusterSpec   *cluster.Spec
+	ctx    context.Context
+	Runner *validations.Runner
 }
 
 func NewValidate(ctx context.Context) *ValidateCmd {
@@ -29,14 +27,13 @@ func NewValidate(ctx context.Context) *ValidateCmd {
 }
 
 func (v *ValidateCmd) RunConfigValidations(clusterConfig *cluster.Config) error {
-	v.ClusterConfig = clusterConfig
-	v.Runner.Register(cmdvalidations.PackageClusterValidation(v.ClusterConfig.Cluster)...)
+	v.Runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig.Cluster)...)
 	err := v.Runner.Run()
 	if err != nil {
 		return err
 	}
 
-	v.Runner.Register(cmdvalidations.PackageKubeConfigPath(v.ClusterConfig.Cluster.Name)...)
+	v.Runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Cluster.Name)...)
 	err = v.Runner.Run()
 	if err != nil {
 		return err
@@ -51,7 +48,6 @@ func (v *ValidateCmd) RunDockerValidations() {
 
 func (v *ValidateCmd) RunSpecValidations(clusterSpec *cluster.Spec, deps *dependencies.Dependencies,
 	cliConfig *config.CliConfig) error {
-	v.ClusterSpec = clusterSpec
 	v.Runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
 	err := v.Runner.Run()
 	if err != nil {
