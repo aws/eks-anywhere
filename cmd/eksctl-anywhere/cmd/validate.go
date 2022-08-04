@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/cmdvalidations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
+	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type validateOptions struct {
@@ -74,7 +75,9 @@ func preRunValidate(cmd *cobra.Command, args []string) error {
 func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	runner := validations.NewRunner()
+	validateCluster := workflows.NewValidate()
+
+	runner := validateCluster.Runner
 	runner.Register(cmdvalidations.PackageDockerValidations(ctx)...)
 	err := runner.StoreValidationResults()
 
@@ -83,15 +86,13 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	if err != nil {
 		return runner.ExitError(err)
 	}
-	runner.Register(cmdvalidations.PackageClusterValidation(clusterConfig.Cluster)...)
-	err = runner.StoreValidationResults()
+
+	err = validateCluster.RunConfigValidations(clusterConfig)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
 
-	runner.Register(cmdvalidations.PackageKubeConfigPath(clusterConfig.Cluster.Name)...)
-
-	if clusterConfig.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+	if validateCluster.ClusterConfig.Cluster.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
 		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
 
 		// If no flag was returned there is a developer error as the flag has been removed
@@ -106,13 +107,8 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 		}
 
 		if !validations.FileExists(cc.hardwareCSVPath) {
-			return runner.ExitError(fmt.Errorf("hardware config file %s does not exist", cc.hardwareCSVPath))
+			return runner.ExitError(fmt.Errorf("hardware config file %s does not exist", valOpt.hardwareCSVPath))
 		}
-	}
-
-	err = runner.StoreValidationResults()
-	if err != nil {
-		return runner.ExitError(err)
 	}
 
 	clusterSpec, err := newClusterSpec(valOpt.clusterOptions)

@@ -33,6 +33,7 @@ func (r *Runner) Run() error {
 			failed = true
 		}
 	}
+	r.validations = make([]Validation, 0)
 
 	if failed {
 		return errRunnerValidation
