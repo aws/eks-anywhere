@@ -15,12 +15,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/validations/cmdvalidations"
-	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
@@ -75,11 +71,10 @@ func preRunValidate(cmd *cobra.Command, args []string) error {
 func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 
-	validateCluster := workflows.NewValidate()
+	validateCluster := workflows.NewValidate(ctx)
 
 	runner := validateCluster.Runner
-	runner.Register(cmdvalidations.PackageDockerValidations(ctx)...)
-	err := runner.StoreValidationResults()
+	validateCluster.RunDockerValidations()
 
 	// Config parse
 	clusterConfig, err := cluster.ParseConfigFromFile(valOpt.fileName)
@@ -132,45 +127,10 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 	}
 	defer close(ctx, deps)
 
-	runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
-	err = runner.StoreValidationResults()
+	err = validateCluster.RunSpecValidations(clusterSpec, deps, cliConfig)
 	if err != nil {
-		return runner.ExitError(err)
+		return err
 	}
-
-	var cluster *types.Cluster
-	if clusterSpec.ManagementCluster == nil {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		}
-	} else {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.ManagementCluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
-		}
-	}
-
-	validationOpts := &validations.Opts{
-		Kubectl: deps.Kubectl,
-		Spec:    clusterSpec,
-		WorkloadCluster: &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		},
-		ManagementCluster: cluster,
-		Provider:          deps.Provider,
-		CliConfig:         cliConfig,
-	}
-
-	createValidations := createvalidations.New(validationOpts)
-
-	runner.Register(cmdvalidations.PackageCreatePreflight(ctx, createValidations)...)
-	runner.Register(cmdvalidations.PackageProviderValidations(ctx, clusterSpec, deps.Provider)...)
-	runner.Register(deps.GitOpsFlux.Validations(ctx, clusterSpec)...)
-
-	err = runner.StoreValidationResults()
-	runner.ReportResults()
 
 	cleanup(deps, &err)
 	deps.Writer.CleanUp()
