@@ -205,6 +205,7 @@ type DockerBundle struct {
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeRbacProxy        Image    `json:"kubeRbacProxy"`
 	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
