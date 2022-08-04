@@ -47,7 +47,8 @@ func (v *ValidateCmd) RunDockerValidations() {
 }
 
 func (v *ValidateCmd) RunSpecValidations(clusterSpec *cluster.Spec, deps *dependencies.Dependencies,
-	cliConfig *config.CliConfig) error {
+	cliConfig *config.CliConfig,
+) error {
 	v.Runner.Register(cmdvalidations.PackageSupportedProvider(deps.Provider)...)
 	err := v.Runner.Run()
 	if err != nil {

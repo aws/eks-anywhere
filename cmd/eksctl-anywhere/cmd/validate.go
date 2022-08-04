@@ -75,7 +75,6 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 
 	validateCluster.RunDockerValidations()
 
-	// Config parse
 	clusterConfig, err := cluster.ParseConfigFromFile(valOpt.fileName)
 	if err != nil {
 		return err
