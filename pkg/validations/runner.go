@@ -10,14 +10,11 @@ type ValidationFunc func() error
 
 type Runner struct {
 	validations []Validation
-	results     []*ValidationResult
 }
 
 func NewRunner() *Runner {
 	return &Runner{
-		validations: make([]Validation, 0),
-		results:     make([]*ValidationResult, 0),
-	}
+		validations: make([]Validation, 0)}
 }
 
 func (r *Runner) Register(validations ...Validation) {
