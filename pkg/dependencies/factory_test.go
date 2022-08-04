@@ -76,9 +76,8 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
-	tt.Expect(deps.HelmSecure).NotTo(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
-	tt.Expect(deps.HelmInsecure).To(BeNil(), "should not build HelmInsecure")
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {
@@ -155,11 +154,11 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithRegistryMirror("1.2.3.4:443").
-		WithHelmInsecure().
+		WithHelm(true).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.HelmInsecure).NotTo(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithPackageInstaller(t *testing.T) {
@@ -185,7 +184,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelmInsecure().
+		WithHelm(true).
 		WithKubectl().
 		WithPackageInstaller(spec, "/test/packages.yaml").
 		Build(context.Background())
@@ -197,7 +196,7 @@ func TestFactoryBuildWithCuratedPackagesCustomRegistry(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelmInsecure().
+		WithHelm(true).
 		WithCuratedPackagesRegistry("test_host:8080", "1.22", version.Info{GitVersion: "1.19"}).
 		Build(context.Background())
 
@@ -241,7 +240,7 @@ func TestFactoryBuildWithPackageControllerClient(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithHelmInsecure().
+		WithHelm(true).
 		WithKubectl().
 		WithPackageControllerClient(spec).
 		Build(context.Background())
@@ -268,12 +267,12 @@ func TestFactoryBuildWithExecutablesUsingDocker(t *testing.T) {
 		UseExecutablesDockerClient(dummyDockerClient{}).
 		UseExecutableImage("myimage").
 		WithGovc().
-		WithHelmSecure().
+		WithHelm(false).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Govc).NotTo(BeNil())
-	tt.Expect(deps.HelmSecure).NotTo(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
 }
 
 type dummyDockerClient struct{}

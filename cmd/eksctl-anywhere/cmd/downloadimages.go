@@ -50,6 +50,7 @@ func init() {
 	}
 
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in downloaded images")
+	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
 }
 
 var downloadImagesRunner = downloadImagesCommand{}
@@ -57,13 +58,14 @@ var downloadImagesRunner = downloadImagesCommand{}
 type downloadImagesCommand struct {
 	outputFile      string
 	includePackages bool
+	insecure        bool
 }
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
-		WithHelmInsecure().
+		WithHelm(c.insecure).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -89,7 +91,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
-		ChartDownloader:    helm.NewChartRegistryDownloader(deps.HelmInsecure, downloadFolder),
+		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
 		Version:            version.Get(),
 		TmpDowloadFolder:   downloadFolder,
 		DstFile:            c.outputFile,
