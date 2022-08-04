@@ -172,12 +172,14 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		for _, identityProvider := range new.Spec.IdentityProviderRefs {
 			if identityProvider.Kind == AWSIamConfigKind {
 				newAWSIamConfig = &identityProvider
+				break
 			}
 		}
 
 		for _, identityProvider := range old.Spec.IdentityProviderRefs {
 			if identityProvider.Kind == AWSIamConfigKind {
 				oldAWSIamConfig = &identityProvider
+				break
 			}
 		}
 

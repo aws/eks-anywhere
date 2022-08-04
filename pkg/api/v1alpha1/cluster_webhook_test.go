@@ -761,6 +761,28 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
+func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameNameWorkloadCluster(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("mgmt2")
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.SetManagedBy("mgmt2")
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	cOld := createCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
@@ -936,6 +958,64 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateSwapIdentityProviders(t *testing.T) {
+	cOld := createCluster()
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateSwapIdentityProvidersWorkloadCluster(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("mgmt2")
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.SetManagedBy("mgmt2")
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
