@@ -126,13 +126,13 @@ func ValidateGitOpsImmutableFields(ctx context.Context, k validations.KubectlCli
 		if prevGitOps.Spec.Flux.Github.Personal != clusterSpec.GitOpsConfig.Spec.Flux.Github.Personal {
 			return errors.New("gitOps spec.flux.github.personal is immutable")
 		}
-		if clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace != "" && prevGitOps.Spec.Flux.Github.FluxSystemNamespace != clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace {
+		if prevGitOps.Spec.Flux.Github.FluxSystemNamespace != clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace {
 			return errors.New("gitOps spec.flux.github.fluxSystemNamespace is immutable")
 		}
-		if clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch != "" && prevGitOps.Spec.Flux.Github.Branch != clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch {
+		if prevGitOps.Spec.Flux.Github.Branch != clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch {
 			return errors.New("gitOps spec.flux.github.branch is immutable")
 		}
-		if clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath != "" && prevGitOps.Spec.Flux.Github.ClusterConfigPath != clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
+		if prevGitOps.Spec.Flux.Github.ClusterConfigPath != clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
 			return errors.New("gitOps spec.flux.github.clusterConfigPath is immutable")
 		}
 
