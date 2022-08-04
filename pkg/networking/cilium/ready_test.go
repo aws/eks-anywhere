@@ -59,7 +59,7 @@ func TestCheckDaemonSetReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := checkDaemonSetReady(tt.daemonSet)
+			err := CheckDaemonSetReady(tt.daemonSet)
 			if tt.wantErr != nil {
 				g.Expect(err).To(MatchError(tt.wantErr))
 				return
@@ -170,7 +170,7 @@ func TestCheckPreflightDaemonSetReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := checkPreflightDaemonSetReady(tt.cilium, tt.preflight)
+			err := CheckPreflightDaemonSetReady(tt.cilium, tt.preflight)
 			if tt.wantErr != nil {
 				g.Expect(err).To(MatchError(tt.wantErr))
 				return
@@ -230,7 +230,7 @@ func TestCheckDeploymentReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := checkDeploymentReady(tt.deployment)
+			err := CheckDeploymentReady(tt.deployment)
 			if tt.wantErr != nil {
 				g.Expect(err).To(MatchError(tt.wantErr))
 				return
