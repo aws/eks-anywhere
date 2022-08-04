@@ -30,6 +30,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
 		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
+		"envoy":                           r.BundleArtifactsTable["envoy"],
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
@@ -118,6 +119,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
+		Envoy:                bundleImageArtifacts["envoy"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],

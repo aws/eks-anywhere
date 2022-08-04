@@ -686,6 +686,22 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
+	// Envoy artifacts
+	{
+		ProjectName: "envoy",
+		ProjectPath: "projects/envoyproxy/envoy",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "envoy",
+			},
+		},
+		ImageRepoPrefix: "envoyproxy",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+		OnlyForDevRelease: true,
+	},
 	// Kustomize-controller artifacts
 	{
 		ProjectName: "kustomize-controller",

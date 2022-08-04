@@ -769,6 +769,7 @@ func (in *TinkerbellBundle) DeepCopyInto(out *TinkerbellBundle) {
 	*out = *in
 	in.ClusterAPIController.DeepCopyInto(&out.ClusterAPIController)
 	in.KubeVip.DeepCopyInto(&out.KubeVip)
+	in.Envoy.DeepCopyInto(&out.Envoy)
 	out.Components = in.Components
 	out.Metadata = in.Metadata
 	out.ClusterTemplate = in.ClusterTemplate
