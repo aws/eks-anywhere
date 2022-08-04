@@ -204,6 +204,21 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
 }
 
+// GetProvisionedTinkerbellHardware mocks base method.
+func (m *MockProviderKubectlClient) GetProvisionedTinkerbellHardware(arg0 context.Context, arg1, arg2 string) ([]v1alpha10.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProvisionedTinkerbellHardware", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha10.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProvisionedTinkerbellHardware indicates an expected call of GetProvisionedTinkerbellHardware.
+func (mr *MockProviderKubectlClientMockRecorder) GetProvisionedTinkerbellHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProvisionedTinkerbellHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetProvisionedTinkerbellHardware), arg0, arg1, arg2)
+}
+
 // GetSecret mocks base method.
 func (m *MockProviderKubectlClient) GetSecret(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1.Secret, error) {
 	m.ctrl.T.Helper()

@@ -76,6 +76,8 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	if p.hardareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
+		writer := hardware.MultiMachineWriter(machineCatalogueWriter, &p.diskExtractor)
+
 		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
 			return err
@@ -88,7 +90,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		machineValidator := hardware.NewDefaultMachineValidator()
 		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
-		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+		if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
 			return err
 		}
 	}
@@ -105,6 +107,25 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	}
 	for i := range hardware {
 		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
+			return err
+		}
+		if err := p.diskExtractor.InsertDisks(&hardware[i]); err != nil {
+			return err
+		}
+	}
+
+	// Retrieve all provisioned hardware from the existing cluster and populate diskExtractors's
+	// disksProvisionedHardware map for use during upgrade
+	hardware, err = p.providerKubectlClient.GetProvisionedTinkerbellHardware(
+		ctx,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving provisioned hardware: %v", err)
+	}
+	for i := range hardware {
+		if err := p.diskExtractor.InsertProvisionedHardwareDisks(&hardware[i]); err != nil {
 			return err
 		}
 	}

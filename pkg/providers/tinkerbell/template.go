@@ -58,7 +58,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		}
 		disk, err := tb.diskExtractor.GetDisk(tb.controlPlaneMachineSpec.HardwareSelector)
 		if err != nil {
-			return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+			disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.controlPlaneMachineSpec.HardwareSelector)
+			if err != nil {
+				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+			}
 		}
 		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
@@ -80,7 +83,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			}
 			disk, err := tb.diskExtractor.GetDisk(tb.etcdMachineSpec.HardwareSelector)
 			if err != nil {
-				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.etcdMachineSpec.HardwareSelector)
+				if err != nil {
+					return nil, fmt.Errorf("getting etcd disk type of the hardware selector: %v", err)
+				}
 			}
 			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
@@ -113,7 +119,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			}
 			disk, err := tb.diskExtractor.GetDisk(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
 			if err != nil {
-				return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
+				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
+				if err != nil {
+					return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
+				}
 			}
 			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
