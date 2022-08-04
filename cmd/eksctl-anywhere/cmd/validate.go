@@ -117,7 +117,11 @@ func (valOpt *validateOptions) validateCluster(cmd *cobra.Command, _ []string) e
 		return runner.ExitError(err)
 	}
 
+	// Get validation writer folder
+	tmpPath, _ := os.MkdirTemp("./", "tmpValidate")
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
+		WithWriterFolder(tmpPath).
 		WithKubectl().
 		WithProvider(valOpt.fileName, clusterSpec.Cluster, valOpt.skipIpCheck, valOpt.hardwareCSVPath, true, valOpt.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
