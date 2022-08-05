@@ -29,6 +29,7 @@ type GitOpsFluxClient interface {
 	BootstrapGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	BootstrapGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error
 	Uninstall(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
+	GetCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (eksaCluster *v1alpha1.Cluster, err error)
 	SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -151,6 +152,15 @@ func (f *Flux) Uninstall(ctx context.Context, cluster *types.Cluster, clusterSpe
 func (f *Flux) PauseGitOpsKustomization(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if f.shouldSkipFlux() {
 		logger.Info("GitOps field not specified, pause flux kustomization skipped")
+		return nil
+	}
+
+	c, err := f.fluxClient.GetCluster(ctx, cluster, clusterSpec)
+	if err != nil {
+		return err
+	}
+	if c.Spec.GitOpsRef == nil {
+		logger.Info("GitOps not enabled in the existing cluster, pause flux kustomization skipped")
 		return nil
 	}
 
