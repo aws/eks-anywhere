@@ -245,6 +245,7 @@ PackageBundleControllerStatus defines the observed state of PackageBundleControl
 
 
 ## PackageBundle Fields
+### PackageBundle
 PackageBundle is the Schema for the packagebundles API.
 
 <table>
@@ -696,6 +697,7 @@ VersionImages is an image used by a version of a package.
 
 
 ## Package Fields
+### Package
 Package is the Schema for the package API.
 
 <table>
