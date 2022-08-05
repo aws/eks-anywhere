@@ -1,7 +1,7 @@
 ---
 title: "Packages configuration"
 linkTitle: "Packages configuration"
-weight: 10
+weight: 40
 description: >
   Full EKS Anywhere configuration reference for curated packages.
 ---
@@ -58,7 +58,7 @@ spec:
 
 ## PackageBundleController Fields
 ### PackageBundleController
-PackageBundleController is the Schema for the packagebundlecontrollers API.
+PackageBundleController is the Schema for the packagebundlecontroller API.
 
 <table>
     <thead>
@@ -246,7 +246,7 @@ PackageBundleControllerStatus defines the observed state of PackageBundleControl
 
 ## PackageBundle Fields
 ### PackageBundle
-PackageBundle is the Schema for the packagebundles API.
+PackageBundle is the Schema for the packagebundle API.
 
 <table>
     <thead>
@@ -909,7 +909,7 @@ Source associated with the installation.
 
 
 
-PackageAvailableUpgrade details the package's available upgrades' versions.
+PackageAvailableUpgrade details the package's available upgrade versions.
 
 <table>
     <thead>
