@@ -10,7 +10,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -47,7 +46,6 @@ func TestDockerKubernetes123Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker1, api.WithCount(1)),
 			api.WithWorkerNodeGroup(worker2, api.WithTaint(framework.PreferNoScheduleTaint()), api.WithCount(1)),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -59,7 +57,6 @@ func TestDockerKubernetes123Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -75,7 +72,6 @@ func TestVSphereKubernetes123Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -87,7 +83,6 @@ func TestVSphereKubernetes123Taints(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -103,7 +98,6 @@ func TestVSphereKubernetes123TaintsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -115,7 +109,6 @@ func TestVSphereKubernetes123TaintsBottlerocket(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -145,7 +138,6 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -158,7 +150,6 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
