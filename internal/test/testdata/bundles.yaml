@@ -143,16 +143,6 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
-    cloudStack:
-      clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
-      kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
-      components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
-      metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
-      version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -203,6 +193,16 @@ spec:
       metadata:
         uri: config/clusterctl/overrides/cluster-api/v0.3.19/metadata.yaml
       version: v0.3.19
+    cloudStack:
+      clusterAPIController:
+        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+      components:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
+      metadata:
+        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
+      version: v0.4.0-alpha+e3b0c44
     controlPlane:
       components:
         uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/control-plane-components.yaml
@@ -281,16 +281,6 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
-    cloudStack:
-      clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
-      kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
-      components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
-      metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
-      version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -441,16 +431,6 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
-    cloudStack:
-      clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
-      kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
-      components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
-      metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
-      version: v0.4.0-alpha+e3b0c44
   - aws:
       clusterTemplate:
         uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -842,14 +822,4 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.158
       version: v0.7.10
-    cloudStack:
-      clusterAPIController:
-        uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
-      kubeVip:
-        uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
-      components:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/infrastructure-components.yaml
-      metadata:
-        uri: https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/artifacts/v0.0.0-dev-build.1748/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.0-alpha/metadata.yaml
-      version: v0.4.0-alpha+e3b0c44
 status: {}
