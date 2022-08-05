@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
@@ -81,7 +82,7 @@ func GetDockerBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]stri
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

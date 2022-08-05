@@ -246,6 +246,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
 			},
 		},
+		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-docker artifacts
 	{
@@ -684,6 +685,22 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"gitTag",
 			"projectPath",
 		},
+	},
+	// Envoy artifacts
+	{
+		ProjectName: "envoy",
+		ProjectPath: "projects/envoyproxy/envoy",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "envoy",
+			},
+		},
+		ImageRepoPrefix: "envoyproxy",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+		OnlyForDevRelease: true,
 	},
 	// Kustomize-controller artifacts
 	{

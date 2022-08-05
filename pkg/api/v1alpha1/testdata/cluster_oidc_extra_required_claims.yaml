@@ -20,7 +20,7 @@ spec:
     kind: VSphereDatacenterConfig
     name: eksa-unit-test
   identityProviderRefs:
-    - kind: OIDCConfig
+  - kind: OIDCConfig
     name: eksa-unit-test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

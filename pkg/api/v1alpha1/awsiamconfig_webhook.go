@@ -20,6 +20,16 @@ func (r *AWSIamConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=mutation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &AWSIamConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (r *AWSIamConfig) Default() {
+	awsiamconfiglog.Info("Setting up AWSIamConfig defaults for", "name", r.Name)
+	r.SetDefaults()
+}
+
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=validation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 

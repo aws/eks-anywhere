@@ -20,12 +20,11 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const capasProjectPath = "projects/aws/cluster-api-provider-aws-snow"
 
 func GetSnowBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.SnowBundle, error) {
 	capasBundleArtifacts := map[string][]releasetypes.Artifact{
@@ -84,7 +83,7 @@ func GetSnowBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capasProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapasProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -140,7 +141,7 @@ func (c *OIDCConfig) ExpectedKind() string {
 	return OIDCConfigKind
 }
 
-func (c *OIDCConfig) Validate() error {
+func (c *OIDCConfig) Validate() field.ErrorList {
 	return validateOIDCConfig(c)
 }
 

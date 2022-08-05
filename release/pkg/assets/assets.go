@@ -29,6 +29,7 @@ import (
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
+	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	sliceutils "github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
@@ -61,6 +62,14 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 			Repository: sourceRepoName,
 			ReleaseUri: imageArtifact.ReleaseImageURI,
 		})
+
+		if ac.UsesKubeRbacProxy {
+			kubeRbacProxyImageTagOverride, err := bundleutils.GetKubeRbacProxyImageTagOverride(rc)
+			if err != nil {
+				return nil, fmt.Errorf("error getting kube-rbac-proxy image tag override: %v", err)
+			}
+			imageTagOverrides = append(imageTagOverrides, kubeRbacProxyImageTagOverride)
+		}
 	}
 
 	// Add manifests to artifacts list

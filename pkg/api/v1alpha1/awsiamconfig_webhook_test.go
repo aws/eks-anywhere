@@ -66,6 +66,15 @@ func TestValidateUpdateAWSIamConfigFailCausedByMutableFieldChange(t *testing.T) 
 	g.Expect(aiNew.ValidateUpdate(&aiOld)).To(MatchError(ContainSubstring("MapRoles Username is required")))
 }
 
+func TestAWSIamConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := awsIamConfig()
+	sOld.Default()
+
+	g.Expect(sOld.Spec.Partition).To(Equal(v1alpha1.DefaultAWSIamConfigPartition))
+}
+
 func awsIamConfig() v1alpha1.AWSIamConfig {
 	return v1alpha1.AWSIamConfig{
 		TypeMeta:   metav1.TypeMeta{},

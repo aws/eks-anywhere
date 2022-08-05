@@ -205,6 +205,7 @@ type DockerBundle struct {
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeRbacProxy        Image    `json:"kubeRbacProxy"`
 	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
@@ -306,6 +307,7 @@ type TinkerbellBundle struct {
 	Version              string                `json:"version"`
 	ClusterAPIController Image                 `json:"clusterAPIController"`
 	KubeVip              Image                 `json:"kubeVip"`
+	Envoy                Image                 `json:"envoy"`
 	Components           Manifest              `json:"components"`
 	Metadata             Manifest              `json:"metadata"`
 	ClusterTemplate      Manifest              `json:"clusterTemplate"`

@@ -22,7 +22,6 @@ import (
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
-	"github.com/aws/eks-anywhere/release/pkg/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
@@ -55,7 +54,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				// Adding a special case for tinkerbell/hook project.
 				// The project builds linux kernel files that are not stored as tarballs and currently do not have SHA checksums.
 				// TODO(pokearu): Add logic to generate SHA for hook project
-				if artifact.Archive.ProjectPath == bundles.HookProjectPath {
+				if artifact.Archive.ProjectPath == constants.HookProjectPath {
 					checksumExtensions = []string{}
 				}
 

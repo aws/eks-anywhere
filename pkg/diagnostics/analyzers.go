@@ -211,6 +211,13 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 				analyzers = append(analyzers, analyzer...)
 			}
 		}
+		// the Run Pod collector generates logs as well but not in the default logs folder.
+		if collector.RunPod != nil {
+			rp_analyzer, rp_ok := analyzersMap[collector.RunPod.Namespaces]
+			if rp_ok {
+				analyzers = append(analyzers, rp_analyzer...)
+			}
+		}
 	}
 	return analyzers
 }

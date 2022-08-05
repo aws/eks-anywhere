@@ -27,11 +27,6 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-const (
-	kindProjectPath          = "projects/kubernetes-sigs/kind"
-	eksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
-)
-
 func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string, dev bool) (anywherev1alpha1.EksDRelease, error) {
 	artifacts := r.BundleArtifactsTable[fmt.Sprintf("image-builder-%s", eksDReleaseChannel)]
 	artifacts = append(artifacts, r.BundleArtifactsTable[fmt.Sprintf("kind-%s", eksDReleaseChannel)]...)
@@ -149,7 +144,7 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 				Crictl:  bundleArchiveArtifacts["cri-tools"],
 			},
 		},
-		Components: eksDReleaseComponentsUrl,
+		Components: constants.EksDReleaseComponentsUrl,
 	}
 
 	return bundle, nil

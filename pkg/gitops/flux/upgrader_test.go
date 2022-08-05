@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -63,6 +62,9 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 					Repository: "testRepo",
 					Personal:   true,
 				},
+				Git: &v1alpha1.GitProviderConfig{
+					RepositoryUrl: "",
+				},
 			},
 		},
 	}
@@ -92,7 +94,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 
 	g := newFluxTest(t)
 
-	if err := setupTestFiles(t, g.gitTools); err != nil {
+	if err := setupTestFiles(t, g.writer); err != nil {
 		t.Errorf("setting up files: %v", err)
 	}
 
@@ -106,41 +108,87 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	g.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
-	g.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	g.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	g.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
-	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
+	g.git.EXPECT().Clone(tt.ctx).Return(nil)
+	g.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	g.git.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.git.EXPECT().Push(tt.ctx).Return(nil)
 
-	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	g.flux.EXPECT().DeleteSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	g.flux.EXPECT().BootstrapGit(tt.ctx, tt.cluster, tt.newSpec.FluxConfig, nil)
 	g.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
 
 	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
-func TestFluxUpgradeError(t *testing.T) {
+func TestFluxUpgradeBootstrapGithubError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
 
 	tt.newSpec.FluxConfig = &tt.fluxConfig
 	g := newFluxTest(t)
 
-	if err := setupTestFiles(t, g.gitTools); err != nil {
+	if err := setupTestFiles(t, g.writer); err != nil {
 		t.Errorf("setting up files: %v", err)
 	}
 
-	g.gitClient.EXPECT().Clone(tt.ctx).Return(nil)
-	g.gitClient.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
-	g.gitClient.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
-	g.gitClient.EXPECT().Commit(test.OfType("string")).Return(nil)
-	g.gitClient.EXPECT().Push(tt.ctx).Return(nil)
+	g.git.EXPECT().Clone(tt.ctx).Return(nil)
+	g.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	g.git.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.git.EXPECT().Push(tt.ctx).Return(nil)
 
-	g.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	g.flux.EXPECT().DeleteSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
 	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig).Return(errors.New("error from client"))
 
 	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestFluxUpgradeBootstrapGitError(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+
+	tt.newSpec.FluxConfig = &tt.fluxConfig
+	g := newFluxTest(t)
+
+	if err := setupTestFiles(t, g.writer); err != nil {
+		t.Errorf("setting up files: %v", err)
+	}
+
+	g.git.EXPECT().Clone(tt.ctx).Return(nil)
+	g.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(nil)
+	g.git.EXPECT().Commit(test.OfType("string")).Return(nil)
+	g.git.EXPECT().Push(tt.ctx).Return(nil)
+
+	g.flux.EXPECT().DeleteSystemSecret(tt.ctx, tt.cluster, tt.newSpec.FluxConfig.Spec.SystemNamespace)
+	g.flux.EXPECT().BootstrapGithub(tt.ctx, tt.cluster, tt.newSpec.FluxConfig)
+	g.flux.EXPECT().BootstrapGit(tt.ctx, tt.cluster, tt.newSpec.FluxConfig, nil).Return(errors.New("error in bootstrap git"))
+
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	tt.Expect(err).To(MatchError(ContainSubstring("error in bootstrap git")))
+}
+
+func TestFluxUpgradeAddError(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
+
+	tt.newSpec.FluxConfig = &tt.fluxConfig
+
+	g := newFluxTest(t)
+
+	if err := setupTestFiles(t, g.writer); err != nil {
+		t.Errorf("setting up files: %v", err)
+	}
+
+	g.git.EXPECT().Clone(tt.ctx).Return(nil)
+	g.git.EXPECT().Branch(tt.fluxConfig.Spec.Branch).Return(nil)
+	g.git.EXPECT().Add(tt.fluxConfig.Spec.ClusterConfigPath).Return(errors.New("error in add"))
+
+	_, err := g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	tt.Expect(err).To(MatchError(ContainSubstring("error in add")))
 }
 
 func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
@@ -158,8 +206,8 @@ func TestFluxUpgradeNewGitOpsConfig(t *testing.T) {
 	tt.Expect(g.gitOpsFlux.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
-func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
-	w, err := g.Writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
+func setupTestFiles(t *testing.T, writer filewriter.FileWriter) error {
+	w, err := writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
 	if err != nil {
 		return fmt.Errorf("failed to create test eksa-system directory: %v", err)
 	}
@@ -176,7 +224,7 @@ func setupTestFiles(t *testing.T, g *gitfactory.GitTools) error {
 
 func TestInstallSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
-	c := flux.NewFlux(nil, nil, nil)
+	c := flux.NewFlux(nil, nil, nil, nil)
 	tt.currentSpec.Cluster.Spec.GitOpsRef = nil
 	tt.Expect(c.Install(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }

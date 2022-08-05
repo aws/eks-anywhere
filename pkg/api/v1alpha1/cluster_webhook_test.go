@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"fmt"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -762,6 +761,28 @@ func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
+func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameNameWorkloadCluster(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("mgmt2")
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.SetManagedBy("mgmt2")
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	cOld := createCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
@@ -939,6 +960,64 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateSwapIdentityProviders(t *testing.T) {
+	cOld := createCluster()
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateSwapIdentityProvidersWorkloadCluster(t *testing.T) {
+	cOld := createCluster()
+	cOld.SetManagedBy("mgmt2")
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+	}
+	c := createCluster()
+	c.SetManagedBy("mgmt2")
+	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		{
+			Kind: v1alpha1.AWSIamConfigKind,
+			Name: "name1",
+		},
+		{
+			Kind: v1alpha1.OIDCConfigKind,
+			Name: "name1",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
 	cOld := createCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
@@ -1052,6 +1131,7 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 }
 
 func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
+	features.ClearCache()
 	cOld := createCluster()
 	cOld.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 		Name: "test",
@@ -1172,8 +1252,7 @@ func TestClusterValidateCreateSelfManagedUnpaused(t *testing.T) {
 	cluster.SetSelfManaged()
 	err := cluster.ValidateCreate()
 	g.Expect(err).NotTo(Succeed())
-	g.Expect(err).To(MatchError(ContainSubstring("cluster on existing cluster is not supported")))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
 func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
@@ -1183,8 +1262,7 @@ func TestClusterValidateCreateManagedUnpaused(t *testing.T) {
 	cluster.SetManagedBy("mgmt2")
 	err := cluster.ValidateCreate()
 	g.Expect(err).NotTo(Succeed())
-	g.Expect(err.Error()).To(ContainSubstring("cluster on existing cluster is not supported"))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err.Error()).To(ContainSubstring("creating new managed cluster on existing cluster is not supported"))
 }
 
 func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
@@ -1195,8 +1273,7 @@ func TestClusterValidateCreateSelfManagedNotPaused(t *testing.T) {
 
 	g := NewWithT(t)
 	err := cluster.ValidateCreate()
-	g.Expect(err).To(MatchError(ContainSubstring("not supported for self managed clusters")))
-	g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+	g.Expect(err).To(MatchError(ContainSubstring("creating new cluster on existing cluster is not supported for self managed clusters")))
 }
 
 func TestClusterValidateCreateInvalidCluster(t *testing.T) {
@@ -1214,13 +1291,6 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			featureGateEnabled: false,
 		},
 		{
-			name: "Unpaused self-managed cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
-			}),
-			featureGateEnabled: false,
-		},
-		{
 			name: "Paused workload cluster, feature gate off",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetManagedBy("my-management-cluster")
@@ -1229,24 +1299,10 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			featureGateEnabled: false,
 		},
 		{
-			name: "Unpaused workload cluster, feature gate off",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetManagedBy("my-management-cluster")
-			}),
-			featureGateEnabled: false,
-		},
-		{
 			name: "Paused self-managed cluster, feature gate on",
 			cluster: newCluster(func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
-			}),
-			featureGateEnabled: true,
-		},
-		{
-			name: "Unpaused self-managed cluster, feature gate on",
-			cluster: newCluster(func(c *v1alpha1.Cluster) {
-				c.SetSelfManaged()
 			}),
 			featureGateEnabled: true,
 		},
@@ -1279,7 +1335,125 @@ func TestClusterValidateCreateInvalidCluster(t *testing.T) {
 			g := NewWithT(t)
 			err := tt.cluster.ValidateCreate()
 			g.Expect(err).To(MatchError(ContainSubstring("control plane node count must be positive")))
-			g.Expect(err).To(MatchError(ContainSubstring("is invalid:")))
+		})
+	}
+}
+
+func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
+	features.ClearCache()
+	tests := []struct {
+		name               string
+		featureGateEnabled bool
+		clusterNew         *v1alpha1.Cluster
+	}{
+		{
+			name: "Paused self-managed cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Unpaused self-managed cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Paused self-managed cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			features.ClearCache()
+			if tt.featureGateEnabled {
+				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+			}
+			clusterOld := createCluster()
+			clusterOld.SetSelfManaged()
+			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "md-0",
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: v1alpha1.VSphereMachineConfigKind,
+					Name: "eksa-unit-test",
+				},
+			}}
+
+			g := NewWithT(t)
+			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be positive")))
+		})
+	}
+}
+
+func TestClusterValidateUpdateInvalidWorkloadCluster(t *testing.T) {
+	features.ClearCache()
+	tests := []struct {
+		name               string
+		featureGateEnabled bool
+		clusterNew         *v1alpha1.Cluster
+	}{
+		{
+			name: "Paused workload cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Unpaused workload cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Paused workload cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: true,
+		},
+		{
+			name: "Unpaused workload cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+			}),
+			featureGateEnabled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			features.ClearCache()
+			if tt.featureGateEnabled {
+				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+			}
+			clusterOld := createCluster()
+			clusterOld.SetManagedBy("my-management-cluster")
+
+			// Invalid control plane configuration
+			tt.clusterNew.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+				Endpoint: &v1alpha1.Endpoint{
+					Host: "1.1.1.1",
+				},
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: v1alpha1.VSphereMachineConfigKind,
+					Name: "eksa-unit-test",
+				},
+			}
+
+			g := NewWithT(t)
+			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(err).To(MatchError(ContainSubstring("control plane node count must be positive")))
 		})
 	}
 }
@@ -1342,15 +1516,133 @@ func TestClusterValidateCreateValidCluster(t *testing.T) {
 	}
 }
 
-func TestBuildStatusError(t *testing.T) {
-	var allErrs []error
-	allErrs = append(allErrs, fmt.Errorf("cluster is not valid"))
-	allErrs = append(allErrs, fmt.Errorf("creating new cluster on existing cluster is not supported for self managed clusters"))
+func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
+	features.ClearCache()
+	tests := []struct {
+		name               string
+		featureGateEnabled bool
+		clusterNew         *v1alpha1.Cluster
+	}{
+		{
+			name: "Paused self-managed cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Unpaused self-managed cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Paused self-managed cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetSelfManaged()
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			features.ClearCache()
+			if tt.featureGateEnabled {
+				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+			}
+			clusterOld := createCluster()
+			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name:  "md-0",
+				Count: 4,
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: v1alpha1.VSphereMachineConfigKind,
+					Name: "eksa-unit-test",
+				},
+			}}
 
-	err := v1alpha1.BuildStatusError(v1alpha1.GroupVersion.WithKind(v1alpha1.ClusterKind).GroupKind(), "clusterName", allErrs)
+			g := NewWithT(t)
+			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(err).To(Succeed())
+		})
+	}
+}
 
-	ContainSubstring(err.Error(), "cluster is not valid", "creating new cluster on existing cluster is not supported for self managed clusters",
-		"clusterName is invalid")
+func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
+	features.ClearCache()
+	tests := []struct {
+		name               string
+		featureGateEnabled bool
+		clusterNew         *v1alpha1.Cluster
+	}{
+		{
+			name: "Paused workload cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Unpaused workload cluster, feature gate off",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+			}),
+			featureGateEnabled: false,
+		},
+		{
+			name: "Paused workload cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+				c.PauseReconcile()
+			}),
+			featureGateEnabled: true,
+		},
+		{
+			name: "Unpaused workload cluster, feature gate on",
+			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+				c.SetManagedBy("my-management-cluster")
+			}),
+			featureGateEnabled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			features.ClearCache()
+			if tt.featureGateEnabled {
+				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+			}
+			clusterOld := createCluster()
+			clusterOld.SetManagedBy("my-management-cluster")
+			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name:  "md-0",
+				Count: 4,
+				MachineGroupRef: &v1alpha1.Ref{
+					Kind: v1alpha1.VSphereMachineConfigKind,
+					Name: "eksa-unit-test",
+				},
+			}}
+
+			g := NewWithT(t)
+			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			g.Expect(err).To(Succeed())
+		})
+	}
+}
+
+func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
+	features.ClearCache()
+	cOld := createCluster()
+	cOld.SetSelfManaged()
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+
+	cNew := createCluster()
+	cNew.SetSelfManaged()
+	g := NewWithT(t)
+	err := cNew.ValidateUpdate(cOld)
+	g.Expect(err).To(MatchError(ContainSubstring("upgrading self managed clusters is not supported")))
 }
 
 func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {

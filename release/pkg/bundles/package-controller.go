@@ -21,12 +21,9 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/aws/eks-anywhere/release/pkg/version"
-)
-
-const (
-	packagesProjectPath = "projects/aws/eks-anywhere-packages"
 )
 
 func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
@@ -70,7 +67,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, packagesProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.PackagesProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

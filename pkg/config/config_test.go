@@ -48,3 +48,32 @@ func TestGetMaxWaitPerMachineFromInvalidEnv(t *testing.T) {
 	maxWaitPerMachine := config.GetMaxWaitPerMachine()
 	tt.Expect(maxWaitPerMachine).To(Equal(10 * time.Minute))
 }
+
+func TestGetExternalEtcdTimeoutDefault(t *testing.T) {
+	tt := newTest(t)
+
+	externalEtcdTimeout := config.GetExternalEtcdTimeout()
+	tt.Expect(externalEtcdTimeout).To(Equal("60m"))
+}
+
+func TestGetExternalEtcdTimeoutFromValidEnv(t *testing.T) {
+	tt := newTest(t)
+
+	oldEnv := os.Getenv(config.ExternalEtcdTimeoutEnv)
+	os.Setenv(config.ExternalEtcdTimeoutEnv, "15m")
+	defer os.Setenv(config.ExternalEtcdTimeoutEnv, oldEnv)
+
+	externalEtcdTimeout := config.GetExternalEtcdTimeout()
+	tt.Expect(externalEtcdTimeout).To(Equal("15m"))
+}
+
+func TestGetExternalEtcdTimeoutFromInvalidEnv(t *testing.T) {
+	tt := newTest(t)
+
+	oldEnv := os.Getenv(config.ExternalEtcdTimeoutEnv)
+	os.Setenv(config.ExternalEtcdTimeoutEnv, "15x")
+	defer os.Setenv(config.ExternalEtcdTimeoutEnv, oldEnv)
+
+	externalEtcdTimeout := config.GetExternalEtcdTimeout()
+	tt.Expect(externalEtcdTimeout).To(Equal("60m"))
+}
