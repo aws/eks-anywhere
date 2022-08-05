@@ -42,7 +42,6 @@ func runUpgradeFlowWithCheckpoint(test *framework.ClusterE2ETest, updateVersion 
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.UpgradeCluster(clusterOpts)
-	test.StopIfSucceeded()
 	test.UpgradeCluster(clusterOpts2)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
@@ -498,9 +497,9 @@ func TestVSphereKubernetes121UbuntuTo122UpgradeWithCheckpoint(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	clusterOpts = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)), framework.ExpectFailure(true),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(vsphereInvalidResourcePoolUpdateVar)), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(config.ExternalEtcdTimeoutEnv, "10m"), framework.WithEnvVar(framework.CleanupVmsVar, "false"))
-	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	clusterOpts2 = append(clusterOpts, framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)), framework.ExpectFailure(false),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var(), api.WithResourcePoolForAllMachines(os.Getenv(vsphereResourcePoolVar))), framework.WithEnvVar(features.CheckpointEnabledEnvVar, "true"), framework.WithEnvVar(framework.CleanupVmsVar, "true"))
 	runUpgradeFlowWithCheckpoint(
 		test,
