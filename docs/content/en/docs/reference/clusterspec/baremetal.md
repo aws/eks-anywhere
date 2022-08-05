@@ -379,6 +379,23 @@ spec:
 
 ### Bottlerocket TinkerbellTemplateConfig example
 
+Pay special attention to the `BOOTCONFIG_CONTENTS` environment section below if you wish to set up console redirection for the kernel and systemd.
+If you are only using a direct attached monitor as your primary display device, no additional configuration is needed here.
+However, if you need all boot output to be shown via a server’s serial console for example, extra configuration should be provided inside `BOOTCONFIG_CONTENTS`.
+
+An empty `kernel {}` key is provided below in the example; inside this key is where you will specify your console devices.
+You may specify multiple comma delimited console devices in quotes to a console key as such: `console = "tty0", "ttyS0,115200n8"`.
+The order of the devices is significant; systemd will output to the last device specified.
+The console key belongs inside the kernel key like so:
+```
+kernel {
+    console = "tty0", "ttyS0,115200n8"
+}
+```
+
+The above example will send all kernel output to both consoles, and systemd output to `ttyS0`.
+Additional information about serial console setup can be found in the [Linux kernel documentation](https://www.kernel.org/doc/html/latest/admin-guide/serial-console.html).
+
 ```yaml
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -400,10 +417,12 @@ spec:
         name: stream-image
         timeout: 360
       - environment:
+          # An example console declaration that will send all kernel output to both consoles, and systemd output to ttyS0.
+          # kernel {
+          #     console = "tty0", "ttyS0,115200n8"
+          # }
           BOOTCONFIG_CONTENTS: |
-            kernel {
-                console = "tty0", "ttyS0,115200n8"
-            }
+            kernel {}
           DEST_DISK: /dev/sda12
           DEST_PATH: /bootconfig.data
           DIRMODE: "0700"
