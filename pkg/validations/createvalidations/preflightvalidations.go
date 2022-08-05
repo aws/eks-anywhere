@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -23,6 +24,11 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
 			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
 		},
+		{
+			Name:        "validate authentication for git provider",
+			Remediation: fmt.Sprintf("ensure %s, %s env variable are set and valid", config.EksaGitPrivateKeyTokenEnv, config.EksaGitKnownHostsFileEnv),
+			Err:         validations.ValidateAuthenticationForGitProvider(u.Opts.Spec, u.Opts.CliConfig),
+		},
 	}
 
 	if u.Opts.Spec.Cluster.IsManaged() {
@@ -36,7 +42,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			validations.ValidationResult{
 				Name:        "validate gitops",
 				Remediation: "",
-				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec, u.Opts.CliConfig),
+				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),
 			},
 			validations.ValidationResult{
 				Name:        "validate identity providers' name",
