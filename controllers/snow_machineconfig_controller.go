@@ -19,18 +19,24 @@ type ClientBuilder interface {
 	Build(ctx context.Context) (aws.Clients, error)
 }
 
-// SnowMachineConfigReconciler reconciles a SnowMachineConfig object
-type SnowMachineConfigReconciler struct {
-	client        client.Client
-	log           logr.Logger
-	clientBuilder ClientBuilder
+type ValidatorBuilder interface {
+	Build(aws aws.Clients) snow.Validator
 }
 
-func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, clientBuilder ClientBuilder) *SnowMachineConfigReconciler {
+// SnowMachineConfigReconciler reconciles a SnowMachineConfig object
+type SnowMachineConfigReconciler struct {
+	client           client.Client
+	log              logr.Logger
+	clientBuilder    ClientBuilder
+	validatorBuilder ValidatorBuilder
+}
+
+func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, clientBuilder ClientBuilder, validatorBuilder ValidatorBuilder) *SnowMachineConfigReconciler {
 	return &SnowMachineConfigReconciler{
-		client:        client,
-		log:           log,
-		clientBuilder: clientBuilder,
+		client:           client,
+		log:              log,
+		clientBuilder:    clientBuilder,
+		validatorBuilder: validatorBuilder,
 	}
 }
 
@@ -86,7 +92,7 @@ func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachine
 		return ctrl.Result{}, err
 	}
 	// Setting the aws client map on every reconcile based on the secrets at that point of time
-	validator := snow.NewValidator(deviceClientMap)
+	validator := r.validatorBuilder.Build(deviceClientMap)
 	if err := validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}

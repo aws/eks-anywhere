@@ -11,6 +11,8 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
+	awsMocks "github.com/aws/eks-anywhere/pkg/aws/mocks"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
@@ -22,7 +24,7 @@ type configManagerTest struct {
 	aws                     *mocks.MockAwsClient
 	keyGenerator            *mocks.MockSshKeyGenerator
 	writer                  filewriter.FileWriter
-	validator               *snow.Validator
+	validator               *snow.AwsClientValidator
 	defaulters              *snow.Defaulters
 	machineConfigDefaulters *snow.MachineConfigDefaulters
 	machineConfig           *v1alpha1.SnowMachineConfig
@@ -128,4 +130,17 @@ func TestValidateMachineDeviceIPsNotValid(t *testing.T) {
 	}
 	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
+}
+
+func TestBuild(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	mockaws := aws.NewClientFromEC2(awsMocks.NewMockEC2Client(ctrl))
+	awsClients := aws.Clients{
+		"device-1": mockaws,
+		"device-2": mockaws,
+	}
+	builder := snow.NewValidatorBuilder()
+	validator := builder.Build(awsClients)
+	g.Expect(validator).NotTo(BeNil())
 }

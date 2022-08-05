@@ -12,23 +12,39 @@ const (
 	defaultAwsSshKeyName = "eksa-default"
 )
 
-type Validator struct {
+type AwsClientValidator struct {
 	awsClientMap AwsClientMap
 }
 
-func NewValidator(aws aws.Clients) *Validator {
-	return &Validator{
+type Validator interface {
+	ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
+	ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
+	ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
+}
+
+type validatorBuilder struct{}
+
+func NewValidatorBuilder() *validatorBuilder {
+	return &validatorBuilder{}
+}
+
+func (b *validatorBuilder) Build(aws aws.Clients) Validator {
+	return NewValidator(aws)
+}
+
+func NewValidator(aws aws.Clients) *AwsClientValidator {
+	return &AwsClientValidator{
 		awsClientMap: NewAwsClientMap(aws),
 	}
 }
 
-func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *Validator {
-	return &Validator{
+func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *AwsClientValidator {
+	return &AwsClientValidator{
 		awsClientMap: awsClientMap,
 	}
 }
 
-func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.SshKeyName == "" {
 		return nil
 	}
@@ -46,7 +62,7 @@ func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1
 	return nil
 }
 
-func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.AMIID == "" {
 		return nil
 	}
@@ -64,7 +80,7 @@ func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alp
 	return nil
 }
 
-func (v *Validator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	for _, ip := range m.Spec.Devices {
 		if _, ok := v.awsClientMap[ip]; !ok {
 			return fmt.Errorf("credentials not found for device [%s]", ip)

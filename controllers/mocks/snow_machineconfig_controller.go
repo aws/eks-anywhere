@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	aws "github.com/aws/eks-anywhere/pkg/aws"
+	snow "github.com/aws/eks-anywhere/pkg/providers/snow"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -48,4 +49,41 @@ func (m *MockClientBuilder) Build(ctx context.Context) (aws.Clients, error) {
 func (mr *MockClientBuilderMockRecorder) Build(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockClientBuilder)(nil).Build), ctx)
+}
+
+// MockValidatorBuilder is a mock of ValidatorBuilder interface.
+type MockValidatorBuilder struct {
+	ctrl     *gomock.Controller
+	recorder *MockValidatorBuilderMockRecorder
+}
+
+// MockValidatorBuilderMockRecorder is the mock recorder for MockValidatorBuilder.
+type MockValidatorBuilderMockRecorder struct {
+	mock *MockValidatorBuilder
+}
+
+// NewMockValidatorBuilder creates a new mock instance.
+func NewMockValidatorBuilder(ctrl *gomock.Controller) *MockValidatorBuilder {
+	mock := &MockValidatorBuilder{ctrl: ctrl}
+	mock.recorder = &MockValidatorBuilderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockValidatorBuilder) EXPECT() *MockValidatorBuilderMockRecorder {
+	return m.recorder
+}
+
+// Build mocks base method.
+func (m *MockValidatorBuilder) Build(aws aws.Clients) snow.Validator {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Build", aws)
+	ret0, _ := ret[0].(snow.Validator)
+	return ret0
+}
+
+// Build indicates an expected call of Build.
+func (mr *MockValidatorBuilderMockRecorder) Build(aws interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockValidatorBuilder)(nil).Build), aws)
 }

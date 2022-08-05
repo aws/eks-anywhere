@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	ec2Types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,7 +21,7 @@ import (
 	controllerMock "github.com/aws/eks-anywhere/controllers/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
-	awsMock "github.com/aws/eks-anywhere/pkg/aws/mocks"
+	snowMock "github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 )
 
 var (
@@ -33,7 +31,7 @@ var (
 
 func TestSnowMachineConfigReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewSnowMachineConfigReconciler(client, logf.Log, nil)
+	r := controllers.NewSnowMachineConfigReconciler(client, logf.Log, nil, nil)
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
@@ -46,16 +44,10 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	for _, ip := range config.Spec.Devices {
-		client := awsMock.NewMockEC2Client(ctrl)
-		client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(&ec2.DescribeKeyPairsOutput{
-			KeyPairs: []ec2Types.KeyPairInfo{{
-				KeyName: &config.Spec.SshKeyName,
-			}},
-		}, nil)
-		client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, nil)
-		mockClients[ip] = aws.NewClientFromEC2(client)
-	}
+	validator := snowMock.NewMockValidator(ctrl)
+	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
 
 	objs := []runtime.Object{config}
 
@@ -65,7 +57,10 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -105,8 +100,9 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -133,8 +129,9 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -161,8 +158,9 @@ func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(nil, errors.New("test error"))
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -182,17 +180,10 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	for _, ip := range config.Spec.Devices {
-		client := awsMock.NewMockEC2Client(ctrl)
-		client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(&ec2.DescribeKeyPairsOutput{
-			KeyPairs: []ec2Types.KeyPairInfo{{
-				KeyName: &config.Spec.SshKeyName,
-			}},
-		}, nil)
-		client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, nil)
-		mockClients[ip] = aws.NewClientFromEC2(client)
-	}
-	config.Spec.Devices = append(config.Spec.Devices, "another-one")
+	validator := snowMock.NewMockValidator(ctrl)
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
+	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error"))
 
 	objs := []runtime.Object{config}
 
@@ -202,7 +193,10 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -227,16 +221,10 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	// Save only the first element for testing purposes
-	config.Spec.Devices = config.Spec.Devices[0:1]
-	client := awsMock.NewMockEC2Client(ctrl)
-	client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, errors.New("test error"))
-	client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(&ec2.DescribeKeyPairsOutput{
-		KeyPairs: []ec2Types.KeyPairInfo{{
-			KeyName: &config.Spec.SshKeyName,
-		}},
-	}, nil)
-	mockClients[config.Spec.Devices[0]] = aws.NewClientFromEC2(client)
+	validator := snowMock.NewMockValidator(ctrl)
+	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error"))
 
 	objs := []runtime.Object{config}
 
@@ -246,7 +234,10 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -271,12 +262,10 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	// Save only the first element for testing purposes
-	config.Spec.Devices = config.Spec.Devices[0:1]
-	client := awsMock.NewMockEC2Client(ctrl)
-	client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, nil)
-	client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(nil, errors.New("test error"))
-	mockClients[config.Spec.Devices[0]] = aws.NewClientFromEC2(client)
+	validator := snowMock.NewMockValidator(ctrl)
+	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error"))
 
 	objs := []runtime.Object{config}
 
@@ -286,7 +275,10 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -313,13 +305,10 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	// Save only the first element for testing purposes
-	config.Spec.Devices = config.Spec.Devices[0:1]
-	client := awsMock.NewMockEC2Client(ctrl)
-	client.EXPECT().DescribeKeyPairs(ctx, gomock.Any(), gomock.Any()).Return(nil, errors.New("test error"))
-	client.EXPECT().DescribeImages(ctx, gomock.Any()).Return(nil, errors.New("test error"))
-	mockClients[config.Spec.Devices[0]] = aws.NewClientFromEC2(client)
-	config.Spec.Devices = append(config.Spec.Devices, "another-one")
+	validator := snowMock.NewMockValidator(ctrl)
+	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error1"))
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error2"))
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error3"))
 
 	objs := []runtime.Object{config}
 
@@ -329,7 +318,10 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
+	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
