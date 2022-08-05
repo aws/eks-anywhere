@@ -127,7 +127,7 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	if err != nil {
 		return err
 	}
-	fmt.Print(&stdOut)
+	fmt.Println(&stdOut)
 	return nil
 }
 
