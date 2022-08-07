@@ -24,10 +24,7 @@ dhcp4 = true
 # the file
 primary = true
 `
-	bottlerocketBootconfig = `kernel {
-  console = "tty0", "ttyS0,115200n8"
-}
-`
+	bottlerocketBootconfig = `kernel {}`
 
 	cloudInit = `datasource:
   Ec2:
