@@ -30,6 +30,17 @@ func runUpgradeFlowWithAWSIamAuth(test *framework.ClusterE2ETest, updateVersion 
 	test.DeleteCluster()
 }
 
+func runTinkerbellAWSIamAuthFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithForce())
+	test.ValidateAWSIamAuth()
+	test.StopIfFailed()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestDockerKubernetes120AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -160,4 +171,64 @@ func TestVSphereKubernetes122To123AWSIamAuthUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate123Var()),
 	)
+}
+
+func TestTinkerbellKubernetes120AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellAWSIamAuthFlow(test)
+}
+
+func TestTinkerbellKubernetes121AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellAWSIamAuthFlow(test)
+}
+
+func TestTinkerbellKubernetes122AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellAWSIamAuthFlow(test)
+}
+
+func TestTinkerbellKubernetes122BottleRocketAWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellAWSIamAuthFlow(test)
+}
+
+func TestTinkerbellKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellAWSIamAuthFlow(test)
 }
