@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -33,7 +32,6 @@ func TestVSphereKubernetes123BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runSimpleUpgradeFlow(
@@ -50,7 +48,6 @@ func TestVSphereKubernetes123BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 				api.WithCount(1),
 			),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -115,7 +112,6 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runSimpleUpgradeFlow(
@@ -133,6 +129,5 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
