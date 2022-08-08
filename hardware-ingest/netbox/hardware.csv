@@ -1,0 +1,3 @@
+hostname,bmc_ip,bmc_username,bmc_password,mac,ip_address,netmask,gateway,nameservers,labels,disk
+eksa-dev01,10.80.12.20,root,root,CC:48:3A:11:F4:C1,10.80.8.21,255.255.255.0,192.168.2.1,1.1.1.1,type=control-plane,/dev/sda
+eksa-dev02,10.80.12.21,root,root,CC:48:3A:11:EA:11,10.80.8.22,255.255.255.0,192.168.2.1,1.1.1.1,type=worker-plane,/dev/sda
