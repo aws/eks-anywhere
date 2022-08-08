@@ -599,13 +599,11 @@ func (f *Factory) WithHelm(insecure bool) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Helm != nil {
-			return nil
-		}
-
 		var opts []executables.HelmOpt
 		if insecure {
 			opts = append(opts, executables.WithInsecure())
+		}
+
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -614,7 +612,7 @@ func (f *Factory) WithHelm(insecure bool) *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
