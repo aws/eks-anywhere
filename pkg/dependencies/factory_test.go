@@ -149,6 +149,34 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.VSphereValidator).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithProxyConfiguration(t *testing.T) {
+	tt := newTest(t, vsphere)
+	wantHttpsProxy := "FOO"
+	wantHttpProxy := "BAR"
+	wantNoProxy := "localhost,anotherhost"
+	env := map[string]string{
+		config.HttpsProxyKey: wantHttpsProxy,
+		config.HttpProxyKey:  wantHttpProxy,
+		config.NoProxyKey:    wantNoProxy,
+	}
+	for k, v := range env {
+		t.Setenv(k, v)
+	}
+
+	f := dependencies.NewFactory().WithProxyConfiguration()
+
+	tt.Expect(f.GetProxyConfiguration()).To(BeNil())
+
+	_, err := f.Build(context.Background())
+
+	pc := f.GetProxyConfiguration()
+	tt.Expect(err).To(BeNil())
+
+	tt.Expect(pc[config.HttpsProxyKey]).To(Equal(wantHttpsProxy))
+	tt.Expect(pc[config.HttpProxyKey]).To(Equal(wantHttpProxy))
+	tt.Expect(pc[config.NoProxyKey]).To(Equal(wantNoProxy))
+}
+
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().

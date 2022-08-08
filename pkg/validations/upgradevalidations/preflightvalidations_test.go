@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -931,6 +932,11 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			k := mocks.NewMockKubectlClient(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
+			cliConfig := &config.CliConfig{
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: "test",
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
+			}
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
@@ -940,6 +946,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TlsValidator:      tlsValidator,
+				CliConfig:         cliConfig,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)

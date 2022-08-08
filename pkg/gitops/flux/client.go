@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -29,6 +30,7 @@ type FluxClient interface {
 
 // KubeClient is an interface that abstracts the basic commands of kubectl executable.
 type KubeClient interface {
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	DeleteSecret(ctx context.Context, managementCluster *types.Cluster, secretName, namespace string) error
 }
@@ -113,4 +115,14 @@ func (c *fluxClient) DeleteSystemSecret(ctx context.Context, cluster *types.Clus
 			return c.kube.DeleteSecret(ctx, cluster, "flux-system", namespace)
 		},
 	)
+}
+
+func (c *fluxClient) GetCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (eksaCluster *v1alpha1.Cluster, err error) {
+	err = c.Retry(
+		func() error {
+			eksaCluster, err = c.kube.GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name)
+			return err
+		},
+	)
+	return eksaCluster, err
 }

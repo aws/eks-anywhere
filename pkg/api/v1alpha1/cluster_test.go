@@ -2321,3 +2321,8 @@ func TestClusterProxyConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
+	g := NewWithT(t)
+	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
+}

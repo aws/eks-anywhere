@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -167,4 +168,24 @@ func TestFluxClientDeleteSystemSecretError(t *testing.T) {
 	tt.k.EXPECT().DeleteSecret(tt.ctx, tt.cluster, "flux-system", "custom-namespace").Return(nil).AnyTimes()
 
 	tt.Expect(tt.c.DeleteSystemSecret(tt.ctx, tt.cluster, "custom-namespace")).To(MatchError(ContainSubstring("error in delete secret")), "fluxClient.DeleteSystemSecret() should fail after 5 tries")
+}
+
+func TestFluxClientGetClusterSuccess(t *testing.T) {
+	tt := newFluxClientTest(t)
+	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, "fluxTestCluster").Return(nil, errors.New("error in get eksa cluster")).Times(4)
+	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, "fluxTestCluster").Return(nil, nil).Times(1)
+
+	_, err := tt.c.GetCluster(tt.ctx, tt.cluster, test.NewClusterSpec())
+
+	tt.Expect(err).To(Succeed(), "fluxClient.GetCluster() should succeed with 5 tries")
+}
+
+func TestFluxClientGetClusterError(t *testing.T) {
+	tt := newFluxClientTest(t)
+	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, "fluxTestCluster").Return(nil, errors.New("error in get eksa cluster")).Times(5)
+	tt.k.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, "fluxTestCluster").Return(nil, nil).AnyTimes()
+
+	_, err := tt.c.GetCluster(tt.ctx, tt.cluster, test.NewClusterSpec())
+
+	tt.Expect(err).To(MatchError(ContainSubstring("error in get eksa cluster")), "fluxClient.GetCluster() should fail after 5 tries")
 }

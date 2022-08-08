@@ -103,7 +103,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
-		WithProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
+		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -164,8 +164,25 @@ func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	return f
 }
 
-func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory {
+func (f *Factory) UseProxyConfiguration(proxyConfig map[string]string) *Factory {
 	f.proxyConfiguration = proxyConfig
+	return f
+}
+
+func (f *Factory) GetProxyConfiguration() map[string]string {
+	return f.proxyConfiguration
+}
+
+func (f *Factory) WithProxyConfiguration() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.proxyConfiguration == nil {
+			proxyConfig := config.GetProxyConfigFromEnv()
+			f.UseProxyConfiguration(proxyConfig)
+		}
+		return nil
+	},
+	)
+
 	return f
 }
 
@@ -579,7 +596,7 @@ func (f *Factory) WithTroubleshoot() *Factory {
 }
 
 func (f *Factory) WithHelm(insecure bool) *Factory {
-	f.WithExecutableBuilder()
+	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Helm != nil {
@@ -589,8 +606,6 @@ func (f *Factory) WithHelm(insecure bool) *Factory {
 		var opts []executables.HelmOpt
 		if insecure {
 			opts = append(opts, executables.WithInsecure())
-		}
-
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -599,7 +614,7 @@ func (f *Factory) WithHelm(insecure bool) *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
