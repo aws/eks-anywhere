@@ -19,3 +19,6 @@ hardware-manifests/
 *.env
 support-bundle*
 /.ignore
+hardware-ingest/out
+hardware-ingest/hardware-ingest
+coverage.out
