@@ -72,13 +72,13 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
 ```
-4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.22, 1.21 and 1.20
+4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.23, 1.22, 1.21 and 1.20
 ```
-export KUBEVERSION="1.22"
+export KUBEVERSION="1.23"
 ```
 5. Download the OVA
 ```
-OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.8.0.ova"
+OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.0.ova"
 tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
    --root ./root.json \
    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -91,11 +91,19 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
+1.23 - `eksdRelease:kubernetes-1-23-eks-4`
+
 1.22 - `eksdRelease:kubernetes-1-22-eks-9`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-16`
+1.21 - `eksdRelease:kubernetes-1-21-eks-17`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-18`
+1.20 - `eksdRelease:kubernetes-1-20-eks-19`
+
+## Ubuntu with Kubernetes 1.23 OVA
+
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/ova/1-23/ubuntu-v1.23.10-eks-d-1-22-9-eks-a-12-amd64.ova
+* `os:ubuntu`
+* `eksdRelease:kubernetes-1-23-eks-4`
 
 ## Ubuntu with Kubernetes 1.22 OVA
 
@@ -212,7 +220,7 @@ govc library.create "CodeBuild"
 `image-builder/images/capi/packer/ova/ubuntu-2004.json`
 9. Setup image-builder and run the OVA build for the Kubernetes version.
 ```
-RELEASE_BRANCH=1-22 make release-ova-ubuntu-2004
+RELEASE_BRANCH=1-23 make release-ova-ubuntu-2004
 ```
 
 # Images
