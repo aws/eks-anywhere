@@ -22,7 +22,7 @@ const (
 	padding    = 0
 	padChar    = '\t'
 	flags      = 0
-	CustomName = "my-"
+	CustomName = "generated-"
 	kind       = "Package"
 )
 

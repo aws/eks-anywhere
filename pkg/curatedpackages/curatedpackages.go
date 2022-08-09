@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-logr/logr"
 	"oras.land/oras-go/pkg/content"
 	"oras.land/oras-go/pkg/oras"
 
@@ -34,16 +33,9 @@ https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this 
 
 var userMsgSeparator = strings.Repeat("-", width)
 
-func CreateBundleManager(kubeVersion string) bundle.Manager {
-	major, minor, err := parseKubeVersion(kubeVersion)
-	if err != nil {
-		return nil
-	}
-	log := logr.Discard()
-	k := NewKubeVersion(major, minor)
-	discovery := NewDiscovery(k)
+func CreateBundleManager(kubeVersion string) bundle.RegistryClient {
 	puller := artifacts.NewRegistryPuller()
-	return bundle.NewBundleManager(log, discovery, puller, nil)
+	return bundle.NewRegistryClient(puller)
 }
 
 func parseKubeVersion(kubeVersion string) (string, string, error) {
