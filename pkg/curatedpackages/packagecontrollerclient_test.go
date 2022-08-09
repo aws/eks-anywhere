@@ -55,7 +55,7 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 		kubectl:        k,
 		chartInstaller: ci,
 		command: curatedpackages.NewPackageControllerClient(
-			ci, k, kubeConfig, uri, chartName, chartVersion,
+			ci, k, "billy", kubeConfig, uri, chartName, chartVersion,
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
@@ -75,7 +75,8 @@ func TestInstallControllerSuccess(t *testing.T) {
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
@@ -94,7 +95,8 @@ func TestInstallControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
 
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(errors.New("login failed"))
 
@@ -109,7 +111,8 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
@@ -129,7 +132,8 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
@@ -171,7 +175,8 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_defaultregion.yaml")
 	tt.Expect(err).To(BeNil())
@@ -181,7 +186,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
 
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaRegion(""),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),

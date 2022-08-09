@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -52,7 +52,7 @@ func runInstallPackageController(cmd *cobra.Command, args []string) error {
 func installPackageController(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	clusterSpec, err := v1alpha1.GetAndValidateClusterConfig(ico.fileName)
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(ico.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
@@ -62,13 +62,13 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	versionBundle, err := curatedpackages.GetVersionBundle(deps.ManifestReader, version.Get().GitVersion, clusterSpec)
+	versionBundle, err := curatedpackages.GetVersionBundle(deps.ManifestReader, version.Get().GitVersion, clusterSpec.Cluster)
 	if err != nil {
 		return err
 	}
 	registryEndpoint := ""
-	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		registryEndpoint = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		registryEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	}
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
@@ -76,6 +76,7 @@ func installPackageController(ctx context.Context) error {
 	ctrlClient := curatedpackages.NewPackageControllerClient(
 		deps.HelmInsecure,
 		deps.Kubectl,
+		clusterSpec.Cluster.Name,
 		kubeConfig,
 		imageUrl,
 		helmChart.Name,
