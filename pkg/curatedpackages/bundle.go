@@ -44,23 +44,23 @@ func NewBundleReader(kubeConfig string, source BundleSource, k KubectlRunner, bm
 	}
 }
 
-func (b *BundleReader) GetLatestBundle(ctx context.Context) (*packagesv1.PackageBundle, error) {
+func (b *BundleReader) GetLatestBundle(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {
 	switch b.source {
 	case Cluster:
 		return b.getActiveBundleFromCluster(ctx)
 	case Registry:
-		return b.getLatestBundleFromRegistry(ctx)
+		return b.getLatestBundleFromRegistry(ctx, kubeVersion)
 	default:
 		return nil, fmt.Errorf("unknown source: %q", b.source)
 	}
 }
 
-func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context) (*packagesv1.PackageBundle, error) {
+func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {
 	registryBaseRef, err := b.registry.GetRegistryBaseRef(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return b.bundleManager.LatestBundle(ctx, registryBaseRef)
+	return b.bundleManager.LatestBundle(ctx, registryBaseRef, kubeVersion)
 }
 
 func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*packagesv1.PackageBundle, error) {

@@ -82,7 +82,7 @@ func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	result, err := tt.Command.GetLatestBundle(tt.ctx)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
 }
@@ -91,7 +91,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt := newBundleTest(t)
 	baseRef := "test_host/test_env/test_controller"
 	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return(baseRef, nil)
-	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef).Return(tt.packageBundle, nil)
+	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef, tt.kubeVersion).Return(tt.packageBundle, nil)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
 		curatedpackages.Registry,
@@ -99,7 +99,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	result, err := tt.Command.GetLatestBundle(tt.ctx)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
 }
@@ -113,7 +113,7 @@ func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("unknown source")))
 }
 
@@ -128,7 +128,7 @@ func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("error reading bundle")))
 }
 
@@ -142,7 +142,7 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("registry doesn't exist")))
 }
 
@@ -156,7 +156,7 @@ func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 		tt.bundleManager,
 		tt.registry,
 	)
-	_, err := tt.Command.GetLatestBundle(tt.ctx)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("error fetching controller")))
 }
 

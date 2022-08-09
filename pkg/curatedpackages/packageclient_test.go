@@ -36,24 +36,6 @@ func newPackageTest(t *testing.T) *packageTest {
 				Packages: []packagesv1.BundlePackage{
 					{
 						Name: "harbor-test",
-						Source: packagesv1.BundlePackageSource{
-							Versions: []packagesv1.SourceVersion{
-								{
-									Configurations: []packagesv1.VersionConfiguration{
-										{
-											Name:     "sourceRegistry",
-											Default:  "localhost:8080",
-											Required: true,
-										},
-										{
-											Name:     "title",
-											Default:  "",
-											Required: false,
-										},
-									},
-								},
-							},
-						},
 					},
 					{
 						Name: "redis-test",

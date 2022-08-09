@@ -33,7 +33,7 @@ https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this 
 
 var userMsgSeparator = strings.Repeat("-", width)
 
-func CreateBundleManager(kubeVersion string) bundle.RegistryClient {
+func CreateBundleManager() bundle.RegistryClient {
 	puller := artifacts.NewRegistryPuller()
 	return bundle.NewRegistryClient(puller)
 }

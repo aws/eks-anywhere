@@ -14,15 +14,8 @@ import (
 )
 
 func TestCreateBundleManagerWhenValidKubeVersion(t *testing.T) {
-	bm := curatedpackages.CreateBundleManager("1.21")
+	bm := curatedpackages.CreateBundleManager()
 	if bm == nil {
-		t.Errorf("Bundle Manager should be successful when valid kubeversion")
-	}
-}
-
-func TestCreateBundleManagerWhenInValidKubeVersion(t *testing.T) {
-	bm := curatedpackages.CreateBundleManager("1")
-	if bm != nil {
 		t.Errorf("Bundle Manager should be successful when valid kubeversion")
 	}
 }
