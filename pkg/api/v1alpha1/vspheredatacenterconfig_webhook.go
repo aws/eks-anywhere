@@ -89,39 +89,40 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 
 func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) field.ErrorList {
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 
 	if old.Spec.Server != new.Spec.Server {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "server"), new.Spec.Server, "field is immutable"),
+			field.Forbidden(specPath.Child("server"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Datacenter != new.Spec.Datacenter {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "datacenter"), new.Spec.Datacenter, "field is immutable"),
+			field.Forbidden(specPath.Child("datacenter"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Network != new.Spec.Network {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "network"), new.Spec.Network, "field is immutable"),
+			field.Forbidden(specPath.Child("network"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Insecure != new.Spec.Insecure {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "insecure"), new.Spec.Insecure, "field is immutable"),
+			field.Forbidden(specPath.Child("insecure"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Thumbprint != new.Spec.Thumbprint {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "thumbprint"), new.Spec.Thumbprint, "field is immutable"),
+			field.Forbidden(specPath.Child("thumbprint"), "field is immutable"),
 		)
 	}
 
