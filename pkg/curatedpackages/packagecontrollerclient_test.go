@@ -80,7 +80,7 @@ func TestInstallControllerSuccess(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).NotTo(HaveOccurred())
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
@@ -116,7 +116,7 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
@@ -137,7 +137,7 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
 	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
@@ -180,7 +180,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	dat, err := os.ReadFile("testdata/awssecret_defaultregion.yaml")
 	tt.Expect(err).To(BeNil())
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)

@@ -109,7 +109,7 @@ func TestGetPackageFromBundleFails(t *testing.T) {
 
 func TestInstallPackagesSucceeds(t *testing.T) {
 	tt := newPackageTest(t)
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, gomock.Any(), gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, gomock.Any(), gomock.Any()).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
@@ -119,7 +119,7 @@ func TestInstallPackagesSucceeds(t *testing.T) {
 
 func TestInstallPackagesFails(t *testing.T) {
 	tt := newPackageTest(t)
-	tt.kubectl.EXPECT().CreateFromYaml(tt.ctx, gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("error installing package. Package exists"))
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, errors.New("error installing package. Package exists"))
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 

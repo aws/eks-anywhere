@@ -35,26 +35,6 @@ func (m *MockKubectlRunner) EXPECT() *MockKubectlRunnerMockRecorder {
 	return m.recorder
 }
 
-// CreateFromYaml mocks base method.
-func (m *MockKubectlRunner) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, yaml}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateFromYaml", varargs...)
-	ret0, _ := ret[0].(bytes.Buffer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateFromYaml indicates an expected call of CreateFromYaml.
-func (mr *MockKubectlRunnerMockRecorder) CreateFromYaml(ctx, yaml interface{}, opts ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, yaml}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFromYaml", reflect.TypeOf((*MockKubectlRunner)(nil).CreateFromYaml), varargs...)
-}
-
 // ExecuteCommand mocks base method.
 func (m *MockKubectlRunner) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
 	m.ctrl.T.Helper()
@@ -73,6 +53,26 @@ func (mr *MockKubectlRunnerMockRecorder) ExecuteCommand(ctx interface{}, opts ..
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteCommand", reflect.TypeOf((*MockKubectlRunner)(nil).ExecuteCommand), varargs...)
+}
+
+// ExecuteFromYaml mocks base method.
+func (m *MockKubectlRunner) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, yaml}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExecuteFromYaml", varargs...)
+	ret0, _ := ret[0].(bytes.Buffer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExecuteFromYaml indicates an expected call of ExecuteFromYaml.
+func (mr *MockKubectlRunnerMockRecorder) ExecuteFromYaml(ctx, yaml interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, yaml}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteFromYaml", reflect.TypeOf((*MockKubectlRunner)(nil).ExecuteFromYaml), varargs...)
 }
 
 // GetResource mocks base method.
