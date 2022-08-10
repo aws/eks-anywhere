@@ -283,10 +283,27 @@ func TestKubectlWaitSuccess(t *testing.T) {
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"wait", "--timeout", timeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+
+	// KubeCtl wait does not tolerate blank timeout values.
+	// It also converts timeouts provided to seconds before actually invoking kubectl wait.
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
 	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err != nil {
 		t.Errorf("Kubectl.Wait() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlWaitBadTimeout(t *testing.T) {
+	var timeout, kubeconfig, forCondition, property, namespace string
+
+	k, ctx, _, _ := newKubectl(t)
+
+	timeout = "1y"
+	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
+		t.Errorf("Kubectl.Wait() error = nil, want duration parse error")
 	}
 }
 
@@ -354,7 +371,11 @@ func TestKubectlWaitError(t *testing.T) {
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"wait", "--timeout", timeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
 		t.Errorf("Kubectl.Wait() error = nil, want not nil")
@@ -2312,20 +2333,27 @@ func TestKubectlDelete(t *testing.T) {
 
 func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 	tt := newKubectlTest(t)
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=ManagedEtcdReady=false", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=ManagedEtcdReady=false", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
+	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
 
 func TestKubectlWaitForClusterReady(t *testing.T) {
 	tt := newKubectlTest(t)
+
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
+	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
