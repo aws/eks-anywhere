@@ -12,6 +12,10 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	defaultRegistry = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+)
+
 type PackageReader struct {
 	*manifests.Reader
 }
@@ -66,14 +70,9 @@ func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle,
 			Description: p.Name,
 			OS:          ctrl.OS,
 			OSName:      ctrl.OSName,
-			URI:         fmt.Sprintf("%s/%s:%s", getDefaultRegistry(ctrl), p.Source.Repository, p.Source.Versions[0].Name),
+			URI:         fmt.Sprintf("%s/%s:%s", defaultRegistry, p.Source.Repository, p.Source.Versions[0].Name),
 		}
 		images = append(images, pI)
 	}
 	return images, nil
-}
-
-func getDefaultRegistry(ctrl releasev1.Image) string {
-	registry := GetRegistry(ctrl.URI)
-	return registry
 }
