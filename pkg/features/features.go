@@ -56,13 +56,6 @@ func SnowProvider() Feature {
 	}
 }
 
-func K8s123Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.23 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
-	}
-}
-
 func CheckpointEnabled() Feature {
 	return Feature{
 		Name:     "Checkpoint to rerun commands enabled",
