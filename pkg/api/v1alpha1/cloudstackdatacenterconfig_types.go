@@ -35,15 +35,18 @@ type CloudStackDatacenterConfigSpec struct {
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
 	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Domain string `json:"domain,omitempty"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
-	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Zones []CloudStackZone `json:"zones,omitempty"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
 	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
 	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
 	// +optional

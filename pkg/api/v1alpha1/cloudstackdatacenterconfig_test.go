@@ -41,11 +41,10 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					AvailabilityZones: []CloudStackAvailabilityZone{
 						{
-							Name: "default-az-0",
+							Name:    "default-az-0",
 							Domain:  "domain1",
 							Account: "admin",
 							Zone: CloudStackZone{
-
 								Name: "zone1",
 								Network: CloudStackResourceIdentifier{
 									Name: "net1",
@@ -71,7 +70,7 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					AvailabilityZones: []CloudStackAvailabilityZone{{
-						Name: "default-az-0",
+						Name:    "default-az-0",
 						Domain:  "domain1",
 						Account: "admin",
 						Zone: CloudStackZone{
@@ -99,7 +98,7 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					AvailabilityZones: []CloudStackAvailabilityZone{{
-						Name: "default-az-0",
+						Name:    "default-az-0",
 						Domain:  "domain1",
 						Account: "admin",
 						Zone: CloudStackZone{
@@ -127,7 +126,7 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					AvailabilityZones: []CloudStackAvailabilityZone{{
-						Name: "default-az-0",
+						Name:    "default-az-0",
 						Domain:  "domain1",
 						Account: "admin",
 						Zone: CloudStackZone{

@@ -1560,15 +1560,17 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	cluster := &types.Cluster{
 		KubeconfigFile: "test",
 	}
+	newClusterSpec := clusterSpec.DeepCopy()
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
 	shinyModifiedDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = "shiny-new-api-endpoint"
+	newClusterSpec.CloudStackDatacenter = shinyModifiedDcConfig
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
-	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+	provider := newProviderWithKubectl(t, nil, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(givenDatacenterConfig(t, testClusterConfigMainFilename), nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	specChanged, err := provider.UpgradeNeeded(ctx, newClusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}

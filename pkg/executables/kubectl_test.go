@@ -880,14 +880,14 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 					AvailabilityZones: []v1alpha1.CloudStackAvailabilityZone{{
 						Name: "default-az-0",
 						Zone: v1alpha1.CloudStackZone{
-								Name: "testZone",
-								Network: v1alpha1.CloudStackResourceIdentifier{
-									Name: "testNetwork",
-								},
+							Name: "testZone",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "testNetwork",
+							},
 						},
 						CredentialsRef: "global",
-						Domain:  "testDomain",
-						Account: "testAccount",
+						Domain:         "testDomain",
+						Account:        "testAccount",
 					}},
 				},
 			},
@@ -911,7 +911,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() error = %v, want nil", err)
 			}
 
-			if !reflect.DeepEqual(gotDatacenter, tt.wantDatacenter) {
+			if !gotDatacenter.Spec.Equal(&tt.wantDatacenter.Spec) {
 				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() machines = %+v, want %+v", gotDatacenter, tt.wantDatacenter)
 			}
 		})
