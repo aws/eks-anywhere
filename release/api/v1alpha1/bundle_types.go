@@ -116,17 +116,17 @@ type EksDRelease struct {
 
 	// Components refers to the url that points to the EKS-D release CRD
 	Components string `json:"components,omitempty"`
+
+	// Etcdadm points to the etcdadm binary/tarball built for this eks-d kube version
+	Etcdadm Archive `json:"etcdadm,omitempty"`
+
+	// Crictl points to the crictl binary/tarball built for this eks-d kube version
+	Crictl Archive `json:"crictl,omitempty"`
 }
 
 type OSImageBundle struct {
-	Bottlerocket OSImage `json:"bottlerocket,omitempty"`
-	Ubuntu       OSImage `json:"ubuntu,omitempty"`
-}
-
-type OSImage struct {
-	Archive `json:",inline"`
-	Etcdadm Archive `json:"etcdadm,omitempty"`
-	Crictl  Archive `json:"crictl,omitempty"`
+	Bottlerocket Archive `json:"bottlerocket,omitempty"`
+	Ubuntu       Archive `json:"ubuntu,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {

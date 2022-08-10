@@ -85,8 +85,8 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 
 func (vb *VersionsBundle) Ovas() []Archive {
 	return []Archive{
-		vb.EksD.Ova.Bottlerocket.Archive,
-		vb.EksD.Ova.Ubuntu.Archive,
+		vb.EksD.Ova.Bottlerocket,
+		vb.EksD.Ova.Ubuntu,
 	}
 }
 
