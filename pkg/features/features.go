@@ -7,7 +7,6 @@ const (
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
-	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {

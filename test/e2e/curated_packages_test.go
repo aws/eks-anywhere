@@ -5,13 +5,11 @@ package e2e
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -40,12 +38,7 @@ func packageBundleURI(version v1alpha1.KubernetesVersion) string {
 }
 
 func runCuratedPackageInstallSimpleFlow(test *framework.ClusterE2ETest) {
-	os.Setenv(features.CuratedPackagesEnvVar, "false")
 	test.WithCluster(func(e *framework.ClusterE2ETest) {
-		os.Setenv(features.CuratedPackagesEnvVar, "true")
-		defer os.Setenv(features.CuratedPackagesEnvVar, "false")
-
-		e.InstallCuratedPackagesController()
 		packageName := "hello-eks-anywhere"
 		packagePrefix := "test"
 		e.InstallCuratedPackage(packageName, packagePrefix)
