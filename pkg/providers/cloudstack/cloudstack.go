@@ -641,6 +641,9 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
+	if clusterSpec.CloudStackDatacenter == nil {
+		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to build template map CP")
+	}
 	values := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
@@ -1003,6 +1006,7 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	if err != nil {
 		return nil, nil, err
 	}
+	currentSpec.CloudStackDatacenter = csdc
 
 	controlPlaneTemplateName, err = p.getControlPlaneNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
 	if err != nil {
@@ -1169,6 +1173,7 @@ func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, current
 	if err != nil {
 		return false, err
 	}
+	currentSpec.CloudStackDatacenter = existingCsdc
 	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil

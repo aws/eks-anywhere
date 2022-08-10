@@ -40,13 +40,17 @@ metadata:
   name: test
   namespace: test-namespace
 spec:
-  account: "admin"
-  domain: "domain1"
-  zones:
-  - name: "zone1"
-    network:
-      name: "net1"
-  managementApiEndpoint: "http://127.16.0.1:8080/client/api"
+  availabilityZones:
+    - account: "admin"
+      domain: "domain1"
+      name: "default-az-0"
+      credentialsRef: "global"
+      zone:
+        name: "zone1"
+        network:
+          name: "net1"
+      managementApiEndpoint: "http://127.16.0.1:8080/client/api"
+
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig

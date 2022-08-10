@@ -1020,6 +1020,33 @@ func TestGetDatacenterConfig(t *testing.T) {
 	}
 }
 
+func TestProviderDeleteResources(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.ManagementCluster = &types.Cluster{
+		KubeconfigFile: "testKubeConfig",
+	}
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	for _, mc := range machineConfigs {
+		kubectl.EXPECT().DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace)
+	}
+	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
+
+	err := provider.DeleteResources(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
@@ -1535,7 +1562,7 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
-	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
+	shinyModifiedDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = "shiny-new-api-endpoint"
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)

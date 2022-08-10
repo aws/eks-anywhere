@@ -131,7 +131,7 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 		for index, zone := range datacenterConfig.Spec.Zones {
 			availabilityZone := localAvailabilityZone{
 				CloudStackAvailabilityZone: &anywherev1.CloudStackAvailabilityZone{
-					Name:                  fmt.Sprintf("availability-zone-%d", index),
+					Name:                  fmt.Sprintf("default-az%d", index),
 					CredentialsRef:        decoder.CloudStackGlobalAZ,
 					Domain:                datacenterConfig.Spec.Domain,
 					Account:               datacenterConfig.Spec.Account,
