@@ -63,6 +63,10 @@ func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 // Retry runs the fn function until it either successful completes (not error),
 // the set timeout reached or the retry policy aborts the execution
 func (r *Retrier) Retry(fn func() error) error {
+	if r == nil {
+		return fn()
+	}
+
 	start := time.Now()
 	retries := 0
 	var err error
