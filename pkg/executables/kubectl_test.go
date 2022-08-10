@@ -382,6 +382,37 @@ func TestKubectlWaitError(t *testing.T) {
 	}
 }
 
+func TestKubectlWaitNetworkErrorWithRetries(t *testing.T) {
+	var timeout, kubeconfig, forCondition, property, namespace string
+
+	t.Log("This test tests actual kubectl retries with backoff, and hence is slow running.  Expect approx 25s.")
+
+	k, ctx, _, e := newKubectl(t)
+
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+	firstTry := e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("The connection to the server 127.0.0.1:56789 was refused"))
+
+	// Kubectl Wait is intelligently adjusting the timeout param on retries.  This is hard to predict from within the test
+	//  so I'm not having the mock validate params on the retried calls.
+
+	secondTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("Unable to connect to the server: 127.0.0.1: 56789, i/o timeout.\n"))
+
+	thirdTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, nil)
+
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+		thirdTry,
+	)
+
+	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err != nil {
+		t.Errorf("Kubectl.Wait() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
 	var kubeconfig, namespace, name string
 	buffer := bytes.Buffer{}

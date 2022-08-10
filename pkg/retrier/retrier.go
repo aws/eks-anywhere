@@ -66,6 +66,7 @@ func (r *Retrier) Retry(fn func() error) error {
 	start := time.Now()
 	retries := 0
 	var err error
+	logger.V(5).Info("Retrier:", "timeout", r.timeout, "backoffFactor", r.backoffFactor)
 	for retry := true; retry; retry = time.Since(start) < r.timeout {
 		err = fn()
 		retries += 1
@@ -81,8 +82,17 @@ func (r *Retrier) Retry(fn func() error) error {
 			return err
 		}
 		if r.backoffFactor != nil {
-			wait = wait * time.Duration(*r.backoffFactor*float32(retries))
+			wait = time.Duration(float32(wait) * (*r.backoffFactor * float32(retries)))
 		}
+
+		// If there's not enough time left for the policy-proposed wait, there's no value in waiting that duration
+		// before quitting at the bottom of the loop.  Just do it now.
+		retrierTimeoutTime := start.Add(r.timeout)
+		policyTimeoutTime := time.Now().Add(wait)
+		if retrierTimeoutTime.Before(policyTimeoutTime) {
+			break
+		}
+
 		logger.V(5).Info("Sleeping before next retry", "time", wait)
 		time.Sleep(wait)
 	}
