@@ -6,8 +6,8 @@ const (
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
-	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
+	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
