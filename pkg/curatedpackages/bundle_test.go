@@ -165,8 +165,12 @@ func TestUpgradeBundleSucceeds(t *testing.T) {
 	tt := newBundleTest(t)
 	params := []string{"apply", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	newBundle := "new-bundle"
-	tt.bundleCtrl.Spec.ActiveBundle = newBundle
-	ctrl, err := yaml.Marshal(tt.bundleCtrl)
+	expectedCtrl := packagesv1.PackageBundleController{
+		Spec: packagesv1.PackageBundleControllerSpec{
+			ActiveBundle: newBundle,
+		},
+	}
+	ctrl, err := yaml.Marshal(expectedCtrl)
 	tt.Expect(err).To(BeNil())
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, ctrl, params).Return(bytes.Buffer{}, nil)
 
@@ -181,6 +185,31 @@ func TestUpgradeBundleSucceeds(t *testing.T) {
 	err = tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(tt.bundleCtrl.Spec.ActiveBundle).To(Equal(newBundle))
+}
+
+func TestUpgradeBundleFails(t *testing.T) {
+	tt := newBundleTest(t)
+	params := []string{"apply", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	newBundle := "new-bundle"
+	expectedCtrl := packagesv1.PackageBundleController{
+		Spec: packagesv1.PackageBundleControllerSpec{
+			ActiveBundle: newBundle,
+		},
+	}
+	ctrl, err := yaml.Marshal(expectedCtrl)
+	tt.Expect(err).To(BeNil())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, ctrl, params).Return(bytes.Buffer{}, errors.New("unable to apply yaml"))
+
+	tt.Command = curatedpackages.NewBundleReader(
+		tt.kubeConfig,
+		curatedpackages.Cluster,
+		tt.kubectl,
+		tt.bundleManager,
+		tt.registry,
+	)
+
+	err = tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
+	tt.Expect(err).NotTo(BeNil())
 }
 
 func convertJsonToBytes(obj interface{}) bytes.Buffer {
