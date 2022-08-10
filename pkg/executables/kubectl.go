@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/retrier"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -36,7 +38,11 @@ import (
 )
 
 const (
-	kubectlPath = "kubectl"
+	kubectlPath                    = "kubectl"
+	timeoutPrecision               = 2
+	minimumWaitTimeout             = 10 ^ -timeoutPrecision // Smallest timeout value given the precision
+	connectionRefusedBaseRetryTime = 10 * time.Second
+	waitBackoffFactor              = 1.5
 )
 
 var (
@@ -59,6 +65,7 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
+	connectionRefusedRegex               = regexp.MustCompile("The connection to the server .* was refused")
 )
 
 type Kubectl struct {
@@ -333,12 +340,52 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 }
 
 func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string) error {
-	_, err := k.Execute(ctx, "wait", "--timeout", timeout,
-		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
+	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
+	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
+	timeoutDuration, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("unparsable timeout specified: %v", err)
+	}
+	if timeoutDuration < 0 {
+		return fmt.Errorf("negative timeout specified: %v", err)
+	}
+	timeoutTime := time.Now().Add(timeoutDuration)
+
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy), retrier.WithBackoffFactor(waitBackoffFactor))
+	err = retrier.Retry(
+		func() error {
+			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace)
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("executing wait: %v", err)
 	}
 	return nil
+}
+
+func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	const maxRetries = 10
+	if totalRetries > maxRetries {
+		return false, 0
+	}
+
+	if match := connectionRefusedRegex.MatchString(err.Error()); match {
+		return true, connectionRefusedBaseRetryTime
+	} else {
+		return false, 0
+	}
+}
+
+func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
+	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
+	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
+		return fmt.Errorf("error: timed out waiting for the condition on %v", property)
+	}
+	kubectlTimeoutString := fmt.Sprintf("%.*fs", timeoutPrecision, secondsRemainingUntilTimeout)
+
+	_, err := k.Execute(ctx, "wait", "--timeout", kubectlTimeoutString,
+		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
+	return err
 }
 
 func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
