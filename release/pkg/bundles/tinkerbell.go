@@ -34,7 +34,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
-		"pbnj":                            r.BundleArtifactsTable["pbnj"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
