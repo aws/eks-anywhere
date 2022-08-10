@@ -199,7 +199,7 @@ func (v *CloudStackDatacenterConfig) SetDefaults() {
 		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
 		for index, csZone := range v.Spec.Zones {
 			az := CloudStackAvailabilityZone{
-				Name:                  fmt.Sprintf("%s-%d-%s", DefaultCloudStackAZPrefix, index, v.ClusterName),
+				Name:                  fmt.Sprintf("%s-%d", DefaultCloudStackAZPrefix, index),
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,

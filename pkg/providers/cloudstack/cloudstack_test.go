@@ -1562,7 +1562,7 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
-	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
+	shinyModifiedDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = "shiny-new-api-endpoint"
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)

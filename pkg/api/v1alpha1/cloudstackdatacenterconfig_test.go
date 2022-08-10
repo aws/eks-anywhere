@@ -39,14 +39,19 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					AvailabilityZones: []CloudStackAvailabilityZone{
 						{
-							Name: "zone1",
-							Network: CloudStackResourceIdentifier{
-								Name: "net1",
+							Name: "default-az-0",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+
+								Name: "zone1",
+								Network: CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
 				},
@@ -65,17 +70,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name: "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Id: "zoneId",
 							Network: CloudStackResourceIdentifier{
 								Id: "netId",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -92,17 +98,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name: "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Name: "zone1",
 							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -119,17 +126,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name: "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Name: "zone1",
 							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -171,7 +179,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
-			Name:           "availability-zone-0",
+			Name:           "default-az-0",
 			CredentialsRef: "global",
 			Zone: CloudStackZone{
 				Name: "zone1",

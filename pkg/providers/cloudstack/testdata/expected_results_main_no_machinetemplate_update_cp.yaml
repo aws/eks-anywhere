@@ -34,7 +34,7 @@ spec:
     host: 1.2.3.4
     port: 6443
   failureDomains:
-  - name: availability-zone-0
+  - name: default-az-0
     zone:
       name: zone1
       network:
