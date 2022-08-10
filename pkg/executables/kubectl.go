@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -38,11 +39,10 @@ import (
 )
 
 const (
-	kubectlPath                    = "kubectl"
-	timeoutPrecision               = 2
-	minimumWaitTimeout             = 10 ^ -timeoutPrecision // Smallest timeout value given the precision
-	connectionRefusedBaseRetryTime = 10 * time.Second
-	waitBackoffFactor              = 1.5
+	kubectlPath        = "kubectl"
+	timeoutPrecision   = 2
+	minimumWaitTimeout = 10 ^ -timeoutPrecision // Smallest timeout value given the precision
+	waitBackoffFactor  = 1.5
 )
 
 var (
@@ -66,6 +66,7 @@ var (
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 	connectionRefusedRegex               = regexp.MustCompile("The connection to the server .* was refused")
+	ioTimeoutRegex                       = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
 )
 
 type Kubectl struct {
@@ -351,7 +352,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	}
 	timeoutTime := time.Now().Add(timeoutDuration)
 
-	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy), retrier.WithBackoffFactor(waitBackoffFactor))
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
 			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace)
@@ -364,16 +365,23 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 }
 
 func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
-	const maxRetries = 10
-	if totalRetries > maxRetries {
-		return false, 0
+	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+
+	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
+	if totalRetries < 1 {
+		totalRetries = 1
 	}
+	const networkFaultBaseRetryTime = 10 * time.Second
+	const backoffFactor = 1.5
+	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
 	if match := connectionRefusedRegex.MatchString(err.Error()); match {
-		return true, connectionRefusedBaseRetryTime
-	} else {
-		return false, 0
+		return true, waitTime
 	}
+	if match := ioTimeoutRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	return false, 0
 }
 
 func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
