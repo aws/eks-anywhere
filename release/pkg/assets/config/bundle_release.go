@@ -747,21 +747,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
-	// PBnJ artifacts
-	{
-		ProjectName: "pbnj",
-		ProjectPath: "projects/tinkerbell/pbnj",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "pbnj",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Rufio artifacts
 	{
 		ProjectName: "rufio",
