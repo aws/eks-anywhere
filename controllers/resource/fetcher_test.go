@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -187,31 +187,35 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 			args: args{
 				csCluster: &cloudstackv1.CloudStackCluster{
 					Spec: cloudstackv1.CloudStackClusterSpec{
-						Zones: []cloudstackv1.Zone{
+						FailureDomains: []cloudstackv1.CloudStackFailureDomainSpec{
 							{
-								Name: "zone",
-								Network: cloudstackv1.Network{
-									Name: "network",
+								Zone: cloudstackv1.CloudStackZoneSpec{
+									Name: "zone",
+									Network: cloudstackv1.Network{
+										Name: "network",
+									},
 								},
+								Account: "account",
+								Domain:  "domain",
 							},
 						},
-						Account: "account",
-						Domain:  "domain",
 					},
 				},
 			},
 			want: &anywherev1.CloudStackDatacenterConfig{
 				Spec: anywherev1.CloudStackDatacenterConfigSpec{
-					Zones: []anywherev1.CloudStackZone{
+					AvailabilityZones: []anywherev1.CloudStackAvailabilityZone{
 						{
-							Name: "zone",
-							Network: anywherev1.CloudStackResourceIdentifier{
-								Name: "network",
+							Zone: anywherev1.CloudStackZone{
+								Name: "zone",
+								Network: anywherev1.CloudStackResourceIdentifier{
+									Name: "network",
+								},
 							},
+							Account: "account",
+							Domain:  "domain",
 						},
 					},
-					Account: "account",
-					Domain:  "domain",
 				},
 			},
 		},

@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
-	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta1"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -589,20 +589,22 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 
 func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) *anywherev1.CloudStackDatacenterConfig {
 	csSpec := &anywherev1.CloudStackDatacenterConfig{}
-	var zones []anywherev1.CloudStackZone
-	for _, csZone := range csCluster.Spec.Zones {
-		zones = append(zones, anywherev1.CloudStackZone{
-			Id:   csZone.ID,
-			Name: csZone.Name,
-			Network: anywherev1.CloudStackResourceIdentifier{
-				Id:   csZone.Network.ID,
-				Name: csZone.Network.Name,
+	var azs []anywherev1.CloudStackAvailabilityZone
+	for _, fd := range csCluster.Spec.FailureDomains {
+		azs = append(azs, anywherev1.CloudStackAvailabilityZone{
+			Name:           fd.Name,
+			CredentialsRef: fd.ACSEndpoint.Name,
+			Zone: anywherev1.CloudStackZone{
+				Name: fd.Zone.Name,
+				Network: anywherev1.CloudStackResourceIdentifier{
+					Name: fd.Zone.Network.Name,
+				},
 			},
+			Domain:  fd.Domain,
+			Account: fd.Account,
 		})
 	}
-	csSpec.Spec.Zones = zones
-	csSpec.Spec.Domain = csCluster.Spec.Domain
-	csSpec.Spec.Account = csCluster.Spec.Account
+	csSpec.Spec.AvailabilityZones = azs
 
 	return csSpec
 }

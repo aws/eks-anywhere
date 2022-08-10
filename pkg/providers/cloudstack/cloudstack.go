@@ -134,10 +134,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"uri":       profile.ManagementUrl,
-			"apikey":    profile.ApiKey,
-			"secretkey": profile.SecretKey,
-			"verifyssl": profile.VerifySsl,
+			"api-url":    profile.ManagementUrl,
+			"api-key":    profile.ApiKey,
+			"secret-key": profile.SecretKey,
+			"verify-ssl": profile.VerifySsl,
 		},
 	}
 }
@@ -166,10 +166,8 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return err
 	}
 
-	datacenter := p.datacenterConfig
-
 	oSpec := prevDatacenter.Spec
-	nSpec := datacenter.Spec
+	nSpec := clusterSpec.CloudStackDatacenter.Spec
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
@@ -262,7 +260,6 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 		writer:                writer,
 		selfSigned:            false,
 		templateBuilder: &CloudStackTemplateBuilder{
-			datacenterConfigSpec:        &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
 			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
@@ -278,8 +275,13 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
-func (p *cloudstackProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.clusterConfig, p.datacenterConfig.Spec.ManagementApiEndpoint)
+func (p *cloudstackProvider) BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	endpoints := []string{}
+	for _, az := range clusterSpec.CloudStackDatacenter.Spec.AvailabilityZones {
+		endpoints = append(endpoints, az.ManagementApiEndpoint)
+	}
+
+	return common.BootstrapClusterOpts(p.clusterConfig, endpoints...)
 }
 
 func (p *cloudstackProvider) Name() string {
@@ -429,20 +431,20 @@ func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, clust
 }
 
 func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
-	return string(secret.Data["uri"]) != profile.ManagementUrl ||
-		string(secret.Data["apikey"]) != profile.ApiKey ||
-		string(secret.Data["secretkey"]) != profile.SecretKey ||
-		string(secret.Data["verifyssl"]) != profile.VerifySsl
+	return string(secret.Data["api-url"]) != profile.ManagementUrl ||
+		string(secret.Data["api-key"]) != profile.ApiKey ||
+		string(secret.Data["secret-key"]) != profile.SecretKey ||
+		string(secret.Data["verify-ssl"]) != profile.VerifySsl
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
-	if err := p.validator.validateCloudStackAccess(ctx, p.datacenterConfig); err != nil {
+	if err := p.validator.validateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
-	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
+	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, clusterSpec.CloudStackDatacenter)); err != nil {
 		return err
 	}
 	return nil
@@ -471,12 +473,12 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 				return fmt.Errorf("CloudStackMachineConfig %s already exists", mc.GetName())
 			}
 		}
-		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
+		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 		if err != nil {
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("CloudStackDatacenter %s already exists", p.datacenterConfig.Name)
+			return fmt.Errorf("CloudStackDatacenter %s already exists", clusterSpec.CloudStackDatacenter.Name)
 		}
 	}
 	if p.skipIpCheck {
@@ -519,7 +521,7 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, 
 	return nil
 }
 
-func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -532,7 +534,7 @@ func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCs
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc)
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
@@ -553,14 +555,14 @@ func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupC
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
-func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+	return AnyImmutableFieldChanged(oldSpec.CloudStackDatacenter, newSpec.CloudStackDatacenter, oldCsmc, newCsmc)
 }
 
 func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, csdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
@@ -570,7 +572,7 @@ func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, worklo
 		if err != nil {
 			return false, err
 		}
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, workerVmc, workerMachineConfig)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, csdc, newClusterSpec.CloudStackDatacenter, workerVmc, workerMachineConfig)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -620,7 +622,6 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 
 func NewCloudStackTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &CloudStackTemplateBuilder{
-		datacenterConfigSpec:        CloudStackDatacenterConfigSpec,
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
@@ -629,7 +630,6 @@ func NewCloudStackTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.Cloud
 }
 
 type CloudStackTemplateBuilder struct {
-	datacenterConfigSpec        *v1alpha1.CloudStackDatacenterConfigSpec
 	controlPlaneMachineSpec     *v1alpha1.CloudStackMachineConfigSpec
 	WorkerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.CloudStackMachineConfigSpec
@@ -641,19 +641,24 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
-	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
+	values := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	return templater.Execute(defaultCAPIConfigCP, values)
+	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values := buildTemplateMapMD(clusterSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -667,7 +672,8 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -701,9 +707,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackDomain":                             datacenterConfigSpec.Domain,
-		"cloudstackZones":                              datacenterConfigSpec.Zones,
-		"cloudstackAccount":                            datacenterConfigSpec.Account,
+		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -763,7 +767,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec, datacenterConfigSpec)
+		fillProxyConfigurations(values, clusterSpec)
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -783,7 +787,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	return values
 }
 
-func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec) {
+func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster.Spec) {
+	datacenterConfigSpec := clusterSpec.CloudStackDatacenter.Spec
 	values["proxyConfig"] = true
 	capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
 		len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
@@ -799,9 +804,6 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
 	}
-	if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint); err == nil {
-		noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-	}
 	noProxyList = append(noProxyList,
 		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 	)
@@ -811,7 +813,7 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 	values["noProxy"] = noProxyList
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
@@ -857,7 +859,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
-		fillProxyConfigurations(values, clusterSpec, datacenterConfigSpec)
+		fillProxyConfigurations(values, clusterSpec)
 	}
 
 	return values
@@ -903,7 +905,7 @@ func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, oldCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -966,7 +968,7 @@ func (p *cloudstackProvider) getEtcdTemplateNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewEtcdTemplate := needsNewEtcdTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+	needsNewEtcdTemplate := needsNewEtcdTemplate(currentSpec, newClusterSpec, etcdMachineVmc, etcdMachineConfig)
 	if !needsNewEtcdTemplate {
 		etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -997,7 +999,7 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	if err != nil {
 		return nil, nil, err
 	}
-	csdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	csdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, newClusterSpec.CloudStackDatacenter.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1125,8 +1127,8 @@ func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	return &infraBundle
 }
 
-func (p *cloudstackProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
-	return p.datacenterConfig
+func (p *cloudstackProvider) DatacenterConfig(clusterSpec *cluster.Spec) providers.DatacenterConfig {
+	return clusterSpec.CloudStackDatacenter
 }
 
 func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
@@ -1167,7 +1169,7 @@ func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, current
 	if err != nil {
 		return false, err
 	}
-	if !existingCsdc.Spec.Equal(&p.datacenterConfig.Spec) {
+	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
 	}
@@ -1185,7 +1187,7 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.CloudStackDatacenter.Namespace)
 }
 
 func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {

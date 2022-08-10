@@ -17,6 +17,7 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -160,10 +161,29 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 }
 
 func (v *CloudStackDatacenterConfig) Validate() error {
-	// TODO https://github.com/aws/eks-anywhere/issues/2406: Add validation to
-	// * Make sure that v.Spec.Zones, v.Spec.Domain, v.Spec.Account, v.Spec.ManagementApiEndpoint are all empty
-	// * Make sure that len(v.Spec.AvailabilityZones) > 0
-	// * Make sure that all the AZ names are unique
+	if v.Spec.Account != "" {
+		return errors.New("account must be empty")
+	}
+	if v.Spec.Domain != "" {
+		return errors.New("domain must be empty")
+	}
+	if v.Spec.ManagementApiEndpoint != "" {
+		return errors.New("managementApiEndpoint must be empty")
+	}
+	if len(v.Spec.Zones) > 0 {
+		return errors.New("zones must be empty")
+	}
+	if len(v.Spec.AvailabilityZones) == 0 {
+		return errors.New("availabilityZones must not be empty")
+	}
+	azSet := make(map[string]bool)
+	for _, az := range v.Spec.AvailabilityZones {
+		if exists := azSet[az.Name]; exists {
+			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
+		}
+		azSet[az.Name] = true
+	}
+
 	return nil
 }
 
