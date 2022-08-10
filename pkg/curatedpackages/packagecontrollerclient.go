@@ -29,6 +29,7 @@ type PackageControllerClient struct {
 	chartName           string
 	chartVersion        string
 	chartInstaller      ChartInstaller
+	clusterName         string
 	kubectl             KubectlRunner
 	eksaAccessKeyId     string
 	eksaSecretAccessKey string
@@ -39,9 +40,10 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
+		clusterName:    clusterName,
 		uri:            uri,
 		chartName:      chartName,
 		chartVersion:   chartVersion,
@@ -59,7 +61,8 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
+	values := []string{sourceRegistry, clusterName}
 	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
 	if err != nil {
 		return err

@@ -873,6 +873,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
+			spec.Cluster.Name,
 			kubeConfig,
 			imageUrl,
 			chart.Name,
