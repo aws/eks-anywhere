@@ -56,10 +56,10 @@ func SnowProvider() Feature {
 	}
 }
 
-func CuratedPackagesSupport() Feature {
+func K8s123Support() Feature {
 	return Feature{
-		Name:     "Curated Packages Support",
-		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+		Name:     "Kubernetes version 1.23 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
 	}
 }
 

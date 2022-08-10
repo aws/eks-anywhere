@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 )
@@ -64,10 +62,6 @@ type ImportImagesCommand struct {
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
-		return fmt.Errorf("curated packages installation is not supported in this release")
-	}
-
 	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
