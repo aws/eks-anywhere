@@ -281,7 +281,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelm(false)
+		f.WithDocker().WithKubectl().WithWriter().WithHelm()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -595,15 +595,10 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithHelm(insecure bool) *Factory {
+func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		var opts []executables.HelmOpt
-		if insecure {
-			opts = append(opts, executables.WithInsecure())
-		}
-
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -627,7 +622,7 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelm(true)
+		f.WithKubectl().WithHelm(executables.WithInsecure())
 		networkingBuilder = func() clustermanager.Networking {
 			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
 		}
@@ -834,7 +829,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 }
 
 func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
-	f.WithHelm(true).WithKubectl()
+	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageControllerClient != nil {
@@ -879,7 +874,7 @@ func (f *Factory) WithPackageClient() *Factory {
 
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
 	if registryName != "" {
-		f.WithHelm(true)
+		f.WithHelm(executables.WithInsecure())
 	} else {
 		f.WithManifestReader()
 	}

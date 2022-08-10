@@ -63,9 +63,13 @@ type downloadImagesCommand struct {
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
 	factory := dependencies.NewFactory()
+	helmOpts := []executables.HelmOpt{}
+	if c.insecure {
+		helmOpts = append(helmOpts, executables.WithInsecure())
+	}
 	deps, err := factory.
 		WithManifestReader().
-		WithHelm(c.insecure).
+		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
 		return err

@@ -110,7 +110,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	deps, err = factory.
 		WithRegistryMirror(c.RegistryEndpoint).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
-		WithHelm(true).
+		WithHelm(executables.WithInsecure()).
 		Build(ctx)
 	if err != nil {
 		return err
