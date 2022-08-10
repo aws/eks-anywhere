@@ -359,15 +359,11 @@ func givenVersionBundle() v1alpha1.VersionsBundle {
 	return v1alpha1.VersionsBundle{
 		EksD: v1alpha1.EksDRelease{
 			Raw: v1alpha1.OSImageBundle{
-				Ubuntu: v1alpha1.OSImage{
-					Archive: v1alpha1.Archive{
-						URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
-					},
+				Ubuntu: v1alpha1.Archive{
+					URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
 				},
-				Bottlerocket: v1alpha1.OSImage{
-					Archive: v1alpha1.Archive{
-						URI: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
-					},
+				Bottlerocket: v1alpha1.Archive{
+					URI: "http://tinkerbell-example:8080/bottlerocket-2004-kube-v1.21.5.gz",
 				},
 			},
 		},
