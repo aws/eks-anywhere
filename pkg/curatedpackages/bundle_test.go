@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"sigs.k8s.io/yaml"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -158,6 +159,28 @@ func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 	)
 	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(MatchError(ContainSubstring("error fetching controller")))
+}
+
+func TestUpgradeBundleSucceeds(t *testing.T) {
+	tt := newBundleTest(t)
+	params := []string{"apply", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	newBundle := "new-bundle"
+	tt.bundleCtrl.Spec.ActiveBundle = newBundle
+	ctrl, err := yaml.Marshal(tt.bundleCtrl)
+	tt.Expect(err).To(BeNil())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, ctrl, params).Return(bytes.Buffer{}, nil)
+
+	tt.Command = curatedpackages.NewBundleReader(
+		tt.kubeConfig,
+		curatedpackages.Cluster,
+		tt.kubectl,
+		tt.bundleManager,
+		tt.registry,
+	)
+
+	err = tt.Command.UpgradeBundle(tt.ctx, tt.bundleCtrl, newBundle)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(tt.bundleCtrl.Spec.ActiveBundle).To(Equal(newBundle))
 }
 
 func convertJsonToBytes(obj interface{}) bytes.Buffer {

@@ -56,7 +56,7 @@ func TestGeneratePackagesSucceed(t *testing.T) {
 	result, err := tt.command.GeneratePackages()
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(result[0].Name).To(BeEquivalentTo(curatedpackages.CustomName + packages[0]))
+	tt.Expect(result[0].Name).To(Equal(curatedpackages.CustomName + packages[0]))
 }
 
 func TestGeneratePackagesFail(t *testing.T) {
@@ -76,7 +76,7 @@ func TestGetPackageFromBundleSucceeds(t *testing.T) {
 	result, err := tt.command.GetPackageFromBundle(packages[0])
 
 	tt.Expect(err).To(BeNil())
-	tt.Expect(result.Name).To(BeEquivalentTo(packages[0]))
+	tt.Expect(result.Name).To(Equal(packages[0]))
 }
 
 func TestGetPackageFromBundleFails(t *testing.T) {
