@@ -42,7 +42,6 @@ const (
 	kubectlPath        = "kubectl"
 	timeoutPrecision   = 2
 	minimumWaitTimeout = 10 ^ -timeoutPrecision // Smallest timeout value given the precision
-	waitBackoffFactor  = 1.5
 )
 
 var (
