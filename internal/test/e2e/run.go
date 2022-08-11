@@ -244,7 +244,8 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
-	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
+	ipman := newE2EIPManager(os.Getenv(cidrVar))
+	privateIpMan := newE2EIPManager(os.Getenv(privateNetworkCidrVar))
 
 	awsSession, err := session.NewSession()
 	if err != nil {
@@ -268,9 +269,9 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 		var ips networkutils.IPPool
 		if privateNetworkTestsRe.MatchString(testName) {
 			if multiClusterTest {
-				ips = ipman.reservePrivateIPPool(maxIPPoolSize)
+				ips = privateIpMan.reserveIPPool(maxIPPoolSize)
 			} else {
-				ips = ipman.reservePrivateIPPool(minIPPoolSize)
+				ips = privateIpMan.reserveIPPool(minIPPoolSize)
 			}
 		} else if vsphereTestsRe.MatchString(testName) {
 			if multiClusterTest {
@@ -342,6 +343,8 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 
 	hardwareChunks := api.SplitHardware(hardware, maxHardwarePerE2ETest)
 
+	ipman := newE2EIPManager(os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
+
 	testsInVSphereInstance := make([]string, 0, tinkTestsPerInstance)
 	for i, testName := range tinkerbellTests {
 		testsInVSphereInstance = append(testsInVSphereInstance, testName)
@@ -350,11 +353,14 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 			logger.V(1).Info("INFO:", "hardwareChunksSize", len(hardwareChunks))
 			logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
 
+			// each tinkerbell test requires 2 floating ip's (cp & tink server)
+			ips := ipman.reserveIPPool(tinkTestsPerInstance * 2)
+
 			if len(hardwareChunks) > 0 {
 				hardware, hardwareChunks = hardwareChunks[0], hardwareChunks[1:]
 			}
 
-			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), networkutils.IPPool{}, hardware, VSphereTestRunnerType, testRunnerConfig))
+			runConfs = append(runConfs, newInstanceRunConf(awsSession, conf, len(runConfs), strings.Join(testsInVSphereInstance, "|"), ips, hardware, VSphereTestRunnerType, testRunnerConfig))
 
 			if remainingTests > 0 {
 				remainingTests--

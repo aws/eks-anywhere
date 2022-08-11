@@ -20,6 +20,16 @@ func (r *AWSIamConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=mutation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &AWSIamConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (r *AWSIamConfig) Default() {
+	awsiamconfiglog.Info("Setting up AWSIamConfig defaults for", "name", r.Name)
+	r.SetDefaults()
+}
+
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=awsiamconfigs,verbs=create;update,versions=v1alpha1,name=validation.awsiamconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
@@ -29,7 +39,7 @@ var _ webhook.Validator = &AWSIamConfig{}
 func (r *AWSIamConfig) ValidateCreate() error {
 	awsiamconfiglog.Info("validate create", "name", r.Name)
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -44,6 +54,9 @@ func (r *AWSIamConfig) ValidateUpdate(old runtime.Object) error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableAWSIamFields(r, oldAWSIamConfig)...)
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("AWSIamConfig"), r, err.Error()))
+	}
 
 	if len(allErrs) == 0 {
 		return nil

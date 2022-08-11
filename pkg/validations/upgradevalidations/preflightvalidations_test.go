@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -247,14 +248,14 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+				s.Cluster.Spec.IdentityProviderRefs[0] = v1alpha1.Ref{
 					Kind: v1alpha1.OIDCConfigKind,
 					Name: "oidc",
 				}
 			},
 		},
 		{
-			name:               "ValidationAwsIamKindImmutable",
+			name:               "ValidationAwsIamKindImmutableSwapOrder",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -267,6 +268,10 @@ func TestPreflightValidations(t *testing.T) {
 				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "aws-iam",
+				}
+				s.Cluster.Spec.IdentityProviderRefs[0] = v1alpha1.Ref{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "oidc",
 				}
 			},
 		},
@@ -649,12 +654,12 @@ func TestPreflightValidations(t *testing.T) {
 		}
 		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{
-				Kind: v1alpha1.OIDCConfigKind,
-				Name: "oidc",
-			},
-			{
 				Kind: v1alpha1.AWSIamConfigKind,
 				Name: "aws-iam",
+			},
+			{
+				Kind: v1alpha1.OIDCConfigKind,
+				Name: "oidc",
 			},
 		}
 		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
@@ -732,8 +737,8 @@ func TestPreflightValidations(t *testing.T) {
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
 			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
-			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
-			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := upgradeValidations.PreflightValidations(ctx)
@@ -927,6 +932,11 @@ func TestPreFlightValidationsGit(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			k := mocks.NewMockKubectlClient(mockCtrl)
 			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
+			cliConfig := &config.CliConfig{
+				GitPrivateKeyFile:   "testdata/git_nonempty_private_key",
+				GitSshKeyPassphrase: "test",
+				GitKnownHostsFile:   "testdata/git_nonempty_ssh_known_hosts",
+			}
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
@@ -936,6 +946,7 @@ func TestPreFlightValidationsGit(t *testing.T) {
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
 				TlsValidator:      tlsValidator,
+				CliConfig:         cliConfig,
 			}
 
 			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)

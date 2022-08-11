@@ -2,6 +2,7 @@ package aws
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 
@@ -12,6 +13,39 @@ import (
 const (
 	snowEC2Port = 8243
 )
+
+type snowAwsClientBuilder struct{}
+
+func NewSnowAwsClientBuilder() *snowAwsClientBuilder {
+	return &snowAwsClientBuilder{}
+}
+
+func (b *snowAwsClientBuilder) BuildSnowAwsClientMap(ctx context.Context) (Clients, error) {
+	credsFile, err := AwsCredentialsFile()
+	if err != nil {
+		return nil, fmt.Errorf("fetching aws credentials from env: %v", err)
+	}
+	certsFile, err := AwsCABundlesFile()
+	if err != nil {
+		return nil, fmt.Errorf("fetching aws CA bundles from env: %v", err)
+	}
+
+	deviceIps, err := ParseDeviceIPsFromFile(credsFile)
+	if err != nil {
+		return nil, fmt.Errorf("getting device ips from aws credentials: %v", err)
+	}
+
+	deviceClientMap := make(Clients, len(deviceIps))
+
+	for _, ip := range deviceIps {
+		config, err := LoadConfig(ctx, WithSnowEndpointAccess(ip, certsFile, credsFile))
+		if err != nil {
+			return nil, fmt.Errorf("setting up aws client: %v", err)
+		}
+		deviceClientMap[ip] = NewClient(ctx, config)
+	}
+	return deviceClientMap, nil
+}
 
 func snowEndpoint(deviceIP string) *ServiceEndpoint {
 	return &ServiceEndpoint{

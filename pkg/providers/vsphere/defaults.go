@@ -114,7 +114,7 @@ func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec,
 func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := spec.VersionsBundle.EksD
-	var ova releasev1.OSImage
+	var ova releasev1.Archive
 	switch osFamily {
 	case anywherev1.Bottlerocket:
 		ova = eksd.Ova.Bottlerocket

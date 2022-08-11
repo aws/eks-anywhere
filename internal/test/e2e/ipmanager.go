@@ -6,36 +6,20 @@ import (
 )
 
 type E2EIPManager struct {
-	vspherenetworkCidr string
-	privateNetworkCidr string
-	vsphereNetworkIPs  map[string]bool
-	privateNetworkIPs  map[string]bool
+	networkCidr string
+	networkIPs  map[string]bool
 }
 
-func newE2EIPManager(networkCidr, privateNetworkCidr string) *E2EIPManager {
+func newE2EIPManager(networkCidr string) *E2EIPManager {
 	ipman := &E2EIPManager{
-		vspherenetworkCidr: networkCidr,
-		privateNetworkCidr: privateNetworkCidr,
-		vsphereNetworkIPs:  make(map[string]bool),
-		privateNetworkIPs:  make(map[string]bool),
+		networkCidr: networkCidr,
+		networkIPs:  make(map[string]bool),
 	}
 	return ipman
 }
 
 func (ipman *E2EIPManager) reserveIP() string {
-	return getUniqueIP(ipman.vspherenetworkCidr, ipman.vsphereNetworkIPs)
-}
-
-func (ipMan *E2EIPManager) reservePrivateIP() string {
-	return getUniqueIP(ipMan.privateNetworkCidr, ipMan.privateNetworkIPs)
-}
-
-func (ipman *E2EIPManager) reservePrivateIPPool(count int) networkutils.IPPool {
-	pool := networkutils.NewIPPool()
-	for i := 0; i < count; i++ {
-		pool.AddIP(ipman.reservePrivateIP())
-	}
-	return pool
+	return getUniqueIP(ipman.networkCidr, ipman.networkIPs)
 }
 
 func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {

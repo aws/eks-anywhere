@@ -20,12 +20,11 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const etcdadmBootstrapProviderProjectPath = "projects/aws/etcdadm-bootstrap-provider"
 
 func GetEtcdadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.EtcdadmBootstrapBundle, error) {
 	etcdadmBootstrapBundleArtifacts := map[string][]releasetypes.Artifact{
@@ -84,7 +83,7 @@ func GetEtcdadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[s
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.EtcdadmBootstrapProviderProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

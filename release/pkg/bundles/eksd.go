@@ -27,11 +27,6 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-const (
-	kindProjectPath          = "projects/kubernetes-sigs/kind"
-	eksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
-)
-
 func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string, dev bool) (anywherev1alpha1.EksDRelease, error) {
 	artifacts := r.BundleArtifactsTable[fmt.Sprintf("image-builder-%s", eksDReleaseChannel)]
 	artifacts = append(artifacts, r.BundleArtifactsTable[fmt.Sprintf("kind-%s", eksDReleaseChannel)]...)
@@ -129,27 +124,17 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		EksDReleaseUrl: eksDManifestUrl,
 		GitCommit:      gitCommit,
 		KindNode:       bundleImageArtifacts["kind-node"],
+		Etcdadm:        bundleArchiveArtifacts["etcdadm"],
+		Crictl:         bundleArchiveArtifacts["cri-tools"],
 		Ova: anywherev1alpha1.OSImageBundle{
-			Bottlerocket: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["bottlerocket-ova"],
-			},
-			Ubuntu: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["ubuntu-ova"],
-				Etcdadm: bundleArchiveArtifacts["etcdadm"],
-				Crictl:  bundleArchiveArtifacts["cri-tools"],
-			},
+			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ova"],
+			Ubuntu:       bundleArchiveArtifacts["ubuntu-ova"],
 		},
 		Raw: anywherev1alpha1.OSImageBundle{
-			Bottlerocket: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["bottlerocket-raw"],
-			},
-			Ubuntu: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["ubuntu-raw"],
-				Etcdadm: bundleArchiveArtifacts["etcdadm"],
-				Crictl:  bundleArchiveArtifacts["cri-tools"],
-			},
+			Bottlerocket: bundleArchiveArtifacts["bottlerocket-raw"],
+			Ubuntu:       bundleArchiveArtifacts["ubuntu-raw"],
 		},
-		Components: eksDReleaseComponentsUrl,
+		Components: constants.EksDReleaseComponentsUrl,
 	}
 
 	return bundle, nil

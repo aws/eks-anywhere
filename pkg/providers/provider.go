@@ -24,7 +24,7 @@ type Provider interface {
 	PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	// PostWorkloadInit is called after the workload cluster is created and initialized with a CNI. This allows us to do provider specific configuration on the workload cluster.
 	PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
+	BootstrapClusterOpts(clusterSpec *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string
 	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
@@ -35,7 +35,6 @@ type Provider interface {
 	MachineResourceType() string
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
-	GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error)

@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type installPackageOptions struct {
@@ -18,7 +17,6 @@ type installPackageOptions struct {
 	packageName   string
 	registry      string
 	customConfigs []string
-	showOptions   bool
 }
 
 var ipo = &installPackageOptions{}
@@ -35,7 +33,6 @@ func init() {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
-	installPackageCommand.Flags().BoolVar(&ipo.showOptions, "show-options", false, "Used to specify the package options to be used for configuration")
 	installPackageCommand.Flags().StringArrayVar(&ipo.customConfigs, "set", []string{}, "Provide custom configurations for curated packages. Format key:value")
 }
 
@@ -65,19 +62,17 @@ func installPackages(ctx context.Context, args []string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := curatedpackages.CreateBundleManager(ipo.kubeVersion)
+	bm := curatedpackages.CreateBundleManager()
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
-		ipo.kubeVersion,
 		ipo.source,
 		deps.Kubectl,
 		bm,
-		version.Get(),
 		deps.BundleRegistry,
 	)
 
-	bundle, err := b.GetLatestBundle(ctx)
+	bundle, err := b.GetLatestBundle(ctx, ipo.kubeVersion)
 	if err != nil {
 		return err
 	}
@@ -86,18 +81,11 @@ func installPackages(ctx context.Context, args []string) error {
 		deps.Kubectl,
 		curatedpackages.WithBundle(bundle),
 		curatedpackages.WithCustomConfigs(ipo.customConfigs),
-		curatedpackages.WithShowOptions(ipo.showOptions),
 	)
 
 	p, err := packages.GetPackageFromBundle(args[0])
 	if err != nil {
 		return err
-	}
-
-	if ipo.showOptions {
-		configs := curatedpackages.GetConfigurationsFromBundle(p)
-		curatedpackages.DisplayConfigurationOptions(configs)
-		return nil
 	}
 
 	curatedpackages.PrintLicense()

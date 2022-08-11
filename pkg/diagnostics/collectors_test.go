@@ -36,3 +36,12 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 		assert.Equal(t, "eksa-diagnostics", collector.Run.Namespace)
 	}
 }
+
+func TestAPIServerCollectors(t *testing.T) {
+	controlPlaneIP := "1.1.1.1"
+	factory := diagnostics.NewDefaultCollectorFactory()
+	collectors := factory.APIServerCollectors(controlPlaneIP)
+	assert.Equal(t, len(collectors), 2, "APIServerCollector() should return two collectors:hostPortCollector and pingHostCollector ")
+	assert.Equal(t, collectors[0].RunPod.Name, "run-ip", "First of APIserverCollectors should be type of runPod named run-ip")
+	assert.Equal(t, collectors[1].RunPod.Name, "run-ping", "Second of APIserverCollectors should be type of runPod named run-ping")
+}

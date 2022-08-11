@@ -32,6 +32,7 @@ const (
 	rufio          = "rufio"
 	grpcPort       = "42113"
 	kubevip        = "kubevip"
+	envoy          = "envoy"
 	loadBalancer   = "loadBalancer"
 )
 
@@ -49,6 +50,7 @@ type Installer struct {
 	docker          Docker
 	filewriter      filewriter.FileWriter
 	helm            Helm
+	podCidrRange    string
 	namespace       string
 	createNamespace bool
 	bootsOnDocker   bool
@@ -92,6 +94,7 @@ func WithHostPortEnabled(enabled bool) InstallOption {
 	}
 }
 
+// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
 func WithLoadBalancer() InstallOption {
 	return func(s *Installer) {
 		s.loadBalancer = true
@@ -99,12 +102,13 @@ func WithLoadBalancer() InstallOption {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace, podCidrRange string) StackInstaller {
 	return &Installer{
-		docker:     docker,
-		filewriter: filewriter,
-		helm:       helm,
-		namespace:  namespace,
+		docker:       docker,
+		filewriter:   filewriter,
+		helm:         helm,
+		namespace:    namespace,
+		podCidrRange: podCidrRange,
 	}
 }
 
@@ -155,6 +159,12 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			port: map[string]bool{
 				hostPortEnabled: s.hostPort,
 			},
+			env: []map[string]string{
+				{
+					"name":  "TRUSTED_PROXIES",
+					"value": s.podCidrRange,
+				},
+			},
 		},
 		boots: map[string]interface{}{
 			deploy: !s.bootsOnDocker,
@@ -175,6 +185,9 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		},
 		kubevip: map[string]interface{}{
 			image: bundle.KubeVip.URI,
+		},
+		envoy: map[string]interface{}{
+			image: bundle.Envoy.URI,
 		},
 	}
 

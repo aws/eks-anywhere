@@ -72,7 +72,7 @@ func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker Provide
 	}
 }
 
-func (p *provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil
 }
 
@@ -422,10 +422,6 @@ func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 
 func (p *provider) GenerateStorageClass() []byte {
 	return nil
-}
-
-func (p *provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *provider) UpdateKubeConfig(content *[]byte, clusterName string) error {

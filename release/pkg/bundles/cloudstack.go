@@ -20,16 +20,16 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const capcProjectPath = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 
 func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
 	cloudstackBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
 		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
+		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	var sourceBranch string
@@ -80,7 +80,7 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capcProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapcProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -91,6 +91,7 @@ func GetCloudStackBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-cloudstack"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
+		KubeRbacProxy:        bundleImageArtifacts["kube-rbac-proxy"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
 	}

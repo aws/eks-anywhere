@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type listPackagesOption struct {
@@ -55,19 +54,17 @@ func listPackages(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := curatedpackages.CreateBundleManager(lpo.kubeVersion)
+	bm := curatedpackages.CreateBundleManager()
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
-		lpo.kubeVersion,
 		lpo.source,
 		deps.Kubectl,
 		bm,
-		version.Get(),
 		deps.BundleRegistry,
 	)
 
-	bundle, err := b.GetLatestBundle(ctx)
+	bundle, err := b.GetLatestBundle(ctx, lpo.kubeVersion)
 	if err != nil {
 		return err
 	}

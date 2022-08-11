@@ -36,11 +36,6 @@ import (
 	artifactutils "github.com/aws/eks-anywhere/release/pkg/util/artifacts"
 )
 
-const (
-	releasePath             = "release"
-	imageBuilderProjectPath = "projects/kubernetes-sigs/image-builder"
-)
-
 type EksDLatestRelease struct {
 	Branch      string `json:"branch"`
 	KubeVersion string `json:"kubeVersion"`
@@ -118,7 +113,7 @@ func ReadEksDReleases(r *releasetypes.ReleaseConfig) (*EksDLatestReleases, error
 
 func GetSupportedK8sVersions(r *releasetypes.ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
-	releaseFilePath := filepath.Join(r.BuildRepoSource, releasePath, "SUPPORTED_RELEASE_BRANCHES")
+	releaseFilePath := filepath.Join(r.BuildRepoSource, constants.ReleaseFolderName, "SUPPORTED_RELEASE_BRANCHES")
 
 	releaseFile, err := ioutil.ReadFile(releaseFilePath)
 	if err != nil {
@@ -144,7 +139,7 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 	if r.BuildRepoBranchName == "release-0.9" {
 		bottlerocketReleasesFilename = "BOTTLEROCKET_OVA_RELEASES"
 	}
-	bottlerocketReleasesFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, bottlerocketReleasesFilename)
+	bottlerocketReleasesFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, bottlerocketReleasesFilename)
 
 	bottlerocketReleasesFileContents, err := ioutil.ReadFile(bottlerocketReleasesFilePath)
 	if err != nil {
@@ -174,7 +169,7 @@ func GetBottlerocketSupportedK8sVersionsByFormat(r *releasetypes.ReleaseConfig, 
 
 func GetBottlerocketAdminContainerMetadata(r *releasetypes.ReleaseConfig) (string, string, error) {
 	var bottlerocketAdminContainerMetadataMap map[string]interface{}
-	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
+	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, constants.ImageBuilderProjectPath, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
 	metadata, err := ioutil.ReadFile(bottlerocketAdminContainerMetadataFilePath)
 	if err != nil {
 		return "", "", errors.Cause(err)

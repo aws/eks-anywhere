@@ -28,6 +28,7 @@ const (
 	govcUsername       = "GOVC_USERNAME"
 	govcPassword       = "GOVC_PASSWORD"
 	govcURL            = "GOVC_URL"
+	govcDatacenter     = "GOVC_DATACENTER"
 	govcInsecure       = "GOVC_INSECURE"
 	vSphereUsername    = "EKSA_VSPHERE_USERNAME"
 	vSpherePassword    = "EKSA_VSPHERE_PASSWORD"
@@ -37,25 +38,29 @@ const (
 )
 
 var govcEnvironment = map[string]string{
-	govcUsername: "vsphere_username",
-	govcPassword: "vsphere_password",
-	govcURL:      "vsphere_server",
-	govcInsecure: "false",
+	govcUsername:   "vsphere_username",
+	govcPassword:   "vsphere_password",
+	govcURL:        "vsphere_server",
+	govcDatacenter: "vsphere_datacenter",
+	govcInsecure:   "false",
 }
 
 type testContext struct {
-	oldUsername   string
-	isUsernameSet bool
-	oldPassword   string
-	isPasswordSet bool
-	oldServer     string
-	isServerSet   bool
+	oldUsername     string
+	isUsernameSet   bool
+	oldPassword     string
+	isPasswordSet   bool
+	oldServer       string
+	isServerSet     bool
+	oldDatacenter   string
+	isDatacenterSet bool
 }
 
 func (tctx *testContext) SaveContext() {
 	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(vSphereUsername)
 	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(vSpherePassword)
 	tctx.oldServer, tctx.isServerSet = os.LookupEnv(vSphereServer)
+	tctx.oldDatacenter, tctx.isDatacenterSet = os.LookupEnv(govcDatacenter)
 	os.Setenv(vSphereUsername, "vsphere_username")
 	os.Setenv(vSpherePassword, "vsphere_password")
 	os.Setenv(vSphereServer, "vsphere_server")
@@ -63,6 +68,7 @@ func (tctx *testContext) SaveContext() {
 	os.Setenv(govcPassword, os.Getenv(vSpherePassword))
 	os.Setenv(govcURL, os.Getenv(vSphereServer))
 	os.Setenv(govcInsecure, "false")
+	os.Setenv(govcDatacenter, "vsphere_datacenter")
 }
 
 func (tctx *testContext) RestoreContext() {
@@ -81,6 +87,11 @@ func (tctx *testContext) RestoreContext() {
 	} else {
 		os.Unsetenv(vSphereServer)
 	}
+	if tctx.isDatacenterSet {
+		os.Setenv(govcDatacenter, tctx.oldDatacenter)
+	} else {
+		os.Unsetenv(govcDatacenter)
+	}
 }
 
 func setupContext(t *testing.T) {
@@ -91,12 +102,12 @@ func setupContext(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
+func setup(t *testing.T, opts ...executables.GovcOpt) (dir string, govc *executables.Govc, mockExecutable *mockexecutables.MockExecutable, env map[string]string) {
 	setupContext(t)
 	dir, writer := test.NewWriter(t)
 	mockCtrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	g := executables.NewGovc(executable, writer)
+	g := executables.NewGovc(executable, writer, opts...)
 
 	return dir, g, executable, govcEnvironment
 }
@@ -540,7 +551,7 @@ func TestGovcCleanupVms(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
 	var params []string
-	params = []string{"find", "-type", "VirtualMachine", "-name", clusterName + "*"}
+	params = []string{"find", "/" + env[govcDatacenter], "-type", "VirtualMachine", "-name", clusterName + "*"}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(clusterName), nil)
 
 	params = []string{"vm.power", "-off", "-force", vmName}
@@ -731,6 +742,28 @@ func TestAddTagSuccess(t *testing.T) {
 	err := g.AddTag(ctx, path, tag)
 	if err != nil {
 		t.Fatalf("Govc.AddTag() err = %v, want err nil", err)
+	}
+}
+
+func TestEnvMapOverride(t *testing.T) {
+	category := "category"
+	tag := "tag"
+	ctx := context.Background()
+
+	envOverride := map[string]string{
+		govcUsername:   "override_vsphere_username",
+		govcPassword:   "override_vsphere_password",
+		govcURL:        "override_vsphere_server",
+		govcDatacenter: "override_vsphere_datacenter",
+		govcInsecure:   "false",
+	}
+
+	_, g, executable, _ := setup(t, executables.WithGovcEnvMap(envOverride))
+	executable.EXPECT().ExecuteWithEnv(ctx, envOverride, "tags.create", "-c", category, tag).Return(*bytes.NewBufferString(""), nil)
+
+	err := g.CreateTag(ctx, tag, category)
+	if err != nil {
+		t.Fatalf("Govc.CreateTag() with envMap override err = %v, want err nil", err)
 	}
 }
 
@@ -992,6 +1025,17 @@ func TestGovcValidateVCenterAuthenticationSuccess(t *testing.T) {
 
 	if err := g.ValidateVCenterAuthentication(ctx); err != nil {
 		t.Fatalf("Govc.ValidateVCenterAuthentication() err = %v, want err nil", err)
+	}
+}
+
+func TestGovcValidateVCenterAuthenticationErrorNoDatacenter(t *testing.T) {
+	ctx := context.Background()
+	_, g, _, _ := setup(t)
+
+	os.Setenv(govcDatacenter, "")
+
+	if err := g.ValidateVCenterAuthentication(ctx); err == nil {
+		t.Fatal("Govc.ValidateVCenterAuthentication() err = nil, want err not nil")
 	}
 }
 

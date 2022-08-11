@@ -6,10 +6,8 @@ const (
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
-	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
-	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
-	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
+	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
 )
 
 func FeedGates(featureGates []string) {
@@ -58,10 +56,10 @@ func SnowProvider() Feature {
 	}
 }
 
-func CuratedPackagesSupport() Feature {
+func CheckpointEnabled() Feature {
 	return Feature{
-		Name:     "Curated Packages Support",
-		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
+		Name:     "Checkpoint to rerun commands enabled",
+		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
 	}
 }
 
@@ -69,19 +67,5 @@ func NutanixProvider() Feature {
 	return Feature{
 		Name:     "Nutanix provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(NutanixProviderEnvVar),
-	}
-}
-
-func K8s123Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.23 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
-	}
-}
-
-func CheckpointEnabled() Feature {
-	return Feature{
-		Name:     "Checkpoint to rerun commands enabled",
-		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
 	}
 }

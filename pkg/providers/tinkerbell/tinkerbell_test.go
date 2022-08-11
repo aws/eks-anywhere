@@ -2,17 +2,14 @@ package tinkerbell
 
 import (
 	"context"
-	"fmt"
 	"path"
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
@@ -420,74 +417,36 @@ func TestTinkerbellProviderGenerateDeploymentFileWithMinimalOIDC(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
 }
 
-func TestGetMHCSuccess(t *testing.T) {
-	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
+func TestTinkerbellProviderGenerateDeploymentFileWithAWSIamConfig(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_awsiam.yaml"
 	mockCtrl := gomock.NewController(t)
 	docker := stackmocks.NewMockDocker(mockCtrl)
 	helm := stackmocks.NewMockHelm(mockCtrl)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	stackInstaller := stackmocks.NewMockStackInstaller(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
 	forceCleanup := false
 
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	provider.stackInstaller = stackInstaller
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-md-0-worker-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 40%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/deployment-name: test-md-0
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
+	stackInstaller.EXPECT().CleanupLocalBoots(ctx, forceCleanup)
 
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-kcp-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 100%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/control-plane: ""
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
 
----
-`, constants.EksaSystemNamespace)
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
 
-	mch, err := provider.GenerateMHC(givenClusterSpec(t, clusterSpecManifest))
-	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
-	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_awsiam.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
 }

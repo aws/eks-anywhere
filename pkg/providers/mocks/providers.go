@@ -40,18 +40,18 @@ func (m *MockProvider) EXPECT() *MockProviderMockRecorder {
 }
 
 // BootstrapClusterOpts mocks base method.
-func (m *MockProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
+func (m *MockProvider) BootstrapClusterOpts(arg0 *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BootstrapClusterOpts")
+	ret := m.ctrl.Call(m, "BootstrapClusterOpts", arg0)
 	ret0, _ := ret[0].([]bootstrapper.BootstrapClusterOption)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // BootstrapClusterOpts indicates an expected call of BootstrapClusterOpts.
-func (mr *MockProviderMockRecorder) BootstrapClusterOpts() *gomock.Call {
+func (mr *MockProviderMockRecorder) BootstrapClusterOpts(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapClusterOpts", reflect.TypeOf((*MockProvider)(nil).BootstrapClusterOpts))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapClusterOpts", reflect.TypeOf((*MockProvider)(nil).BootstrapClusterOpts), arg0)
 }
 
 // ChangeDiff mocks base method.
@@ -155,21 +155,6 @@ func (m *MockProvider) GenerateCAPISpecForUpgrade(arg0 context.Context, arg1, ar
 func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForUpgrade), arg0, arg1, arg2, arg3, arg4)
-}
-
-// GenerateMHC mocks base method.
-func (m *MockProvider) GenerateMHC(arg0 *cluster.Spec) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateMHC", arg0)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GenerateMHC indicates an expected call of GenerateMHC.
-func (mr *MockProviderMockRecorder) GenerateMHC(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateMHC", reflect.TypeOf((*MockProvider)(nil).GenerateMHC), arg0)
 }
 
 // GenerateStorageClass mocks base method.

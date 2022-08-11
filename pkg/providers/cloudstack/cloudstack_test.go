@@ -102,7 +102,6 @@ func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.CloudStackDa
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file: %v", err)
 	}
-	datacenterConfig.SetDefaults()
 	return datacenterConfig
 }
 
@@ -564,8 +563,9 @@ func TestUpdateKubeConfig(t *testing.T) {
 
 func TestBootstrapClusterOpts(t *testing.T) {
 	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
 
-	bootstrapClusterOps, err := provider.BootstrapClusterOpts()
+	bootstrapClusterOps, err := provider.BootstrapClusterOpts(clusterSpec)
 	if err != nil {
 		t.Fatalf("failed BootstrapClusterOpts: %v", err)
 	}
@@ -1040,70 +1040,6 @@ func TestGetDatacenterConfig(t *testing.T) {
 	if providerConfig.Kind() != "kind" {
 		t.Fatal("Unexpected error DatacenterConfig: kind field not found")
 	}
-}
-
-func TestGetMHCSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-md-0-worker-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 40%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/deployment-name: test-md-0
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
-
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineHealthCheck
-metadata:
-  creationTimestamp: null
-  name: test-kcp-unhealthy
-  namespace: %[1]s
-spec:
-  clusterName: test
-  maxUnhealthy: 100%%
-  selector:
-    matchLabels:
-      cluster.x-k8s.io/control-plane: ""
-  unhealthyConditions:
-  - status: Unknown
-    timeout: 5m0s
-    type: Ready
-  - status: "False"
-    timeout: 5m0s
-    type: Ready
-status:
-  currentHealthy: 0
-  expectedMachines: 0
-  remediationsAllowed: 0
-
----
-`, constants.EksaSystemNamespace)
-
-	mch, err := provider.GenerateMHC(givenClusterSpec(t, testClusterConfigMainFilename))
-	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
-	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }
 
 func TestChangeDiffNoChange(t *testing.T) {
@@ -1780,6 +1716,33 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeConfigFile).Return(nil)
 	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, "false", kubeConfigFile).Return(nil)
 	if err := provider.InstallCustomProviderComponents(ctx, kubeConfigFile); err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+}
+
+func TestProviderDeleteResources(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.ManagementCluster = &types.Cluster{
+		KubeconfigFile: "testKubeConfig",
+	}
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	for _, mc := range machineConfigs {
+		kubectl.EXPECT().DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace)
+	}
+	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
+
+	err := provider.DeleteResources(ctx, clusterSpec)
+	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
 }

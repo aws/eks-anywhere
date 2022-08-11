@@ -50,6 +50,7 @@ const (
 	vSphereUsernameKey        = "VSPHERE_USERNAME"
 	vSpherePasswordKey        = "VSPHERE_PASSWORD"
 	vSphereServerKey          = "VSPHERE_SERVER"
+	govcDatacenterKey         = "GOVC_DATACENTER"
 	govcInsecure              = "GOVC_INSECURE"
 	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary    = "eks-a-templates"
@@ -135,6 +136,7 @@ type ProviderKubectlClient interface {
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
 	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
@@ -229,8 +231,8 @@ func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1a
 	return false, nil
 }
 
-func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.Server, p.clusterConfig)
+func (p *vsphereProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return common.BootstrapClusterOpts(p.clusterConfig, p.datacenterConfig.Spec.Server)
 }
 
 func (p *vsphereProvider) Name() string {
@@ -1067,10 +1069,6 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 
 func (p *vsphereProvider) GenerateStorageClass() []byte {
 	return defaultStorageClass
-}
-
-func (p *vsphereProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {

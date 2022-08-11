@@ -3,16 +3,15 @@ package dependencies
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	"github.com/aws/eks-anywhere/pkg/clients/flux"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -26,6 +25,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
+	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
@@ -59,14 +60,13 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
-	HelmSecure                *executables.Helm
-	HelmInsecure              *executables.Helm
+	Helm                      *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
-	FluxAddonClient           *addonclients.FluxAddonClient
+	GitOpsFlux                *flux.Flux
 	Git                       *gitfactory.GitTools
 	EksdInstaller             *eksd.Installer
 	EksdUpgrader              *eksd.Upgrader
@@ -81,8 +81,11 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
+	PackageControllerClient   curatedpackages.PackageController
+	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	SnowValidator             *snow.Validator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -101,7 +104,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
-		WithProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
+		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -162,8 +165,25 @@ func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	return f
 }
 
-func (f *Factory) WithProxyConfiguration(proxyConfig map[string]string) *Factory {
+func (f *Factory) UseProxyConfiguration(proxyConfig map[string]string) *Factory {
 	f.proxyConfiguration = proxyConfig
+	return f
+}
+
+func (f *Factory) GetProxyConfiguration() map[string]string {
+	return f.proxyConfiguration
+}
+
+func (f *Factory) WithProxyConfiguration() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.proxyConfiguration == nil {
+			proxyConfig := config.GetProxyConfigFromEnv()
+			f.UseProxyConfiguration(proxyConfig)
+		}
+		return nil
+	},
+	)
+
 	return f
 }
 
@@ -262,7 +282,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelmSecure()
+		f.WithDocker().WithKubectl().WithWriter().WithHelm()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -354,7 +374,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
-				f.dependencies.HelmSecure,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				tinkerbellIp,
 				time.Now,
@@ -502,30 +522,12 @@ func (f *Factory) WithAwsSnow() *Factory {
 		if f.dependencies.SnowAwsClient != nil {
 			return nil
 		}
-		credsFile, err := aws.AwsCredentialsFile()
+
+		builder := aws.NewSnowAwsClientBuilder()
+		deviceClientMap, err := builder.BuildSnowAwsClientMap(ctx)
 		if err != nil {
-			return fmt.Errorf("fetching aws credentials from env: %v", err)
+			return err
 		}
-		certsFile, err := aws.AwsCABundlesFile()
-		if err != nil {
-			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
-		}
-
-		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
-		if err != nil {
-			return fmt.Errorf("getting device ips from aws credentials: %v", err)
-		}
-
-		deviceClientMap := make(aws.Clients, len(deviceIps))
-
-		for _, ip := range deviceIps {
-			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
-			if err != nil {
-				return fmt.Errorf("setting up aws client: %v", err)
-			}
-			deviceClientMap[ip] = aws.NewClient(ctx, config)
-		}
-
 		f.dependencies.SnowAwsClient = deviceClientMap
 
 		return nil
@@ -612,15 +614,10 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithHelmSecure() *Factory {
-	f.WithExecutableBuilder()
+func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
+	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmSecure != nil {
-			return nil
-		}
-
-		var opts []executables.HelmOpt
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -629,31 +626,7 @@ func (f *Factory) WithHelmSecure() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithHelmInsecure() *Factory {
-	f.WithExecutableBuilder()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmInsecure != nil {
-			return nil
-		}
-
-		opts := []executables.HelmOpt{executables.WithInsecure()}
-		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
-		}
-
-		if f.proxyConfiguration != nil {
-			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
-		}
-
-		f.dependencies.HelmInsecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -668,9 +641,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelmInsecure()
+		f.WithKubectl().WithHelm(executables.WithInsecure())
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.HelmInsecure)
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
 		}
 	}
 
@@ -839,22 +812,15 @@ func (f *Factory) WithGit(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.
 	return f
 }
 
-func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
+func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl().WithGit(clusterConfig, fluxConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.FluxAddonClient != nil {
+		if f.dependencies.GitOpsFlux != nil {
 			return nil
 		}
 
-		f.dependencies.FluxAddonClient = addonclients.NewFluxAddonClient(
-			&flux.FluxKubectl{
-				Flux:    f.dependencies.Flux,
-				Kubectl: f.dependencies.Kubectl,
-			},
-			f.dependencies.Git,
-			cliConfig,
-		)
+		f.dependencies.GitOpsFlux = flux.NewFlux(f.dependencies.Flux, f.dependencies.Kubectl, f.dependencies.Git, cliConfig)
 
 		return nil
 	})
@@ -863,15 +829,16 @@ func (f *Factory) WithFluxAddonClient(clusterConfig *v1alpha1.Cluster, fluxConfi
 }
 
 func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+	f.WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
-			f.dependencies.HelmInsecure,
 			f.dependencies.Kubectl,
+			f.dependencies.PackageClient,
+			f.dependencies.PackageControllerClient,
 			spec,
 			packagesLocation,
 		)
@@ -880,9 +847,54 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 	return f
 }
 
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
+	f.WithHelm(executables.WithInsecure()).WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageControllerClient != nil {
+			return nil
+		}
+		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+
+		chart := spec.VersionsBundle.PackageController.HelmChart
+		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
+			f.dependencies.Helm,
+			f.dependencies.Kubectl,
+			spec.Cluster.Name,
+			kubeConfig,
+			imageUrl,
+			chart.Name,
+			chart.Tag(),
+			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
+			curatedpackages.WithEksaRegion(eksaRegion),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPackageClient() *Factory {
+	f.WithKubectl()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.PackageClient != nil {
+			return nil
+		}
+
+		f.dependencies.PackageClient = curatedpackages.NewPackageClient(
+			f.dependencies.Kubectl,
+		)
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
 	if registryName != "" {
-		f.WithHelmInsecure()
+		f.WithHelm(executables.WithInsecure())
 	} else {
 		f.WithManifestReader()
 	}
@@ -894,7 +906,7 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 
 		if registryName != "" {
 			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
-				f.dependencies.HelmInsecure,
+				f.dependencies.Helm,
 				registryName,
 			)
 		} else {

@@ -46,6 +46,7 @@ const (
 	ClusterPrefixVar                 = "T_CLUSTER_PREFIX"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
+	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
 	CleanupVmsVar                    = "T_CLEANUP_VMS"
 	hardwareYamlPath                 = "hardware.yaml"
 	hardwareCsvPath                  = "hardware.csv"
@@ -690,6 +691,12 @@ func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
 		}
 	}
 	e.Run(binaryPath, args...)
+}
+
+func (e *ClusterE2ETest) StopIfSucceeded() {
+	if !e.T.Failed() {
+		e.T.FailNow()
+	}
 }
 
 func (e *ClusterE2ETest) StopIfFailed() {

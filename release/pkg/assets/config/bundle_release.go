@@ -246,6 +246,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
 			},
 		},
+		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-docker artifacts
 	{
@@ -685,6 +686,22 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
+	// Envoy artifacts
+	{
+		ProjectName: "envoy",
+		ProjectPath: "projects/envoyproxy/envoy",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "envoy",
+			},
+		},
+		ImageRepoPrefix: "envoyproxy",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+		OnlyForDevRelease: true,
+	},
 	// Kustomize-controller artifacts
 	{
 		ProjectName: "kustomize-controller",
@@ -725,21 +742,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 		ImageRepoPrefix: "fluxcd",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
-	// PBnJ artifacts
-	{
-		ProjectName: "pbnj",
-		ProjectPath: "projects/tinkerbell/pbnj",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "pbnj",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",
@@ -805,7 +807,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tinkerbell-chart",
 		Images: []*assettypes.Image{
 			{
-				RepoName: "tinkerbell-chart",
+				RepoName:             "tinkerbell-chart",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
 					SourceLatestTagFromECR: true,

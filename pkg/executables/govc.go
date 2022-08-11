@@ -30,6 +30,7 @@ const (
 	govcPasswordKey      = "GOVC_PASSWORD"
 	govcURLKey           = "GOVC_URL"
 	govcInsecure         = "GOVC_INSECURE"
+	govcDatacenterKey    = "GOVC_DATACENTER"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
@@ -39,7 +40,7 @@ const (
 	DeployOptsFile       = "deploy-opts.json"
 )
 
-var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure}
+var requiredEnvs = []string{govcUsernameKey, govcPasswordKey, govcURLKey, govcInsecure, govcDatacenterKey}
 
 type networkMapping struct {
 	Name    string `json:"Name,omitempty"`
@@ -509,6 +510,10 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 }
 
 func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
+	if g.envMap != nil {
+		return g.envMap, nil
+	}
+
 	var vSphereUsername, vSpherePassword, vSphereURL string
 	var ok bool
 	var envMap map[string]string
@@ -533,6 +538,10 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 	} else if govcURL, ok := os.LookupEnv(govcURLKey); !ok || len(govcURL) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcURLKey, ok)
 	}
+	if govcDatacenter, ok := os.LookupEnv(govcDatacenterKey); !ok || len(govcDatacenter) <= 0 {
+		return nil, fmt.Errorf("%s is not set or is empty: %t", govcDatacenterKey, ok)
+	}
+
 	envMap, err := g.getEnvMap()
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
@@ -550,7 +559,7 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 	var params []string
 	var result bytes.Buffer
 
-	params = strings.Fields("find -type VirtualMachine -name " + clusterName + "*")
+	params = strings.Fields("find /" + envMap[govcDatacenterKey] + " -type VirtualMachine -name " + clusterName + "*")
 	result, err = g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return fmt.Errorf("getting vm list: %v", err)
@@ -563,10 +572,18 @@ func (g *Govc) CleanupVms(ctx context.Context, clusterName string, dryRun bool) 
 			continue
 		}
 		params = strings.Fields("vm.power -off -force " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to power off vm ", "vm_name", vmName, "error", err)
+		}
+
 		params = strings.Fields("object.destroy " + vmName)
-		result, _ = g.ExecuteWithEnv(ctx, envMap, params...)
-		logger.Info("Deleted ", "vm_name", vmName)
+		result, err = g.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			logger.Info("WARN: Failed to delete vm ", "vm_name", vmName, "error", err)
+		} else {
+			logger.Info("Deleted ", "vm_name", vmName)
+		}
 	}
 
 	if err := scanner.Err(); err != nil {

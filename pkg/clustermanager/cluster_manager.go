@@ -10,6 +10,7 @@ import (
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -39,7 +41,6 @@ const (
 	moveCAPIWait           = 15 * time.Minute
 	clusterWaitStr         = "60m"
 	ctrlPlaneWaitStr       = "60m"
-	etcdWaitStr            = "60m"
 	deploymentWaitStr      = "30m"
 	ctrlPlaneInProgressStr = "1m"
 	etcdInProgressStr      = "1m"
@@ -239,7 +240,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", workloadCluster.Name)
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name)
+		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, config.GetExternalEtcdTimeout(), workloadCluster.Name)
 		if err != nil {
 			return nil, fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
 		}
@@ -381,7 +382,14 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		}
 
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
-		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, newClusterSpec.Cluster.Name); err != nil {
+		etcdWait := config.GetExternalEtcdTimeout()
+		if err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWait, newClusterSpec.Cluster.Name); err != nil {
+			if err := c.clusterClient.RemoveAnnotationInNamespace(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Cluster.Name),
+				etcdv1.UpgradeInProgressAnnotation,
+				managementCluster,
+				constants.EksaSystemNamespace); err != nil {
+				return fmt.Errorf("removing annotation: %v", err)
+			}
 			return fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
 		}
 		externalEtcdTopology = true
@@ -578,15 +586,12 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	return nil
 }
 
-func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, provider providers.Provider) error {
-	mhc, err := provider.GenerateMHC(clusterSpec)
+func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster) error {
+	mhc, err := templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 	if err != nil {
 		return err
 	}
-	if len(mhc) == 0 {
-		logger.V(4).Info("Skipping machine health checks")
-		return nil
-	}
+
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)

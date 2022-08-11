@@ -20,24 +20,20 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
-)
-
-const (
-	captProjectPath = "projects/tinkerbell/cluster-api-provider-tinkerbell"
-	HookProjectPath = "projects/tinkerbell/hook"
 )
 
 func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
 	tinkerbellBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
 		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
+		"envoy":                           r.BundleArtifactsTable["envoy"],
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
-		"pbnj":                            r.BundleArtifactsTable["pbnj"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
@@ -107,7 +103,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, captProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CaptProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -122,6 +118,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
+		Envoy:                bundleImageArtifacts["envoy"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],

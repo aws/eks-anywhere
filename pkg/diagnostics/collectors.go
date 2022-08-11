@@ -380,6 +380,61 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	}
 }
 
+// APIServerCollectors collect connection info when running a pod on an existing cluster
+func (c *collectorFactory) APIServerCollectors(controlPlaneIP string) []*Collect {
+	var collectors []*Collect
+	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
+	return collectors
+}
+
+func (c *collectorFactory) controlPlaneNetworkPathCollector(controlPlaneIP string) []*Collect {
+	ports := []string{"6443", "22"}
+	var collectors []*Collect
+	collectors = append(collectors, c.hostPortCollector(ports, controlPlaneIP))
+	collectors = append(collectors, c.pingHostCollector(controlPlaneIP))
+	return collectors
+}
+
+func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Collect {
+	apiServerPort := ports[0]
+	port := ports[1]
+	tempIPRequest := fmt.Sprintf("for port in %s %s; do nc -z -v -w5 %s $port; done", apiServerPort, port, hostIP)
+	argsIP := []string{tempIPRequest}
+	return &Collect{
+		RunPod: &runPod{
+			Name:       "run-ip",
+			Namespaces: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    "run-ip",
+					Image:   c.DiagnosticCollectorImage,
+					Command: []string{"/bin/sh", "-c"},
+					Args:    argsIP,
+				}},
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
+	tempPingRequest := fmt.Sprintf("ping -w10 -c5 %s; echo exit code: $?", hostIP)
+	argsPing := []string{tempPingRequest}
+	return &Collect{
+		RunPod: &runPod{
+			Name:       "run-ping",
+			Namespaces: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    "run-ping",
+					Image:   c.DiagnosticCollectorImage,
+					Command: []string{"/bin/sh", "-c"},
+					Args:    argsPing,
+				}},
+			},
+		},
+	}
+}
+
 func logpath(namespace string) string {
 	return fmt.Sprintf("logs/%s", namespace)
 }

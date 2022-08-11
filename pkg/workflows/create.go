@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -20,14 +19,14 @@ type Create struct {
 	bootstrapper     interfaces.Bootstrapper
 	provider         providers.Provider
 	clusterManager   interfaces.ClusterManager
-	addonManager     interfaces.AddonManager
+	gitOpsManager    interfaces.GitOpsManager
 	writer           filewriter.FileWriter
 	eksdInstaller    interfaces.EksdInstaller
 	packageInstaller interfaces.PackageInstaller
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
+	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 	writer filewriter.FileWriter, eksdInstaller interfaces.EksdInstaller,
 	packageInstaller interfaces.PackageInstaller,
 ) *Create {
@@ -35,7 +34,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 		bootstrapper:     bootstrapper,
 		provider:         provider,
 		clusterManager:   clusterManager,
-		addonManager:     addonManager,
+		gitOpsManager:    gitOpsManager,
 		writer:           writer,
 		eksdInstaller:    eksdInstaller,
 		packageInstaller: packageInstaller,
@@ -54,7 +53,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		Bootstrapper:     c.bootstrapper,
 		Provider:         c.provider,
 		ClusterManager:   c.clusterManager,
-		AddonManager:     c.addonManager,
+		GitOpsManager:    c.gitOpsManager,
 		ClusterSpec:      clusterSpec,
 		Writer:           c.writer,
 		Validations:      validator,
@@ -83,7 +82,7 @@ type InstallResourcesOnManagementTask struct{}
 
 type InstallEksaComponentsTask struct{}
 
-type InstallAddonManagerTask struct{}
+type InstallGitOpsManagerTask struct{}
 
 type MoveClusterManagementTask struct{}
 
@@ -103,7 +102,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	logger.Info("Creating new bootstrap cluster")
 
-	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
+	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts(commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -163,7 +162,7 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 	logger.Info("Performing setup and validations")
 	runner := validations.NewRunner()
 	runner.Register(s.providerValidation(ctx, commandContext)...)
-	runner.Register(commandContext.AddonManager.Validations(ctx, commandContext.ClusterSpec)...)
+	runner.Register(commandContext.GitOpsManager.Validations(ctx, commandContext.ClusterSpec)...)
 	runner.Register(s.validations(ctx, commandContext)...)
 
 	err := runner.Run()
@@ -270,7 +269,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.V(4).Info("Installing machine health checks on bootstrap cluster")
-	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
+	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -390,7 +389,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
 	}
-	return &InstallAddonManagerTask{}
+	return &InstallGitOpsManagerTask{}
 }
 
 func (s *InstallEksaComponentsTask) Name() string {
@@ -405,12 +404,12 @@ func (s *InstallEksaComponentsTask) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
-// InstallAddonManagerTask implementation
+// InstallGitOpsManagerTask implementation
 
-func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Installing AddonManager and GitOps Toolkit on workload cluster")
+func (s *InstallGitOpsManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	logger.Info("Installing GitOps Toolkit on workload cluster")
 
-	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
+	err := commandContext.GitOpsManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
 	if err != nil {
 		logger.MarkFail("Error when installing GitOps toolkits on workload cluster; EKS-A will continue with cluster creation, but GitOps will not be enabled", "error", err)
 		return &WriteClusterConfigTask{}
@@ -418,15 +417,15 @@ func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.
 	return &WriteClusterConfigTask{}
 }
 
-func (s *InstallAddonManagerTask) Name() string {
-	return "addon-manager-install"
+func (s *InstallGitOpsManagerTask) Name() string {
+	return "gitops-manager-install"
 }
 
-func (s *InstallAddonManagerTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+func (s *InstallGitOpsManagerTask) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
 	return nil, nil
 }
 
-func (s *InstallAddonManagerTask) Checkpoint() *task.CompletedTask {
+func (s *InstallGitOpsManagerTask) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
@@ -473,11 +472,9 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if features.IsActive(features.CuratedPackagesSupport()) {
-		err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
-		if err != nil {
-			logger.MarkFail("Curated Packages Installation Failed...")
-		}
+	err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+	if err != nil {
+		logger.MarkFail("Curated Packages Installation Failed...")
 	}
 	return nil
 }

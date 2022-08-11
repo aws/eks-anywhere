@@ -1,10 +1,8 @@
 package curatedpackages_test
 
 import (
-	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -21,18 +19,21 @@ import (
 
 type packageInstallerTest struct {
 	*WithT
-	ctx            context.Context
-	chartInstaller *mocks.MockChartInstaller
-	kubectlRunner  *mocks.MockKubectlRunner
-	spec           *cluster.Spec
-	command        *curatedpackages.Installer
-	packagePath    string
+	ctx                     context.Context
+	kubectlRunner           *mocks.MockKubectlRunner
+	packageClient           *mocks.MockPackageHandler
+	packageControllerClient *mocks.MockPackageController
+	spec                    *cluster.Spec
+	command                 *curatedpackages.Installer
+	packagePath             string
+	kubeConfigPath          string
 }
 
 func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 	ctrl := gomock.NewController(t)
 	k := mocks.NewMockKubectlRunner(ctrl)
-	c := mocks.NewMockChartInstaller(ctrl)
+	pc := mocks.NewMockPackageHandler(ctrl)
+	pcc := mocks.NewMockPackageController(ctrl)
 	packagesPath := "/test/package.yaml"
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
@@ -53,29 +54,26 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 			},
 		},
 	}
+	kubeConfigPath := kubeconfig.FromClusterName(spec.Cluster.Name)
 	return &packageInstallerTest{
-		WithT:          NewWithT(t),
-		ctx:            context.Background(),
-		chartInstaller: c,
-		kubectlRunner:  k,
-		spec:           spec,
-		packagePath:    packagesPath,
-		command:        curatedpackages.NewInstaller(c, k, spec, packagesPath),
+		WithT:                   NewWithT(t),
+		ctx:                     context.Background(),
+		kubectlRunner:           k,
+		spec:                    spec,
+		packagePath:             packagesPath,
+		packageClient:           pc,
+		packageControllerClient: pcc,
+		kubeConfigPath:          kubeConfigPath,
+		command:                 curatedpackages.NewInstaller(k, pc, pcc, spec, packagesPath),
 	}
 }
 
 func TestPackageInstallerSuccess(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	kubeConfigPath := kubeconfig.FromClusterName(tt.spec.Cluster.Name)
-	helmChart := tt.spec.VersionsBundle.PackageController.HelmChart
-	params := []string{"create", "-f", tt.packagePath, "--kubeconfig", kubeConfigPath}
-	registry := curatedpackages.GetRegistry(helmChart.URI)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
-	tt.kubectlRunner.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(nil)
+	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
 	tt.Expect(err).To(BeNil())
@@ -84,8 +82,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 func TestPackageInstallerFailWhenCertManagerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	kubeConfigPath := kubeconfig.FromClusterName(tt.spec.Cluster.Name)
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(false, nil)
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(false, nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
 	tt.Expect(err).NotTo(BeNil())
@@ -94,13 +91,8 @@ func TestPackageInstallerFailWhenCertManagerFails(t *testing.T) {
 func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	kubeConfigPath := kubeconfig.FromClusterName(tt.spec.Cluster.Name)
-	helmChart := tt.spec.VersionsBundle.PackageController.HelmChart
-	registry := curatedpackages.GetRegistry(helmChart.URI)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(errors.New("controller installation failed"))
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(errors.New("controller installation failed"))
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
 	tt.Expect(err).NotTo(BeNil())
@@ -109,15 +101,9 @@ func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	kubeConfigPath := kubeconfig.FromClusterName(tt.spec.Cluster.Name)
-	helmChart := tt.spec.VersionsBundle.PackageController.HelmChart
-	params := []string{"create", "-f", tt.packagePath, "--kubeconfig", kubeConfigPath}
-	registry := curatedpackages.GetRegistry(helmChart.URI)
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
-	tt.kubectlRunner.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("path doesn't exist"))
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", kubeConfigPath, "cert-manager").Return(true, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, helmChart.Name, "oci://"+helmChart.Image(), helmChart.Tag(), kubeConfigPath, values).Return(nil)
+	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(errors.New("path doesn't exist"))
+	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
 	tt.Expect(err).NotTo(BeNil())

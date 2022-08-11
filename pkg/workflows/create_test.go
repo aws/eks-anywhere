@@ -23,9 +23,10 @@ import (
 
 type createTestSetup struct {
 	t                *testing.T
+	packageInstaller *mocks.MockPackageInstaller
 	bootstrapper     *mocks.MockBootstrapper
 	clusterManager   *mocks.MockClusterManager
-	addonManager     *mocks.MockAddonManager
+	gitOpsManager    *mocks.MockGitOpsManager
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
@@ -44,7 +45,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
-	addonManager := mocks.NewMockAddonManager(mockCtrl)
+	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	eksd := mocks.NewMockEksdInstaller(mockCtrl)
@@ -52,18 +53,19 @@ func newCreateTest(t *testing.T) *createTestSetup {
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer, eksd, packageInstaller)
+	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, gitOpsManager, writer, eksd, packageInstaller)
 	validator := mocks.NewMockValidator(mockCtrl)
 
 	return &createTestSetup{
 		t:                t,
 		bootstrapper:     bootstrapper,
 		clusterManager:   clusterManager,
-		addonManager:     addonManager,
+		gitOpsManager:    gitOpsManager,
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
 		eksd:             eksd,
+		packageInstaller: packageInstaller,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -77,7 +79,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 func (c *createTestSetup) expectSetup() {
 	c.provider.EXPECT().SetupAndValidateCreateCluster(c.ctx, c.clusterSpec)
 	c.provider.EXPECT().Name()
-	c.addonManager.EXPECT().Validations(c.ctx, c.clusterSpec)
+	c.gitOpsManager.EXPECT().Validations(c.ctx, c.clusterSpec)
 }
 
 func (c *createTestSetup) expectCreateBootstrap() {
@@ -86,7 +88,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 	}
 
 	gomock.InOrder(
-		c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil),
+		c.provider.EXPECT().BootstrapClusterOpts(c.clusterSpec).Return(opts, nil),
 		// Checking for not nil because in go you can't compare closures
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
 			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
@@ -207,12 +209,20 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 	)
 }
 
-func (c *createTestSetup) expectInstallAddonManager() {
+func (c *createTestSetup) skipCuratedPackagesInstallation() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(nil)
+}
+
+func (c *createTestSetup) expectCuratedPackagesInstallationFail() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(errors.New("curated Packages installation failed"))
+}
+
+func (c *createTestSetup) expectInstallGitOpsManager() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 
-		c.addonManager.EXPECT().InstallGitOps(
+		c.gitOpsManager.EXPECT().InstallGitOps(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
 	)
 }
@@ -236,7 +246,7 @@ func (c *createTestSetup) expectNotDeleteBootstrap() {
 func (c *createTestSetup) expectInstallMHC() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallMachineHealthChecks(
-			c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider,
+			c.ctx, c.clusterSpec, c.bootstrapCluster,
 		),
 	)
 }
@@ -258,11 +268,12 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectInstallResourcesOnManagementTask()
 	test.expectMoveManagement()
 	test.expectInstallEksaComponents()
-	test.expectInstallAddonManager()
+	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.expectCuratedPackagesInstallationFail()
 
 	err := test.run()
 	if err != nil {
@@ -280,11 +291,12 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectInstallResourcesOnManagementTask()
 	test.expectMoveManagement()
 	test.expectInstallEksaComponents()
-	test.expectInstallAddonManager()
+	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.skipCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -310,11 +322,12 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectCreateWorkloadSkipCAPI()
 	test.skipMoveManagement()
 	test.skipInstallEksaComponents()
-	test.expectInstallAddonManager()
+	test.expectInstallGitOpsManager()
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.skipCuratedPackagesInstallation()
 
 	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)

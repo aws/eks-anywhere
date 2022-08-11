@@ -9,8 +9,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
 
@@ -25,7 +27,8 @@ type Factory struct {
 
 	tracker                  *remote.ClusterCacheTracker
 	registry                 *clusters.ProviderClusterReconcilerRegistry
-	vsphereClusterReconciler *vspherereconciler.VSphereClusterReconciler
+	vsphereClusterReconciler *vspherereconciler.Reconciler
+	snowClusterReconciler    *snowreconciler.Reconciler
 	logger                   logr.Logger
 	deps                     *dependencies.Dependencies
 }
@@ -33,6 +36,7 @@ type Factory struct {
 type Reconcilers struct {
 	ClusterReconciler           *ClusterReconciler
 	VSphereDatacenterReconciler *VSphereDatacenterReconciler
+	SnowMachineConfigReconciler *SnowMachineConfigReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -105,6 +109,22 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 	return f
 }
 
+func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.SnowMachineConfigReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
+			f.manager.GetClient(),
+			f.logger,
+			aws.NewSnowAwsClientBuilder(),
+		)
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) withTracker() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.tracker != nil {
@@ -145,8 +165,7 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 
 		switch p.ProviderName {
 		case snowProviderName:
-			// TODO: implement
-			// f.withSnowClusterReconciler()
+			f.withSnowClusterReconciler()
 		case vSphereProviderName:
 			f.withVSphereClusterReconciler()
 		default:
@@ -175,14 +194,28 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 			return nil
 		}
 
-		f.vsphereClusterReconciler = vspherereconciler.NewVSphereReconciler(
+		f.vsphereClusterReconciler = vspherereconciler.New(
 			f.manager.GetClient(),
-			f.logger,
 			f.deps.VSphereValidator,
 			f.deps.VSphereDefaulter,
 			f.tracker,
 		)
 		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withSnowClusterReconciler() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.snowClusterReconciler != nil {
+			return nil
+		}
+
+		f.snowClusterReconciler = snowreconciler.New()
+		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 
 		return nil
 	})

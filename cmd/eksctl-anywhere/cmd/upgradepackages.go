@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type upgradePackageOptions struct {
@@ -49,11 +48,9 @@ func upgradePackages(ctx context.Context) error {
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
-		ipo.kubeVersion,
 		ipo.source,
 		deps.Kubectl,
 		nil,
-		version.Get(),
 		nil,
 	)
 	activeController, err := b.GetActiveController(ctx)

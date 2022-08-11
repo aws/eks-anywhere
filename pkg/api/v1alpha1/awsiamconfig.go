@@ -10,6 +10,8 @@ const (
 	AWSIamConfigKind = "AWSIamConfig"
 	eksConfigMap     = "EKSConfigMap"
 	mountedFile      = "MountedFile"
+
+	DefaultAWSIamConfigPartition = "aws"
 )
 
 func GetAndValidateAWSIamConfig(fileName string, refName string, clusterConfig *Cluster) (*AWSIamConfig, error) {
@@ -125,7 +127,7 @@ func validateAWSIamNamespace(config *AWSIamConfig, clusterConfig *Cluster) error
 
 func setDefaultAWSIamPartition(config *AWSIamConfig) {
 	if config.Spec.Partition == "" {
-		config.Spec.Partition = "aws"
+		config.Spec.Partition = DefaultAWSIamConfigPartition
 		logger.V(1).Info("AWSIamConfig Partition is empty. Using default partition 'aws'")
 	}
 }

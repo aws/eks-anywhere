@@ -134,10 +134,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"api-url":    profile.ManagementUrl,
-			"api-key":    profile.ApiKey,
-			"secret-key": profile.SecretKey,
-			"verify-ssl": profile.VerifySsl,
+			"uri":       profile.ManagementUrl,
+			"apikey":    profile.ApiKey,
+			"secretkey": profile.SecretKey,
+			"verifyssl": profile.VerifySsl,
 		},
 	}
 }
@@ -278,8 +278,8 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
-func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.ManagementApiEndpoint, p.clusterConfig)
+func (p *cloudstackProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return common.BootstrapClusterOpts(p.clusterConfig, p.datacenterConfig.Spec.ManagementApiEndpoint)
 }
 
 func (p *cloudstackProvider) Name() string {
@@ -641,21 +641,13 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
-	}
 	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return templater.Execute(defaultCAPIConfigCP, values)
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
@@ -709,7 +701,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
-		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
+		"cloudstackDomain":                             datacenterConfigSpec.Domain,
+		"cloudstackZones":                              datacenterConfigSpec.Zones,
+		"cloudstackAccount":                            datacenterConfigSpec.Account,
 		"cloudstackAnnotationSuffix":                   constants.CloudstackAnnotationSuffix,
 		"cloudstackControlPlaneDiskOfferingProvided":   len(controlPlaneMachineSpec.DiskOffering.Id) > 0 || len(controlPlaneMachineSpec.DiskOffering.Name) > 0,
 		"cloudstackControlPlaneDiskOfferingId":         controlPlaneMachineSpec.DiskOffering.Id,
@@ -804,6 +798,9 @@ func fillProxyConfigurations(values map[string]interface{}, clusterSpec *cluster
 		if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(az.ManagementApiEndpoint); err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
+	}
+	if cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint); err == nil {
+		noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 	}
 	noProxyList = append(noProxyList,
 		clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -1083,10 +1080,6 @@ func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *
 	}
 
 	return false, nil
-}
-
-func (p *cloudstackProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
-	return templater.ObjectsToYaml(clusterapi.MachineHealthCheckObjects(clusterSpec)...)
 }
 
 func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {

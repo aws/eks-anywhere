@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -29,7 +28,6 @@ func TestVSphereKubernetes123UbuntuRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithRegistryMirrorEndpointAndCert(),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -43,7 +41,6 @@ func TestVSphereKubernetes123BottlerocketRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithRegistryMirrorEndpointAndCert(),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }

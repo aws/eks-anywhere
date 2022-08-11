@@ -32,7 +32,7 @@ func ReconcileObjects(ctx context.Context, c client.Client, objs []client.Object
 
 func ReconcileObject(ctx context.Context, c client.Client, obj client.Object) error {
 	// Server side apply
-	err := c.Patch(ctx, obj, client.Apply, &client.PatchOptions{FieldManager: fieldManager})
+	err := c.Patch(ctx, obj, client.Apply, client.FieldOwner(fieldManager), client.ForceOwnership)
 	if err != nil {
 		return errors.Wrapf(err, "failed to reconcile object %s, %s/%s", obj.GetObjectKind().GroupVersionKind(), obj.GetNamespace(), obj.GetName())
 	}

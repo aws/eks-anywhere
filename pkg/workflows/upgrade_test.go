@@ -26,7 +26,7 @@ type upgradeTestSetup struct {
 	t                  *testing.T
 	bootstrapper       *mocks.MockBootstrapper
 	clusterManager     *mocks.MockClusterManager
-	addonManager       *mocks.MockAddonManager
+	gitOpsManager      *mocks.MockGitOpsManager
 	provider           *providermocks.MockProvider
 	writer             *writermocks.MockFileWriter
 	validator          *mocks.MockValidator
@@ -50,7 +50,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
-	addonManager := mocks.NewMockAddonManager(mockCtrl)
+	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
@@ -59,7 +59,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer, eksdUpgrader, eksdInstaller)
+	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, gitOpsManager, writer, eksdUpgrader, eksdInstaller)
 
 	for _, e := range featureEnvVars {
 		if err := os.Setenv(e, "true"); err != nil {
@@ -79,7 +79,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		t:                t,
 		bootstrapper:     bootstrapper,
 		clusterManager:   clusterManager,
-		addonManager:     addonManager,
+		gitOpsManager:    gitOpsManager,
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
@@ -173,8 +173,8 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 	gomock.InOrder(
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, workloadCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, managementCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
-		c.addonManager.EXPECT().Install(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(nil),
-		c.addonManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
+		c.gitOpsManager.EXPECT().Install(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(nil),
+		c.gitOpsManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
 		c.eksdUpgrader.EXPECT().Upgrade(c.ctx, managementCluster, currentSpec, c.newClusterSpec).Return(eksdChangeDiff, nil),
 	)
@@ -186,7 +186,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 	}
 
 	gomock.InOrder(
-		c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil),
+		c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Return(opts, nil),
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
@@ -198,7 +198,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 }
 
 func (c *upgradeTestSetup) expectNotToCreateBootstrap() {
-	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
+	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(
 		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 	).Times(0)
@@ -285,7 +285,7 @@ func (c *upgradeTestSetup) expectResumeEKSAControllerReconcile(expectedCluster *
 
 func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.addonManager.EXPECT().PauseGitOpsKustomization(
+		c.gitOpsManager.EXPECT().PauseGitOpsKustomization(
 			c.ctx, expectedCluster, c.newClusterSpec,
 		),
 	)
@@ -293,13 +293,13 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig).AnyTimes(),
 	)
 }
 
 func (c *upgradeTestSetup) expectMachineConfigs() {
 	gomock.InOrder(
-		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs).AnyTimes(),
 	)
 }
 
@@ -321,7 +321,7 @@ func (c *upgradeTestSetup) expectInstallEksdManifest(expectedCLuster *types.Clus
 
 func (c *upgradeTestSetup) expectUpdateGitEksaSpec() {
 	gomock.InOrder(
-		c.addonManager.EXPECT().UpdateGitEksaSpec(
+		c.gitOpsManager.EXPECT().UpdateGitEksaSpec(
 			c.ctx, c.newClusterSpec, c.datacenterConfig, c.machineConfigs,
 		),
 	)
@@ -329,7 +329,7 @@ func (c *upgradeTestSetup) expectUpdateGitEksaSpec() {
 
 func (c *upgradeTestSetup) expectForceReconcileGitRepo(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.addonManager.EXPECT().ForceReconcileGitRepo(
+		c.gitOpsManager.EXPECT().ForceReconcileGitRepo(
 			c.ctx, expectedCluster, c.newClusterSpec,
 		),
 	)
@@ -337,7 +337,7 @@ func (c *upgradeTestSetup) expectForceReconcileGitRepo(expectedCluster *types.Cl
 
 func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.addonManager.EXPECT().ResumeGitOpsKustomization(
+		c.gitOpsManager.EXPECT().ResumeGitOpsKustomization(
 			c.ctx, expectedCluster, c.newClusterSpec,
 		),
 	)
@@ -380,16 +380,8 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	)
 }
 
-func (c *upgradeTestSetup) expectPauseEKSAControllerReconcileNotToBeCalled() {
-	c.clusterManager.EXPECT().PauseEKSAControllerReconcile(c.ctx, c.workloadCluster, c.newClusterSpec, c.provider).Times(0)
-}
-
-func (c *upgradeTestSetup) expectPauseGitOpsKustomizationNotToBeCalled() {
-	c.addonManager.EXPECT().PauseGitOpsKustomization(c.ctx, c.workloadCluster, c.newClusterSpec).Times(0)
-}
-
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
-	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
+	c.provider.EXPECT().BootstrapClusterOpts(c.newClusterSpec).Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
 	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
@@ -404,11 +396,17 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
+	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
+	test.expectPauseGitOpsKustomization(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecNoChanges()
-	test.expectPauseEKSAControllerReconcileNotToBeCalled()
-	test.expectPauseGitOpsKustomizationNotToBeCalled()
+	test.expectDatacenterConfig()
+	test.expectMachineConfigs()
+	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
+	test.expectUpdateGitEksaSpec()
+	test.expectForceReconcileGitRepo(test.workloadCluster)
+	test.expectResumeGitOpsKustomization(test.workloadCluster)
 	test.expectCreateBootstrapNotToBeCalled()
 
 	err := test.run()

@@ -2,10 +2,10 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 160
-    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 160
+    INTEGRATION_TEST_MAX_EC2_COUNT: 165
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 165
     T_CLOUDSTACK_CIDR: "10.11.255.0/24"
-    SKIPPED_TESTS: "TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes123SimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes122SimpleFlow,TestSnowKubernetes123SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig,TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups,TestSnowKubernetes123LabelsUbuntu,TestSnowKubernetes123TaintsUbuntu,TestSnowKubernetes121To122UbuntuUpgrade,TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade"
+    SKIPPED_TESTS: "TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestVSphereKubernetes122BottlerocketAutoimport,TestCloudStackKubernetes120OIDC,TestCloudStackKubernetes121OIDC,TestCloudStackKubernetes121RedhatRegistryMirrorAndCert,TestSnowKubernetes121SimpleFlow,TestSnowKubernetes122SimpleFlow,TestSnowKubernetes123SimpleFlow,TestSnowKubernetes121OIDC,TestSnowKubernetes121UbuntuProxyConfig,TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups,TestSnowKubernetes123LabelsUbuntu,TestSnowKubernetes123TaintsUbuntu,TestSnowKubernetes121To122UbuntuUpgrade,TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade,TestCloudStackKubernetes120ThreeWorkersConformanceFlow,TestCloudStackKubernetes121ThreeWorkersConformanceFlow,TestCloudStackKubernetes120GitopsOptionsFluxLegacy,TestCloudStackKubernetes121RedhatAndRemoveWorkerNodeGroups,TestCloudStackKubernetes121RedhatProxyConfig,TestCloudStackKubernetes120SimpleFlow,TestCloudStackKubernetes121SimpleFlow,TestCloudStackKubernetes121DifferentNamespaceSimpleFlow,TestCloudStackKubernetes120StackedEtcdRedhat,TestCloudStackKubernetes121StackedEtcdRedhat,TestCloudStackKubernetes120To121CpComputeOfferingUpgrade,TestCloudStackKubernetes120UpgradeFromLatestMinorRelease,TestCloudStackKubernetes120RedhatTo121Upgrade,TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade,TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade,TestCloudStackKubernetes120RedhatWorkerNodeUpgrade,TestCloudStackKubernetes121WorkloadCluster,TestCloudStackUpgradeMulticlusterWorkloadClusterWithFluxLegacy"
     CLOUDSTACK_PROVIDER: true
     EKSA_GIT_KNOWN_HOSTS: "/tmp/known_hosts"
     EKSA_GIT_PRIVATE_KEY: "/tmp/private-key"
@@ -20,6 +20,7 @@ env:
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
     VSPHERE_SERVER: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    GOVC_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
     T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
     T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
@@ -77,7 +78,6 @@ env:
     T_TINKERBELL_IMAGE_UBUNTU_1_22: "tinkerbell_ci:image_ubuntu_1_22"
     T_TINKERBELL_IMAGE_UBUNTU_1_23: "tinkerbell_ci:image_ubuntu_1_23"
     T_TINKERBELL_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
-    T_TINKERBELL_NETWORK_CIDR: "tinkerbell_ci:network_cidr"
     T_TINKERBELL_CP_NETWORK_CIDR: "tinkerbell_ci:cp_network_cidr"
     T_TINKERBELL_S3_INVENTORY_CSV_KEY: "tinkerbell_ci:s3_inventory_csv"
     TEST_RUNNER_GOVC_USERNAME: "tinkerbell_ci:govc_username"
@@ -151,6 +151,7 @@ phases:
       - export EKSA_VSPHERE_USERNAME=${TEST_RUNNER_GOVC_USERNAME}
       - export EKSA_VSPHERE_PASSWORD=${TEST_RUNNER_GOVC_PASSWORD}
       - export VSPHERE_SERVER=${TEST_RUNNER_GOVC_URL}
+      - export GOVC_DATACENTER=${TEST_RUNNER_GOVC_DATACENTER}
       - export NODE_PREFIX=eksa-e2e-$CODEBUILD_BUILD_ID
       - >
         if [[ ${#NODE_PREFIX} -gt 80 ]] ; then

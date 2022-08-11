@@ -117,17 +117,17 @@ type EksDRelease struct {
 
 	// Components refers to the url that points to the EKS-D release CRD
 	Components string `json:"components,omitempty"`
+
+	// Etcdadm points to the etcdadm binary/tarball built for this eks-d kube version
+	Etcdadm Archive `json:"etcdadm,omitempty"`
+
+	// Crictl points to the crictl binary/tarball built for this eks-d kube version
+	Crictl Archive `json:"crictl,omitempty"`
 }
 
 type OSImageBundle struct {
-	Bottlerocket OSImage `json:"bottlerocket,omitempty"`
-	Ubuntu       OSImage `json:"ubuntu,omitempty"`
-}
-
-type OSImage struct {
-	Archive `json:",inline"`
-	Etcdadm Archive `json:"etcdadm,omitempty"`
-	Crictl  Archive `json:"crictl,omitempty"`
+	Bottlerocket Archive `json:"bottlerocket,omitempty"`
+	Ubuntu       Archive `json:"ubuntu,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {
@@ -206,6 +206,7 @@ type DockerBundle struct {
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeRbacProxy        Image    `json:"kubeRbacProxy"`
 	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
@@ -307,6 +308,7 @@ type TinkerbellBundle struct {
 	Version              string                `json:"version"`
 	ClusterAPIController Image                 `json:"clusterAPIController"`
 	KubeVip              Image                 `json:"kubeVip"`
+	Envoy                Image                 `json:"envoy"`
 	Components           Manifest              `json:"components"`
 	Metadata             Manifest              `json:"metadata"`
 	ClusterTemplate      Manifest              `json:"clusterTemplate"`

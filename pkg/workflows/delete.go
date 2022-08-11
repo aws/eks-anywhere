@@ -16,18 +16,18 @@ type Delete struct {
 	bootstrapper   interfaces.Bootstrapper
 	provider       providers.Provider
 	clusterManager interfaces.ClusterManager
-	addonManager   interfaces.AddonManager
+	gitOpsManager  interfaces.GitOpsManager
 	writer         filewriter.FileWriter
 }
 
 func NewDelete(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
+	clusterManager interfaces.ClusterManager, gitOpsManager interfaces.GitOpsManager,
 ) *Delete {
 	return &Delete{
 		bootstrapper:   bootstrapper,
 		provider:       provider,
 		clusterManager: clusterManager,
-		addonManager:   addonManager,
+		gitOpsManager:  gitOpsManager,
 	}
 }
 
@@ -44,7 +44,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		Bootstrapper:    c.bootstrapper,
 		Provider:        c.provider,
 		ClusterManager:  c.clusterManager,
-		AddonManager:    c.addonManager,
+		GitOpsManager:   c.gitOpsManager,
 		WorkloadCluster: workloadCluster,
 		ClusterSpec:     clusterSpec,
 	}
@@ -97,7 +97,7 @@ func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.
 		return &deleteWorkloadCluster{}
 	}
 	logger.Info("Creating management cluster")
-	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
+	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts(commandContext.ClusterSpec)
 	if err != nil {
 		logger.Error(err, "Error getting management options from provider")
 		commandContext.SetError(err)
@@ -201,7 +201,7 @@ func (s *deleteWorkloadCluster) Checkpoint() *task.CompletedTask {
 
 func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Clean up Git Repo")
-	err := commandContext.AddonManager.CleanupGitRepo(ctx, commandContext.ClusterSpec)
+	err := commandContext.GitOpsManager.CleanupGitRepo(ctx, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

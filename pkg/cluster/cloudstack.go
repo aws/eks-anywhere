@@ -18,9 +18,6 @@ func cloudstackEntry() *ConfigManagerEntry {
 		},
 		Defaulters: []Defaulter{
 			func(c *Config) error {
-				if c.CloudStackDatacenter != nil {
-					c.CloudStackDatacenter.SetDefaults()
-				}
 				return nil
 			},
 		},
