@@ -183,6 +183,8 @@ github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbt
 github.com/PuerkitoBio/urlesc v0.0.0-20160726150825-5bd2802263f2/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 h1:d+Bc7a5rLufV/sSk/8dngufqelfh6jnri85riMAaF/M=
 github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578/go.mod h1:uGdkoq3SwY9Y+13GIhn11/XLaGBb4BfwItxLd5jeuXE=
+github.com/ReneKroon/ttlcache v1.7.0 h1:8BkjFfrzVFXyrqnMtezAaJ6AHPSsVV10m6w28N/Fgkk=
+github.com/ReneKroon/ttlcache v1.7.0/go.mod h1:8BGGzdumrIjWxdRx8zpK6L3oGMWvIXdvB2GD1cfvd+I=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d h1:UrqY+r/OJnIp5u0s1SbQ8dVfLCZJsnvazdBP5hS4iRs=
 github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d/go.mod h1:HI8ITrYtUY+O+ZhtlqUnD8+KwNPOyugEhfP9fdUIaEQ=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
@@ -278,7 +280,6 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3 h1:frW4ikGcxfAEDfmQqWgMLp+F1n4n
 github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoHYgRmgfGM4mgsLYtcObdveU=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/cluster-api-provider-cloudstack v0.4.4/go.mod h1:fafGBTlbWJKQz5EuGV36U0smcZ4BYPZ0bxCyz1nLdgg=
 github.com/aws/eks-anywhere-packages v0.1.11 h1:CC8tdEEWrcmzJxKgpMuK6SHFNeHVyZXSi4GFXOioJXQ=
 github.com/aws/eks-anywhere-packages v0.1.11/go.mod h1:g4HXRg4xMgofXwDrlOtMYVkKEQQC3JXgduQTkDfPf6U=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
@@ -1487,8 +1488,6 @@ github.com/rakyll/statik v0.1.6/go.mod h1:OEi9wJV/fMUAGx1eNjq75DKDsJVuEv1U0oYdX6
 github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Unghqrcc=
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/rejoshed/cluster-api-provider-cloudstack v0.4.5-rc3.0.20220716163849-c554f7451de3 h1:2qtcxIZ/5Z1WbeoPeBzlqCCIdwWzeKsJdrt2NsGGrWg=
-github.com/rejoshed/cluster-api-provider-cloudstack v0.4.5-rc3.0.20220716163849-c554f7451de3/go.mod h1:qJ9cAquiVi7/uwAwlKiQLMVrfskkXF5orz68Shltsh0=
 github.com/remyoudompheng/bigfft v0.0.0-20170806203942-52369c62f446/go.mod h1:uYEyJGbgTkfkS4+E/PavXkNJcbFIpEtjt2B0KDQ5+9M=
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
@@ -2697,6 +2696,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15/go.mod h1:LEScyz
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22/go.mod h1:LEScyzhFmoF5pso/YSeBstl57mOzx9xlU9n85RGrDQg=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.25/go.mod h1:Mlj9PNLmG9bZ6BHFwFKDo5afkpWyUISkb9Me0GnK66I=
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.27/go.mod h1:tq2nT0Kx7W+/f2JVE+zxYtUhdjuELJkVpNz+x/QN5R4=
+sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1 h1:MUwyt8wO9+yQmTXfZiSz55nELa+q1dPwS/YIsmqsmiQ=
+sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1/go.mod h1:Exwre/HXXrntfbct3j64F6pQmKkN/I/vD1rCyzFehxY=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1 h1:qs7zSFkAL9tU8tHob7bmrEWfKsOU5JaskpeSIYrhQCc=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1/go.mod h1:Z6MDQcZjX5DUcEFStotBptj2fMR4vgCVPAnw6inIY20=
 sigs.k8s.io/cluster-api/test v1.0.0 h1:PeWOLXtDGYMmzXwGX+NtH7Xxx6BtS83DT7vKzITY5X0=
