@@ -1,0 +1,35 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+  datacenterRef:
+    kind: DockerDatacenterConfig
+    name: eksa-unit-test
+  externalEtcdConfiguration:
+    count: 1
+  kubernetesVersion: "1.22"
+  managementCluster:
+    name: dev-cluster
+  workerNodeGroupConfigurations:
+  - count: 1
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: DockerDatacenterConfig
+metadata:
+  name: eksa-unit-test2
+spec: {}
+---

@@ -1,0 +1,70 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "myHostIp"
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: eksa-unit-test-cp
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: eksa-unit-test2
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - name: workers-1
+      count: 1
+      machineGroupRef:
+        kind: VSphereMachineConfig
+        name: eksa-unit-test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  datacenter: "myDatacenter"
+  network: "myNetwork"
+  server: "myServer"
+  insecure: false
+  thumbprint: "myTlsThumbprint"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-unit-test-cp
+spec:
+  diskGiB: 25
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  diskGiB: 25
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
+---
