@@ -6,15 +6,14 @@ package e2e
 import (
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
 func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
-			eksaPackageControllerHelmChartName, eksaPackageControllerHelmURI,
-			eksaPackageControllerHelmVersion, eksaPackageControllerHelmValues),
+		framework.WithPackageConfig(t, eksAnywherePackagesBundleUri,
+			eksAnywherePackagesHelmChartName, eksAnywherePackagesHelmUri,
+			eksAnywherePackagesHelmVersion, eksAnywherePackagesHelmValues),
 	)
 	runHarborInstallSimpleFlow(test) // other args as necessary
 }
