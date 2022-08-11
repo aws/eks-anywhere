@@ -386,7 +386,7 @@ func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.
 func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
 	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
 	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
-		return fmt.Errorf("error: timed out waiting for the condition on %v", property)
+		return fmt.Errorf("error: timed out waiting for condition %v on %v", forCondition, property)
 	}
 	kubectlTimeoutString := fmt.Sprintf("%.*fs", timeoutPrecision, secondsRemainingUntilTimeout)
 

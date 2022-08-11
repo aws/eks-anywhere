@@ -347,8 +347,8 @@ func TestKubectlWaitRetryPolicy(t *testing.T) {
 func TestWaitForTimeout(t *testing.T) {
 	k := executables.Kubectl{}
 	timeoutTime := time.Now()
-	err := executables.CallKubectlPrivateWait(&k, nil, "", timeoutTime, "", "property", "")
-	if err == nil || err.Error() != "error: timed out waiting for the condition on property" {
+	err := executables.CallKubectlPrivateWait(&k, nil, "", timeoutTime, "myCondition", "myProperty", "")
+	if err == nil || err.Error() != "error: timed out waiting for condition myCondition on myProperty" {
 		t.Errorf("kubectl private wait didn't timeout")
 	}
 }
