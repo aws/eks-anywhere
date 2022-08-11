@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"math"
 	"regexp"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/aws/eks-anywhere/pkg/retrier" //nolint:gci
+	// ^ gci complains Expected 'e', Found '"'
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -41,7 +43,7 @@ import (
 const (
 	kubectlPath        = "kubectl"
 	timeoutPrecision   = 2
-	minimumWaitTimeout = 10 ^ -timeoutPrecision // Smallest timeout value given the precision
+	minimumWaitTimeout = 0.01 // Smallest express-able timeout value given the precision
 )
 
 var (
