@@ -74,7 +74,7 @@ func installPackageController(ctx context.Context) error {
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
 	eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 	ctrlClient := curatedpackages.NewPackageControllerClient(
-		deps.HelmInsecure,
+		deps.Helm,
 		deps.Kubectl,
 		clusterSpec.Cluster.Name,
 		kubeConfig,

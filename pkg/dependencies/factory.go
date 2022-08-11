@@ -59,8 +59,7 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
-	HelmSecure                *executables.Helm
-	HelmInsecure              *executables.Helm
+	Helm                      *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
@@ -282,7 +281,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelmSecure()
+		f.WithDocker().WithKubectl().WithWriter().WithHelm()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -374,7 +373,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
-				f.dependencies.HelmSecure,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				tinkerbellIp,
 				time.Now,
@@ -596,15 +595,10 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithHelmSecure() *Factory {
+func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmSecure != nil {
-			return nil
-		}
-
-		var opts []executables.HelmOpt
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -613,31 +607,7 @@ func (f *Factory) WithHelmSecure() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithHelmInsecure() *Factory {
-	f.WithExecutableBuilder().WithProxyConfiguration()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmInsecure != nil {
-			return nil
-		}
-
-		opts := []executables.HelmOpt{executables.WithInsecure()}
-		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
-		}
-
-		if f.proxyConfiguration != nil {
-			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
-		}
-
-		f.dependencies.HelmInsecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -652,9 +622,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelmInsecure()
+		f.WithKubectl().WithHelm(executables.WithInsecure())
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.HelmInsecure)
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
 		}
 	}
 
@@ -859,7 +829,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 }
 
 func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageControllerClient != nil {
@@ -871,7 +841,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.HelmInsecure,
+			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			kubeConfig,
@@ -905,7 +875,7 @@ func (f *Factory) WithPackageClient() *Factory {
 
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
 	if registryName != "" {
-		f.WithHelmInsecure()
+		f.WithHelm(executables.WithInsecure())
 	} else {
 		f.WithManifestReader()
 	}
@@ -917,7 +887,7 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 
 		if registryName != "" {
 			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
-				f.dependencies.HelmInsecure,
+				f.dependencies.Helm,
 				registryName,
 			)
 		} else {

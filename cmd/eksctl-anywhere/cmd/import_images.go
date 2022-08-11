@@ -104,7 +104,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	deps, err = factory.
 		WithRegistryMirror(c.RegistryEndpoint).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
-		WithHelmInsecure().
+		WithHelm(executables.WithInsecure()).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -120,7 +120,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
 		),
 		ChartImporter: helm.NewChartRegistryImporter(
-			deps.HelmInsecure, artifactsFolder,
+			deps.Helm, artifactsFolder,
 			c.RegistryEndpoint,
 			username,
 			password,
