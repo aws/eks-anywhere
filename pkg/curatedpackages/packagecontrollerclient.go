@@ -99,7 +99,7 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	}
 
 	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
-	stdOut, err := pc.kubectl.CreateFromYaml(ctx, result, params...)
+	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
 	if err != nil {
 		return fmt.Errorf("creating secret %v", err)
 	}

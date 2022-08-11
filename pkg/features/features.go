@@ -6,7 +6,6 @@ const (
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
-	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 )
 
@@ -53,13 +52,6 @@ func SnowProvider() Feature {
 	return Feature{
 		Name:     "Snow provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(SnowProviderEnvVar),
-	}
-}
-
-func CuratedPackagesSupport() Feature {
-	return Feature{
-		Name:     "Curated Packages Support",
-		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
 	}
 }
 

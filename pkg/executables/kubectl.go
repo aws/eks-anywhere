@@ -1629,6 +1629,6 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kub
 	return nil
 }
 
-func (k *Kubectl) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
+func (k *Kubectl) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
 	return k.ExecuteWithStdin(ctx, yaml, opts...)
 }

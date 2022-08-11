@@ -22,7 +22,7 @@ const (
 	padding    = 0
 	padChar    = '\t'
 	flags      = 0
-	CustomName = "my-"
+	CustomName = "generated-"
 	kind       = "Package"
 )
 
@@ -123,7 +123,7 @@ func (pc *PackageClient) InstallPackage(ctx context.Context, bp *packagesv1.Bund
 	if err != nil {
 		return err
 	}
-	stdOut, err := pc.kubectl.CreateFromYaml(ctx, packageYaml, params...)
+	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, packageYaml, params...)
 	if err != nil {
 		return err
 	}

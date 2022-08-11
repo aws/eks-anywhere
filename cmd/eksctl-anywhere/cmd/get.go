@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
 
@@ -25,9 +24,6 @@ func init() {
 }
 
 func preRunPackages(cmd *cobra.Command, args []string) error {
-	if !features.IsActive(features.CuratedPackagesSupport()) {
-		return fmt.Errorf("this command is currently not supported")
-	}
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		if err := viper.BindPFlag(flag.Name, flag); err != nil {
 			log.Fatalf("Error initializing flags: %v", err)

@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/eks-anywhere-packages v0.1.11
+	github.com/aws/eks-anywhere-packages v0.2.0-alpha.3
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/smithy-go v1.11.2
