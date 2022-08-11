@@ -213,6 +213,10 @@ func (c *createTestSetup) skipCuratedPackagesInstallation() {
 	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(nil)
 }
 
+func (c *createTestSetup) expectCuratedPackagesInstallationFail() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(errors.New("curated Packages installation failed"))
+}
+
 func (c *createTestSetup) expectInstallGitOpsManager() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
@@ -269,7 +273,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
-	test.skipCuratedPackagesInstallation()
+	test.expectCuratedPackagesInstallationFail()
 
 	err := test.run()
 	if err != nil {
