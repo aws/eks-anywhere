@@ -166,6 +166,8 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return err
 	}
 
+	prevDatacenter.SetDefaults()
+
 	oSpec := prevDatacenter.Spec
 	nSpec := clusterSpec.CloudStackDatacenter.Spec
 
@@ -1006,6 +1008,8 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	if err != nil {
 		return nil, nil, err
 	}
+
+	csdc.SetDefaults()
 	currentSpec.CloudStackDatacenter = csdc
 
 	controlPlaneTemplateName, err = p.getControlPlaneNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
@@ -1173,6 +1177,7 @@ func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, current
 	if err != nil {
 		return false, err
 	}
+	existingCsdc.SetDefaults()
 	currentSpec.CloudStackDatacenter = existingCsdc
 	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")

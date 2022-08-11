@@ -868,8 +868,8 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 			},
 		},
 		{
-			testName:         "one datacenter",
-			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig.json",
+			testName:         "one datacenter availability zones",
+			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig_az.json",
 			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "CloudStackDatacenterConfig",
@@ -889,6 +889,29 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 						Domain:         "testDomain",
 						Account:        "testAccount",
 					}},
+				},
+			},
+		},
+		{
+			testName:         "one datacenter legacy zones",
+			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig.json",
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "CloudStackDatacenterConfig",
+					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
+					Domain:  "testDomain",
+					Account: "testAccount",
+					Zones: []v1alpha1.CloudStackZone{
+						{
+							Name: "testZone",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "testNetwork",
+							},
+						},
+					},
 				},
 			},
 		},
