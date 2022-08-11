@@ -83,8 +83,8 @@ func (r *CloudStackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDatacenterKind).GroupKind(), r.Name, allErrs)
 }
 
-func isValidUUID(uuid string) bool {
-	r := regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$")
+func isValidAzConversionName(uuid string) bool {
+	r := regexp.MustCompile("^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}")
 	return r.MatchString(uuid)
 }
 
@@ -92,13 +92,13 @@ func isCapcV1beta1ToV1beta2Upgrade(new, old *CloudStackDatacenterConfigSpec) boo
 	if len(new.AvailabilityZones) != len(old.AvailabilityZones) {
 		return false
 	}
-	for _, az := range new.AvailabilityZones {
+	for _, az := range old.AvailabilityZones {
 		if !strings.HasPrefix(az.Name, DefaultCloudStackAZPrefix) {
 			return false
 		}
 	}
-	for _, az := range old.AvailabilityZones {
-		if !isValidUUID(az.Name) {
+	for _, az := range new.AvailabilityZones {
+		if !isValidAzConversionName(az.Name) {
 			return false
 		}
 	}
@@ -113,12 +113,14 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	if isCapcV1beta1ToV1beta2Upgrade(&new.Spec, &old.Spec) {
 		return allErrs
 	}
-	newAzMap := make(map[string]*CloudStackAvailabilityZone)
+	newAzMap := make(map[string]CloudStackAvailabilityZone)
 	for _, az := range new.Spec.AvailabilityZones {
-		newAzMap[az.Name] = &az
+		newAzMap[az.Name] = az
 	}
+	atLeastOneAzOverlap := false
 	for _, oldAz := range old.Spec.AvailabilityZones {
 		if newAz, ok := newAzMap[oldAz.Name]; ok {
+			atLeastOneAzOverlap = true
 			if newAz.ManagementApiEndpoint != oldAz.ManagementApiEndpoint {
 				allErrs = append(
 					allErrs,
@@ -144,6 +146,12 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 				)
 			}
 		}
+	}
+	if !atLeastOneAzOverlap {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "availabilityZone"), new.Spec.AvailabilityZones, "at least one AvailabilityZone must be shared between new and old CloudStackDatacenterConfig specs"),
+		)
 	}
 
 	return allErrs

@@ -31,6 +31,37 @@ func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2Upgrade(t *testing.T) {
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.AvailabilityZones[0].Name = "default-az-0"
+	vNew := vOld.DeepCopy()
+
+	vNew.Spec.AvailabilityZones[0].Name = "12345678-abcd-4abc-abcd-abcd12345678"
+	g := NewWithT(t)
+	g.Expect(vNew.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestCloudStackDatacenterValidateUpdateV1beta1ToV1beta2UpgradeAddAzInvalid(t *testing.T) {
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.AvailabilityZones[0].Name = "default-az-0"
+	vNew := vOld.DeepCopy()
+
+	vNew.Spec.AvailabilityZones[0].Name = "12345678-abcd-4abc-abcd-abcd12345678"
+	vNew.Spec.AvailabilityZones = append(vNew.Spec.AvailabilityZones, vNew.Spec.AvailabilityZones[0])
+	g := NewWithT(t)
+	g.Expect(vNew.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCloudStackDatacenterValidateUpdateRenameAzInvalid(t *testing.T) {
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.AvailabilityZones[0].Name = "default-az-0"
+	vNew := vOld.DeepCopy()
+
+	vNew.Spec.AvailabilityZones[0].Name = "shinyNewAzName"
+	g := NewWithT(t)
+	g.Expect(vNew.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
 func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.AvailabilityZones[0].ManagementApiEndpoint = "oldCruftyManagementApiEndpoint"

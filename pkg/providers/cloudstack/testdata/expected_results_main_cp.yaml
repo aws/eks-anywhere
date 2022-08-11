@@ -41,7 +41,7 @@ spec:
         name: net1
     domain: domain1
     account: admin
-    acsendpoint:
+    acsEndpoint:
       name: global
       namespace: eksa-system
 ---
@@ -69,7 +69,7 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      affinitygroupids:
+      affinityGroupIDs:
       - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -473,5 +473,5 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      affinitygroupids:
+      affinityGroupIDs:
       - etcd-affinity

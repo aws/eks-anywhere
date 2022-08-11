@@ -116,7 +116,7 @@ spec:
         label: data_disk
       details:
         foo: bar
-      affinitygroupids:
+      affinityGroupIDs:
       - worker-affinity
 
 ---

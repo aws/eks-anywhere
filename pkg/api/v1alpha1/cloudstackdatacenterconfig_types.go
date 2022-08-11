@@ -38,6 +38,7 @@ type CloudStackDatacenterConfigSpec struct {
 	// Deprecated: Please use AvailabilityZones instead
 	Domain string `json:"domain,omitempty"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+	// +optional
 	// Deprecated: Please use AvailabilityZones instead
 	Zones []CloudStackZone `json:"zones,omitempty"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
@@ -49,7 +50,6 @@ type CloudStackDatacenterConfigSpec struct {
 	// Deprecated: Please use AvailabilityZones instead
 	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
 	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
-	// +optional
 	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
 }
 

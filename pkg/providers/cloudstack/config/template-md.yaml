@@ -197,7 +197,7 @@ spec:
       affinity: '{{ .cloudstackAffinity }}'
 {{- end }}
 {{- if .cloudstackAffinityGroupIds }}
-      affinitygroupids:
+      affinityGroupIDs:
       {{- range .cloudstackAffinityGroupIds}}
       - {{.}}
       {{- end }}

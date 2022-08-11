@@ -37,7 +37,7 @@ spec:
         name: net1
     domain: domain1
     account: admin
-    acsendpoint:
+    acsEndpoint:
       name: global
       namespace: eksa-system
 ---
