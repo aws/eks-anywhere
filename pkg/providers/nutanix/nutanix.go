@@ -87,10 +87,8 @@ func NewProvider(
 		},
 	}
 }
-func (p *nutanixProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	env := map[string]string{}
-
-	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
+func (p *nutanixProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+	return nil, nil
 }
 
 func (p *nutanixProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
