@@ -1370,6 +1370,6 @@ func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, k
 	return nil
 }
 
-func (p *vsphereProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
+func (p *vsphereProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 	return nil
 }

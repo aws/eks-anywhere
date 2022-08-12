@@ -155,6 +155,13 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	allHardware := p.catalogue.AllHardware()
 	if len(allHardware) == 0 {
@@ -195,13 +202,6 @@ func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
-}
-
-func (p *Provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
-	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (p *Provider) hardareCSVIsProvided() bool {
