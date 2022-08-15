@@ -698,6 +698,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"externalAttacherImage":                        bundle.KubeDistro.ExternalAttacher.VersionedImage(),
 		"externalProvisionerImage":                     bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeRbacProxyImage":                           bundle.CloudStack.KubeRbacProxy.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,

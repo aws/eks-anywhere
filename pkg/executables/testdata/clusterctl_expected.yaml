@@ -79,6 +79,9 @@ images:
   infrastructure-aws/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+  infrastructure-cloudstack/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.8.0
   infrastructure-vsphere/manager:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release
     tag: v0.7.8-eks-a-0.0.1.build.38

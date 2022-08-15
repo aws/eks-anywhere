@@ -978,6 +978,9 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
 					},
+					KubeRbacProxy: releasev1alpha1.Image{
+						URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
+					},
 					KubeVip: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
