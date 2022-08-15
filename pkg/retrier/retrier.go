@@ -63,6 +63,10 @@ func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 // Retry runs the fn function until it either successful completes (not error),
 // the set timeout reached or the retry policy aborts the execution
 func (r *Retrier) Retry(fn func() error) error {
+	// While it seems aberrant to call a method with a nil receiver, several unit tests actually do.  With a previous
+	// version of this module (which didn't attempt to dereference the receiver until after the wrapped function failed)
+	// these passed.  Changes below, to log the receiver struct's key params changed that breaking the unit tests.
+	// The below conditional block restores the original behavior, enabling these tests to again pass.
 	if r == nil {
 		return fn()
 	}
