@@ -213,3 +213,11 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 	g.Expect(config.SnowMachineConfigs["machine-1"]).To(Equal(machineControlPlane))
 	g.Expect(config.SnowMachineConfigs["machine-2"]).To(Equal(machineWorker))
 }
+
+func TestParseConfigMissingSnowDatacenter(t *testing.T) {
+	g := NewWithT(t)
+	got, err := cluster.ParseConfigFromFile("testdata/cluster_snow_missing_datacenter.yaml")
+
+	g.Expect(err).To(Not(HaveOccurred()))
+	g.Expect(got.DockerDatacenter).To(BeNil())
+}
