@@ -13,6 +13,10 @@ func ValidateAuthenticationForGitProvider(clusterSpec *cluster.Spec, cliConfig *
 		return nil
 	}
 
+	if cliConfig == nil {
+		return nil
+	}
+
 	if cliConfig.GitPrivateKeyFile == "" {
 		return errors.New("provide a path to a private key file via the EKSA_GIT_PRIVATE_KEY in order to use the generic git Flux provider")
 	}
