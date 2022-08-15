@@ -1142,6 +1142,15 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	}
 }
 
+func TestProviderGenerateCAPISpecForUpgradeIncompleteClusterSpec(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.CloudStackDatacenter = nil
+	templateBuilder := NewCloudStackTemplateBuilder(nil, nil, nil, nil, nil)
+	if _, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec); err == nil {
+		t.Fatalf("Expected error for incomplete cluster spec, but no error occurred")
+	}
+}
+
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
 	tests := []struct {
 		testName          string
