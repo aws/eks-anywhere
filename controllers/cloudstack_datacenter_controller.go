@@ -43,7 +43,7 @@ func (r *CloudStackDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) erro
 func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("cloudstackDatacenter", req.NamespacedName)
 
-	// Fetch the VsphereDatacenter object
+	// Fetch the CloudStackDatacenter object
 	cloudstackDatacenter := &anywherev1.CloudStackDatacenterConfig{}
 	if err := r.client.Get(ctx, req.NamespacedName, cloudstackDatacenter); err != nil {
 		return ctrl.Result{}, err
@@ -67,14 +67,14 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}()
 
-	// There's no need to go any further if the VsphereDatacenterConfig is marked for deletion.
+	// There's no need to go any further if the CloudStackDatacenterConfig is marked for deletion.
 	if !cloudstackDatacenter.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, cloudstackDatacenter, log)
 	}
 
 	result, err := r.reconcile(ctx, cloudstackDatacenter, log)
 	if err != nil {
-		log.Error(err, "Failed to reconcile VsphereDatacenterConfig")
+		log.Error(err, "Failed to reconcile CloudStackDatacenterConfig")
 	}
 	return result, err
 }
@@ -82,15 +82,15 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
 	// Set up envs for executing Govc cmd and default values for datacenter config
 	if err := reconciler.SetupEnvVars(ctx, cloudstackDatacenter, r.client); err != nil {
-		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
+		log.Error(err, "Failed to set up env vars and default values for CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
 	}
 	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed setting default values for cloudstack datacenter config: %v", err)
 	}
-	// Determine if VsphereDatacenterConfig is valid
+	// Determine if CloudStackDatacenterConfig is valid
 	if err := r.validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
-		log.Error(err, "Failed to validate VsphereDatacenterConfig")
+		log.Error(err, "Failed to validate CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
 	}
 
