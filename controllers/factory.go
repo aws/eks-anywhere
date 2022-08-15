@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
@@ -25,18 +26,20 @@ type Factory struct {
 	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers       Reconcilers
 
-	tracker                  *remote.ClusterCacheTracker
-	registry                 *clusters.ProviderClusterReconcilerRegistry
-	vsphereClusterReconciler *vspherereconciler.Reconciler
-	snowClusterReconciler    *snowreconciler.Reconciler
-	logger                   logr.Logger
-	deps                     *dependencies.Dependencies
+	tracker                     *remote.ClusterCacheTracker
+	registry                    *clusters.ProviderClusterReconcilerRegistry
+	vsphereClusterReconciler    *vspherereconciler.Reconciler
+	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
+	snowClusterReconciler       *snowreconciler.Reconciler
+	logger                      logr.Logger
+	deps                        *dependencies.Dependencies
 }
 
 type Reconcilers struct {
-	ClusterReconciler           *ClusterReconciler
-	VSphereDatacenterReconciler *VSphereDatacenterReconciler
-	SnowMachineConfigReconciler *SnowMachineConfigReconciler
+	ClusterReconciler              *ClusterReconciler
+	VSphereDatacenterReconciler    *VSphereDatacenterReconciler
+	CloudStackDatacenterReconciler *CloudStackDatacenterReconciler
+	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
 }
 
 type buildStep func(ctx context.Context) error
@@ -109,6 +112,26 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 	return f
 }
 
+func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
+	f.dependencyFactory.WithCloudStackDefaulter().WithCloudStackValidator()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.reconcilers.CloudStackDatacenterReconciler != nil {
+			return nil
+		}
+
+		f.reconcilers.CloudStackDatacenterReconciler = NewCloudStackDatacenterReconciler(
+			f.manager.GetClient(),
+			f.logger,
+			f.deps.CloudStackValidator,
+			f.deps.CloudStackDefaulter,
+		)
+
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.SnowMachineConfigReconciler != nil {
@@ -151,8 +174,9 @@ func (f *Factory) withTracker() *Factory {
 }
 
 const (
-	snowProviderName    = "snow"
-	vSphereProviderName = "vsphere"
+	snowProviderName       = "snow"
+	vSphereProviderName    = "vsphere"
+	cloudStackProviderName = "cloudstack"
 )
 
 func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterctlv1.Provider) *Factory {
@@ -168,6 +192,8 @@ func (f *Factory) WithProviderClusterReconcilerRegistry(capiProviders []clusterc
 			f.withSnowClusterReconciler()
 		case vSphereProviderName:
 			f.withVSphereClusterReconciler()
+		case cloudStackProviderName:
+			f.withCloudStackClusterReconciler()
 		default:
 			f.logger.Info("Found unknown CAPI provider, ignoring", "providerName", p.ProviderName)
 		}
@@ -201,6 +227,28 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 			f.tracker,
 		)
 		f.registryBuilder.Add(anywherev1.VSphereDatacenterKind, f.vsphereClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCloudStackClusterReconciler() *Factory {
+	f.dependencyFactory.WithCloudStackDefaulter().WithCloudStackValidator()
+	f.withTracker()
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.cloudstackClusterReconciler != nil {
+			return nil
+		}
+
+		f.cloudstackClusterReconciler = cloudstackreconciler.New(
+			f.manager.GetClient(),
+			f.deps.CloudStackValidator,
+			f.deps.CloudStackDefaulter,
+			f.tracker,
+		)
+		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 
 		return nil
 	})

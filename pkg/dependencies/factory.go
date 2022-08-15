@@ -84,6 +84,8 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	CloudStackValidator       *cloudstack.Validator
+	CloudStackDefaulter       *cloudstack.Defaulter
 	SnowValidator             *snow.Validator
 }
 
@@ -1064,6 +1066,38 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 		}
 
 		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCloudStackValidator() *Factory {
+	f.WithGovc()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CloudStackValidator != nil {
+			return nil
+		}
+
+		f.dependencies.CloudStackValidator = cloudstack.NewValidator(f.dependencies.Cmk)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCloudStackDefaulter() *Factory {
+	f.WithCmk()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CloudStackDefaulter != nil {
+			return nil
+		}
+
+		f.dependencies.CloudStackDefaulter = cloudstack.NewDefaulter(f.dependencies.Cmk)
 
 		return nil
 	})

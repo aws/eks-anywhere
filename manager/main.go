@@ -119,7 +119,8 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 		factory := controllers.NewFactory(ctrl.Log, mgr).
 			WithClusterReconciler(providers).
 			WithVSphereDatacenterReconciler().
-			WithSnowMachineConfigReconciler()
+			WithSnowMachineConfigReconciler().
+			WithCloudStackDatacenterReconciler()
 
 		reconcilers, err := factory.Build(ctx)
 		if err != nil {
@@ -136,6 +137,12 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 		setupLog.Info("Setting up vspheredatacenter controller")
 		if err := (reconcilers.VSphereDatacenterReconciler).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
+			os.Exit(1)
+		}
+
+		setupLog.Info("Setting up cloudstackdatacenter controller")
+		if err := (reconcilers.CloudStackDatacenterReconciler).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackDatacenterKind)
 			os.Exit(1)
 		}
 
