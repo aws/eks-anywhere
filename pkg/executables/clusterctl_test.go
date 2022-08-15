@@ -488,6 +488,7 @@ var versionBundle = &cluster.VersionsBundle{
 			ClusterAPIController: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
+			KubeRbacProxy: kubeProxyVersion08,
 		},
 		Docker: v1alpha1.DockerBundle{
 			Version: "v0.3.19",
