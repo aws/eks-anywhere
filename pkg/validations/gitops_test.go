@@ -37,6 +37,14 @@ func TestValidateGitOpsGitProviderNoAuthForWorkloadCluster(t *testing.T) {
 			},
 		},
 		{
+			name:    "cliConfig nil",
+			wantErr: nil,
+			git: &v1alpha1.GitProviderConfig{
+				RepositoryUrl: "testRepo",
+			},
+			cliConfig: nil,
+		},
+		{
 			name:    "Empty known host",
 			wantErr: fmt.Errorf("provide a path to an SSH Known Hosts file which contains a valid entry associate with the given private key via the EKSA_GIT_SSH_KNOWN_HOSTS environment variable"),
 			git: &v1alpha1.GitProviderConfig{
