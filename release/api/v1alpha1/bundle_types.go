@@ -235,6 +235,7 @@ type FluxBundle struct {
 type PackageBundle struct {
 	Version    string `json:"version,omitempty"`
 	Controller Image  `json:"packageController"`
+	Refreshser Image  `json:"tokenRefresher"`
 	HelmChart  Image  `json:"helmChart,omitempty"`
 }
 

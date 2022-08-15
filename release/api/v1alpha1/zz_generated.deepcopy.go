@@ -603,6 +603,7 @@ func (in *OSImageBundle) DeepCopy() *OSImageBundle {
 func (in *PackageBundle) DeepCopyInto(out *PackageBundle) {
 	*out = *in
 	in.Controller.DeepCopyInto(&out.Controller)
+	in.Refreshser.DeepCopyInto(&out.Refreshser)
 	in.HelmChart.DeepCopyInto(&out.HelmChart)
 }
 

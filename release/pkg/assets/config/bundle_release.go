@@ -390,6 +390,9 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "eks-anywhere-packages",
 			},
 			{
+				RepoName: "ecr-token-refresher",
+			},
+			{
 				AssetName:            "eks-anywhere-packages-helm",
 				RepoName:             "eks-anywhere-packages",
 				TrimVersionSignifier: true,
