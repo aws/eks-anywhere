@@ -11,6 +11,9 @@ spec:
       cidrBlocks: {{.podCidrs}}
     services:
       cidrBlocks: {{.serviceCidrs}}
+  controlPlaneEndpoint:
+    host: {{.controlPlaneEndpointHost}}
+    port: {{.controlPlaneEndpointPort}}
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane

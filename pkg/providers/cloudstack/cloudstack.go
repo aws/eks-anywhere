@@ -168,8 +168,9 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 
 	prevDatacenter.SetDefaults()
 
-	oSpec := prevDatacenter.Spec
-	nSpec := clusterSpec.CloudStackDatacenter.Spec
+	if err = clusterSpec.CloudStackDatacenter.ValidateUpdate(prevDatacenter); err != nil {
+		return err
+	}
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
@@ -183,23 +184,6 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 			if err != nil {
 				return err
-			}
-		}
-	}
-
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
-	}
-	if nSpec.Account != oSpec.Account {
-		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
-	}
-
-	if len(nSpec.Zones) != len(oSpec.Zones) {
-		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
-	} else {
-		for i, zone := range nSpec.Zones {
-			if !zone.Equal(&oSpec.Zones[i]) {
-				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
 			}
 		}
 	}
@@ -589,8 +573,8 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 }
 
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	for index, zone := range oldCsdc.Spec.Zones {
-		if !zone.Equal(&newCsdc.Spec.Zones[index]) {
+	for index, zone := range oldCsdc.Spec.AvailabilityZones {
+		if !zone.Equal(&newCsdc.Spec.AvailabilityZones[index]) {
 			return true
 		}
 	}
@@ -910,8 +894,7 @@ func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig)
-	if !needsNewControlPlaneTemplate {
+	if !needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig) {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, oldCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return "", err

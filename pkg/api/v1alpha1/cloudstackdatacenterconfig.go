@@ -17,7 +17,6 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 			Name: clusterName,
 		},
 		Spec: CloudStackDatacenterConfigSpec{
-			Domain: "domain1",
 			AvailabilityZones: []CloudStackAvailabilityZone{
 				{
 					Name: "az-1",
@@ -25,9 +24,10 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 						Network: CloudStackResourceIdentifier{},
 					},
 					CredentialsRef: "global",
+					Account: "admin",
+					Domain: "domain1",
 				},
 			},
-			Account: "admin",
 		},
 	}
 }
