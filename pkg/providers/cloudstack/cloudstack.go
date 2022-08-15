@@ -623,12 +623,12 @@ type CloudStackTemplateBuilder struct {
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	if clusterSpec.CloudStackDatacenter == nil {
+		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to generate CAPI spec control plane")
+	}
 	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
-	}
-	if clusterSpec.CloudStackDatacenter == nil {
-		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to build template map CP")
 	}
 	values := buildTemplateMapCP(clusterSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
