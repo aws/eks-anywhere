@@ -63,7 +63,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	if err := r.client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
 		return controller.Result{}, err
 	}
-	// Set up envs for executing Govc cmd and default values for datacenter config
+	// Set up envs for executing Cmk cmd and default values for datacenter config
 	if err := SetupEnvVars(ctx, dataCenterConfig, r.client); err != nil {
 		log.Error(err, "Failed to set up env vars and default values for CloudStackDatacenterConfig")
 		return controller.Result{}, err

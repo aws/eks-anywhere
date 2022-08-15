@@ -1074,7 +1074,7 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 }
 
 func (f *Factory) WithCloudStackValidator() *Factory {
-	f.WithGovc()
+	f.WithCmk()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CloudStackValidator != nil {
