@@ -41,7 +41,7 @@ require (
 	k8s.io/client-go v0.23.4
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/cluster-api v1.1.3
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.5-rc3
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -62,7 +62,9 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
+	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
+	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
