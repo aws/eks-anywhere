@@ -85,10 +85,10 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 	}
 
 	bundle := anywherev1alpha1.PackageBundle{
-		Version:    version,
-		Controller: bundleImageArtifacts["eks-anywhere-packages"],
-		Refreshser: bundleImageArtifacts["ecr-token-refresher"],
-		HelmChart:  bundleImageArtifacts["eks-anywhere-packages-helm"],
+		Version:        version,
+		Controller:     bundleImageArtifacts["eks-anywhere-packages"],
+		TokenRefresher: bundleImageArtifacts["ecr-token-refresher"],
+		HelmChart:      bundleImageArtifacts["eks-anywhere-packages-helm"],
 	}
 	return bundle, nil
 }
