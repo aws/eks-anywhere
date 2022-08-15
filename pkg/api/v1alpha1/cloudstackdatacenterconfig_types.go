@@ -17,11 +17,14 @@ package v1alpha1
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+const DefaultCloudStackAZPrefix = "default-az"
 
 // CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigSpec struct {
@@ -31,12 +34,20 @@ type CloudStackDatacenterConfigSpec struct {
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
 	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Domain string `json:"domain,omitempty"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Zones []CloudStackZone `json:"zones,omitempty"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+	// +optional
+	// Deprecated: Please use AvailabilityZones instead
 	ManagementApiEndpoint string `json:"managementApiEndpoint,omitempty"`
 	// AvailabilityZones list of different partitions to distribute VMs across - corresponds to a list of CAPI failure domains
 	AvailabilityZones []CloudStackAvailabilityZone `json:"availabilityZones,omitempty"`
@@ -160,10 +171,29 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 }
 
 func (v *CloudStackDatacenterConfig) Validate() error {
-	// TODO https://github.com/aws/eks-anywhere/issues/2406: Add validation to
-	// * Make sure that v.Spec.Zones, v.Spec.Domain, v.Spec.Account, v.Spec.ManagementApiEndpoint are all empty
-	// * Make sure that len(v.Spec.AvailabilityZones) > 0
-	// * Make sure that all the AZ names are unique
+	if v.Spec.Account != "" {
+		return errors.New("account must be empty")
+	}
+	if v.Spec.Domain != "" {
+		return errors.New("domain must be empty")
+	}
+	if v.Spec.ManagementApiEndpoint != "" {
+		return errors.New("managementApiEndpoint must be empty")
+	}
+	if len(v.Spec.Zones) > 0 {
+		return errors.New("zones must be empty")
+	}
+	if len(v.Spec.AvailabilityZones) == 0 {
+		return errors.New("availabilityZones must not be empty")
+	}
+	azSet := make(map[string]bool)
+	for _, az := range v.Spec.AvailabilityZones {
+		if exists := azSet[az.Name]; exists {
+			return fmt.Errorf("availabilityZone names must be unique. Duplicate name: %s", az.Name)
+		}
+		azSet[az.Name] = true
+	}
+
 	return nil
 }
 
@@ -172,7 +202,7 @@ func (v *CloudStackDatacenterConfig) SetDefaults() {
 		v.Spec.AvailabilityZones = make([]CloudStackAvailabilityZone, 0, len(v.Spec.Zones))
 		for index, csZone := range v.Spec.Zones {
 			az := CloudStackAvailabilityZone{
-				Name:                  fmt.Sprintf("availability-zone-%d", index),
+				Name:                  fmt.Sprintf("%s-%d", DefaultCloudStackAZPrefix, index),
 				Zone:                  csZone,
 				Account:               v.Spec.Account,
 				Domain:                v.Spec.Domain,

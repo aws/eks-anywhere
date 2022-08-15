@@ -50,7 +50,7 @@ func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, datacenterConfig)
 	if err != nil {
@@ -69,12 +69,7 @@ func TestValidateCloudStackDatacenterConfigWithAZ(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
-
-	for _, az := range datacenterConfig.Spec.AvailabilityZones {
-		cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).Times(1).Return(az.ManagementApiEndpoint, nil)
-	}
 
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, datacenterConfig)
 	if err != nil {
@@ -126,7 +121,7 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	}
 	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = ""
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 
@@ -148,9 +143,9 @@ func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 		machineConfigsLookup: nil,
 	}
 	validator := NewValidator(cmk)
-	datacenterConfig.Spec.Zones[0].Network.Id = ""
-	datacenterConfig.Spec.Zones[0].Network.Name = ""
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Id = ""
+	datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Name = ""
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
@@ -171,9 +166,9 @@ func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
 		machineConfigsLookup: nil,
 	}
 	validator := NewValidator(cmk)
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
-	datacenterConfig.Spec.ManagementApiEndpoint = ":1234.5234"
+	datacenterConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ":1234.5234"
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
 	thenErrorExpected(t, "checking management api endpoint: :1234.5234 is not a valid url", err)
@@ -194,9 +189,9 @@ func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
 		machineConfigsLookup: nil,
 	}
 	validator := NewValidator(cmk)
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
-	datacenterConfig.Spec.ManagementApiEndpoint = "abcefg.com"
+	datacenterConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = "abcefg.com"
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
 	thenErrorExpected(t, "cloudstack secret management url (http://127.16.0.1:8080/client/api) differs from cluster spec management url (abcefg.com)", err)
@@ -227,7 +222,7 @@ func TestSetupAndValidateDiskOfferingEmpty(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -274,7 +269,7 @@ func TestSetupAndValidateValidDiskOffering(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -321,7 +316,7 @@ func TestSetupAndValidateInvalidDiskOfferingNotPresent(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -367,7 +362,7 @@ func TestSetupAndValidateInValidDiskOfferingBadMountPath(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -411,7 +406,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyDevice(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -455,7 +450,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyFilesystem(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -499,7 +494,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyLabel(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
@@ -535,7 +530,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users = nil
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -574,7 +569,7 @@ func TestSetupAndValidateRestrictedUserDetails(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.UserCustomDetails = map[string]string{"keyboard": "test"}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	if err == nil {
@@ -607,7 +602,7 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -621,13 +616,15 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	}
 }
 
-func setupMockForDatacenterConfigValidation(cmk *mocks.MockProviderCmkClient, ctx context.Context, datacenterConfig *v1alpha1.CloudStackDatacenterConfig) {
-	cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), datacenterConfig.Spec.Zones[0]).AnyTimes().Return("4e3b338d-87a6-4189-b931-a1747edeea8f", nil)
-	cmk.EXPECT().ValidateDomainAndGetId(ctx, gomock.Any(), datacenterConfig.Spec.Domain).AnyTimes().Return("5300cdac-74d5-11ec-8696-c81f66d3e965", nil)
-	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
-	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
-	cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).AnyTimes().MaxTimes(1).Return("http://127.16.0.1:8080/client/api", nil)
-}
+//func setupMockForAvailabilityZonesValidation(cmk *mocks.MockProviderCmkClient, ctx context.Context, datacenterConfig *v1alpha1.CloudStackDatacenterConfig) {
+//	if len(datacenterConfig.Spec.Zones) > 0 {
+//		cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), datacenterConfig.Spec.Zones[0]).AnyTimes().Return("4e3b338d-87a6-4189-b931-a1747edeea8f", nil)
+//	}
+//	cmk.EXPECT().ValidateDomainAndGetId(ctx, gomock.Any(), datacenterConfig.Spec.Domain).AnyTimes().Return("5300cdac-74d5-11ec-8696-c81f66d3e965", nil)
+//	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+//	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+//	cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).AnyTimes().MaxTimes(1).Return("http://127.16.0.1:8080/client/api", nil)
+//}
 
 func setupMockForAvailabilityZonesValidation(cmk *mocks.MockProviderCmkClient, ctx context.Context, azs []v1alpha1.CloudStackAvailabilityZone) {
 	for _, az := range azs {
@@ -635,6 +632,7 @@ func setupMockForAvailabilityZonesValidation(cmk *mocks.MockProviderCmkClient, c
 		cmk.EXPECT().ValidateDomainAndGetId(ctx, gomock.Any(), az.Domain).AnyTimes().Return("5300cdac-74d5-11ec-8696-c81f66d3e962", nil)
 		cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), az.Account, gomock.Any()).AnyTimes().Return(nil)
 		cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
+		cmk.EXPECT().GetManagementApiEndpoint(az.CredentialsRef).AnyTimes().Return(az.ManagementApiEndpoint, nil)
 	}
 }
 
@@ -658,7 +656,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
 	}
 	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "must specify machineGroupRef for control plane", err)
@@ -684,7 +682,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
 	}
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "must specify machineGroupRef for worker nodes", err)
@@ -710,7 +708,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
 	}
 	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef = nil
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "must specify machineGroupRef for etcd machines", err)
@@ -736,7 +734,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T)
 	}
 	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "nonexistent"
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for control plane", err)
@@ -762,7 +760,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testin
 	}
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "nonexistent"
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for worker nodes", err)
@@ -788,7 +786,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	}
 	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "nonexistent"
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for etcd machines", err)
@@ -815,7 +813,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceIdentifier{Name: "different"}
 
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)
@@ -839,13 +837,13 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	validator := NewValidator(cmk)
-	setupMockForDatacenterConfigValidation(cmk, ctx, datacenterConfig)
+	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
 	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(),
-		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
+		gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
-	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, gomock.Any()).Times(3)
 
 	_ = validator.ValidateCloudStackDatacenterConfig(ctx, datacenterConfig)
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
@@ -868,10 +866,10 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 
 	cmk.EXPECT().ValidateZoneAndGetId(ctx, gomock.Any(), gomock.Any()).Times(3).Return("4e3b338d-87a6-4189-b931-a1747edeea82", nil)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(),
-		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
+		gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).Times(3)
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
-	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, gomock.Any()).Times(3)
 
 	for _, machineConfig := range machineConfigs {
 		err := validator.validateMachineConfig(ctx, datacenterConfig, machineConfig)
@@ -914,10 +912,10 @@ func TestValidateMachineConfigsWithAffinity(t *testing.T) {
 	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil)
 	cmk.EXPECT().GetManagementApiEndpoint(gomock.Any()).AnyTimes().Return("http://127.16.0.1:8080/client/api", nil)
 
-	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), datacenterConfig.Spec.Account, testTemplate).AnyTimes()
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, testTemplate).AnyTimes()
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), gomock.Any(), testOffering).AnyTimes()
 	cmk.EXPECT().ValidateDiskOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), gomock.Any(), datacenterConfig.Spec.AvailabilityZones[0].Account, gomock.Any()).AnyTimes()
 
 	// Valid affinity types
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)

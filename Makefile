@@ -599,7 +599,7 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
-run-controller:
+run-controller: $(KUSTOMIZE)
 	tilt up --file manager/Tiltfile
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
