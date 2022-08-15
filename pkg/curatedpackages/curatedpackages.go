@@ -20,15 +20,12 @@ import (
 )
 
 const (
-	license = `The EKS Anywhere package controller and the EKS Anywhere Curated Packages
-(referred to as “features”) are provided as “preview features” subject to the AWS Service Terms,
-(including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
-the AWS Service Terms are extended to provide customers access to these features free of charge.
-These features will be subject to a service charge and fee structure at ”General Availability“ of the features.`
+	license = `The Amazon EKS Anywhere Curated Packages are only available to customers with the 
+Amazon EKS Anywhere Enterprise Subscription`
 	certManagerDoesNotExistMsg = `Curated packages cannot be installed as cert-manager is not present in the cluster. This is most likely caused
 by an action to install Curated packages at a workload cluster. Refer to
 https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.`
-	width = 112
+	width = 82
 )
 
 var userMsgSeparator = strings.Repeat("-", width)
@@ -62,13 +59,10 @@ func GetVersionBundle(reader Reader, eksaVersion string, spec *v1alpha1.Cluster)
 func PrintLicense() {
 	// Currently, use the width of the longest line to repeat the dashes
 	// Sample Output
-	//----------------------------------------------------------------------------------------------------------------
-	//The EKS Anywhere package controller and the EKS Anywhere Curated Packages
-	//(referred to as “features”) are provided as “preview features” subject to the AWS Service Terms,
-	//(including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
-	//the AWS Service Terms are extended to provide customers access to these features free of charge.
-	//These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
-	//----------------------------------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------
+	//The Amazon EKS Anywhere Curated Packages are only available to customers with the
+	//Amazon EKS Anywhere Enterprise Subscription
+	//---------------------------------------------------------------------------------
 	fmt.Println(userMsgSeparator)
 	fmt.Println(license)
 	fmt.Println(userMsgSeparator)
