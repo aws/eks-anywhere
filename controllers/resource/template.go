@@ -175,6 +175,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	for _, wnConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerCsmcs[wnConfig.MachineGroupRef.Name].Spec
 	}
+	clusterSpec.CloudStackDatacenter = &csdc
 	// control plane and etcd updates are prohibited in controller so those specs should not change
 	templateBuilder := cloudstack.NewCloudStackTemplateBuilder(&csdc.Spec, &cpCsmc.Spec, &etcdCsmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	clusterName := clusterSpec.Cluster.Name

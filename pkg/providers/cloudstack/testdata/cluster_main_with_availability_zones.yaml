@@ -40,14 +40,15 @@ metadata:
   name: test
   namespace: test-namespace
 spec:
-  account: "admin"
-  domain: "domain1"
-  zones:
-  - name: "zone1"
-    network:
-      name: "net1"
-  managementApiEndpoint: "http://127.16.0.1:8080/client/api"
   availabilityZones:
+  - credentialsRef: "zone1"
+    account: "admin"
+    domain: "domain1"
+    managementApiEndpoint: "http://127.16.0.1:8080/client/api"
+    zone:
+      name: "zone1"
+      network:
+        name: "net1"
   - credentialsRef: "zone2"
     account: "admin"
     domain: "domain2"
