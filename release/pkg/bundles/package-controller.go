@@ -43,7 +43,6 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range artifacts[componentName] {
-			fmt.Printf("PACKAGE TEST %v\n", artifact.Image)
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
 			bundleImageArtifact := anywherev1alpha1.Image{}
@@ -65,7 +64,6 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 			}
-			fmt.Printf("PACKAGE TEST %v\n", bundleImageArtifact)
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 			artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 		}
