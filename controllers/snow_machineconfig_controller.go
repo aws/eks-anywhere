@@ -16,7 +16,7 @@ import (
 )
 
 type ClientBuilder interface {
-	BuildSnowAwsClientMap(ctx context.Context) (aws.Clients, error)
+	Build(ctx context.Context) (aws.Clients, error)
 }
 
 // SnowMachineConfigReconciler reconciles a SnowMachineConfig object
@@ -80,9 +80,8 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachineConfig *anywherev1.SnowMachineConfig) (_ ctrl.Result, reterr error) {
-	// TODO: need to figure out how to load creds in controller
 	var allErrs []error
-	deviceClientMap, err := r.clientBuilder.BuildSnowAwsClientMap(ctx)
+	deviceClientMap, err := r.clientBuilder.Build(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
 	}

@@ -63,7 +63,7 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 
@@ -160,7 +160,7 @@ func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(nil, errors.New("test error"))
+	clientBuilder.EXPECT().Build(ctx).Return(nil, errors.New("test error"))
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 
@@ -200,7 +200,7 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 
@@ -244,7 +244,7 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 
@@ -284,7 +284,7 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 
@@ -327,7 +327,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
 	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().BuildSnowAwsClientMap(ctx).Return(mockClients, nil)
+	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
 
 	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder)
 

@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
@@ -118,7 +117,7 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
 			f.manager.GetClient(),
 			f.logger,
-			aws.NewSnowAwsClientBuilder(),
+			snowreconciler.NewAwsClientBuilder(f.manager.GetClient()),
 		)
 		return nil
 	})

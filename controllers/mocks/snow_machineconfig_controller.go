@@ -35,17 +35,17 @@ func (m *MockClientBuilder) EXPECT() *MockClientBuilderMockRecorder {
 	return m.recorder
 }
 
-// BuildSnowAwsClientMap mocks base method.
-func (m *MockClientBuilder) BuildSnowAwsClientMap(ctx context.Context) (aws.Clients, error) {
+// Build mocks base method.
+func (m *MockClientBuilder) Build(ctx context.Context) (aws.Clients, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildSnowAwsClientMap", ctx)
+	ret := m.ctrl.Call(m, "Build", ctx)
 	ret0, _ := ret[0].(aws.Clients)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// BuildSnowAwsClientMap indicates an expected call of BuildSnowAwsClientMap.
-func (mr *MockClientBuilderMockRecorder) BuildSnowAwsClientMap(ctx interface{}) *gomock.Call {
+// Build indicates an expected call of Build.
+func (mr *MockClientBuilderMockRecorder) Build(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildSnowAwsClientMap", reflect.TypeOf((*MockClientBuilder)(nil).BuildSnowAwsClientMap), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockClientBuilder)(nil).Build), ctx)
 }
