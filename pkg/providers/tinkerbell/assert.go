@@ -291,7 +291,7 @@ func ExtraHardwareAvailableAssertion(catalogue *hardware.Catalogue, maxSurge int
 		}
 
 		if err := validateMinimumHardwareRequirements(requirements, catalogue); err != nil {
-			return fmt.Errorf("for scale up, %v", err)
+			return fmt.Errorf("for rolling upgrade, %v", err)
 		}
 		return nil
 	}
