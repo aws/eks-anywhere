@@ -20,7 +20,6 @@ func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
 
 func runHarborInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.InstallCuratedPackagesController()
 		if _, ok := test.Provider.(*framework.Docker); ok {
 			test.InstallLocalStorageProvisioner()
 		}
