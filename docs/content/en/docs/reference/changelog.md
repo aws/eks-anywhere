@@ -3,12 +3,13 @@ title: "What's New?"
 linkTitle: "What's New?"
 weight: 35
 ---
+## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
 
-## Unreleased
 ### Added
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)
 - Add support for Support Bundle for validating control plane IP with vSphere provider
-
+- Curated Packages General Availibilty
+- Added Emissary Ingress Curated Package
 
 ## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
 
