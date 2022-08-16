@@ -303,28 +303,8 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-19/bottlerocket-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-build.0-amd64.ova
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Ova image for EKS-D 1-20-19 release
-          name: ubuntu-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-build.0-amd64.ova
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-20/1-20-19/ubuntu-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket: {}
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Raw image for EKS-D 1-20-19 release
-          name: ubuntu-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-build.0-amd64.gz
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-20/1-20-19/ubuntu-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -1077,16 +1057,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-17/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.ova
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Ova image for EKS-D 1-21-17 release
-          name: ubuntu-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.ova
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-21/1-21-17/ubuntu-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
@@ -1098,16 +1068,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-17/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.img.gz
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Raw image for EKS-D 1-21-17 release
-          name: ubuntu-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.gz
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-21/1-21-17/ubuntu-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -1860,16 +1820,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Ova image for EKS-D 1-22-9 release
-          name: ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-22/1-22-9/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
@@ -1881,16 +1831,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.img.gz
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Raw image for EKS-D 1-22-9 release
-          name: ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.gz
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-22/1-22-9/ubuntu-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
@@ -2643,16 +2583,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-4/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.ova
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Ova image for EKS-D 1-23-4 release
-          name: ubuntu-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.ova
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/ova/1-23/1-23-4/ubuntu-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
@@ -2664,16 +2594,6 @@ spec:
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-4/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.img.gz
-        ubuntu:
-          arch:
-          - amd64
-          description: Ubuntu Raw image for EKS-D 1-23-4 release
-          name: ubuntu-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.gz
-          os: linux
-          osName: ubuntu
-          sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/eks-distro/raw/1-23/1-23-4/ubuntu-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-build.0-amd64.gz
     eksa:
       cliTools:
         arch:
