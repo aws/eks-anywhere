@@ -115,7 +115,7 @@ func TarballArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assettyp
 	}
 
 	if rc.DevRelease {
-		releaseName = fmt.Sprintf("%s-%s-%s-%s.tar.gz", archive.Name, rc.ReleaseVersion, os, arch)
+		releaseName = fmt.Sprintf("%s-%s-%s-%s.tar.gz", archive.Name, rc.DevReleaseUriVersion, os, arch)
 		releaseS3Path = fmt.Sprintf("artifacts/%s/%s/%s", rc.DevReleaseUriVersion, archive.Name, gitTag)
 	} else {
 		releaseName = fmt.Sprintf("%s-%s-%s.tar.gz", archive.Name, os, arch)
