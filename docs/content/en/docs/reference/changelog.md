@@ -7,6 +7,7 @@ weight: 35
 ## Unreleased
 ### Added
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)
+- Add support for Support Bundle for verification of control plane IP
 
 
 ## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
