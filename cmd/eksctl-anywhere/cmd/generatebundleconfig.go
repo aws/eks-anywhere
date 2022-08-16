@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -88,7 +87,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return factory.DiagnosticBundleDefault(), nil
 	}
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(f, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

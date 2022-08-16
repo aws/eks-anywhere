@@ -361,6 +361,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig))
+
+	// LoadBalancerClass is feature gated in K8S v1.21 and needs to be enabled manually
+	if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube121 {
+		apiServerExtraArgs.Append(clusterapi.FeatureGatesExtraArgs("ServiceLoadBalancerClass=true"))
+	}
+
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))

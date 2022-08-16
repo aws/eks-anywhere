@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -85,7 +84,7 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 }
 
 func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(csbo.fileName, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

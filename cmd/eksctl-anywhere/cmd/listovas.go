@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -52,7 +51,7 @@ var listOvasCmd = &cobra.Command{
 }
 
 func listOvas(context context.Context, spec string) error {
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
 	if err != nil {
 		return err
 	}
