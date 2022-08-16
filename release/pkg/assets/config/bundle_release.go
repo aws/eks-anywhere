@@ -314,6 +314,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
+	// Image-builder cli artifacts
+	{
+		ProjectName: "image-builder",
+		ProjectPath: "projects/aws/image-builder",
+		Archives: []*assettypes.Archive{
+			{
+				Name:   "image-builder",
+				Format: "tarball",
+			},
+		},
+	},
 	// Cri-tools artifacts
 	{
 		ProjectName: "cri-tools",
