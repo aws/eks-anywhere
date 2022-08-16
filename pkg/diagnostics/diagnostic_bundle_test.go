@@ -127,10 +127,8 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
-		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
-		host := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-		c.EXPECT().APIServerCollectors(host).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -191,9 +189,8 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
-		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
-		c.EXPECT().APIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -251,9 +248,8 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
-		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
-		c.EXPECT().APIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -335,9 +331,8 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
-		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 		c.EXPECT().PackagesCollectors().Return(nil)
-		c.EXPECT().APIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
@@ -447,7 +442,7 @@ func machineConfigs() []providers.MachineConfig {
 	return m
 }
 
-func TestGenerateManagementClusterBundle(t *testing.T) {
+func TestGenerateManagementClusterBundleVsphereProvider(t *testing.T) {
 	kubeconfig := "testcluster.kubeconfig"
 
 	spec := test.NewClusterSpec(func(s *cluster.Spec) {
@@ -462,6 +457,9 @@ func TestGenerateManagementClusterBundle(t *testing.T) {
 						Host: "1.1.1.1",
 					},
 				},
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: "VSphereDatacenterConfig",
+				},
 			},
 			Status: eksav1alpha1.ClusterStatus{},
 		}
@@ -471,17 +469,15 @@ func TestGenerateManagementClusterBundle(t *testing.T) {
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
-		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).AnyTimes().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().ManagementClusterCollectors().Return(nil)
-		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef).Return(nil)
-		c.EXPECT().APIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).AnyTimes().Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
 
 		w := givenWriter(t)
-		w.EXPECT().Write(gomock.Any(), gomock.Any())
-
+		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
@@ -489,6 +485,58 @@ func TestGenerateManagementClusterBundle(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.DiagnosticBundleManagementCluster(spec, kubeconfig)
+		bootstrapBundle, _ := f.DiagnosticBundleManagementCluster(spec, kubeconfig)
+		err := bootstrapBundle.WriteBundleConfig()
+		if err != nil {
+			t.Errorf("WriteBundleConfig() error = %v, wantErr nil", err)
+			return
+		}
+	})
+}
+
+func TestGenerateManagementClusterBundleDockerProvider(t *testing.T) {
+	kubeconfig := "testcluster.kubeconfig"
+
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "bootstrap-cluster",
+			},
+			Spec: eksav1alpha1.ClusterSpec{
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: "DockerDatacenterConfig",
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+	})
+	t.Run(t.Name(), func(t *testing.T) {
+		a := givenMockAnalyzerFactory(t)
+		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
+		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+
+		c := givenMockCollectorsFactory(t)
+		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
+		c.EXPECT().DataCenterConfigCollectors(spec.Cluster.Spec.DatacenterRef, spec).Return(nil)
+
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			Writer:           w,
+		}
+
+		f := diagnostics.NewFactory(opts)
+		bootstrapBundle, _ := f.DiagnosticBundleManagementCluster(spec, kubeconfig)
+		err := bootstrapBundle.WriteBundleConfig()
+		if err != nil {
+			t.Errorf("WriteBundleConfig() error = %v, wantErr nil", err)
+			return
+		}
 	})
 }
