@@ -160,9 +160,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -182,8 +182,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/metadata.yaml
-      version: v0.4.7-rc1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/metadata.yaml
+      version: v0.4.7-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -472,6 +472,15 @@ spec:
         name: eks-anywhere-packages
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
+      tokenRefresher:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for ecr-token-refresher image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: ecr-token-refresher
+        os: linux
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
       version: v0.2.0-alpha.5+abcdef1
     snow:
       components:
@@ -925,9 +934,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -947,8 +956,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/metadata.yaml
-      version: v0.4.7-rc1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/metadata.yaml
+      version: v0.4.7-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -1246,6 +1255,15 @@ spec:
         name: eks-anywhere-packages
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
+      tokenRefresher:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for ecr-token-refresher image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: ecr-token-refresher
+        os: linux
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
       version: v0.2.0-alpha.5+abcdef1
     snow:
       components:
@@ -1699,9 +1717,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -1721,8 +1739,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/metadata.yaml
-      version: v0.4.7-rc1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/metadata.yaml
+      version: v0.4.7-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -2020,6 +2038,15 @@ spec:
         name: eks-anywhere-packages
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
+      tokenRefresher:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for ecr-token-refresher image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: ecr-token-refresher
+        os: linux
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
       version: v0.2.0-alpha.5+abcdef1
     snow:
       components:
@@ -2473,9 +2500,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: cluster-api-provider-cloudstack
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc1-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.4.7-rc2-eks-a-v0.0.0-dev-build.1
       components:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/infrastructure-components.yaml
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/infrastructure-components.yaml
       kubeRbacProxy:
         arch:
         - amd64
@@ -2495,8 +2522,8 @@ spec:
         os: linux
         uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       metadata:
-        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc1/metadata.yaml
-      version: v0.4.7-rc1+abcdef1
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v0.4.7-rc2/metadata.yaml
+      version: v0.4.7-rc2+abcdef1
     clusterAPI:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api/manifests/cluster-api/v1.2.0/core-components.yaml
@@ -2794,6 +2821,15 @@ spec:
         name: eks-anywhere-packages
         os: linux
         uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
+      tokenRefresher:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for ecr-token-refresher image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: ecr-token-refresher
+        os: linux
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.5-eks-a-v0.0.0-dev-build.1
       version: v0.2.0-alpha.5+abcdef1
     snow:
       components:
