@@ -577,19 +577,8 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 }
 
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	if len(oldCsdc.Spec.AvailabilityZones) != len(newCsdc.Spec.AvailabilityZones) {
+	if !oldCsdc.Spec.Equal(&newCsdc.Spec) {
 		return true
-	}
-	newAzs := make(map[string]v1alpha1.CloudStackAvailabilityZone, len(newCsdc.Spec.AvailabilityZones))
-	for _, az := range newCsdc.Spec.AvailabilityZones {
-		newAzs[az.Name] = az
-	}
-	for _, oldAz := range oldCsdc.Spec.AvailabilityZones {
-		if newAz, ok := newAzs[oldAz.Name]; ok {
-			if !oldAz.Equal(&newAz) {
-				return true
-			}
-		}
 	}
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
 		return true
