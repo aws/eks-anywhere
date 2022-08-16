@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -52,7 +51,7 @@ func runInstallPackageController(cmd *cobra.Command, args []string) error {
 func installPackageController(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(ico.fileName, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(ico.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}

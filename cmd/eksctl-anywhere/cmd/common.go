@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -12,7 +11,7 @@ import (
 )
 
 func getImages(spec string) ([]v1alpha1.Image, error) {
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
 	if err != nil {
 		return nil, err
 	}
