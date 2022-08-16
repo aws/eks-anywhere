@@ -577,10 +577,8 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 }
 
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	for index, zone := range oldCsdc.Spec.AvailabilityZones {
-		if !zone.Equal(&newCsdc.Spec.AvailabilityZones[index]) {
-			return true
-		}
+	if !oldCsdc.Spec.Equal(&newCsdc.Spec) {
+		return true
 	}
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
 		return true
