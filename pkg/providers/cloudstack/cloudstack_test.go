@@ -1707,6 +1707,26 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
 }
 
+func TestAnyImmutableFieldChangedDomain(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
+func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	secondAz := dcConfig.Spec.AvailabilityZones[0].DeepCopy()
+	secondAz.Name = "shinyNewAz"
+	dcConfig.Spec.AvailabilityZones = append(dcConfig.Spec.AvailabilityZones, *secondAz)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
