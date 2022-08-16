@@ -72,8 +72,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 	b.WithDefaultCollectors().
 		WithDefaultAnalyzers().
 		WithManagementCluster(true).
-		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
-		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host). // Add a collector here to runPod and ping control plane IP once bootstrap cluster was created
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -112,13 +111,12 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
 		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef, spec).
 		WithMachineConfigs(provider.MachineConfigs(spec)).
 		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithPackagesCollectors().
-		WithAPIServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host).
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
@@ -268,9 +266,9 @@ func (e *EksaDiagnosticBundle) WithPackagesCollectors() *EksaDiagnosticBundle {
 	return e
 }
 
-func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
+func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref, spec *cluster.Spec) *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DataCenterConfigAnalyzers(config)...)
-	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config)...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config, spec)...)
 	return e
 }
 
@@ -302,12 +300,6 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
-	return e
-}
-
-// WithAPIServerCollectors aims to collect connection info from API server
-func (e *EksaDiagnosticBundle) WithAPIServerCollectors(controlPlaneIP string) *EksaDiagnosticBundle {
-	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.APIServerCollectors(controlPlaneIP)...)
 	return e
 }
 
