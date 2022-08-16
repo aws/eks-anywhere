@@ -232,17 +232,17 @@ func (mr *MockDiagnosticBundleMockRecorder) PrintBundleConfig() *gomock.Call {
 }
 
 // WithDatacenterConfig mocks base method.
-func (m *MockDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *diagnostics.EksaDiagnosticBundle {
+func (m *MockDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref, spec *cluster.Spec) *diagnostics.EksaDiagnosticBundle {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithDatacenterConfig", config)
+	ret := m.ctrl.Call(m, "WithDatacenterConfig", config, spec)
 	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
 	return ret0
 }
 
 // WithDatacenterConfig indicates an expected call of WithDatacenterConfig.
-func (mr *MockDiagnosticBundleMockRecorder) WithDatacenterConfig(config interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleMockRecorder) WithDatacenterConfig(config, spec interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithDatacenterConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithDatacenterConfig), config)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithDatacenterConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithDatacenterConfig), config, spec)
 }
 
 // WithDefaultAnalyzers mocks base method.
@@ -530,32 +530,18 @@ func (m *MockCollectorFactory) EXPECT() *MockCollectorFactoryMockRecorder {
 	return m.recorder
 }
 
-// APIServerCollectors mocks base method.
-func (m *MockCollectorFactory) APIServerCollectors(controlPlaneIP string) []*diagnostics.Collect {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "APIServerCollectors", controlPlaneIP)
-	ret0, _ := ret[0].([]*diagnostics.Collect)
-	return ret0
-}
-
-// APIServerCollectors indicates an expected call of APIServerCollectors.
-func (mr *MockCollectorFactoryMockRecorder) APIServerCollectors(controlPlaneIP interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "APIServerCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).APIServerCollectors), controlPlaneIP)
-}
-
 // DataCenterConfigCollectors mocks base method.
-func (m *MockCollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*diagnostics.Collect {
+func (m *MockCollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*diagnostics.Collect {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DataCenterConfigCollectors", datacenter)
+	ret := m.ctrl.Call(m, "DataCenterConfigCollectors", datacenter, spec)
 	ret0, _ := ret[0].([]*diagnostics.Collect)
 	return ret0
 }
 
 // DataCenterConfigCollectors indicates an expected call of DataCenterConfigCollectors.
-func (mr *MockCollectorFactoryMockRecorder) DataCenterConfigCollectors(datacenter interface{}) *gomock.Call {
+func (mr *MockCollectorFactoryMockRecorder) DataCenterConfigCollectors(datacenter, spec interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DataCenterConfigCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).DataCenterConfigCollectors), datacenter)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DataCenterConfigCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).DataCenterConfigCollectors), datacenter, spec)
 }
 
 // DefaultCollectors mocks base method.
