@@ -105,8 +105,7 @@ spec:
                   reconciling the state, and will be set to a descriptive error message.
                 type: string
               specValid:
-                description: SpecValid is set to true if vspheredatacenterconfig is
-                  validated.
+                description: SpecValid is set to true if snow machineconfig is validated.
                 type: boolean
             type: object
         type: object

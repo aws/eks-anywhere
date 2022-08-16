@@ -9,7 +9,17 @@ type SnowDatacenterConfigSpec struct { // Important: Run "make generate" to rege
 }
 
 // SnowDatacenterConfigStatus defines the observed state of SnowDatacenterConfig
-type SnowDatacenterConfigStatus struct{}
+type SnowDatacenterConfigStatus struct {
+	// SpecValid is set to true if snow datacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

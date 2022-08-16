@@ -12,13 +12,13 @@ type bootstrapCreds struct {
 }
 
 func (p *SnowProvider) setupBootstrapCreds() error {
-	creds, err := aws.EncodeFileFromEnv(eksaSnowCredentialsFileKey)
+	creds, err := aws.EncodeFileFromEnv(EksaSnowCredentialsFileKey)
 	if err != nil {
 		return fmt.Errorf("failed to set up snow credentials: %v", err)
 	}
 	p.bootstrapCreds.snowCredsB64 = creds
 
-	certs, err := aws.EncodeFileFromEnv(eksaSnowCABundlesFileKey)
+	certs, err := aws.EncodeFileFromEnv(EksaSnowCABundlesFileKey)
 	if err != nil {
 		return fmt.Errorf("failed to set up snow certificates: %v", err)
 	}

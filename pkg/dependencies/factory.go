@@ -84,6 +84,7 @@ type Dependencies struct {
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
 	SnowValidator             *snow.AwsClientValidator
+	SnowDefaulters            *snow.Defaulters
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {

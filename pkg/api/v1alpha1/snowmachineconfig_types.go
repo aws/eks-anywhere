@@ -61,7 +61,7 @@ func (s *SnowMachineConfig) OSFamily() OSFamily {
 
 // SnowMachineConfigStatus defines the observed state of SnowMachineConfig
 type SnowMachineConfigStatus struct {
-	// SpecValid is set to true if vspheredatacenterconfig is validated.
+	// SpecValid is set to true if snow machineconfig is validated.
 	SpecValid bool `json:"specValid,omitempty"`
 
 	// FailureMessage indicates that there is a fatal problem reconciling the

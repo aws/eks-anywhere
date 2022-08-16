@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	eksaSnowCredentialsFileKey = "EKSA_AWS_CREDENTIALS_FILE"
-	eksaSnowCABundlesFileKey   = "EKSA_AWS_CA_BUNDLES_FILE"
+	EksaSnowCredentialsFileKey = "EKSA_AWS_CREDENTIALS_FILE"
+	EksaSnowCABundlesFileKey   = "EKSA_AWS_CA_BUNDLES_FILE"
 	snowCredentialsKey         = "AWS_B64ENCODED_CREDENTIALS"
 	snowCertsKey               = "AWS_B64ENCODED_CA_BUNDLES"
 	maxRetries                 = 30
@@ -103,27 +103,44 @@ func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 }
 
 func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneObjs, err := ControlPlaneObjects(ctx, clusterSpec, kubeClient)
+	controlPlaneSpec, err = ControlPlaneSpec(ctx, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workersObjs, err := WorkersObjects(ctx, clusterSpec, kubeClient)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	workersSpec, err = WorkersSpec(ctx, clusterSpec, kubeClient)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return controlPlaneSpec, workersSpec, nil
+}
+
+func ControlPlaneSpec(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (controlPlaneSpec []byte, err error) {
+	controlPlaneObjs, err := ControlPlaneObjects(ctx, clusterSpec, kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
+	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
+	if err != nil {
+		return nil, err
+	}
+	return controlPlaneSpec, nil
+}
+
+func WorkersSpec(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) (workersSpec []byte, err error) {
+	workersObjs, err := WorkersObjects(ctx, clusterSpec, kubeClient)
+	if err != nil {
+		return nil, err
+	}
+
+	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return workersSpec, nil
 }
 
 func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
