@@ -126,7 +126,6 @@ type EksDRelease struct {
 
 type OSImageBundle struct {
 	Bottlerocket Archive `json:"bottlerocket,omitempty"`
-	Ubuntu       Archive `json:"ubuntu,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {

@@ -118,10 +118,8 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	switch osFamily {
 	case anywherev1.Bottlerocket:
 		ova = eksd.Ova.Bottlerocket
-	case anywherev1.Ubuntu:
-		ova = eksd.Ova.Ubuntu
 	default:
-		return fmt.Errorf("can not import ova for osFamily: %s, please use a valid osFamily", osFamily)
+		return fmt.Errorf("can not import ova for osFamily: %s, please use %s as osFamily for auto-importing or provide a valid template", osFamily, anywherev1.Bottlerocket)
 	}
 
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
