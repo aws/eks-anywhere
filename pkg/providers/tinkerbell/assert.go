@@ -1,6 +1,7 @@
 package tinkerbell
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -67,6 +68,15 @@ func AssertWorkerNodeGroupMachineRefsExists(spec *ClusterSpec) error {
 		if err := validateMachineRefExists(groupRef, spec.MachineConfigs); err != nil {
 			return fmt.Errorf("worker node group configuration machine group ref: %v", err)
 		}
+	}
+
+	return nil
+}
+
+// AssertK8SVersionNot120 ensures Kubernetes version is not set to v1.20
+func AssertK8SVersionNot120(spec *ClusterSpec) error {
+	if spec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube120 {
+		return errors.New("kubernetes version v1.20 is not supported for Bare Metal")
 	}
 
 	return nil
