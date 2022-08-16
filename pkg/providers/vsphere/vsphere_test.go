@@ -2383,41 +2383,6 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	thenErrorExpected(t, "validating template tags: failed getting tags", err)
 }
 
-func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.EksD.Ova.Ubuntu.URI = "https://amazonaws.com/artifacts/0.0.1/eks-distro/ova/1-19/1-19-4/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova"
-		s.VersionsBundle.EksD.Ova.Ubuntu.SHA256 = "63a8dce1683379cb8df7d15e9c5adf9462a2b9803a544dd79b16f19a4657967f"
-		s.VersionsBundle.EksD.Ova.Ubuntu.Arch = []string{"amd64"}
-		s.VersionsBundle.EksD.Name = eksd119Release
-		s.VersionsBundle.EksD.KubeVersion = "v1.19.8"
-		s.VersionsBundle.KubeVersion = "1.19"
-		s.Cluster.Namespace = "test-namespace"
-	})
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = ""
-	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Template = ""
-	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Template = ""
-	wantTemplate := "/SDDC-Datacenter/vm/Templates/ubuntu-v1.19.8-kubernetes-1-19-eks-4-amd64-63a8dce"
-	setupContext(t)
-
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-	}
-	gotTemplate := provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template
-	if gotTemplate != wantTemplate {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() template = %s, want %s", gotTemplate, wantTemplate)
-	}
-	gotTemplate = provider.machineConfigs[workerNodeMachineConfigName].Spec.Template
-	if gotTemplate != wantTemplate {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() template = %s, want %s", gotTemplate, wantTemplate)
-	}
-}
-
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	tests := []struct {
 		testName    string

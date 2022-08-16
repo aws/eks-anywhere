@@ -128,11 +128,9 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		Crictl:         bundleArchiveArtifacts["cri-tools"],
 		Ova: anywherev1alpha1.OSImageBundle{
 			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ova"],
-			Ubuntu:       bundleArchiveArtifacts["ubuntu-ova"],
 		},
 		Raw: anywherev1alpha1.OSImageBundle{
 			Bottlerocket: bundleArchiveArtifacts["bottlerocket-raw"],
-			Ubuntu:       bundleArchiveArtifacts["ubuntu-raw"],
 		},
 		Components: constants.EksDReleaseComponentsUrl,
 	}
