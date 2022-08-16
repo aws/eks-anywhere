@@ -42,6 +42,7 @@ spec:
       apiServer:
         extraArgs:
           authentication-token-webhook-config-file: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+          feature-gates: ServiceLoadBalancerClass=true
         extraVolumes:
           - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
             mountPath: /etc/kubernetes/aws-iam-authenticator/
