@@ -100,6 +100,7 @@ func NewClusterSpecValidator(assertions ...ClusterSpecAssertion) *ClusterSpecVal
 	// Register mandatory assertions. If an assertion becomes optional dependent on context move it
 	// to a New* func and register it dynamically. See assert.go for examples.
 	v.Register(
+		AssertK8SVersionNot120,
 		AssertDatacenterConfigValid,
 		AssertControlPlaneMachineRefExists,
 		AssertEtcdMachineRefExists,
