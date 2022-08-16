@@ -1163,6 +1163,42 @@ spec:
                           description: Git commit the component is built from, before
                             any patches
                           type: string
+                        imagebuilder:
+                          description: ImageBuilder points to the image-builder binary
+                            used to build eks-D based node images
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            sha256:
+                              description: The sha256 of the asset, only applies for
+                                'file' store
+                              type: string
+                            sha512:
+                              description: The sha512 of the asset, only applies for
+                                'file' store
+                              type: string
+                            uri:
+                              description: The URI where the asset is located
+                              type: string
+                          type: object
                         kindNode:
                           description: KindNode points to a kind image built with
                             this eks-d version

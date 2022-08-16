@@ -122,6 +122,9 @@ type EksDRelease struct {
 
 	// Crictl points to the crictl binary/tarball built for this eks-d kube version
 	Crictl Archive `json:"crictl,omitempty"`
+
+	// ImageBuilder points to the image-builder binary used to build eks-D based node images
+	ImageBuilder Archive `json:"imagebuilder,omitempty"`
 }
 
 type OSImageBundle struct {
