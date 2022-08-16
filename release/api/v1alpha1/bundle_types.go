@@ -233,9 +233,10 @@ type FluxBundle struct {
 }
 
 type PackageBundle struct {
-	Version    string `json:"version,omitempty"`
-	Controller Image  `json:"packageController"`
-	HelmChart  Image  `json:"helmChart,omitempty"`
+	Version        string `json:"version,omitempty"`
+	Controller     Image  `json:"packageController"`
+	TokenRefresher Image  `json:"tokenRefresher"`
+	HelmChart      Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {
