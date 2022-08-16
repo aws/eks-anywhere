@@ -151,6 +151,10 @@ func (p *SnowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1
 	return nil
 }
 
+func (p *SnowProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	return nil
+}
+
 func (p *SnowProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
@@ -280,9 +284,5 @@ func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Clu
 }
 
 func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return nil
-}
-
-func (p *SnowProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
 	return nil
 }

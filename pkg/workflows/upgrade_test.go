@@ -343,6 +343,12 @@ func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *type
 	)
 }
 
+func (c *upgradeTestSetup) expectPostBootstrapDeleteForUpgrade() {
+	gomock.InOrder(
+		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx),
+	)
+}
+
 func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec).Return(true, nil),
@@ -440,6 +446,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsKustomization(test.workloadCluster)
+	test.expectPostBootstrapDeleteForUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -471,6 +478,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsKustomization(test.workloadCluster)
+	test.expectPostBootstrapDeleteForUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -589,6 +597,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test2.expectUpdateGitEksaSpec()
 	test2.expectForceReconcileGitRepo(test2.workloadCluster)
 	test2.expectResumeGitOpsKustomization(test2.workloadCluster)
+	test2.expectPostBootstrapDeleteForUpgrade()
 
 	err = test2.run()
 	if err != nil {
