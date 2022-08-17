@@ -576,10 +576,30 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 	return true, nil
 }
 
+// AnyImmutableFieldChanged Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
+// CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
+// new CloudStackMachineTemplates
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	if !oldCsdc.Spec.Equal(&newCsdc.Spec) {
+	fmt.Printf("Comparing old csdc spec (%s) and new csdc spec (%s)", oldCsdc.Spec, newCsdc.Spec)
+	if len(newCsdc.Spec.AvailabilityZones) != len(oldCsdc.Spec.AvailabilityZones) {
 		return true
 	}
+	oAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
+	for _, oAz := range oldCsdc.Spec.AvailabilityZones {
+		oAzsMap[oAz.Name] = oAz
+	}
+	for _, sAz := range newCsdc.Spec.AvailabilityZones {
+		oAz, found := oAzsMap[sAz.Name]
+		if !found || !(sAz.Zone.Equal(&oAz.Zone) &&
+			sAz.Name == oAz.Name &&
+			sAz.CredentialsRef == oAz.CredentialsRef &&
+			sAz.Account == oAz.Account &&
+			sAz.Domain == oAz.Domain) {
+
+			return true
+		}
+	}
+
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
 		return true
 	}
