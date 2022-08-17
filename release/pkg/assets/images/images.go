@@ -20,13 +20,13 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/aws/eks-anywhere/release/pkg/assets/tagger"
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
-	"github.com/aws/eks-anywhere/release/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-func GetImageAssets(rc *releasetypes.ReleaseConfig, image *assettypes.Image, imageRepoPrefix string, imageTagOptions []string, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ImageArtifact, string, error) {
+func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, image *assettypes.Image, imageRepoPrefix string, imageTagOptions []string, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ImageArtifact, string, error) {
 	repoName, assetName := image.RepoName, image.RepoName
 	if image.AssetName != "" {
 		assetName = image.AssetName
@@ -70,7 +70,7 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, image *assettypes.Image, ima
 		return nil, "", errors.Cause(err)
 	}
 	if sourcedFromBranch != rc.BuildRepoBranchName {
-		gitTag, err = filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, sourcedFromBranch)
+		gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath, sourcedFromBranch)
 		if err != nil {
 			return nil, "", errors.Cause(err)
 		}

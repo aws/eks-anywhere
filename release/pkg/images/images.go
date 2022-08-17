@@ -158,7 +158,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 				if r.BuildRepoBranchName != "main" {
 					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)
 					var gitTagFromMain string
-					if name == "bottlerocket-bootstrap" {
+					if strings.Contains(name, "bottlerocket-bootstrap") {
 						gitTagFromMain = "non-existent"
 					} else {
 						gitTagFromMain, err = filereader.ReadGitTag(tagOptions["projectPath"], r.BuildRepoSource, "main")
