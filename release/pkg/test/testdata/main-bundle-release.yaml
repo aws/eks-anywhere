@@ -280,6 +280,15 @@ spec:
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev-build.0-linux-amd64.tar.gz
       gitCommit: 0123456789abcdef0123456789abcdef01234567
+      imagebuilder:
+        arch:
+        - amd64
+        description: image-builder tarball for linux/amd64
+        name: image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -1034,6 +1043,15 @@ spec:
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev-build.0-linux-amd64.tar.gz
       gitCommit: 0123456789abcdef0123456789abcdef01234567
+      imagebuilder:
+        arch:
+        - amd64
+        description: image-builder tarball for linux/amd64
+        name: image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -1797,6 +1815,15 @@ spec:
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev-build.0-linux-amd64.tar.gz
       gitCommit: 0123456789abcdef0123456789abcdef01234567
+      imagebuilder:
+        arch:
+        - amd64
+        description: image-builder tarball for linux/amd64
+        name: image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -2560,6 +2587,15 @@ spec:
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/etcdadm/5b496a72af3d80d64a16a650c85ce9a5882bc014/etcdadm-v0.0.0-dev-build.0-linux-amd64.tar.gz
       gitCommit: 0123456789abcdef0123456789abcdef01234567
+      imagebuilder:
+        arch:
+        - amd64
+        description: image-builder tarball for linux/amd64
+        name: image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
+        os: linux
+        sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
