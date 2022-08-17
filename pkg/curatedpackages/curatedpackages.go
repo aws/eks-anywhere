@@ -22,10 +22,11 @@ import (
 const (
 	license = `The Amazon EKS Anywhere Curated Packages are only available to customers with the 
 Amazon EKS Anywhere Enterprise Subscription`
-	certManagerDoesNotExistMsg = `Curated packages cannot be installed as cert-manager is not present in the cluster. This is most likely caused
-by an action to install Curated packages at a workload cluster. Refer to
-https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.`
-	width = 82
+	certManagerDoesNotExistMsg = `Curated packages cannot be installed as cert-manager is not present in the cluster.
+This is most likely caused by an action to install curated packages at a workload 
+cluster. Refer to https://anywhere.eks.amazonaws.com/docs/tasks/troubleshoot/packages/ 
+for how to resolve this issue.`
+	width = 86
 )
 
 var userMsgSeparator = strings.Repeat("-", width)
@@ -59,10 +60,10 @@ func GetVersionBundle(reader Reader, eksaVersion string, spec *v1alpha1.Cluster)
 func PrintLicense() {
 	// Currently, use the width of the longest line to repeat the dashes
 	// Sample Output
-	//---------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------
 	//The Amazon EKS Anywhere Curated Packages are only available to customers with the
 	//Amazon EKS Anywhere Enterprise Subscription
-	//---------------------------------------------------------------------------------
+	//-------------------------------------------------------------------------------------
 	fmt.Println(userMsgSeparator)
 	fmt.Println(license)
 	fmt.Println(userMsgSeparator)
@@ -71,11 +72,12 @@ func PrintLicense() {
 func PrintCertManagerDoesNotExistMsg() {
 	// Currently, use the width of the longest line to repeat the dashes
 	// Sample Output
-	//----------------------------------------------------------------------------------------------------------------
-	//Curated packages cannot be installed as cert-manager is not present in the cluster. This is most likely caused
-	//by an action to install Curated packages at a workload cluster. Refer to
-	//https://anywhere.eks.amazonaws.com/docs/tasks/packages/ for how to resolve this issue.
-	//----------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------
+	//Curated packages cannot be installed as cert-manager is not present in the cluster.
+	//This is most likely caused by an action to install curated packages at a workload
+	//cluster. Refer to https://anywhere.eks.amazonaws.com/docs/tasks/troubleshoot/packages/
+	//for how to resolve this issue.
+	//--------------------------------------------------------------------------------------
 	fmt.Println(userMsgSeparator)
 	fmt.Println(certManagerDoesNotExistMsg)
 	fmt.Println(userMsgSeparator)
