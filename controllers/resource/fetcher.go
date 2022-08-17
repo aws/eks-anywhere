@@ -596,8 +596,10 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 			CredentialsRef: fd.ACSEndpoint.Name,
 			Zone: anywherev1.CloudStackZone{
 				Name: fd.Zone.Name,
+				Id:   fd.Zone.ID,
 				Network: anywherev1.CloudStackResourceIdentifier{
 					Name: fd.Zone.Network.Name,
+					Id:   fd.Zone.Network.ID,
 				},
 			},
 			Domain:  fd.Domain,
