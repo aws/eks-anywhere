@@ -7,11 +7,8 @@ description: >
   Install/upgrade/uninstall MetalLB
 ---
 
-{{% alert title="Important" color="warning" %}}
+{{< content "../prereq.md" >}}
 
-If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you may need to [install the package controller.]({{< relref ".." >}})
-
-{{% /alert %}}
 
 ## Install
 
