@@ -51,6 +51,7 @@ func TestGenerateImageAssets(t *testing.T) {
 		image               *assettypes.Image
 		imageRepoPrefix     string
 		imageTagOptions     []string
+		assetConfig         *assettypes.AssetConfig
 		buildRepoBranchName string
 		projectPath         string
 		gitTag              string
@@ -195,7 +196,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			releaseConfig.ReleaseVersion = releaseVersion
 			releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
-			if gotImageArtifact, _, err := GetImageAssets(releaseConfig, tt.image, tt.imageRepoPrefix, tt.imageTagOptions, tt.gitTag, tt.projectPath, tt.projectPath, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion); (err != nil) != tt.wantErr {
+			if gotImageArtifact, _, err := GetImageAssets(releaseConfig, tt.assetConfig, tt.image, tt.imageRepoPrefix, tt.imageTagOptions, tt.gitTag, tt.projectPath, tt.projectPath, tt.eksDReleaseChannel, tt.eksDReleaseNumber, tt.kubeVersion); (err != nil) != tt.wantErr {
 				t.Fatalf("GetImageAssets got err = %v, want err = %v", err, tt.wantErr)
 			} else if !reflect.DeepEqual(gotImageArtifact, tt.wantImageArtifact) {
 				t.Fatalf("GetImageAssets got artifact = %v, expected %v", gotImageArtifact, tt.wantImageArtifact)
