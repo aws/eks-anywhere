@@ -63,6 +63,9 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 			}
 		}
+		if tb.controlPlaneMachineSpec.OSFamily != v1alpha1.Bottlerocket && tb.datacenterSpec.OSImageURL == "" {
+			return nil, fmt.Errorf("failed generating Control Plane TinkerbellTemplateConfig: cannot import image for osFamily: %s, please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL", tb.controlPlaneMachineSpec.OSFamily)
+		}
 		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
 
@@ -87,6 +90,9 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 				if err != nil {
 					return nil, fmt.Errorf("getting etcd disk type of the hardware selector: %v", err)
 				}
+			}
+			if tb.etcdMachineSpec.OSFamily != v1alpha1.Bottlerocket && tb.datacenterSpec.OSImageURL == "" {
+				return nil, fmt.Errorf("failed generating ETCD TinkerbellTemplateConfig: cannot import image for osFamily: %s, please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL", tb.etcdMachineSpec.OSFamily)
 			}
 			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
@@ -123,6 +129,9 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 				if err != nil {
 					return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
 				}
+			}
+			if workerNodeMachineSpec.OSFamily != v1alpha1.Bottlerocket && tb.datacenterSpec.OSImageURL == "" {
+				return nil, fmt.Errorf("failed generating worker TinkerbellTemplateConfig: cannot import image for osFamily: %s, please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL", workerNodeMachineSpec.OSFamily)
 			}
 			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
