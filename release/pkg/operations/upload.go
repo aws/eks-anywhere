@@ -20,7 +20,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
 
-	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	"github.com/aws/eks-anywhere/release/pkg/images"
@@ -84,15 +83,9 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				releaseImageUri := artifact.Image.ReleaseImageURI
 				fmt.Printf("Source Image - %s\n", sourceImageUri)
 				fmt.Printf("Destination Image - %s\n", releaseImageUri)
-				exists, err := ecrpublic.CheckImageExistence(releaseImageUri, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+				err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 				if err != nil {
-					return fmt.Errorf("checking for image existence in ECR Public: %v", err)
-				}
-				if !exists {
-					err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
-					if err != nil {
-						return fmt.Errorf("copying image from source to destination: %v", err)
-					}
+					return fmt.Errorf("copying image from source to destination: %v", err)
 				}
 			}
 		}
