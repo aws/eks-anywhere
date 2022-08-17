@@ -28,7 +28,7 @@ GO_TEST ?= $(GO) test
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.11
 ifneq ($(PULL_BASE_REF),)
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
