@@ -44,14 +44,14 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 		gitTagPath = filepath.Join(projectPath, eksDReleaseChannel)
 	}
 	// Get git tag for project if exists
-	gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath)
+	gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath, sourcedFromBranch)
 	if err != nil {
 		return nil, fmt.Errorf("error getting git tag for project %s: %v", projectName, err)
 	}
 
 	// Add project images to artifacts list
 	for _, image := range ac.Images {
-		imageArtifact, sourceRepoName, err := images.GetImageAssets(rc, image, ac.ImageRepoPrefix, ac.ImageTagOptions, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
+		imageArtifact, sourceRepoName, err := images.GetImageAssets(rc, ac, image, ac.ImageRepoPrefix, ac.ImageTagOptions, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error getting image artifact: %v", err)
 		}
