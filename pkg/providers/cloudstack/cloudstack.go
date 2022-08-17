@@ -580,7 +580,6 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	fmt.Printf("Comparing old csdc spec (%s) and new csdc spec (%s)", oldCsdc.Spec, newCsdc.Spec)
 	if len(newCsdc.Spec.AvailabilityZones) != len(oldCsdc.Spec.AvailabilityZones) {
 		return true
 	}
