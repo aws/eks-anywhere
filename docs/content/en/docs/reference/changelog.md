@@ -5,10 +5,18 @@ weight: 35
 ---
 
 ## Unreleased
+
+## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
+
 ### Added
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)
 - Add support for Support Bundle for validating control plane IP with vSphere provider
+- Add support for aws-iam-authenticator on Bare Metal
+- Curated Packages General Availibilty
+- Added Emissary Ingress Curated Package
 
+### Changed
+- Install and enable GitOps in the existing cluster with upgrade command
 
 ## [v0.10.1](https://github.com/aws/eks-anywhere/releases/tag/v0.10.1)
 
