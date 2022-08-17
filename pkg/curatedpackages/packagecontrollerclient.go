@@ -69,11 +69,11 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	}
 
 	if err = pc.ApplySecret(ctx); err != nil {
-		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+		logger.Info("Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.")
 	}
 
 	if err = pc.CreateCronJob(ctx); err != nil {
-		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
+		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
 	}
 	return nil
 }
