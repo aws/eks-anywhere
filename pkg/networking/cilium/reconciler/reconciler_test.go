@@ -112,6 +112,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYaml(t *testing.T) {
+	t.Skip("Flaky test, needs to be fixed")
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflightDS := ciliumPreflightDaemonSet()
