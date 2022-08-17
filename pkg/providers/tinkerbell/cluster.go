@@ -107,6 +107,7 @@ func NewClusterSpecValidator(assertions ...ClusterSpecAssertion) *ClusterSpecVal
 		AssertWorkerNodeGroupMachineRefsExists,
 		AssertMachineConfigsValid,
 		AssertMachineConfigNamespaceMatchesDatacenterConfig,
+		AssertOsFamilyValid,
 	)
 	v.Register(assertions...)
 	return &v
