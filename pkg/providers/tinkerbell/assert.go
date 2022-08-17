@@ -82,6 +82,10 @@ func AssertK8SVersionNot120(spec *ClusterSpec) error {
 	return nil
 }
 
+func AssertOsFamilyValid(spec *ClusterSpec) error {
+	return validateOsFamily(spec)
+}
+
 // AssertcontrolPlaneIPNotInUse ensures the endpoint host for the control plane isn't in use.
 // The check may be unreliable due to its implementation.
 func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion {
