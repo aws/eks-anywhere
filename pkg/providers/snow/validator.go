@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 )
 
 const (
@@ -13,24 +12,12 @@ const (
 )
 
 type AwsClientValidator struct {
-	awsClientMap AwsClientMap
+	clientRegistry ClientRegistry
 }
 
-type Validator interface {
-	ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
-	ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
-	ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
-}
-
-func NewValidator(aws aws.Clients) *AwsClientValidator {
+func NewValidator(clientRegistry ClientRegistry) *AwsClientValidator {
 	return &AwsClientValidator{
-		awsClientMap: NewAwsClientMap(aws),
-	}
-}
-
-func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *AwsClientValidator {
-	return &AwsClientValidator{
-		awsClientMap: awsClientMap,
+		clientRegistry: clientRegistry,
 	}
 }
 
@@ -39,7 +26,12 @@ func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m 
 		return nil
 	}
 
-	for ip, client := range v.awsClientMap {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for ip, client := range clientMap {
 		keyExists, err := client.EC2KeyNameExists(ctx, m.Spec.SshKeyName)
 		if err != nil {
 			return fmt.Errorf("describe key pair on snow device [%s]: %v", ip, err)
@@ -57,7 +49,12 @@ func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context,
 		return nil
 	}
 
-	for ip, client := range v.awsClientMap {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for ip, client := range clientMap {
 		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {
 			return fmt.Errorf("describe image on snow device [%s]: %v", ip, err)
@@ -71,8 +68,13 @@ func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context,
 }
 
 func (v *AwsClientValidator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
 	for _, ip := range m.Spec.Devices {
-		if _, ok := v.awsClientMap[ip]; !ok {
+		if _, ok := clientMap[ip]; !ok {
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 	}

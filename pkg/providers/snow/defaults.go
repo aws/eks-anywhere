@@ -5,35 +5,38 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
 
 type Defaulters struct {
-	awsClientMap AwsClientMap
-	writer       filewriter.FileWriter
-	keyGenerator SshKeyGenerator
+	clientRegistry ClientRegistry
+	writer         filewriter.FileWriter
+	keyGenerator   SshKeyGenerator
 }
 
 type SshKeyGenerator interface {
 	GenerateSSHAuthKey(filewriter.FileWriter) (string, error)
 }
 
-func NewDefaulters(aws aws.Clients, writer filewriter.FileWriter) *Defaulters {
-	return &Defaulters{
-		awsClientMap: NewAwsClientMap(aws),
-		writer:       writer,
-		keyGenerator: common.SshAuthKeyGenerator{},
+type DefaultersOpt func(defaulters *Defaulters)
+
+func NewDefaulters(clientRegistry ClientRegistry, writer filewriter.FileWriter, opts ...DefaultersOpt) *Defaulters {
+	defaulters := &Defaulters{
+		clientRegistry: clientRegistry,
+		writer:         writer,
+		keyGenerator:   common.SshAuthKeyGenerator{},
 	}
+	for _, opt := range opts {
+		opt(defaulters)
+	}
+	return defaulters
 }
 
-func NewDefaultersFromAwsClientMap(awsClientMap AwsClientMap, writer filewriter.FileWriter, keyGenerator SshKeyGenerator) *Defaulters {
-	return &Defaulters{
-		awsClientMap: awsClientMap,
-		writer:       writer,
-		keyGenerator: keyGenerator,
+func WithKeyGenerator(generator SshKeyGenerator) DefaultersOpt {
+	return func(defaulters *Defaulters) {
+		defaulters.keyGenerator = generator
 	}
 }
 
@@ -60,9 +63,10 @@ func NewMachineConfigDefaulters(d *Defaulters) *MachineConfigDefaulters {
 	}
 }
 
-func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context) (int, error) {
+func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context, clientMap AwsClientMap) (int, error) {
 	var count int
-	for ip, client := range md.defaulters.awsClientMap {
+
+	for ip, client := range clientMap {
 		keyExists, err := client.EC2KeyNameExists(ctx, defaultAwsSshKeyName)
 		if err != nil {
 			return count, fmt.Errorf("describing key pair on snow device [deviceIP=%s]: %v", ip, err)
@@ -84,16 +88,21 @@ func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1
 		return nil
 	}
 
-	keyCount, err := md.defaultKeyCount(ctx)
+	clientMap, err := md.defaulters.clientRegistry.Get(ctx)
 	if err != nil {
 		return err
 	}
 
-	if keyCount > 0 && keyCount < len(md.defaulters.awsClientMap) {
+	keyCount, err := md.defaultKeyCount(ctx, clientMap)
+	if err != nil {
+		return err
+	}
+
+	if keyCount > 0 && keyCount < len(clientMap) {
 		return fmt.Errorf("default key [keyName=%s] only exists on some of the devices. Use 'aws ec2 import-key-pair' to import this key to all the devices", defaultAwsSshKeyName)
 	}
 
-	if keyCount == len(md.defaulters.awsClientMap) {
+	if keyCount == len(clientMap) {
 		md.keyGenerated = true
 		m.Spec.SshKeyName = defaultAwsSshKeyName
 		return nil
@@ -106,7 +115,7 @@ func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1
 		return err
 	}
 
-	for ip, client := range md.defaulters.awsClientMap {
+	for ip, client := range clientMap {
 		err := client.EC2ImportKeyPair(ctx, defaultAwsSshKeyName, []byte(key))
 		if err != nil {
 			return fmt.Errorf("importing key pair on snow device [deviceIP=%s]: %v", ip, err)

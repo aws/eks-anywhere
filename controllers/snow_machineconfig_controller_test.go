@@ -18,9 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers"
-	controllerMock "github.com/aws/eks-anywhere/controllers/mocks"
+	"github.com/aws/eks-anywhere/controllers/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	snowMock "github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 )
 
 var (
@@ -42,7 +41,7 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	validator := snowMock.NewMockValidator(ctrl)
+	validator := mocks.NewMockValidator(ctrl)
 	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
@@ -52,10 +51,7 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -75,7 +71,6 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	g := NewWithT(t)
-	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
 	config := &anywherev1.SnowDatacenterConfig{
@@ -94,9 +89,7 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, nil)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -111,7 +104,6 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	g := NewWithT(t)
-	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
@@ -122,9 +114,7 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, nil)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -137,41 +127,13 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
-func TestSnowMachineConfigReconcilerFailureBuildValidator(t *testing.T) {
-	g := NewWithT(t)
-	ctrl := gomock.NewController(t)
-	ctx := context.Background()
-
-	config := createSnowMachineConfig()
-
-	objs := []runtime.Object{config}
-
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
-
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(nil, errors.New("test error"))
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(HaveOccurred())
-}
-
 func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	validator := snowMock.NewMockValidator(ctrl)
+	validator := mocks.NewMockValidator(ctrl)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
 	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error"))
@@ -181,10 +143,7 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -208,7 +167,7 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	validator := snowMock.NewMockValidator(ctrl)
+	validator := mocks.NewMockValidator(ctrl)
 	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error"))
@@ -218,10 +177,7 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -245,7 +201,7 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	validator := snowMock.NewMockValidator(ctrl)
+	validator := mocks.NewMockValidator(ctrl)
 	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error"))
@@ -255,10 +211,7 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -284,7 +237,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	ctx := context.Background()
 
 	config := createSnowMachineConfig()
-	validator := snowMock.NewMockValidator(ctrl)
+	validator := mocks.NewMockValidator(ctrl)
 	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error1"))
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error2"))
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error3"))
@@ -294,10 +247,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{

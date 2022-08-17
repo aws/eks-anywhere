@@ -11,6 +11,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
@@ -118,7 +119,7 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
 			client,
 			f.logger,
-			snowreconciler.NewValidatorBuilder(snowreconciler.NewAwsClientBuilder(client)),
+			snow.NewValidator(snowreconciler.NewAwsClientBuilder(client)),
 		)
 		return nil
 	})

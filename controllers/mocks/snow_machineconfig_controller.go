@@ -8,44 +8,71 @@ import (
 	context "context"
 	reflect "reflect"
 
-	snow "github.com/aws/eks-anywhere/pkg/providers/snow"
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockValidatorBuilder is a mock of ValidatorBuilder interface.
-type MockValidatorBuilder struct {
+// MockValidator is a mock of Validator interface.
+type MockValidator struct {
 	ctrl     *gomock.Controller
-	recorder *MockValidatorBuilderMockRecorder
+	recorder *MockValidatorMockRecorder
 }
 
-// MockValidatorBuilderMockRecorder is the mock recorder for MockValidatorBuilder.
-type MockValidatorBuilderMockRecorder struct {
-	mock *MockValidatorBuilder
+// MockValidatorMockRecorder is the mock recorder for MockValidator.
+type MockValidatorMockRecorder struct {
+	mock *MockValidator
 }
 
-// NewMockValidatorBuilder creates a new mock instance.
-func NewMockValidatorBuilder(ctrl *gomock.Controller) *MockValidatorBuilder {
-	mock := &MockValidatorBuilder{ctrl: ctrl}
-	mock.recorder = &MockValidatorBuilderMockRecorder{mock}
+// NewMockValidator creates a new mock instance.
+func NewMockValidator(ctrl *gomock.Controller) *MockValidator {
+	mock := &MockValidator{ctrl: ctrl}
+	mock.recorder = &MockValidatorMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockValidatorBuilder) EXPECT() *MockValidatorBuilderMockRecorder {
+func (m *MockValidator) EXPECT() *MockValidatorMockRecorder {
 	return m.recorder
 }
 
-// Build mocks base method.
-func (m *MockValidatorBuilder) Build(ctx context.Context) (snow.Validator, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Build", ctx)
-	ret0, _ := ret[0].(snow.Validator)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+// ValidateEC2ImageExistsOnDevice mocks base method.
+func (m_2 *MockValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "ValidateEC2ImageExistsOnDevice", ctx, m)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// Build indicates an expected call of Build.
-func (mr *MockValidatorBuilderMockRecorder) Build(ctx interface{}) *gomock.Call {
+// ValidateEC2ImageExistsOnDevice indicates an expected call of ValidateEC2ImageExistsOnDevice.
+func (mr *MockValidatorMockRecorder) ValidateEC2ImageExistsOnDevice(ctx, m interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockValidatorBuilder)(nil).Build), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEC2ImageExistsOnDevice", reflect.TypeOf((*MockValidator)(nil).ValidateEC2ImageExistsOnDevice), ctx, m)
+}
+
+// ValidateEC2SshKeyNameExists mocks base method.
+func (m_2 *MockValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "ValidateEC2SshKeyNameExists", ctx, m)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateEC2SshKeyNameExists indicates an expected call of ValidateEC2SshKeyNameExists.
+func (mr *MockValidatorMockRecorder) ValidateEC2SshKeyNameExists(ctx, m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEC2SshKeyNameExists", reflect.TypeOf((*MockValidator)(nil).ValidateEC2SshKeyNameExists), ctx, m)
+}
+
+// ValidateMachineDeviceIPs mocks base method.
+func (m_2 *MockValidator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	m_2.ctrl.T.Helper()
+	ret := m_2.ctrl.Call(m_2, "ValidateMachineDeviceIPs", ctx, m)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateMachineDeviceIPs indicates an expected call of ValidateMachineDeviceIPs.
+func (mr *MockValidatorMockRecorder) ValidateMachineDeviceIPs(ctx, m interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateMachineDeviceIPs", reflect.TypeOf((*MockValidator)(nil).ValidateMachineDeviceIPs), ctx, m)
 }
