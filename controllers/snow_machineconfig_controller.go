@@ -11,31 +11,24 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
-type ClientBuilder interface {
-	Build(ctx context.Context) (aws.Clients, error)
-}
-
 type ValidatorBuilder interface {
-	Build(aws aws.Clients) snow.Validator
+	Build(ctx context.Context) (snow.Validator, error)
 }
 
 // SnowMachineConfigReconciler reconciles a SnowMachineConfig object
 type SnowMachineConfigReconciler struct {
 	client           client.Client
 	log              logr.Logger
-	clientBuilder    ClientBuilder
 	validatorBuilder ValidatorBuilder
 }
 
-func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, clientBuilder ClientBuilder, validatorBuilder ValidatorBuilder) *SnowMachineConfigReconciler {
+func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, validatorBuilder ValidatorBuilder) *SnowMachineConfigReconciler {
 	return &SnowMachineConfigReconciler{
 		client:           client,
 		log:              log,
-		clientBuilder:    clientBuilder,
 		validatorBuilder: validatorBuilder,
 	}
 }
@@ -87,12 +80,11 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachineConfig *anywherev1.SnowMachineConfig) (_ ctrl.Result, reterr error) {
 	var allErrs []error
-	deviceClientMap, err := r.clientBuilder.Build(ctx)
+	// Setting the aws client map in validator on every reconcile based on the secrets at that point of time
+	validator, err := r.validatorBuilder.Build(ctx)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
-	// Setting the aws client map on every reconcile based on the secrets at that point of time
-	validator := r.validatorBuilder.Build(deviceClientMap)
 	if err := validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}

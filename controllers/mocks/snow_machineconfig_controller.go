@@ -8,48 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	aws "github.com/aws/eks-anywhere/pkg/aws"
 	snow "github.com/aws/eks-anywhere/pkg/providers/snow"
 	gomock "github.com/golang/mock/gomock"
 )
-
-// MockClientBuilder is a mock of ClientBuilder interface.
-type MockClientBuilder struct {
-	ctrl     *gomock.Controller
-	recorder *MockClientBuilderMockRecorder
-}
-
-// MockClientBuilderMockRecorder is the mock recorder for MockClientBuilder.
-type MockClientBuilderMockRecorder struct {
-	mock *MockClientBuilder
-}
-
-// NewMockClientBuilder creates a new mock instance.
-func NewMockClientBuilder(ctrl *gomock.Controller) *MockClientBuilder {
-	mock := &MockClientBuilder{ctrl: ctrl}
-	mock.recorder = &MockClientBuilderMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockClientBuilder) EXPECT() *MockClientBuilderMockRecorder {
-	return m.recorder
-}
-
-// Build mocks base method.
-func (m *MockClientBuilder) Build(ctx context.Context) (aws.Clients, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Build", ctx)
-	ret0, _ := ret[0].(aws.Clients)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Build indicates an expected call of Build.
-func (mr *MockClientBuilderMockRecorder) Build(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockClientBuilder)(nil).Build), ctx)
-}
 
 // MockValidatorBuilder is a mock of ValidatorBuilder interface.
 type MockValidatorBuilder struct {
@@ -75,15 +36,16 @@ func (m *MockValidatorBuilder) EXPECT() *MockValidatorBuilderMockRecorder {
 }
 
 // Build mocks base method.
-func (m *MockValidatorBuilder) Build(aws aws.Clients) snow.Validator {
+func (m *MockValidatorBuilder) Build(ctx context.Context) (snow.Validator, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Build", aws)
+	ret := m.ctrl.Call(m, "Build", ctx)
 	ret0, _ := ret[0].(snow.Validator)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Build indicates an expected call of Build.
-func (mr *MockValidatorBuilderMockRecorder) Build(aws interface{}) *gomock.Call {
+func (mr *MockValidatorBuilderMockRecorder) Build(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockValidatorBuilder)(nil).Build), aws)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Build", reflect.TypeOf((*MockValidatorBuilder)(nil).Build), ctx)
 }

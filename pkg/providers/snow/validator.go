@@ -22,16 +22,6 @@ type Validator interface {
 	ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error
 }
 
-type validatorBuilder struct{}
-
-func NewValidatorBuilder() *validatorBuilder {
-	return &validatorBuilder{}
-}
-
-func (b *validatorBuilder) Build(aws aws.Clients) Validator {
-	return NewValidator(aws)
-}
-
 func NewValidator(aws aws.Clients) *AwsClientValidator {
 	return &AwsClientValidator{
 		awsClientMap: NewAwsClientMap(aws),

@@ -113,7 +113,7 @@ func TestBuildSnowAwsClientMap(t *testing.T) {
 			cl := cb.WithRuntimeObjects(objs...).Build()
 			clientBuilder := reconciler.NewAwsClientBuilder(cl)
 
-			_, err := clientBuilder.Build(ctx)
+			_, err := clientBuilder.Get(ctx)
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
 			} else {
@@ -131,7 +131,7 @@ func TestBuildSnowAwsClientMapNonexistentSecret(t *testing.T) {
 	cl := cb.Build()
 	clientBuilder := reconciler.NewAwsClientBuilder(cl)
 
-	_, err := clientBuilder.Build(ctx)
+	_, err := clientBuilder.Get(ctx)
 	g.Expect(err).To(MatchError(ContainSubstring("getting snow credentials: secrets \"capas-manager-bootstrap-credentials\" not found")))
 }
 

@@ -25,7 +25,7 @@ func NewAwsClientBuilder(client client.Client) *AwsClientBuilder {
 	}
 }
 
-func (b *AwsClientBuilder) Build(ctx context.Context) (aws.Clients, error) {
+func (b *AwsClientBuilder) Get(ctx context.Context) (aws.Clients, error) {
 	credentials, certificates, err := getSnowCredentials(ctx, b.client)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting snow credentials")

@@ -20,7 +20,7 @@ func NewSnowAwsClientBuilder() *snowAwsClientBuilder {
 	return &snowAwsClientBuilder{}
 }
 
-func (b *snowAwsClientBuilder) Build(ctx context.Context) (Clients, error) {
+func (b *snowAwsClientBuilder) Get(ctx context.Context) (Clients, error) {
 	credsFile, err := AwsCredentialsFile()
 	if err != nil {
 		return nil, fmt.Errorf("fetching aws credentials from env: %v", err)

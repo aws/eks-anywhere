@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers"
 	controllerMock "github.com/aws/eks-anywhere/controllers/mocks"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	snowMock "github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 )
 
@@ -31,7 +30,7 @@ var (
 
 func TestSnowMachineConfigReconcilerSetupWithManager(t *testing.T) {
 	client := env.Client()
-	r := controllers.NewSnowMachineConfigReconciler(client, logf.Log, nil, nil)
+	r := controllers.NewSnowMachineConfigReconciler(client, logf.Log, nil)
 
 	g := NewWithT(t)
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
@@ -39,7 +38,6 @@ func TestSnowMachineConfigReconcilerSetupWithManager(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	g := NewWithT(t)
-	mockClients := make(map[string]*aws.Client)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -54,13 +52,10 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
-
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -99,10 +94,9 @@ func TestSnowMachineConfigReconcilerFailureIncorrectObject(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -128,10 +122,9 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -144,7 +137,7 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
-func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
+func TestSnowMachineConfigReconcilerFailureBuildValidator(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
@@ -156,11 +149,10 @@ func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(nil, errors.New("test error"))
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
+	validatorBuilder.EXPECT().Build(ctx).Return(nil, errors.New("test error"))
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -175,7 +167,6 @@ func TestSnowMachineConfigReconcilerFailureBuildAwsClient(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	g := NewWithT(t)
-	mockClients := make(map[string]*aws.Client)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -190,13 +181,10 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
-
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -216,7 +204,6 @@ func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	g := NewWithT(t)
-	mockClients := make(map[string]*aws.Client)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -231,13 +218,10 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
-
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -257,7 +241,6 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	g := NewWithT(t)
-	mockClients := make(map[string]*aws.Client)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -272,13 +255,10 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
-
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{
@@ -300,7 +280,6 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 
 func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	g := NewWithT(t)
-	mockClients := make(map[string]*aws.Client)
 	ctrl := gomock.NewController(t)
 	ctx := context.Background()
 
@@ -315,13 +294,10 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	clientBuilder := controllerMock.NewMockClientBuilder(ctrl)
-	clientBuilder.EXPECT().Build(ctx).Return(mockClients, nil)
-
 	validatorBuilder := controllerMock.NewMockValidatorBuilder(ctrl)
-	validatorBuilder.EXPECT().Build(mockClients).Return(validator)
+	validatorBuilder.EXPECT().Build(ctx).Return(validator, nil)
 
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, clientBuilder, validatorBuilder)
+	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validatorBuilder)
 
 	req := reconcile.Request{
 		NamespacedName: types.NamespacedName{

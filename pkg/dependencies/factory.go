@@ -505,7 +505,7 @@ func (f *Factory) WithAwsSnow() *Factory {
 		}
 
 		builder := aws.NewSnowAwsClientBuilder()
-		deviceClientMap, err := builder.Build(ctx)
+		deviceClientMap, err := builder.Get(ctx)
 		if err != nil {
 			return err
 		}

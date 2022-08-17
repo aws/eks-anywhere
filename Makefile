@@ -460,6 +460,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/client.go -package=mocks -source "pkg/providers/snow/snow.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/validator.go -package=mocks -source "pkg/providers/snow/validator.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/validatorbuilder.go -package=mocks -source "pkg/providers/snow/reconciler/validatorbuilder.go"
 	${GOPATH}/bin/mockgen -destination=pkg/eksd/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/eksd" EksdInstallerClient
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/kubectlrunner.go -package=mocks -source "pkg/curatedpackages/kubectlrunner.go" KubectlRunner
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packageinstaller.go -package=mocks -source "pkg/curatedpackages/packageinstaller.go" PackageController PackageHandler
