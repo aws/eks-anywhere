@@ -61,6 +61,7 @@ type Dependencies struct {
 	Helm                      *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
+	CiliumTemplater           *cilium.Templater
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
@@ -632,6 +633,21 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return nil
 		}
 		f.dependencies.Networking = networkingBuilder()
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCiliumTemplater() *Factory {
+	f.WithHelm()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CiliumTemplater != nil {
+			return nil
+		}
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
 
 		return nil
 	})

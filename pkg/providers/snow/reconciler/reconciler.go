@@ -8,23 +8,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 )
 
-type Reconciler struct {
-	client client.Client
+type CNIReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error)
 }
 
-func New(client client.Client) *Reconciler {
+type Reconciler struct {
+	client        client.Client
+	cniReconciler CNIReconciler
+}
+
+func New(client client.Client, cniReconciler CNIReconciler) *Reconciler {
 	return &Reconciler{
-		client: client,
+		client:        client,
+		cniReconciler: cniReconciler,
 	}
 }
 
-func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
-	specWithBundles, err := c.BuildSpec(ctx, clientutil.NewKubeClient(r.client), cluster)
+func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywherev1.Cluster) (controller.Result, error) {
+	specWithBundles, err := cluster.BuildSpec(ctx, clientutil.NewKubeClient(r.client), c)
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -37,7 +43,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 			}
 
 			log.Error(nil, failureMessage)
-			cluster.Status.FailureMessage = &failureMessage
+			c.Status.FailureMessage = &failureMessage
 			return controller.Result{}, nil
 		}
 	}
