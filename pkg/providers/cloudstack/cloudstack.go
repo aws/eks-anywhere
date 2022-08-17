@@ -580,20 +580,20 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	if len(newCsdc.Spec.AvailabilityZones) != len(oldCsdc.Spec.AvailabilityZones) {
+	if len(oldCsdc.Spec.AvailabilityZones) != len(newCsdc.Spec.AvailabilityZones) {
 		return true
 	}
-	oAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
-	for _, oAz := range oldCsdc.Spec.AvailabilityZones {
-		oAzsMap[oAz.Name] = oAz
+	oldAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
+	for _, oldAz := range oldCsdc.Spec.AvailabilityZones {
+		oldAzsMap[oldAz.Name] = oldAz
 	}
-	for _, sAz := range newCsdc.Spec.AvailabilityZones {
-		oAz, found := oAzsMap[sAz.Name]
-		if !found || !(sAz.Zone.Equal(&oAz.Zone) &&
-			sAz.Name == oAz.Name &&
-			sAz.CredentialsRef == oAz.CredentialsRef &&
-			sAz.Account == oAz.Account &&
-			sAz.Domain == oAz.Domain) {
+	for _, newAz := range newCsdc.Spec.AvailabilityZones {
+		oldAz, found := oldAzsMap[newAz.Name]
+		if !found || !(oldAz.Zone.Equal(&newAz.Zone) &&
+			oldAz.Name == newAz.Name &&
+			oldAz.CredentialsRef == newAz.CredentialsRef &&
+			oldAz.Account == newAz.Account &&
+			oldAz.Domain == newAz.Domain) {
 
 			return true
 		}
