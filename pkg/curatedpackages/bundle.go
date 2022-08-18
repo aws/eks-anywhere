@@ -90,7 +90,12 @@ func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string
 }
 
 func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
-	params := []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, packagesv1.PackageBundleControllerName}
+	params := []string{"get", "kubeadmcontrolplane", "--no-headers", "-o", "custom-columns=:metadata.name", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaSystemNamespace}
+	activeCluster, err := b.kubectl.ExecuteCommand(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+	params = []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, strings.TrimSuffix(activeCluster.String(), "\n")}
 	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
 		return nil, err
