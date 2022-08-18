@@ -68,24 +68,33 @@ Follow these steps to create an EKS Anywhere cluster.
    * `eksctl anywhere version` version should be `v0.9.0` or later.
    * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
+   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
      {{% /alert %}}
+   
+      * Setup authentication to use curated-packages
+         ```bash
+         $ export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+         $ export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+         ```
 
       * Discover curated packages to install
          ```bash
-         eksctl anywhere list packages --source registry --kube-version 1.21
+         eksctl anywhere list packages --source registry --kube-version 1.23
          ```
          Example command output:
          ```                 
          Package                 Version(s)                                       
          -------                 ----------                                       
-         harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
+         hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+         harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+         metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
+         emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
          ```
       * Generate a curated-packages config
 
          The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
          ```bash
-         eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
+         eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
          ```
 
       * Create the initial cluster
