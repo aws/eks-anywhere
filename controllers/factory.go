@@ -215,7 +215,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 			return nil
 		}
 
-		f.snowClusterReconciler = snowreconciler.New()
+		f.snowClusterReconciler = snowreconciler.New(f.manager.GetClient())
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 
 		return nil
