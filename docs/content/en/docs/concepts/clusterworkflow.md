@@ -337,7 +337,7 @@ The project documents the use of [Emissary-ingress]({{< relref "../tasks/workloa
 The Ubuntu or Mac operating system representing the Administrative machine can continue to use the binaries to manage the EKS anywhere cluster.
 You may need to [update those binaries]({{< relref "../getting-started/install/#upgrade-eksctl-anywhere" >}}) (`kubectl`, `eksctl anywhere`, and others) from time to time.
 
-In the workload cluster itself, the operating system on each node is provided from either Bottlerocket or Ubuntu OVAs.
+In the workload cluster itself, the operating system on each node is provided from either Bottlerocket or Ubuntu os images.
 Note that it is not recommended that you add software or change the configuration of these systems once they are running in the cluster.
 In fact, Bottlerocket contains limited writeable areas and does not include a software package management system.
 
