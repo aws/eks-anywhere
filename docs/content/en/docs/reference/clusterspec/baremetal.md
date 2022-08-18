@@ -65,7 +65,7 @@ metadata:
   name: my-cluster-name-cp
 spec:
   hardwareSelector: {}
-  osFamily: ubuntu
+  osFamily: bottlerocket
   templateRef: {}
   users:
   - name: ec2-user
@@ -79,7 +79,7 @@ metadata:
   name: my-cluster-name
 spec:
   hardwareSelector: {}
-  osFamily: ubuntu
+  osFamily: bottlerocket
   templateRef:
     kind: TinkerbellTemplateConfig
     name: my-cluster-name
@@ -193,7 +193,7 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default operating system image.
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../)
 This field is useful if you want to provide a customized operating system image or simply host the standard image locally.
 See [Artifacts]({{< relref "../artifacts/#ubuntu-os-images-for-bare-metal" >}}) for details.
 
