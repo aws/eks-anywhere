@@ -168,6 +168,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
+- `gitOpsRef` (Once set, you can't change or delete the field's content later)
 
 
 `VSphereMachineConfig`:
