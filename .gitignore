@@ -19,3 +19,4 @@ hardware-manifests/
 *.env
 support-bundle*
 /.ignore
+docs/.hugo_build.lock
