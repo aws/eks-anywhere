@@ -40,7 +40,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.22"
+  kubernetesVersion: "1.23"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
