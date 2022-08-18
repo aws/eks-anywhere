@@ -451,7 +451,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       packageController:
         arch:
         - amd64
@@ -460,7 +460,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -469,8 +469,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
-      version: v0.2.0-alpha.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
+      version: v0.2.0+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -1205,7 +1205,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       packageController:
         arch:
         - amd64
@@ -1214,7 +1214,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1223,8 +1223,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
-      version: v0.2.0-alpha.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
+      version: v0.2.0+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -1959,7 +1959,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       packageController:
         arch:
         - amd64
@@ -1968,7 +1968,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1977,8 +1977,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
-      version: v0.2.0-alpha.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
+      version: v0.2.0+abcdef1
     snow:
       components: {}
       kubeVip: {}
@@ -2713,7 +2713,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       packageController:
         arch:
         - amd64
@@ -2722,7 +2722,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2731,8 +2731,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-alpha.6-eks-a-v0.0.0-dev-release-0.11-build.1
-      version: v0.2.0-alpha.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.0-eks-a-v0.0.0-dev-release-0.11-build.1
+      version: v0.2.0+abcdef1
     snow:
       components: {}
       kubeVip: {}
