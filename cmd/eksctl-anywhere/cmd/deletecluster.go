@@ -123,6 +123,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deps.Provider,
 		deps.ClusterManager,
 		deps.GitOpsFlux,
+		deps.Writer,
 	)
 
 	var cluster *types.Cluster
