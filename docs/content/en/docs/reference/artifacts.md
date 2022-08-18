@@ -96,8 +96,8 @@ EKS-D Release
 1.20 - `eksdRelease:kubernetes-1-20-eks-19`
 
 ### Ubuntu OVAs
-EKS Anywhere no longer distributes Ubuntu OVAs or gzip images for use with EKS Anywhere clusters.
-So building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) is the only supported way to get that functionality.
+EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
+Building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) is the only supported way to get that functionality.
 
 ## Building Ubuntu-based node images
 
