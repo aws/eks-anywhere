@@ -42,6 +42,14 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		Build(ctx)
 }
 
+func NewLightweightDepsForPackages(ctx context.Context, opts ...PackageOpt) (*dependencies.Dependencies, error) {
+	config := New(opts...)
+	return dependencies.NewFactory().
+		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
+		WithKubeRESTClient(config.kubeConfigFilename).
+		Build(ctx)
+}
+
 type PackageOpt func(*PackageConfig)
 
 type PackageConfig struct {

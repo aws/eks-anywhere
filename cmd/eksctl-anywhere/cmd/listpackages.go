@@ -49,7 +49,7 @@ var listPackagesCommand = &cobra.Command{
 
 func listPackages(ctx context.Context) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(lpo.registry), WithKubeVersion(lpo.kubeVersion), WithMountPaths(kubeConfig))
+	deps, err := NewLightweightDepsForPackages(ctx, WithKubeVersion(lpo.kubeVersion))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
