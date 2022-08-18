@@ -159,13 +159,6 @@ To use `image-builder` you must meet the following prerequisites:
       * Low level file operations
     * Network
       * Assign network to vm
-### Optional Proxy configuration
-You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
-  ```
-  export HTTP_PROXY=<HTTP proxy URL e.g. http://proxy.corp.com:80>
-  export HTTPS_PROXY=<HTTPS proxy URL e.g. http://proxy.corp.com:443>
-  export NO_PROXY=<No proxy>
-  ```
 
 ### Optional Proxy configuration
 You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
