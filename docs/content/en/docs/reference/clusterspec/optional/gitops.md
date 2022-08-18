@@ -8,7 +8,7 @@ description: >
 
 # GitOps Support (Optional)
 EKS Anywhere can create clusters that supports GitOps configuration management with Flux. 
-In order to add GitOps support, you need to configure your cluster by updating the configuration file before creating the cluster.
+In order to add GitOps support, you need to configure your cluster by specifying the configuration file with `gitOpsRef` field when creating or upgrading the cluster.
 We currently support two types of configurations: `FluxConfig` and `GitOpsConfig`.
 
 ## Flux Configuration
