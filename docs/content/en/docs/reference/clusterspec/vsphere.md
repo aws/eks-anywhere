@@ -55,7 +55,7 @@ spec:
      machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.22"
+   kubernetesVersion: "1.23"
    workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
