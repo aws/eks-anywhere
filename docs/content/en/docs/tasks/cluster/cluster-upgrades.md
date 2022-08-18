@@ -218,6 +218,14 @@ spec:
 
 Worker node groups can use the same machineGroupRef as previous groups, or you can define a new machine configuration for your new group.
 
+### Resume upgrade after failure
+
+EKS Anywhere supports re-running the `upgrade` command post-failure as an experimental feature.
+If the `upgrade` command fails, the user can manually fix the issue (when applicable) and simply rerun the same command.  At this point, the CLI will skip the completed tasks, restore the state of the operation, and resume the upgrade process.
+The completed tasks are stored in the `generated` folder as a file named `<clusterName>-checkpoint.yaml`.
+
+This feature is experimental. To enable this feature, export the following environment variable:<br/>
+`export CHECKPOINT_ENABLED=true`
 
 ### Troubleshooting
 
