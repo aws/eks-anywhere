@@ -408,7 +408,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName:             "eks-anywhere-packages",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					SourceLatestTagFromECR: true,
+					NonProdSourceImageTagFormat: "<gitTag>",
 				},
 			},
 		},
