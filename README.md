@@ -18,6 +18,7 @@ Here are the steps for [getting started](https://anywhere.eks.amazonaws.com/docs
 Full documentation for releases can be found on [https://anywhere.eks.amazonaws.com](https://anywhere.eks.amazonaws.com/).
 
 [<img src="docs/static/images/certified-kubernetes-1.22-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/1872)
+[<img src="docs/static/images/certified-kubernetes-1.23-color.svg" height=150>](https://github.com/cncf/k8s-conformance/pull/2109)
 <!-- 
 Source: https://github.com/cncf/artwork/tree/master/projects/kubernetes/certified-kubernetes
 -->
