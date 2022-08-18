@@ -3,24 +3,18 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -34,7 +28,6 @@ type createClusterOptions struct {
 	skipIpCheck           bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
-	installPackages       string
 }
 
 var cc = &createClusterOptions{}
@@ -214,48 +207,4 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	cleanup(deps, &err)
 	return err
-}
-
-func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
-	dirs := cc.mountDirs()
-	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
-		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
-		dirs = append(dirs, filepath.Dir(cc.installPackages))
-	}
-
-	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		if extraDirs, err := cc.extraDirectoriesToMount(); err == nil {
-			dirs = append(dirs, extraDirs...)
-		}
-	}
-
-	return dirs, nil
-}
-
-func (cc *createClusterOptions) extraDirectoriesToMount() ([]string, error) {
-	dirs := []string{}
-	env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
-	if found && len(env) > 0 {
-		mountDirs := strings.Split(env, ",")
-		for _, dir := range mountDirs {
-			if _, err := os.Stat(dir); err != nil {
-				return nil, fmt.Errorf("invalid host path to mount: %v", err)
-			}
-			dirs = append(dirs, dir)
-		}
-	}
-	return dirs, nil
-}
-
-func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{}
-	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
-		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
-		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
-		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
-	}
-
-	return cliConfig
 }

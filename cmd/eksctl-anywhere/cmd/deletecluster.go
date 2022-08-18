@@ -96,7 +96,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := dc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err
 	}

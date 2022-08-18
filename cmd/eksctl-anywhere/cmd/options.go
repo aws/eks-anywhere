@@ -2,14 +2,20 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
+	"strings"
+
 	"github.com/spf13/cobra"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -59,6 +65,7 @@ type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string
 	managementKubeconfig string
+	installPackages      string
 }
 
 func (c clusterOptions) mountDirs() []string {
@@ -107,4 +114,47 @@ func markFlagHidden(cmd *cobra.Command, flagName string) {
 	if err := cmd.Flags().MarkHidden(flagName); err != nil {
 		logger.V(5).Info("Warning: Failed to mark flag as hidden: " + flagName)
 	}
+}
+func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
+	cliConfig := &config.CliConfig{}
+	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
+		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
+		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
+		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
+	}
+
+	return cliConfig
+}
+
+func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
+	dirs := c.mountDirs()
+	fluxConfig := clusterSpec.FluxConfig
+	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
+		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
+		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
+		dirs = append(dirs, filepath.Dir(c.installPackages))
+	}
+
+	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
+		if extraDirs, err := c.extraDirectoriesToMount(); err == nil {
+			dirs = append(dirs, extraDirs...)
+		}
+	}
+
+	return dirs, nil
+}
+
+func (c *clusterOptions) extraDirectoriesToMount() ([]string, error) {
+	dirs := []string{}
+	env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+	if found && len(env) > 0 {
+		mountDirs := strings.Split(env, ",")
+		for _, dir := range mountDirs {
+			if _, err := os.Stat(dir); err != nil {
+				return nil, fmt.Errorf("invalid host path to mount: %v", err)
+			}
+			dirs = append(dirs, dir)
+		}
+	}
+	return dirs, nil
 }
