@@ -36,9 +36,9 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 	mockBootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
-	_, w := test.NewWriter(t)
+	_, writer := test.NewWriter(t)
 	provider := providermocks.NewMockProvider(mockCtrl)
-	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, gitOpsManager, w)
+	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, gitOpsManager, writer)
 
 	return &deleteTestSetup{
 		t:                t,
@@ -47,7 +47,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		gitOpsManager:    gitOpsManager,
 		provider:         provider,
 		workflow:         workflow,
-		writer:           w,
+		writer:           writer,
 		ctx:              context.Background(),
 		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
