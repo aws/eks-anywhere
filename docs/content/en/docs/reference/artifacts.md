@@ -125,7 +125,7 @@ To use `image-builder` you must meet the following prerequisites:
   * 8 GB RAM
   * Bare Metal only: Run on a bare metal machine with virtualization enabled
 * Network access to:
-  * vCenter endpoint
+  * vCenter endpoint (vSphere only)
   * public.ecr.aws (to download container images from EKS Anywhere)
   * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
   * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
@@ -178,8 +178,8 @@ You can use a proxy server to route outbound requests to the internet. To config
 1. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f.s3.us-west-2.amazonaws.com/projects/aws/image-builder/latest/image-builder-linux-amd64-0.1.0.tar.gz
-   sudo tar xvf image-builder-linux-amd64-0.1.0.tar.gz
+   sudo wget <location-of-image-builder-tarball>
+   sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
 1. Create a content library on vSphere:
@@ -250,7 +250,6 @@ You can use a proxy server to route outbound requests to the internet. To config
    │   └── vmlinuz-x86_64
    └── my-ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
    ```
-
 1. Then create the [Bare metal configuration]({{< relref "./clusterspec/baremetal/" >}}) file, setting the `osImageURL` field to the location of the image. For example:
 
    ```
