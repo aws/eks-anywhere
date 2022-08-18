@@ -68,7 +68,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       * [proxy]({{< relref "../../reference/clusterspec/optional/proxy" >}})
       * [gitops]({{< relref "../../reference/clusterspec/optional/gitops" >}})
 
-Create Cluster: Create your cluster either with or without curated packages:
+2. Create Cluster: Create your cluster either with or without curated packages:
 
    - Cluster creation without curated packages installation
      
@@ -169,7 +169,7 @@ Create Cluster: Create your cluster either with or without curated packages:
          package.packages.eks.amazonaws.com/my-harbor created
          ```
 
-1. Use the cluster
+3. Use the cluster
 
    Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
 
