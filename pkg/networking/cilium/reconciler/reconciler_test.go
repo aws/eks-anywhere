@@ -61,6 +61,7 @@ func TestReconcilerReconcileErrorYamlReconcile(t *testing.T) {
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersion(t *testing.T) {
+	t.Skip("Flaky test, needs to be fixed")
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -130,6 +131,7 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYam
 }
 
 func TestReconcilerReconcileUpgradeButCiliumDaemonSetNotReady(t *testing.T) {
+	t.Skip("Flaky test, needs to be fixed")
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
@@ -176,6 +178,7 @@ func TestReconcilerReconcileUpgradeErrorGeneratingPreflight(t *testing.T) {
 }
 
 func TestReconcilerReconcileUpgradeNeedsPreflightAndPreflightDeploymentNotAvailable(t *testing.T) {
+	t.Skip("Flaky test, needs to be fixed")
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	tt := newReconcileTest(t).withObjects(ds, operator)
