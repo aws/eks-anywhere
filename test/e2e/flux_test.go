@@ -289,3 +289,46 @@ func TestVSphereKubernetes122To123GitFluxUpgrade(t *testing.T) {
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate123Var()),
 	)
 }
+
+func TestDockerInstallFluxGitDuringUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube122,
+		framework.WithFluxGit(),
+		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
+	)
+}
+
+func TestDockerInstallFluxGithubDuringUpgrade(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube122,
+		framework.WithFluxGithub(),
+		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
+	)
+}
+
+func TestVSphereInstallFluxGitDuringUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu122())
+	test := framework.NewClusterE2ETest(t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube122,
+		framework.WithFluxGit(),
+		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
+	)
+}
