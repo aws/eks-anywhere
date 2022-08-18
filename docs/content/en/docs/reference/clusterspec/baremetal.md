@@ -193,9 +193,8 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../)
-This field is useful if you want to provide a customized operating system image or simply host the standard image locally.
-See [Artifacts]({{< relref "../artifacts/#ubuntu-os-images-for-bare-metal" >}}) for details.
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../artifacts/#Building-Ubuntu-based-node-images" >}})
+to learn more on building and using ubuntu with EKS-A cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
 ### hookImagesURLPath
 Optional field to replace the HookOS image.
@@ -206,7 +205,7 @@ See [Artifacts]({{< relref "../artifacts/#hookos-kernel-and-initial-ramdisk-for-
 ```yaml
 spec:
   tinkerbellIP: "192.168.0.10"                                                      # Available, routable IP
-  osImageURL: "http://my-web-server/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz" # Full URL to the OS Image hosted locally
+  osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz" # Full URL to the OS Image hosted locally
   hookImagesURLPath: "http://my-web-server/hook"                                    # Path to the hook images. This path contains vmlinuz-x86_64 and initramfs-x86_64 
 ```
 This is the folder structure for `my-web-server`:
@@ -215,7 +214,7 @@ my-web-server
 ├── hook
 │   ├── initramfs-x86_64
 │   └── vmlinuz-x86_64
-└── ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+└── ubuntu-v1.23.7-eks-a-12-amd64.gz
 ```
 
 ## TinkerbellMachineConfig Fields
@@ -299,7 +298,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+          IMG_URL: https://my-file-server/ubuntu-v1.23.7-eks-a-12-amd64.gz
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: stream-image
         timeout: 360

@@ -22,7 +22,7 @@ See descriptions of the [osImageURL]({{< relref "./clusterspec/baremetal/#osimag
 
 ### Ubuntu OS images for Bare Metal
 
-EKS Anywhere no long distributes Ubuntu OS images.
+EKS Anywhere no longer distributes Ubuntu OS images.
 However, see [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) for information on how to build your own Ubuntu-based image to use with EKS Anywhere.
 
 ### Bottlerocket OS images for Bare Metal
@@ -249,13 +249,13 @@ You can use a proxy server to route outbound requests to the internet. To config
    ├── hook
    │   ├── initramfs-x86_64
    │   └── vmlinuz-x86_64
-   └── my-ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+   └── my-ubuntu-v1.23.7-eks-a-12-amd64.gz
    ```
 
 1. Then create the [Bare metal configuration]({{< relref "./clusterspec/baremetal/" >}}) file, setting the `osImageURL` field to the location of the image. For example:
 
    ```
-   osImageURL: "http://my-web-server/my-ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz"
+   osImageURL: "http://my-web-server/my-ubuntu-v1.23.7-eks-a-12-amd64.gz"
    ```
 
    See descriptions of [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) for further information.
