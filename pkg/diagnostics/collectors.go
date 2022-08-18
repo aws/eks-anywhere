@@ -44,7 +44,24 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 	}
 	collectors = append(collectors, c.defaultLogCollectors()...)
+	collectors = append(collectors, c.vmsAccessCollector())
 	return collectors
+}
+
+// based on Troubleshoot.sh,
+// we expect that vmsAccessCollector can generate a .txt file with output of executed command
+// since .sh file doesn't work currently, just execute simple kubectl command for testing purpose
+func (c *collectorFactory) vmsAccessCollector() *Collect {
+	return &Collect{
+		Exec: &exec{
+			Name:      "collect-control-plane-log",
+			Namespace: constants.EksaDiagnosticsNamespace,
+			Command:   []string{"kubectl", "get"},
+			Args:      []string{"nodes", "-n", "kube-system"},
+			Selector:  []string{"node-role.kubernetes.io/control-plane"},
+			Timeout:   "30s",
+		},
+	}
 }
 
 func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
@@ -417,6 +434,7 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 					Args:    argsIP,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
@@ -436,6 +454,7 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 					Args:    argsPing,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }

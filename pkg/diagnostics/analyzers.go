@@ -223,6 +223,7 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
+		constants.KubeSystemNamespace:                    a.kubeSystemLogAnalyzers(),
 	}
 }
 
@@ -356,6 +357,40 @@ func (a *analyzerFactory) controlPlaneIPAnalyzer() []*Analyze {
 							When:    "true",
 							Message: "Control plane IP verified.",
 						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func (a *analyzerFactory) kubeSystemLogAnalyzers() []*Analyze {
+	var analyzers []*Analyze
+	return append(analyzers, a.cloudControllerAnalyzer())
+}
+
+func (a *analyzerFactory) cloudControllerAnalyzer() *Analyze {
+	vSphereCloudControllerPod := "vsphere-cloud-controller-manager"
+	vSphereCloudControllerPodLogFile := fmt.Sprintf("%s*.log", vSphereCloudControllerPod)
+	vSphereCloudControllerPodLogPath := path.Join(logpath(constants.KubeSystemNamespace), vSphereCloudControllerPodLogFile)
+	return &Analyze{
+		TextAnalyze: &textAnalyze{
+			analyzeMeta: analyzeMeta{
+				CheckName: fmt.Sprintf("%s: VMs has no access to vSphere APi. Logs: %s", logAnalysisAnalyzerPrefix, vSphereCloudControllerPodLogPath),
+			},
+			FileName:     vSphereCloudControllerPodLogPath,
+			RegexPattern: `Failed to create new client. err: Post (.*) dial tcp (.*) connect: connection timed out\n(.*)Failed to create govmomi client. err: Post (.*) dial tcp (.*) connect: connection timed out`,
+			Outcomes: []*outcome{
+				{
+					Fail: &singleOutcome{
+						When:    "true",
+						Message: fmt.Sprintf("Failed to create client, Virtural Machines have no access to vSphere API. See the cloud controller log in master node: %s", vSphereCloudControllerPodLogPath),
+					},
+				},
+				{
+					Pass: &singleOutcome{
+						When:    "false",
+						Message: fmt.Sprintf("Virtual Machines have access to vSphere API. See %s", vSphereCloudControllerPodLogPath),
 					},
 				},
 			},
