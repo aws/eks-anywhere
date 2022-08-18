@@ -67,5 +67,5 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		},
 	}
 
-	return validations.RunPreflightValidations(upgradeValidations)
+	return validations.ProcessValidationResults(upgradeValidations)
 }

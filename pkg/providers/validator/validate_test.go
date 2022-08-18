@@ -2,13 +2,16 @@ package validator_test
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
+	mockprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/validator"
 )
 
@@ -29,4 +32,40 @@ func TestValidateControlPlaneIpUniqueness(t *testing.T) {
 		Times(5).
 		Return(nil, errors.New("no connection"))
 	g.Expect(validator.ValidateControlPlaneIpUniqueness(cluster, client)).To(Succeed())
+}
+
+func TestValidateSupportedProvider(t *testing.T) {
+	tests := []struct {
+		name     string
+		wantErr  error
+		provider string
+	}{
+		{
+			name:     "FailureUnsupportedCloudstackProvider",
+			wantErr:  errors.New("provider cloudstack is not supported in this release"),
+			provider: constants.CloudStackProviderName,
+		},
+		{
+			name:     "FailureUnsupportedSnowProvider",
+			wantErr:  errors.New("provider snow is not supported in this release"),
+			provider: constants.SnowProviderName,
+		},
+		{
+			name:     "SuccessSupportedVSphereProvider",
+			wantErr:  nil,
+			provider: constants.VSphereProviderName,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			provider := mockprovider.NewMockProvider(mockCtrl)
+			provider.EXPECT().Name().Return(tc.provider).AnyTimes()
+			err := validator.ValidateSupportedProviderCreate(provider)
+			if !reflect.DeepEqual(err, tc.wantErr) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
 }

@@ -149,19 +149,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.PackageInstaller,
 	)
 
-	var cluster *types.Cluster
-	if clusterSpec.ManagementCluster == nil {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		}
-	} else {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.ManagementCluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
-		}
-	}
-
 	validationOpts := &validations.Opts{
 		Kubectl: deps.Kubectl,
 		Spec:    clusterSpec,
@@ -169,7 +156,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
-		ManagementCluster: cluster,
+		ManagementCluster: getManagementCluster(clusterSpec),
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
 	}

@@ -4,7 +4,10 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
 // TODO: update vsphere, cloudstack, tinkerbell validators to use this common validation method
@@ -13,5 +16,17 @@ func ValidateControlPlaneIpUniqueness(cluster *v1alpha1.Cluster, netClient netwo
 	if networkutils.IsIPInUse(netClient, ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
+	return nil
+}
+
+func ValidateSupportedProviderCreate(provider providers.Provider) error {
+	if !features.IsActive(features.CloudStackProvider()) && provider.Name() == constants.CloudStackProviderName {
+		return fmt.Errorf("provider cloudstack is not supported in this release")
+	}
+
+	if !features.IsActive(features.SnowProvider()) && provider.Name() == constants.SnowProviderName {
+		return fmt.Errorf("provider snow is not supported in this release")
+	}
+
 	return nil
 }
