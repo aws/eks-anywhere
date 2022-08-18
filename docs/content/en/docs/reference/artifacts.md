@@ -230,8 +230,8 @@ You can use a proxy server to route outbound requests to the internet. To config
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f.s3.us-west-2.amazonaws.com/projects/aws/image-builder/latest/image-builder-linux-amd64-0.1.0.tar.gz
-    sudo tar xvf image-builder-linux-amd64-0.1.0.tar.gz
+    sudo wget <location-of-image-builder-tarball>
+    sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
 1. Run `image-builder` with the following options:
