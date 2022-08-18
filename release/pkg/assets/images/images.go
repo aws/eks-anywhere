@@ -38,10 +38,10 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 	sourceRepoName, releaseRepoName := repoName, repoName
 	if image.TrimEksAPrefix {
 		if rc.ReleaseEnvironment == "production" {
-			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 		if !rc.DevRelease {
-			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 	}
 
