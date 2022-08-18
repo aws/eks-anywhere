@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -52,7 +51,7 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Cmk                       *executables.Cmk
-	SnowAwsClient             aws.Clients
+	SnowAwsClientRegistry     *snow.AwsClientRegistry
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -84,7 +83,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
-	SnowValidator             *snow.Validator
+	SnowValidator             *snow.AwsClientValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -487,8 +486,8 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 			return nil
 		}
 
-		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
-		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClientRegistry, f.dependencies.Writer)
 
 		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
 
@@ -500,16 +499,16 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 
 func (f *Factory) WithAwsSnow() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.SnowAwsClient != nil {
+		if f.dependencies.SnowAwsClientRegistry != nil {
 			return nil
 		}
 
-		builder := aws.NewSnowAwsClientBuilder()
-		deviceClientMap, err := builder.Build(ctx)
+		clientRegistry := snow.NewAwsClientRegistry()
+		err := clientRegistry.Build(ctx)
 		if err != nil {
 			return err
 		}
-		f.dependencies.SnowAwsClient = deviceClientMap
+		f.dependencies.SnowAwsClientRegistry = clientRegistry
 
 		return nil
 	})

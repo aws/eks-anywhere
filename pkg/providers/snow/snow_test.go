@@ -47,16 +47,17 @@ type snowTest struct {
 
 func newSnowTest(t *testing.T) snowTest {
 	ctrl := gomock.NewController(t)
+	ctx := context.Background()
 	mockKubeUnAuthClient := mocks.NewMockKubeUnAuthClient(ctrl)
 	mockKubeconfigClient := kubemock.NewMockClient(ctrl)
 	mockaws := mocks.NewMockAwsClient(ctrl)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(t, mockKubeUnAuthClient, mockaws)
+	provider := newProvider(ctx, t, mockKubeUnAuthClient, mockaws, ctrl)
 	return snowTest{
 		WithT:            NewWithT(t),
-		ctx:              context.Background(),
+		ctx:              ctx,
 		kubeUnAuthClient: mockKubeUnAuthClient,
 		kubeconfigClient: mockKubeconfigClient,
 		aws:              mockaws,
@@ -213,7 +214,7 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 }
 
 func givenProvider(t *testing.T) *snow.SnowProvider {
-	return newProvider(t, nil, nil)
+	return newProvider(context.Background(), t, nil, nil, gomock.NewController(t))
 }
 
 func givenEmptyClusterSpec() *cluster.Spec {
@@ -222,13 +223,15 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient) *snow.SnowProvider {
+func newProvider(ctx context.Context, t *testing.T, kubeUnAuthClient snow.KubeUnAuthClient, mockaws *mocks.MockAwsClient, ctrl *gomock.Controller) *snow.SnowProvider {
 	awsClients := snow.AwsClientMap{
 		"1.2.3.4": mockaws,
 		"1.2.3.5": mockaws,
 	}
-	validator := snow.NewValidatorFromAwsClientMap(awsClients)
-	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, nil, nil)
+	mockClientRegistry := mocks.NewMockClientRegistry(ctrl)
+	mockClientRegistry.EXPECT().Get(ctx).Return(awsClients, nil).AnyTimes()
+	validator := snow.NewValidator(mockClientRegistry)
+	defaulters := snow.NewDefaulters(mockClientRegistry, nil)
 	configManager := snow.NewConfigManager(defaulters, validator)
 	return snow.NewProvider(
 		kubeUnAuthClient,

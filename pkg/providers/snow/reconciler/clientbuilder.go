@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/pkg/aws"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
 type AwsClientBuilder struct {
@@ -25,13 +26,18 @@ func NewAwsClientBuilder(client client.Client) *AwsClientBuilder {
 	}
 }
 
-func (b *AwsClientBuilder) Build(ctx context.Context) (aws.Clients, error) {
+func (b *AwsClientBuilder) Get(ctx context.Context) (snow.AwsClientMap, error) {
+	// Setting the aws client map in validator on every reconcile based on the secrets at that point of time
 	credentials, certificates, err := getSnowCredentials(ctx, b.client)
 	if err != nil {
 		return nil, errors.Wrap(err, "getting snow credentials")
 	}
 
-	return createAwsClients(ctx, credentials, certificates)
+	clients, err := createAwsClients(ctx, credentials, certificates)
+	if err != nil {
+		return nil, err
+	}
+	return snow.NewAwsClientMap(clients), nil
 }
 
 type credentialConfiguration struct {
