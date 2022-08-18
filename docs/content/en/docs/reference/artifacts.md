@@ -167,6 +167,14 @@ You can use a proxy server to route outbound requests to the internet. To config
   export NO_PROXY=<No proxy>
   ```
 
+### Optional Proxy configuration
+You can use a proxy server to route outbound requests to the internet. To configure `image-builder` tool to use a proxy server, export these proxy environment variables:
+  ```
+  export HTTP_PROXY=<HTTP proxy URL e.g. http://proxy.corp.com:80>
+  export HTTPS_PROXY=<HTTPS proxy URL e.g. http://proxy.corp.com:443>
+  export NO_PROXY=<No proxy>
+  ```
+
 ### Build vSphere OVA node images
 
 1. Install packages and prepare environment:
@@ -250,6 +258,7 @@ You can use a proxy server to route outbound requests to the internet. To config
    │   └── vmlinuz-x86_64
    └── my-ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
    ```
+
 1. Then create the [Bare metal configuration]({{< relref "./clusterspec/baremetal/" >}}) file, setting the `osImageURL` field to the location of the image. For example:
 
    ```
