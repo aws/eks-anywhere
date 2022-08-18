@@ -151,6 +151,9 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 				latestTag,
 			)
 		}
+		if strings.HasSuffix(name, "-helm") {
+			sourceImageUri += "-helm"
+		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 			err := PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, r.SourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
