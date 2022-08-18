@@ -597,20 +597,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
 				OSName:              "bottlerocket",
 				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "raw",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
