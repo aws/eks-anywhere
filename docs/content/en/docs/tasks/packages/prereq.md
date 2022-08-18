@@ -22,12 +22,14 @@ Before installing any curated packages for EKS Anywhere, do the following:
 * If the packages controller is not yet installed, follow these steps:
 
     1. Install the package controller
+        
+        *Note* This command is temporarily provided to ease integration with curated packages. This command will be deprecated in the future
+  
         ```bash
-        export CURATED_PACKAGES_SUPPORT=true
         eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
         ```
 
-    1. Check the package controller
+    2. Check the package controller
         ```bash
         kubectl get pods -n eksa-packages
         ```
