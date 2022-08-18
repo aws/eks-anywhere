@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflows"
@@ -20,6 +21,7 @@ type deleteTestSetup struct {
 	bootstrapper     *mocks.MockBootstrapper
 	clusterManager   *mocks.MockClusterManager
 	gitOpsManager    *mocks.MockGitOpsManager
+	writer           filewriter.FileWriter
 	provider         *providermocks.MockProvider
 	workflow         *workflows.Delete
 	ctx              context.Context
@@ -34,8 +36,9 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 	mockBootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
 	gitOpsManager := mocks.NewMockGitOpsManager(mockCtrl)
+	_, w := test.NewWriter(t)
 	provider := providermocks.NewMockProvider(mockCtrl)
-	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, gitOpsManager)
+	workflow := workflows.NewDelete(mockBootstrapper, provider, clusterManager, gitOpsManager, w)
 
 	return &deleteTestSetup{
 		t:                t,
@@ -44,6 +47,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		gitOpsManager:    gitOpsManager,
 		provider:         provider,
 		workflow:         workflow,
+		writer:           w,
 		ctx:              context.Background(),
 		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
