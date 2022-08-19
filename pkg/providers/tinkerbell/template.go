@@ -4,8 +4,11 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -18,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 )
 
 //go:embed config/template-cp.yaml
@@ -25,6 +29,8 @@ var defaultCAPIConfigCP string
 
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
+
+const TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
 
 type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
@@ -257,6 +263,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		}
 		values["etcdTemplateName"] = etcdTemplateName
 	}
+
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
@@ -266,6 +273,16 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	if err != nil {
 		return nil, nil, err
 	}
+
+	if p.isScaleUpDown(currentSpec, newClusterSpec) {
+		cpSpec, err := omitTinkerbellMachineTemplate(controlPlaneSpec)
+		if err == nil {
+			if wSpec, err := omitTinkerbellMachineTemplate(workersSpec); err == nil {
+				return cpSpec, wSpec, nil
+			}
+		}
+	}
+
 	return controlPlaneSpec, workersSpec, nil
 }
 
@@ -443,4 +460,28 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	}
 
 	return values
+}
+
+func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
+	var outSpec []unstructured.Unstructured
+	resources := strings.Split(string(inputSpec), "---")
+	for _, resource := range resources {
+		if resource == "" {
+			continue
+		}
+
+		var m map[string]interface{}
+		if err := yaml.Unmarshal([]byte(resource), &m); err != nil {
+			continue
+		}
+
+		var u unstructured.Unstructured
+		u.SetUnstructuredContent(m)
+
+		// Omit TinkerbellMachineTemplate kind from deployment yaml
+		if u.GetKind() != "" && u.GetKind() != TinkerbellMachineTemplateKind {
+			outSpec = append(outSpec, u)
+		}
+	}
+	return unstructuredutil.UnstructuredToYaml(outSpec)
 }
