@@ -63,7 +63,7 @@ func EksDistroArtifactPathGetter(rc *releasetypes.ReleaseConfig, archive *assett
 			arch,
 			imageExtension,
 		)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", rc.BundleNumber, eksDReleaseChannel, archive.Format)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", rc.BundleNumber, archive.Format, eksDReleaseChannel)
 	}
 
 	if rc.DevRelease {
