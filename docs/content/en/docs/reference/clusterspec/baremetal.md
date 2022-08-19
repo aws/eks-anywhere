@@ -150,7 +150,7 @@ the existing nodes.
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`
 
 ### managementCluster
 Identifies the name of the management cluster.
@@ -204,9 +204,9 @@ See [Artifacts]({{< relref "../artifacts/#hookos-kernel-and-initial-ramdisk-for-
 #### Example `TinkerbellDatacenterConfig.spec`
 ```yaml
 spec:
-  tinkerbellIP: "192.168.0.10"                                                      # Available, routable IP
-  osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz" # Full URL to the OS Image hosted locally
-  hookImagesURLPath: "http://my-web-server/hook"                                    # Path to the hook images. This path contains vmlinuz-x86_64 and initramfs-x86_64 
+  tinkerbellIP: "192.168.0.10"                                          # Available, routable IP
+  osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz"   # Full URL to the OS Image hosted locally
+  hookImagesURLPath: "http://my-web-server/hook"                        # Path to the hook images. This path must contain vmlinuz-x86_64 and initramfs-x86_64 
 ```
 This is the folder structure for `my-web-server`:
 ```
