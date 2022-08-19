@@ -702,7 +702,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"gitTag",
 			"projectPath",
 		},
-		OnlyForDevRelease: true,
 	},
 	// Kustomize-controller artifacts
 	{
