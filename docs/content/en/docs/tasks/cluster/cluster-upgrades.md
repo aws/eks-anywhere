@@ -4,7 +4,7 @@ linkTitle: "Upgrade cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to perform a cluster version upgrade
+  How to perform a cluster upgrade
 ---
 > **_NOTE_**: Cluster upgrade is supported for vSphere clusters, but is not yet available for Bare Metal clusters
 >
@@ -152,6 +152,20 @@ Forcing reconcile Git repo with latest commit
 GitOps not configured, force reconcile flux git repo skipped
 Resuming Flux kustomization
 GitOps field not specified, resume flux kustomization skipped
+```
+
+During the upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster.
+
+Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
+
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused=true
+```
+
+After finishing the task, make sure you resume the cluster reconciliation by removing the paused annotation, so that EKS Anywhere cluster controller can continue working as expected.
+
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
 ```
 
 ### Upgradeable Cluster Attributes
