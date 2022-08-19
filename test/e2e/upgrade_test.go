@@ -458,13 +458,12 @@ func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
 		),
 	})
 	test.StopIfFailed()
-	// TODO: Uncomment when CAPC releases the next patch after v0.4.7-rc2. Removing Availability Zones is broken currently.
-	//test.UpgradeCluster([]framework.ClusterE2ETestOpt {
-	//	provider.WithProviderUpgrade(
-	//		framework.UpdateRemoveAz2(),
-	//	),
-	//})
-	//test.StopIfFailed()
+	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
+		provider.WithProviderUpgrade(
+			framework.UpdateRemoveAz2(),
+		),
+	})
+	test.StopIfFailed()
 	test.DeleteCluster()
 }
 
