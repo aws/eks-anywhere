@@ -120,9 +120,9 @@ Follow these steps to create an EKS Anywhere cluster.
 
    Example command output:
    ```
-   NAMESPACE   NAME                PROVIDERID         PHASE    VERSION
-   eksa-system mgmt-b2xyz          tinkerbell:/xxxxx  Running  v1.21.2-eks-1-21-5
-   eksa-system mgmt-md-8-6xr-rnr   tinkerbell:/xxxxx  Running  v1.21.2-eks-1-21-5
+   NAMESPACE     NAME                        CLUSTER   NODENAME        PROVIDERID                              PHASE     AGE   VERSION
+   eksa-system   mgmt-47zj8                  mgmt      eksa-node01     tinkerbell://eksa-system/eksa-node01    Running   1h    v1.23.7-eks-1-23-4
+   eksa-system   mgmt-md-0-7f79df46f-wlp7w   mgmt      eksa-node02     tinkerbell://eksa-system/eksa-node02    Running   1h    v1.23.7-eks-1-23-4
    ...
    ```
 
