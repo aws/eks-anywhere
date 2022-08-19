@@ -441,6 +441,33 @@ func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
+	provider := framework.NewCloudStackWithAzs(t, framework.WithCloudStackRedhat121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
+		provider.WithProviderUpgrade(
+			framework.UpdateAddAz2(),
+		),
+	})
+	test.StopIfFailed()
+	// TODO: Uncomment when CAPC releases the next patch after v0.4.7-rc2. Removing Availability Zones is broken currently.
+	//test.UpgradeCluster([]framework.ClusterE2ETestOpt {
+	//	provider.WithProviderUpgrade(
+	//		framework.UpdateRemoveAz2(),
+	//	),
+	//})
+	//test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func TestSnowKubernetes121To122UbuntuUpgrade(t *testing.T) {
 	provider := framework.NewSnow(t, framework.WithSnowUbuntu121())
 	test := framework.NewClusterE2ETest(

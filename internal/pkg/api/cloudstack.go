@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
@@ -67,6 +68,31 @@ func WithCloudStackManagementServer(value string) CloudStackFiller {
 	}
 }
 
+func WithCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		config.datacenterConfig.Spec.AvailabilityZones = append(config.datacenterConfig.Spec.AvailabilityZones, az)
+	}
+}
+
+func WithFirstCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		config.datacenterConfig.Spec.AvailabilityZones[0] = az
+	}
+}
+
+func WithoutCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		for i, oldAz := range config.datacenterConfig.Spec.AvailabilityZones {
+			if az.Name == oldAz.Name {
+				config.datacenterConfig.Spec.AvailabilityZones =
+					 append(config.datacenterConfig.Spec.AvailabilityZones[:i],
+						 config.datacenterConfig.Spec.AvailabilityZones[i+1:]...)
+				return
+			}
+		}
+	}
+}
+
 func WithCloudStackAffinityGroupIds(value []string) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for _, m := range config.machineConfigs {
@@ -121,13 +147,17 @@ func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 
 func WithCloudStackDomain(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.AvailabilityZones[0].Domain = value
+		for _, az := range config.datacenterConfig.Spec.AvailabilityZones {
+			az.Domain = value
+		}
 	}
 }
 
 func WithCloudStackAccount(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.AvailabilityZones[0].Account = value
+		for _, az := range config.datacenterConfig.Spec.AvailabilityZones {
+			az.Account = value
+		}
 	}
 }
 
@@ -145,6 +175,23 @@ func WithCloudStackNetwork(value string) CloudStackFiller {
 
 func WithCloudStackStringFromEnvVar(envVar string, opt func(string) CloudStackFiller) CloudStackFiller {
 	return opt(os.Getenv(envVar))
+}
+
+func WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar, cloudstackManagementServerVar string, opt func(zone anywherev1.CloudStackAvailabilityZone) CloudStackFiller) CloudStackFiller {
+	az := anywherev1.CloudStackAvailabilityZone{
+		Name:                  strings.ToLower(fmt.Sprintf("az-%s", os.Getenv(cloudstackZoneVar))),
+		CredentialsRef:        "global",
+		Zone:                  anywherev1.CloudStackZone{
+			Name: os.Getenv(cloudstackZoneVar),
+			Network: anywherev1.CloudStackResourceIdentifier{
+				Name: os.Getenv(cloudstackNetworkVar),
+			},
+		},
+		Domain:                os.Getenv(cloudstackDomainVar),
+		Account:               os.Getenv(cloudstackAccountVar),
+		ManagementApiEndpoint: os.Getenv(cloudstackManagementServerVar),
+	}
+	return opt(az)
 }
 
 func WithCloudStackMachineConfig(name string, fillers ...CloudStackMachineConfigFiller) CloudStackFiller {
