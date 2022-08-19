@@ -73,11 +73,23 @@ export CURATED_PACKAGES_SUPPORT=true
 Error: this command is currently not supported
 ```
 
-Curated packages is supported behind a feature flag, you must set and export the `CURATED_PACKAGES_SUPPORT` environment variable.
+Curated packages is supported behind a feature flag before `v0.11.0`, you must set and export the `CURATED_PACKAGES_SUPPORT` environment variable.
 
 ```bash
 export CURATED_PACKAGES_SUPPORT=true
 ```
+
+### Error: cert-manager is not present in the cluster
+```
+Error: curated packages cannot be installed as cert-manager is not present in the cluster
+```
+This is most likely caused by an action to install curated packages at a workload cluster. Note curated packages installation at workload cluster creation is currently not supported. In order to use packages on workload clusters, you can do a post-creation curated packages installation:
+- Install cert-manager, refer to cert-manager [installation guide](https://cert-manager.io/docs/installation/) for more details.
+- Install package controller using following command:
+  ```bash
+  eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
+  ```
+- Install packages, refer to [package management]({{< relref "../../tasks/packages" >}}) for more details.
 
 ### Package controller not running
 If you do not see a pod or various resources for the package controller, it may be that it is not installed.
@@ -122,4 +134,3 @@ This is most like because the machine running kubelet in your Kubernetes cluster
 ```bash
 ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whateveritis
 ```
-
