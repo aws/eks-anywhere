@@ -290,7 +290,7 @@ func TestVSphereKubernetes122To123GitFluxUpgrade(t *testing.T) {
 	)
 }
 
-func TestDockerInstallFluxGitDuringUpgrade(t *testing.T) {
+func TestDockerInstallGitFluxDuringUpgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -303,7 +303,7 @@ func TestDockerInstallFluxGitDuringUpgrade(t *testing.T) {
 	)
 }
 
-func TestDockerInstallFluxGithubDuringUpgrade(t *testing.T) {
+func TestDockerInstallGithubFluxDuringUpgrade(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -316,7 +316,7 @@ func TestDockerInstallFluxGithubDuringUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereInstallFluxGitDuringUpgrade(t *testing.T) {
+func TestVSphereInstallGitFluxDuringUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := framework.NewClusterE2ETest(t,
 		provider,
