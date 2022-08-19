@@ -83,13 +83,12 @@ func WithFirstCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackF
 func WithoutCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for i, oldAz := range config.datacenterConfig.Spec.AvailabilityZones {
-			if az.Name == oldAz.Name && i < len(config.datacenterConfig.Spec.AvailabilityZones) - 1 {
+			if az.Name == oldAz.Name && i < len(config.datacenterConfig.Spec.AvailabilityZones)-1 {
 				// Take all AZ's except for the ith one. This only works when it's not the last AZ
-				config.datacenterConfig.Spec.AvailabilityZones =
-					 append(config.datacenterConfig.Spec.AvailabilityZones[:i],
-						 config.datacenterConfig.Spec.AvailabilityZones[i+1:]...)
+				config.datacenterConfig.Spec.AvailabilityZones = append(config.datacenterConfig.Spec.AvailabilityZones[:i],
+					config.datacenterConfig.Spec.AvailabilityZones[i+1:]...)
 				return
-			} else if az.Name == oldAz.Name {  // Last AZ matches - just take the first i AZ's
+			} else if az.Name == oldAz.Name { // Last AZ matches - just take the first i AZ's
 				config.datacenterConfig.Spec.AvailabilityZones = config.datacenterConfig.Spec.AvailabilityZones[:i]
 			}
 		}
@@ -182,9 +181,9 @@ func WithCloudStackStringFromEnvVar(envVar string, opt func(string) CloudStackFi
 
 func WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar, cloudstackManagementServerVar string, opt func(zone anywherev1.CloudStackAvailabilityZone) CloudStackFiller) CloudStackFiller {
 	az := anywherev1.CloudStackAvailabilityZone{
-		Name:                  strings.ToLower(fmt.Sprintf("az-%s", os.Getenv(cloudstackZoneVar))),
-		CredentialsRef:        "global",
-		Zone:                  anywherev1.CloudStackZone{
+		Name:           strings.ToLower(fmt.Sprintf("az-%s", os.Getenv(cloudstackZoneVar))),
+		CredentialsRef: "global",
+		Zone: anywherev1.CloudStackZone{
 			Name: os.Getenv(cloudstackZoneVar),
 			Network: anywherev1.CloudStackResourceIdentifier{
 				Name: os.Getenv(cloudstackNetworkVar),
