@@ -139,7 +139,7 @@ func WithCloudStackConfigNamespace(ns string) CloudStackFiller {
 func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for _, m := range config.machineConfigs {
-			if len(m.Spec.Users) == 0 || m.Spec.Users == nil{
+			if len(m.Spec.Users) == 0 || m.Spec.Users == nil {
 				m.Spec.Users = []anywherev1.UserConfiguration{{Name: "capc"}}
 			}
 			m.Spec.Users[0].SshAuthorizedKeys = []string{value}
