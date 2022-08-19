@@ -30,14 +30,15 @@ import (
 )
 
 const (
-	eksaConfigFileName  = "eksa-cluster.yaml"
-	fluxSystemNamespace = "flux-system"
-	GitRepositoryVar    = "T_GIT_REPOSITORY"
-	GitRepoSshUrl       = "T_GIT_SSH_REPO_URL"
-	GithubUserVar       = "T_GITHUB_USER"
-	GithubTokenVar      = "EKSA_GITHUB_TOKEN"
-	GitKnownHosts       = "EKSA_GIT_KNOWN_HOSTS"
-	GitPrivateKeyFile   = "EKSA_GIT_PRIVATE_KEY"
+	eksaConfigFileName    = "eksa-cluster.yaml"
+	fluxSystemNamespace   = "flux-system"
+	GitRepositoryVar      = "T_GIT_REPOSITORY"
+	GitRepoSshUrl         = "T_GIT_SSH_REPO_URL"
+	GithubUserVar         = "T_GITHUB_USER"
+	GithubTokenVar        = "EKSA_GITHUB_TOKEN"
+	GitKnownHosts         = "EKSA_GIT_KNOWN_HOSTS"
+	GitPrivateKeyFile     = "EKSA_GIT_PRIVATE_KEY"
+	DefaultFluxConfigName = "eksa-test"
 )
 
 var fluxGithubRequiredEnvVars = []string{
@@ -63,8 +64,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxGitRequiredEnvVars)
 		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
-		fluxConfigName := fluxConfigName()
-		e.FluxConfig = api.NewFluxConfig(fluxConfigName,
+		e.FluxConfig = api.NewFluxConfig(DefaultFluxConfigName,
 			api.WithGenericGitProvider(
 				api.WithStringFromEnvVarGenericGitProviderConfig(GitRepoSshUrl, api.WithGitRepositoryUrl),
 			),
@@ -73,7 +73,7 @@ func WithFluxGit(opts ...api.FluxConfigOpt) ClusterE2ETestOpt {
 			api.WithBranch(jobId),
 		)
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(fluxConfigName, v1alpha1.FluxConfigKind),
+			api.WithGitOpsRef(DefaultFluxConfigName, v1alpha1.FluxConfigKind),
 		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
