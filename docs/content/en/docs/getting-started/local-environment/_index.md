@@ -105,7 +105,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 
      {{% alert title="Note" color="primary" %}}
    * It is *optional* to install curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be later than `v0.9.0`.
+   * `eksctl anywhere version` version should be later than `v0.11.0`.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
      {{% /alert %}}

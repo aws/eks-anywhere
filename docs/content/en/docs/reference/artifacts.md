@@ -37,6 +37,11 @@ Kubernetes 1.22:
 https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.img.gz
 ```
 
+Kubernetes 1.23:
+```bash
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-23/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-14-amd64.img.gz
+```
+
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
