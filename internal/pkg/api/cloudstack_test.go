@@ -73,4 +73,46 @@ func TestCloudStackDatacenterConfigFillers(t *testing.T) {
 	WithoutCloudStackAz(testAz)(cloudStackConfig)
 	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz2))
+
+	WithoutCloudStackAz(testAz2)(cloudStackConfig)
+	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(0))
+}
+
+func TestCloudStackAzFromEnvVars(t *testing.T) {
+	testAz := anywherev1.CloudStackAvailabilityZone{
+		Name:           "az-zone1",
+		CredentialsRef: "global",
+		Zone: anywherev1.CloudStackZone{
+			Name: "zone1",
+			Network: anywherev1.CloudStackResourceIdentifier{
+				Name: "SharedNet1",
+			},
+		},
+		Domain:                "testDomain",
+		Account:               "testAccount",
+		ManagementApiEndpoint: "testApiEndpoint",
+	}
+	accountVar := "CLOUDSTACK_ACCOUNT"
+	domainVar := "CLOUDSTACK_DOMAIN"
+	zoneVar := "CLOUDSTACK_ZONE"
+	networkVar := "CLOUDSTACK_NETWORK"
+	endpointVar := "CLOUDSTACK_ENDPOINT"
+
+	t.Setenv(accountVar, testAz.Account)
+	t.Setenv(domainVar, testAz.Domain)
+	t.Setenv(zoneVar, testAz.Zone.Name)
+	t.Setenv(networkVar, testAz.Zone.Network.Name)
+	t.Setenv(endpointVar, testAz.ManagementApiEndpoint)
+	g := NewWithT(t)
+	config, err := cluster.ParseConfigFromFile(clusterConfigFile)
+	if err != nil {
+		g.Fail("failed to parse cluster from file")
+	}
+
+	cloudStackConfig := CloudStackConfig{
+		datacenterConfig: config.CloudStackDatacenter,
+	}
+	WithCloudStackAzFromEnvVars(accountVar, domainVar, zoneVar, networkVar, endpointVar, WithFirstCloudStackAz)(cloudStackConfig)
+	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
+	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz))
 }
