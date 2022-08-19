@@ -58,7 +58,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
    kind: DockerDatacenterConfig
    metadata:
-   name: dev-cluster
+      name: dev-cluster
    spec: {}
    ```
 
