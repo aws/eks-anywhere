@@ -1,7 +1,7 @@
 ---
 title: "Prerequisites"
 linkTitle: "Prerequisites"
-weight: 13
+weight: 10
 description: >
   Prerequisites for using curated packages
 ---
