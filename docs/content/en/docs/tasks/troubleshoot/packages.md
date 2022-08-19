@@ -98,7 +98,7 @@ If you do not see a pod or various resources for the package controller, it may 
 No resources found in eksa-packages namespace.
 ```
 
-Most likely the cluster was created with an older version of the EKS Anywhere CLI or the feature flag was not enabled. If you run the version command, it should return `v0.9.0` or later release.
+Most likely the cluster was created with an older version of the EKS Anywhere CLI or the feature flag was not enabled. If you run the version command, it should return `v0.11.0` or later release.
 
 ```bash
 eksctl anywhere version
