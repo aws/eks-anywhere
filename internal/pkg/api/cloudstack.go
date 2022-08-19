@@ -83,11 +83,14 @@ func WithFirstCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackF
 func WithoutCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		for i, oldAz := range config.datacenterConfig.Spec.AvailabilityZones {
-			if az.Name == oldAz.Name {
+			if az.Name == oldAz.Name && i < len(config.datacenterConfig.Spec.AvailabilityZones) - 1 {
+				// Take all AZ's except for the ith one. This only works when it's not the last AZ
 				config.datacenterConfig.Spec.AvailabilityZones =
 					 append(config.datacenterConfig.Spec.AvailabilityZones[:i],
 						 config.datacenterConfig.Spec.AvailabilityZones[i+1:]...)
 				return
+			} else if az.Name == oldAz.Name {  // Last AZ matches - just take the first i AZ's
+				config.datacenterConfig.Spec.AvailabilityZones = config.datacenterConfig.Spec.AvailabilityZones[:i]
 			}
 		}
 	}
