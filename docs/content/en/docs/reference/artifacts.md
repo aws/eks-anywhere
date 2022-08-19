@@ -29,24 +29,29 @@ However, see [Building Ubuntu-based node images]({{< relref "#building-ubuntu-ba
 
 Kubernetes 1.21:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-16-eks-a-12-amd64.img.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-14-amd64.img.gz
 ```
 
 Kubernetes 1.22:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.img.gz
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.img.gz
+```
+
+Kubernetes 1.23:
+```bash
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-23/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-14-amd64.img.gz
 ```
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/12/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere OVAs

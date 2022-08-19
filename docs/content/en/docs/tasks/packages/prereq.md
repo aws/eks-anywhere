@@ -9,7 +9,7 @@ description: >
 ## Prerequisites
 Before installing any curated packages for EKS Anywhere, do the following:
 
-* Check that the version of `eksctl anywhere` is `v0.9.0` or above with the following commands:
+* Check that the version of `eksctl anywhere` is `v0.11.0` or above with the following commands:
     ```bash
     eksctl anywhere version
     ```
