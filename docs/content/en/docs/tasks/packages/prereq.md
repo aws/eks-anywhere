@@ -1,3 +1,11 @@
+---
+title: "Prerequisites"
+linkTitle: "Prerequisites"
+weight: 10
+description: >
+  Prerequisites for using curated packages
+---
+
 ## Prerequisites
 Before installing any curated packages for EKS Anywhere, do the following:
 
