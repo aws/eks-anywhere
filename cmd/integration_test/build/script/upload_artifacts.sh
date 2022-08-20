@@ -94,9 +94,8 @@ function build::cli::upload() {
   local -r latesttag=$6
   local -r dry_run=$7
 
-  local upload_path="$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts
-  local latest_upload_path="$artifactsbucket"/"$projectpath"/"$latesttag"
-  
+  upload_path="$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts
+  latest_upload_path="$artifactsbucket"/"$projectpath"/"$latesttag"
   if [ "$CODEBUILD_CI" = "true" ]; then
     if [[ "$CODEBUILD_BUILD_ID" =~ "aws-staging-eks-a-test" ]]; then
       upload_path="$upload_path"/staging
@@ -107,13 +106,13 @@ function build::cli::upload() {
 
   if [ "$dry_run" = "true" ]; then
     aws s3 cp "$artifactspath" "$upload_path" --recursive --dryrun
-    aws s3 cp "$artifactspath"  "$latest_upload_path" --dryrun
+    aws s3 cp "$artifactspath" "$latest_upload_path" --dryrun
   else
     # Upload artifacts to s3
     # 1. To proper path on s3 with buildId-githash
     # 2. Latest path to indicate the latest build, with --delete option to delete stale files in the dest path
-    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --acl public-read
-    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$latesttag" --delete --acl public-read
+    aws s3 sync "$artifactspath" "$upload_path" --acl public-read
+    aws s3 sync "$artifactspath" "$latest_upload_path" --delete --acl public-read
   fi
 }
 
