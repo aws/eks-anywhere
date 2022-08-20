@@ -82,6 +82,7 @@ type ClusterE2ETest struct {
 	ProxyConfig            *v1alpha1.ProxyConfiguration
 	AWSIamConfig           *v1alpha1.AWSIamConfig
 	eksaBinaryLocation     string
+	ExpectFailure          bool
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -149,6 +150,12 @@ func withHardware(requiredCount int, hardareType string, labels map[string]strin
 func WithNoPowerActions() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.WithNoPowerActions = true
+	}
+}
+
+func ExpectFailure(expected bool) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ExpectFailure = expected
 	}
 }
 
@@ -675,6 +682,10 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 		}
 
 		if errorMessage != "" {
+			if e.ExpectFailure {
+				e.T.Logf("This error was expected. Continuing...")
+				return
+			}
 			e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
 		}
 

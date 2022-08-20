@@ -40,7 +40,7 @@ spec:
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: my-cluster-name
-  kubernetesVersion: "1.22"
+  kubernetesVersion: "1.23"
   managementCluster:
     name: my-cluster-name
   workerNodeGroupConfigurations:
@@ -65,7 +65,7 @@ metadata:
   name: my-cluster-name-cp
 spec:
   hardwareSelector: {}
-  osFamily: ubuntu
+  osFamily: bottlerocket
   templateRef: {}
   users:
   - name: ec2-user
@@ -79,7 +79,7 @@ metadata:
   name: my-cluster-name
 spec:
   hardwareSelector: {}
-  osFamily: ubuntu
+  osFamily: bottlerocket
   templateRef:
     kind: TinkerbellTemplateConfig
     name: my-cluster-name
@@ -150,7 +150,7 @@ the existing nodes.
 Refers to the Kubernetes object with Tinkerbell-specific configuration. See `TinkerbellDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`
 
 ### managementCluster
 Identifies the name of the management cluster.
@@ -193,9 +193,8 @@ Once the Tinkerbell services move from the Admin machine to run on the target cl
 When separate management and workload clusters are supported in Bare Metal, the IP address becomes a necessity.
 
 ### osImageURL
-Optional field to replace the default operating system image.
-This field is useful if you want to provide a customized operating system image or simply host the standard image locally.
-See [Artifacts]({{< relref "../artifacts/#ubuntu-os-images-for-bare-metal" >}}) for details.
+Optional field to replace the default Bottlerocket operating system. EKS Anywhere can only auto-import Bottlerocket. In order to use Ubuntu see [building ubuntu]({{< relref "../artifacts/#Building-Ubuntu-based-node-images" >}})
+to learn more on building and using Ubuntu with an EKS Anywhere cluster. This field is also useful if you want to provide a customized operating system image or simply host the standard image locally.
 
 ### hookImagesURLPath
 Optional field to replace the HookOS image.
@@ -205,9 +204,9 @@ See [Artifacts]({{< relref "../artifacts/#hookos-kernel-and-initial-ramdisk-for-
 #### Example `TinkerbellDatacenterConfig.spec`
 ```yaml
 spec:
-  tinkerbellIP: "192.168.0.10"                                                      # Available, routable IP
-  osImageURL: "http://my-web-server/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz" # Full URL to the OS Image hosted locally
-  hookImagesURLPath: "http://my-web-server/hook"                                    # Path to the hook images. This path contains vmlinuz-x86_64 and initramfs-x86_64 
+  tinkerbellIP: "192.168.0.10"                                          # Available, routable IP
+  osImageURL: "http://my-web-server/ubuntu-v1.23.7-eks-a-12-amd64.gz"   # Full URL to the OS Image hosted locally
+  hookImagesURLPath: "http://my-web-server/hook"                        # Path to the hook images. This path must contain vmlinuz-x86_64 and initramfs-x86_64 
 ```
 This is the folder structure for `my-web-server`:
 ```
@@ -215,7 +214,7 @@ my-web-server
 ├── hook
 │   ├── initramfs-x86_64
 │   └── vmlinuz-x86_64
-└── ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+└── ubuntu-v1.23.7-eks-a-12-amd64.gz
 ```
 
 ## TinkerbellMachineConfig Fields
@@ -299,7 +298,7 @@ spec:
       - environment:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
-          IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+          IMG_URL: https://my-file-server/ubuntu-v1.23.7-eks-a-12-amd64.gz
         image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
         name: stream-image
         timeout: 360
@@ -379,6 +378,23 @@ spec:
 
 ### Bottlerocket TinkerbellTemplateConfig example
 
+Pay special attention to the `BOOTCONFIG_CONTENTS` environment section below if you wish to set up console redirection for the kernel and systemd.
+If you are only using a direct attached monitor as your primary display device, no additional configuration is needed here.
+However, if you need all boot output to be shown via a server’s serial console for example, extra configuration should be provided inside `BOOTCONFIG_CONTENTS`.
+
+An empty `kernel {}` key is provided below in the example; inside this key is where you will specify your console devices.
+You may specify multiple comma delimited console devices in quotes to a console key as such: `console = "tty0", "ttyS0,115200n8"`.
+The order of the devices is significant; systemd will output to the last device specified.
+The console key belongs inside the kernel key like so:
+```
+kernel {
+    console = "tty0", "ttyS0,115200n8"
+}
+```
+
+The above example will send all kernel output to both consoles, and systemd output to `ttyS0`.
+Additional information about serial console setup can be found in the [Linux kernel documentation](https://www.kernel.org/doc/html/latest/admin-guide/serial-console.html).
+
 ```yaml
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -400,10 +416,12 @@ spec:
         name: stream-image
         timeout: 360
       - environment:
+          # An example console declaration that will send all kernel output to both consoles, and systemd output to ttyS0.
+          # kernel {
+          #     console = "tty0", "ttyS0,115200n8"
+          # }
           BOOTCONFIG_CONTENTS: |
-            kernel {
-                console = "tty0", "ttyS0,115200n8"
-            }
+            kernel {}
           DEST_DISK: /dev/sda12
           DEST_PATH: /bootconfig.data
           DIRMODE: "0700"

@@ -80,6 +80,10 @@ func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
+func (p *cloudstackProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	return nil
+}
+
 func (p *cloudstackProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
@@ -166,8 +170,11 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return err
 	}
 
-	oSpec := prevDatacenter.Spec
-	nSpec := clusterSpec.CloudStackDatacenter.Spec
+	prevDatacenter.SetDefaults()
+
+	if err = clusterSpec.CloudStackDatacenter.ValidateUpdate(prevDatacenter); err != nil {
+		return err
+	}
 
 	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
@@ -181,23 +188,6 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 			if err != nil {
 				return err
-			}
-		}
-	}
-
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
-	}
-	if nSpec.Account != oSpec.Account {
-		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
-	}
-
-	if len(nSpec.Zones) != len(oSpec.Zones) {
-		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
-	} else {
-		for i, zone := range nSpec.Zones {
-			if !zone.Equal(&oSpec.Zones[i]) {
-				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
 			}
 		}
 	}
@@ -586,12 +576,29 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 	return true, nil
 }
 
+// AnyImmutableFieldChanged Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
+// CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
+// new CloudStackMachineTemplates
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	for index, zone := range oldCsdc.Spec.Zones {
-		if !zone.Equal(&newCsdc.Spec.Zones[index]) {
+	if len(oldCsdc.Spec.AvailabilityZones) != len(newCsdc.Spec.AvailabilityZones) {
+		return true
+	}
+	oldAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
+	for _, oldAz := range oldCsdc.Spec.AvailabilityZones {
+		oldAzsMap[oldAz.Name] = oldAz
+	}
+	for _, newAz := range newCsdc.Spec.AvailabilityZones {
+		oldAz, found := oldAzsMap[newAz.Name]
+		if !found || !(oldAz.Zone.Equal(&newAz.Zone) &&
+			oldAz.Name == newAz.Name &&
+			oldAz.CredentialsRef == newAz.CredentialsRef &&
+			oldAz.Account == newAz.Account &&
+			oldAz.Domain == newAz.Domain) {
+
 			return true
 		}
 	}
+
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
 		return true
 	}
@@ -637,6 +644,9 @@ type CloudStackTemplateBuilder struct {
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	if clusterSpec.CloudStackDatacenter == nil {
+		return nil, fmt.Errorf("provided clusterSpec CloudStackDatacenter is nil. Unable to generate CAPI spec control plane")
+	}
 	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
@@ -705,6 +715,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"externalAttacherImage":                        bundle.KubeDistro.ExternalAttacher.VersionedImage(),
 		"externalProvisionerImage":                     bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"managerImage":                                 bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeRbacProxyImage":                           bundle.CloudStack.KubeRbacProxy.VersionedImage(),
 		"kubeVipImage":                                 bundle.CloudStack.KubeVip.VersionedImage(),
 		"cloudstackKubeVip":                            !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"cloudstackAvailabilityZones":                  datacenterConfigSpec.AvailabilityZones,
@@ -905,8 +916,7 @@ func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig)
-	if !needsNewControlPlaneTemplate {
+	if !needsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneVmc, controlPlaneMachineConfig) {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, oldCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return "", err
@@ -1003,6 +1013,9 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	if err != nil {
 		return nil, nil, err
 	}
+
+	csdc.SetDefaults()
+	currentSpec.CloudStackDatacenter = csdc
 
 	controlPlaneTemplateName, err = p.getControlPlaneNameForCAPISpecUpgrade(ctx, c, currentSpec, newClusterSpec, bootstrapCluster, workloadCluster, csdc, clusterName)
 	if err != nil {
@@ -1169,6 +1182,8 @@ func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, current
 	if err != nil {
 		return false, err
 	}
+	existingCsdc.SetDefaults()
+	currentSpec.CloudStackDatacenter = existingCsdc
 	if !existingCsdc.Spec.Equal(&newSpec.CloudStackDatacenter.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
@@ -1277,8 +1292,4 @@ func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
-}
-
-func (p *cloudstackProvider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
-	return nil
 }

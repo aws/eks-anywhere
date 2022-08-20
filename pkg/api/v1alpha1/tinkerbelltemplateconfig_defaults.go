@@ -24,10 +24,7 @@ dhcp4 = true
 # the file
 primary = true
 `
-	bottlerocketBootconfig = `kernel {
-  console = "tty0", "ttyS0,115200n8"
-}
-`
+	bottlerocketBootconfig = `kernel {}`
 
 	cloudInit = `datasource:
   Ec2:
@@ -52,7 +49,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 	var diskPart string
 
 	defaultActions := []ActionOpt{
-		withStreamImageAction(b, disk, osImageOverride, osFamily),
+		withStreamImageAction(b, disk, osImageOverride),
 	}
 
 	// The metadata string will have two URLs:
@@ -86,17 +83,15 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 	return defaultActions
 }
 
-func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string, osFamily OSFamily) ActionOpt {
+func withStreamImageAction(b v1alpha1.VersionsBundle, disk, osImageOverride string) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		var imageUrl string
 
 		switch {
 		case osImageOverride != "":
 			imageUrl = osImageOverride
-		case osFamily == Bottlerocket:
-			imageUrl = b.EksD.Raw.Bottlerocket.URI
 		default:
-			imageUrl = b.EksD.Raw.Ubuntu.URI
+			imageUrl = b.EksD.Raw.Bottlerocket.URI
 		}
 
 		*a = append(*a, tinkerbell.Action{

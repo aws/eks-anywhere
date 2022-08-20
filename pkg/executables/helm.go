@@ -133,8 +133,10 @@ func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubecon
 	return err
 }
 
+// InstallChartWithValuesFile installs a helm chart with the provided values file and waits for the chart deployment to be ready
+// The default timeout for the chart to reach ready state is 5m
 func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error {
-	params := []string{"install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath}
+	params := []string{"install", chart, ociURI, "--version", version, "--values", valuesFilePath, "--kubeconfig", kubeconfigFilePath, "--wait"}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err

@@ -4,7 +4,7 @@ linkTitle: "Upgrade cluster"
 weight: 20
 date: 2017-01-05
 description: >
-  How to perform a cluster version upgrade
+  How to perform a cluster upgrade
 ---
 > **_NOTE_**: Cluster upgrade is supported for vSphere clusters, but is not yet available for Bare Metal clusters
 >
@@ -154,6 +154,20 @@ Resuming Flux kustomization
 GitOps field not specified, resume flux kustomization skipped
 ```
 
+During the upgrade process, EKS Anywhere pauses the cluster controller reconciliation by adding the paused annotation `anywhere.eks.amazonaws.com/paused: true` to the EKS Anywhere cluster, provider datacenterconfig and machineconfig resources, before the components upgrade. After upgrade completes, the annotations are removed so that the cluster controller resumes reconciling the cluster.
+
+Though not recommended, you can manually pause the EKS Anywhere cluster controller reconciliation to perform extended maintenance work or interact with Cluster API objects directly. To do it, you can add the paused annotation to the cluster resource:
+
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused=true
+```
+
+After finishing the task, make sure you resume the cluster reconciliation by removing the paused annotation, so that EKS Anywhere cluster controller can continue working as expected.
+
+```bash
+kubectl annotate clusters.anywhere.eks.amazonaws.com ${CLUSTER_NAME} -n ${CLUSTER_NAMESPACE} anywhere.eks.amazonaws.com/paused-
+```
+
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
 allowing you to upgrade a number of fields simultaneously with the same procedure.
@@ -168,6 +182,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 - `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
+- `gitOpsRef` (Once set, you can't change or delete the field's content later)
 
 
 `VSphereMachineConfig`:
@@ -218,6 +233,14 @@ spec:
 
 Worker node groups can use the same machineGroupRef as previous groups, or you can define a new machine configuration for your new group.
 
+### Resume upgrade after failure
+
+EKS Anywhere supports re-running the `upgrade` command post-failure as an experimental feature.
+If the `upgrade` command fails, the user can manually fix the issue (when applicable) and simply rerun the same command.  At this point, the CLI will skip the completed tasks, restore the state of the operation, and resume the upgrade process.
+The completed tasks are stored in the `generated` folder as a file named `<clusterName>-checkpoint.yaml`.
+
+This feature is experimental. To enable this feature, export the following environment variable:<br/>
+`export CHECKPOINT_ENABLED=true`
 
 ### Troubleshooting
 

@@ -22,12 +22,12 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	"github.com/aws/eks-anywhere/release/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
 const (
-	ciliumProjectPath       = "projects/cilium/cilium"
 	ciliumImageName         = "cilium"
 	ciliumOperatorImageName = "operator-generic"
 	ciliumHelmChartName     = "cilium-chart"
@@ -40,7 +40,7 @@ func GetCiliumBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.CiliumBund
 	artifacts := r.BundleArtifactsTable["cilium"]
 
 	ciliumContainerRegistry := "public.ecr.aws/isovalent"
-	ciliumGitTag, err := filereader.ReadGitTag(ciliumProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
+	ciliumGitTag, err := filereader.ReadGitTag(constants.CiliumProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
 	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
 	}

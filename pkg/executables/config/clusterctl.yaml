@@ -79,6 +79,9 @@ images:
   infrastructure-aws/kube-rbac-proxy:
     repository: {{ .ClusterApiAwsKubeRbacProxyRepository }}
     tag: {{ .ClusterApiAwsKubeRbacProxyTag }} #org one is v0.4.1
+  infrastructure-cloudstack/kube-rbac-proxy:
+    repository: {{ .ClusterApiCloudStackKubeRbacProxyRepository }}
+    tag: {{ .ClusterApiCloudStackKubeRbacProxyTag }} #org one is v0.8.0
   infrastructure-vsphere/manager:
     repository: {{ .ClusterApiVSphereControllerRepository }}
     tag: {{ .ClusterApiVSphereControllerTag }}

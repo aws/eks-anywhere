@@ -24,6 +24,6 @@ TARGET_DIR="${3?Third argument is target directory}"
 TARGET=${TARGET_DIR}/README.md
 
 cat template/README.md.begin >${TARGET}
-sed -e 's/^/   /' <template/example.yaml >>${TARGET}
+sed -e 's/^/   /' -e "s/kubernetesVersion: .*$/kubernetesVersion: \"${EKSA_K8S_VERSION}\"/" <template/example.yaml >>${TARGET}
 cat template/README.md.end >>${TARGET}
 sed -i "" -e "s/{{eksa_k8s_version}}/${EKSA_K8S_VERSION}/" -e "s/{{conformance_version}}/${CONFORMANCE_VERSION}/" ${TARGET_DIR}/README.md

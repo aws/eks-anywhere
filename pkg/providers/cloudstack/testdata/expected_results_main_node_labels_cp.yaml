@@ -11,6 +11,9 @@ spec:
       cidrBlocks: [192.168.0.0/16]
     services:
       cidrBlocks: [10.96.0.0/12]
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
@@ -34,14 +37,14 @@ spec:
     host: 1.2.3.4
     port: 6443
   failureDomains:
-  - name: availability-zone-0
+  - name: default-az-0
     zone:
       name: zone1
       network:
         name: net1
     domain: domain1
     account: admin
-    acsendpoint:
+    acsEndpoint:
       name: global
       namespace: eksa-system
 ---
@@ -68,7 +71,7 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      affinitygroupids:
+      affinityGroupIDs:
       - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -458,5 +461,5 @@ spec:
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      affinitygroupids:
+      affinityGroupIDs:
       - etcd-affinity

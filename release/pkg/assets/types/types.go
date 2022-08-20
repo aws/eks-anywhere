@@ -61,8 +61,9 @@ type AssetConfig struct {
 	HasReleaseBranches             bool
 	HasSeparateTagPerReleaseBranch bool
 	OnlyForDevRelease              bool
+	UsesKubeRbacProxy              bool
 }
 
 type ArchiveS3PathGenerator func(rc *releasetypes.ReleaseConfig, archive *Archive, projectPath, gitTag, eksDReleaseChannel, eksDReleaseNumber, kubeVersion, latestPath, arch string) (string, string, string, string, error)
 
-type GitTagAssigner func(rc *releasetypes.ReleaseConfig, gitTagPath string) (string, error)
+type GitTagAssigner func(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error)

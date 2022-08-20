@@ -23,7 +23,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/aws/eks-anywhere/release/pkg/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
@@ -56,7 +55,7 @@ func RenameArtifacts(r *releasetypes.ReleaseConfig, artifacts map[string][]relea
 				// Adding a special case for tinkerbell/hook project.
 				// The project builds linux kernel files that are not stored as tarballs and currently do not have SHA checksums.
 				// TODO(pokearu): Add logic to generate SHA for hook project
-				if artifact.Archive.ProjectPath == bundles.HookProjectPath {
+				if artifact.Archive.ProjectPath == constants.HookProjectPath {
 					checksumExtensions = []string{}
 				}
 

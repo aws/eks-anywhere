@@ -20,12 +20,11 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const capiProjectPath = "projects/kubernetes-sigs/cluster-api"
 
 func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
 	coreClusterAPIBundleArtifacts := map[string][]releasetypes.Artifact{
@@ -90,7 +89,7 @@ func GetCoreClusterAPIBundle(r *releasetypes.ReleaseConfig, imageDigests map[str
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -171,7 +170,7 @@ func GetKubeadmBootstrapBundle(r *releasetypes.ReleaseConfig, imageDigests map[s
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -252,7 +251,7 @@ func GetKubeadmControlPlaneBundle(r *releasetypes.ReleaseConfig, imageDigests ma
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

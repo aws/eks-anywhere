@@ -84,6 +84,10 @@ func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	return nil
 }
 
+func (p *provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	return nil
+}
+
 func (p *provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
@@ -530,8 +534,4 @@ func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
 	}
 
 	return haproxyImageRepo
-}
-
-func (p *provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
-	return nil
 }

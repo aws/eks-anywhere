@@ -20,12 +20,11 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
-
-const capvProjectPath = "projects/kubernetes-sigs/cluster-api-provider-vsphere"
 
 func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.VSphereBundle, error) {
 	vsphereBundleArtifacts := map[string][]releasetypes.Artifact{
@@ -102,7 +101,7 @@ func GetVsphereBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapvProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

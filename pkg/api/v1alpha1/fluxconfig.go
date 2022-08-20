@@ -4,9 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -57,12 +55,6 @@ func validateGitProviderConfig(gitProviderConfig GitProviderConfig) error {
 		}
 	} else {
 		logger.Info("Warning: 'sshKeyAlgorithm' is not set, defaulting to 'ecdsa'")
-	}
-	if privateKeyFile, ok := os.LookupEnv(config.EksaGitPrivateKeyTokenEnv); !ok || len(privateKeyFile) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", config.EksaGitPrivateKeyTokenEnv)
-	}
-	if gitKnownHosts, ok := os.LookupEnv(config.EksaGitKnownHostsFileEnv); !ok || len(gitKnownHosts) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", config.EksaGitKnownHostsFileEnv)
 	}
 
 	return validateRepositoryUrl(gitProviderConfig.RepositoryUrl)

@@ -978,6 +978,9 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
 					},
+					KubeRbacProxy: releasev1alpha1.Image{
+						URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
+					},
 					KubeVip: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
@@ -1017,6 +1020,33 @@ func TestGetDatacenterConfig(t *testing.T) {
 	providerConfig := provider.DatacenterConfig(givenClusterSpec(t, testClusterConfigMainFilename))
 	if providerConfig.Kind() != "CloudStackDatacenterConfig" {
 		t.Fatalf("Unexpected error DatacenterConfig: kind field not found: %s", providerConfig.Kind())
+	}
+}
+
+func TestProviderDeleteResources(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.ManagementCluster = &types.Cluster{
+		KubeconfigFile: "testKubeConfig",
+	}
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	for _, mc := range machineConfigs {
+		kubectl.EXPECT().DeleteEksaCloudStackMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace)
+	}
+	kubectl.EXPECT().DeleteEksaCloudStackDatacenterConfig(ctx, provider.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, provider.datacenterConfig.Namespace)
+
+	err := provider.DeleteResources(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
 	}
 }
 
@@ -1112,6 +1142,15 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 
 			test.AssertContentToFile(t, string(md), tt.wantMDFile)
 		})
+	}
+}
+
+func TestProviderGenerateCAPISpecForUpgradeIncompleteClusterSpec(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.CloudStackDatacenter = nil
+	templateBuilder := NewCloudStackTemplateBuilder(nil, nil, nil, nil, nil)
+	if _, err := templateBuilder.GenerateCAPISpecControlPlane(clusterSpec); err == nil {
+		t.Fatalf("Expected error for incomplete cluster spec, but no error occurred")
 	}
 }
 
@@ -1533,15 +1572,17 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	cluster := &types.Cluster{
 		KubeconfigFile: "test",
 	}
+	newClusterSpec := clusterSpec.DeepCopy()
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
-	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
+	shinyModifiedDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = "shiny-new-api-endpoint"
+	newClusterSpec.CloudStackDatacenter = shinyModifiedDcConfig
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
-	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+	provider := newProviderWithKubectl(t, nil, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(givenDatacenterConfig(t, testClusterConfigMainFilename), nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	specChanged, err := provider.UpgradeNeeded(ctx, newClusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1667,6 +1708,41 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
 	}
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+}
+
+func TestAnyImmutableFieldChangedDomain(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
+func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	secondAz := dcConfig.Spec.AvailabilityZones[0].DeepCopy()
+	secondAz.Name = "shinyNewAz"
+	dcConfig.Spec.AvailabilityZones = append(dcConfig.Spec.AvailabilityZones, *secondAz)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
+func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
+	// We currently can't retrieve ManagementApiEndpoint for an AZ from the CloudStackCluster resource, so a difference there should be ignored
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
 }
 
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {

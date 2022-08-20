@@ -7,6 +7,6 @@ import (
 )
 
 type Manager interface {
-	LatestBundle(ctx context.Context, baseRef string) (
+	LatestBundle(ctx context.Context, baseRef string, kubeVersion string) (
 		*packagesv1.PackageBundle, error)
 }

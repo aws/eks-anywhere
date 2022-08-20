@@ -1302,6 +1302,32 @@ func (k *Kubectl) GetUnprovisionedTinkerbellHardware(ctx context.Context, kubeco
 	return list.Items, nil
 }
 
+// GetProvisionedTinkerbellHardware retrieves provisioned Tinkerbell Hardware objects.
+// Provisioned objects are those with owner reference information.
+func (k *Kubectl) GetProvisionedTinkerbellHardware(ctx context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error) {
+	// Retrieve hardware resources that have the `v1alpha1.tinkerbell.org/ownerName` label.
+	// This label is used to populate hardware when the CAPT controller acquires the Hardware
+	// resource for provisioning.
+	params := []string{
+		"get", TinkerbellHardwareResourceType,
+		"-l", "v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", namespace,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	var list tinkv1alpha1.HardwareList
+	if err := json.Unmarshal(stdOut.Bytes(), &list); err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
+}
+
 func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1603,6 +1629,6 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kub
 	return nil
 }
 
-func (k *Kubectl) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
+func (k *Kubectl) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
 	return k.ExecuteWithStdin(ctx, yaml, opts...)
 }

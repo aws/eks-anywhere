@@ -18,6 +18,7 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
@@ -56,7 +57,7 @@ func GetKindnetdBundle(r *releasetypes.ReleaseConfig) (anywherev1alpha1.Kindnetd
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
 	version, err := version.BuildComponentVersion(
-		version.NewVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
+		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.KindProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

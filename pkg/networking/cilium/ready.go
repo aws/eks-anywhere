@@ -6,7 +6,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 )
 
-func checkDaemonSetReady(daemonSet *v1.DaemonSet) error {
+func CheckDaemonSetReady(daemonSet *v1.DaemonSet) error {
 	if err := checkDaemonSetObservedGeneration(daemonSet); err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func checkDaemonSetReady(daemonSet *v1.DaemonSet) error {
 	return nil
 }
 
-func checkPreflightDaemonSetReady(ciliumDaemonSet, preflightDaemonSet *v1.DaemonSet) error {
+func CheckPreflightDaemonSetReady(ciliumDaemonSet, preflightDaemonSet *v1.DaemonSet) error {
 	if err := checkDaemonSetObservedGeneration(ciliumDaemonSet); err != nil {
 		return err
 	}
@@ -31,7 +31,7 @@ func checkPreflightDaemonSetReady(ciliumDaemonSet, preflightDaemonSet *v1.Daemon
 	return nil
 }
 
-func checkDeploymentReady(deployment *v1.Deployment) error {
+func CheckDeploymentReady(deployment *v1.Deployment) error {
 	if err := checkDeploymentObservedGeneration(deployment); err != nil {
 		return err
 	}

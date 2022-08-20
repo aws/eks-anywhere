@@ -28,7 +28,7 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
   identityProviderRefs:
-    - kind: OIDCConfig
+  - kind: OIDCConfig
     name: eksa-unit-test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

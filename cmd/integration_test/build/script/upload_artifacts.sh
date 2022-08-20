@@ -22,6 +22,7 @@ LATEST=latest
 if [[ $BRANCH_NAME != "main" ]]; then
   LATEST=$BRANCH_NAME
 fi
+CODEBUILD_CI="${CODEBUILD_CI:-false}"
 
 function build::cli::move_artifacts() {
   local -r os=$1
@@ -93,11 +94,20 @@ function build::cli::upload() {
   local -r latesttag=$6
   local -r dry_run=$7
 
+  local upload_path="$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts
+  local latest_upload_path="$artifactsbucket"/"$projectpath"/"$latesttag"
+  
+  if [ "$CODEBUILD_CI" = "true" ]; then
+    if [[ "$CODEBUILD_BUILD_ID" =~ "aws-staging-eks-a-test" ]]; then
+      upload_path="$upload_path"/staging
+      latest_upload_path="$artifactsbucket"/"$projectpath"/staging/"$latesttag"
+    fi
+  fi
   echo "$githash" >> "$artifactspath"/githash
 
   if [ "$dry_run" = "true" ]; then
-    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --recursive --dryrun
-    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/"$latesttag" --recursive --dryrun
+    aws s3 cp "$artifactspath" "$upload_path" --recursive --dryrun
+    aws s3 cp "$artifactspath"  "$latest_upload_path" --dryrun
   else
     # Upload artifacts to s3
     # 1. To proper path on s3 with buildId-githash

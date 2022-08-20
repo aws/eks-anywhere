@@ -164,6 +164,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		WorkloadCluster:   workloadCluster,
 		ManagementCluster: managementCluster,
 		Provider:          deps.Provider,
+		CliConfig:         cliConfig,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 

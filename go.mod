@@ -7,8 +7,9 @@ require (
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
+	github.com/aws/aws-sdk-go-v2/credentials v1.11.2
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/eks-anywhere-packages v0.1.11
+	github.com/aws/eks-anywhere-packages v0.2.0-alpha.6
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/smithy-go v1.11.2
@@ -41,7 +42,7 @@ require (
 	k8s.io/client-go v0.23.4
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/cluster-api v1.1.3
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.5.0
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
 	sigs.k8s.io/controller-runtime v0.11.1
@@ -62,8 +63,9 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Microsoft/go-winio v0.5.1 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
+	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
+	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
@@ -185,6 +187,4 @@ replace (
 
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.1.3-custom
-	// need the unreleased version (v1beta2) of API from CAPC. remove once a new capc is released with v1beta2 API
-	sigs.k8s.io/cluster-api-provider-cloudstack => github.com/rejoshed/cluster-api-provider-cloudstack v0.4.5-rc3.0.20220716163849-c554f7451de3
 )

@@ -56,3 +56,28 @@ func TestDefaultConfigClientBuilderOIDC(t *testing.T) {
 	g.Expect(len(config.OIDCConfigs)).To(Equal(1))
 	g.Expect(config.OIDCConfigs["my-oidc"]).To(Equal(oidcConfig))
 }
+
+func TestConfigManagerValidateOIDCConfigSuccess(t *testing.T) {
+	g := NewWithT(t)
+	c := clusterConfigFromFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml")
+	m, err := cluster.NewDefaultConfigManager()
+	g.Expect(err).To(BeNil())
+
+	err = m.Validate(c)
+	g.Expect(err).To(Succeed())
+}
+
+func TestConfigManagerValidateOIDCConfigMultipleErrors(t *testing.T) {
+	g := NewWithT(t)
+	c := clusterConfigFromFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml")
+	c.OIDCConfigs["eksa-unit-test"] = &anywherev1.OIDCConfig{
+		Spec: anywherev1.OIDCConfigSpec{
+			ClientId: "",
+		},
+	}
+	m, err := cluster.NewDefaultConfigManager()
+	g.Expect(err).To(BeNil())
+
+	err = m.Validate(c)
+	g.Expect(err).To(MatchError(ContainSubstring("clientId is required")))
+}

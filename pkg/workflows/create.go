@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -473,11 +472,9 @@ func (s *DeleteBootstrapClusterTask) Name() string {
 }
 
 func (cp *InstallCuratedPackagesTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if features.IsActive(features.CuratedPackagesSupport()) {
-		err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
-		if err != nil {
-			logger.MarkFail("Curated Packages Installation Failed...")
-		}
+	err := commandContext.PackageInstaller.InstallCuratedPackages(ctx)
+	if err != nil {
+		logger.MarkFail("Curated Packages Installation Failed...")
 	}
 	return nil
 }

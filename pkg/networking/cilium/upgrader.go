@@ -7,7 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -66,20 +66,23 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 	}
 
 	logger.V(3).Info("Generating Cilium upgrade manifest")
-	upgradeManifest, err := u.templater.GenerateUpgradeManifest(ctx, currentSpec, newSpec)
+	currentKubeVersion, err := getKubeVersionString(currentSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	if chartValuesChanged {
-		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == v1alpha1.CiliumPolicyModeAlways {
-			logger.V(3).Info("Installing NetworkPolicy resources for policy enforcement mode 'always'")
-			networkPolicyManifest, err := u.templater.GenerateNetworkPolicyManifest(newSpec, namespaces)
-			if err != nil {
-				return nil, err
-			}
-			upgradeManifest = templater.AppendYamlResources(upgradeManifest, networkPolicyManifest)
-		}
+	previousCiliumVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	upgradeManifest, err := u.templater.GenerateManifest(ctx, newSpec,
+		WithKubeVersion(currentKubeVersion),
+		WithUpgradeFromVersion(*previousCiliumVersion),
+		WithPolicyAllowedNamespaces(namespaces),
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	logger.V(2).Info("Installing new Cilium version")

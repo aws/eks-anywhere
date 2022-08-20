@@ -15,11 +15,32 @@
 package constants
 
 const (
-	ReleaseKind           = "Release"
-	BundlesKind           = "Bundles"
-	HexAlphabet           = "0123456789abcdef"
-	SuccessIcon           = "✅"
-	FakeComponentChecksum = "abcdef1"
-	FakeGitCommit         = "0123456789abcdef0123456789abcdef01234567"
-	ReleaseFolderName     = "release"
+	// Artifacts-related constants
+	ReleaseKind              = "Release"
+	BundlesKind              = "Bundles"
+	HexAlphabet              = "0123456789abcdef"
+	SuccessIcon              = "✅"
+	FakeComponentChecksum    = "abcdef1"
+	FakeGitCommit            = "0123456789abcdef0123456789abcdef01234567"
+	ReleaseFolderName        = "release"
+	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
+
+	// Project paths
+	CapaProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-aws"
+	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
+	CapcProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
+	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
+	CaptProjectPath                     = "projects/tinkerbell/cluster-api-provider-tinkerbell"
+	CapvProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-vsphere"
+	CertManagerProjectPath              = "projects/cert-manager/cert-manager"
+	CiliumProjectPath                   = "projects/cilium/cilium"
+	EtcdadmBootstrapProviderProjectPath = "projects/aws/etcdadm-bootstrap-provider"
+	EtcdadmControllerProjectPath        = "projects/aws/etcdadm-controller"
+	FluxcdRootPath                      = "projects/fluxcd"
+	Flux2ProjectPath                    = "projects/fluxcd/flux2"
+	HookProjectPath                     = "projects/tinkerbell/hook"
+	ImageBuilderProjectPath             = "projects/kubernetes-sigs/image-builder"
+	KindProjectPath                     = "projects/kubernetes-sigs/kind"
+	KubeRbacProxyProjectPath            = "projects/brancz/kube-rbac-proxy"
+	PackagesProjectPath                 = "projects/aws/eks-anywhere-packages"
 )

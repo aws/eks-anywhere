@@ -43,6 +43,13 @@ var _ webhook.Validator = &FluxConfig{}
 func (r *FluxConfig) ValidateCreate() error {
 	fluxconfiglog.Info("validate create", "name", r.Name)
 
+	if err := r.Validate(); err != nil {
+		return apierrors.NewInvalid(
+			r.GroupVersionKind().GroupKind(),
+			r.Name,
+			field.ErrorList{field.Invalid(field.NewPath("spec"), r.Spec, err.Error())})
+	}
+
 	return nil
 }
 
@@ -58,6 +65,10 @@ func (r *FluxConfig) ValidateUpdate(old runtime.Object) error {
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFluxFields(r, oldFluxConfig)...)
+
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
 
 	if len(allErrs) == 0 {
 		return nil

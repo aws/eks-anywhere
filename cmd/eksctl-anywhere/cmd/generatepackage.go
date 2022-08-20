@@ -53,7 +53,7 @@ func generatePackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	bm := curatedpackages.CreateBundleManager(gpOptions.kubeVersion)
+	bm := curatedpackages.CreateBundleManager()
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
@@ -63,7 +63,7 @@ func generatePackages(ctx context.Context, args []string) error {
 		deps.BundleRegistry,
 	)
 
-	bundle, err := b.GetLatestBundle(ctx)
+	bundle, err := b.GetLatestBundle(ctx, gpOptions.kubeVersion)
 	if err != nil {
 		return err
 	}

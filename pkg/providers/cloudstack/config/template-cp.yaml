@@ -11,6 +11,9 @@ spec:
       cidrBlocks: {{.podCidrs}}
     services:
       cidrBlocks: {{.serviceCidrs}}
+  controlPlaneEndpoint:
+    host: {{.controlPlaneEndpointHost}}
+    port: {{.controlPlaneEndpointPort}}
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
@@ -43,7 +46,7 @@ spec:
         name: {{ $az.Zone.Network.Name }}
     domain: {{ $az.Domain }}
     account: {{ $az.Account }}
-    acsendpoint:
+    acsEndpoint:
       name: {{ $az.CredentialsRef }}
       namespace: eksa-system
 {{- end }}
@@ -108,7 +111,7 @@ spec:
       affinity: '{{ .cloudstackControlPlaneAffinity }}'
 {{- end }}
 {{- if .cloudstackControlPlaneAffinityGroupIds }}
-      affinitygroupids:
+      affinityGroupIDs:
       {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
@@ -551,7 +554,7 @@ spec:
       affinity: '{{ .cloudstackEtcdAffinity }}'
 {{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
-      affinitygroupids:
+      affinityGroupIDs:
       {{- range .cloudstackEtcdAffinityGroupIds }}
       - {{.}}
       {{- end }}

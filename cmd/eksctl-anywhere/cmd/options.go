@@ -23,6 +23,18 @@ func (c clusterOptions) mountDirs() []string {
 	return dirs
 }
 
+func readAndValidateClusterSpec(clusterConfigPath string, cliVersion version.Info, opts ...cluster.SpecOpt) (*cluster.Spec, error) {
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(clusterConfigPath, cliVersion, opts...)
+	if err != nil {
+		return nil, err
+	}
+	if err = cluster.ValidateConfig(clusterSpec.Config); err != nil {
+		return nil, err
+	}
+
+	return clusterSpec, nil
+}
+
 func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	var specOpts []cluster.SpecOpt
 	if options.bundlesOverride != "" {
@@ -36,7 +48,7 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 		specOpts = append(specOpts, cluster.WithManagementCluster(managementCluster))
 	}
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(options.fileName, version.Get(), specOpts...)
+	clusterSpec, err := readAndValidateClusterSpec(options.fileName, version.Get(), specOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

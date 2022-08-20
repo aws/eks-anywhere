@@ -29,6 +29,7 @@ import (
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
 	"github.com/aws/eks-anywhere/release/pkg/filereader"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
+	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	sliceutils "github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
@@ -43,14 +44,14 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 		gitTagPath = filepath.Join(projectPath, eksDReleaseChannel)
 	}
 	// Get git tag for project if exists
-	gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath)
+	gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath, sourcedFromBranch)
 	if err != nil {
 		return nil, fmt.Errorf("error getting git tag for project %s: %v", projectName, err)
 	}
 
 	// Add project images to artifacts list
 	for _, image := range ac.Images {
-		imageArtifact, sourceRepoName, err := images.GetImageAssets(rc, image, ac.ImageRepoPrefix, ac.ImageTagOptions, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
+		imageArtifact, sourceRepoName, err := images.GetImageAssets(rc, ac, image, ac.ImageRepoPrefix, ac.ImageTagOptions, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion)
 		if err != nil {
 			return nil, fmt.Errorf("error getting image artifact: %v", err)
 		}
@@ -61,6 +62,14 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 			Repository: sourceRepoName,
 			ReleaseUri: imageArtifact.ReleaseImageURI,
 		})
+
+		if ac.UsesKubeRbacProxy {
+			kubeRbacProxyImageTagOverride, err := bundleutils.GetKubeRbacProxyImageTagOverride(rc)
+			if err != nil {
+				return nil, fmt.Errorf("error getting kube-rbac-proxy image tag override: %v", err)
+			}
+			imageTagOverrides = append(imageTagOverrides, kubeRbacProxyImageTagOverride)
+		}
 	}
 
 	// Add manifests to artifacts list

@@ -246,6 +246,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				ManifestFiles: []string{"infrastructure-components.yaml", "metadata.yaml"},
 			},
 		},
+		UsesKubeRbacProxy: true,
 	},
 	// Cluster-api-provider-docker artifacts
 	{
@@ -310,6 +311,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			{
 				Name:          "infrastructure-vsphere",
 				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
+			},
+		},
+	},
+	// Image-builder cli artifacts
+	{
+		ProjectName: "image-builder",
+		ProjectPath: "projects/aws/image-builder",
+		Archives: []*assettypes.Archive{
+			{
+				Name:   "image-builder",
+				Format: "tarball",
 			},
 		},
 	},
@@ -389,11 +401,14 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "eks-anywhere-packages",
 			},
 			{
+				RepoName: "ecr-token-refresher",
+			},
+			{
 				AssetName:            "eks-anywhere-packages-helm",
 				RepoName:             "eks-anywhere-packages",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					SourceLatestTagFromECR: true,
+					NonProdSourceImageTagFormat: "<gitTag>",
 				},
 			},
 		},
@@ -582,20 +597,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
 				OSName:              "bottlerocket",
 				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "raw",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
@@ -685,6 +688,21 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"projectPath",
 		},
 	},
+	// Envoy artifacts
+	{
+		ProjectName: "envoy",
+		ProjectPath: "projects/envoyproxy/envoy",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "envoy",
+			},
+		},
+		ImageRepoPrefix: "envoyproxy",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+	},
 	// Kustomize-controller artifacts
 	{
 		ProjectName: "kustomize-controller",
@@ -725,21 +743,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 		ImageRepoPrefix: "fluxcd",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
-	// PBnJ artifacts
-	{
-		ProjectName: "pbnj",
-		ProjectPath: "projects/tinkerbell/pbnj",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "pbnj",
-			},
-		},
-		ImageRepoPrefix: "tinkerbell",
 		ImageTagOptions: []string{
 			"gitTag",
 			"projectPath",

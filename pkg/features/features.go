@@ -6,8 +6,6 @@ const (
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
-	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
-	K8s123SupportEnvVar             = "K8S_1_23_SUPPORT"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 )
 
@@ -54,20 +52,6 @@ func SnowProvider() Feature {
 	return Feature{
 		Name:     "Snow provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(SnowProviderEnvVar),
-	}
-}
-
-func CuratedPackagesSupport() Feature {
-	return Feature{
-		Name:     "Curated Packages Support",
-		IsActive: globalFeatures.isActiveForEnvVar(CuratedPackagesEnvVar),
-	}
-}
-
-func K8s123Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.23 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s123SupportEnvVar),
 	}
 }
 

@@ -24,6 +24,13 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
 
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-management-cluster",
+			Namespace: "my-namespace",
+		},
+	}
+
 	cluster := &anywherev1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "my-cluster",
@@ -61,7 +68,7 @@ func TestClusterReconcilerEnsureOwnerReferences(t *testing.T) {
 			},
 		},
 	}
-	objs := []runtime.Object{cluster, oidc, awsIAM}
+	objs := []runtime.Object{cluster, managementCluster, oidc, awsIAM}
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
@@ -88,6 +95,71 @@ func TestClusterReconcilerSetupWithManager(t *testing.T) {
 	g.Expect(r.SetupWithManager(env.Manager())).To(Succeed())
 }
 
+func TestClusterReconcilerManagementClusterNotFound(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	objs := []runtime.Object{cluster, managementCluster}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).To(MatchError(ContainSubstring("\"my-management-cluster\" not found")))
+}
+
+func TestClusterReconcilerSetBundlesRef(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+
+	managementCluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-management-cluster",
+		},
+		Spec: anywherev1.ClusterSpec{
+			BundlesRef: &anywherev1.BundlesRef{
+				Name: "my-bundles-ref",
+			},
+		},
+	}
+
+	cluster := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "my-cluster",
+		},
+	}
+	cluster.SetManagedBy("my-management-cluster")
+
+	objs := []runtime.Object{cluster, managementCluster}
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	mgmtCluster := &anywherev1.Cluster{}
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: managementCluster.Name}, mgmtCluster)).To(Succeed())
+
+	r := controllers.NewClusterReconciler(cl, nullLog(), newRegistryForDummyProviderReconciler())
+	_, err := r.Reconcile(ctx, clusterRequest(cluster))
+	g.Expect(err).ToNot(HaveOccurred())
+
+	newCluster := &anywherev1.Cluster{}
+	g.Expect(cl.Get(ctx, client.ObjectKey{Namespace: cluster.Namespace, Name: "my-cluster"}, newCluster)).To(Succeed())
+	g.Expect(newCluster.Spec.BundlesRef).To(Equal(mgmtCluster.Spec.BundlesRef))
+}
+
 func newRegistryForDummyProviderReconciler() controllers.ProviderClusterReconcilerRegistry {
 	return dummyProviderReconcilerRegistry{
 		reconciler: dummyProviderReconciler{},
@@ -104,7 +176,7 @@ func (d dummyProviderReconcilerRegistry) Get(_ string) clusters.ProviderClusterR
 
 type dummyProviderReconciler struct{}
 
-func (dummyProviderReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (controller.Result, error) {
+func (dummyProviderReconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
 	return controller.Result{}, nil
 }
 

@@ -63,7 +63,7 @@ func WithCloudStackComputeOfferingForAllMachines(value string) CloudStackFiller 
 
 func WithCloudStackManagementServer(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.ManagementApiEndpoint = value
+		config.datacenterConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = value
 	}
 }
 
@@ -121,25 +121,25 @@ func WithCloudStackSSHAuthorizedKey(value string) CloudStackFiller {
 
 func WithCloudStackDomain(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Domain = value
+		config.datacenterConfig.Spec.AvailabilityZones[0].Domain = value
 	}
 }
 
 func WithCloudStackAccount(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Account = value
+		config.datacenterConfig.Spec.AvailabilityZones[0].Account = value
 	}
 }
 
 func WithCloudStackZone(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Zones[0].Name = value
+		config.datacenterConfig.Spec.AvailabilityZones[0].Zone.Name = value
 	}
 }
 
 func WithCloudStackNetwork(value string) CloudStackFiller {
 	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.Zones[0].Network.Name = value
+		config.datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Name = value
 	}
 }
 

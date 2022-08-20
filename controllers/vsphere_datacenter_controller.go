@@ -17,17 +17,18 @@ import (
 
 // VSphereDatacenterReconciler reconciles a VSphereDatacenterConfig object
 type VSphereDatacenterReconciler struct {
-	reconciler.VSphereReconciler
+	log       logr.Logger
+	client    client.Client
+	defaulter *vsphere.Defaulter
+	validator *vsphere.Validator
 }
 
 func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereDatacenterReconciler {
 	return &VSphereDatacenterReconciler{
-		reconciler.VSphereReconciler{
-			Client:    client,
-			Log:       log,
-			Validator: validator,
-			Defaulter: defaulter,
-		},
+		client:    client,
+		validator: validator,
+		defaulter: defaulter,
+		log:       log,
 	}
 }
 
@@ -40,16 +41,16 @@ func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // TODO: add here kubebuilder permissions as neeeded
 func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.Log.WithValues("vsphereDatacenter", req.NamespacedName)
+	log := r.log.WithValues("vsphereDatacenter", req.NamespacedName)
 
 	// Fetch the VsphereDatacenter object
 	vsphereDatacenter := &anywherev1.VSphereDatacenterConfig{}
-	if err := r.Client.Get(ctx, req.NamespacedName, vsphereDatacenter); err != nil {
+	if err := r.client.Get(ctx, req.NamespacedName, vsphereDatacenter); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := patch.NewHelper(vsphereDatacenter, r.Client)
+	patchHelper, err := patch.NewHelper(vsphereDatacenter, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -80,15 +81,15 @@ func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *VSphereDatacenterReconciler) reconcile(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := reconciler.SetupEnvVars(ctx, vsphereDatacenter, r.Client); err != nil {
+	if err := reconciler.SetupEnvVars(ctx, vsphereDatacenter, r.client); err != nil {
 		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return ctrl.Result{}, err
 	}
-	if err := r.Defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
+	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 	// Determine if VsphereDatacenterConfig is valid
-	if err := r.Validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
+	if err := r.validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
 		log.Error(err, "Failed to validate VsphereDatacenterConfig")
 		return ctrl.Result{}, err
 	}

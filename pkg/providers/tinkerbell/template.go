@@ -58,7 +58,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		}
 		disk, err := tb.diskExtractor.GetDisk(tb.controlPlaneMachineSpec.HardwareSelector)
 		if err != nil {
-			return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+			disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.controlPlaneMachineSpec.HardwareSelector)
+			if err != nil {
+				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+			}
 		}
 		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
@@ -80,7 +83,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 			}
 			disk, err := tb.diskExtractor.GetDisk(tb.etcdMachineSpec.HardwareSelector)
 			if err != nil {
-				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
+				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.etcdMachineSpec.HardwareSelector)
+				if err != nil {
+					return nil, fmt.Errorf("getting etcd disk type of the hardware selector: %v", err)
+				}
 			}
 			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
@@ -113,7 +119,10 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 			}
 			disk, err := tb.diskExtractor.GetDisk(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
 			if err != nil {
-				return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
+				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
+				if err != nil {
+					return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
+				}
 			}
 			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
@@ -350,7 +359,14 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
-	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig)
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig))
+
+	// LoadBalancerClass is feature gated in K8S v1.21 and needs to be enabled manually
+	if clusterSpec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube121 {
+		apiServerExtraArgs.Append(clusterapi.FeatureGatesExtraArgs("ServiceLoadBalancerClass=true"))
+	}
+
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
@@ -397,6 +413,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
+	}
+
+	if clusterSpec.AWSIamConfig != nil {
+		values["awsIamAuth"] = true
 	}
 
 	return values

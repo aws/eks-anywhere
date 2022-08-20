@@ -14,15 +14,17 @@ import (
 
 // DiskExtractor represents a hardware labels and map it with the appropriate disk given in the hardware csv file
 type DiskExtractor struct {
-	selector map[string]eksav1alpha1.HardwareSelector
-	disks    map[string]string
+	selector                 map[string]eksav1alpha1.HardwareSelector
+	disks                    map[string]string
+	disksProvisionedHardware map[string]string
 }
 
 // NewDiskExtractor creates a DiskExtractor instance.
 func NewDiskExtractor() *DiskExtractor {
 	return &DiskExtractor{
-		selector: make(map[string]eksav1alpha1.HardwareSelector),
-		disks:    make(map[string]string),
+		selector:                 make(map[string]eksav1alpha1.HardwareSelector),
+		disks:                    make(map[string]string),
+		disksProvisionedHardware: make(map[string]string),
 	}
 }
 
@@ -54,6 +56,26 @@ func (d *DiskExtractor) Register(selector eksav1alpha1.HardwareSelector) error {
 	return nil
 }
 
+func (d *DiskExtractor) InsertDisks(hardware *tinkv1alpha1.Hardware) error {
+	for key, selector := range d.selector {
+		if _, ok := d.disks[key]; !ok && LabelsMatchSelector(selector, hardware.Labels) {
+			d.disks[key] = hardware.Spec.Disks[0].Device
+		}
+	}
+
+	return nil
+}
+
+func (d *DiskExtractor) InsertProvisionedHardwareDisks(hardware *tinkv1alpha1.Hardware) error {
+	for key, selector := range d.selector {
+		if _, ok := d.disksProvisionedHardware[key]; !ok && LabelsMatchSelector(selector, hardware.Labels) {
+			d.disksProvisionedHardware[key] = hardware.Spec.Disks[0].Device
+		}
+	}
+
+	return nil
+}
+
 // GetDisk returns the disk cached for selector. If selector has no disk cached ErrDiskNotFound
 // is returned.
 func (d *DiskExtractor) GetDisk(selector eksav1alpha1.HardwareSelector) (string, error) {
@@ -67,6 +89,21 @@ func (d *DiskExtractor) GetDisk(selector eksav1alpha1.HardwareSelector) (string,
 	}
 
 	return d.disks[key], nil
+}
+
+// GetDiskProvisionedHardware returns the disk cached for selector. If selector has no disk cached ErrDiskNotFound
+// is returned.
+func (d *DiskExtractor) GetDiskProvisionedHardware(selector eksav1alpha1.HardwareSelector) (string, error) {
+	key, err := serializeHardwareSelector(selector)
+	if err != nil {
+		return "", err
+	}
+
+	if _, ok := d.disksProvisionedHardware[key]; !ok {
+		return "", ErrDiskNotFound{key}
+	}
+
+	return d.disksProvisionedHardware[key], nil
 }
 
 // serializeHardwareSelector returns a key for use in a map unique selector.

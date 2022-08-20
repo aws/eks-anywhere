@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -17,6 +18,7 @@ var schemeAdders = []schemeAdder{
 	controlplanev1.AddToScheme,
 	anywherev1.AddToScheme,
 	snowv1.AddToScheme,
+	cloudstackv1.AddToScheme,
 	bootstrapv1.AddToScheme,
 }
 

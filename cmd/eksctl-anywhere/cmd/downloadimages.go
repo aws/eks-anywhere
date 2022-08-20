@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
@@ -19,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/tar"
@@ -50,6 +48,7 @@ func init() {
 	}
 
 	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in downloaded images")
+	downloadImagesCmd.Flags().BoolVar(&downloadImagesRunner.insecure, "insecure", false, "Flag to indicate skipping TLS verification while downloading helm charts")
 }
 
 var downloadImagesRunner = downloadImagesCommand{}
@@ -57,13 +56,18 @@ var downloadImagesRunner = downloadImagesCommand{}
 type downloadImagesCommand struct {
 	outputFile      string
 	includePackages bool
+	insecure        bool
 }
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
 	factory := dependencies.NewFactory()
+	helmOpts := []executables.HelmOpt{}
+	if c.insecure {
+		helmOpts = append(helmOpts, executables.WithInsecure())
+	}
 	deps, err := factory.
 		WithManifestReader().
-		WithHelmInsecure().
+		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -75,10 +79,6 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	imagesFile := filepath.Join(downloadFolder, imagesTarFile)
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
-	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
-		return fmt.Errorf("curated packages installation is not supported in this release")
-	}
-
 	downloadArtifacts := artifacts.Download{
 		Reader: fetchReader(deps.ManifestReader, c.includePackages),
 		BundlesImagesDownloader: docker.NewImageMover(
@@ -89,7 +89,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
-		ChartDownloader:    helm.NewChartRegistryDownloader(deps.HelmInsecure, downloadFolder),
+		ChartDownloader:    helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
 		Version:            version.Get(),
 		TmpDowloadFolder:   downloadFolder,
 		DstFile:            c.outputFile,

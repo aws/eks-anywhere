@@ -143,6 +143,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		return ctrl.Result{}, nil
 	}
 
+	if cluster.Spec.BundlesRef == nil {
+		if err := r.setBundlesRef(ctx, cluster); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	if err = r.ensureClusterOwnerReferences(ctx, cluster); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -159,7 +165,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
 	clusterProviderReconciler := r.providerReconcilerRegistry.Get(cluster.Spec.DatacenterRef.Kind)
 
-	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, cluster)
+	reconcileResult, err := clusterProviderReconciler.Reconcile(ctx, log, cluster)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -216,5 +222,14 @@ func (r *ClusterReconciler) ensureClusterOwnerReferences(ctx context.Context, cl
 		}
 	}
 
+	return nil
+}
+
+func (r *ClusterReconciler) setBundlesRef(ctx context.Context, clus *anywherev1.Cluster) error {
+	mgmtCluster := &anywherev1.Cluster{}
+	if err := r.client.Get(ctx, types.NamespacedName{Name: clus.ManagedBy(), Namespace: clus.Namespace}, mgmtCluster); err != nil {
+		return err
+	}
+	clus.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
 	return nil
 }

@@ -1,4 +1,5 @@
 
+* vCenter endpoint (must be accessible to EKS Anywhere clusters)
 * public.ecr.aws
 * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
 * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)

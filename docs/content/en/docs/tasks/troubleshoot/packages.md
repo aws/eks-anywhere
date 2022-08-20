@@ -73,11 +73,23 @@ export CURATED_PACKAGES_SUPPORT=true
 Error: this command is currently not supported
 ```
 
-Curated packages is supported behind a feature flag, you must set and export the `CURATED_PACKAGES_SUPPORT` environment variable.
+Curated packages is supported behind a feature flag before `v0.11.0`, you must set and export the `CURATED_PACKAGES_SUPPORT` environment variable.
 
 ```bash
 export CURATED_PACKAGES_SUPPORT=true
 ```
+
+### Error: cert-manager is not present in the cluster
+```
+Error: curated packages cannot be installed as cert-manager is not present in the cluster
+```
+This is most likely caused by an action to install curated packages at a workload cluster. Note curated packages installation at workload cluster creation is currently not supported. In order to use packages on workload clusters, you can do a post-creation curated packages installation:
+- Install cert-manager, refer to cert-manager [installation guide](https://cert-manager.io/docs/installation/) for more details.
+- Install package controller using following command:
+  ```bash
+  eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
+  ```
+- Install packages, refer to [package management]({{< relref "../../tasks/packages" >}}) for more details.
 
 ### Package controller not running
 If you do not see a pod or various resources for the package controller, it may be that it is not installed.
@@ -86,7 +98,7 @@ If you do not see a pod or various resources for the package controller, it may 
 No resources found in eksa-packages namespace.
 ```
 
-Most likely the cluster was created with an older version of the EKS Anywhere CLI or the feature flag was not enabled. If you run the version command, it should return `v0.9.0` or later release.
+Most likely the cluster was created with an older version of the EKS Anywhere CLI or the feature flag was not enabled. If you run the version command, it should return `v0.11.0` or later release.
 
 ```bash
 eksctl anywhere version
@@ -102,11 +114,7 @@ During cluster creation, you should see messages after the cluster is created wh
 ```
 🎉 Cluster created!
 ----------------------------------------------------------------------------------------------------------------
-The EKS Anywhere package controller and the EKS Anywhere Curated Packages
-(referred to as “features”) are provided as “preview features” subject to the AWS Service Terms,
-(including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview,
-the AWS Service Terms are extended to provide customers access to these features free of charge.
-These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
+The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
 ----------------------------------------------------------------------------------------------------------------
 Installing curated packages controller on workload cluster
 package.packages.eks.amazonaws.com/my-harbor created
@@ -126,4 +134,3 @@ This is most like because the machine running kubelet in your Kubernetes cluster
 ```bash
 ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whateveritis
 ```
-

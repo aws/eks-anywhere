@@ -15,8 +15,15 @@
 package bundles
 
 import (
+	"fmt"
 	"sort"
 
+	"github.com/pkg/errors"
+
+	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
+	"github.com/aws/eks-anywhere/release/pkg/filereader"
+	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
@@ -28,4 +35,37 @@ func SortArtifactsMap(m map[string][]releasetypes.Artifact) []string {
 	sort.Strings(keys)
 
 	return keys
+}
+
+func getKubeRbacProxyImageAttributes(r *releasetypes.ReleaseConfig) (string, string, map[string]string, error) {
+	gitTag, err := filereader.ReadGitTag(constants.KubeRbacProxyProjectPath, r.BuildRepoSource, r.BuildRepoBranchName)
+	if err != nil {
+		return "", "", nil, errors.Cause(err)
+	}
+	name := "kube-rbac-proxy"
+	repoName := fmt.Sprintf("brancz/%s", name)
+	tagOptions := map[string]string{
+		"gitTag":      gitTag,
+		"projectPath": constants.KubeRbacProxyProjectPath,
+	}
+
+	return name, repoName, tagOptions, nil
+}
+
+func GetKubeRbacProxyImageTagOverride(r *releasetypes.ReleaseConfig) (releasetypes.ImageTagOverride, error) {
+	name, repoName, tagOptions, err := getKubeRbacProxyImageAttributes(r)
+	if err != nil {
+		return releasetypes.ImageTagOverride{}, errors.Cause(err)
+	}
+
+	releaseImageUri, err := images.GetReleaseImageURI(r, name, repoName, tagOptions, assettypes.ImageTagConfiguration{}, false)
+	if err != nil {
+		return releasetypes.ImageTagOverride{}, errors.Cause(err)
+	}
+	imageTagOverride := releasetypes.ImageTagOverride{
+		Repository: repoName,
+		ReleaseUri: releaseImageUri,
+	}
+
+	return imageTagOverride, nil
 }

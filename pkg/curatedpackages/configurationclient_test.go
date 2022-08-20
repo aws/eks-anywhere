@@ -12,109 +12,36 @@ import (
 
 type configurationTest struct {
 	*WithT
-	validbp   *packagesv1.BundlePackage
 	invalidbp *packagesv1.BundlePackage
+	configs   map[string]string
 }
 
 func newConfigurationTest(t *testing.T) *configurationTest {
-	validbp := &packagesv1.BundlePackage{
-		Source: packagesv1.BundlePackageSource{
-			Versions: []packagesv1.SourceVersion{
-				{
-					Configurations: []packagesv1.VersionConfiguration{
-						{
-							Name:     "sourceRegistry",
-							Default:  "localhost:8080",
-							Required: true,
-						},
-						{
-							Name:     "title",
-							Default:  "",
-							Required: false,
-						},
-						{
-							Name:     "subtitle",
-							Default:  "",
-							Required: false,
-						},
-						{
-							Name:     "expose.tls.enabled",
-							Default:  "false",
-							Required: false,
-						},
-						{
-							Name:     "expose.tls.auto.commonName",
-							Default:  "localhost",
-							Required: false,
-						},
-					},
-				},
-			},
-		},
-	}
-
 	invalidbp := &packagesv1.BundlePackage{
 		Source: packagesv1.BundlePackageSource{
 			Versions: []packagesv1.SourceVersion{},
 		},
 	}
 
+	config := map[string]string{
+		"expose.tls.auto.commonName": "localhost",
+		"expose.tls.enabled":         "false",
+		"sourceRegistry":             "localhost:8080",
+		"title":                      "",
+		"subtitle":                   "",
+	}
+
 	return &configurationTest{
 		WithT:     NewWithT(t),
-		validbp:   validbp,
+		configs:   config,
 		invalidbp: invalidbp,
 	}
 }
 
-func TestGetConfigurationsFromBundleSuccess(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
-
-	tt.Expect(len(configs)).To(Equal(5))
-}
-
-func TestGetConfigurationsFromBundleFail(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(nil)
-
-	tt.Expect(len(configs)).To(Equal(0))
-}
-
-func TestGetConfigurationsFromBundleFailWhenNoConfigs(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.invalidbp)
-
-	tt.Expect(len(configs)).To(Equal(0))
-}
-
-func TestUpdateConfigurationsSuccess(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
-	newConfigs := make(map[string]string)
-	newConfigs["sourceRegistry"] = "127.0.0.1:8080"
-
-	err := curatedpackages.UpdateConfigurations(configs, newConfigs)
-
-	tt.Expect(err).To(BeNil())
-	tt.Expect(configs["sourceRegistry"].Default).To(Equal(newConfigs["sourceRegistry"]))
-}
-
-func TestUpdateConfigurationsFail(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
-	newConfigs := make(map[string]string)
-	newConfigs["registry"] = "127.0.0.1:8080"
-
-	err := curatedpackages.UpdateConfigurations(configs, newConfigs)
-
-	tt.Expect(err).NotTo(BeNil())
-}
-
 func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
 
-	output, err := curatedpackages.GenerateAllValidConfigurations(configs)
+	output, err := curatedpackages.GenerateAllValidConfigurations(tt.configs)
 	tt.Expect(err).To(BeNil())
 
 	expectedOutput := fmt.Sprintf(
@@ -122,17 +49,6 @@ func TestGenerateAllValidConfigurationsSuccess(t *testing.T) {
 		"expose", "tls", "auto", "commonName", "localhost", "enabled", "false",
 		"sourceRegistry", "localhost:8080",
 	)
-
-	tt.Expect(output).To(Equal(expectedOutput))
-}
-
-func TestGenerateDefaultConfigurationsSuccess(t *testing.T) {
-	tt := newConfigurationTest(t)
-	configs := curatedpackages.GetConfigurationsFromBundle(tt.validbp)
-
-	output := curatedpackages.GenerateDefaultConfigurations(configs)
-	expectedOutput := fmt.Sprintf("%s: \"%s\"\n",
-		"sourceRegistry", "localhost:8080")
 
 	tt.Expect(output).To(Equal(expectedOutput))
 }

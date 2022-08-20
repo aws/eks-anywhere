@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -51,7 +50,6 @@ func TestDockerKubernetes123Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -63,7 +61,6 @@ func TestDockerKubernetes123Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -79,7 +76,6 @@ func TestVSphereKubernetes123Labels(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -91,7 +87,6 @@ func TestVSphereKubernetes123Labels(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -107,7 +102,6 @@ func TestVSphereKubernetes123LabelsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -119,7 +113,6 @@ func TestVSphereKubernetes123LabelsBottlerocket(t *testing.T) {
 			api.WithWorkerNodeGroup(worker2),
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
@@ -145,7 +138,6 @@ func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -157,7 +149,6 @@ func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar(features.K8s123SupportEnvVar, "true"),
 	)
 }
 
