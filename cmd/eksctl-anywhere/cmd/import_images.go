@@ -50,6 +50,7 @@ func init() {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
+	importImagesCmd.Flags().BoolVar(&importImagesCommand.insecure, "insecure", false, "Flag to indicate skipping TLS verification while pushing helm charts")
 }
 
 var importImagesCommand = ImportImagesCommand{}
@@ -59,6 +60,7 @@ type ImportImagesCommand struct {
 	RegistryEndpoint string
 	BundlesFile      string
 	includePackages  bool
+	insecure         bool
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
@@ -101,10 +103,21 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
+	dirsToMount, err := cc.extraDirectoriesToMount()
+	if err != nil {
+		return err
+	}
+
+	helmOpts := []executables.HelmOpt{}
+	if c.insecure {
+		helmOpts = append(helmOpts, executables.WithInsecure())
+	}
+
 	deps, err = factory.
+		WithExecutableMountDirs(dirsToMount...).
 		WithRegistryMirror(c.RegistryEndpoint).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
-		WithHelm(executables.WithInsecure()).
+		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
 		return err
