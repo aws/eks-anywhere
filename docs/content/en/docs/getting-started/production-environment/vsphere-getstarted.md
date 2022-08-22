@@ -93,9 +93,9 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
    ```
      
-1. Create initial cluster: Create your initial cluster either with or without curated packages:
+1. Create cluster
+
    ```bash
-   # Create a cluster without curated packages installation
    eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
    ```
 
