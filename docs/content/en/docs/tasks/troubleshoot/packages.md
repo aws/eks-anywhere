@@ -6,7 +6,7 @@ weight: 50
 description: >
   Troubleshooting specific to curated packages
 aliases:
-   - /docs/tasks/troubleshoot/packages
+   - /docs/tasks/troubleshoot/_packages
 ---
 
 
@@ -32,12 +32,12 @@ Logs of the controller can be seen in a normal Kubernetes fashion
 kubectl logs deploy/eks-anywhere-packages -n eksa-packages controller
 ```
 
-The general state of the package can be seen through the custom resources
+To get the general state of the package controller, run the following command:
 ```bash
 kubectl get packages,packagebundles,packagebundlecontrollers -A
 ```
 
-This will generate output similar to this
+You should see an active packagebundlecontroller and an available bundle. The packagebundlecontroller should indicate the active bundle. It may take a few minutes to download and active the latest bundle. Thest state of the package in this example is installing and there is an error downloading the chart.
 ```bash
 NAMESPACE       NAME                                         PACKAGE   AGE     STATE        CURRENTVERSION   TARGETVERSION                                                   DETAIL
 eksa-packages   package.packages.eks.amazonaws.com/my-test   Test      2m33s   installing                    v0.1.1-8b3810e1514b7432e032794842425accc837757a-helm (latest)   loading helm chart my-test: locating helm chart oci://public.ecr.aws/eks-anywhere/hello-eks-anywhere tag sha256:64ea03b119d2421f9206252ff4af4bf7cdc2823c343420763e0e6fc20bf03b68: failed to download "oci://public.ecr.aws/eks-anywhere/hello-eks-anywhere" at version "v0.1.1-8b3810e1514b7432e032794842425accc837757a-helm"
@@ -45,11 +45,9 @@ eksa-packages   package.packages.eks.amazonaws.com/my-test   Test      2m33s   i
 NAMESPACE       NAME                                                   STATE
 eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-68    available
 
-NAMESPACE       NAME                                                                                 STATE
-eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/eksa-packages-bundle-controller   active
+NAMESPACE       NAME                                                      ACTIVEBUNDLE   STATE    DETAIL
+eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/prod   v1-23-68       active   
 ```
-
-Looking at the output, you can see the active packagebundlecontroller and available packagebundle. The state of the package is "installing".
 
 ### Error: this command is currently not supported
 
@@ -81,13 +79,11 @@ During cluster creation, you should see messages after the cluster is created wh
 ----------------------------------------------------------------------------------------------------------------
 The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
 ----------------------------------------------------------------------------------------------------------------
-Installing curated packages controller on workload cluster
-package.packages.eks.amazonaws.com/my-harbor created
+Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
+Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.
 ```
 
-### No AWS key/license provided
-
-If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR.
+If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages.
 
 ### ImagePullBackOff on Package or Package Controller
 

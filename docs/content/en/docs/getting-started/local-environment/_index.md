@@ -97,7 +97,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       The Amazon EKS Anywhere Curated Packages are only available to customers with the
       Amazon EKS Anywhere Enterprise Subscription
       ----------------------------------------------------------------------------------
-      Installing curated packages controller on management cluster
+      Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
       secret/aws-secret created
       job.batch/eksa-auth-refresher created
       ```
@@ -105,7 +105,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 
      {{% alert title="Note" color="primary" %}}
    * It is *optional* to install curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be later than `v0.11.0`.
+   * `eksctl anywhere version` version should be `v0.11.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
      {{% /alert %}}
@@ -163,7 +163,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
          ------------------------------------------------------------------------------------------------------------------------------
          The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
          ------------------------------------------------------------------------------------------------------------------------------
-         Installing curated packages controller on management cluster
+         Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
          secret/aws-secret created
          job.batch/eksa-auth-refresher created
          package.packages.eks.amazonaws.com/my-harbor created
