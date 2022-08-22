@@ -95,7 +95,7 @@ export KUBEVERSION="1.23"
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
        --targets-url "https://updates.bottlerocket.aws/targets/"
     ```
-   The above command will download Bottlerocket OVA. Please refer [Deploy an OVA Template]({{< relref vsphere/vsphere-preparation/#deploy-an-ova-template">}}) to proceed with the downloaded OVA.
+   The above command will download Bottlerocket OVA. Please refer [Deploy an OVA Template]({{< relref "vsphere/vsphere-preparation/#deploy-an-ova-template">}}) to proceed with the downloaded OVA.
 
     b. To download Baremetal variant Bottlerocket image
     ```
