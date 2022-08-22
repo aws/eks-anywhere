@@ -71,14 +71,18 @@ func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOfferingForAllMachines)
 }
 
-func UpdateAddAz2() api.CloudStackFiller {
+func UpdateAddCloudStackAz2() api.CloudStackFiller {
 	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone2Var, cloudstackNetwork2Var,
 		cloudstackManagementServerVar, api.WithCloudStackAz)
 }
 
-func UpdateRemoveAz2() api.CloudStackFiller {
-	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone2Var, cloudstackNetwork2Var,
-		cloudstackManagementServerVar, api.WithoutCloudStackAz)
+func UpdateAddCloudStackAz1() api.CloudStackFiller {
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar,
+		cloudstackManagementServerVar, api.WithCloudStackAz)
+}
+
+func RemoveAllCloudStackAzs() api.CloudStackFiller {
+	return api.RemoveCloudStackAzs()
 }
 
 // NewCloudStack deprecated - moving forward, we should use NewCloudStackWithAzs
@@ -114,8 +118,9 @@ func NewCloudStackWithAzs(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	c := &CloudStack{
 		t: t,
 		fillers: []api.CloudStackFiller{
+			api.RemoveCloudStackAzs(),
 			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar,
-				cloudstackManagementServerVar, api.WithFirstCloudStackAz),
+				cloudstackManagementServerVar, api.WithCloudStackAz),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
 			api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargeVar, api.WithCloudStackComputeOfferingForAllMachines),
