@@ -25,8 +25,12 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath string) (string, error) {
-	gitTag, err := filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, rc.BuildRepoBranchName)
+func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
+	branchName := rc.BuildRepoBranchName
+	if overrideBranch != "" {
+		branchName = overrideBranch
+	}
+	gitTag, err := filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, branchName)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
@@ -34,7 +38,7 @@ func BuildToolingGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath strin
 	return gitTag, nil
 }
 
-func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath string) (string, error) {
+func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	var gitTag string
 
 	if rc.DevRelease {
@@ -50,7 +54,7 @@ func CliGitTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath string) (strin
 	return gitTag, nil
 }
 
-func NonExistentTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath string) (string, error) {
+func NonExistentTagAssigner(rc *releasetypes.ReleaseConfig, gitTagPath, overrideBranch string) (string, error) {
 	return "non-existent", nil
 }
 

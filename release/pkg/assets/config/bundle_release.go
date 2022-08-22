@@ -314,6 +314,17 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
+	// Image-builder cli artifacts
+	{
+		ProjectName: "image-builder",
+		ProjectPath: "projects/aws/image-builder",
+		Archives: []*assettypes.Archive{
+			{
+				Name:   "image-builder",
+				Format: "tarball",
+			},
+		},
+	},
 	// Cri-tools artifacts
 	{
 		ProjectName: "cri-tools",
@@ -390,11 +401,14 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName: "eks-anywhere-packages",
 			},
 			{
+				RepoName: "ecr-token-refresher",
+			},
+			{
 				AssetName:            "eks-anywhere-packages-helm",
 				RepoName:             "eks-anywhere-packages",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					SourceLatestTagFromECR: true,
+					NonProdSourceImageTagFormat: "<gitTag>",
 				},
 			},
 		},
@@ -583,20 +597,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
 				OSName:              "bottlerocket",
 				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "raw",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
@@ -700,7 +702,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"gitTag",
 			"projectPath",
 		},
-		OnlyForDevRelease: true,
 	},
 	// Kustomize-controller artifacts
 	{

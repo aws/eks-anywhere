@@ -48,6 +48,8 @@ spec:
     cloudStack:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+      kubeRbacProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
@@ -194,6 +196,8 @@ spec:
     cloudStack:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+      kubeRbacProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
@@ -340,6 +344,8 @@ spec:
     cloudStack:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+      kubeRbacProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:
@@ -565,6 +571,8 @@ spec:
     cloudStack:
       clusterAPIController:
         uri: public.ecr.aws/j9l9l0k3/cluster-api-provider-capc:latest
+      kubeRbacProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
       kubeVip:
         uri: public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
       components:

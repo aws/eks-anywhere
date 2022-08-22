@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -59,7 +58,7 @@ func importImages(ctx context.Context, spec string) error {
 	if registryUsername == "" || registryPassword == "" {
 		return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
 	}
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
 	if err != nil {
 		return err
 	}

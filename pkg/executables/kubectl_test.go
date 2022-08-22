@@ -868,7 +868,32 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 			},
 		},
 		{
-			testName:         "one datacenter",
+			testName:         "one datacenter availability zones",
+			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig_az.json",
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "CloudStackDatacenterConfig",
+					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
+					AvailabilityZones: []v1alpha1.CloudStackAvailabilityZone{{
+						Name: "default-az-0",
+						Zone: v1alpha1.CloudStackZone{
+							Name: "testZone",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "testNetwork",
+							},
+						},
+						CredentialsRef: "global",
+						Domain:         "testDomain",
+						Account:        "testAccount",
+					}},
+				},
+			},
+		},
+		{
+			testName:         "one datacenter legacy zones",
 			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig.json",
 			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
@@ -877,6 +902,8 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
+					Domain:  "testDomain",
+					Account: "testAccount",
 					Zones: []v1alpha1.CloudStackZone{
 						{
 							Name: "testZone",
@@ -885,8 +912,6 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 							},
 						},
 					},
-					Domain:  "testDomain",
-					Account: "testAccount",
 				},
 			},
 		},
@@ -909,7 +934,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() error = %v, want nil", err)
 			}
 
-			if !reflect.DeepEqual(gotDatacenter, tt.wantDatacenter) {
+			if !gotDatacenter.Spec.Equal(&tt.wantDatacenter.Spec) {
 				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() machines = %+v, want %+v", gotDatacenter, tt.wantDatacenter)
 			}
 		})

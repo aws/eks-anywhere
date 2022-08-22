@@ -39,14 +39,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
+					AvailabilityZones: []CloudStackAvailabilityZone{
 						{
-							Name: "zone1",
-							Network: CloudStackResourceIdentifier{
-								Name: "net1",
+							Name:    "default-az-0",
+							Domain:  "domain1",
+							Account: "admin",
+							Zone: CloudStackZone{
+								Name: "zone1",
+								Network: CloudStackResourceIdentifier{
+									Name: "net1",
+								},
 							},
+							ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 						},
 					},
 				},
@@ -65,17 +69,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name:    "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Id: "zoneId",
 							Network: CloudStackResourceIdentifier{
 								Id: "netId",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -92,17 +97,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name:    "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Name: "zone1",
 							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -119,17 +125,18 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:  "domain1",
-					Account: "admin",
-					Zones: []CloudStackZone{
-						{
+					AvailabilityZones: []CloudStackAvailabilityZone{{
+						Name:    "default-az-0",
+						Domain:  "domain1",
+						Account: "admin",
+						Zone: CloudStackZone{
 							Name: "zone1",
 							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
-					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+						ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
+					}},
 				},
 			},
 			wantErr: false,
@@ -171,7 +178,7 @@ var cloudStackDatacenterConfigSpec1 = &CloudStackDatacenterConfigSpec{
 var cloudStackDatacenterConfigSpecAzs = &CloudStackDatacenterConfigSpec{
 	AvailabilityZones: []CloudStackAvailabilityZone{
 		{
-			Name:           "availability-zone-0",
+			Name:           "default-az-0",
 			CredentialsRef: "global",
 			Zone: CloudStackZone{
 				Name: "zone1",
@@ -279,4 +286,51 @@ func TestCloudStackDatacenterConfigSetDefaults(t *testing.T) {
 	cloudStackDatacenterConfig.SetDefaults()
 	g.Expect(cloudStackDatacenterConfig.Spec.Equal(cloudStackDatacenterConfigSpecAzs)).To(BeTrue(), "AvailabilityZones comparison in CloudStackDatacenterConfigSpec not equal")
 	g.Expect(len(cloudStackDatacenterConfigSpec1.Zones)).To(Equal(len(cloudStackDatacenterConfig.Spec.AvailabilityZones)), "AvailabilityZones count in CloudStackDatacenterConfigSpec not equal to zone count")
+}
+
+func TestCloudStackDatacenterConfigValidate(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+
+	// Spec.Accout validation
+	err := cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.Domain validation
+	cloudStackDatacenterConfig.Spec.Account = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.ManagementApiEndpoint validation
+	cloudStackDatacenterConfig.Spec.Domain = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.Zones validation
+	cloudStackDatacenterConfig.Spec.ManagementApiEndpoint = ""
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+
+	// Spec.AvailabilityZones validation #1 (Length)
+	cloudStackDatacenterConfig.Spec.Zones = []CloudStackZone{}
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
+}
+
+func TestCloudStackDatacenterConfigValidateAfterSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackDatacenterConfig := CloudStackDatacenterConfig{
+		Spec: *cloudStackDatacenterConfigSpec1.DeepCopy(),
+	}
+
+	cloudStackDatacenterConfig.SetDefaults()
+	err := cloudStackDatacenterConfig.Validate()
+	g.Expect(err).To(BeNil())
+
+	// Spec.AvailabilityZones validation #2 (Name uniqueness)
+	cloudStackDatacenterConfig.Spec.AvailabilityZones = append(cloudStackDatacenterConfig.Spec.AvailabilityZones, cloudStackDatacenterConfig.Spec.AvailabilityZones[0])
+	err = cloudStackDatacenterConfig.Validate()
+	g.Expect(err).NotTo(BeNil())
 }

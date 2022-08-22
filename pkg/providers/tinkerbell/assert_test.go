@@ -115,6 +115,20 @@ func TestAssertWorkerNodeGroupMachineRefsExists_Exists(t *testing.T) {
 	g.Expect(tinkerbell.AssertWorkerNodeGroupMachineRefsExists(clusterSpec)).To(gomega.Succeed())
 }
 
+func TestAssertK8SVersionNot120_Success(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube123
+	g.Expect(tinkerbell.AssertK8SVersionNot120(clusterSpec)).Error().ShouldNot(gomega.HaveOccurred())
+}
+
+func TestAssertK8SVersionNot120_Error(t *testing.T) {
+	g := gomega.NewWithT(t)
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.Cluster.Spec.KubernetesVersion = eksav1alpha1.Kube120
+	g.Expect(tinkerbell.AssertK8SVersionNot120(clusterSpec)).Error().Should(gomega.HaveOccurred())
+}
+
 func TestAssertWorkerNodeGroupMachineRefsExists_Missing(t *testing.T) {
 	g := gomega.NewWithT(t)
 	builder := NewDefaultValidClusterSpecBuilder()

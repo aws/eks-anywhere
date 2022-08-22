@@ -78,6 +78,7 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 			},
 			Spec: v1alpha1.TinkerbellDatacenterConfigSpec{
 				TinkerbellIP: "1.1.1.1",
+				OSImageURL:   "https://ubuntu.gz",
 			},
 		},
 		MachineConfigs: map[string]*v1alpha1.TinkerbellMachineConfig{

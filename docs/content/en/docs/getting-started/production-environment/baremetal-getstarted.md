@@ -65,27 +65,35 @@ Follow these steps to create an EKS Anywhere cluster.
 
      {{% alert title="Note" color="primary" %}}
    * It is *optional* to install the curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be `v0.9.0` or later.
-   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
+   * `eksctl anywhere version` version should be `v0.11.0` or later.
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * The EKS Anywhere package controller and the EKS Anywhere Curated Packages (referred to as “features”) are provided as “preview features” subject to the AWS Service Terms, (including Section 2 (Betas and Previews)) of the same. During the EKS Anywhere Curated Packages Public Preview, the AWS Service Terms are extended to provide customers access to these features free of charge. These features will be subject to a service charge and fee structure at ”General Availability“ of the features.
+   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
      {{% /alert %}}
+   
+      * Setup authentication to use curated-packages
+         ```bash
+         $ export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+         $ export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+         ```
 
       * Discover curated packages to install
          ```bash
-         eksctl anywhere list packages --source registry --kube-version 1.21
+         eksctl anywhere list packages --source registry --kube-version 1.23
          ```
          Example command output:
          ```                 
          Package                 Version(s)                                       
          -------                 ----------                                       
-         harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
+         hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+         harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+         metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
+         emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
          ```
       * Generate a curated-packages config
 
          The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
          ```bash
-         eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
+         eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
          ```
 
       * Create the initial cluster
@@ -111,9 +119,9 @@ Follow these steps to create an EKS Anywhere cluster.
 
    Example command output:
    ```
-   NAMESPACE   NAME                PROVIDERID         PHASE    VERSION
-   eksa-system mgmt-b2xyz          tinkerbell:/xxxxx  Running  v1.21.2-eks-1-21-5
-   eksa-system mgmt-md-8-6xr-rnr   tinkerbell:/xxxxx  Running  v1.21.2-eks-1-21-5
+   NAMESPACE     NAME                        CLUSTER   NODENAME        PROVIDERID                              PHASE     AGE   VERSION
+   eksa-system   mgmt-47zj8                  mgmt      eksa-node01     tinkerbell://eksa-system/eksa-node01    Running   1h    v1.23.7-eks-1-23-4
+   eksa-system   mgmt-md-0-7f79df46f-wlp7w   mgmt      eksa-node02     tinkerbell://eksa-system/eksa-node02    Running   1h    v1.23.7-eks-1-23-4
    ...
    ```
 

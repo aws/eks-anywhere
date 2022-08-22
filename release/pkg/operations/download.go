@@ -67,12 +67,17 @@ func DownloadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]
 				})
 				if err != nil {
 					if r.BuildRepoBranchName != "main" {
+						var latestSourceS3PrefixFromMain string
 						fmt.Printf("Artifact corresponding to %s branch not found for %s archive. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
-						gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
-						if err != nil {
-							return errors.Cause(err)
+						if strings.Contains(sourceS3Key, "eksctl-anywhere") {
+							latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
+						} else {
+							gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+							if err != nil {
+								return errors.Cause(err)
+							}
+							latestSourceS3PrefixFromMain = strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 						}
-						latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 						objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
 					} else {
 						return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
@@ -111,12 +116,17 @@ func DownloadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]
 					})
 					if err != nil {
 						if r.BuildRepoBranchName != "main" {
-							fmt.Printf("Artifact corresponding to %s branch not found for %s checksum file. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
-							gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
-							if err != nil {
-								return errors.Cause(err)
+							var latestSourceS3PrefixFromMain string
+							fmt.Printf("Artifact corresponding to %s branch not found for %s archive. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
+							if strings.Contains(sourceS3Key, "eksctl-anywhere") {
+								latestSourceS3PrefixFromMain = strings.NewReplacer(r.CliRepoBranchName, "latest").Replace(sourceS3Prefix)
+							} else {
+								gitTagFromMain, err := filereader.ReadGitTag(artifact.Archive.ProjectPath, r.BuildRepoSource, "main")
+								if err != nil {
+									return errors.Cause(err)
+								}
+								latestSourceS3PrefixFromMain = strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 							}
-							latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
 							objectShasumFileKey = filepath.Join(latestSourceS3PrefixFromMain, objectShasumFileName)
 						} else {
 							return fmt.Errorf("retries exhausted waiting for checksum file to be uploaded to source location: %v", err)

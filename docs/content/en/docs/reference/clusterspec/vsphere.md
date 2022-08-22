@@ -55,7 +55,7 @@ spec:
      machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
-   kubernetesVersion: "1.22"
+   kubernetesVersion: "1.23"
    workerNodeGroupConfigurations:
    - count: 1
      machineGroupRef:
@@ -199,7 +199,7 @@ Refers to the Kubernetes object with vsphere specific configuration for your etc
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
-The Kubernetes version you want to use for your cluster. Supported values: `1.22`, `1.21`, `1.20`
+The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`, `1.20`
 
 ## VSphereDatacenterConfig Fields
 
@@ -278,7 +278,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
 [imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
-This is a required field if you are using Bottlerocket OVAs.
+This is a required field if you are using Ubuntu OVAs.
 
 ### datastore (required)
 The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html)

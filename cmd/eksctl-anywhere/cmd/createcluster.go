@@ -222,18 +222,26 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
-		if found && len(env) > 0 {
-			mountDirs := strings.Split(env, ",")
-			for _, dir := range mountDirs {
-				if _, err := os.Stat(dir); err != nil {
-					return nil, fmt.Errorf("invalid host path to mount: %v", err)
-				}
-				dirs = append(dirs, dir)
-			}
+		if extraDirs, err := cc.extraDirectoriesToMount(); err == nil {
+			dirs = append(dirs, extraDirs...)
 		}
 	}
 
+	return dirs, nil
+}
+
+func (cc *createClusterOptions) extraDirectoriesToMount() ([]string, error) {
+	dirs := []string{}
+	env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+	if found && len(env) > 0 {
+		mountDirs := strings.Split(env, ",")
+		for _, dir := range mountDirs {
+			if _, err := os.Stat(dir); err != nil {
+				return nil, fmt.Errorf("invalid host path to mount: %v", err)
+			}
+			dirs = append(dirs, dir)
+		}
+	}
 	return dirs, nil
 }
 

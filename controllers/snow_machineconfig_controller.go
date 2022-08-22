@@ -11,26 +11,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
-	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
 
-type ClientBuilder interface {
-	BuildSnowAwsClientMap(ctx context.Context) (aws.Clients, error)
+type Validator interface {
+	ValidateEC2SshKeyNameExists(ctx context.Context, m *anywherev1.SnowMachineConfig) error
+	ValidateEC2ImageExistsOnDevice(ctx context.Context, m *anywherev1.SnowMachineConfig) error
+	ValidateMachineDeviceIPs(ctx context.Context, m *anywherev1.SnowMachineConfig) error
 }
 
 // SnowMachineConfigReconciler reconciles a SnowMachineConfig object
 type SnowMachineConfigReconciler struct {
-	client        client.Client
-	log           logr.Logger
-	clientBuilder ClientBuilder
+	client    client.Client
+	log       logr.Logger
+	validator Validator
 }
 
-func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, clientBuilder ClientBuilder) *SnowMachineConfigReconciler {
+func NewSnowMachineConfigReconciler(client client.Client, log logr.Logger, validator Validator) *SnowMachineConfigReconciler {
 	return &SnowMachineConfigReconciler{
-		client:        client,
-		log:           log,
-		clientBuilder: clientBuilder,
+		client:    client,
+		log:       log,
+		validator: validator,
 	}
 }
 
@@ -80,21 +80,14 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachineConfig *anywherev1.SnowMachineConfig) (_ ctrl.Result, reterr error) {
-	// TODO: need to figure out how to load creds in controller
 	var allErrs []error
-	deviceClientMap, err := r.clientBuilder.BuildSnowAwsClientMap(ctx)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-	// Setting the aws client map on every reconcile based on the secrets at that point of time
-	validator := snow.NewValidator(deviceClientMap)
-	if err := validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
+	if err := r.validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
-	if err := validator.ValidateEC2ImageExistsOnDevice(ctx, snowMachineConfig); err != nil {
+	if err := r.validator.ValidateEC2ImageExistsOnDevice(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
-	if err := validator.ValidateEC2SshKeyNameExists(ctx, snowMachineConfig); err != nil {
+	if err := r.validator.ValidateEC2SshKeyNameExists(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
 	if len(allErrs) > 0 {

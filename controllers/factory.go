@@ -9,9 +9,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
@@ -115,10 +115,11 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 			return nil
 		}
 
+		client := f.manager.GetClient()
 		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
-			f.manager.GetClient(),
+			client,
 			f.logger,
-			aws.NewSnowAwsClientBuilder(),
+			snow.NewValidator(snowreconciler.NewAwsClientBuilder(client)),
 		)
 		return nil
 	})
@@ -214,7 +215,7 @@ func (f *Factory) withSnowClusterReconciler() *Factory {
 			return nil
 		}
 
-		f.snowClusterReconciler = snowreconciler.New()
+		f.snowClusterReconciler = snowreconciler.New(f.manager.GetClient())
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 
 		return nil

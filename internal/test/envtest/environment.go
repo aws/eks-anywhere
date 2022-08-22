@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
+	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
@@ -43,6 +44,7 @@ func init() {
 	utilruntime.Must(clusterctlv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
