@@ -27,20 +27,7 @@ However, see [Building Ubuntu-based node images]({{< relref "#building-ubuntu-ba
 
 ### Bottlerocket OS images for Bare Metal
 
-Kubernetes 1.21:
-```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-21/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-14-amd64.img.gz
-```
-
-Kubernetes 1.22:
-```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-12-amd64.img.gz
-```
-
-Kubernetes 1.23:
-```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/raw/1-23/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-14-amd64.img.gz
-```
+Bottlerocket vends its Baremetal variant Images using a secure distribution tool called tuftool. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket image.
 
 ### HookOS (kernel and initial ramdisk) for Bare Metal
 
@@ -58,33 +45,7 @@ https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029
 
 ### Bottlerocket OVAs
 
-Bottlerocket vends its VMware variant OVAs using a secure distribution tool called tuftool. Please follow instructions down below to
-download Bottlerocket OVA.
-1. Install Rust and Cargo
-```
-curl https://sh.rustup.rs -sSf | sh
-```
-2. Install tuftool using Cargo
-```
-CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
-```
-3. Download the root role tuftool will use to download the OVA
-```
-curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
-```
-4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.23, 1.22, 1.21 and 1.20
-```
-export KUBEVERSION="1.23"
-```
-5. Download the OVA
-```
-OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.0.ova"
-tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
-   --root ./root.json \
-   --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
-   --targets-url "https://updates.bottlerocket.aws/targets/"
-```
+Bottlerocket vends its VMware variant OVAs using a secure distribution tool called tuftool. Please refer [Download Bottlerocket node images]({{< relref "#download-bottlerocket-node-images">}}) to download Bottlerocket OVA.
 
 Bottlerocket Tags
 
@@ -103,6 +64,53 @@ EKS-D Release
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
 Building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "#building-ubuntu-based-node-images">}}) is the only supported way to get that functionality.
+
+## Download Bottlerocket node images
+Bottlerocket vends its VMware variant OVAs and Baremetal variants images using a secure distribution tool called tuftool. Please follow instructions down below to
+download Bottlerocket node images.
+1. Install Rust and Cargo
+```
+curl https://sh.rustup.rs -sSf | sh
+```
+2. Install tuftool using Cargo
+```
+CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
+```
+3. Download the root role tuftool will use to download the bottlerocket images
+```
+curl -O "https://cache.bottlerocket.aws/root.json"
+sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
+```
+4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.23, 1.22, 1.21 and 1.20
+```
+export KUBEVERSION="1.23"
+```
+5. Download Bottlerocket node image
+
+    a. To download VMware variant Bottlerocket OVA
+    ```
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.0.ova"
+    tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
+       --root ./root.json \
+       --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
+       --targets-url "https://updates.bottlerocket.aws/targets/"
+    ```
+   The above command will download Bottlerocket OVA. Please refer [Deploy an OVA Template]({{< relref vsphere/vsohere-preparation/#deploy-an-ova-template">}}) to proceed with the downloaded OVA.
+
+    b. To download Baremetal variant Bottlerocket image
+    ```
+    IMAGE="bottlerocket-metal-k8s-${KUBEVERSION}-x86_64-v1.9.0.img.lz4"
+    tuftool download ${TMPDIR:-/tmp/bottlerocket-metal} --target-name "${IMAGE}" \
+       --root ./root.json \
+       --metadata-url "https://updates.bottlerocket.aws/2020-07-07/metal-k8s-${KUBEVERSION}/x86_64/" \
+       --targets-url "https://updates.bottlerocket.aws/targets/"
+    ```
+   The above command will download Bottlerocket lz4 compressed image. Decompress and gzip the image with the following
+   commands and host the image on a webserver for using it for an EKS Anywhere Baremetal cluster.
+   ```
+   lz4 --decompress ${TMPDIR:-/tmp/bottlerocket-metal}/${IMAGE} ${TMPDIR:-/tmp/bottlerocket-metal}/bottlerocket.img
+   gzip ${TMPDIR:-/tmp/bottlerocket-metal}/bottlerocket.img
+   ```
 
 ## Building Ubuntu-based node images
 
@@ -175,24 +183,34 @@ You can use a proxy server to route outbound requests to the internet. To config
 
 ### Build vSphere OVA node images
 
-1. Install packages and prepare environment:
+1. Create a linux user for running image-builder.
+   ```
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+   ```
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
+3. Install packages and prepare environment:
    ```
    sudo apt update -y
    sudo apt install jq unzip make ansible -y
    sudo snap install yq
    ```
-1. Get `image-builder`:
+4. Get `image-builder`:
    ```bash
    cd /tmp
    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
-1. Create a content library on vSphere:
+5. Create a content library on vSphere:
    ```
    govc library.create "<library name>"
    ```
-1. Create a vsphere configuration file (for example, `vsphere-connection.json`):
+6. Create a vsphere configuration file (for example, `vsphere-connection.json`):
    ```json
    {
      "cluster":"<vsphere cluster used for image building>",
@@ -212,7 +230,7 @@ You can use a proxy server to route outbound requests to the internet. To config
    }
    ```
 
-1. Run `image-builder` with the following options:
+7. Run `image-builder` with the following options:
 
    * `--os`: Currently only `ubuntu` is supported.
    * `--hypervisor`: For vSphere use `vsphere`
@@ -223,12 +241,22 @@ You can use a proxy server to route outbound requests to the internet. To config
    image-builder build --os ubuntu --hypervisor vsphere --release-channel 1-23 --vsphere-config vsphere-connection.json
    ```
 ### Build Bare Metal node images
+1. Create a linux user for running image-builder.
+   ```
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+2. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+   ```
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
 1. Install packages and prepare environment:
    ```
    sudo apt update -y
    sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
    sudo snap install yq
-   sudo usermod -a -G kvm ubuntu
+   sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
    sudo chown root:kvm /dev/kvm
    ```
