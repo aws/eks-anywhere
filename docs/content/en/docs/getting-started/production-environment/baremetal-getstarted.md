@@ -66,7 +66,6 @@ Follow these steps to create an EKS Anywhere cluster.
      {{% alert title="Note" color="primary" %}}
    * It is *optional* to install the curated packages as part of the cluster creation.
    * `eksctl anywhere version` version should be `v0.11.0` or later.
-   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
    * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
    * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
      {{% /alert %}}
