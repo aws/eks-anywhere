@@ -100,6 +100,29 @@ This is most like because the machine running kubelet in your Kubernetes cluster
 ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whateveritis
 ```
 
+### Package pod cannot pull images
+If a package pod cannot pull images, you may not have your AWS credentials set up properly:
+
+#### Verify you are authenticated with the CLI
+
+Make sure you are authenticated with the AWS CLI
+
+```
+aws sts get-caller-identity
+```
+
+#### Login to docker
+
+`aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com`
+
+#### Verify you can pull an image
+
+```
+docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
+```
+
+If the image downloads successfully, it worked!
+
 ### Error: cert-manager is not present in the cluster
 ```
 Error: curated packages cannot be installed as cert-manager is not present in the cluster
