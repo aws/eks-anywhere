@@ -440,6 +440,33 @@ func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
 	)
 }
 
+func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
+	provider := framework.NewCloudStackWithAzs(t, framework.WithCloudStackRedhat121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
+		provider.WithProviderUpgrade(
+			framework.UpdateAddCloudStackAz2(),
+		),
+	})
+	test.StopIfFailed()
+	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
+		provider.WithProviderUpgrade(
+			framework.RemoveAllCloudStackAzs(),
+			framework.UpdateAddCloudStackAz1(),
+		),
+	})
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func TestSnowKubernetes121To122UbuntuUpgrade(t *testing.T) {
 	provider := framework.NewSnow(t, framework.WithSnowUbuntu121())
 	test := framework.NewClusterE2ETest(
