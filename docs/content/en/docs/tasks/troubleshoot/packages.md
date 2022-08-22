@@ -70,7 +70,7 @@ No resources found in eksa-packages namespace.
 
 Most likely the cluster was created with an older version of the EKS Anywhere CLI. Curated packages became generally available with `v0.11.0`. Use the `eksctl anywhere version` command to verify you are running a new enough release and you can use the `eksctl anywhere install packagecontroller` command to install the package controller on an older release.
 
-### Errors during cluster creation
+### Warnings during cluster creation
 
 During cluster creation, you should see messages after the cluster is created when the package controller and any packages are installed.
 
@@ -83,7 +83,7 @@ Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "
 Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.
 ```
 
-If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages.
+If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_REGION`, `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
 
 ### ImagePullBackOff on Package or Package Controller
 
@@ -101,9 +101,7 @@ ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whatever
 ```
 
 ### Package pod cannot pull images
-If a package pod cannot pull images, you may not have your AWS credentials set up properly:
-
-#### Verify you are authenticated with the CLI
+If a package pod cannot pull images, you may not have your AWS credentials set up properly. Verify that your credentials are working properly.
 
 Make sure you are authenticated with the AWS CLI
 
@@ -111,17 +109,22 @@ Make sure you are authenticated with the AWS CLI
 aws sts get-caller-identity
 ```
 
-#### Login to docker
+Login to docker
+```
+aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+```
 
-`aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com`
-
-#### Verify you can pull an image
-
+Verify you can pull an image
 ```
 docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
 ```
-
 If the image downloads successfully, it worked!
+
+You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
+```
+kubectl delete secret -n eksa-packages aws-secret
+kubectl create secret -n eksa-packages generic aws-secret --from-literal=REGION=${EKSA_AWS_REGION=us-west-2} --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}
+```
 
 ### Error: cert-manager is not present in the cluster
 ```
