@@ -1,11 +1,9 @@
 ---
-title: "Packages"
-linkTitle: "Packages"
+title: "Curated Packages Workshop"
+linkTitle: "Curated Packages Workshop"
 weight: 2
-date: 2022-05-09
+date: 2022-08-09
 description: >  
 ---
 
-This chapter walks through the following:
-
-* Harbor use cases
+Workshops for using curated packages.
