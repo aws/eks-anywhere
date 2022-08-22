@@ -53,62 +53,29 @@ Follow these steps to create an EKS Anywhere cluster.
 
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster.
 
-1. Create the cluster, using the `hardware.csv` file you made in [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}),
-   either with or without curated packages:
-   - Cluster creation without curated packages installation
-      ```bash
-      # Create a cluster without curated packages installation
-      eksctl anywhere create cluster --hardware-csv hardware.csv -f eksa-mgmt-cluster.yaml
-      ```
 
-   - Cluster creation with optional curated packages
+1. Configure Curated Packages
 
-     {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be `v0.11.0` or later.
-   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
-     {{% /alert %}}
-   
-      * Setup authentication to use curated-packages
-         ```bash
-         $ export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
-         $ export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
-         ```
+   The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../tasks/packages" >}}).
 
-      * Discover curated packages to install
-         ```bash
-         eksctl anywhere list packages --source registry --kube-version 1.23
-         ```
-         Example command output:
-         ```                 
-         Package                 Version(s)                                       
-         -------                 ----------                                       
-         hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-         harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-         metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
-         emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
-         ```
-      * Generate a curated-packages config
-
-         The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
-         ```bash
-         eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
-         ```
-
-      * Create the initial cluster
-
-         ```bash
-         # Create a cluster with curated packages installation
-         eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml \
-            --hardware-csv hardware.csv --install-packages packages.yaml
-         ```
+   If you are going to use packages, set up authentication:
+   ```bash
+   export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+   ```
+     
+1. Create the cluster, using the `hardware.csv` file you made in [Bare Metal preparation]({{< relref "/docs/reference/baremetal/bare-preparation.md" >}}):
+   ```bash
+   # Create a cluster without curated packages installation
+   eksctl anywhere create cluster --hardware-csv hardware.csv -f eksa-mgmt-cluster.yaml
+   ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
    ```bash
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    ```
+
 1. Check the cluster nodes:
 
    To check that the cluster completed, list the machines to see the control plane and worker nodes:
