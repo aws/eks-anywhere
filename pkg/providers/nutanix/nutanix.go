@@ -101,6 +101,10 @@ func (p *nutanixProvider) PostBootstrapSetup(ctx context.Context, clusterConfig 
 	return nil
 }
 
+func (p *nutanixProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	return nil
+}
+
 func (p *nutanixProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	return nil
