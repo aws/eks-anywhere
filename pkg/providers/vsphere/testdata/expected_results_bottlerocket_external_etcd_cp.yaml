@@ -102,6 +102,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          anonymous-auth: "false"
           oidc-client-id: my-client-id
           oidc-groups-claim: claim1
           oidc-groups-prefix: prefix-for-groups

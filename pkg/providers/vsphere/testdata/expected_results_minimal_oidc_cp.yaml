@@ -92,6 +92,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          anonymous-auth: "false"
           oidc-client-id: my-client-id
           oidc-issuer-url: https://mydomain.com/issuer
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256

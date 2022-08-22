@@ -67,9 +67,10 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if .apiserverExtraArgs }}
       apiServer:
         extraArgs:
+          anonymous-auth: "false"
+{{- if .apiserverExtraArgs }}
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
 {{- if .awsIamAuth}}
