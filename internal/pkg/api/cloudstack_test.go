@@ -59,7 +59,8 @@ func TestCloudStackDatacenterConfigFillers(t *testing.T) {
 	cloudStackConfig := CloudStackConfig{
 		datacenterConfig: config.CloudStackDatacenter,
 	}
-	WithFirstCloudStackAz(testAz)(cloudStackConfig)
+	RemoveCloudStackAzs()(cloudStackConfig)
+	WithCloudStackAz(testAz)(cloudStackConfig)
 	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz))
 
@@ -70,11 +71,7 @@ func TestCloudStackDatacenterConfigFillers(t *testing.T) {
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz))
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[1]).To(Equal(testAz2))
 
-	WithoutCloudStackAz(testAz)(cloudStackConfig)
-	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
-	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz2))
-
-	WithoutCloudStackAz(testAz2)(cloudStackConfig)
+	RemoveCloudStackAzs()(cloudStackConfig)
 	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(0))
 }
 
@@ -112,7 +109,8 @@ func TestCloudStackAzFromEnvVars(t *testing.T) {
 	cloudStackConfig := CloudStackConfig{
 		datacenterConfig: config.CloudStackDatacenter,
 	}
-	WithCloudStackAzFromEnvVars(accountVar, domainVar, zoneVar, networkVar, endpointVar, WithFirstCloudStackAz)(cloudStackConfig)
+	RemoveCloudStackAzs()(cloudStackConfig)
+	WithCloudStackAzFromEnvVars(accountVar, domainVar, zoneVar, networkVar, endpointVar, WithCloudStackAz)(cloudStackConfig)
 	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz))
 }

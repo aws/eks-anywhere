@@ -453,13 +453,14 @@ func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
 	test.CreateCluster()
 	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
 		provider.WithProviderUpgrade(
-			framework.UpdateAddAz2(),
+			framework.UpdateAddCloudStackAz2(),
 		),
 	})
 	test.StopIfFailed()
 	test.UpgradeCluster([]framework.ClusterE2ETestOpt {
 		provider.WithProviderUpgrade(
-			framework.UpdateRemoveAz2(),
+			framework.RemoveAllCloudStackAzs(),
+			framework.UpdateAddCloudStackAz1(),
 		),
 	})
 	test.StopIfFailed()
