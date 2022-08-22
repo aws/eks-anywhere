@@ -7,3 +7,5 @@
 [Pull Request Guidelines](pull-requests.md)
 
 [Issue Management](issues.md)
+
+[Go Version](go-version.md)
