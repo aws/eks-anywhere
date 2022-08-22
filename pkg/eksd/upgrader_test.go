@@ -90,7 +90,7 @@ func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
+	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error")).Times(5)
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
