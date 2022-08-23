@@ -3,9 +3,10 @@ package eksd_test
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"os"
 	"testing"
+
+	"github.com/aws/eks-anywhere/pkg/retrier"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -90,7 +91,7 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 
 func TestInstallEksdManifestErrorReadingManifest(t *testing.T) {
 	tt := newInstallerTest(t)
-	tt.eksdInstaller.Retrier = retrier.NewWithMaxRetries(1, 0)
+	tt.eksdInstaller.SetRetrier(retrier.NewWithMaxRetries(1, 0))
 	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "fake.yaml"
 
 	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))

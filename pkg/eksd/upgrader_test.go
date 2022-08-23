@@ -3,7 +3,6 @@ package eksd_test
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/eksd/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -88,7 +88,7 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 
 func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.eksdUpgrader.Retrier = retrier.NewWithMaxRetries(1, 0)
+	tt.eksdUpgrader.SetRetrier(retrier.NewWithMaxRetries(1, 0))
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
 
 	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
