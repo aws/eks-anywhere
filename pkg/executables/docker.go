@@ -12,6 +12,7 @@ import (
 const (
 	dockerPath      = "docker"
 	defaultRegistry = "public.ecr.aws"
+	packageLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 type Docker struct {
@@ -81,6 +82,8 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
 	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
+	localImage = strings.ReplaceAll(localImage, packageLocation, endpoint)
+	localImage = removeDigestReference(localImage)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -90,6 +93,8 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
 	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
+	localImage = strings.ReplaceAll(localImage, packageLocation, endpoint)
+	localImage = removeDigestReference(localImage)
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err
@@ -158,4 +163,14 @@ func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool
 	}
 
 	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
+}
+
+func removeDigestReference(image string) string {
+	imageSplit := strings.Split(image, "@")
+	if len(imageSplit) < 2 {
+		return image
+	}
+	imageLocation, digest := imageSplit[0], imageSplit[1]
+	digestSplit := strings.Split(digest, ":")
+	return fmt.Sprintf("%s:%s", imageLocation, digestSplit[1])
 }

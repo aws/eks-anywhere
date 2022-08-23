@@ -12,6 +12,10 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	packageLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+)
+
 type PackageReader struct {
 	*manifests.Reader
 }
@@ -22,8 +26,24 @@ func NewPackageReader(mr *manifests.Reader) *PackageReader {
 	}
 }
 
-func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
-	return r.Reader.ReadImagesFromBundles(b)
+func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
+	images, err := r.Reader.ReadImagesFromBundles(ctx, b)
+
+	for _, vb := range b.Spec.VersionsBundles {
+		artifact, err := GetPackageBundleRef(vb)
+		if err != nil {
+			logger.Info("Warning: Failed getting bundle reference", "error", err)
+			continue
+		}
+		packagesHelmChart, err := fetchPackagesImage(ctx, vb, artifact)
+		if err != nil {
+			logger.Info("Warning: Failed extracting packages", "error", err)
+			continue
+		}
+		images = append(images, packagesHelmChart...)
+	}
+
+	return images, err
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
@@ -34,18 +54,18 @@ func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packages, err := fetchPackages(ctx, vb, artifact)
+		packagesHelmChart, err := fetchPackagesHelmChart(ctx, vb, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
 		}
-		images = append(images, packages...)
+		images = append(images, packagesHelmChart...)
 	}
 	return images
 }
 
-func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
-	data, err := Pull(ctx, artifact)
+func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
+	data, err := PullLatestBundle(ctx, artifact)
 	if err != nil {
 		return nil, err
 	}
@@ -57,14 +77,41 @@ func fetchPackages(ctx context.Context, versionsBundle releasev1.VersionsBundle,
 	}
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 	for _, p := range bundle.Spec.Packages {
-		pI := releasev1.Image{
+		pHC := releasev1.Image{
 			Name:        p.Name,
 			Description: p.Name,
 			OS:          ctrl.OS,
 			OSName:      ctrl.OSName,
 			URI:         fmt.Sprintf("%s/%s:%s", getDefaultRegistry(ctrl), p.Source.Repository, p.Source.Versions[0].Name),
 		}
-		images = append(images, pI)
+		images = append(images, pHC)
+	}
+	return images, nil
+}
+
+func fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
+	data, err := PullLatestBundle(ctx, artifact)
+	if err != nil {
+		return nil, err
+	}
+	ctrl := versionsBundle.PackageController.Controller
+	bundle := &packagesv1.PackageBundle{}
+	err = yaml.Unmarshal(data, bundle)
+	if err != nil {
+		return nil, err
+	}
+	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
+	for _, p := range bundle.Spec.Packages {
+		for _, version := range p.Source.Versions[0].Images {
+			image := releasev1.Image{
+				Name:        version.Repository,
+				Description: version.Repository,
+				OS:          ctrl.OS,
+				OSName:      ctrl.OSName,
+				URI:         fmt.Sprintf("%s/%s@%s", packageLocation, version.Repository, version.Digest),
+			}
+			images = append(images, image)
+		}
 	}
 	return images, nil
 }

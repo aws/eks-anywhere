@@ -80,7 +80,7 @@ func (r *Reader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
 	return bundles.ReadImages(r, bundle)
 }
 
-func (r *Reader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
+func (r *Reader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
 	return bundles.ReadImages(r, b)
 }
 

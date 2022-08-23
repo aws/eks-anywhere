@@ -102,7 +102,7 @@ func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeCon
 	return nil
 }
 
-func Pull(ctx context.Context, art string) ([]byte, error) {
+func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
 	puller := artifacts.NewRegistryPuller()
 
 	data, err := puller.Pull(ctx, art)
@@ -116,7 +116,7 @@ func Pull(ctx context.Context, art string) ([]byte, error) {
 	return data, nil
 }
 
-func Push(ctx context.Context, ref, fileName string, fileContent []byte) error {
+func PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error {
 	registry, err := content.NewRegistry(content.RegistryOptions{})
 	if err != nil {
 		return fmt.Errorf("creating registry: %w", err)
