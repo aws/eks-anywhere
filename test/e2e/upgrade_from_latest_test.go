@@ -27,6 +27,23 @@ func runUpgradeFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion
 	test.DeleteCluster()
 }
 
+func runUpgradeWithFluxFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
+	latestRelease, err := framework.GetLatestMinorReleaseFromTestBranch()
+	if err != nil {
+		test.T.Fatal(err)
+	}
+	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
+	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
+	// Adding this manual wait because old versions of the cli don't wait long enough
+	// after creation, which makes the upgrade preflight validations fail
+	test.WaitForControlPlaneReady()
+	test.UpgradeCluster(clusterOpts)
+	test.ValidateCluster(wantVersion)
+	test.ValidateFlux()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
 		api.WithTemplateForAllMachines(""), // Use default template from bundle
@@ -245,6 +262,23 @@ func TestDockerKubernetes122to123UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFromLatestReleaseFlow(
+		test,
+		anywherev1.Kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
+	)
+}
+
+func TestDockerKubernetes122to123GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithFluxGithub(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runUpgradeWithFluxFromLatestReleaseFlow(
 		test,
 		anywherev1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
