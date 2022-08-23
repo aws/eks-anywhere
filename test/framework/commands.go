@@ -24,6 +24,18 @@ func WithForce() CommandOpt {
 	return appendOpt("--force-cleanup")
 }
 
+func WithControlPlaneWaitTimeout(timeout string) CommandOpt {
+	return appendOpt("--control-plane-wait-timeout", timeout)
+}
+
+func WithExternalEtcdWaitTimeout(timeout string) CommandOpt {
+	return appendOpt("--external-etcd-wait-timeout", timeout)
+}
+
+func WithPerMachineWaitTimeout(timeout string) CommandOpt {
+	return appendOpt("--per-machine-wait-timeout", timeout)
+}
+
 func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
 	return executeWithBinaryCommandOpt(func() (string, error) {
 		return GetReleaseBinaryFromVersion(version)

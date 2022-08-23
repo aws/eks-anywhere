@@ -68,108 +68,51 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       * [proxy]({{< relref "../../reference/clusterspec/optional/proxy" >}})
       * [gitops]({{< relref "../../reference/clusterspec/optional/gitops" >}})
 
-2. Create Cluster: Create your cluster either with or without curated packages:
+1. Configure Curated Packages
 
-   - Cluster creation without curated packages installation
+   The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../tasks/packages" >}}).
+
+   If you are going to use packages, set up authentication:
+   ```bash
+   export EKSA_AWS_REGION="your-region"
+   export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+   ```
      
-      *Note* The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. Due to this there might be some warnings in the CLI if proper authentication is not set up. 
-      ```bash
-      eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
-      ```
-      Example command output
-      ```
-      Performing setup and validations
-      ✅ validation succeeded {"validation": "docker Provider setup is valid"}
-      Creating new bootstrap cluster
-      Installing cluster-api providers on bootstrap cluster
-      Provider specific setup
-      Creating new workload cluster
-      Installing networking on workload cluster
-      Installing cluster-api providers on workload cluster
-      Moving cluster management from bootstrap to workload cluster
-      Installing EKS-A custom components (CRD and controller) on workload cluster
-      Creating EKS-A CRDs instances on workload cluster
-      Installing GitOps Toolkit on workload cluster
-      GitOps field not specified, bootstrap flux skipped
-      Deleting bootstrap cluster
-      🎉 Cluster created!
-      ----------------------------------------------------------------------------------
-      The Amazon EKS Anywhere Curated Packages are only available to customers with the
-      Amazon EKS Anywhere Enterprise Subscription
-      ----------------------------------------------------------------------------------
-      Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
-      secret/aws-secret created
-      job.batch/eksa-auth-refresher created
-      ```
-   - Cluster creation with optional curated packages
+1. Create cluster
 
-     {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be `v0.11.0` or later.
-   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/)
-     {{% /alert %}}
+   ```bash
+   # Create a cluster with curated packages installation
+   eksctl anywhere create cluster -f $CLUSTER_NAME.yaml
+   ```
 
-      * Setup authentication to use curated-packages
-         ```bash
-         $ export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
-         $ export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
-         ```
-     
-      * Discover curated-packages to install
-         ```bash
-         eksctl anywhere list packages --source registry --kube-version 1.23
-         ```
-         Example command output
-         ```                 
-         Package                 Version(s)                                       
-         -------                 ----------                                       
-         hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-         harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
-         metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
-         emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
-         ```
-        
-      * Generate a curated-packages config
+   Example command output
+   ```
+   Performing setup and validations
+   ✅ validation succeeded {"validation": "docker Provider setup is valid"}
+   Creating new bootstrap cluster
+   Installing cluster-api providers on bootstrap cluster
+   Provider specific setup
+   Creating new workload cluster
+   Installing networking on workload cluster
+   Installing cluster-api providers on workload cluster
+   Moving cluster management from bootstrap to workload cluster
+   Installing EKS-A custom components (CRD and controller) on workload cluster
+   Creating EKS-A CRDs instances on workload cluster
+   Installing GitOps Toolkit on workload cluster
+   GitOps field not specified, bootstrap flux skipped
+   Deleting bootstrap cluster
+   🎉 Cluster created!
+   ------------------------------------------------------------------------------------------------------------------------------
+   The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
+   ------------------------------------------------------------------------------------------------------------------------------
+   Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
+   secret/aws-secret created
+   job.batch/eksa-auth-refresher created
+   package.packages.eks.amazonaws.com/my-harbor created
+   ```
 
-         The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
-         ```bash
-         eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
-         ```
-
-      * Create a cluster
-
-         ```bash
-         # Create a cluster with curated packages installation
-         eksctl anywhere create cluster -f $CLUSTER_NAME.yaml --install-packages packages.yaml
-         ```
-         Example command output
-         ```
-         Performing setup and validations
-         ✅ validation succeeded {"validation": "docker Provider setup is valid"}
-         Creating new bootstrap cluster
-         Installing cluster-api providers on bootstrap cluster
-         Provider specific setup
-         Creating new workload cluster
-         Installing networking on workload cluster
-         Installing cluster-api providers on workload cluster
-         Moving cluster management from bootstrap to workload cluster
-         Installing EKS-A custom components (CRD and controller) on workload cluster
-         Creating EKS-A CRDs instances on workload cluster
-         Installing GitOps Toolkit on workload cluster
-         GitOps field not specified, bootstrap flux skipped
-         Deleting bootstrap cluster
-         🎉 Cluster created!
-         ------------------------------------------------------------------------------------------------------------------------------
-         The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription.
-         ------------------------------------------------------------------------------------------------------------------------------
-         Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "0.2.0-eks-a-v0.0.0-dev-build.3842"}
-         secret/aws-secret created
-         job.batch/eksa-auth-refresher created
-         package.packages.eks.amazonaws.com/my-harbor created
-         ```
-
-3. Use the cluster
+1. Use the cluster
 
    Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
 
