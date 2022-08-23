@@ -62,7 +62,8 @@ func (i *Installer) InstallEksdCRDs(ctx context.Context, clusterSpec *cluster.Sp
 	return nil
 }
 
-// SetRetrier Exposing retrier for unit testing purposes
+// SetRetrier allows to modify the internal retrier
+// For unit testing purposes only. It is not thread safe
 func (i *Installer) SetRetrier(retrier *retrier.Retrier) {
 	i.retrier = retrier
 }
