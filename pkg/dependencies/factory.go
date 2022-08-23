@@ -25,7 +25,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
-	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -1058,13 +1057,8 @@ func (f *Factory) WithVSphereValidator() *Factory {
 		if f.dependencies.VSphereValidator != nil {
 			return nil
 		}
-		vcb := govmomi.NewVMOMIClientBuilder()
-		v := vsphere.NewValidator(
-			f.dependencies.Govc,
-			&networkutils.DefaultNetClient{},
-			vcb,
-		)
-		f.dependencies.VSphereValidator = v
+
+		f.dependencies.VSphereValidator = vsphere.NewValidator(f.dependencies.Govc, &networkutils.DefaultNetClient{})
 
 		return nil
 	})
