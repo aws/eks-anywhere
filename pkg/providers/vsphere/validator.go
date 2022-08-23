@@ -2,25 +2,46 @@ package vsphere
 
 import (
 	"context"
+	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
+	"path/filepath"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type Validator struct {
-	govc      ProviderGovcClient
-	netClient networkutils.NetClient
+const (
+	vsphereRootPath = "/"
+)
+
+type PrivAssociation struct {
+	objectType   string
+	privsContent string
+	path         string
 }
 
-func NewValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *Validator {
+type VSphereClientBuilder interface {
+	Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error)
+}
+
+type Validator struct {
+	govc                 ProviderGovcClient
+	netClient            networkutils.NetClient
+	vSphereClientBuilder VSphereClientBuilder
+}
+
+func NewValidator(govc ProviderGovcClient, netClient networkutils.NetClient, vscb VSphereClientBuilder) *Validator {
 	return &Validator{
-		govc:      govc,
-		netClient: netClient,
+		govc:                 govc,
+		netClient:            netClient,
+		vSphereClientBuilder: vscb,
 	}
 }
 
@@ -384,4 +405,235 @@ func (v *Validator) validateControlPlaneIpUniqueness(spec *Spec) error {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 	return nil
+}
+
+func (v *Validator) collectSpecMachineConfigs(ctx context.Context, spec *Spec) ([]*anywherev1.VSphereMachineConfig, error) {
+	controlPlaneMachineConfig := spec.controlPlaneMachineConfig()
+	machineConfigs := []*anywherev1.VSphereMachineConfig{controlPlaneMachineConfig}
+
+	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineConfig := spec.workerMachineConfig(workerNodeGroupConfiguration)
+		machineConfigs = append(machineConfigs, workerNodeGroupMachineConfig)
+	}
+
+	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := spec.etcdMachineConfig()
+		machineConfigs = append(machineConfigs, etcdMachineConfig)
+	}
+
+	return machineConfigs, nil
+}
+
+func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) error {
+	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	requiredPrivAssociations := []PrivAssociation{
+		// validate global root priv settings are correct
+		{
+			objectType:   govmomi.VSphereTypeFolder,
+			privsContent: config.VSphereGlobalPrivsFile,
+			path:         vsphereRootPath,
+		},
+		{
+			objectType:   govmomi.VSphereTypeNetwork,
+			privsContent: config.VSphereUserPrivsFile,
+			path:         spec.datacenterConfig.Spec.Network,
+		},
+	}
+
+	var pas []PrivAssociation
+	for _, mc := range machineConfigs {
+		pas = []PrivAssociation{
+			// validate object-level priv settings are correct
+			{
+				objectType:   govmomi.VSphereTypeDatastore,
+				privsContent: config.VSphereUserPrivsFile,
+				path:         mc.Spec.Datastore,
+			},
+			{
+				objectType:   govmomi.VSphereTypeResourcePool,
+				privsContent: config.VSphereUserPrivsFile,
+				path:         mc.Spec.ResourcePool,
+			},
+			// validate Administrator role (all privs) on VM folder and Template folder
+			{
+				objectType:   govmomi.VSphereTypeFolder,
+				privsContent: config.VSphereAdminPrivsFile,
+				path:         mc.Spec.Folder,
+			},
+			// ToDo: add more sophisticated validation around a scenario where someone has uploaded templates
+			// on their own and does not want to allow EKSA user write access to templates
+			// Verify privs on the template
+			{
+				objectType:   govmomi.VSphereTypeVirtualMachine,
+				privsContent: config.VSphereAdminPrivsFile,
+				path:         mc.Spec.Template,
+			},
+			// Verify privs on the template directory
+			{
+				objectType:   govmomi.VSphereTypeFolder,
+				privsContent: config.VSphereAdminPrivsFile,
+				path:         filepath.Dir(mc.Spec.Template),
+			},
+		}
+
+		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
+
+	}
+
+	host := spec.datacenterConfig.Spec.Server
+	datacenter := spec.datacenterConfig.Spec.Datacenter
+
+	vsc, err := v.vSphereClientBuilder.Build(
+		ctx,
+		host,
+		vuc.EksaVsphereUsername,
+		vuc.EksaVspherePassword,
+		spec.datacenterConfig.Spec.Insecure,
+		datacenter,
+	)
+	if err != nil {
+		return err
+	}
+
+	return v.validatePrivs(ctx, requiredPrivAssociations, vsc)
+}
+
+func (v *Validator) validateCSIUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) error {
+	requiredPrivAssociations := []PrivAssociation{
+		{ // CNS-SEARCH-AND-SPBM role
+			objectType:   govmomi.VSphereTypeFolder,
+			privsContent: config.VSphereCnsSearchAndSpbmPrivsFile,
+			path:         vsphereRootPath,
+		},
+	}
+
+	machineConfigs, err := v.collectSpecMachineConfigs(ctx, spec)
+	if err != nil {
+		return err
+	}
+
+	var pas []PrivAssociation
+	for _, mc := range machineConfigs {
+		pas = []PrivAssociation{
+			{ // CNS-Datastore role
+				objectType:   govmomi.VSphereTypeDatastore,
+				privsContent: config.VSphereCnsDatastorePrivsFile,
+				path:         mc.Spec.Datastore,
+			},
+
+			{ // CNS-VM role
+				objectType:   govmomi.VSphereTypeFolder,
+				privsContent: config.VSphereCnsVmPrivsFile,
+				path:         mc.Spec.Folder,
+			},
+			// CNS-HOST-CONFIG-STORAGE role
+			{
+				objectType:   govmomi.VSphereTypeDatastore,
+				privsContent: config.VSphereCnsHostConfigStorageFile,
+				path:         mc.Spec.Datastore,
+			},
+		}
+		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
+	}
+
+	host := spec.datacenterConfig.Spec.Server
+	datacenter := spec.datacenterConfig.Spec.Datacenter
+
+	vsc, err := v.vSphereClientBuilder.Build(
+		ctx,
+		host,
+		vuc.EksaVsphereCSIUsername,
+		vuc.EksaVsphereCSIPassword,
+		spec.datacenterConfig.Spec.Insecure,
+		datacenter,
+	)
+	if err != nil {
+		return err
+	}
+
+	return v.validatePrivs(ctx, requiredPrivAssociations, vsc)
+}
+
+func (v *Validator) validateCPUserPrivs(ctx context.Context, spec *Spec, vuc *config.VSphereUserConfig) error {
+	// CP role just needs read only
+	privObjs := []PrivAssociation{
+		{
+			objectType:   govmomi.VSphereTypeFolder,
+			privsContent: config.VSphereReadOnlyPrivs,
+			path:         vsphereRootPath,
+		},
+	}
+
+	host := spec.datacenterConfig.Spec.Server
+	datacenter := spec.datacenterConfig.Spec.Datacenter
+
+	vsc, err := v.vSphereClientBuilder.Build(
+		ctx,
+		host,
+		vuc.EksaVsphereCPUsername,
+		vuc.EksaVsphereCPPassword,
+		spec.datacenterConfig.Spec.Insecure,
+		datacenter,
+	)
+	if err != nil {
+		return err
+	}
+
+	return v.validatePrivs(ctx, privObjs, vsc)
+}
+
+func (v *Validator) validatePrivs(ctx context.Context, privObjs []PrivAssociation, vsc govmomi.VSphereClient) error {
+	var missingPrivs []string
+	var err error
+
+	for _, obj := range privObjs {
+		path := obj.path
+		privsContent := obj.privsContent
+		t := obj.objectType
+		missingPrivs, err = v.getMissingPrivs(ctx, vsc, path, t, privsContent, vsc.Username())
+		if err != nil {
+			return err
+		} else if len(missingPrivs) > 0 {
+			return fmt.Errorf("User %s missing privileges on %s: %v", vsc.Username(), path, missingPrivs)
+		}
+	}
+
+	return nil
+}
+
+func checkRequiredPrivs(requiredPrivs []string, hasPrivs []string) []string {
+	hp := map[string]interface{}{}
+	for _, val := range hasPrivs {
+		hp[val] = 1
+	}
+
+	missingPrivs := []string{}
+	for _, p := range requiredPrivs {
+		if _, ok := hp[p]; !ok {
+			missingPrivs = append(missingPrivs, p)
+		}
+	}
+
+	return missingPrivs
+}
+
+func (v *Validator) getMissingPrivs(ctx context.Context, vsc govmomi.VSphereClient, path string, objType string, requiredPrivsContent string, username string) ([]string, error) {
+	var requiredPrivs []string
+	err := json.Unmarshal([]byte(requiredPrivsContent), &requiredPrivs)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPrivs, err := vsc.GetPrivsOnEntity(ctx, path, objType, username)
+	if err != nil {
+		return nil, err
+	}
+
+	missingPrivs := checkRequiredPrivs(requiredPrivs, hasPrivs)
+
+	return missingPrivs, nil
 }
