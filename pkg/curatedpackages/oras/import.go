@@ -38,7 +38,7 @@ func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bun
 			logger.Info("Warning: reading file", "error", err)
 			continue
 		}
-		err = curatedpackages.Push(ctx, updatedChartURL, fileName, data)
+		err = curatedpackages.PushBundle(ctx, updatedChartURL, fileName, data)
 		if err != nil {
 			logger.Info("Warning: Failed  to push to registry", "error", err)
 		}

@@ -65,18 +65,18 @@ func (mr *MockReaderMockRecorder) ReadChartsFromBundles(ctx, bundles interface{}
 }
 
 // ReadImagesFromBundles mocks base method.
-func (m *MockReader) ReadImagesFromBundles(bundles *v1alpha1.Bundles) ([]v1alpha1.Image, error) {
+func (m *MockReader) ReadImagesFromBundles(ctx context.Context, bundles *v1alpha1.Bundles) ([]v1alpha1.Image, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReadImagesFromBundles", bundles)
+	ret := m.ctrl.Call(m, "ReadImagesFromBundles", ctx, bundles)
 	ret0, _ := ret[0].([]v1alpha1.Image)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ReadImagesFromBundles indicates an expected call of ReadImagesFromBundles.
-func (mr *MockReaderMockRecorder) ReadImagesFromBundles(bundles interface{}) *gomock.Call {
+func (mr *MockReaderMockRecorder) ReadImagesFromBundles(ctx, bundles interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadImagesFromBundles", reflect.TypeOf((*MockReader)(nil).ReadImagesFromBundles), bundles)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadImagesFromBundles", reflect.TypeOf((*MockReader)(nil).ReadImagesFromBundles), ctx, bundles)
 }
 
 // MockImageMover is a mock of ImageMover interface.
