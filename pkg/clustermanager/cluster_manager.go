@@ -33,7 +33,6 @@ import (
 )
 
 const (
-<<<<<<< HEAD
 	maxRetries                = 30
 	defaultBackOffPeriod      = 5 * time.Second
 	machineBackoff            = 1 * time.Second
@@ -46,18 +45,6 @@ const (
 	controlPlaneInProgressStr = "1m"
 	etcdInProgressStr         = "1m"
 	DefaultEtcdWait           = 60 * time.Minute
-=======
-	maxRetries             = 30
-	backOffPeriod          = 5 * time.Second
-	machineBackoff         = 1 * time.Second
-	machinesMinWait        = 30 * time.Minute
-	moveCAPIWait           = 15 * time.Minute
-	clusterWaitStr         = "60m"
-	ctrlPlaneWaitStr       = "60m"
-	deploymentWaitStr      = "30m"
-	ctrlPlaneInProgressStr = "1m"
-	etcdInProgressStr      = "1m"
->>>>>>> 7bcd36d1 (Add new analyzer and collector to support bundle)
 )
 
 type ClusterManager struct {
