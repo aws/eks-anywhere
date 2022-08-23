@@ -44,7 +44,7 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.VSphereDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory()
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(10), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(11), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapvSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapvSystemNamespace)))
 	for _, collector := range collectors[1:7] {
@@ -53,6 +53,7 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	}
 	g.Expect(collectors[8].RunPod.PodSpec.Containers[0].Name).To(Equal("check-host-port"))
 	g.Expect(collectors[9].RunPod.PodSpec.Containers[0].Name).To(Equal("ping-host-ip"))
+	g.Expect(collectors[10].RunPod.PodSpec.Containers[0].Name).To(Equal("check-cloud-controller"))
 }
 
 func TestCloudStackDataCenterConfigCollectors(t *testing.T) {

@@ -44,24 +44,7 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 	}
 	collectors = append(collectors, c.defaultLogCollectors()...)
-	collectors = append(collectors, c.vmsAccessCollector())
 	return collectors
-}
-
-// based on Troubleshoot.sh,
-// we expect that vmsAccessCollector can generate a .txt file with output of executed command
-// since .sh file doesn't work currently, just execute simple kubectl command for testing purpose
-func (c *collectorFactory) vmsAccessCollector() *Collect {
-	return &Collect{
-		Exec: &exec{
-			Name:      "collect-control-plane-log",
-			Namespace: constants.EksaDiagnosticsNamespace,
-			Command:   []string{"kubectl", "get"},
-			Args:      []string{"nodes", "-n", "kube-system"},
-			Selector:  []string{"node-role.kubernetes.io/control-plane"},
-			Timeout:   "30s",
-		},
-	}
 }
 
 func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
@@ -119,6 +102,7 @@ func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect 
 	collectors = append(collectors, vsphereLogs...)
 	collectors = append(collectors, c.vsphereCrdCollectors()...)
 	collectors = append(collectors, c.apiServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)...)
+	collectors = append(collectors, c.vmsAccessCollector(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host))
 	return collectors
 }
 
@@ -434,7 +418,7 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 					Args:    argsIP,
 				}},
 			},
-			Timeout: "30s",
+			Timeout: "20s",
 		},
 	}
 }
@@ -453,8 +437,69 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 					Command: []string{"/bin/sh", "-c"},
 					Args:    argsPing,
 				}},
+			}, Timeout: "20s",
+		},
+	}
+}
+
+// vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
+// on control plane node
+func (c *collectorFactory) vmsAccessCollector(controlPlaneEndpoint string) *Collect {
+	makeConnection := fmt.Sprintf("curl --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt -H \"Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)\" https://%s:6443/", controlPlaneEndpoint)
+	getLogs := "kubectl logs -n kube-system -l k8s-app=vsphere-cloud-controller-manager"
+	args := []string{fmt.Sprintf("%s && %s", makeConnection, getLogs)}
+	return &Collect{
+		RunPod: &runPod{
+			Name:      "check-cloud-controller",
+			Namespace: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    "check-cloud-controller",
+					Image:   c.DiagnosticCollectorImage,
+					Command: []string{"/bin/sh", "-c"},
+					Args:    args,
+				}},
+				ServiceAccountName: "default",
+				HostNetwork:        true,
+				Tolerations: []v1.Toleration{
+					{
+						Effect: "NoSchedule",
+						Key:    "node-role.kubernetes.io/master",
+					},
+					{
+						Key:    "node.cloudprovider.kubernetes.io/uninitialized",
+						Value:  "true",
+						Effect: "NoSchedule",
+					},
+					{
+						Key:    "node.kubernetes.io/not-ready",
+						Effect: "NoSchedule",
+					},
+				},
+				Affinity: &v1.Affinity{
+					NodeAffinity: &v1.NodeAffinity{
+						PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{{
+							Weight: 10,
+							Preference: v1.NodeSelectorTerm{
+								MatchExpressions: []v1.NodeSelectorRequirement{{
+									Key:      "node-role.kubernetes.io/control-plane",
+									Operator: "Exists",
+								}},
+							},
+						}, {
+							Weight: 10,
+							Preference: v1.NodeSelectorTerm{
+								MatchExpressions: []v1.NodeSelectorRequirement{{
+									Key:      "node-role.kubernetes.io/master",
+									Operator: "Exists",
+								}},
+							},
+						},
+						},
+					},
+				},
 			},
-			Timeout: "30s",
+			Timeout: "20s",
 		},
 	}
 }

@@ -223,7 +223,7 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
-		constants.KubeSystemNamespace:                    a.kubeSystemLogAnalyzers(),
+		// constants.KubeSystemNamespace:                    a.kubeSystemLogAnalyzers(),
 	}
 }
 
@@ -327,7 +327,10 @@ func (a *analyzerFactory) crdAnalyzer(crdName string) *Analyze {
 
 // vsphereDiagnosticAnalyzers will return diagnostic analyzers to analyze the condition of vSphere cluster
 func (a *analyzerFactory) vsphereDiagnosticAnalyzers() []*Analyze {
-	return a.controlPlaneIPAnalyzer()
+	var analyzers []*Analyze
+	analyzers = append(analyzers, a.controlPlaneIPAnalyzer()...)
+	analyzers = append(analyzers, a.vmsAccessAnalyzer())
+	return analyzers
 }
 
 // controlPlaneIPAnalyzer analyze whether a valid control plane IP is used to connect
@@ -364,15 +367,11 @@ func (a *analyzerFactory) controlPlaneIPAnalyzer() []*Analyze {
 	}
 }
 
-func (a *analyzerFactory) kubeSystemLogAnalyzers() []*Analyze {
-	var analyzers []*Analyze
-	return append(analyzers, a.cloudControllerAnalyzer())
-}
-
-func (a *analyzerFactory) cloudControllerAnalyzer() *Analyze {
-	vSphereCloudControllerPod := "vsphere-cloud-controller-manager"
-	vSphereCloudControllerPodLogFile := fmt.Sprintf("%s*.log", vSphereCloudControllerPod)
-	vSphereCloudControllerPodLogPath := path.Join(logpath(constants.KubeSystemNamespace), vSphereCloudControllerPodLogFile)
+// vmsAccessAnalyzer will analyze if vms have access to the API server of vSphere cluster
+func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze {
+	runBashPod := "check-cloud-controller"
+	runBashPodLog := fmt.Sprintf("%s.log", runBashPod)
+	vSphereCloudControllerPodLogPath := path.Join(runBashPod, runBashPodLog)
 	return &Analyze{
 		TextAnalyze: &textAnalyze{
 			analyzeMeta: analyzeMeta{

@@ -33,6 +33,7 @@ import (
 )
 
 const (
+<<<<<<< HEAD
 	maxRetries                = 30
 	defaultBackOffPeriod      = 5 * time.Second
 	machineBackoff            = 1 * time.Second
@@ -45,6 +46,18 @@ const (
 	controlPlaneInProgressStr = "1m"
 	etcdInProgressStr         = "1m"
 	DefaultEtcdWait           = 60 * time.Minute
+=======
+	maxRetries             = 30
+	backOffPeriod          = 5 * time.Second
+	machineBackoff         = 1 * time.Second
+	machinesMinWait        = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	clusterWaitStr         = "60m"
+	ctrlPlaneWaitStr       = "60m"
+	deploymentWaitStr      = "30m"
+	ctrlPlaneInProgressStr = "1m"
+	etcdInProgressStr      = "1m"
+>>>>>>> 7bcd36d1 (Add new analyzer and collector to support bundle)
 )
 
 type ClusterManager struct {
@@ -277,7 +290,13 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
 	if err != nil {
-		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+		err = c.Retrier.Retry(
+			func() error {
+				workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+				return err
+			},
+		)
+		return workloadCluster, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
