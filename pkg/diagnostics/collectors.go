@@ -478,23 +478,24 @@ func (c *collectorFactory) vmsAccessCollector(controlPlaneEndpoint string) *Coll
 				},
 				Affinity: &v1.Affinity{
 					NodeAffinity: &v1.NodeAffinity{
-						PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{{
-							Weight: 10,
-							Preference: v1.NodeSelectorTerm{
-								MatchExpressions: []v1.NodeSelectorRequirement{{
-									Key:      "node-role.kubernetes.io/control-plane",
-									Operator: "Exists",
-								}},
+						PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{
+							{
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/control-plane",
+										Operator: "Exists",
+									}},
+								},
+							}, {
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/master",
+										Operator: "Exists",
+									}},
+								},
 							},
-						}, {
-							Weight: 10,
-							Preference: v1.NodeSelectorTerm{
-								MatchExpressions: []v1.NodeSelectorRequirement{{
-									Key:      "node-role.kubernetes.io/master",
-									Operator: "Exists",
-								}},
-							},
-						},
 						},
 					},
 				},
