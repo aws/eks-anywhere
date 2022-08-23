@@ -68,28 +68,28 @@ The `validate` command includes validations from the following locations origina
 
 ```
 
-`.`
-`└──`` eks``-``anywhere`
-`    ``├──`` cmd``/``eks``-``a``/``cmd``
+.
+└── eks-anywhere
+    ├── cmd/eks-a/cmd
     │ ├── experiment.go 
     │ ├── validate.go 
     │ └── validatecreatecluster.go
-``    ``└──`` pkg`
-`        ``├──`` addonmanager``/``addonclients`
-`        ``│``   ``└──`` fluxaddonclient``.``go`
-`        ``├──`` api``/``v1alpha1`
-`        ``│``   ``└──`` cluster``.``go`
-`        ``├──`` providers`
-`        ``│``   ``├──`` cloudstack`
-`        ``│``   ``├──`` docker`
-`        ``│``   ``├──`` snow`
-`        ``│``   ``├──`` tinkerbell`
-`        ``│``   ``└──`` vsphere`
-`        ``└──`` validations`
-`            ``├── validatevalidations`
-`            ``│``   ``└──`` validatevalidations``.``go`
-`            ``├──`` docker``.``go`
-`            ``└──`` input``.``go`
+    └── pkg
+        ├── addonmanager/addonclients
+        │   └── fluxaddonclient.go
+        ├── api/v1alpha1
+        │   └── cluster.go
+        ├── providers
+        │   ├── cloudstack
+        │   ├── docker
+        │   ├── snow
+        │   ├── tinkerbell
+        │   └── vsphere
+        └── validations
+            ├── commandvalidations
+            │   └── commandvalidations.go
+            ├── docker.go
+            └── input.go
 
 ```
 
