@@ -3,6 +3,7 @@ package eksd_test
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -87,10 +88,10 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 
 func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 	tt := newUpgraderTest(t)
-
+	tt.eksdUpgrader.Retrier = retrier.NewWithMaxRetries(1, 0)
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error")).Times(5)
+	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())

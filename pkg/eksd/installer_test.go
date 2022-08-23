@@ -3,6 +3,7 @@ package eksd_test
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"os"
 	"testing"
 
@@ -89,9 +90,10 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 
 func TestInstallEksdManifestErrorReadingManifest(t *testing.T) {
 	tt := newInstallerTest(t)
+	tt.eksdInstaller.Retrier = retrier.NewWithMaxRetries(1, 0)
 	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "fake.yaml"
 
-	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error")).Times(5)
+	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
 	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
 		t.Error("Eksd.InstallEksdManifest() error = nil, wantErr not nil")
 	}
