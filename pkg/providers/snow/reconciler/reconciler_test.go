@@ -81,6 +81,17 @@ func TestReconcilerReconcileWorkers(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileControlPlane(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.createAllObjs()
+
+	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
@@ -243,6 +254,14 @@ func snowCluster(opts ...clusterOpt) *anywherev1.Cluster {
 				Name: "datacenter",
 			},
 			KubernetesVersion: "1.20",
+			ClusterNetwork: anywherev1.ClusterNetwork{
+				Pods: anywherev1.Pods{
+					CidrBlocks: []string{"0.0.0.0"},
+				},
+				Services: anywherev1.Services{
+					CidrBlocks: []string{"0.0.0.0"},
+				},
+			},
 		},
 	}
 
