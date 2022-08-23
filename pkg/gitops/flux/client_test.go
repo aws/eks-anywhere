@@ -90,6 +90,44 @@ func TestFluxClientUninstallError(t *testing.T) {
 	tt.Expect(tt.c.Uninstall(tt.ctx, tt.cluster, tt.fluxConfig)).To(MatchError(ContainSubstring("error in uninstall")), "fluxClient.Uninstall() should fail after 5 tries")
 }
 
+func TestFluxClientEnableResourceReconcileSuccess(t *testing.T) {
+	tt := newFluxClientTest(t)
+	tt.k.EXPECT().RemoveAnnotation(tt.ctx, "cluster", "test-cluster", "kustomize.toolkit.fluxcd.io/reconcile", gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("error in remove annotation")).Times(4)
+	tt.k.EXPECT().RemoveAnnotation(tt.ctx, "cluster", "test-cluster", "kustomize.toolkit.fluxcd.io/reconcile", gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+
+	tt.Expect(tt.c.EnableResourceReconcile(tt.ctx, tt.cluster, "cluster", "test-cluster", "default")).To(Succeed(), "fluxClient.EnableResourceReconcile() should succeed with 5 tries")
+}
+
+func TestFluxClientEnableResourceReconcileError(t *testing.T) {
+	tt := newFluxClientTest(t)
+	tt.k.EXPECT().RemoveAnnotation(tt.ctx, "cluster", "test-cluster", "kustomize.toolkit.fluxcd.io/reconcile", gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("error in remove annotation")).Times(5)
+	tt.k.EXPECT().RemoveAnnotation(tt.ctx, "cluster", "test-cluster", "kustomize.toolkit.fluxcd.io/reconcile", gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	tt.Expect(tt.c.EnableResourceReconcile(tt.ctx, tt.cluster, "cluster", "test-cluster", "default")).To(MatchError(ContainSubstring("error in remove annotation")), "fluxClient.EnableResourceReconcile() should fail after 5 tries")
+}
+
+func TestFluxClientDisableResourceReconcileSuccess(t *testing.T) {
+	tt := newFluxClientTest(t)
+	annotations := map[string]string{
+		"kustomize.toolkit.fluxcd.io/reconcile": "disabled",
+	}
+	tt.k.EXPECT().UpdateAnnotation(tt.ctx, "cluster", "test-cluster", annotations, gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("error in add annotation")).Times(4)
+	tt.k.EXPECT().UpdateAnnotation(tt.ctx, "cluster", "test-cluster", annotations, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(1)
+
+	tt.Expect(tt.c.DisableResourceReconcile(tt.ctx, tt.cluster, "cluster", "test-cluster", "default")).To(Succeed(), "fluxClient.DisableResourceReconcile() should succeed with 5 tries")
+}
+
+func TestFluxClientDisableResourceReconcileError(t *testing.T) {
+	tt := newFluxClientTest(t)
+	annotations := map[string]string{
+		"kustomize.toolkit.fluxcd.io/reconcile": "disabled",
+	}
+	tt.k.EXPECT().UpdateAnnotation(tt.ctx, "cluster", "test-cluster", annotations, gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("error in add annotation")).Times(5)
+	tt.k.EXPECT().UpdateAnnotation(tt.ctx, "cluster", "test-cluster", annotations, gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+	tt.Expect(tt.c.DisableResourceReconcile(tt.ctx, tt.cluster, "cluster", "test-cluster", "default")).To(MatchError(ContainSubstring("error in add annotation")), "fluxClient.DisableResourceReconcile() should fail after 5 tries")
+}
+
 func TestFluxClientSuspendKustomizationSuccess(t *testing.T) {
 	tt := newFluxClientTest(t)
 	tt.f.EXPECT().SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in suspend kustomization")).Times(4)
