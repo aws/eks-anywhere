@@ -128,38 +128,6 @@ func TestFluxClientDisableResourceReconcileError(t *testing.T) {
 	tt.Expect(tt.c.DisableResourceReconcile(tt.ctx, tt.cluster, "cluster", "test-cluster", "default")).To(MatchError(ContainSubstring("error in add annotation")), "fluxClient.DisableResourceReconcile() should fail after 5 tries")
 }
 
-func TestFluxClientSuspendKustomizationSuccess(t *testing.T) {
-	tt := newFluxClientTest(t)
-	tt.f.EXPECT().SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in suspend kustomization")).Times(4)
-	tt.f.EXPECT().SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(nil).Times(1)
-
-	tt.Expect(tt.c.SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig)).To(Succeed(), "fluxClient.SuspendKustomization() should succeed with 5 tries")
-}
-
-func TestFluxClientSuspendKustomizationError(t *testing.T) {
-	tt := newFluxClientTest(t)
-	tt.f.EXPECT().SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in suspend kustomization")).Times(5)
-	tt.f.EXPECT().SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(nil).AnyTimes()
-
-	tt.Expect(tt.c.SuspendKustomization(tt.ctx, tt.cluster, tt.fluxConfig)).To(MatchError(ContainSubstring("error in suspend kustomization")), "fluxClient.SuspendKustomization() should fail after 5 tries")
-}
-
-func TestFluxClientResumeKustomizationSuccess(t *testing.T) {
-	tt := newFluxClientTest(t)
-	tt.f.EXPECT().ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in resume kustomization")).Times(4)
-	tt.f.EXPECT().ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(nil).Times(1)
-
-	tt.Expect(tt.c.ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig)).To(Succeed(), "fluxClient.ResumeKustomization() should succeed with 5 tries")
-}
-
-func TestFluxClientResumeKustomizationError(t *testing.T) {
-	tt := newFluxClientTest(t)
-	tt.f.EXPECT().ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in resume kustomization")).Times(5)
-	tt.f.EXPECT().ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig).Return(nil).AnyTimes()
-
-	tt.Expect(tt.c.ResumeKustomization(tt.ctx, tt.cluster, tt.fluxConfig)).To(MatchError(ContainSubstring("error in resume kustomization")), "fluxClient.ResumeKustomization() should fail after 5 tries")
-}
-
 func TestFluxClientReconcileSuccess(t *testing.T) {
 	tt := newFluxClientTest(t)
 	tt.f.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.fluxConfig).Return(errors.New("error in reconcile")).Times(4)

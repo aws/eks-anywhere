@@ -30,8 +30,6 @@ type GitOpsFluxClient interface {
 	BootstrapGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error
 	Uninstall(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	GetCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (eksaCluster *v1alpha1.Cluster, err error)
-	SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
-	ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	DisableResourceReconcile(ctx context.Context, cluster *types.Cluster, resourceType, objectName, namespace string) error
 	EnableResourceReconcile(ctx context.Context, cluster *types.Cluster, resourceType, objectName, namespace string) error
 	Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
@@ -203,36 +201,6 @@ func (f *Flux) ResumeClusterResourcesReconcile(ctx context.Context, cluster *typ
 	}
 
 	return nil
-}
-
-func (f *Flux) PauseGitOpsKustomization(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if f.shouldSkipFlux() {
-		logger.Info("GitOps field not specified, pause flux kustomization skipped")
-		return nil
-	}
-
-	c, err := f.fluxClient.GetCluster(ctx, cluster, clusterSpec)
-	if err != nil {
-		return err
-	}
-	if c.Spec.GitOpsRef == nil {
-		logger.Info("GitOps not enabled in the existing cluster, pause flux kustomization skipped")
-		return nil
-	}
-
-	logger.V(3).Info("Pause reconciliation of all Kustomization", "namespace", clusterSpec.FluxConfig.Spec.SystemNamespace)
-
-	return f.fluxClient.SuspendKustomization(ctx, cluster, clusterSpec.FluxConfig)
-}
-
-func (f *Flux) ResumeGitOpsKustomization(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if f.shouldSkipFlux() {
-		logger.Info("GitOps field not specified, resume flux kustomization skipped")
-		return nil
-	}
-
-	logger.V(3).Info("resume reconciliation of all Kustomization", "namespace", clusterSpec.FluxConfig.Spec.SystemNamespace)
-	return f.fluxClient.ResumeKustomization(ctx, cluster, clusterSpec.FluxConfig)
 }
 
 func (f *Flux) ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {

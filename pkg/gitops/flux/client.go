@@ -24,8 +24,6 @@ type FluxClient interface {
 	BootstrapGithub(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	BootstrapGit(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig, cliConfig *config.CliConfig) error
 	Uninstall(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
-	SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
-	ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 }
 
@@ -71,22 +69,6 @@ func (c *fluxClient) Uninstall(ctx context.Context, cluster *types.Cluster, flux
 	return c.Retry(
 		func() error {
 			return c.flux.Uninstall(ctx, cluster, fluxConfig)
-		},
-	)
-}
-
-func (c *fluxClient) SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
-	return c.Retry(
-		func() error {
-			return c.flux.SuspendKustomization(ctx, cluster, fluxConfig)
-		},
-	)
-}
-
-func (c *fluxClient) ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error {
-	return c.Retry(
-		func() error {
-			return c.flux.ResumeKustomization(ctx, cluster, fluxConfig)
 		},
 	)
 }

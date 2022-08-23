@@ -602,47 +602,6 @@ func TestInstallGitOpsToolkitsBareRepo(t *testing.T) {
 	}
 }
 
-func TestPauseKustomization(t *testing.T) {
-	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	wantCluster := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			GitOpsRef: &v1alpha1.Ref{
-				Name: "flux",
-			},
-		},
-	}
-	g := newFluxTest(t)
-
-	g.flux.EXPECT().GetCluster(g.ctx, cluster, clusterSpec).Return(wantCluster, nil)
-	g.flux.EXPECT().SuspendKustomization(g.ctx, cluster, clusterSpec.FluxConfig)
-
-	g.Expect(g.gitOpsFlux.PauseGitOpsKustomization(g.ctx, cluster, clusterSpec)).To(Succeed())
-}
-
-func TestPauseKustomizationGitOpsNotExistsInCluster(t *testing.T) {
-	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	g := newFluxTest(t)
-
-	g.flux.EXPECT().GetCluster(g.ctx, cluster, clusterSpec).Return(&v1alpha1.Cluster{}, nil)
-
-	g.Expect(g.gitOpsFlux.PauseGitOpsKustomization(g.ctx, cluster, clusterSpec)).To(Succeed())
-}
-
-func TestPauseKustomizationGetClusterError(t *testing.T) {
-	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	g := newFluxTest(t)
-
-	g.flux.EXPECT().GetCluster(g.ctx, cluster, clusterSpec).Return(nil, errors.New("error in get cluster"))
-
-	g.Expect(g.gitOpsFlux.PauseGitOpsKustomization(g.ctx, cluster, clusterSpec)).To(MatchError(ContainSubstring("error in get cluster")))
-}
-
 func TestResumeClusterResourcesReconcile(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
@@ -779,17 +738,6 @@ func TestPauseClusterResourcesReconcileEnableMachineReconcileError(t *testing.T)
 	g.provider.EXPECT().MachineResourceType().Return("providerMachineConfig").Times(3)
 
 	g.Expect(g.gitOpsFlux.PauseClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(MatchError(ContainSubstring("error in enable machine reconcile")))
-}
-
-func TestResumeKustomization(t *testing.T) {
-	cluster := &types.Cluster{}
-	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(t, clusterConfig, "")
-	g := newFluxTest(t)
-
-	g.flux.EXPECT().ResumeKustomization(g.ctx, cluster, clusterSpec.FluxConfig)
-
-	g.Expect(g.gitOpsFlux.ResumeGitOpsKustomization(g.ctx, cluster, clusterSpec)).To(Succeed())
 }
 
 func TestUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
