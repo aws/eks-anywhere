@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
@@ -46,6 +47,22 @@ type Tinkerbell struct {
 	inventoryCsvFilePath string
 }
 
+func UpdateTinkerbellUbuntuTemplate120Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu120EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate121Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate122Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate123Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL)
+}
+
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
@@ -68,6 +85,7 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 
 	tink.cidr = cidr
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+	logger.Info("csv file path")
 
 	for _, opt := range opts {
 		opt(tink)
@@ -84,6 +102,12 @@ func (t *Tinkerbell) Setup() {}
 
 func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
+}
+
+func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = t.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+	}
 }
 
 func (t *Tinkerbell) CleanupVMs(_ string) error {

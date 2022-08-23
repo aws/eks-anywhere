@@ -178,6 +178,7 @@ func WithExternalEtcdHardware(requiredCount int) ClusterE2ETestOpt {
 func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
 	if e.HardwarePool == nil {
 		csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+		fmt.Printf("csv file path: %s\n", csvFilePath)
 		var err error
 		e.HardwarePool, err = api.NewHardwareMapFromFile(csvFilePath)
 		if err != nil {
