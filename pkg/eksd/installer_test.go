@@ -6,8 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/retrier"
-
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
@@ -18,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/eksd/mocks"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
