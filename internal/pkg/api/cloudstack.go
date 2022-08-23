@@ -62,12 +62,6 @@ func WithCloudStackComputeOfferingForAllMachines(value string) CloudStackFiller 
 	}
 }
 
-func WithCloudStackManagementServer(value string) CloudStackFiller {
-	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = value
-	}
-}
-
 func WithCloudStackAz(az anywherev1.CloudStackAvailabilityZone) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		config.datacenterConfig.Spec.AvailabilityZones = append(config.datacenterConfig.Spec.AvailabilityZones, az)
@@ -145,18 +139,6 @@ func WithCloudStackAccount(value string) CloudStackFiller {
 		for _, az := range config.datacenterConfig.Spec.AvailabilityZones {
 			az.Account = value
 		}
-	}
-}
-
-func WithCloudStackZone(value string) CloudStackFiller {
-	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.AvailabilityZones[0].Zone.Name = value
-	}
-}
-
-func WithCloudStackNetwork(value string) CloudStackFiller {
-	return func(config CloudStackConfig) {
-		config.datacenterConfig.Spec.AvailabilityZones[0].Zone.Network.Name = value
 	}
 }
 
