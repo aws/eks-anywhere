@@ -177,6 +177,25 @@ func (mr *MockKubeClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockKubeClient)(nil).GetEksaCluster), arg0, arg1, arg2)
 }
 
+// RemoveAnnotation mocks base method.
+func (m *MockKubeClient) RemoveAnnotation(arg0 context.Context, arg1, arg2, arg3 string, arg4 ...executables.KubectlOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2, arg3}
+	for _, a := range arg4 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveAnnotation", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveAnnotation indicates an expected call of RemoveAnnotation.
+func (mr *MockKubeClientMockRecorder) RemoveAnnotation(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotation", reflect.TypeOf((*MockKubeClient)(nil).RemoveAnnotation), varargs...)
+}
+
 // UpdateAnnotation mocks base method.
 func (m *MockKubeClient) UpdateAnnotation(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 ...executables.KubectlOpt) error {
 	m.ctrl.T.Helper()
@@ -259,6 +278,34 @@ func (m *MockGitOpsFluxClient) DeleteSystemSecret(arg0 context.Context, arg1 *ty
 func (mr *MockGitOpsFluxClientMockRecorder) DeleteSystemSecret(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSystemSecret", reflect.TypeOf((*MockGitOpsFluxClient)(nil).DeleteSystemSecret), arg0, arg1, arg2)
+}
+
+// DisableResourceReconcile mocks base method.
+func (m *MockGitOpsFluxClient) DisableResourceReconcile(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableResourceReconcile", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableResourceReconcile indicates an expected call of DisableResourceReconcile.
+func (mr *MockGitOpsFluxClientMockRecorder) DisableResourceReconcile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableResourceReconcile", reflect.TypeOf((*MockGitOpsFluxClient)(nil).DisableResourceReconcile), arg0, arg1, arg2, arg3, arg4)
+}
+
+// EnableResourceReconcile mocks base method.
+func (m *MockGitOpsFluxClient) EnableResourceReconcile(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableResourceReconcile", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableResourceReconcile indicates an expected call of EnableResourceReconcile.
+func (mr *MockGitOpsFluxClientMockRecorder) EnableResourceReconcile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableResourceReconcile", reflect.TypeOf((*MockGitOpsFluxClient)(nil).EnableResourceReconcile), arg0, arg1, arg2, arg3, arg4)
 }
 
 // ForceReconcile mocks base method.

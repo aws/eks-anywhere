@@ -32,6 +32,8 @@ type GitOpsFluxClient interface {
 	GetCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (eksaCluster *v1alpha1.Cluster, err error)
 	SuspendKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	ResumeKustomization(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
+	DisableResourceReconcile(ctx context.Context, cluster *types.Cluster, resourceType, objectName, namespace string) error
+	EnableResourceReconcile(ctx context.Context, cluster *types.Cluster, resourceType, objectName, namespace string) error
 	Reconcile(ctx context.Context, cluster *types.Cluster, fluxConfig *v1alpha1.FluxConfig) error
 	ForceReconcile(ctx context.Context, cluster *types.Cluster, namespace string) error
 	DeleteSystemSecret(ctx context.Context, cluster *types.Cluster, namespace string) error
@@ -146,6 +148,60 @@ func (f *Flux) Uninstall(ctx context.Context, cluster *types.Cluster, clusterSpe
 		logger.Info("Could not uninstall flux components", "error", err)
 		return err
 	}
+	return nil
+}
+
+func (f *Flux) PauseClusterResourcesReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	if f.shouldSkipFlux() {
+		logger.V(4).Info("GitOps field not specified, pause cluster resources reconcile skipped")
+		return nil
+	}
+
+	logger.V(3).Info("Pause Flux EKS-A resources reconcile")
+
+	if err := f.fluxClient.DisableResourceReconcile(ctx, cluster, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, clusterSpec.Cluster.Namespace); err != nil {
+		return fmt.Errorf("disable resource %s %s from Flux reconcile: %v", clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, err)
+	}
+
+	if err := f.fluxClient.DisableResourceReconcile(ctx, cluster, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, clusterSpec.Cluster.Namespace); err != nil {
+		return fmt.Errorf("disable resource %s %s from Flux reconcile: %v", provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, err)
+	}
+
+	if provider.MachineResourceType() != "" {
+		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
+			if err := f.fluxClient.DisableResourceReconcile(ctx, cluster, provider.MachineResourceType(), machineConfigRef.Name, clusterSpec.Cluster.Namespace); err != nil {
+				return fmt.Errorf("disable resource %s %s from Flux reconcile: %v", provider.MachineResourceType(), machineConfigRef.Name, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (f *Flux) ResumeClusterResourcesReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	if f.shouldSkipFlux() {
+		logger.V(4).Info("GitOps field not specified, resume cluster resources reconcile skipped")
+		return nil
+	}
+
+	logger.V(3).Info("Resume Flux EKS-A resources reconcile")
+
+	if err := f.fluxClient.EnableResourceReconcile(ctx, cluster, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, clusterSpec.Cluster.Namespace); err != nil {
+		return fmt.Errorf("enable resource %s %s from Flux reconcile: %v", clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, err)
+	}
+
+	if err := f.fluxClient.EnableResourceReconcile(ctx, cluster, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, clusterSpec.Cluster.Namespace); err != nil {
+		return fmt.Errorf("enable resource %s %s from Flux reconcile: %v", provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, err)
+	}
+
+	if provider.MachineResourceType() != "" {
+		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
+			if err := f.fluxClient.EnableResourceReconcile(ctx, cluster, provider.MachineResourceType(), machineConfigRef.Name, clusterSpec.Cluster.Namespace); err != nil {
+				return fmt.Errorf("enable resource %s %s from Flux reconcile: %v", provider.MachineResourceType(), machineConfigRef.Name, err)
+			}
+		}
+	}
+
 	return nil
 }
 

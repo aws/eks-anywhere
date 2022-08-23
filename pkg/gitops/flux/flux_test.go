@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	fluxMocks "github.com/aws/eks-anywhere/pkg/gitops/flux/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -40,6 +41,7 @@ type fluxTest struct {
 	ctx         context.Context
 	flux        *fluxMocks.MockGitOpsFluxClient
 	git         *fluxMocks.MockGitClient
+	provider    *mocksprovider.MockProvider
 	gitOpsFlux  *flux.Flux
 	writer      filewriter.FileWriter
 	clusterSpec *cluster.Spec
@@ -49,6 +51,7 @@ func newFluxTest(t *testing.T) fluxTest {
 	mockCtrl := gomock.NewController(t)
 	mockGitOpsFlux := fluxMocks.NewMockGitOpsFluxClient(mockCtrl)
 	mockGit := fluxMocks.NewMockGitClient(mockCtrl)
+	mockProvider := mocksprovider.NewMockProvider(gomock.NewController(t))
 	_, w := test.NewWriter(t)
 	f := flux.NewFluxFromGitOpsFluxClient(mockGitOpsFlux, mockGit, w, nil)
 
@@ -64,6 +67,7 @@ func newFluxTest(t *testing.T) fluxTest {
 		gitOpsFlux:  f,
 		flux:        mockGitOpsFlux,
 		git:         mockGit,
+		provider:    mockProvider,
 		writer:      w,
 		clusterSpec: clusterSpec,
 	}
@@ -637,6 +641,144 @@ func TestPauseKustomizationGetClusterError(t *testing.T) {
 	g.flux.EXPECT().GetCluster(g.ctx, cluster, clusterSpec).Return(nil, errors.New("error in get cluster"))
 
 	g.Expect(g.gitOpsFlux.PauseGitOpsKustomization(g.ctx, cluster, clusterSpec)).To(MatchError(ContainSubstring("error in get cluster")))
+}
+
+func TestResumeClusterResourcesReconcile(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
+	clusterConfig.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+		{
+			MachineGroupRef: &v1alpha1.Ref{Name: "worker-machine"},
+		},
+	}
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "cp-machine", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "worker-machine", "")
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter")
+	g.provider.EXPECT().MachineResourceType().Return("providerMachineConfig").Times(3)
+
+	g.Expect(g.gitOpsFlux.ResumeClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(Succeed())
+}
+
+func TestResumeClusterResourcesReconcileEnableClusterReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "").Return(errors.New("error in enable cluster reconcile"))
+
+	g.Expect(g.gitOpsFlux.ResumeClusterResourcesReconcile(g.ctx, cluster, clusterSpec, nil)).To(MatchError(ContainSubstring("error in enable cluster reconcile")))
+}
+
+func TestResumeClusterResourcesReconcileEnableDatacenterReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "").Return(errors.New("error in enable datacenter reconcile"))
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter").Times(2)
+
+	g.Expect(g.gitOpsFlux.ResumeClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(MatchError(ContainSubstring("error in enable datacenter reconcile")))
+}
+
+func TestResumeClusterResourcesReconcileEnableMachineReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "")
+	g.flux.EXPECT().EnableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "cp-machine", "").Return(errors.New("error in enable machine reconcile"))
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter")
+	g.provider.EXPECT().MachineResourceType().Return("providerMachineConfig").Times(3)
+
+	g.Expect(g.gitOpsFlux.ResumeClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(MatchError(ContainSubstring("error in enable machine reconcile")))
+}
+
+func TestPauseClusterResourcesReconcile(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
+	clusterConfig.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{
+		{
+			MachineGroupRef: &v1alpha1.Ref{Name: "worker-machine"},
+		},
+	}
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "cp-machine", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "worker-machine", "")
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter")
+	g.provider.EXPECT().MachineResourceType().Return("providerMachineConfig").Times(3)
+
+	g.Expect(g.gitOpsFlux.PauseClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(Succeed())
+}
+
+func TestPauseClusterResourcesReconcileEnableClusterReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "").Return(errors.New("error in enable cluster reconcile"))
+
+	g.Expect(g.gitOpsFlux.PauseClusterResourcesReconcile(g.ctx, cluster, clusterSpec, nil)).To(MatchError(ContainSubstring("error in enable cluster reconcile")))
+}
+
+func TestPauseClusterResourcesReconcileEnableDatacenterReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "").Return(errors.New("error in enable datacenter reconcile"))
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter").Times(2)
+
+	g.Expect(g.gitOpsFlux.PauseClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(MatchError(ContainSubstring("error in enable datacenter reconcile")))
+}
+
+func TestPauseClusterResourcesReconcileEnableMachineReconcileError(t *testing.T) {
+	cluster := &types.Cluster{}
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	clusterConfig.Spec.DatacenterRef = v1alpha1.Ref{Name: "datacenter"}
+	clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef = &v1alpha1.Ref{Name: "cp-machine"}
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
+
+	g := newFluxTest(t)
+
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "clusters.anywhere.eks.amazonaws.com", "management-cluster", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerDatacenter", "datacenter", "")
+	g.flux.EXPECT().DisableResourceReconcile(g.ctx, cluster, "providerMachineConfig", "cp-machine", "").Return(errors.New("error in enable machine reconcile"))
+	g.provider.EXPECT().DatacenterResourceType().Return("providerDatacenter")
+	g.provider.EXPECT().MachineResourceType().Return("providerMachineConfig").Times(3)
+
+	g.Expect(g.gitOpsFlux.PauseClusterResourcesReconcile(g.ctx, cluster, clusterSpec, g.provider)).To(MatchError(ContainSubstring("error in enable machine reconcile")))
 }
 
 func TestResumeKustomization(t *testing.T) {

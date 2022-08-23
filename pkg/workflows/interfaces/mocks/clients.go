@@ -507,6 +507,20 @@ func (mr *MockGitOpsManagerMockRecorder) InstallGitOps(arg0, arg1, arg2, arg3, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallGitOps", reflect.TypeOf((*MockGitOpsManager)(nil).InstallGitOps), arg0, arg1, arg2, arg3, arg4)
 }
 
+// PauseClusterResourcesReconcile mocks base method.
+func (m *MockGitOpsManager) PauseClusterResourcesReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PauseClusterResourcesReconcile", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PauseClusterResourcesReconcile indicates an expected call of PauseClusterResourcesReconcile.
+func (mr *MockGitOpsManagerMockRecorder) PauseClusterResourcesReconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseClusterResourcesReconcile", reflect.TypeOf((*MockGitOpsManager)(nil).PauseClusterResourcesReconcile), arg0, arg1, arg2, arg3)
+}
+
 // PauseGitOpsKustomization mocks base method.
 func (m *MockGitOpsManager) PauseGitOpsKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
@@ -519,6 +533,20 @@ func (m *MockGitOpsManager) PauseGitOpsKustomization(arg0 context.Context, arg1 
 func (mr *MockGitOpsManagerMockRecorder) PauseGitOpsKustomization(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PauseGitOpsKustomization", reflect.TypeOf((*MockGitOpsManager)(nil).PauseGitOpsKustomization), arg0, arg1, arg2)
+}
+
+// ResumeClusterResourcesReconcile mocks base method.
+func (m *MockGitOpsManager) ResumeClusterResourcesReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResumeClusterResourcesReconcile", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResumeClusterResourcesReconcile indicates an expected call of ResumeClusterResourcesReconcile.
+func (mr *MockGitOpsManagerMockRecorder) ResumeClusterResourcesReconcile(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeClusterResourcesReconcile", reflect.TypeOf((*MockGitOpsManager)(nil).ResumeClusterResourcesReconcile), arg0, arg1, arg2, arg3)
 }
 
 // ResumeGitOpsKustomization mocks base method.
