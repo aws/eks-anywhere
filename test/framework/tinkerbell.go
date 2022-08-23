@@ -46,6 +46,18 @@ type Tinkerbell struct {
 	inventoryCsvFilePath string
 }
 
+func UpdateTinkerbellUbuntuTemplate121Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate122Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate123Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL)
+}
+
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
@@ -84,6 +96,12 @@ func (t *Tinkerbell) Setup() {}
 
 func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
+}
+
+func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = t.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+	}
 }
 
 func (t *Tinkerbell) CleanupVMs(_ string) error {
