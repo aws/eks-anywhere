@@ -33,12 +33,12 @@ Bottlerocket vends its Baremetal variant Images using a secure distribution tool
 
 kernel:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/15/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/vmlinuz-x86_64
 ```
 
 initial ramdisk:
 ```bash
-https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
+https://anywhere-assets.eks.amazonaws.com/releases/bundles/15/artifacts/hook/029ef8f0711579717bfd14ac5eb63cdc3e658b1d/initramfs-x86_64
 ```
 
 ## vSphere OVAs
@@ -202,7 +202,7 @@ You can use a proxy server to route outbound requests to the internet. To config
 4. Get `image-builder`:
    ```bash
    cd /tmp
-   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+   sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/15/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
    sudo tar xvf image-builder*.tar.gz
    sudo cp image-builder /usr/local/bin
    ```
@@ -263,7 +263,7 @@ You can use a proxy server to route outbound requests to the internet. To config
 1. Get `image-builder`:
     ```bash
     cd /tmp
-    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/15/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
