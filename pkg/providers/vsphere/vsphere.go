@@ -21,10 +21,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -37,28 +39,20 @@ import (
 )
 
 const (
-	CredentialsObjectName  = "vsphere-credentials"
-	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
-	// Username and password for cloud provider
-	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
-	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
-	// Username and password for the CSI driver
-	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
-	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
-	eksaLicense               = "EKSA_LICENSE"
-	vSphereUsernameKey        = "VSPHERE_USERNAME"
-	vSpherePasswordKey        = "VSPHERE_PASSWORD"
-	vSphereServerKey          = "VSPHERE_SERVER"
-	govcDatacenterKey         = "GOVC_DATACENTER"
-	govcInsecure              = "GOVC_INSECURE"
-	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
-	defaultTemplateLibrary    = "eks-a-templates"
-	defaultTemplatesFolder    = "vm/Templates"
-	bottlerocketDefaultUser   = "ec2-user"
-	ubuntuDefaultUser         = "capv"
-	maxRetries                = 30
-	backOffPeriod             = 5 * time.Second
+	CredentialsObjectName    = "vsphere-credentials"
+	eksaLicense              = "EKSA_LICENSE"
+	vSphereUsernameKey       = "VSPHERE_USERNAME"
+	vSpherePasswordKey       = "VSPHERE_PASSWORD"
+	vSphereServerKey         = "VSPHERE_SERVER"
+	govcDatacenterKey        = "GOVC_DATACENTER"
+	govcInsecure             = "GOVC_INSECURE"
+	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
+	defaultTemplateLibrary   = "eks-a-templates"
+	defaultTemplatesFolder   = "vm/Templates"
+	bottlerocketDefaultUser  = "ec2-user"
+	ubuntuDefaultUser        = "capv"
+	maxRetries               = 30
+	backOffPeriod            = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -150,6 +144,14 @@ type ClusterResourceSetManager interface {
 }
 
 func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
+	netClient := &networkutils.DefaultNetClient{}
+	vcb := govmomi.NewVMOMIClientBuilder()
+	v := NewValidator(
+		providerGovcClient,
+		netClient,
+		vcb,
+	)
+
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
@@ -157,14 +159,15 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 		providerGovcClient,
 		providerKubectlClient,
 		writer,
-		&networkutils.DefaultNetClient{},
+		netClient,
 		now,
 		skipIpCheck,
 		resourceSetManager,
+		v,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -177,6 +180,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 		}
 	}
+
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
 		datacenterConfig:      datacenterConfig,
@@ -195,7 +199,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
-		validator:          NewValidator(providerGovcClient, netClient),
+		validator:          v,
 		defaulter:          NewDefaulter(providerGovcClient),
 	}
 }
@@ -429,6 +433,33 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		}
 	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
+	}
+
+	vuc := config.NewVsphereUserConfig()
+
+	if err := p.validator.validateUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+		return err
+	} else {
+		s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereUsername)
+		logger.MarkPass(s)
+	}
+
+	if len(vuc.EksaVsphereCPUsername) > 0 && vuc.EksaVsphereCPUsername != vuc.EksaVsphereUsername {
+		if err := p.validator.validateCPUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		} else {
+			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCPUsername)
+			logger.MarkPass(s)
+		}
+	}
+
+	if len(vuc.EksaVsphereCSIUsername) > 0 && vuc.EksaVsphereCSIUsername != vuc.EksaVsphereUsername {
+		if err := p.validator.validateCSIUserPrivs(ctx, vSphereClusterSpec, vuc); err != nil {
+			return err
+		} else {
+			s := fmt.Sprintf("%s user vSphere privileges validated", vuc.EksaVsphereCSIUsername)
+			logger.MarkPass(s)
+		}
 	}
 
 	return nil
@@ -695,24 +726,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	controllerManagerExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.NodeCIDRMaskExtraArgs(&clusterSpec.Cluster.Spec.ClusterNetwork))
 
-	eksaVsphereUsername := os.Getenv(EksavSphereUsernameKey)
-	eksaVspherePassword := os.Getenv(EksavSpherePasswordKey)
-
-	// Cloud provider credentials
-	eksaCPUsername := os.Getenv(EksavSphereCPUsernameKey)
-	eksaCPassword := os.Getenv(EksavSphereCPPasswordKey)
-
-	if eksaCPUsername == "" {
-		eksaCPUsername = eksaVsphereUsername
-		eksaCPassword = eksaVspherePassword
-	}
-	// CSI driver credentials
-	eksaCSIUsername := os.Getenv(EksavSphereCSIUsernameKey)
-	eksaCSIPassword := os.Getenv(EksavSphereCSIPasswordKey)
-	if eksaCSIUsername == "" {
-		eksaCSIUsername = eksaVsphereUsername
-		eksaCSIPassword = eksaVspherePassword
-	}
+	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.Cluster.Name,
@@ -760,12 +774,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  eksaVsphereUsername,
-		"eksaVspherePassword":                  eksaVspherePassword,
-		"eksaCloudProviderUsername":            eksaCPUsername,
-		"eksaCloudProviderPassword":            eksaCPassword,
-		"eksaCSIUsername":                      eksaCSIUsername,
-		"eksaCSIPassword":                      eksaCSIPassword,
+		"eksaVsphereUsername":                  vuc.EksaVsphereUsername,
+		"eksaVspherePassword":                  vuc.EksaVspherePassword,
+		"eksaCloudProviderUsername":            vuc.EksaVsphereCPUsername,
+		"eksaCloudProviderPassword":            vuc.EksaVsphereCPPassword,
+		"eksaCSIUsername":                      vuc.EksaVsphereCSIUsername,
+		"eksaCSIPassword":                      vuc.EksaVsphereCSIPassword,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
