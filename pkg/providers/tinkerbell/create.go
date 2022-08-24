@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -69,7 +70,7 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
-	err = p.WaitForBaseboardManagementsContactable(ctx, cluster, p.catalogue.AllBMCs())
+	err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}

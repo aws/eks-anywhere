@@ -365,7 +365,7 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
 	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	kubectl.EXPECT().WaitForBaseboardManagement(ctx, cluster, "5m", "Contactable", gomock.Any(), gomock.Any()).MaxTimes(2)
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 

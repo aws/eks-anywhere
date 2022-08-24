@@ -334,13 +334,17 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
-func (k *Kubectl) WaitForBaseboardManagement(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, fmt.Sprintf("%s/%s", rufioBaseboardManagementResourceType, target), namespace)
+func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
 }
 
-func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string) error {
-	_, err := k.Execute(ctx, "wait", "--timeout", timeout,
-		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
+func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	params := []string{
+		"wait", "--timeout", timeout,
+		"--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace,
+	}
+	applyOpts(&params, opts...)
+	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("executing wait: %v", err)
 	}
@@ -872,6 +876,10 @@ func WithSkipTLSVerify() KubectlOpt {
 
 func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
+}
+
+func WithWaitAll() KubectlOpt {
+	return appendOpt("--all")
 }
 
 func appendOpt(new ...string) KubectlOpt {
