@@ -283,7 +283,8 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 				return err
 			},
 		)
-		return workloadCluster, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+		// add warning here *******
+		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)

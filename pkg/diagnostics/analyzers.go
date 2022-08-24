@@ -223,7 +223,6 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	return map[string][]*Analyze{
 		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
-		// constants.KubeSystemNamespace:                    a.kubeSystemLogAnalyzers(),
 	}
 }
 
