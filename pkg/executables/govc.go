@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -33,8 +34,6 @@ const (
 	govcDatacenterKey    = "GOVC_DATACENTER"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
-	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
 	DeployOptsFile       = "deploy-opts.json"
@@ -517,14 +516,14 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 	var vSphereUsername, vSpherePassword, vSphereURL string
 	var ok bool
 	var envMap map[string]string
-	if vSphereUsername, ok = os.LookupEnv(vSphereUsernameKey); ok && len(vSphereUsername) > 0 {
+	if vSphereUsername, ok = os.LookupEnv(config.EksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(govcUsernameKey, vSphereUsername); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", govcUsernameKey, err)
 		}
 	} else if govcUsername, ok := os.LookupEnv(govcUsernameKey); !ok || len(govcUsername) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcUsernameKey, ok)
 	}
-	if vSpherePassword, ok = os.LookupEnv(vSpherePasswordKey); ok && len(vSpherePassword) > 0 {
+	if vSpherePassword, ok = os.LookupEnv(config.EksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
 		if err := os.Setenv(govcPasswordKey, vSpherePassword); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", govcPasswordKey, err)
 		}
