@@ -66,7 +66,7 @@ func validateImmutableGitOpsFields(new, old *GitOpsConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "GitOpsConfig"), new, "config is immutable"),
+			field.Forbidden(field.NewPath(GitOpsConfigKind), "config is immutable"),
 		)
 	}
 

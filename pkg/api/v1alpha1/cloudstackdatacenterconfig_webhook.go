@@ -108,6 +108,7 @@ func isCapcV1beta1ToV1beta2Upgrade(new, old *CloudStackDatacenterConfigSpec) boo
 
 func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConfig) field.ErrorList {
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 
 	// Check for CAPC v1beta1 -> CAPC v1beta2 upgrade
 	if isCapcV1beta1ToV1beta2Upgrade(&new.Spec, &old.Spec) {
@@ -124,7 +125,7 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 			if !newAz.Equal(&oldAz) {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name), newAz, "availabilityZone is immutable"),
+					field.Forbidden(specPath.Child("availabilityZone", oldAz.Name), "availabilityZone is immutable"),
 				)
 			}
 		}
