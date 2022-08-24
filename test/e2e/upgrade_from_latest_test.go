@@ -8,14 +8,11 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runUpgradeFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
-	latestRelease, err := framework.GetLatestMinorReleaseFromTestBranch()
-	if err != nil {
-		test.T.Fatal(err)
-	}
+func runUpgradeFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
 	// Adding this manual wait because old versions of the cli don't wait long enough
@@ -27,11 +24,7 @@ func runUpgradeFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion
 	test.DeleteCluster()
 }
 
-func runUpgradeWithFluxFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
-	latestRelease, err := framework.GetLatestMinorReleaseFromTestBranch()
-	if err != nil {
-		test.T.Fatal(err)
-	}
+func runUpgradeWithFluxFromReleaseFlow(test *framework.ClusterE2ETest, latestRelease *releasev1.EksARelease, wantVersion anywherev1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfigForVersion(latestRelease.Version, framework.ExecuteWithEksaRelease(latestRelease))
 	test.CreateCluster(framework.ExecuteWithEksaRelease(latestRelease))
 	// Adding this manual wait because old versions of the cli don't wait long enough
@@ -44,11 +37,24 @@ func runUpgradeWithFluxFromLatestReleaseFlow(test *framework.ClusterE2ETest, wan
 	test.DeleteCluster()
 }
 
+func latestMinorRelease(t testing.TB) *releasev1.EksARelease {
+	t.Helper()
+	latestRelease, err := framework.GetLatestMinorReleaseFromTestBranch()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return latestRelease
+}
+
 func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+		framework.WithBottlerocketFromRelease(release, anywherev1.Kube120),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -57,8 +63,9 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube120,
 		provider.WithProviderUpgrade(
 			framework.UpdateBottlerocketTemplate120(), // Set the template so it doesn't get autoimported
@@ -67,6 +74,7 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 }
 
 func TestCloudStackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -76,18 +84,22 @@ func TestCloudStackKubernetes120UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube120,
 		provider.WithProviderUpgrade(),
 	)
 }
 
 func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		),
+		framework.WithBottlerocketFromRelease(release, anywherev1.Kube121),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -96,8 +108,9 @@ func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testin
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube121,
 		provider.WithProviderUpgrade(
 			framework.UpdateBottlerocketTemplate121(), // Set the template so it doesn't get autoimported
@@ -106,10 +119,13 @@ func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testin
 }
 
 func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube120),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -118,8 +134,9 @@ func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube120,
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate120Var(), // Set the template so it doesn't get autoimported
@@ -128,10 +145,13 @@ func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube121),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -140,8 +160,9 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube121,
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate121Var(), // Set the template so it doesn't get autoimported
@@ -150,10 +171,13 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPolicy(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube121),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -162,8 +186,9 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube121,
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(anywherev1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(
@@ -173,6 +198,7 @@ func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorReleaseAlwaysNetworkPol
 }
 
 func TestDockerKubernetes121UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -182,17 +208,21 @@ func TestDockerKubernetes121UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube121,
 	)
 }
 
 func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube121),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -201,8 +231,9 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube122,
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate122Var(), // Set the template so it doesn't get autoimported
@@ -212,10 +243,13 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 }
 
 func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplateForAllMachines(""), // Use default template from bundle
-		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
-	))
+	release := latestMinorRelease(t)
+	provider := framework.NewVSphere(t,
+		framework.WithVSphereFillers(
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		),
+		framework.WithUbuntuForRelease(release, anywherev1.Kube122),
+	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -224,8 +258,9 @@ func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube123,
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate123Var(), // Set the template so it doesn't get autoimported
@@ -235,6 +270,7 @@ func TestVSphereKubernetes122To123UbuntuUpgradeFromLatestMinorRelease(t *testing
 }
 
 func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -244,14 +280,16 @@ func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
 	)
 }
 
 func TestDockerKubernetes122to123UpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
 	provider := framework.NewDocker(t)
 	test := framework.NewClusterE2ETest(
 		t,
@@ -261,14 +299,16 @@ func TestDockerKubernetes122to123UpgradeFromLatestMinorRelease(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeFromLatestReleaseFlow(
+	runUpgradeFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
 	)
 }
 
 func TestDockerKubernetes122to123GithubFluxEnabledUpgradeFromLatestMinorRelease(t *testing.T) {
+	release := latestMinorRelease(t)
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
@@ -278,8 +318,9 @@ func TestDockerKubernetes122to123GithubFluxEnabledUpgradeFromLatestMinorRelease(
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
-	runUpgradeWithFluxFromLatestReleaseFlow(
+	runUpgradeWithFluxFromReleaseFlow(
 		test,
+		release,
 		anywherev1.Kube123,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube123)),
 	)
