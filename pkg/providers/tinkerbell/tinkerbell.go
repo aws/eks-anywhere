@@ -7,7 +7,6 @@ import (
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -85,7 +84,7 @@ type ProviderKubectlClient interface {
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	GetUnprovisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetProvisionedTinkerbellHardware(_ context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error)
-	WaitForBaseboardManagement(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
+	WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -290,16 +289,5 @@ func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 }
 
 func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return nil
-}
-
-// WaitForBaseboardManagementsContactable executes kubectl wait for each baseboardmanagement
-func (p *Provider) WaitForBaseboardManagementsContactable(ctx context.Context, cluster *types.Cluster, bmcs []*rufiov1alpha1.BaseboardManagement) error {
-	for _, bmc := range bmcs {
-		if err := p.providerKubectlClient.WaitForBaseboardManagement(ctx, cluster, "5m", "Contactable", bmc.Name, constants.EksaSystemNamespace); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
