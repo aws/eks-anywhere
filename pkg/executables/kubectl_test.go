@@ -2330,12 +2330,12 @@ func TestKubectlWaitForClusterReady(t *testing.T) {
 	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
 }
 
-func TestWaitForBaseboardManagement(t *testing.T) {
+func TestWaitForBaseboardManagements(t *testing.T) {
 	kt := newKubectlTest(t)
 	kt.e.EXPECT().Execute(
 		kt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=Contactable", "baseboardmanagements.bmc.tinkerbell.org/test", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", "5m", "--for=condition=Contactable", "baseboardmanagements.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
 	).Return(bytes.Buffer{}, nil)
 
-	kt.Expect(kt.k.WaitForBaseboardManagement(kt.ctx, kt.cluster, "5m", "Contactable", "test", "eksa-system")).To(Succeed())
+	kt.Expect(kt.k.WaitForBaseboardManagements(kt.ctx, kt.cluster, "5m", "Contactable", "eksa-system")).To(Succeed())
 }
