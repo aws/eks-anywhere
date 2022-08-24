@@ -95,6 +95,13 @@ Make sure you use single quotes around the values so that your shell does not in
    ```
      
 1. Create cluster
+     {{% alert title="Note" color="primary" %}}
+   * It is *optional* to install the curated packages as part of the cluster creation.
+   * `eksctl anywhere version` version should be `v0.9.0` or later.
+   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
+   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
+   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here.](https://aws.amazon.com/contact-us/sales-support-eks/)
+     {{% /alert %}}
 
    ```bash
    eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
@@ -178,8 +185,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
+
    {{% alert title="Note" color="primary" %}}
-   Curated packages installation at workload cluster creation is currently not supported. Refer to instructions [here]({{< relref "../../tasks/packages" >}}) for how to install curated packages after cluster creation.
+   Curated packages installation at workload cluster creation is currently not supported.
+   Refer to instructions on how to install curated packages after cluster creation [here.]({{< relref "../../tasks/packages " >}})
    {{% /alert %}}
 
 1. Check the workload cluster:
@@ -193,7 +202,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
 
-   Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
+   Verify the test application in the [deploy test application section.]({{< relref "../../tasks/workload/test-app" >}})
 
 1. Add more workload clusters:
 
