@@ -39,9 +39,9 @@ func TestValidatorValidatePrivs(t *testing.T) {
 	vsc.EXPECT().Username().Return("foobar")
 	vsc.EXPECT().GetPrivsOnEntity(ctx, networkPath, govmomi.VSphereTypeNetwork, "foobar").Return(privs, nil)
 
-	err = v.validatePrivs(ctx, objects, vsc)
-	if err != nil {
-		t.Fatalf("failed to validate privs: %v", err)
+	passed, err := v.validatePrivs(ctx, objects, vsc)
+	if passed != true || err != nil {
+		t.Fatalf("failed to validate privs passed=%v, err=%v", passed, err)
 	}
 }
 
@@ -72,8 +72,40 @@ func TestValidatorValidatePrivsError(t *testing.T) {
 	vsc.EXPECT().Username().Return("foobar")
 	vsc.EXPECT().GetPrivsOnEntity(ctx, networkPath, govmomi.VSphereTypeNetwork, "foobar").Return(nil, fmt.Errorf(errMsg))
 
-	err = v.validatePrivs(ctx, objects, vsc)
+	_, err = v.validatePrivs(ctx, objects, vsc)
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
+}
+
+func TestValidatorValidatePrivsMissing(t *testing.T) {
+	v := Validator{}
+
+	ctrl := gomock.NewController(t)
+	vsc := mocks.NewMockVSphereClient(ctrl)
+
+	ctx := context.Background()
+	folderPath := "/Datacenter/vm/path/foo"
+
+	objects := []PrivAssociation{
+		{
+			objectType:   govmomi.VSphereTypeFolder,
+			privsContent: config.VSphereAdminPrivsFile,
+			path:         folderPath,
+		},
+	}
+
+	var privs []string
+	err := json.Unmarshal([]byte(config.VSphereUserPrivsFile), &privs)
+	if err != nil {
+		t.Fatalf("failed to validate privs: %v", err)
+	}
+	g := NewWithT(t)
+	vsc.EXPECT().Username().Return("foobar")
+	vsc.EXPECT().GetPrivsOnEntity(ctx, folderPath, govmomi.VSphereTypeFolder, "foobar").Return(privs, nil)
+
+	passed, err := v.validatePrivs(ctx, objects, vsc)
+
+	g.Expect(passed).To(BeEquivalentTo(false))
+	g.Expect(err).To(BeNil())
 }
 
 func TestValidatorValidatePrivsBadJson(t *testing.T) {
@@ -96,6 +128,6 @@ func TestValidatorValidatePrivsBadJson(t *testing.T) {
 		},
 	}
 
-	err := v.validatePrivs(ctx, objects, vsc)
+	_, err := v.validatePrivs(ctx, objects, vsc)
 	g.Expect(err).To(MatchError(ContainSubstring(errMsg)))
 }
