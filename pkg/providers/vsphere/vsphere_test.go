@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -29,11 +28,8 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/govmomi"
-	govmomi_mocks "github.com/aws/eks-anywhere/pkg/govmomi/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -271,28 +267,28 @@ func workerNodeGroup2MachineDeployment() *clusterv1.MachineDeployment {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(config.EksavSphereUsernameKey)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(config.EksavSpherePasswordKey)
+	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(EksavSphereUsernameKey)
+	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(EksavSpherePasswordKey)
 	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(vSpherePasswordKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(vSpherePasswordKey)
-	os.Setenv(config.EksavSphereUsernameKey, expectedVSphereUsername)
-	os.Setenv(vSphereUsernameKey, os.Getenv(config.EksavSphereUsernameKey))
-	os.Setenv(config.EksavSpherePasswordKey, expectedVSpherePassword)
-	os.Setenv(vSpherePasswordKey, os.Getenv(config.EksavSpherePasswordKey))
+	os.Setenv(EksavSphereUsernameKey, expectedVSphereUsername)
+	os.Setenv(vSphereUsernameKey, os.Getenv(EksavSphereUsernameKey))
+	os.Setenv(EksavSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(vSpherePasswordKey, os.Getenv(EksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 }
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isUsernameSet {
-		os.Setenv(config.EksavSphereUsernameKey, tctx.oldUsername)
+		os.Setenv(EksavSphereUsernameKey, tctx.oldUsername)
 	} else {
-		os.Unsetenv(config.EksavSphereUsernameKey)
+		os.Unsetenv(EksavSphereUsernameKey)
 	}
 	if tctx.isPasswordSet {
-		os.Setenv(config.EksavSpherePasswordKey, tctx.oldPassword)
+		os.Setenv(EksavSpherePasswordKey, tctx.oldPassword)
 	} else {
-		os.Unsetenv(config.EksavSpherePasswordKey)
+		os.Unsetenv(EksavSpherePasswordKey)
 	}
 }
 
@@ -323,8 +319,6 @@ func newProviderTest(t *testing.T) *providerTest {
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	govc := mocks.NewMockProviderGovcClient(ctrl)
-	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
@@ -337,7 +331,6 @@ func newProviderTest(t *testing.T) *providerTest {
 		govc,
 		kubectl,
 		resourceSetManager,
-		v,
 	)
 	return &providerTest{
 		WithT: NewWithT(t),
@@ -392,37 +385,6 @@ func TestNewProvider(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
-	govc := NewDummyProviderGovcClient()
-	_, writer := test.NewWriter(t)
-	skipIpCheck := true
-
-	provider := NewProvider(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		govc,
-		kubectl,
-		writer,
-		time.Now,
-		skipIpCheck,
-		resourceSetManager,
-	)
-
-	if provider == nil {
-		t.Fatalf("provider object is nil")
-	}
-	if provider.validator == nil {
-		t.Fatalf("validator not configured")
-	}
-}
-
-func TestNewProviderCustomNet(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider := newProviderWithKubectl(
 		t,
 		datacenterConfig,
@@ -438,26 +400,20 @@ func TestNewProviderCustomNet(t *testing.T) {
 
 func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *vsphereProvider {
 	ctrl := gomock.NewController(t)
-	govc := NewDummyProviderGovcClient()
-	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	return newProvider(
 		t,
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
-		govc,
+		NewDummyProviderGovcClient(),
 		kubectl,
 		resourceSetManager,
-		v,
 	)
 }
 
 func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient) *vsphereProvider {
 	ctrl := gomock.NewController(t)
-	vscb, _ := newMockVSphereClientBuilder(ctrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	return newProvider(
@@ -468,43 +424,11 @@ func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacen
 		govc,
 		kubectl,
 		resourceSetManager,
-		v,
 	)
 }
 
-type mockVSphereClientBuilder struct {
-	vsc *govmomi_mocks.MockVSphereClient
-}
-
-func (mvscb *mockVSphereClientBuilder) Build(ctx context.Context, host string, username string, password string, insecure bool, datacenter string) (govmomi.VSphereClient, error) {
-	return mvscb.vsc, nil
-}
-
-func setDefaultVSphereClientMock(vsc *govmomi_mocks.MockVSphereClient) error {
-	vsc.EXPECT().Username().Return("foobar").AnyTimes()
-
-	var privs []string
-	err := json.Unmarshal([]byte(config.VSphereAdminPrivsFile), &privs)
-	if err != nil {
-		return err
-	}
-
-	vsc.EXPECT().GetPrivsOnEntity(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(privs, nil).AnyTimes()
-
-	return nil
-}
-
-func newMockVSphereClientBuilder(ctrl *gomock.Controller) (VSphereClientBuilder, error) {
-	vsc := govmomi_mocks.NewMockVSphereClient(ctrl)
-	err := setDefaultVSphereClientMock(vsc)
-	mvscb := mockVSphereClientBuilder{vsc}
-	return &mvscb, err
-}
-
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager, v *Validator) *vsphereProvider {
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	_, writer := test.NewWriter(t)
-	netClient := &DummyNetClient{}
-
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
@@ -512,11 +436,10 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 		govc,
 		kubectl,
 		writer,
-		netClient,
+		&DummyNetClient{},
 		test.FakeNow,
 		false,
 		resourceSetManager,
-		v,
 	)
 }
 
@@ -996,19 +919,8 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
-	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	govc.osTag = bottlerocketOSTag
-	provider := newProvider(
-		t,
-		datacenterConfig,
-		machineConfigs,
-		clusterSpec.Cluster,
-		govc,
-		kubectl,
-		resourceSetManager,
-		v,
-	)
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -1035,19 +947,8 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
-	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
 	govc.osTag = bottlerocketOSTag
-	provider := newProvider(
-		t,
-		datacenterConfig,
-		machineConfigs,
-		clusterSpec.Cluster,
-		govc,
-		kubectl,
-		resourceSetManager,
-		v,
-	)
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -1074,18 +975,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
-	vscb, _ := newMockVSphereClientBuilder(mockCtrl)
-	v := NewValidator(govc, &DummyNetClient{}, vscb)
-	provider := newProvider(
-		t,
-		datacenterConfig,
-		machineConfigs,
-		clusterSpec.Cluster,
-		govc,
-		kubectl,
-		resourceSetManager,
-		v,
-	)
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -1226,7 +1116,7 @@ func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(config.EksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1240,7 +1130,7 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(config.EksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1429,7 +1319,7 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(config.EksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 
@@ -1463,7 +1353,7 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(config.EksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
@@ -1478,7 +1368,7 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(config.EksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
@@ -3136,21 +3026,21 @@ func TestProviderGenerateCAPISpecForCreateMultipleCredentials(t *testing.T) {
 		{
 			testName:   "specify cloud provider credentials",
 			wantCPFile: "testdata/expected_results_main_cp_cloud_provider_credentials.yaml",
-			envMap:     map[string]string{config.EksavSphereCPUsernameKey: "EksavSphereCPUsername", config.EksavSphereCPPasswordKey: "EksavSphereCPPassword"},
+			envMap:     map[string]string{EksavSphereCPUsernameKey: "EksavSphereCPUsername", EksavSphereCPPasswordKey: "EksavSphereCPPassword"},
 		},
 		{
 			testName:   "specify CSI credentials",
 			wantCPFile: "testdata/expected_results_main_cp_csi_driver_credentials.yaml",
-			envMap:     map[string]string{config.EksavSphereCSIUsernameKey: "EksavSphereCSIUsername", config.EksavSphereCSIPasswordKey: "EksavSphereCSIPassword"},
+			envMap:     map[string]string{EksavSphereCSIUsernameKey: "EksavSphereCSIUsername", EksavSphereCSIPasswordKey: "EksavSphereCSIPassword"},
 		},
 		{
 			testName:   "specify cloud provider and CSI credentials",
 			wantCPFile: "testdata/expected_results_main_cp_cloud_provder_and_csi_driver_credentials.yaml",
 			envMap: map[string]string{
-				config.EksavSphereCSIUsernameKey: "EksavSphereCSIUsername",
-				config.EksavSphereCSIPasswordKey: "EksavSphereCSIPassword",
-				config.EksavSphereCPUsernameKey:  "EksavSphereCPUsername",
-				config.EksavSphereCPPasswordKey:  "EksavSphereCPPassword",
+				EksavSphereCSIUsernameKey: "EksavSphereCSIUsername",
+				EksavSphereCSIPasswordKey: "EksavSphereCSIPassword",
+				EksavSphereCPUsernameKey:  "EksavSphereCPUsername",
+				EksavSphereCPPasswordKey:  "EksavSphereCPPassword",
 			},
 		},
 	}

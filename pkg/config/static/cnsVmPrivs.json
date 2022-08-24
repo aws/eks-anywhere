@@ -1,7 +1,0 @@
-[
-	"VirtualMachine.Config.AddExistingDisk",
-	"VirtualMachine.Config.AddRemoveDevice",
-	"System.Anonymous",
-	"System.Read",
-	"System.View"
-]

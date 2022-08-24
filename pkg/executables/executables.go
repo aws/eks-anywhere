@@ -19,8 +19,8 @@ const (
 )
 
 var redactedEnvKeys = []string{
-	config.EksavSphereUsernameKey,
-	config.EksavSpherePasswordKey,
+	vSphereUsernameKey,
+	vSpherePasswordKey,
 	decoder.CloudStackCloudConfigB64SecretKey,
 	eksaGithubTokenEnv,
 	config.EksaAccessKeyIdEnv,

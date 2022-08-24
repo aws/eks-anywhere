@@ -22,7 +22,6 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
-	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -47,9 +46,7 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	vcb := govmomi.NewVMOMIClientBuilder()
-
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
+	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	reconciler := vspherereconciler.New(
