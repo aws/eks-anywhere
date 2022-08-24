@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -58,11 +60,12 @@ func listOvas(context context.Context, spec string) error {
 
 	bundle := clusterSpec.VersionsBundle
 
+	titler := cases.Title(language.English)
 	for _, ova := range bundle.Ovas() {
 		if strings.Contains(ova.URI, string(eksav1alpha1.Bottlerocket)) {
-			fmt.Printf("%s:\n", strings.Title(string(eksav1alpha1.Bottlerocket)))
+			fmt.Printf("%s:\n", titler.String(string(eksav1alpha1.Bottlerocket)))
 		} else {
-			fmt.Printf("%s:\n", strings.Title(string(eksav1alpha1.Ubuntu)))
+			fmt.Printf("%s:\n", titler.String(string(eksav1alpha1.Ubuntu)))
 		}
 		output := listOvasOutput{
 			URI:    ova.URI,
