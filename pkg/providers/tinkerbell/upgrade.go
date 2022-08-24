@@ -73,7 +73,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 	// If we've been given a CSV with additional hardware for the cluster, validate it and
 	// write it to the catalogue so it can be used for further processing.
-	if p.hardareCSVIsProvided() {
+	if p.hardwareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
 
 		writer := hardware.MultiMachineWriter(machineCatalogueWriter, &p.diskExtractor)
@@ -208,6 +208,27 @@ func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types
 	return false, nil
 }
 
-func (p *Provider) hardareCSVIsProvided() bool {
+func (p *Provider) hardwareCSVIsProvided() bool {
 	return p.hardwareCSVFile != ""
+}
+
+func (p *Provider) isScaleUpDown(currentSpec *cluster.Spec, newSpec *cluster.Spec) bool {
+	if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count != newSpec.Cluster.Spec.ControlPlaneConfiguration.Count {
+		return true
+	}
+
+	workerNodeGroupMap := make(map[string]*v1alpha1.WorkerNodeGroupConfiguration)
+	for _, workerNodeGroupConfiguration := range currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+	}
+
+	for _, nodeGroupNewSpec := range newSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
+			if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+				return true
+			}
+		}
+	}
+
+	return false
 }
