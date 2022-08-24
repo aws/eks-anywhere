@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
-GOLANG_VERSION?="1.17"
+GOLANG_VERSION?="1.18"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
@@ -471,6 +471,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
 	${GOPATH}/bin/mockgen -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

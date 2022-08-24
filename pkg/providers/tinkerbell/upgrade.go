@@ -176,6 +176,10 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
+	err = p.WaitForBaseboardManagementsContactable(ctx, cluster, p.catalogue.AllBMCs())
+	if err != nil {
+		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+	}
 	return nil
 }
 

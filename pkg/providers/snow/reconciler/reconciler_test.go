@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -13,6 +14,7 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
+	"github.com/aws/eks-anywhere/pkg/providers/snow/reconciler/mocks"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -23,6 +25,8 @@ var (
 
 func TestSnowClusterReconcileSuccess(t *testing.T) {
 	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
 
 	managementCluster := createSnowCluster()
 	managementCluster.Name = "management-cluster"
@@ -44,7 +48,7 @@ func TestSnowClusterReconcileSuccess(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(cluster, managementCluster, datacenterConfig, bundle, machineConfigCP, machineConfigWN, eksd).Build()
 
-	_, e := reconciler.New(client).Reconcile(context.Background(), log.Log, cluster)
+	_, e := reconciler.New(client, cniReconciler).Reconcile(context.Background(), log.Log, cluster)
 
 	g.Expect(e).To(BeNil())
 	g.Expect(cluster.Status.FailureMessage).To(BeZero())
@@ -52,6 +56,8 @@ func TestSnowClusterReconcileSuccess(t *testing.T) {
 
 func TestSnowClusterReconcileFailDueToInvalidWNMachineConfig(t *testing.T) {
 	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
 
 	managementCluster := createSnowCluster()
 	managementCluster.Name = "management-cluster"
@@ -75,7 +81,7 @@ func TestSnowClusterReconcileFailDueToInvalidWNMachineConfig(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(cluster, managementCluster, datacenterConfig, bundle, machineConfigCP, machineConfigWN, eksd).Build()
 
-	_, e := reconciler.New(client).Reconcile(context.Background(), log.Log, cluster)
+	_, e := reconciler.New(client, cniReconciler).Reconcile(context.Background(), log.Log, cluster)
 	g.Expect(e).To(BeNil(), "error should be nil to prevent requeue")
 
 	g.Expect(cluster.Status.FailureMessage).ToNot(BeZero())
@@ -85,6 +91,8 @@ func TestSnowClusterReconcileFailDueToInvalidWNMachineConfig(t *testing.T) {
 
 func TestSnowClusterReconcileFailDueToInvalidCPMachineConfig(t *testing.T) {
 	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
 
 	managementCluster := createSnowCluster()
 	managementCluster.Name = "management-cluster"
@@ -106,7 +114,7 @@ func TestSnowClusterReconcileFailDueToInvalidCPMachineConfig(t *testing.T) {
 
 	client := fake.NewClientBuilder().WithObjects(cluster, managementCluster, datacenterConfig, bundle, machineConfigCP, machineConfigWN, eksd).Build()
 
-	_, e := reconciler.New(client).Reconcile(context.Background(), log.Log, cluster)
+	_, e := reconciler.New(client, cniReconciler).Reconcile(context.Background(), log.Log, cluster)
 	g.Expect(e).To(BeNil(), "error should be nil to prevent requeue")
 
 	g.Expect(cluster.Status.FailureMessage).ToNot(BeZero())
