@@ -57,7 +57,7 @@ Ensure you are running Docker Desktop 4.4.2 or newer and have set `"deprecatedCg
 ```
 % defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
 4.42
-% docker info --format '{{json .CgroupVersion}}' 
+% docker info --format '{{json .CgroupVersion}}'
 "1"
 ```
 
@@ -75,9 +75,10 @@ To verify cgroups version
 ```
 To use _cgroups v1_ you need to _sudo_ and edit _/etc/default/grub_ to set _GRUB_CMDLINE_LINUX_ to "systemd.unified_cgroup_hierarchy=0" and reboot.
 ```
-%sudo <editor> /etc/default/group
+%sudo <editor> /etc/default/grub
 GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"
 
+sudo update-grub
 sudo reboot now
 ```
 Then verify you are using _cgroups v1_.
@@ -130,10 +131,10 @@ Make sure the system wide Docker memory configuration provides enough RAM for th
 Make sure you do not have unneeded KinD clusters running `kind get clusters`.
 You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`.
 If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
- 
+
 Make sure you do not have any unneeded Docker containers running with `docker ps`.
 Terminate any unneeded Docker containers.
-   
+
 Make sure Docker isn't out of disk resources.
 If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
 
@@ -148,7 +149,7 @@ This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-r
 You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
 
-### The connection to the server localhost:8080 was refused 
+### The connection to the server localhost:8080 was refused
 ```
 Performing provider setup and validations
 Creating new bootstrap cluster
@@ -159,7 +160,7 @@ Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane
 This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 
 ### Generic cluster unavailable
-Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
+Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands.
 ```
 kubectl get pods -A --kubeconfig=<kubeconfig>
 kubectl get nodes -A --kubeconfig=<kubeconfig>
@@ -242,7 +243,7 @@ In either of those cases, the following steps can help you determine the problem
 
     * Check the boots service logs from the machine where you are running the CLI to see if it received and/or responded to the request:
 
-        ```bash 
+        ```bash
         docker logs boots
         ```
     * Confirm no other DHCP service responded to the request and check for any errors in the BMC console. Other DHCP servers on the network can result in race conditions and should be avoided by configuring the other server to block all MAC addresses and exclude all IP addresses used by EKS Anywhere.
@@ -258,10 +259,10 @@ In either of those cases, the following steps can help you determine the problem
 
     ```bash
     kubectl get workflows -n eksa-system
-    kubectl describe workflow/<workflow-name> -n eksa-system 
+    kubectl describe workflow/<workflow-name> -n eksa-system
     ```
 
-    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec. 
+    Check all the actions and their status to determine if all actions have been executed successfully or not. If the *stream-image* has action failed, it’s likely due to a timeout or network related issue. You can also provide your own `image_url` by specifying `osImageURL` under datacenter spec.
 
 
 ## vSphere troubleshooting
