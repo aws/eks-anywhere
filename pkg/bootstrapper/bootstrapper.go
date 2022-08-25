@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aws/eks-anywhere/pkg/retrier"
-
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
