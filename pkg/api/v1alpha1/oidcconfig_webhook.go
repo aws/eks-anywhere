@@ -78,7 +78,7 @@ func validateImmutableOIDCFields(new, old *OIDCConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "OIDCConfig"), new, "config is immutable"),
+			field.Forbidden(field.NewPath(OIDCConfigKind), "config is immutable"),
 		)
 	}
 

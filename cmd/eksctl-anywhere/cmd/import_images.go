@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"path/filepath"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 )
@@ -52,6 +50,7 @@ func init() {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
 	}
 	importImagesCmd.Flags().BoolVar(&importImagesCommand.includePackages, "include-packages", false, "Flag to indicate inclusion of curated packages in imported images")
+	importImagesCmd.Flags().BoolVar(&importImagesCommand.insecure, "insecure", false, "Flag to indicate skipping TLS verification while pushing helm charts")
 }
 
 var importImagesCommand = ImportImagesCommand{}
@@ -61,13 +60,10 @@ type ImportImagesCommand struct {
 	RegistryEndpoint string
 	BundlesFile      string
 	includePackages  bool
+	insecure         bool
 }
 
 func (c ImportImagesCommand) Call(ctx context.Context) error {
-	if !features.IsActive(features.CuratedPackagesSupport()) && c.includePackages {
-		return fmt.Errorf("curated packages installation is not supported in this release")
-	}
-
 	username, password, err := config.ReadCredentials()
 	if err != nil {
 		return err
@@ -107,10 +103,21 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
+	dirsToMount, err := cc.extraDirectoriesToMount()
+	if err != nil {
+		return err
+	}
+
+	helmOpts := []executables.HelmOpt{}
+	if c.insecure {
+		helmOpts = append(helmOpts, executables.WithInsecure())
+	}
+
 	deps, err = factory.
+		WithExecutableMountDirs(dirsToMount...).
 		WithRegistryMirror(c.RegistryEndpoint).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
-		WithHelmInsecure().
+		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -126,7 +133,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
 		),
 		ChartImporter: helm.NewChartRegistryImporter(
-			deps.HelmInsecure, artifactsFolder,
+			deps.Helm, artifactsFolder,
 			c.RegistryEndpoint,
 			username,
 			password,

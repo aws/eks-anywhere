@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
@@ -17,7 +18,14 @@ const (
 	redactMask = "*****"
 )
 
-var redactedEnvKeys = []string{vSphereUsernameKey, vSpherePasswordKey, decoder.CloudStackCloudConfigB64SecretKey, eksaGithubTokenEnv}
+var redactedEnvKeys = []string{
+	vSphereUsernameKey,
+	vSpherePasswordKey,
+	decoder.CloudStackCloudConfigB64SecretKey,
+	eksaGithubTokenEnv,
+	config.EksaAccessKeyIdEnv,
+	config.EksaSecretAcessKeyEnv,
+}
 
 type executable struct {
 	cli string

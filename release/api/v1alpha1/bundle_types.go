@@ -116,17 +116,19 @@ type EksDRelease struct {
 
 	// Components refers to the url that points to the EKS-D release CRD
 	Components string `json:"components,omitempty"`
+
+	// Etcdadm points to the etcdadm binary/tarball built for this eks-d kube version
+	Etcdadm Archive `json:"etcdadm,omitempty"`
+
+	// Crictl points to the crictl binary/tarball built for this eks-d kube version
+	Crictl Archive `json:"crictl,omitempty"`
+
+	// ImageBuilder points to the image-builder binary used to build eks-D based node images
+	ImageBuilder Archive `json:"imagebuilder,omitempty"`
 }
 
 type OSImageBundle struct {
-	Bottlerocket OSImage `json:"bottlerocket,omitempty"`
-	Ubuntu       OSImage `json:"ubuntu,omitempty"`
-}
-
-type OSImage struct {
-	Archive `json:",inline"`
-	Etcdadm Archive `json:"etcdadm,omitempty"`
-	Crictl  Archive `json:"crictl,omitempty"`
+	Bottlerocket Archive `json:"bottlerocket,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {
@@ -233,9 +235,10 @@ type FluxBundle struct {
 }
 
 type PackageBundle struct {
-	Version    string `json:"version,omitempty"`
-	Controller Image  `json:"packageController"`
-	HelmChart  Image  `json:"helmChart,omitempty"`
+	Version        string `json:"version,omitempty"`
+	Controller     Image  `json:"packageController"`
+	TokenRefresher Image  `json:"tokenRefresher"`
+	HelmChart      Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {

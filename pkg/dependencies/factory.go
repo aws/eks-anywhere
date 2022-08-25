@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -52,17 +51,17 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Cmk                       *executables.Cmk
-	SnowAwsClient             aws.Clients
+	SnowAwsClientRegistry     *snow.AwsClientRegistry
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
-	HelmSecure                *executables.Helm
-	HelmInsecure              *executables.Helm
+	Helm                      *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
+	CiliumTemplater           *cilium.Templater
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
@@ -85,7 +84,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
-	SnowValidator             *snow.Validator
+	SnowValidator             *snow.AwsClientValidator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -282,7 +281,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelmSecure()
+		f.WithDocker().WithKubectl().WithWriter().WithHelm()
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -374,7 +373,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				hardwareCSVPath,
 				f.dependencies.Writer,
 				f.dependencies.DockerClient,
-				f.dependencies.HelmSecure,
+				f.dependencies.Helm,
 				f.dependencies.Kubectl,
 				tinkerbellIp,
 				time.Now,
@@ -488,8 +487,8 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 			return nil
 		}
 
-		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
-		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClientRegistry, f.dependencies.Writer)
 
 		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
 
@@ -501,16 +500,16 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 
 func (f *Factory) WithAwsSnow() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.SnowAwsClient != nil {
+		if f.dependencies.SnowAwsClientRegistry != nil {
 			return nil
 		}
 
-		builder := aws.NewSnowAwsClientBuilder()
-		deviceClientMap, err := builder.BuildSnowAwsClientMap(ctx)
+		clientRegistry := snow.NewAwsClientRegistry()
+		err := clientRegistry.Build(ctx)
 		if err != nil {
 			return err
 		}
-		f.dependencies.SnowAwsClient = deviceClientMap
+		f.dependencies.SnowAwsClientRegistry = clientRegistry
 
 		return nil
 	})
@@ -596,15 +595,10 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithHelmSecure() *Factory {
+func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmSecure != nil {
-			return nil
-		}
-
-		var opts []executables.HelmOpt
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
 		}
@@ -613,31 +607,7 @@ func (f *Factory) WithHelmSecure() *Factory {
 			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
 		}
 
-		f.dependencies.HelmSecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithHelmInsecure() *Factory {
-	f.WithExecutableBuilder().WithProxyConfiguration()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.HelmInsecure != nil {
-			return nil
-		}
-
-		opts := []executables.HelmOpt{executables.WithInsecure()}
-		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
-		}
-
-		if f.proxyConfiguration != nil {
-			opts = append(opts, executables.WithEnv(f.proxyConfiguration))
-		}
-
-		f.dependencies.HelmInsecure = f.executablesConfig.builder.BuildHelmExecutable(opts...)
+		f.dependencies.Helm = f.executablesConfig.builder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -652,9 +622,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelmInsecure()
+		f.WithKubectl().WithHelm(executables.WithInsecure())
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.HelmInsecure)
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
 		}
 	}
 
@@ -663,6 +633,21 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return nil
 		}
 		f.dependencies.Networking = networkingBuilder()
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCiliumTemplater() *Factory {
+	f.WithHelm()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CiliumTemplater != nil {
+			return nil
+		}
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
 
 		return nil
 	})
@@ -709,16 +694,12 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
 	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
 			return nil
-		}
-		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
-		if f.dependencies.CliConfig != nil {
-			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
 		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
@@ -730,7 +711,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			maxWaitPerMachine,
+			opts...,
 		)
 		return nil
 	})
@@ -859,7 +840,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 }
 
 func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
-	f.WithHelmInsecure().WithKubectl()
+	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageControllerClient != nil {
@@ -871,8 +852,9 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
-			f.dependencies.HelmInsecure,
+			f.dependencies.Helm,
 			f.dependencies.Kubectl,
+			spec.Cluster.Name,
 			kubeConfig,
 			imageUrl,
 			chart.Name,
@@ -904,7 +886,7 @@ func (f *Factory) WithPackageClient() *Factory {
 
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
 	if registryName != "" {
-		f.WithHelmInsecure()
+		f.WithHelm(executables.WithInsecure())
 	} else {
 		f.WithManifestReader()
 	}
@@ -916,7 +898,7 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 
 		if registryName != "" {
 			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
-				f.dependencies.HelmInsecure,
+				f.dependencies.Helm,
 				registryName,
 			)
 		} else {

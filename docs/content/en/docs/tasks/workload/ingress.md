@@ -7,20 +7,8 @@ description: >
   How to deploy an ingress controller for simple host or URL-based HTTP routing into workload running in EKS-A
 ---
 
-<!-- overview -->
-
-A production-quality Kubernetes cluster requires planning and preparation for various networking features.
-
-<!-- body -->
-
-
-The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere.
-Ingress Controller is essential in order to have routing rules that decide how external users access services running in a Kubernetes cluster. It enables efficient distribution of incoming network traffic among multiple backend services.
-
-
-## Current Recommendation: Emissary-ingress 
-
-We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an Open Source Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
+While you are free to use any Ingress Controller you like with your EKS Anywhere cluster, AWS currently only supports Emissary Ingress.
+For information on how to configure a Emissary Ingress curated package for EKS Anywhere, see the [Add Emissary Ingress]({{< relref "../../tasks/packages/emissary" >}}) page.
 
 ## Setting up Emissary-ingress for Ingress Controller
 
@@ -31,12 +19,7 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
 
 2. Set up a load balancer: Set up MetalLB Load Balancer by following the instructions [here]({{< relref "./loadbalance" >}})
 
-3. Install Ambassador CRDs and ClusterRoles and RoleBindings
-
-    ```bash
-    kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-crds.yaml"
-    kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-rbac.yaml"
-    ```
+3. Install Emissary Ingress: Follow the instructions here [Add Emissary Ingress]({{< relref "../../tasks/packages/emissary" >}})
 
 4. Create Ambassador Service with Type LoadBalancer.
 

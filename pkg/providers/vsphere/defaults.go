@@ -114,14 +114,12 @@ func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec,
 func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := spec.VersionsBundle.EksD
-	var ova releasev1.OSImage
+	var ova releasev1.Archive
 	switch osFamily {
 	case anywherev1.Bottlerocket:
 		ova = eksd.Ova.Bottlerocket
-	case anywherev1.Ubuntu:
-		ova = eksd.Ova.Ubuntu
 	default:
-		return fmt.Errorf("can not import ova for osFamily: %s, please use a valid osFamily", osFamily)
+		return fmt.Errorf("can not import ova for osFamily: %s, please use %s as osFamily for auto-importing or provide a valid template", osFamily, anywherev1.Bottlerocket)
 	}
 
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])

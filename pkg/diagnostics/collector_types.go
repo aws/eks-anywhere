@@ -90,7 +90,7 @@ type collectorMeta struct {
 
 type runPod struct {
 	Name             string      `json:"name,omitempty"`
-	Namespaces       string      `json:"namespace"`
+	Namespace        string      `json:"namespace"`
 	PodSpec          *v1.PodSpec `json:"podSpec,omitempty"`
 	Timeout          string      `json:"timeout,omitempty"`
 	imagePullSecrets `json:",inline"`

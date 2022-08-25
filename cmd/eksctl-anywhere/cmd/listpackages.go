@@ -54,7 +54,7 @@ func listPackages(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := curatedpackages.CreateBundleManager(lpo.kubeVersion)
+	bm := curatedpackages.CreateBundleManager()
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
@@ -64,7 +64,7 @@ func listPackages(ctx context.Context) error {
 		deps.BundleRegistry,
 	)
 
-	bundle, err := b.GetLatestBundle(ctx)
+	bundle, err := b.GetLatestBundle(ctx, lpo.kubeVersion)
 	if err != nil {
 		return err
 	}

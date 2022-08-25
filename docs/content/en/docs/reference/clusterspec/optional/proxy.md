@@ -22,6 +22,26 @@ spec:
       noProxy:
       - list of no proxy endpoints
 ```
+
+### Configuring Docker daemon
+EKS Anywhere will proxy for you given the above configuration file.
+However, to successfully use EKS Anywhere you will also need to ensure your Docker daemon is configured to use the proxy.
+
+This generally means updating your daemon to launch with the HTTPS_PROXY, HTTP_PROXY, and NO_PROXY environment variables.
+
+For an example of how to do this with systemd, please see Docker's documentation [here](https://docs.docker.com/config/daemon/systemd/#httphttps-proxy).
+
+### Configuring EKS Anywhere proxy without config file
+For commands using a cluster config file, EKS Anywhere will derive its proxy config from the cluster configuration file.
+
+However, for commands that do not utilize a cluster config file, you can set the following environment variables:
+```bash
+export HTTPS_PROXY=https-proxy-ip:port
+export HTTP_PROXY=http-proxy-ip:port
+export NO_PROXY=no-proxy-domain.com,another-domain.com,localhost
+```
+
+
 ## Proxy Configuration Spec Details
 ### __proxyConfiguration__ (required)
 * __Description__: top level key; required to use proxy.

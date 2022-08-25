@@ -283,10 +283,10 @@ func (c *upgradeTestSetup) expectResumeEKSAControllerReconcile(expectedCluster *
 	)
 }
 
-func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types.Cluster) {
+func (c *upgradeTestSetup) expectPauseGitOpsReconcile(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.gitOpsManager.EXPECT().PauseGitOpsKustomization(
-			c.ctx, expectedCluster, c.newClusterSpec,
+		c.gitOpsManager.EXPECT().PauseClusterResourcesReconcile(
+			c.ctx, expectedCluster, c.newClusterSpec, c.provider,
 		),
 	)
 }
@@ -335,11 +335,17 @@ func (c *upgradeTestSetup) expectForceReconcileGitRepo(expectedCluster *types.Cl
 	)
 }
 
-func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *types.Cluster) {
+func (c *upgradeTestSetup) expectResumeGitOpsReconcile(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.gitOpsManager.EXPECT().ResumeGitOpsKustomization(
-			c.ctx, expectedCluster, c.newClusterSpec,
+		c.gitOpsManager.EXPECT().ResumeClusterResourcesReconcile(
+			c.ctx, expectedCluster, c.newClusterSpec, c.provider,
 		),
+	)
+}
+
+func (c *upgradeTestSetup) expectPostBootstrapDeleteForUpgrade() {
+	gomock.InOrder(
+		c.provider.EXPECT().PostBootstrapDeleteForUpgrade(c.ctx),
 	)
 }
 
@@ -397,7 +403,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
-	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecNoChanges()
@@ -406,7 +412,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
-	test.expectResumeGitOpsKustomization(test.workloadCluster)
+	test.expectResumeGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrapNotToBeCalled()
 
 	err := test.run()
@@ -425,7 +431,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecChanged(test.workloadCluster)
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
-	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
@@ -439,7 +445,8 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
-	test.expectResumeGitOpsKustomization(test.workloadCluster)
+	test.expectResumeGitOpsReconcile(test.workloadCluster)
+	test.expectPostBootstrapDeleteForUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -456,7 +463,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectUpgradeCoreComponents(test.workloadCluster, test.workloadCluster)
 	test.expectProviderUpgradeNeeded()
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
-	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkload(test.bootstrapCluster, test.workloadCluster)
@@ -470,7 +477,8 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectResumeEKSAControllerReconcile(test.workloadCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.workloadCluster)
-	test.expectResumeGitOpsKustomization(test.workloadCluster)
+	test.expectResumeGitOpsReconcile(test.workloadCluster)
+	test.expectPostBootstrapDeleteForUpgrade()
 
 	err := test.run()
 	if err != nil {
@@ -488,7 +496,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecChanged(test.workloadCluster)
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
-	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
@@ -511,7 +519,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectProviderNoUpgradeNeeded(test.managementCluster)
 	test.expectVerifyClusterSpecChanged(test.managementCluster)
 	test.expectPauseEKSAControllerReconcile(test.managementCluster)
-	test.expectPauseGitOpsKustomization(test.managementCluster)
+	test.expectPauseGitOpsReconcile(test.managementCluster)
 	test.expectNotToCreateBootstrap()
 	test.expectNotToMoveManagementToBootstrap()
 	test.expectNotToMoveManagementToWorkload()
@@ -524,7 +532,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectResumeEKSAControllerReconcile(test.managementCluster)
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.managementCluster)
-	test.expectResumeGitOpsKustomization(test.managementCluster)
+	test.expectResumeGitOpsReconcile(test.managementCluster)
 	test.expectUpgradeWorkload(test.managementCluster, test.workloadCluster)
 
 	err := test.run()
@@ -562,7 +570,7 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test.expectProviderNoUpgradeNeeded(test.workloadCluster)
 	test.expectVerifyClusterSpecChanged(test.workloadCluster)
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
-	test.expectPauseGitOpsKustomization(test.workloadCluster)
+	test.expectPauseGitOpsReconcile(test.workloadCluster)
 	test.expectCreateBootstrap()
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, test.workloadCluster, errors.New("failed upgrading"))
@@ -588,7 +596,8 @@ func TestUpgradeWithCheckpointSecondRunSuccess(t *testing.T) {
 	test2.expectResumeEKSAControllerReconcile(test2.workloadCluster)
 	test2.expectUpdateGitEksaSpec()
 	test2.expectForceReconcileGitRepo(test2.workloadCluster)
-	test2.expectResumeGitOpsKustomization(test2.workloadCluster)
+	test2.expectResumeGitOpsReconcile(test2.workloadCluster)
+	test2.expectPostBootstrapDeleteForUpgrade()
 
 	err = test2.run()
 	if err != nil {

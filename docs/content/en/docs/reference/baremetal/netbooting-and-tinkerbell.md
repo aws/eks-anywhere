@@ -230,7 +230,7 @@ status:
     - environment:
         COMPRESSED: "true"
         DEST_DISK: /dev/sda
-        IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/ubuntu-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.gz
+        IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
       image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
       name: stream-image
       seconds: 35
@@ -240,7 +240,7 @@ status:
 ```
 
 You can see that the first action in the workflow is to stream (`stream-image`) the operating system to the destination disk (`DEST_DISK`) on the machine.
-In this example, the Ubuntu operating system that will be copied to disk (`/dev/sda`) is being served from the location specificed by IMG_URL.
+In this example, the Bottlerocket operating system that will be copied to disk (`/dev/sda`) is being served from the location specificed by IMG_URL.
 The action was successful (STATE_SUCCESS) and it took 35 seconds.
 
 Each action and its status is shown in this output for the whole workflow.
@@ -271,7 +271,7 @@ You can follow this output to see the machine as it goes through the provisionin
 After the node is initialized, completes all the Tinkerbell actions, and is booted into the installed operating system (Ubuntu or Bottlerocket), the new system starts cloud-init to do further configuration.
 At this point, the system will reach out to the Tinkerbell hegel service to get the hegel metadata.
 
-If something goes wrong, viewing hegel files can help you understand why a stuck system that has booted into Ubuntu has not joined the cluster yet.
+If something goes wrong, viewing hegel files can help you understand why a stuck system that has booted into Ubuntu or Bottlerocket has not joined the cluster yet.
 To see the hegel files, get the internal IP address for one of the new nodes. Then check for the names of hegel logs and display the contents of one of those logs, searching for the IP address of the node:
 
 ```bash

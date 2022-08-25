@@ -42,6 +42,7 @@ metadata:
   namespace: test-namespace
 spec:
   tinkerbellIP: "1.2.3.4"
+  osImageURL: "https://ubuntu.gz"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

@@ -66,7 +66,7 @@ spec:
 ```
 
 {{% alert title="Note" color="primary" %}}
-When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
+When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD.](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
 {{% /alert %}}
 
 ### Authenticating with IAM Authenticator

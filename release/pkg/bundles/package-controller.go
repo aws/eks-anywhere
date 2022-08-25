@@ -23,42 +23,50 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
+	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
 
 func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
-	artifacts := r.BundleArtifactsTable["eks-anywhere-packages"]
+	//artifacts := r.BundleArtifactsTable["eks-anywhere-packages"]
+
+	artifacts := map[string][]releasetypes.Artifact{
+		"eks-anywhere-packages": r.BundleArtifactsTable["eks-anywhere-packages"],
+		"ecr-token-refresher":   r.BundleArtifactsTable["ecr-token-refresher"],
+	}
+	sortedComponentNames := bundleutils.SortArtifactsMap(artifacts)
 
 	var sourceBranch string
 	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
 
-	for _, artifact := range artifacts {
-		imageArtifact := artifact.Image
-		sourceBranch = imageArtifact.SourcedFromBranch
-		bundleImageArtifact := anywherev1alpha1.Image{}
-		if strings.HasSuffix(imageArtifact.AssetName, "helm") {
-			assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
-			bundleImageArtifact = anywherev1alpha1.Image{
-				Name:        assetName,
-				Description: fmt.Sprintf("Helm chart for %s", assetName),
-				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+	for _, componentName := range sortedComponentNames {
+		for _, artifact := range artifacts[componentName] {
+			imageArtifact := artifact.Image
+			sourceBranch = imageArtifact.SourcedFromBranch
+			bundleImageArtifact := anywherev1alpha1.Image{}
+			if strings.HasSuffix(imageArtifact.AssetName, "helm") {
+				assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
+				bundleImageArtifact = anywherev1alpha1.Image{
+					Name:        assetName,
+					Description: fmt.Sprintf("Helm chart for %s", assetName),
+					URI:         imageArtifact.ReleaseImageURI,
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				}
+			} else {
+				bundleImageArtifact = anywherev1alpha1.Image{
+					Name:        imageArtifact.AssetName,
+					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+					OS:          imageArtifact.OS,
+					Arch:        imageArtifact.Arch,
+					URI:         imageArtifact.ReleaseImageURI,
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				}
 			}
-		} else {
-			bundleImageArtifact = anywherev1alpha1.Image{
-				Name:        imageArtifact.AssetName,
-				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-				OS:          imageArtifact.OS,
-				Arch:        imageArtifact.Arch,
-				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
-			}
+			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+			artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 		}
-
-		bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-		artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 	}
 
 	if r.DryRun {
@@ -75,9 +83,10 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 	}
 
 	bundle := anywherev1alpha1.PackageBundle{
-		Version:    version,
-		Controller: bundleImageArtifacts["eks-anywhere-packages"],
-		HelmChart:  bundleImageArtifacts["eks-anywhere-packages-helm"],
+		Version:        version,
+		Controller:     bundleImageArtifacts["eks-anywhere-packages"],
+		TokenRefresher: bundleImageArtifacts["ecr-token-refresher"],
+		HelmChart:      bundleImageArtifacts["eks-anywhere-packages-helm"],
 	}
 	return bundle, nil
 }

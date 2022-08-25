@@ -63,7 +63,7 @@ func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 
@@ -91,7 +91,7 @@ func TestTinkerbellStackInstallHookOverrideSuccess(t *testing.T) {
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 
@@ -117,7 +117,7 @@ func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
 	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
@@ -146,7 +146,7 @@ func TestTinkerbellStackUninstallLocalSucess(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	docker.EXPECT().ForceRemove(ctx, boots)
 
@@ -162,7 +162,7 @@ func TestTinkerbellStackUninstallLocalFailure(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	dockerError := "docker error"
 	expectedError := fmt.Sprintf("removing local boots container: %s", dockerError)
@@ -178,7 +178,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesNotExist(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
 	docker.EXPECT().ForceRemove(ctx, "boots")
@@ -193,7 +193,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDoesExist(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 	expectedErrorMsg := "boots container already exists, delete the container manually or re-run the command with --force-cleanup"
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(true, nil)
@@ -208,7 +208,7 @@ func TestTinkerbellStackCheckLocalBootsExistenceDockerError(t *testing.T) {
 	helm := mocks.NewMockHelm(mockCtrl)
 	writer := filewritermocks.NewMockFileWriter(mockCtrl)
 	ctx := context.Background()
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace)
+	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16")
 
 	docker.EXPECT().CheckContainerExistence(ctx, "boots").Return(false, nil)
 

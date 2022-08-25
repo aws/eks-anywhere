@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1.1-experimental
 
 # Build the manager binary
-FROM golang:1.17.8 as builder
+FROM golang:1.18.5 as builder
 WORKDIR /workspace
 
 # Run this with docker build --build_arg $(go env GOPROXY) to override the goproxy
@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -o main ./manager
 
 # Build
-ARG package=./controllers
+ARG package=./manager
 ARG ARCH
 ARG ldflags
 

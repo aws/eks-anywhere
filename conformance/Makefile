@@ -2,9 +2,9 @@ SHELL := /bin/bash
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GITHUB_USER?=$(shell git config --get remote.origin.url|sed -e 's/.*://' -e 's,/.*,,')
 SONOBUOY_OSARCH?=darwin_amd64
-TARGET_RELEASE?=1.22
+TARGET_RELEASE?=1.23
 TARGET_DIR=k8s-conformance/v$(TARGET_RELEASE)/eks-a
-K8S_VERSION=v1.22.6
+K8S_VERSION=v1.23.7
 
 .PHONY: default
 default: clean k8s-conformance sonobuoy sonobuoy-run sonobuoy-results generate git-commit
@@ -41,6 +41,7 @@ generate:
 
 .PHONY: git-commit
 git-commit:
+	cd k8s-conformance ; git add $(TARGET_DIR)/*
 	cd k8s-conformance ; git commit -a -m "AWS EKS Anywhere v$(TARGET_RELEASE) conformance" --signoff
 	cd k8s-conformance ; git push
 

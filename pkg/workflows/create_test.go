@@ -23,6 +23,7 @@ import (
 
 type createTestSetup struct {
 	t                *testing.T
+	packageInstaller *mocks.MockPackageInstaller
 	bootstrapper     *mocks.MockBootstrapper
 	clusterManager   *mocks.MockClusterManager
 	gitOpsManager    *mocks.MockGitOpsManager
@@ -64,6 +65,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		writer:           writer,
 		validator:        validator,
 		eksd:             eksd,
+		packageInstaller: packageInstaller,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -207,6 +209,14 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 	)
 }
 
+func (c *createTestSetup) skipCuratedPackagesInstallation() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(nil)
+}
+
+func (c *createTestSetup) expectCuratedPackagesInstallationFail() {
+	c.packageInstaller.EXPECT().InstallCuratedPackages(c.ctx).Return(errors.New("curated Packages installation failed"))
+}
+
 func (c *createTestSetup) expectInstallGitOpsManager() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
@@ -263,6 +273,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.expectCuratedPackagesInstallationFail()
 
 	err := test.run()
 	if err != nil {
@@ -285,6 +296,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.skipCuratedPackagesInstallation()
 
 	err := test.run()
 	if err != nil {
@@ -315,6 +327,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
 	test.expectPreflightValidationsToPass()
+	test.skipCuratedPackagesInstallation()
 
 	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)

@@ -17,7 +17,7 @@ var awsSecretYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
-	cronJobName       = "cronjob/ecr-refresher"
+	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
 )
 
@@ -29,6 +29,7 @@ type PackageControllerClient struct {
 	chartName           string
 	chartVersion        string
 	chartInstaller      ChartInstaller
+	clusterName         string
 	kubectl             KubectlRunner
 	eksaAccessKeyId     string
 	eksaSecretAccessKey string
@@ -39,9 +40,10 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
 		kubeConfig:     kubeConfig,
+		clusterName:    clusterName,
 		uri:            uri,
 		chartName:      chartName,
 		chartVersion:   chartVersion,
@@ -59,18 +61,19 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	values := []string{sourceRegistry}
+	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
+	values := []string{sourceRegistry, clusterName}
 	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
 	if err != nil {
 		return err
 	}
 
 	if err = pc.ApplySecret(ctx); err != nil {
-		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+		logger.Info("Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.")
 	}
 
 	if err = pc.CreateCronJob(ctx); err != nil {
-		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
+		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
 	}
 	return nil
 }
@@ -96,7 +99,7 @@ func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
 	}
 
 	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
-	stdOut, err := pc.kubectl.CreateFromYaml(ctx, result, params...)
+	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
 	if err != nil {
 		return fmt.Errorf("creating secret %v", err)
 	}
@@ -111,7 +114,7 @@ func (pc *PackageControllerClient) CreateCronJob(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("executing cron job %v", err)
 	}
-	fmt.Println(stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }
 

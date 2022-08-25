@@ -29,6 +29,7 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	forceClean            bool
 	skipIpCheck           bool
 	hardwareCSVPath       string
@@ -63,6 +64,8 @@ func init() {
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
+
+	setupTimeoutFlags(createClusterCmd, &cc.timeoutOptions)
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -143,10 +146,15 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 
+	clusterManagerOpts, err := buildClusterManagerOpts(cc.timeoutOptions)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster manager opts: %v", err)
+	}
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -218,25 +226,31 @@ func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cl
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
-		if found && len(env) > 0 {
-			mountDirs := strings.Split(env, ",")
-			for _, dir := range mountDirs {
-				if _, err := os.Stat(dir); err != nil {
-					return nil, fmt.Errorf("invalid host path to mount: %v", err)
-				}
-				dirs = append(dirs, dir)
-			}
+		if extraDirs, err := cc.extraDirectoriesToMount(); err == nil {
+			dirs = append(dirs, extraDirs...)
 		}
 	}
 
 	return dirs, nil
 }
 
-func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{
-		MaxWaitPerMachine: config.GetMaxWaitPerMachine(),
+func (cc *createClusterOptions) extraDirectoriesToMount() ([]string, error) {
+	dirs := []string{}
+	env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
+	if found && len(env) > 0 {
+		mountDirs := strings.Split(env, ",")
+		for _, dir := range mountDirs {
+			if _, err := os.Stat(dir); err != nil {
+				return nil, fmt.Errorf("invalid host path to mount: %v", err)
+			}
+			dirs = append(dirs, dir)
+		}
 	}
+	return dirs, nil
+}
+
+func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
+	cliConfig := &config.CliConfig{}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
 		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
 		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)

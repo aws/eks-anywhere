@@ -9,41 +9,88 @@ description: >
 
 The main goal of EKS Anywhere curated packages is to make it easy to install, configure and maintain operational components in an EKS Anywhere cluster. EKS Anywhere curated packages offers to run secure and tested operational components on EKS Anywhere clusters. Please check out [EKS Anywhere curated packages concepts]({{< relref "../../concepts/packages" >}}) and [EKS Anywhere curated packages configurations]({{< relref "../../reference/clusterspec/packages.md" >}}) for more details.
 
-### Check the existence of package controller
-```bash
-kubectl get pods -n eksa-packages | grep "eks-anywhere-packages"
+Use the `eksctl anywhere version` command to verify you are running `v0.11.0` or later for curated package support. Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
+
+### Setup authentication to use curated-packages
+
+When you have been notified that your account has been given access to curated packages, create a user in your account with a policy that only allows ECR read access similar to this:
+
 ```
-Skip the following installation steps if the returned result is not empty.
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:DescribeImageScanFindings",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:DescribeRegistry",
+                "ecr:DescribePullThroughCacheRules",
+                "ecr:DescribeImageReplicationStatus",
+                "ecr:GetAuthorizationToken",
+                "ecr:ListTagsForResource",
+                "ecr:ListImages",
+                "ecr:BatchGetImage",
+                "ecr:DescribeImages",
+                "ecr:DescribeRepositories",
+                "ecr:BatchCheckLayerAvailability",
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
 
-{{% alert title="Important" color="warning" %}}
+Create credentials for this user and set and export the following environment variables:
+```bash
+export EKSA_AWS_REGION="your-region"
+export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
+export AWS_ACCESS_KEY_ID="your*access*id"
+export AWS_SECRET_ACCESS_KEY="your*secret*key"
+```
+Make sure you are authenticated with the AWS CLI
 
-* To install EKS Anywhere, create an EKS Anywhere cluster or review the EKS Anywhere system requirements. See the [Getting started]({{< relref "../../getting-started" >}}) guide for details.
+```
+aws sts get-caller-identity
+```
 
-* Check if the version of `eksctl anywhere` is `v0.9.0` or above with the following commands:
-    ```bash
-    eksctl anywhere version
-    ```
-* Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager and follow the instructions below to finish the package controller installation.
+Login to docker
 
-{{% /alert %}}
+```
+aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
+```
 
-### Install package controller
+Verify you can pull an image
+```
+docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
+```
+If the image downloads successfully, it worked!
 
-1. Install the package controller
-    ```bash
-    export CURATED_PACKAGES_SUPPORT=true
-    eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
-    ```
+### Discover curated packages
 
-1. Check the package controller
-    ```bash
-    kubectl get pods -n eksa-packages
-    ```
+You can get a list of the available packages from the command line:
 
-    Example command output
-    ```
-    NAME                                       READY   STATUS     RESTARTS   AGE
-    eks-anywhere-packages-57778bc88f-587tq     2/2     Running    0          16h
-    ```
-### Curated package list
-See [packages]({{< relref "../../reference/packagespec" >}}) for the complete curated package list.
+```bash
+eksctl anywhere list packages --source registry --kube-version 1.23
+```
+
+Example command output:
+```                 
+Package                 Version(s)                                       
+-------                 ----------                                       
+hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+harbor                  2.5.1-a217465b3b2d165634f9c24a863fa67349c7268a   
+metallb                 0.12.1-b9e4e5d941ccd20c72b4fec366ffaddb79bbc578  
+emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
+```
+
+### Generate a curated-packages config
+
+The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
+```bash
+eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
+```
+
+Available curated packages are listed below.

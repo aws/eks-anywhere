@@ -32,8 +32,9 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 	artifacts = append(artifacts, r.BundleArtifactsTable[fmt.Sprintf("kind-%s", eksDReleaseChannel)]...)
 
 	tarballArtifacts := map[string][]releasetypes.Artifact{
-		"cri-tools": r.BundleArtifactsTable["cri-tools"],
-		"etcdadm":   r.BundleArtifactsTable["etcdadm"],
+		"cri-tools":     r.BundleArtifactsTable["cri-tools"],
+		"etcdadm":       r.BundleArtifactsTable["etcdadm"],
+		"image-builder": r.BundleArtifactsTable["image-builder"],
 	}
 
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
@@ -124,25 +125,14 @@ func GetEksDReleaseBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel, kub
 		EksDReleaseUrl: eksDManifestUrl,
 		GitCommit:      gitCommit,
 		KindNode:       bundleImageArtifacts["kind-node"],
+		Etcdadm:        bundleArchiveArtifacts["etcdadm"],
+		Crictl:         bundleArchiveArtifacts["cri-tools"],
+		ImageBuilder:   bundleArchiveArtifacts["image-builder"],
 		Ova: anywherev1alpha1.OSImageBundle{
-			Bottlerocket: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["bottlerocket-ova"],
-			},
-			Ubuntu: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["ubuntu-ova"],
-				Etcdadm: bundleArchiveArtifacts["etcdadm"],
-				Crictl:  bundleArchiveArtifacts["cri-tools"],
-			},
+			Bottlerocket: bundleArchiveArtifacts["bottlerocket-ova"],
 		},
 		Raw: anywherev1alpha1.OSImageBundle{
-			Bottlerocket: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["bottlerocket-raw"],
-			},
-			Ubuntu: anywherev1alpha1.OSImage{
-				Archive: bundleArchiveArtifacts["ubuntu-raw"],
-				Etcdadm: bundleArchiveArtifacts["etcdadm"],
-				Crictl:  bundleArchiveArtifacts["cri-tools"],
-			},
+			Bottlerocket: bundleArchiveArtifacts["bottlerocket-raw"],
 		},
 		Components: constants.EksDReleaseComponentsUrl,
 	}

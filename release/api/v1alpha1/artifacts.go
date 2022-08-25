@@ -85,8 +85,7 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 
 func (vb *VersionsBundle) Ovas() []Archive {
 	return []Archive{
-		vb.EksD.Ova.Bottlerocket.Archive,
-		vb.EksD.Ova.Ubuntu.Archive,
+		vb.EksD.Ova.Bottlerocket,
 	}
 }
 
@@ -157,6 +156,8 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.ExternalEtcdController.Controller,
 		vb.ExternalEtcdController.KubeProxy,
 		vb.Haproxy.Image,
+		vb.PackageController.Controller,
+		vb.PackageController.TokenRefresher,
 	}
 }
 

@@ -7,11 +7,11 @@ import (
 )
 
 type ConfigManager struct {
-	validator  *Validator
+	validator  *AwsClientValidator
 	defaulters *Defaulters
 }
 
-func NewConfigManager(defaulters *Defaulters, validators *Validator) *ConfigManager {
+func NewConfigManager(defaulters *Defaulters, validators *AwsClientValidator) *ConfigManager {
 	return &ConfigManager{
 		validator:  validators,
 		defaulters: defaulters,

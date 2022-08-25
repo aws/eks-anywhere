@@ -15,6 +15,7 @@ import (
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -52,6 +53,7 @@ var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
+	rufioBaseboardManagementResourceType = fmt.Sprintf("baseboardmanagements.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -339,7 +341,11 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
-func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string) error {
+func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
+}
+
+func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
@@ -354,7 +360,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace)
+			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace, opts...)
 		},
 	)
 	if err != nil {
@@ -383,16 +389,22 @@ func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.
 	return false, 0
 }
 
-func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
+func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
 	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
 		return fmt.Errorf("error: timed out waiting for condition %v on %v", forCondition, property)
 	}
 	kubectlTimeoutString := fmt.Sprintf("%.*fs", timeoutPrecision, secondsRemainingUntilTimeout)
-
-	_, err := k.Execute(ctx, "wait", "--timeout", kubectlTimeoutString,
-		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
-	return err
+	params := []string{
+		"wait", "--timeout", kubectlTimeoutString,
+		"--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace,
+	}
+	applyOpts(&params, opts...)
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("executing wait: %v", err)
+	}
+	return nil
 }
 
 func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
@@ -922,6 +934,10 @@ func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
 }
 
+func WithWaitAll() KubectlOpt {
+	return appendOpt("--all")
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -1356,6 +1372,32 @@ func (k *Kubectl) GetUnprovisionedTinkerbellHardware(ctx context.Context, kubeco
 	return list.Items, nil
 }
 
+// GetProvisionedTinkerbellHardware retrieves provisioned Tinkerbell Hardware objects.
+// Provisioned objects are those with owner reference information.
+func (k *Kubectl) GetProvisionedTinkerbellHardware(ctx context.Context, kubeconfig, namespace string) ([]tinkv1alpha1.Hardware, error) {
+	// Retrieve hardware resources that have the `v1alpha1.tinkerbell.org/ownerName` label.
+	// This label is used to populate hardware when the CAPT controller acquires the Hardware
+	// resource for provisioning.
+	params := []string{
+		"get", TinkerbellHardwareResourceType,
+		"-l", "v1alpha1.tinkerbell.org/ownerName",
+		"--kubeconfig", kubeconfig,
+		"-o", "json",
+		"--namespace", namespace,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+
+	var list tinkv1alpha1.HardwareList
+	if err := json.Unmarshal(stdOut.Bytes(), &list); err != nil {
+		return nil, err
+	}
+
+	return list.Items, nil
+}
+
 func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
 	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1657,6 +1699,6 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kub
 	return nil
 }
 
-func (k *Kubectl) CreateFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
+func (k *Kubectl) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
 	return k.ExecuteWithStdin(ctx, yaml, opts...)
 }

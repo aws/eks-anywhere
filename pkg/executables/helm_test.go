@@ -198,7 +198,7 @@ func TestHelmInstallChartWithValuesFileSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig,
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
@@ -212,7 +212,7 @@ func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	valuesFileName := "values.yaml"
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--values", valuesFileName, "--kubeconfig", kubeconfig, "--wait", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())

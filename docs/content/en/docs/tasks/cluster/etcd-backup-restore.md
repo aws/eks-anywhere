@@ -3,6 +3,8 @@ title: "Etcd Backup and Restore"
 linkTitle: "Etcd Backup and Restore"
 weight: 11
 date: 2021-11-04
+description: >
+  How to backup and restore an EKS Anywhere cluster
 ---
 
 >**_NOTE_**: External etcd topology is supported for vSphere clusters, but not yet for Bare Metal clusters.

@@ -78,7 +78,7 @@ func validateImmutableAWSIamFields(new, old *AWSIamConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "AWSIamConfig"), new, "config is immutable"),
+			field.Forbidden(field.NewPath(AWSIamConfigKind), "config is immutable"),
 		)
 	}
 

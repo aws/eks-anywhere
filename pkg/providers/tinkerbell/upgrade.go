@@ -73,8 +73,10 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 
 	// If we've been given a CSV with additional hardware for the cluster, validate it and
 	// write it to the catalogue so it can be used for further processing.
-	if p.hardareCSVIsProvided() {
+	if p.hardwareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+
+		writer := hardware.MultiMachineWriter(machineCatalogueWriter, &p.diskExtractor)
 
 		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
@@ -88,7 +90,7 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		machineValidator := hardware.NewDefaultMachineValidator()
 		machineValidator.Register(hardware.MatchingDisksForSelectors(selectors))
 
-		if err := hardware.TranslateAll(machines, machineCatalogueWriter, machineValidator); err != nil {
+		if err := hardware.TranslateAll(machines, writer, machineValidator); err != nil {
 			return err
 		}
 	}
@@ -105,6 +107,25 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 	}
 	for i := range hardware {
 		if err := p.catalogue.InsertHardware(&hardware[i]); err != nil {
+			return err
+		}
+		if err := p.diskExtractor.InsertDisks(&hardware[i]); err != nil {
+			return err
+		}
+	}
+
+	// Retrieve all provisioned hardware from the existing cluster and populate diskExtractors's
+	// disksProvisionedHardware map for use during upgrade
+	hardware, err = p.providerKubectlClient.GetProvisionedTinkerbellHardware(
+		ctx,
+		cluster.KubeconfigFile,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("retrieving provisioned hardware: %v", err)
+	}
+	for i := range hardware {
+		if err := p.diskExtractor.InsertProvisionedHardwareDisks(&hardware[i]); err != nil {
 			return err
 		}
 	}
@@ -134,6 +155,13 @@ func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, curr
 	return nil
 }
 
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	allHardware := p.catalogue.AllHardware()
 	if len(allHardware) == 0 {
@@ -147,6 +175,10 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
+	err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	if err != nil {
+		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}
 	return nil
 }
@@ -176,13 +208,27 @@ func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types
 	return false, nil
 }
 
-func (p *Provider) PostClusterDeleteForUpgrade(ctx context.Context, managementCluster *types.Cluster) error {
-	if err := p.stackInstaller.UninstallLocal(ctx); err != nil {
-		return err
-	}
-	return nil
+func (p *Provider) hardwareCSVIsProvided() bool {
+	return p.hardwareCSVFile != ""
 }
 
-func (p *Provider) hardareCSVIsProvided() bool {
-	return p.hardwareCSVFile != ""
+func (p *Provider) isScaleUpDown(currentSpec *cluster.Spec, newSpec *cluster.Spec) bool {
+	if currentSpec.Cluster.Spec.ControlPlaneConfiguration.Count != newSpec.Cluster.Spec.ControlPlaneConfiguration.Count {
+		return true
+	}
+
+	workerNodeGroupMap := make(map[string]*v1alpha1.WorkerNodeGroupConfiguration)
+	for _, workerNodeGroupConfiguration := range currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMap[workerNodeGroupConfiguration.Name] = &workerNodeGroupConfiguration
+	}
+
+	for _, nodeGroupNewSpec := range newSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGrpOldSpec, ok := workerNodeGroupMap[nodeGroupNewSpec.Name]; ok {
+			if nodeGroupNewSpec.Count != workerNodeGrpOldSpec.Count {
+				return true
+			}
+		}
+	}
+
+	return false
 }

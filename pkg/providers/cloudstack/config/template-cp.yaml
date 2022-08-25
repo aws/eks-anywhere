@@ -11,12 +11,15 @@ spec:
       cidrBlocks: {{.podCidrs}}
     services:
       cidrBlocks: {{.serviceCidrs}}
+  controlPlaneEndpoint:
+    host: {{.controlPlaneEndpointHost}}
+    port: {{.controlPlaneEndpointPort}}
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
@@ -26,7 +29,7 @@ spec:
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackCluster
 metadata:
   name: {{.clusterName}}
@@ -35,25 +38,20 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  zones:{{ range $zone := .cloudstackZones }}
-    - network:
-{{- if $zone.Network.Id }}
-        id: {{ $zone.Network.Id}}
-{{- end}}
-{{- if $zone.Network.Name }}
-        name: {{ $zone.Network.Name}}
-{{- end}}
-{{- if $zone.Id }}
-      id: {{ $zone.Id }}
-{{- end}}
-{{- if $zone.Name }}
-      name: {{ $zone.Name }}
-{{- end}}
-{{- end}}
-  {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
-  {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
+  failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
+  - name: {{ $az.Name }}
+    zone:
+      name: {{ $az.Zone.Name }}
+      network:
+        name: {{ $az.Zone.Network.Name }}
+    domain: {{ $az.Domain }}
+    account: {{ $az.Account }}
+    acsEndpoint:
+      name: {{ $az.CredentialsRef }}
+      namespace: eksa-system
+{{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -113,7 +111,7 @@ spec:
       affinity: '{{ .cloudstackControlPlaneAffinity }}'
 {{- end }}
 {{- if .cloudstackControlPlaneAffinityGroupIds }}
-      affinitygroupids:
+      affinityGroupIDs:
       {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
@@ -127,7 +125,7 @@ metadata:
 spec:
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: CloudStackMachineTemplate
       name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
@@ -492,11 +490,11 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: CloudStackMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
@@ -556,7 +554,7 @@ spec:
       affinity: '{{ .cloudstackEtcdAffinity }}'
 {{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
-      affinitygroupids:
+      affinityGroupIDs:
       {{- range .cloudstackEtcdAffinityGroupIds }}
       - {{.}}
       {{- end }}

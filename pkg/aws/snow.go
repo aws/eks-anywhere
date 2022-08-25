@@ -14,13 +14,7 @@ const (
 	snowEC2Port = 8243
 )
 
-type snowAwsClientBuilder struct{}
-
-func NewSnowAwsClientBuilder() *snowAwsClientBuilder {
-	return &snowAwsClientBuilder{}
-}
-
-func (b *snowAwsClientBuilder) BuildSnowAwsClientMap(ctx context.Context) (Clients, error) {
+func BuildClients(ctx context.Context) (Clients, error) {
 	credsFile, err := AwsCredentialsFile()
 	if err != nil {
 		return nil, fmt.Errorf("fetching aws credentials from env: %v", err)
@@ -73,7 +67,7 @@ func WithCustomCABundleFile(certsFile string) AwsConfigOpt {
 	}
 }
 
-// WithSnowEndpointAccess gatheres all the config's LoadOptions for snow,
+// WithSnowEndpointAccess gathers all the config's LoadOptions for snow,
 // which includes snowball ec2 endpoint, snow credentials for a specific profile,
 // and CA bundles for accessing the https endpoint.
 func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
