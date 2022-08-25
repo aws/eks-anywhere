@@ -28,11 +28,7 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		return fmt.Errorf("failed loading manifest for eksa components: %v", err)
 	}
 
-	err = c.Retry(
-		func() error {
-			return c.ApplyKubeSpecFromBytes(ctx, cluster, componentsManifest.Content)
-		},
-	)
+	err = c.ApplyKubeSpecFromBytes(ctx, cluster, componentsManifest.Content)
 	if err != nil {
 		return fmt.Errorf("applying eks-a components spec: %v", err)
 	}
@@ -50,4 +46,12 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		}
 	}
 	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
+}
+
+func (c *retrierClient) ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.ApplyKubeSpecFromBytes(ctx, cluster, data)
+		},
+	)
 }

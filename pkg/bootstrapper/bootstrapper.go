@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
+	"github.com/aws/eks-anywhere/pkg/retrier"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -11,8 +14,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+const (
+	maxRetries           = 10
+	defaultBackOffPeriod = 5 * time.Second
+)
+
 type Bootstrapper struct {
-	clusterClient ClusterClient
+	clusterClient retrierClient
 }
 
 type ClusterClient interface {
@@ -35,10 +43,17 @@ type (
 	BootstrapClusterOption       func(b *Bootstrapper) BootstrapClusterClientOption
 )
 
-func New(clusterClient ClusterClient) *Bootstrapper {
-	return &Bootstrapper{
-		clusterClient: clusterClient,
+func New(clusterClient ClusterClient, opts ...BootstrapperOpt) *Bootstrapper {
+	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
+	retrierClient := NewRetrierClient(&clusterClient, retrier)
+	bootstrapper := &Bootstrapper{
+		clusterClient: *retrierClient,
 	}
+
+	for _, o := range opts {
+		o(bootstrapper)
+	}
+	return bootstrapper
 }
 
 func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...BootstrapClusterOption) (*types.Cluster, error) {
@@ -56,12 +71,20 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		return nil, err
 	}
 
-	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)
+	err = cluster.ApplyExtraObjects(ctx, &b.clusterClient, c, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("applying extra objects to bootstrap cluster: %v", err)
 	}
 
 	return c, nil
+}
+
+type BootstrapperOpt func(*Bootstrapper)
+
+func WithRetrier(retrier *retrier.Retrier) BootstrapperOpt {
+	return func(c *Bootstrapper) {
+		c.clusterClient.Retrier = retrier
+	}
 }
 
 func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, isUpgrade bool) error {
