@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -283,10 +284,72 @@ func TestKubectlWaitSuccess(t *testing.T) {
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"wait", "--timeout", timeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+
+	// KubeCtl wait does not tolerate blank timeout values.
+	// It also converts timeouts provided to seconds before actually invoking kubectl wait.
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
 	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err != nil {
 		t.Errorf("Kubectl.Wait() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlWaitBadTimeout(t *testing.T) {
+	var timeout, kubeconfig, forCondition, property, namespace string
+
+	k, ctx, _, _ := newKubectl(t)
+
+	timeout = "1y"
+	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
+		t.Errorf("Kubectl.Wait() error = nil, want duration parse error")
+	}
+
+	timeout = "-1s"
+	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
+		t.Errorf("Kubectl.Wait() error = nil, want duration parse error")
+	}
+}
+
+func TestKubectlWaitRetryPolicy(t *testing.T) {
+	connectionRefusedError := fmt.Errorf("The connection to the server 127.0.0.1:56789 was refused")
+	ioTimeoutError := fmt.Errorf("Unable to connect to the server 127.0.0.1:56789, i/o timeout\n")
+	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
+
+	_, wait := executables.KubectlWaitRetryPolicy(1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for connection refused")
+	}
+
+	_, wait = executables.KubectlWaitRetryPolicy(-1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly protect for total retries < 0")
+	}
+
+	_, wait = executables.KubectlWaitRetryPolicy(2, connectionRefusedError)
+	if wait != 15*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly protect for second retry wait")
+	}
+
+	_, wait = executables.KubectlWaitRetryPolicy(1, ioTimeoutError)
+	if wait != 10*time.Second {
+		t.Errorf("kubectlWaitRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	retry, _ := executables.KubectlWaitRetryPolicy(1, miscellaneousError)
+	if retry != false {
+		t.Errorf("kubectlWaitRetryPolicy didn't not-retry on non-network error")
+	}
+}
+
+func TestWaitForTimeout(t *testing.T) {
+	k := executables.Kubectl{}
+	timeoutTime := time.Now()
+	err := executables.CallKubectlPrivateWait(&k, nil, "", timeoutTime, "myCondition", "myProperty", "")
+	if err == nil || err.Error() != "error: timed out waiting for condition myCondition on myProperty" {
+		t.Errorf("kubectl private wait didn't timeout")
 	}
 }
 
@@ -354,10 +417,45 @@ func TestKubectlWaitError(t *testing.T) {
 	var timeout, kubeconfig, forCondition, property, namespace string
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"wait", "--timeout", timeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err == nil {
 		t.Errorf("Kubectl.Wait() error = nil, want not nil")
+	}
+}
+
+func TestKubectlWaitNetworkErrorWithRetries(t *testing.T) {
+	var timeout, kubeconfig, forCondition, property, namespace string
+
+	t.Log("This test tests actual kubectl retries with backoff, and hence is slow running.  Expect approx 25s.")
+
+	k, ctx, _, e := newKubectl(t)
+
+	timeout = "1m"
+	expectedTimeout := "60.00s"
+
+	expectedParam := []string{"wait", "--timeout", expectedTimeout, "--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace}
+	firstTry := e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("The connection to the server 127.0.0.1:56789 was refused"))
+
+	// Kubectl Wait is intelligently adjusting the timeout param on retries.  This is hard to predict from within the test
+	//  so I'm not having the mock validate params on the retried calls.
+
+	secondTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("Unable to connect to the server: 127.0.0.1: 56789, i/o timeout.\n"))
+
+	thirdTry := e.EXPECT().Execute(ctx, gomock.Any()).Return(bytes.Buffer{}, nil)
+
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+		thirdTry,
+	)
+
+	if err := k.Wait(ctx, kubeconfig, timeout, forCondition, property, namespace); err != nil {
+		t.Errorf("Kubectl.Wait() error = %v, want nil", err)
 	}
 }
 
@@ -2312,30 +2410,41 @@ func TestKubectlDelete(t *testing.T) {
 
 func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 	tt := newKubectlTest(t)
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=ManagedEtcdReady=false", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=ManagedEtcdReady=false", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
+	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
 
 func TestKubectlWaitForClusterReady(t *testing.T) {
 	tt := newKubectlTest(t)
+
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
 	tt.e.EXPECT().Execute(
 		tt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Ready", "clusters.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
 	).Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, "5m", "test")).To(Succeed())
+	tt.Expect(tt.k.WaitForClusterReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
 
 func TestWaitForBaseboardManagements(t *testing.T) {
 	kt := newKubectlTest(t)
+
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
 	kt.e.EXPECT().Execute(
 		kt.ctx,
-		"wait", "--timeout", "5m", "--for=condition=Contactable", "baseboardmanagements.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
+		"wait", "--timeout", expectedTimeout, "--for=condition=Contactable", "baseboardmanagements.bmc.tinkerbell.org", "--kubeconfig", kt.cluster.KubeconfigFile, "-n", "eksa-system", "--all",
 	).Return(bytes.Buffer{}, nil)
 
-	kt.Expect(kt.k.WaitForBaseboardManagements(kt.ctx, kt.cluster, "5m", "Contactable", "eksa-system")).To(Succeed())
+	kt.Expect(kt.k.WaitForBaseboardManagements(kt.ctx, kt.cluster, timeout, "Contactable", "eksa-system")).To(Succeed())
 }
