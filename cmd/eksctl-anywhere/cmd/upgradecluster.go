@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -138,10 +137,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 	defer close(ctx, deps)
-
-	if deps.Provider.Name() == "tinkerbell" {
-		return errors.New("upgrade operation is not supported for provider tinkerbell")
-	}
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
