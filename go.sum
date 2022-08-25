@@ -280,8 +280,8 @@ github.com/aws/aws-sdk-go-v2/service/sso v1.11.3 h1:frW4ikGcxfAEDfmQqWgMLp+F1n4n
 github.com/aws/aws-sdk-go-v2/service/sso v1.11.3/go.mod h1:7UQ/e69kU7LDPtY40OyoHYgRmgfGM4mgsLYtcObdveU=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3 h1:cJGRyzCSVwZC7zZZ1xbx9m32UnrKydRYhOvcD1NYP9Q=
 github.com/aws/aws-sdk-go-v2/service/sts v1.16.3/go.mod h1:bfBj0iVmsUyUg4weDB4NxktD9rDGeKSVWnjTnwbx9b8=
-github.com/aws/eks-anywhere-packages v0.2.0-alpha.3 h1:czmEGJUqZqOKiM3d923BfrEjGVIkl9vhLyd5hDsOuRQ=
-github.com/aws/eks-anywhere-packages v0.2.0-alpha.3/go.mod h1:iV6QgEh8ZSh2cSLMCLKdxHRKD2lvBtw3PXPRzqZVY2w=
+github.com/aws/eks-anywhere-packages v0.2.0-alpha.6 h1:aV7/6rr0KIsCU3/CljVMATaCyNWwaSc6sCfkPgI560g=
+github.com/aws/eks-anywhere-packages v0.2.0-alpha.6/go.mod h1:iV6QgEh8ZSh2cSLMCLKdxHRKD2lvBtw3PXPRzqZVY2w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
 github.com/aws/smithy-go v1.8.0/go.mod h1:SObp3lf9smib00L/v3U2eAKG8FyQ7iLrJnQiAmR5n+E=

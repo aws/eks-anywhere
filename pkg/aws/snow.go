@@ -14,13 +14,7 @@ const (
 	snowEC2Port = 8243
 )
 
-type snowAwsClientBuilder struct{}
-
-func NewSnowAwsClientBuilder() *snowAwsClientBuilder {
-	return &snowAwsClientBuilder{}
-}
-
-func (b *snowAwsClientBuilder) Build(ctx context.Context) (Clients, error) {
+func BuildClients(ctx context.Context) (Clients, error) {
 	credsFile, err := AwsCredentialsFile()
 	if err != nil {
 		return nil, fmt.Errorf("fetching aws credentials from env: %v", err)

@@ -54,3 +54,10 @@ func TestSetDefaultSshKeyImportKeyError(t *testing.T) {
 	err := g.machineConfigDefaulters.SetupDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }
+
+func TestSetDefaultSshKeyClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
+	g.machineConfig.Spec.SshKeyName = ""
+	err := g.machineConfigDefaulters.SetupDefaultSshKey(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}

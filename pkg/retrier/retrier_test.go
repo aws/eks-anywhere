@@ -171,3 +171,17 @@ func TestNewWithRetryPolicyFinishByPolicy(t *testing.T) {
 		t.Fatalf("Wrong number of retries, got %d, want %d", gotRetries, wantRetries)
 	}
 }
+
+func TestRetrierWithNilReceiver(t *testing.T) {
+	var retrier *retrier.Retrier = nil // This seems improbable, but happens in some other unit tests.
+
+	expectedError := errors.New("my expected error")
+	retryable := func() error {
+		return expectedError
+	}
+
+	err := retrier.Retry(retryable)
+	if err == nil || err.Error() != expectedError.Error() {
+		t.Errorf("Retrier didn't correctly handle nil receiver")
+	}
+}

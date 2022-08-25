@@ -17,7 +17,7 @@ var awsSecretYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
-	cronJobName       = "cronjob/ecr-refresher"
+	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
 )
 
@@ -114,7 +114,7 @@ func (pc *PackageControllerClient) CreateCronJob(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("executing cron job %v", err)
 	}
-	fmt.Println(stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }
 

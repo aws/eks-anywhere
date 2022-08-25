@@ -83,46 +83,22 @@ Make sure you use single quotes around the values so that your shell does not in
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster.
 
 
-1. Create initial cluster: Create your initial cluster either with or without curated packages:
-   - Cluster creation  without curated packages installation
-      ```bash
-      # Create a cluster without curated packages installation
-      eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
-      ```
+1. Configure Curated Packages
 
-   - Cluster creation with optional curated packages
+   The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../tasks/packages" >}}).
 
-     {{% alert title="Note" color="primary" %}}
-   * It is *optional* to install the curated packages as part of the cluster creation.
-   * `eksctl anywhere version` version should be `v0.9.0` or later.
-   * If including curated packages during cluster creation, please set the environment variable: `export CURATED_PACKAGES_SUPPORT=true`
-   * Post-creation installation and detailed package configurations can be found [here.]({{< relref "../../tasks/packages" >}})
-   * The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/).
-     {{% /alert %}}
+   If you are going to use packages, set up authentication:
+   ```bash
+   export EKSA_AWS_REGION="your-region"
+   export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
+   export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
+   ```
+     
+1. Create cluster
 
-      * Discover curated packages to install
-         ```bash
-         eksctl anywhere list packages --source registry --kube-version 1.21
-         ```
-         Example command output
-         ```                 
-         Package                 Version(s)                                       
-         -------                 ----------                                       
-         harbor                  2.5.0-4324383d8c5383bded5f7378efb98b4d50af827b
-         ```
-      * Generate a curated-packages config
-
-         The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
-         ```bash
-         eksctl anywhere generate package harbor --source registry --kube-version 1.21 > packages.yaml
-         ```
-
-      * Create the initial cluster
-
-         ```bash
-         # Create a cluster with curated packages installation
-         eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml --install-packages packages.yaml
-         ```
+   ```bash
+   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
+   ```
 
 1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
@@ -202,8 +178,10 @@ Follow these steps if you want to use your initial cluster to create and manage 
 
    As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
 
+
    {{% alert title="Note" color="primary" %}}
-   Curated packages installation at workload cluster creation is currently not supported. Refer to instructions [here]({{< relref "../../tasks/packages" >}}) for how to install curated packages after cluster creation.
+   Curated packages installation at workload cluster creation is currently not supported.
+   Refer to instructions on how to install curated packages after cluster creation [here.]({{< relref "../../tasks/packages " >}})
    {{% /alert %}}
 
 1. Check the workload cluster:
@@ -217,7 +195,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
 
-   Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
+   Verify the test application in the [deploy test application section.]({{< relref "../../tasks/workload/test-app" >}})
 
 1. Add more workload clusters:
 

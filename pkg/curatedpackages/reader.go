@@ -27,11 +27,7 @@ func NewPackageReader(mr *manifests.Reader) *PackageReader {
 }
 
 func (r *PackageReader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.Reader.ReadImagesFromBundles(b)
-	for _, v := range b.Spec.VersionsBundles {
-		images = append(images, v.PackageControllerImage()...)
-	}
-	return images, err
+	return r.Reader.ReadImagesFromBundles(b)
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {

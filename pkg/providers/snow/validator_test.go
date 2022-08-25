@@ -22,7 +22,7 @@ type configManagerTest struct {
 	aws                     *mocks.MockAwsClient
 	keyGenerator            *mocks.MockSshKeyGenerator
 	writer                  filewriter.FileWriter
-	validator               *snow.Validator
+	validator               *snow.AwsClientValidator
 	defaulters              *snow.Defaulters
 	machineConfigDefaulters *snow.MachineConfigDefaulters
 	machineConfig           *v1alpha1.SnowMachineConfig
@@ -37,6 +37,8 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 		"device-1": mockaws,
 		"device-2": mockaws,
 	}
+	mockClientRegistry := mocks.NewMockClientRegistry(ctrl)
+	mockClientRegistry.EXPECT().Get(ctx).Return(awsClients, nil).AnyTimes()
 	m := &v1alpha1.SnowMachineConfig{
 		ObjectMeta: v1.ObjectMeta{
 			Name: "cp-machine",
@@ -51,12 +53,46 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 		},
 	}
 	_, writer := test.NewWriter(t)
-	validators := snow.NewValidatorFromAwsClientMap(awsClients)
-	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, writer, mockKeyGenerator)
+	validators := snow.NewValidator(mockClientRegistry)
+	defaulters := snow.NewDefaulters(mockClientRegistry, writer, snow.WithKeyGenerator(mockKeyGenerator))
 	return &configManagerTest{
 		WithT:                   NewWithT(t),
 		ctx:                     ctx,
 		aws:                     mockaws,
+		keyGenerator:            mockKeyGenerator,
+		writer:                  writer,
+		validator:               validators,
+		defaulters:              defaulters,
+		machineConfigDefaulters: snow.NewMachineConfigDefaulters(defaulters),
+		machineConfig:           m,
+	}
+}
+
+func newConfigManagerTestClientMapError(t *testing.T) *configManagerTest {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	mockKeyGenerator := mocks.NewMockSshKeyGenerator(ctrl)
+	mockClientRegistry := mocks.NewMockClientRegistry(ctrl)
+	mockClientRegistry.EXPECT().Get(ctx).Return(nil, errors.New("test error"))
+	m := &v1alpha1.SnowMachineConfig{
+		ObjectMeta: v1.ObjectMeta{
+			Name: "cp-machine",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			AMIID:      "ami-1",
+			SshKeyName: "default",
+			Devices: []string{
+				"device-1",
+				"device-2",
+			},
+		},
+	}
+	_, writer := test.NewWriter(t)
+	validators := snow.NewValidator(mockClientRegistry)
+	defaulters := snow.NewDefaulters(mockClientRegistry, writer, snow.WithKeyGenerator(mockKeyGenerator))
+	return &configManagerTest{
+		WithT:                   NewWithT(t),
+		ctx:                     ctx,
 		keyGenerator:            mockKeyGenerator,
 		writer:                  writer,
 		validator:               validators,
@@ -83,6 +119,19 @@ func TestValidateEC2SshKeyNameExistsNotExists(t *testing.T) {
 func TestValidateEC2SshKeyNameExistsError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.machineConfig.Spec.SshKeyName).Return(false, errors.New("error"))
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateEC2SshKeyNameEmpty(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.SshKeyName = ""
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
+	g.Expect(err).To(Succeed())
+}
+
+func TestValidateEC2SshKeyNameClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
 	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }
@@ -115,10 +164,22 @@ func TestValidateEC2ImageExistsOnDeviceError(t *testing.T) {
 	g.Expect(err).NotTo(Succeed())
 }
 
+func TestValidateEC2ImageExistsOnDeviceClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}
+
 func TestValidateMachineDeviceIPs(t *testing.T) {
 	g := newConfigManagerTest(t)
 	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
+}
+
+func TestValidateMachineDeviceIPsClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
+	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
 }
 
 func TestValidateMachineDeviceIPsNotValid(t *testing.T) {

@@ -112,7 +112,6 @@ func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorFromTemplat
 }
 
 func TestReconcilerReconcileAlreadyInDesiredVersionWithPreflightErrorDeletingYaml(t *testing.T) {
-	t.Skip("Flaky test, needs to be fixed")
 	ds := ciliumDaemonSet()
 	operator := ciliumOperator()
 	preflightDS := ciliumPreflightDaemonSet()
@@ -345,6 +344,7 @@ func TestReconcilerReconcileUpgradePreflightReady(t *testing.T) {
 
 type reconcileTest struct {
 	*WithT
+	t          *testing.T
 	ctx        context.Context
 	env        *envtest.Environment
 	spec       *cluster.Spec
@@ -359,6 +359,7 @@ func newReconcileTest(t *testing.T) *reconcileTest {
 
 	tt := &reconcileTest{
 		WithT: NewWithT(t),
+		t:     t,
 		ctx:   context.Background(),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Cilium.URI = "cilium:1.10.1-eksa-1"
@@ -380,25 +381,26 @@ func (tt *reconcileTest) cleanup() {
 	tt.Expect(tt.client.DeleteAllOf(tt.ctx, &appsv1.Deployment{}, client.InNamespace("kube-system")))
 }
 
-func (tt *reconcileTest) withObjects(objs ...client.Object) *reconcileTest {
-	for _, obj := range objs {
-		tt.Expect(tt.client.Create(tt.ctx, obj)).To(Succeed())
-	}
-
+func (tt *reconcileTest) withObjects(objs ...envtest.Object) *reconcileTest {
+	tt.t.Helper()
+	envtest.CreateObjs(tt.ctx, tt.t, tt.client, objs...)
 	return tt
 }
 
 func (tt *reconcileTest) expectDSToNotExist(name, namespace string) {
+	tt.t.Helper()
 	err := tt.env.APIReader().Get(tt.ctx, types.NamespacedName{Name: name, Namespace: namespace}, &appsv1.DaemonSet{})
 	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue(), "DaemonSet %s should not exist", name)
 }
 
 func (tt *reconcileTest) expectDeploymentToNotExist(name, namespace string) {
+	tt.t.Helper()
 	err := tt.env.APIReader().Get(tt.ctx, types.NamespacedName{Name: name, Namespace: namespace}, &appsv1.Deployment{})
 	tt.Expect(apierrors.IsNotFound(err)).To(BeTrue(), "Deployment %s should not exist", name)
 }
 
 func (tt *reconcileTest) getDaemonSet(name, namespace string) *appsv1.DaemonSet {
+	tt.t.Helper()
 	ds := &appsv1.DaemonSet{}
 	tt.Expect(tt.env.APIReader().Get(tt.ctx, types.NamespacedName{Name: name, Namespace: namespace}, ds)).To(Succeed())
 
@@ -406,6 +408,7 @@ func (tt *reconcileTest) getDaemonSet(name, namespace string) *appsv1.DaemonSet 
 }
 
 func (tt *reconcileTest) getDeployment(name, namespace string) *appsv1.Deployment {
+	tt.t.Helper()
 	deployment := &appsv1.Deployment{}
 	tt.Expect(tt.env.APIReader().Get(tt.ctx, types.NamespacedName{Name: name, Namespace: namespace}, deployment)).To(Succeed())
 
@@ -413,22 +416,27 @@ func (tt *reconcileTest) getDeployment(name, namespace string) *appsv1.Deploymen
 }
 
 func (tt *reconcileTest) getCiliumOperator() *appsv1.Deployment {
+	tt.t.Helper()
 	return tt.getDeployment(cilium.DeploymentName, "kube-system")
 }
 
 func (tt *reconcileTest) getCiliumDaemonSet() *appsv1.DaemonSet {
+	tt.t.Helper()
 	return tt.getDaemonSet(cilium.DaemonSetName, "kube-system")
 }
 
 func (tt *reconcileTest) makeCiliumDaemonSetReady() {
+	tt.t.Helper()
 	tt.makeDaemonSetReady(cilium.DaemonSetName, "kube-system")
 }
 
 func (tt *reconcileTest) makePreflightDaemonSetReady() {
+	tt.t.Helper()
 	tt.makeDaemonSetReady(cilium.PreflightDaemonSetName, "kube-system")
 }
 
 func (tt *reconcileTest) makeDaemonSetReady(name, namespace string) {
+	tt.t.Helper()
 	ds := tt.getDaemonSet(name, namespace)
 	ds.Status.ObservedGeneration = ds.Generation
 	tt.Expect(tt.client.Status().Update(tt.ctx, ds)).To(Succeed())
@@ -451,10 +459,12 @@ func (tt *reconcileTest) makeDaemonSetReady(name, namespace string) {
 }
 
 func (tt *reconcileTest) makePreflightDeploymentReady() {
+	tt.t.Helper()
 	tt.makeDeploymentReady(cilium.PreflightDeploymentName, "kube-system")
 }
 
 func (tt *reconcileTest) makeDeploymentReady(name, namespace string) {
+	tt.t.Helper()
 	deployment := tt.getDeployment(name, namespace)
 	deployment.Status.ObservedGeneration = deployment.Generation
 	tt.Expect(tt.client.Status().Update(tt.ctx, deployment)).To(Succeed())
@@ -477,6 +487,7 @@ func (tt *reconcileTest) makeDeploymentReady(name, namespace string) {
 }
 
 func (tt *reconcileTest) expectDaemonSetSemanticallyEqual(wantDS *appsv1.DaemonSet) {
+	tt.t.Helper()
 	gotDS := tt.getCiliumDaemonSet()
 	tt.Expect(equality.Semantic.DeepDerivative(wantDS.Spec, gotDS.Spec)).To(
 		BeTrue(), "Cilium DaemonSet should be semantically equivalent",
@@ -484,6 +495,7 @@ func (tt *reconcileTest) expectDaemonSetSemanticallyEqual(wantDS *appsv1.DaemonS
 }
 
 func (tt *reconcileTest) expectOperatorSemanticallyEqual(wantOperator *appsv1.Deployment) {
+	tt.t.Helper()
 	gotOperator := tt.getCiliumOperator()
 	tt.Expect(equality.Semantic.DeepDerivative(wantOperator.Spec, gotOperator.Spec)).To(
 		BeTrue(), "Cilium Operator should be semantically equivalent",
@@ -491,6 +503,7 @@ func (tt *reconcileTest) expectOperatorSemanticallyEqual(wantOperator *appsv1.De
 }
 
 func (tt *reconcileTest) buildManifest(objs ...client.Object) []byte {
+	tt.t.Helper()
 	return buildManifest(tt.WithT, objs...)
 }
 

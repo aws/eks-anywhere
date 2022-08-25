@@ -62,18 +62,19 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	}
 
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 
 	if old.Spec.OSFamily != new.Spec.OSFamily {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "osFamily"), new.Spec.OSFamily, "field is immutable"),
+			field.Forbidden(specPath.Child("osFamily"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.StoragePolicyName != new.Spec.StoragePolicyName {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "storagepolicyname"), new.Spec.StoragePolicyName, "field is immutable"),
+			field.Forbidden(specPath.Child("storagePolicyName"), "field is immutable"),
 		)
 	}
 
@@ -92,56 +93,56 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "users"), new.Spec.Users, "field is immutable"),
+			field.Forbidden(specPath.Child("users"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Template != new.Spec.Template {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
+			field.Forbidden(specPath.Child("template"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Datastore != new.Spec.Datastore {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "datastore"), new.Spec.Datastore, "field is immutable"),
+			field.Forbidden(specPath.Child("datastore"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.Folder != new.Spec.Folder {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "folder"), new.Spec.Folder, "field is immutable"),
+			field.Forbidden(specPath.Child("folder"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.ResourcePool != new.Spec.ResourcePool {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "resourcePool"), new.Spec.ResourcePool, "field is immutable"),
+			field.Forbidden(specPath.Child("resourcePool"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.MemoryMiB != new.Spec.MemoryMiB {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "memoryMiB"), new.Spec.MemoryMiB, "field is immutable"),
+			field.Forbidden(specPath.Child("memoryMiB"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.NumCPUs != new.Spec.NumCPUs {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "numCPUs"), new.Spec.NumCPUs, "field is immutable"),
+			field.Forbidden(specPath.Child("numCPUs"), "field is immutable"),
 		)
 	}
 
 	if old.Spec.DiskGiB != new.Spec.DiskGiB {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "diskGiB"), new.Spec.DiskGiB, "field is immutable"),
+			field.Forbidden(specPath.Child("diskGiB"), "field is immutable"),
 		)
 	}
 

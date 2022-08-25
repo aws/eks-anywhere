@@ -38,10 +38,10 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 	sourceRepoName, releaseRepoName := repoName, repoName
 	if image.TrimEksAPrefix {
 		if rc.ReleaseEnvironment == "production" {
-			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 		if !rc.DevRelease {
-			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 	}
 
@@ -65,7 +65,7 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 		}
 	}
 
-	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration)
+	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
 	if err != nil {
 		return nil, "", errors.Cause(err)
 	}
@@ -77,16 +77,9 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, 
 		imageTagOptionsMap["gitTag"] = gitTag
 	}
 
-	if image.TrimVersionSignifier {
-		sourceImageUri = strings.ReplaceAll(sourceImageUri, ":v", ":")
-	}
-
-	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration)
+	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
 	if err != nil {
 		return nil, "", errors.Cause(err)
-	}
-	if image.TrimVersionSignifier {
-		releaseImageUri = strings.ReplaceAll(releaseImageUri, ":v", ":")
 	}
 
 	imageArtifact := &releasetypes.ImageArtifact{

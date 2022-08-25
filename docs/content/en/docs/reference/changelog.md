@@ -6,7 +6,13 @@ weight: 35
 
 ## Unreleased
 
+### ⚠️ Breaking changes
+- Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
+
 ## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
+
+### Breaking Changes
+- EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters. Building your own Ubuntu-based nodes as described in [Building Ubuntu-based node images]({{< relref "./artifacts.md/#building-ubuntu-based-node-images" >}}) is the only supported way to get that functionality.
 
 ### Added
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)

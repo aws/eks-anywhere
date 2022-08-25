@@ -408,7 +408,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName:             "eks-anywhere-packages",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					SourceLatestTagFromECR: true,
+					NonProdSourceImageTagFormat: "<gitTag>",
 				},
 			},
 		},
@@ -597,20 +597,8 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		Archives: []*assettypes.Archive{
 			{
 				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
 				OSName:              "bottlerocket",
 				Format:              "ova",
-				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
-			},
-			{
-				Name:                "eks-distro",
-				OSName:              "ubuntu",
-				Format:              "raw",
 				ArchiveS3PathGetter: archives.EksDistroArtifactPathGetter,
 			},
 			{
@@ -714,7 +702,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"gitTag",
 			"projectPath",
 		},
-		OnlyForDevRelease: true,
 	},
 	// Kustomize-controller artifacts
 	{

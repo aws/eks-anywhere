@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
@@ -21,6 +20,7 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	wConfig               string
 	forceClean            bool
 	hardwareCSVPath       string
@@ -68,6 +68,8 @@ func init() {
 		TinkerbellHardwareCSVFlagDescription,
 	)
 
+	setupTimeoutFlags(upgradeClusterCmd, &uc.timeoutOptions)
+
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -114,10 +116,15 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 
+	clusterManagerOpts, err := buildClusterManagerOpts(uc.timeoutOptions)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster manager opts: %v", err)
+	}
+
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -130,10 +137,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 	defer close(ctx, deps)
-
-	if deps.Provider.Name() == "tinkerbell" {
-		return errors.New("upgrade operation is not supported for provider tinkerbell")
-	}
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,

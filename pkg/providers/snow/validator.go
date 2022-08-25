@@ -5,35 +5,33 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 )
 
 const (
 	defaultAwsSshKeyName = "eksa-default"
 )
 
-type Validator struct {
-	awsClientMap AwsClientMap
+type AwsClientValidator struct {
+	clientRegistry ClientRegistry
 }
 
-func NewValidator(aws aws.Clients) *Validator {
-	return &Validator{
-		awsClientMap: NewAwsClientMap(aws),
+func NewValidator(clientRegistry ClientRegistry) *AwsClientValidator {
+	return &AwsClientValidator{
+		clientRegistry: clientRegistry,
 	}
 }
 
-func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *Validator {
-	return &Validator{
-		awsClientMap: awsClientMap,
-	}
-}
-
-func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.SshKeyName == "" {
 		return nil
 	}
 
-	for ip, client := range v.awsClientMap {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for ip, client := range clientMap {
 		keyExists, err := client.EC2KeyNameExists(ctx, m.Spec.SshKeyName)
 		if err != nil {
 			return fmt.Errorf("describe key pair on snow device [%s]: %v", ip, err)
@@ -46,12 +44,17 @@ func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1
 	return nil
 }
 
-func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.AMIID == "" {
 		return nil
 	}
 
-	for ip, client := range v.awsClientMap {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for ip, client := range clientMap {
 		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {
 			return fmt.Errorf("describe image on snow device [%s]: %v", ip, err)
@@ -64,9 +67,14 @@ func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alp
 	return nil
 }
 
-func (v *Validator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *AwsClientValidator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	clientMap, err := v.clientRegistry.Get(ctx)
+	if err != nil {
+		return err
+	}
+
 	for _, ip := range m.Spec.Devices {
-		if _, ok := v.awsClientMap[ip]; !ok {
+		if _, ok := clientMap[ip]; !ok {
 			return fmt.Errorf("credentials not found for device [%s]", ip)
 		}
 	}

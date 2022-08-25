@@ -37,7 +37,7 @@ func New(templater Templater) *Reconciler {
 	}
 }
 
-// Reconcile takes the CIlium CNI in a cluster to the desired state defined in a cluster Spec
+// Reconcile takes the Cilium CNI in a cluster to the desired state defined in a cluster Spec
 // It uses a controller.Result to indicate when requeues are needed
 // Intended to be used in a kubernetes controller
 func (r *Reconciler) Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *cluster.Spec) (controller.Result, error) {

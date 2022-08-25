@@ -123,7 +123,7 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	return nil
 }
 
-func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration) (string, string, error) {
+func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier bool) (string, string, error) {
 	var sourceImageUri string
 	var latestTag string
 	var err error
@@ -150,6 +150,12 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 				repoName,
 				latestTag,
 			)
+		}
+		if strings.HasSuffix(name, "-helm") {
+			sourceImageUri += "-helm"
+		}
+		if trimVersionSignifier {
+			sourceImageUri = strings.ReplaceAll(sourceImageUri, ":v", ":")
 		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
@@ -190,12 +196,15 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 				r.BundleNumber,
 			)
 		}
+		if trimVersionSignifier {
+			sourceImageUri = strings.ReplaceAll(sourceImageUri, ":v", ":")
+		}
 	}
 
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration) (string, error) {
+func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tagOptions map[string]string, imageTagConfiguration assettypes.ImageTagConfiguration, trimVersionSignifier bool) (string, error) {
 	var releaseImageUri string
 
 	if imageTagConfiguration.ReleaseImageTagFormat != "" {
@@ -215,7 +224,7 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 
 	var semver string
 	if r.DevRelease {
-		currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration)
+		currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration, trimVersionSignifier)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
@@ -251,6 +260,9 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 	}
 
 	releaseImageUri = fmt.Sprintf("%s-%s", releaseImageUri, semver)
+	if trimVersionSignifier {
+		releaseImageUri = strings.ReplaceAll(releaseImageUri, ":v", ":")
+	}
 
 	return releaseImageUri, nil
 }

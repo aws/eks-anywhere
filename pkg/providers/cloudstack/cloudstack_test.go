@@ -1730,6 +1730,21 @@ func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
 }
 
+func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
+	// We currently can't retrieve ManagementApiEndpoint for an AZ from the CloudStackCluster resource, so a difference there should be ignored
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+}
+
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)

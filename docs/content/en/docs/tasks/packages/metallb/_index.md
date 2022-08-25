@@ -32,17 +32,20 @@ description: >
     spec:
       packageName: metallb
       config: |
-        peers:
-          - peer-address: 10.220.0.2
-            peer-asn: 65000
-            my-asn: 65002
-        address-pools:
+        IPAddressPools:
           - name: default
-            protocol: bgp
             addresses:
-              - 10.220.0.90/32
+              - 10.220.0.93/32
               - 10.220.0.97-10.220.0.120
+        BGPAdvertisements:
+          - IPAddressPools:
+            - default
+        BGPPeers:
+          - peerAddress: 10.220.0.2
+            peerASN: 65000
+            myASN: 65002
     ```
+
     Example package file with ARP configuration:
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
@@ -53,12 +56,14 @@ description: >
     spec:
       packageName: metallb
       config: |
-        address-pools:
+        IPAddressPools:
           - name: default
-            protocol: layer2
             addresses:
-              - 10.220.0.90/32
+              - 10.220.0.93/32
               - 10.220.0.97-10.220.0.120
+        L2Advertisements:
+          - IPAddressPools:
+            - default
     ```
 
 

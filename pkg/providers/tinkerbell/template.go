@@ -4,8 +4,11 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strings"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -18,7 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/version"
+	unstructuredutil "github.com/aws/eks-anywhere/pkg/utils/unstructured"
 )
 
 //go:embed config/template-cp.yaml
@@ -26,6 +29,8 @@ var defaultCAPIConfigCP string
 
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
+
+const TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
 
 type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
@@ -52,10 +57,6 @@ func NewTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec,
 func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.controlPlaneMachineSpec.TemplateRef.Name]
 	if cpTemplateConfig == nil {
-		versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
-		if err != nil {
-			return nil, fmt.Errorf("creating control plane template config: %v", err)
-		}
 		disk, err := tb.diskExtractor.GetDisk(tb.controlPlaneMachineSpec.HardwareSelector)
 		if err != nil {
 			disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.controlPlaneMachineSpec.HardwareSelector)
@@ -63,6 +64,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 				return nil, fmt.Errorf("getting control plane disk type of the hardware selector: %v", err)
 			}
 		}
+		versionBundle := clusterSpec.VersionsBundle.VersionsBundle
 		cpTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.controlPlaneMachineSpec.OSFamily)
 	}
 
@@ -77,10 +79,6 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 		etcdMachineSpec = *tb.etcdMachineSpec
 		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[tb.etcdMachineSpec.TemplateRef.Name]
 		if etcdTemplateConfig == nil {
-			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
-			if err != nil {
-				return nil, fmt.Errorf("creating etcd template config: %v", err)
-			}
 			disk, err := tb.diskExtractor.GetDisk(tb.etcdMachineSpec.HardwareSelector)
 			if err != nil {
 				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.etcdMachineSpec.HardwareSelector)
@@ -88,6 +86,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spe
 					return nil, fmt.Errorf("getting etcd disk type of the hardware selector: %v", err)
 				}
 			}
+			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
 			etcdTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, tb.etcdMachineSpec.OSFamily)
 		}
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
@@ -113,10 +112,6 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		workerNodeMachineSpec := tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[workerNodeMachineSpec.TemplateRef.Name]
 		if wTemplateConfig == nil {
-			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), clusterSpec.Cluster.Spec.KubernetesVersion)
-			if err != nil {
-				return nil, fmt.Errorf("creating worker node template config: %v", err)
-			}
 			disk, err := tb.diskExtractor.GetDisk(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
 			if err != nil {
 				disk, err = tb.diskExtractor.GetDiskProvisionedHardware(tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].HardwareSelector)
@@ -124,6 +119,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 					return nil, fmt.Errorf("getting worker node disk type of the hardware selector: %v", err)
 				}
 			}
+			versionBundle := clusterSpec.VersionsBundle.VersionsBundle
 			wTemplateConfig = v1alpha1.NewDefaultTinkerbellTemplateConfigCreate(clusterSpec.Cluster.Name, *versionBundle, disk, tb.datacenterSpec.OSImageURL, tb.tinkerbellIp, tb.datacenterSpec.TinkerbellIP, workerNodeMachineSpec.OSFamily)
 		}
 
@@ -267,6 +263,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		}
 		values["etcdTemplateName"] = etcdTemplateName
 	}
+
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
@@ -276,6 +273,16 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	if err != nil {
 		return nil, nil, err
 	}
+
+	if p.isScaleUpDown(currentSpec, newClusterSpec) {
+		cpSpec, err := omitTinkerbellMachineTemplate(controlPlaneSpec)
+		if err == nil {
+			if wSpec, err := omitTinkerbellMachineTemplate(workersSpec); err == nil {
+				return cpSpec, wSpec, nil
+			}
+		}
+	}
+
 	return controlPlaneSpec, workersSpec, nil
 }
 
@@ -453,4 +460,28 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	}
 
 	return values
+}
+
+func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
+	var outSpec []unstructured.Unstructured
+	resources := strings.Split(string(inputSpec), "---")
+	for _, resource := range resources {
+		if resource == "" {
+			continue
+		}
+
+		var m map[string]interface{}
+		if err := yaml.Unmarshal([]byte(resource), &m); err != nil {
+			continue
+		}
+
+		var u unstructured.Unstructured
+		u.SetUnstructuredContent(m)
+
+		// Omit TinkerbellMachineTemplate kind from deployment yaml
+		if u.GetKind() != "" && u.GetKind() != TinkerbellMachineTemplateKind {
+			outSpec = append(outSpec, u)
+		}
+	}
+	return unstructuredutil.UnstructuredToYaml(outSpec)
 }
