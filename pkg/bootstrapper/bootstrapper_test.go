@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/retrier"
-
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -16,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
