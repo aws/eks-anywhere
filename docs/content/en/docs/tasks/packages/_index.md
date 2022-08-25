@@ -44,7 +44,6 @@ When you have been notified that your account has been given access to curated p
 
 Create credentials for this user and set and export the following environment variables:
 ```bash
-export EKSA_AWS_REGION="your-region"
 export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
 export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
 export AWS_ACCESS_KEY_ID="your*access*id"
