@@ -46,6 +46,7 @@ const (
 	govcUrlVar                  = "VSPHERE_SERVER"
 	govcInsecureVar             = "GOVC_INSECURE"
 	govcDatacenterVar           = "GOVC_DATACENTER"
+	vsphereTemplateEnvVarPrefix = "T_VSPHERE_TEMPLATE_"
 )
 
 var requiredEnvVars = []string{
@@ -314,6 +315,14 @@ func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
 
 func RequiredVsphereEnvVars() []string {
 	return requiredEnvVars
+}
+
+// VSphereExtraEnvVarPrefixes returns prefixes for env vars that although not always required,
+// might be necessary for certain tests
+func VSphereExtraEnvVarPrefixes() []string {
+	return []string{
+		vsphereTemplateEnvVarPrefix,
+	}
 }
 
 func vSphereMachineConfig(name string, fillers ...api.VSphereMachineConfigFiller) api.VSphereFiller {
