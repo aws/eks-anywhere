@@ -137,3 +137,10 @@ This is most likely caused by an action to install curated packages at a workloa
   eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
   ```
 - Install packages, refer to [package management]({{< relref "../../tasks/packages" >}}) for more details.
+
+### Warning: not able to trigger cron job
+```
+secret/aws-secret created
+Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.
+```
+This is most likely caused by an action to install curated packages in a cluster that is running `Kubernetes` at version `v1.20` or below. Note curated packages only support `Kubernetes` `v1.21` and above.
