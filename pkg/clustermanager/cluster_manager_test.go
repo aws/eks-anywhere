@@ -58,7 +58,7 @@ func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterSpec := test.NewClusterSpec()
 
-	c, m := newClusterManager(t)
+	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	m.provider.EXPECT().GetDeployments()
 	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(nil, errors.New("error in networking"))
 

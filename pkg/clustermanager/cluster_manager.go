@@ -539,16 +539,21 @@ func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster
 
 func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	providerNamespaces := getProviderNamespaces(provider.GetDeployments())
-	networkingManifestContent, err := c.networking.GenerateManifest(ctx, clusterSpec, providerNamespaces)
-	if err != nil {
+	var networkingManifestContent []byte
+	if err := c.retrier.Retry(
+		func() error {
+			var networkingErr error
+			networkingManifestContent, networkingErr = c.networking.GenerateManifest(ctx, clusterSpec, providerNamespaces)
+			return networkingErr
+		},
+	); err != nil {
 		return fmt.Errorf("generating networking manifest: %v", err)
 	}
-	err = c.Retrier.Retry(
+	if err := c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent)
 		},
-	)
-	if err != nil {
+	); err != nil {
 		return fmt.Errorf("applying networking manifest spec: %v", err)
 	}
 	return nil
