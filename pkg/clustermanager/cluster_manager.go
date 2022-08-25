@@ -277,14 +277,17 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
 	if err != nil {
-		err = c.Retrier.Retry(
+		logger.Info("Warning: attempting to create kubeconfig")
+		retryErr := c.Retrier.Retry(
 			func() error {
 				workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
 				return err
 			},
 		)
-		// add warning here *******
-		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
+		if retryErr != nil {
+			logger.Info("Warning: unable to generate workload kubeconfig")
+		}
+		return workloadCluster, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)

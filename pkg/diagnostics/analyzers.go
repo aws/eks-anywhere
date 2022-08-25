@@ -374,7 +374,7 @@ func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze {
 	return &Analyze{
 		TextAnalyze: &textAnalyze{
 			analyzeMeta: analyzeMeta{
-				CheckName: fmt.Sprintf("%s: VMs has no access to vSphere APi. Logs: %s", logAnalysisAnalyzerPrefix, vSphereCloudControllerPodLogPath),
+				CheckName: fmt.Sprintf("%s: Virtual Machine has no access to vSphere APi serveer. Logs: %s", logAnalysisAnalyzerPrefix, vSphereCloudControllerPodLogPath),
 			},
 			FileName:     vSphereCloudControllerPodLogPath,
 			RegexPattern: `Failed to create new client. err: Post (.*) dial tcp (.*) connect: connection timed out\n(.*)Failed to create govmomi client. err: Post (.*) dial tcp (.*) connect: connection timed out`,
@@ -382,13 +382,13 @@ func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze {
 				{
 					Fail: &singleOutcome{
 						When:    "true",
-						Message: fmt.Sprintf("Failed to create client, Virtural Machines have no access to vSphere API. See the cloud controller log in master node: %s", vSphereCloudControllerPodLogPath),
+						Message: fmt.Sprintf("Failed to create client, Virtural Machines have no access to vSphere API server. See the cloud controller log in control plane node: %s", vSphereCloudControllerPodLogPath),
 					},
 				},
 				{
 					Pass: &singleOutcome{
 						When:    "false",
-						Message: fmt.Sprintf("Virtual Machines have access to vSphere API. See %s", vSphereCloudControllerPodLogPath),
+						Message: fmt.Sprintf("Virtual Machines have access to vSphere API server. See %s \nPlease ignore the result when this analyzer is running on bootstrap cluster", vSphereCloudControllerPodLogPath),
 					},
 				},
 			},
