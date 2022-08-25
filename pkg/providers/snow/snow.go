@@ -108,7 +108,7 @@ func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kube
 		return nil, nil, err
 	}
 
-	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
+	controlPlaneSpec, err = templater.ObjectsToYaml(kubernetesToRuntimeObjects(controlPlaneObjs)...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,12 +118,21 @@ func CAPIObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kube
 		return nil, nil, err
 	}
 
-	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	workersSpec, err = templater.ObjectsToYaml(kubernetesToRuntimeObjects(workersObjs)...)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return controlPlaneSpec, workersSpec, nil
+}
+
+func kubernetesToRuntimeObjects(objs []kubernetes.Object) []runtime.Object {
+	runtimeObjs := make([]runtime.Object, 0, len(objs))
+	for _, o := range objs {
+		runtimeObjs = append(runtimeObjs, o)
+	}
+
+	return runtimeObjs
 }
 
 func (p *SnowProvider) generateCAPISpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
