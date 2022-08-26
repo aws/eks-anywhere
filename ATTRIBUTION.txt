@@ -729,7 +729,7 @@ https://github.com/aws/aws-sdk-go-v2
 ** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
 https://github.com/ProtonMail/go-crypto
 
-** golang.org/go; version go1.18.4 --
+** golang.org/go; version go1.18.5 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20220517005047-85d78b3ac167 --
