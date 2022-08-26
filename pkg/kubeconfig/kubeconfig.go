@@ -2,8 +2,12 @@ package kubeconfig
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 // FromClusterFormat defines the format of the kubeconfig of the
@@ -36,4 +40,41 @@ func NewMissingFileError(path string) error {
 
 func (m missingFileError) Error() string {
 	return fmt.Sprintf("kubeconfig file missing: path=%v", m.Path)
+}
+
+// Validate checks that kubeconfig data is readable.
+//
+// This does not validate the values contained within; just that the data has
+// the basic structure of a kubeconfig.
+func Validate(r io.Reader) error {
+	kubeConfigData, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	// I wish I knew why the k8s authors avoid Reader/Writer interfaces so
+	// much. :(
+	if err := validator(kubeConfigData); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validator can be overridden for easier testing.
+var validator = func(b []byte) error { _, err := clientcmd.Load(b); return err }
+
+// ValidateFile is a helper for Validate.
+func ValidateFile(filename string) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("%q: %w", filename, err)
+	}
+	defer f.Close()
+
+	if err := Validate(f); err != nil {
+		return fmt.Errorf("%q: %w", filename, err)
+	}
+
+	return nil
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
@@ -171,8 +170,8 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return nil, kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := validations.KubeConfigFile(kubeconfigPath); err != nil {
+		return nil, err
 	}
 
 	return clusterConfig, nil
