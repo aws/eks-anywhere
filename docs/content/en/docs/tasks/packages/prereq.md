@@ -9,6 +9,7 @@ description: >
 ## Prerequisites
 Before installing any curated packages for EKS Anywhere, do the following:
 
+* Check that the cluster `Kubernetes` version is `v1.21` or above.
 * Check that the version of `eksctl anywhere` is `v0.11.0` or above with the `eksctl anywhere version` command.
 * Make sure cert-manager is up and running in the cluster. Note cert-manager is not installed on workload clusters by default. If cert-manager is not installed, you can manually install cert-manager and follow the instructions below to finish the package controller installation.
 * Check the existence of package controller:
