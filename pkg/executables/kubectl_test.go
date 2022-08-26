@@ -908,7 +908,7 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 					ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
 						Name: "testOffering",
 					},
-					DiskOffering: v1alpha1.CloudStackResourceDiskOffering{
+					DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 							Name: "testOffering",
 						},
