@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -36,7 +35,7 @@ var createClusterCmd = &cobra.Command{
 	Use:          "cluster -f <cluster-config-file> [flags]",
 	Short:        "Create workload cluster",
 	Long:         "This command is used to create workload clusters",
-	PreRunE:      preRunCreateCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE:         cc.createCluster,
 }
@@ -63,16 +62,6 @@ func init() {
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-}
-
-func preRunCreateCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {

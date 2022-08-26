@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
-
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -115,6 +114,7 @@ func markFlagHidden(cmd *cobra.Command, flagName string) {
 		logger.V(5).Info("Warning: Failed to mark flag as hidden: " + flagName)
 	}
 }
+
 func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	cliConfig := &config.CliConfig{}
 	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
@@ -138,7 +138,7 @@ func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		if extraDirs, err := c.extraDirectoriesToMount(); err == nil {
+		if extraDirs, err := c.cloudStackDirectoriesToMount(); err == nil {
 			dirs = append(dirs, extraDirs...)
 		}
 	}
@@ -146,7 +146,7 @@ func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig
 	return dirs, nil
 }
 
-func (c *clusterOptions) extraDirectoriesToMount() ([]string, error) {
+func (c *clusterOptions) cloudStackDirectoriesToMount() ([]string, error) {
 	dirs := []string{}
 	env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
 	if found && len(env) > 0 {
