@@ -55,3 +55,35 @@ func (c *retrierClient) ApplyKubeSpecFromBytes(ctx context.Context, cluster *typ
 		},
 	)
 }
+
+func (c *retrierClient) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, data)
+		},
+	)
+}
+
+func (c *retrierClient) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace)
+		},
+	)
+}
+
+func (c *retrierClient) UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.UpdateAnnotationInNamespace(ctx, resourceType, objectName, annotations, cluster, namespace)
+		},
+	)
+}
+
+func (c *retrierClient) RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error {
+	return c.Retry(
+		func() error {
+			return c.ClusterClient.RemoveAnnotationInNamespace(ctx, resourceType, objectName, key, cluster, namespace)
+		},
+	)
+}
