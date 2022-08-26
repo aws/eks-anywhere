@@ -12,6 +12,7 @@ const (
 	markPass    = "✅ "
 	markSuccess = "🎉 "
 	markFailed  = "❌ "
+	markWarning = "⚠️"
 )
 
 var (
@@ -77,6 +78,10 @@ func MarkSuccess(msg string, keysAndValues ...interface{}) {
 
 func MarkFail(msg string, keysAndValues ...interface{}) {
 	l.V(0).Info(markFailed+msg, keysAndValues...)
+}
+
+func MarkWarning(msg string, keysAndValues ...interface{}) {
+	l.V(0).Info(markWarning+msg, keysAndValues...)
 }
 
 type LoggerOpt func(logr *logr.Logger)
