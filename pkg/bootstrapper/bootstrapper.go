@@ -19,7 +19,7 @@ const (
 )
 
 type Bootstrapper struct {
-	clusterClient retrierClient
+	clusterClient *retrierClient
 }
 
 type ClusterClient interface {
@@ -46,7 +46,7 @@ func New(clusterClient ClusterClient, opts ...BootstrapperOpt) *Bootstrapper {
 	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
 	retrierClient := NewRetrierClient(&clusterClient, retrier)
 	bootstrapper := &Bootstrapper{
-		clusterClient: *retrierClient,
+		clusterClient: retrierClient,
 	}
 
 	for _, o := range opts {
@@ -70,7 +70,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		return nil, err
 	}
 
-	err = cluster.ApplyExtraObjects(ctx, &b.clusterClient, c, clusterSpec)
+	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("applying extra objects to bootstrap cluster: %v", err)
 	}
