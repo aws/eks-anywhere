@@ -74,7 +74,7 @@ func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 	retries := 2
 
-	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(retries, 0)))
 	m.provider.EXPECT().GetDeployments()
 	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
@@ -118,7 +118,7 @@ func TestClusterManagerInstallStorageClassClientError(t *testing.T) {
 	storageClassManifest := []byte("yaml: values")
 	retries := 2
 
-	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(retries, 0)))
 	m.provider.EXPECT().GenerateStorageClass().Return(storageClassManifest)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, storageClassManifest).Return(
 		errors.New("error from client")).Times(retries)
@@ -667,7 +667,7 @@ func TestClusterManagerUpgradeSelfManagedClusterWithUnstackedEtcdErrorRemovingAn
 		Name: clusterName,
 	}
 
-	tt := newSpecChangedTest(t)
+	tt := newSpecChangedTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 
 	tt.clusterSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
 		Count: 3,
