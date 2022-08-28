@@ -18,7 +18,7 @@ func NewReader(s string) ReaderType {
 
 func (r *ReaderType) GetRegistry(uri string) string {
 	switch *r {
-	case Import:
+	case Download:
 		return packageLocation
 	default:
 		return GetRegistry(uri)
