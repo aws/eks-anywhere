@@ -109,7 +109,6 @@ func (r *PackageReader) fetchPackagesImage(ctx context.Context, versionsBundle r
 				OSName:      ctrl.OSName,
 				URI:         fmt.Sprintf("%s/%s@%s", r.readerType.GetRegistry(ctrl.URI), version.Repository, version.Digest),
 			}
-			logger.Info("Package Reader is: " + image.URI)
 			images = append(images, image)
 		}
 	}
