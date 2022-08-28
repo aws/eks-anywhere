@@ -12,17 +12,15 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const (
-	packageLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-)
-
 type PackageReader struct {
 	*manifests.Reader
+	readerType *ReaderType
 }
 
-func NewPackageReader(mr *manifests.Reader) *PackageReader {
+func NewPackageReader(mr *manifests.Reader, readerType *ReaderType) *PackageReader {
 	return &PackageReader{
-		Reader: mr,
+		Reader:     mr,
+		readerType: readerType,
 	}
 }
 
@@ -35,7 +33,7 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packagesHelmChart, err := fetchPackagesImage(ctx, vb, artifact)
+		packagesHelmChart, err := r.fetchPackagesImage(ctx, vb, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
@@ -82,14 +80,14 @@ func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.Versio
 			Description: p.Name,
 			OS:          ctrl.OS,
 			OSName:      ctrl.OSName,
-			URI:         fmt.Sprintf("%s/%s:%s", getDefaultRegistry(ctrl), p.Source.Repository, p.Source.Versions[0].Name),
+			URI:         fmt.Sprintf("%s/%s:%s", GetRegistry(ctrl.URI), p.Source.Repository, p.Source.Versions[0].Name),
 		}
 		images = append(images, pHC)
 	}
 	return images, nil
 }
 
-func fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
+func (r *PackageReader) fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
 	data, err := PullLatestBundle(ctx, artifact)
 	if err != nil {
 		return nil, err
@@ -101,6 +99,7 @@ func fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBu
 		return nil, err
 	}
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
+
 	for _, p := range bundle.Spec.Packages {
 		for _, version := range p.Source.Versions[0].Images {
 			image := releasev1.Image{
@@ -108,15 +107,11 @@ func fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBu
 				Description: version.Repository,
 				OS:          ctrl.OS,
 				OSName:      ctrl.OSName,
-				URI:         fmt.Sprintf("%s/%s@%s", packageLocation, version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", r.readerType.GetRegistry(ctrl.URI), version.Repository, version.Digest),
 			}
+			logger.Info("Package Reader is: " + image.URI)
 			images = append(images, image)
 		}
 	}
 	return images, nil
-}
-
-func getDefaultRegistry(ctrl releasev1.Image) string {
-	registry := GetRegistry(ctrl.URI)
-	return registry
 }
