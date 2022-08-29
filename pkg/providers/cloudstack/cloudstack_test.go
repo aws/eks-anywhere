@@ -1632,6 +1632,7 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 		func(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 			if cloudstackMachineConfigName == "test" {
 				modifiedMachineConfig := machineConfigsMap["test"].DeepCopy()
+				modifiedMachineConfig.Spec.DiskOffering = (*machineConfigsMap["test"].Spec.DiskOffering).DeepCopy()
 				modifiedMachineConfig.Spec.DiskOffering.Name = "shiny-new-diskoffering"
 				return modifiedMachineConfig, nil
 			}

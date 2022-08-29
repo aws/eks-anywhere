@@ -362,7 +362,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:        anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering: anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					DiskOffering: anywherev1.CloudStackResourceDiskOffering{
+					DiskOffering: &anywherev1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 							Name: "Small",
 						},
@@ -447,7 +447,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:        anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering: anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					DiskOffering: anywherev1.CloudStackResourceDiskOffering{
+					DiskOffering: &anywherev1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 							Name: "Small",
 						},
