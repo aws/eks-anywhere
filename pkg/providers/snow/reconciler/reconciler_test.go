@@ -8,6 +8,7 @@ import (
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +41,15 @@ func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().Reconcile(tt.ctx, test.NewNullLogger(), tt.cluster)
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -114,11 +123,50 @@ func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerReconcileCNISuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileCNIErrorClientRegistry(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(nil, errors.New("building client"))
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
 	ctx                       context.Context
 	cniReconciler             *mocks.MockCNIReconciler
+	remoteClientRegistry      *mocks.MockRemoteClientRegistry
 	cluster                   *anywherev1.Cluster
 	client                    client.Client
 	env                       *envtest.Environment
@@ -130,6 +178,7 @@ type reconcilerTest struct {
 func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ctrl := gomock.NewController(t)
 	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
+	remoteClientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	client := env.Client()
 
 	bundle := createBundle()
@@ -190,12 +239,13 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 
 	tt := &reconcilerTest{
-		t:             t,
-		WithT:         NewWithT(t),
-		ctx:           context.Background(),
-		cniReconciler: cniReconciler,
-		client:        client,
-		env:           env,
+		t:                    t,
+		WithT:                NewWithT(t),
+		ctx:                  context.Background(),
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
+		client:               client,
+		env:                  env,
 		eksaSupportObjs: []envtest.Object{
 			namespace(clusterNamespace),
 			namespace(constants.EksaSystemNamespace),
@@ -243,7 +293,7 @@ func (tt *reconcilerTest) withFakeClient() {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.cniReconciler)
+	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry)
 }
 
 func (tt *reconcilerTest) createAllObjs() {
