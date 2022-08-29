@@ -64,7 +64,6 @@ type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string
 	managementKubeconfig string
-	installPackages      string
 }
 
 func (c clusterOptions) mountDirs() []string {
@@ -126,21 +125,22 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	return cliConfig
 }
 
-func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
+func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig, addDirs ...string) ([]string, error) {
 	dirs := c.mountDirs()
 	fluxConfig := clusterSpec.FluxConfig
 	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
 		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
 		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
-		if c.installPackages != "" {
-			dirs = append(dirs, filepath.Dir(c.installPackages))
-		}
 	}
 
 	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
 		if extraDirs, err := c.cloudStackDirectoriesToMount(); err == nil {
 			dirs = append(dirs, extraDirs...)
 		}
+	}
+
+	for _, addDir := range addDirs {
+		dirs = append(dirs, filepath.Dir(addDir))
 	}
 
 	return dirs, nil

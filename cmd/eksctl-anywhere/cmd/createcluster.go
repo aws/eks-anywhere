@@ -27,6 +27,7 @@ type createClusterOptions struct {
 	skipIpCheck           bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
+	installPackages       string
 }
 
 var cc = &createClusterOptions{}
@@ -123,7 +124,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig, cc.installPackages)
 	if err != nil {
 		return err
 	}
