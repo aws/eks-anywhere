@@ -3,13 +3,15 @@ package reconciler_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -17,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -31,6 +34,10 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().Reconcile(tt.ctx, test.NewNullLogger(), tt.cluster)
@@ -86,6 +93,21 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 	tt.createAllObjs()
 
 	result, err := tt.reconciler().ReconcileControlPlane(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
+	tt := newReconcilerTest(t)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.withFakeClient()
+
+	result, err := tt.reconciler().CheckControlPlaneReady(tt.ctx, test.NewNullLogger(), tt.buildSpec())
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -193,7 +215,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 func (tt *reconcilerTest) cleanup() {
 	for _, obj := range tt.allObjs() {
-		_, isNamespace := obj.(*v1.Namespace)
+		_, isNamespace := obj.(*corev1.Namespace)
 		if isNamespace {
 			// namespaces can't be deleted with envtest
 			continue
@@ -409,8 +431,8 @@ func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
 	return m
 }
 
-func namespace(name string) *v1.Namespace {
-	return &v1.Namespace{
+func namespace(name string) *corev1.Namespace {
+	return &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "namespace",
 			APIVersion: "v1",
@@ -419,4 +441,34 @@ func namespace(name string) *v1.Namespace {
 			Name: name,
 		},
 	}
+}
+
+type capiClusterOpt func(*clusterv1.Cluster)
+
+func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
+	c := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+		Status: clusterv1.ClusterStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ControlPlaneReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }
