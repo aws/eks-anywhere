@@ -299,7 +299,7 @@ spec:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
           IMG_URL: https://my-file-server/ubuntu-v1.23.7-eks-a-12-amd64.gz
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: stream-image
         timeout: 360
       - environment:
@@ -311,7 +311,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: write-netplan
         timeout: 90
       - environment:
@@ -330,7 +330,7 @@ spec:
           GID: "0"
           MODE: "0600"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: add-tink-cloud-init-config
         timeout: 90
       - environment:
@@ -344,7 +344,7 @@ spec:
           GID: "0"
           MODE: "0600"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: disable-cloud-init-network-capabilities
         timeout: 90
       - environment:
@@ -357,13 +357,13 @@ spec:
           GID: "0"
           MODE: "0600"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: add-tink-cloud-init-ds-config
         timeout: 90
       - environment:
           BLOCK_DEVICE: /dev/sda2
           FS_TYPE: ext4
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/kexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: kexec-image
         pid: host
         timeout: 90
@@ -412,7 +412,7 @@ spec:
           COMPRESSED: "true"
           DEST_DISK: /dev/sda
           IMG_URL: https://anywhere-assets.eks.amazonaws.com/releases/bundles/11/artifacts/raw/1-22/bottlerocket-v1.22.10-eks-d-1-22-8-eks-a-11-amd64.img.gz
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/image2disk:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: stream-image
         timeout: 360
       - environment:
@@ -429,7 +429,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: write-bootconfig
         timeout: 90
       - environment:
@@ -454,7 +454,7 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: write-netconfig
         timeout: 90
       - environment:
@@ -466,14 +466,20 @@ spec:
           GID: "0"
           MODE: "0644"
           UID: "0"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/writefile:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: write-user-data
         timeout: 90
       - name: "reboot"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/reboot:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         timeout: 90
         volumes:
           - /worker:/worker
+      name: my-cluster-name
+      volumes:
+      - /dev:/dev
+      - /dev/console:/dev/console
+      - /lib/firmware:/lib/firmware:ro
+      worker: '{{.device_1}}'
     version: "0.1"
 ```
 ## TinkerbellTemplateConfig Fields
@@ -642,7 +648,7 @@ The following example shows how to add a .deb package (`openssl`) to an Ubuntu i
           CMD_LINE: apt -y update && apt -y install openssl
           DEFAULT_INTERPRETER: /bin/sh -c
           FS_TYPE: ext4
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: install-openssl
         timeout: 90
 ```
@@ -655,7 +661,7 @@ The following shows an example of adding a new user (`tinkerbell`) to an install
           CHROOT: y
           DEFAULT_INTERPRETER: "/bin/sh -c"
           CMD_LINE: "useradd --password $(openssl passwd -1 tinkerbell) --shell /bin/bash --create-home --groups sudo tinkerbell"
-        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-11
+        image: public.ecr.aws/eks-anywhere/tinkerbell/hub/cexec:6c0f0d437bde2c836d90b000312c8b25fa1b65e1-eks-a-15
         name: "create-user"
         timeout: 90
 ```
