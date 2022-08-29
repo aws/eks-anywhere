@@ -14,10 +14,10 @@ import (
 
 type PackageReader struct {
 	*manifests.Reader
-	readerType *ReaderType
+	readerType *PackageReaderType
 }
 
-func NewPackageReader(mr *manifests.Reader, readerType *ReaderType) *PackageReader {
+func NewPackageReader(mr *manifests.Reader, readerType *PackageReaderType) *PackageReader {
 	return &PackageReader{
 		Reader:     mr,
 		readerType: readerType,

@@ -5,21 +5,26 @@ import (
 )
 
 const (
-	Download        = "download"
-	Import          = "import"
-	packageLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	Download            = "download"
+	Import              = "import"
+	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	publicECR           = "public.ecr.aws/eks-anywhere"
 )
 
-type ReaderType string
+type PackageReaderType string
 
-func NewReader(s string) ReaderType {
-	return ReaderType(strings.ToLower(strings.TrimSpace(s)))
+func NewReader(s string) PackageReaderType {
+	return PackageReaderType(strings.ToLower(strings.TrimSpace(s)))
 }
 
-func (r *ReaderType) GetRegistry(uri string) string {
+func (r *PackageReaderType) GetRegistry(uri string) string {
 	switch *r {
 	case Download:
-		return packageLocation
+		if strings.Contains(uri, publicECR) {
+			return packageProdLocation
+		}
+		return packageDevLocation
 	default:
 		return GetRegistry(uri)
 	}
