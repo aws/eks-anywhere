@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
+	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/controller/serverside"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 )
@@ -44,6 +45,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 	return controller.NewPhaseRunner().Register(
 		r.ValidateMachineConfigs,
 		r.ReconcileControlPlane,
+		r.CheckControlPlaneReady,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
@@ -64,6 +66,11 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 	}
 
 	return controller.Result{}, nil
+}
+
+func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "checkControlPlaneReady")
+	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
 func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
