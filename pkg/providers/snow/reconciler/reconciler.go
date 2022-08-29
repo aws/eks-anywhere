@@ -43,6 +43,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, c *anywhere
 
 	return controller.NewPhaseRunner().Register(
 		r.ValidateMachineConfigs,
+		r.ReconcileControlPlane,
 		r.ReconcileWorkers,
 	).Run(ctx, log, clusterSpec)
 }
@@ -71,5 +72,14 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 
 	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
 		return snow.WorkersObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
+	})
+}
+
+func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+	log = log.WithValues("phase", "reconcileControlPlane")
+	log.Info("Applying control plane CAPI objects")
+
+	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
+		return snow.ControlPlaneObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
 	})
 }
