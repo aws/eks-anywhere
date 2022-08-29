@@ -103,7 +103,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		return err
 	}
 
-	dirsToMount, err := cc.extraDirectoriesToMount()
+	dirsToMount, err := cc.cloudStackDirectoriesToMount()
 	if err != nil {
 		return err
 	}
