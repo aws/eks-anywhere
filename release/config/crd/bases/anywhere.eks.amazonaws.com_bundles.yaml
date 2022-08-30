@@ -47,6 +47,7 @@ spec:
                 items:
                   properties:
                     aws:
+                      description: This field has been deprecated
                       properties:
                         clusterTemplate:
                           properties:
@@ -2806,7 +2807,6 @@ spec:
                       - version
                       type: object
                   required:
-                  - aws
                   - bootstrap
                   - bottlerocketAdmin
                   - bottlerocketBootstrap
