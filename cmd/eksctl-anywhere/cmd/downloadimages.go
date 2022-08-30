@@ -80,7 +80,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: fetchReader(deps.ManifestReader, c.includePackages, curatedpackages.Download),
+		Reader: fetchReader(deps.ManifestReader, c.includePackages),
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -113,10 +113,9 @@ func packagerForFile(file string) packager {
 	}
 }
 
-func fetchReader(reader *manifests.Reader, includePackages bool, readerType string) artifacts.Reader {
+func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reader {
 	if includePackages {
-		packageReaderType := curatedpackages.NewReader(readerType)
-		return curatedpackages.NewPackageReader(reader, &packageReaderType)
+		return curatedpackages.NewPackageReader(reader)
 	}
 	return reader
 }

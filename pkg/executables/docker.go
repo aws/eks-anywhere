@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	dockerPath      = "docker"
-	defaultRegistry = "public.ecr.aws"
-	packageLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	dockerPath          = "docker"
+	defaultRegistry     = "public.ecr.aws"
+	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 type Docker struct {
@@ -81,8 +82,8 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 }
 
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
-	localImage = strings.ReplaceAll(localImage, packageLocation, endpoint)
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdLocation, endpoint, packageDevLocation, endpoint)
+	localImage := replacer.Replace(image)
 	localImage = removeDigestReference(localImage)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
@@ -92,8 +93,8 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 }
 
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
-	localImage = strings.ReplaceAll(localImage, packageLocation, endpoint)
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdLocation, endpoint, packageDevLocation, endpoint)
+	localImage := replacer.Replace(image)
 	localImage = removeDigestReference(localImage)
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {

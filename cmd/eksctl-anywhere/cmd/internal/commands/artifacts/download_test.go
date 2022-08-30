@@ -3,7 +3,6 @@ package artifacts_test
 import (
 	"context"
 	"errors"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"os"
 	"testing"
 
@@ -20,7 +19,6 @@ type downloadArtifactsTest struct {
 	*WithT
 	ctx                context.Context
 	reader             *mocks.MockReader
-	packageReaderType  *curatedpackages.PackageReaderType
 	mover              *mocks.MockImageMover
 	downloader         *mocks.MockChartDownloader
 	toolsDownloader    *mocks.MockImageMover
@@ -43,7 +41,6 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 	downloader := mocks.NewMockChartDownloader(ctrl)
 	packager := mocks.NewMockPackager(ctrl)
 	manifestDownloader := mocks.NewMockManifestDownloader(ctrl)
-	packageReaderType := curatedpackages.NewReader(curatedpackages.Import)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -105,7 +102,6 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 			},
 		},
 		manifestDownloader: manifestDownloader,
-		packageReaderType:  &packageReaderType,
 	}
 }
 
@@ -113,7 +109,7 @@ func TestDownloadRun(t *testing.T) {
 	tt := newDownloadArtifactsTest(t)
 	tt.reader.EXPECT().ReadBundlesForVersion("v1.0.0").Return(tt.bundles, nil)
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles, tt.packageReaderType).Return(tt.images, nil)
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
@@ -127,7 +123,7 @@ func TestDownloadErrorReadingImages(t *testing.T) {
 	tt := newDownloadArtifactsTest(t)
 	tt.reader.EXPECT().ReadBundlesForVersion("v1.0.0").Return(tt.bundles, nil)
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles, tt.packageReaderType).Return(nil, errors.New("error reading images"))
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(nil, errors.New("error reading images"))
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(MatchError(ContainSubstring("downloading images: error reading images")))
 }

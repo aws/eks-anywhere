@@ -2,7 +2,6 @@ package artifacts_test
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"os"
 	"testing"
 
@@ -16,15 +15,14 @@ import (
 
 type importArtifactsTest struct {
 	*WithT
-	ctx               context.Context
-	reader            *mocks.MockReader
-	packageReaderType *curatedpackages.PackageReaderType
-	mover             *mocks.MockImageMover
-	importer          *mocks.MockChartImporter
-	command           *artifacts.Import
-	images, charts    []releasev1.Image
-	bundles           *releasev1.Bundles
-	fileImporter      *mocks.MockFileImporter
+	ctx            context.Context
+	reader         *mocks.MockReader
+	mover          *mocks.MockImageMover
+	importer       *mocks.MockChartImporter
+	command        *artifacts.Import
+	images, charts []releasev1.Image
+	bundles        *releasev1.Bundles
+	fileImporter   *mocks.MockFileImporter
 }
 
 func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
@@ -37,7 +35,6 @@ func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
 	mover := mocks.NewMockImageMover(ctrl)
 	importer := mocks.NewMockChartImporter(ctrl)
 	fileImporter := mocks.NewMockFileImporter(ctrl)
-	packageReaderType := curatedpackages.NewReader(curatedpackages.Import)
 	images := []releasev1.Image{
 		{
 			Name: "image 1",
@@ -84,15 +81,14 @@ func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
 			Bundles:            bundles,
 			FileImporter:       fileImporter,
 		},
-		bundles:           bundles,
-		fileImporter:      fileImporter,
-		packageReaderType: &packageReaderType,
+		bundles:      bundles,
+		fileImporter: fileImporter,
 	}
 }
 
 func TestImportRun(t *testing.T) {
 	tt := newImportArtifactsTest(t)
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles, tt.packageReaderType).Return(tt.images, nil)
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.fileImporter.EXPECT().Push(tt.ctx, tt.bundles)
