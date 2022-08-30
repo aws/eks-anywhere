@@ -104,12 +104,13 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 	if err != nil {
 		return nil, err
 	}
-	ctrl := versionsBundle.PackageController.Controller
 	bundle := &packagesv1.PackageBundle{}
 	err = yaml.Unmarshal(data, bundle)
 	if err != nil {
 		return nil, err
 	}
+
+	ctrl := versionsBundle.PackageController.Controller
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 
 	for _, p := range bundle.Spec.Packages {
