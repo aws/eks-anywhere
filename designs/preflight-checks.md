@@ -12,7 +12,7 @@ With more complex provider configurations, users may need to review and modify t
 
 * ****Simple:**** simple to use, simple to understand, simple to maintain
 * **Informative**: output should lead user to take action and guide next steps 
-* **Non-invasive:** minimal permanent changes should be left as a result of this comman**d**
+* **Non-invasive:** minimal permanent changes should be left as a result of this command
 * **Intuitive:** validation should be accomplished following the same patterns users have come to expect with EKS-A CLI
 
 ### Goals and objectives
