@@ -13,6 +13,8 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// Temporary: Curated packages dev and prod accounts are currently hard coded
+// This is because there is no mechanism to extract these values as of now
 const (
 	publicProdECR       = "public.ecr.aws/eks-anywhere"
 	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
