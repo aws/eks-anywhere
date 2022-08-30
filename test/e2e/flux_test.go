@@ -312,7 +312,7 @@ func TestDockerInstallGithubFluxDuringUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithFluxGithub(),
-		framework.WithClusterUpgrade(api.WithGitOpsRef(framework.DefaultFluxConfigName, v1alpha1.FluxConfigKind)),
+		framework.WithClusterUpgrade(),
 	)
 }
 
