@@ -30,9 +30,8 @@ func NewPackageReader(mr *manifests.Reader) *PackageReader {
 }
 
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
-	//images, err := r.Reader.ReadImagesFromBundles(ctx, b)
+	images, err := r.Reader.ReadImagesFromBundles(ctx, b)
 
-	var images []releasev1.Image
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
@@ -47,7 +46,7 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 		images = append(images, packagesHelmChart...)
 	}
 
-	return images, nil
+	return images, err
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
