@@ -66,7 +66,6 @@ type VersionsBundle struct {
 	ClusterAPI             CoreClusterAPI              `json:"clusterAPI"`
 	Bootstrap              KubeadmBootstrapBundle      `json:"bootstrap"`
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
-	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
 	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
@@ -82,6 +81,8 @@ type VersionsBundle struct {
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
 	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 	Snow                   SnowBundle                  `json:"snow,omitempty"`
+	// This field has been deprecated
+	Aws *AwsBundle `json:"aws,omitempty"`
 }
 
 type EksDRelease struct {
