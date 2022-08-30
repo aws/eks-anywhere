@@ -74,11 +74,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 		return nil, errors.Wrapf(err, "Error getting bundle for cluster-api kubeadm-control-plane")
 	}
 
-	awsBundle, err := GetAwsBundle(r, imageDigests)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for AWS infrastructure provider")
-	}
-
 	dockerBundle, err := GetDockerBundle(r, imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Docker infrastructure provider")
@@ -190,7 +185,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			ClusterAPI:             coreClusterApiBundle,
 			Bootstrap:              kubeadmBootstrapBundle,
 			ControlPlane:           kubeadmControlPlaneBundle,
-			Aws:                    awsBundle,
 			VSphere:                vsphereBundle,
 			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,
