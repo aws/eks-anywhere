@@ -84,6 +84,31 @@ func TestPackageReaderReadImagesFromBundlesFail(t *testing.T) {
 	tt.Expect(images).To(BeEmpty())
 }
 
+func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	bundles := &releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "1.21",
+					PackageController: releasev1.PackageBundle{
+						Version: "test-version",
+						Controller: releasev1.Image{
+							URI: "fake_registry/fake_env/ctrl:v1",
+						},
+					},
+				},
+			},
+		},
+	}
+	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+
+	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(images).To(BeEmpty())
+}
+
 func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
 	tt := newPackageReaderTest(t)
 	bundles := &releasev1.Bundles{
@@ -119,6 +144,30 @@ func TestPackageReaderReadChartsFromBundlesFail(t *testing.T) {
 						Version: "test-version",
 						Controller: releasev1.Image{
 							URI: tt.registry + "/ctrl:v1",
+						},
+					},
+				},
+			},
+		},
+	}
+	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+
+	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
+
+	tt.Expect(images).To(BeEmpty())
+}
+
+func TestPackageReaderReadChartsFromBundlesFailWhenWrongURI(t *testing.T) {
+	tt := newPackageReaderTest(t)
+	bundles := &releasev1.Bundles{
+		Spec: releasev1.BundlesSpec{
+			VersionsBundles: []releasev1.VersionsBundle{
+				{
+					KubeVersion: "1.21",
+					PackageController: releasev1.PackageBundle{
+						Version: "test-version",
+						Controller: releasev1.Image{
+							URI: "fake_registry/fake_env/ctrl:v1",
 						},
 					},
 				},
