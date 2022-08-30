@@ -48,6 +48,40 @@ func TestDockerPullImage(t *testing.T) {
 	}
 }
 
+func TestDockerTagImageWhenDigestUsed(t *testing.T) {
+	image := "test_image@sha256:v1"
+	expectedImage := "test_image:v1"
+	endpoint := "test_endpoint"
+
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "tag", image, expectedImage).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+	err := d.TagImage(ctx, image, endpoint)
+	if err != nil {
+		t.Fatalf("Docker.PullImage() error = %v, want nil", err)
+	}
+}
+
+func TestDockerTagImageWhenDigestNotUsed(t *testing.T) {
+	image := "test_image:v1"
+	expectedImage := "test_image:v1"
+	endpoint := "test_endpoint"
+
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "tag", image, expectedImage).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+	err := d.TagImage(ctx, image, endpoint)
+	if err != nil {
+		t.Fatalf("Docker.PullImage() error = %v, want nil", err)
+	}
+}
+
 func TestDockerVersion(t *testing.T) {
 	version := "1.234"
 	wantVersion := 1
