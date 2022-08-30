@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
 
 func ValidateClusterNameArg(args []string) (string, error) {
@@ -32,8 +31,3 @@ func FileExistsAndIsNotEmpty(filename string) bool {
 	info, err := os.Stat(filename)
 	return err == nil && info.Size() > 0
 }
-
-var (
-	KubeConfigFile = kubeconfig.ValidateFile
-	KubeConfig     = kubeconfig.Validate
-)

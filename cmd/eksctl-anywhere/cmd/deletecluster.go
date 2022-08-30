@@ -21,9 +21,12 @@ type deleteClusterOptions struct {
 	forceCleanup          bool
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
+	kubeconfigValidator   kubeconfig.Validator
 }
 
-var dc = &deleteClusterOptions{}
+var dc = &deleteClusterOptions{
+	kubeconfigValidator: kubeconfig.NewValidator(),
+}
 
 var deleteClusterCmd = &cobra.Command{
 	Use:          "cluster (<cluster-name>|-f <config-file>)",
@@ -69,7 +72,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
-	if err := validations.KubeConfigFile(kubeconfigPath); err != nil {
+	if err := dc.kubeconfigValidator.ValidateFile(kubeconfigPath); err != nil {
 		return err
 	}
 

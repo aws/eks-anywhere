@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -25,9 +24,12 @@ type createSupportBundleOptions struct {
 	bundleConfig          string
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
+	kubeconfigValidator   kubeconfig.Validator
 }
 
-var csbo = &createSupportBundleOptions{}
+var csbo = &createSupportBundleOptions{
+	kubeconfigValidator: kubeconfig.NewValidator(),
+}
 
 var supportbundleCmd = &cobra.Command{
 	Use:          "support-bundle -f my-cluster.yaml",
@@ -66,7 +68,7 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	}
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if err := validations.KubeConfigFile(kubeconfigPath); err != nil {
+	if err := csbo.kubeconfigValidator.ValidateFile(kubeconfigPath); err != nil {
 		return err
 	}
 

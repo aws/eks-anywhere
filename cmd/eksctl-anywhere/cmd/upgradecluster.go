@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
@@ -22,9 +23,12 @@ type upgradeClusterOptions struct {
 	forceClean            bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
+	kubeconfigValidator   kubeconfig.Validator
 }
 
-var uc = &upgradeClusterOptions{}
+var uc = &upgradeClusterOptions{
+	kubeconfigValidator: kubeconfig.NewValidator(),
+}
 
 var upgradeClusterCmd = &cobra.Command{
 	Use:          "cluster",
@@ -170,7 +174,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
-	if err := validations.KubeConfigFile(kubeconfigPath); err != nil {
+	if err := uc.kubeconfigValidator.ValidateFile(kubeconfigPath); err != nil {
 		return nil, err
 	}
 
