@@ -27,7 +27,6 @@ As a Kubernetes administrator I want to:
 
 **In scope**
 
-* Preflight validation checks can be run independently of `create cluster`
 * Existing preflight validation checks for `create cluster` are run with `exp validate create` command
 * Adding more in-depth provider validations should be prioritized on a per-provider basis
 * Ensure design is extensible to easily incorporate additional validations in the future
