@@ -70,31 +70,23 @@ The `validate` command includes validations from the following locations origina
 .
 └── eks-anywhere
     ├── cmd/eks-a/cmd
-    │ ├── experiment.go 
-    │ ├── validate.go 
-    │ └── validatecreatecluster.go
+    │   ├── experiment.go
+    │   ├── validate.go
+    │   └── validatecreatecluster.go
     └── pkg
-        ├── addonmanager/addonclients
-        │   └── fluxaddonclient.go
-        ├── api/v1alpha1
-        │   └── cluster.go
-        ├── providers
-        │   ├── cloudstack
-        │   ├── docker
-        │   ├── snow
-        │   ├── tinkerbell
-        │   └── vsphere
         └── validations
             ├── commandvalidations
-            │   └── commandvalidations.go
-            ├── docker.go
-            └── input.go
+            │   ├── commandvalidations.go
+            │   ├── dockerexec.go
+            │   ├── kubeconfig.go
+            │   └── validateprovider.go
+            └── utils.go
 
 ```
 
 New validation for `validate` should be added following the same validation architecture when possible. Ideally, validations should be separated into configuration-specific validations that can be preformed directly based only off the provided configuration file, and ones that require provider access or queries to be run.  The configuration-specific validations can be run independently of provider validations for users that want config only validation or whose provider environment may not be ready yet.
 
-Primary validation components called by validatevalidations include the following:
+Primary validation components called by commandvalidations include the following:
 
 * General `create` validations under `pkg/validations/createvalidations` ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/validations/createvalidations/preflightvalidations.go))
     * `validate` will continue to run the general `create` validations in `validations/createvalidations` as part of the preflight checks to ensure a single source of truth for maintenance and consistency in user experience
@@ -103,7 +95,7 @@ Primary validation components called by validatevalidations include the followin
 
 * Addonmanager/addonclients validation ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/addonmanager/addonclients/fluxaddonclient.go#L289))
     * fluxaddonclient
-* Additional miscellaneous methods called directly for preflight validation
+* Additional functions in validations/commandvalidations called directly for preflight validation tasks
 
 #### Usage:
 
@@ -113,8 +105,7 @@ Primary validation components called by validatevalidations include the followin
 * **Flags**:
 
 `-f, --filename string Filename that contains EKS-A cluster configuration`
-`-l, --lint only perform configuration formatting checks  `
-Additional flags may be necessary for prior `create cluster` arguments
+`-z, --hardware-csv string Path to a CSV file containing hardware data.`
 
 * **Global Flags:**
 
@@ -122,7 +113,7 @@ Additional flags may be necessary for prior `create cluster` arguments
 
 ### Dependencies and consumers
 
-The preflight check relies on the existing validations used by `create cluster` .  In order to keep the user experience consistent, `validate` should inform the user of situations where a `create cluster` would fail. 
+The preflight check relies on the existing validations used by `create cluster` .  In order to keep the user experience consistent, `validate` should inform the user of situations where a `create cluster` would fail.
 
 ## Major considerations
 
@@ -140,16 +131,6 @@ The preflight validations should be minimally invasive and not result in artifac
 
 Currently there are already safeguards in place to redact any personal and credential information during validations. These safeguards should also be incorporated into any new validations added. 
 
-## Testing
-
-The new code will be covered by unit and e2e tests, and the e2e framework will be extended to support the `validate` command.
-
-The following e2e test will be added:
-
-Scenario 1 - run preflight check successfully
-
-* run preflight check on valid configuration
-* proceed with cluster creation if successful
 
 ## Alternative designs
 
@@ -157,6 +138,3 @@ We chose to add the `validate` command to EKS-A as opposed to creating a standal
 
 Additionally, an independent command was chosen instead of modifying the existing create cluster command to run validations only for simplicity in execution as well as to allow the `validate` command to be expanded independently of `create cluster`.
 
-## Appendices - I, II, ...
-
-Proof of concept created on forked repo branch. ([link](https://github.com/raymond-zhang00/eks-anywhere/tree/review/poc))
