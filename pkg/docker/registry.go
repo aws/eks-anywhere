@@ -13,10 +13,10 @@ import (
 // Harbor requires root level projects but curated packages private account currently
 // doesn't have support for root level
 const (
-	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
-	publicProdECRName   = "eks-anywhere"
-	publicDevECRName    = "l0g8r8j6"
+	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	publicProdECRName = "eks-anywhere"
+	publicDevECRName  = "l0g8r8j6"
 )
 
 // ImageRegistryDestination implements the ImageDestination interface, writing images and tags from
@@ -95,10 +95,10 @@ func (s *ImageOriginalRegistrySource) Load(ctx context.Context, images ...string
 // Currently private curated packages don't have a root level project
 // This method adds a root level projectName to the endpoint
 func getUpdatedEndpoint(originalEndpoint, image string) string {
-	if strings.Contains(image, packageDevLocation) {
+	if strings.Contains(image, packageDevDomain) {
 		return originalEndpoint + "/" + publicDevECRName
 	}
-	if strings.Contains(image, packageProdLocation) {
+	if strings.Contains(image, packageProdDomain) {
 		return originalEndpoint + "/" + publicProdECRName
 	}
 	return originalEndpoint
