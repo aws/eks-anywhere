@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"context"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"log"
 	"path/filepath"
 
@@ -127,7 +126,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
 	importArtifacts := artifacts.Import{
-		Reader:  fetchReader(deps.ManifestReader, c.includePackages, curatedpackages.Import),
+		Reader:  fetchReader(deps.ManifestReader, c.includePackages),
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),

@@ -3,6 +3,7 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -12,21 +13,26 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	publicProdECR       = "public.ecr.aws/eks-anywhere"
+	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+)
+
 type PackageReader struct {
 	*manifests.Reader
-	readerType *PackageReaderType
 }
 
-func NewPackageReader(mr *manifests.Reader, readerType *PackageReaderType) *PackageReader {
+func NewPackageReader(mr *manifests.Reader) *PackageReader {
 	return &PackageReader{
-		Reader:     mr,
-		readerType: readerType,
+		Reader: mr,
 	}
 }
 
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.Reader.ReadImagesFromBundles(ctx, b)
+	//images, err := r.Reader.ReadImagesFromBundles(ctx, b)
 
+	var images []releasev1.Image
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
@@ -41,7 +47,7 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 		images = append(images, packagesHelmChart...)
 	}
 
-	return images, err
+	return images, nil
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
@@ -107,10 +113,17 @@ func (r *PackageReader) fetchPackagesImage(ctx context.Context, versionsBundle r
 				Description: version.Repository,
 				OS:          ctrl.OS,
 				OSName:      ctrl.OSName,
-				URI:         fmt.Sprintf("%s/%s@%s", r.readerType.GetRegistry(ctrl.URI), version.Repository, version.Digest),
+				URI:         fmt.Sprintf("%s/%s@%s", getRegistry(ctrl.URI), version.Repository, version.Digest),
 			}
 			images = append(images, image)
 		}
 	}
 	return images, nil
+}
+
+func getRegistry(uri string) string {
+	if strings.Contains(uri, publicProdECR) {
+		return packageProdLocation
+	}
+	return packageDevLocation
 }
