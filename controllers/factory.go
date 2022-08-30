@@ -213,14 +213,18 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withSnowClusterReconciler() *Factory {
-	f.withCNIReconciler()
+	f.withCNIReconciler().withTracker()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.snowClusterReconciler != nil {
 			return nil
 		}
 
-		f.snowClusterReconciler = snowreconciler.New(f.manager.GetClient(), f.cniReconciler)
+		f.snowClusterReconciler = snowreconciler.New(
+			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
+		)
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
 
 		return nil
