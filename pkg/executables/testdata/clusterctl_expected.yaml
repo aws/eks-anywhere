@@ -15,10 +15,6 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "v0.7.8"
-  - name: "aws"
-    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml"
-    type: "InfrastructureProvider"
-    version: "v0.6.4"
   - name: "snow"
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-snow/v0.0.0/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -71,12 +67,6 @@ images:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
     tag: v0.3.19-eks-a-0.0.1.build.38
   control-plane-kubeadm/kube-rbac-proxy:
-    repository: public.ecr.aws/l0g8r8j6/brancz
-    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
-  infrastructure-aws/cluster-api-aws-controller:
-    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws
-    tag: v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
-  infrastructure-aws/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
   infrastructure-cloudstack/kube-rbac-proxy:
