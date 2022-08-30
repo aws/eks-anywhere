@@ -9,7 +9,6 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/manifests"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -21,18 +20,24 @@ const (
 	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
-type PackageReader struct {
-	*manifests.Reader
+type ManifestReader interface {
+	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
+	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
+	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
 }
 
-func NewPackageReader(mr *manifests.Reader) *PackageReader {
+type PackageReader struct {
+	ManifestReader
+}
+
+func NewPackageReader(mr ManifestReader) *PackageReader {
 	return &PackageReader{
-		Reader: mr,
+		ManifestReader: mr,
 	}
 }
 
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
-	images, err := r.Reader.ReadImagesFromBundles(ctx, b)
+	images, err := r.ManifestReader.ReadImagesFromBundles(ctx, b)
 
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
@@ -40,19 +45,19 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 			logger.Info("Warning: Failed getting bundle reference", "error", err)
 			continue
 		}
-		packagesHelmChart, err := r.fetchPackagesImage(ctx, vb, artifact)
+		packageImages, err := r.fetchImagesFromBundle(ctx, vb, artifact)
 		if err != nil {
 			logger.Info("Warning: Failed extracting packages", "error", err)
 			continue
 		}
-		images = append(images, packagesHelmChart...)
+		images = append(images, packageImages...)
 	}
 
 	return images, err
 }
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
-	images := r.Reader.ReadChartsFromBundles(ctx, b)
+	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
@@ -94,7 +99,7 @@ func fetchPackagesHelmChart(ctx context.Context, versionsBundle releasev1.Versio
 	return images, nil
 }
 
-func (r *PackageReader) fetchPackagesImage(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
+func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundle releasev1.VersionsBundle, artifact string) ([]releasev1.Image, error) {
 	data, err := PullLatestBundle(ctx, artifact)
 	if err != nil {
 		return nil, err
@@ -108,6 +113,7 @@ func (r *PackageReader) fetchPackagesImage(ctx context.Context, versionsBundle r
 	images := make([]releasev1.Image, 0, len(bundle.Spec.Packages))
 
 	for _, p := range bundle.Spec.Packages {
+		// each package will have at least one version
 		for _, version := range p.Source.Versions[0].Images {
 			image := releasev1.Image{
 				Name:        version.Repository,
