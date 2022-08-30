@@ -10,8 +10,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clusterapi"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
@@ -94,7 +92,7 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 func (s *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileCNI")
 
-	client, err := s.remoteClientRegistry.GetClient(ctx, capiClusterObjectKey(clusterSpec.Cluster))
+	client, err := s.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
 	if err != nil {
 		return controller.Result{}, err
 	}
@@ -109,12 +107,4 @@ func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clus
 	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
 		return snow.WorkersObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
 	})
-}
-
-func capiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
-	// TODO: we should consider storing a reference to the CAPI cluster in the eksa cluster status
-	return client.ObjectKey{
-		Name:      clusterapi.ClusterName(cluster),
-		Namespace: constants.EksaSystemNamespace,
-	}
 }
