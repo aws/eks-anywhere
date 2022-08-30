@@ -175,33 +175,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cluster-api-provider-aws artifacts
-	{
-		ProjectName: "cluster-api-provider-aws",
-		ProjectPath: "projects/kubernetes-sigs/cluster-api-provider-aws",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "cluster-api-aws-controller",
-			},
-			{
-				RepoName: "eks-bootstrap-controller",
-			},
-			{
-				RepoName: "eks-control-plane-controller",
-			},
-		},
-		ImageRepoPrefix: "kubernetes-sigs/cluster-api-provider-aws",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-		Manifests: []*assettypes.ManifestComponent{
-			{
-				Name:          "infrastructure-aws",
-				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
-			},
-		},
-	},
 	// Cluster-api-provider-aws-snow artifacts
 	{
 		ProjectName: "cluster-api-provider-aws-snow",

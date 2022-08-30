@@ -26,7 +26,6 @@ const (
 	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
 
 	// Project paths
-	CapaProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-aws"
 	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
 	CapcProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
