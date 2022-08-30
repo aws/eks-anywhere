@@ -266,6 +266,8 @@ This will generate a known hosts file which contains only the entry necessary to
 ### Example FluxConfig cluster configuration for a generic git provider
 For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/optional/gitops" >}}).
 
+>**_NOTE:_** The `repositoryUrl` value is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. For Example, the github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present.
+
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
