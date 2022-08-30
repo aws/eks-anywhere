@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 
@@ -40,6 +41,7 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 	logger.V(3).Info("Starting registry write", "numberOfImages", len(images))
 	err := d.processor.Process(ctx, images, func(ctx context.Context, image string) error {
 		endpoint := getUpdatedEndpoint(d.endpoint, image)
+		image = removeDigestReference(image)
 		if err := d.client.TagImage(ctx, image, endpoint); err != nil {
 			return err
 		}
@@ -100,4 +102,17 @@ func getUpdatedEndpoint(originalEndpoint, image string) string {
 		return originalEndpoint + "/" + publicProdECRName
 	}
 	return originalEndpoint
+}
+
+// Curated packages are currently referenced by digest
+// Docker doesn't support tagging images with digest
+// This method extracts any @ in the image tag
+func removeDigestReference(image string) string {
+	imageSplit := strings.Split(image, "@")
+	if len(imageSplit) < 2 {
+		return image
+	}
+	imageLocation, digest := imageSplit[0], imageSplit[1]
+	digestSplit := strings.Split(digest, ":")
+	return fmt.Sprintf("%s:%s", imageLocation, digestSplit[1])
 }

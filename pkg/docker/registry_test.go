@@ -30,6 +30,22 @@ func TestNewRegistryDestination(t *testing.T) {
 	g.Expect(dstLoader.Write(ctx, images...)).To(Succeed())
 }
 
+func TestNewRegistryDestinationWhenDigestSpecified(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	client := mocks.NewMockImageTaggerPusher(ctrl)
+
+	registry := "https://registry"
+	image := "image1@sha256:v1"
+	expectedImage := "image1:v1"
+	ctx := context.Background()
+	dstLoader := docker.NewRegistryDestination(client, registry)
+	client.EXPECT().TagImage(test.AContext(), expectedImage, registry)
+	client.EXPECT().PushImage(test.AContext(), expectedImage, registry)
+
+	g.Expect(dstLoader.Write(ctx, image)).To(Succeed())
+}
+
 func TestNewRegistryDestinationErrorTag(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)

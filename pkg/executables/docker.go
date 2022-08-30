@@ -12,10 +12,10 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now
 const (
-	dockerPath          = "docker"
-	defaultRegistry     = "public.ecr.aws"
-	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	dockerPath        = "docker"
+	defaultRegistry   = "public.ecr.aws"
+	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 type Docker struct {
@@ -84,9 +84,8 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 }
 
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdLocation, endpoint, packageDevLocation, endpoint)
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)
-	localImage = removeDigestReference(localImage)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -95,9 +94,8 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 }
 
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdLocation, endpoint, packageDevLocation, endpoint)
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
 	localImage := replacer.Replace(image)
-	localImage = removeDigestReference(localImage)
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err
@@ -166,17 +164,4 @@ func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool
 	}
 
 	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
-}
-
-// Curated packages are currently referenced by digest
-// Docker doesn't support tagging images with digest
-// This method extracts any @ in the image tag
-func removeDigestReference(image string) string {
-	imageSplit := strings.Split(image, "@")
-	if len(imageSplit) < 2 {
-		return image
-	}
-	imageLocation, digest := imageSplit[0], imageSplit[1]
-	digestSplit := strings.Split(digest, ":")
-	return fmt.Sprintf("%s:%s", imageLocation, digestSplit[1])
 }
