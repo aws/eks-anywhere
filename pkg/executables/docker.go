@@ -9,6 +9,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+// Temporary: Curated packages dev and prod accounts are currently hard coded
+// This is because there is no mechanism to extract these values as of now
 const (
 	dockerPath          = "docker"
 	defaultRegistry     = "public.ecr.aws"
@@ -166,6 +168,9 @@ func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool
 	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
 }
 
+// Curated packages are currently referenced by digest
+// Docker doesn't support tagging images with digest
+// This method extracts any @ in the image tag
 func removeDigestReference(image string) string {
 	imageSplit := strings.Split(image, "@")
 	if len(imageSplit) < 2 {
