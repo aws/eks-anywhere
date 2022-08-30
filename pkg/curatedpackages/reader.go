@@ -15,9 +15,9 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now
 const (
-	publicProdECR       = "public.ecr.aws/eks-anywhere"
-	packageProdLocation = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevLocation  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	publicProdECR     = "public.ecr.aws/eks-anywhere"
+	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
+	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
 )
 
 type ManifestReader interface {
@@ -131,7 +131,7 @@ func (r *PackageReader) fetchImagesFromBundle(ctx context.Context, versionsBundl
 
 func getRegistry(uri string) string {
 	if strings.Contains(uri, publicProdECR) {
-		return packageProdLocation
+		return packageProdDomain
 	}
-	return packageDevLocation
+	return packageDevDomain
 }
