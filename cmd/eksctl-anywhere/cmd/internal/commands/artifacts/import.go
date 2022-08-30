@@ -26,7 +26,7 @@ type FileImporter interface {
 }
 
 func (i Import) Run(ctx context.Context) error {
-	images, err := i.Reader.ReadImagesFromBundles(i.Bundles)
+	images, err := i.Reader.ReadImagesFromBundles(ctx, i.Bundles)
 	if err != nil {
 		return fmt.Errorf("downloading images: %v", err)
 	}

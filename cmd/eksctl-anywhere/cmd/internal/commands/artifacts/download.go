@@ -12,7 +12,7 @@ import (
 
 type Reader interface {
 	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
-	ReadImagesFromBundles(bundles *releasev1.Bundles) ([]releasev1.Image, error)
+	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
 	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
 }
 
@@ -58,7 +58,7 @@ func (d Download) Run(ctx context.Context) error {
 		return fmt.Errorf("downloading eksa tools image: %v", err)
 	}
 
-	images, err := d.Reader.ReadImagesFromBundles(b)
+	images, err := d.Reader.ReadImagesFromBundles(ctx, b)
 	if err != nil {
 		return fmt.Errorf("downloading images: %v", err)
 	}
