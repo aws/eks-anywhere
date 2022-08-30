@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
@@ -229,10 +230,11 @@ func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
 }
 
 func TestTemplaterGenerateManifestError(t *testing.T) {
+	expectedAttempts := 2
 	tt := newtemplaterTest(t)
-	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
+	tt.expectHelmTemplateWith(gomock.Any(), "1.22").Return(nil, errors.New("error from helm")).Times(expectedAttempts) // Using any because we only want to test the returned error
 
-	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
+	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec, cilium.WithRetrier(retrier.NewWithMaxRetries(expectedAttempts, 0)))
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
 }

@@ -228,11 +228,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		return nil, err
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("applying capi spec: %v", err)
 	}
@@ -359,11 +355,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if err = c.writeCAPISpecFile(newClusterSpec.Cluster.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("applying capi control plane spec: %v", err)
 	}
@@ -438,11 +430,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster control plane replicas to be ready: %v", err)
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, mdContent, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, mdContent, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("applying capi machine deployment spec: %v", err)
 	}
@@ -543,12 +531,7 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 	if err != nil {
 		return fmt.Errorf("generating networking manifest: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent)
-		},
-	)
-	if err != nil {
+	if err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent); err != nil {
 		return fmt.Errorf("applying networking manifest spec: %v", err)
 	}
 	return nil
@@ -574,11 +557,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	}
 
 	logger.Info("Installing storage class on cluster")
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
-		},
-	)
+	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
 	if err != nil {
 		return fmt.Errorf("applying storage class manifest: %v", err)
 	}
@@ -591,11 +570,7 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, cluster
 		return err
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
 	if err != nil {
 		return fmt.Errorf("applying machine health checks: %v", err)
 	}
@@ -609,11 +584,7 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluste
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
@@ -629,11 +600,7 @@ func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
 	}
@@ -940,11 +907,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
 	logger.V(1).Info("Applying Bundles to cluster")
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
@@ -953,32 +916,20 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 
 func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	pausedAnnotation := map[string]string{clusterSpec.Cluster.PausedAnnotation(): "true"}
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
 		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err := c.Retrier.Retry(
-				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-				},
-			)
+			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing cluster reconciliation: %v", err)
 	}
@@ -987,32 +938,20 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	pausedAnnotation := clusterSpec.Cluster.PausedAnnotation()
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
 		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err := c.Retrier.Retry(
-				func() error {
-					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-				},
-			)
+			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing cluster reconciliation: %v", err)
 	}
@@ -1023,11 +962,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 }
 
 func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Cluster, resourcesSpec []byte) error {
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, resourcesSpec)
-		},
-	)
+	err := c.clusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, resourcesSpec)
 	if err != nil {
 		return fmt.Errorf("applying eks-a spec: %v", err)
 	}
