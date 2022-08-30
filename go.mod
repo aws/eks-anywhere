@@ -29,6 +29,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
 	github.com/tinkerbell/tink v0.6.1-0.20220509141453-30fe9e015575
+	github.com/whilp/git-urls v1.0.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8

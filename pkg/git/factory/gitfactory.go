@@ -65,7 +65,10 @@ func Build(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.
 		if err != nil {
 			return nil, err
 		}
-		repoUrl = fluxConfig.Spec.Git.RepositoryUrl
+		// go-git fails to parse private git repo urls if the URL scheme is ssh
+		// The url is a valid SSH url even if we strip ssh://
+		// For example git@github.com:ORGNAME/reponame.git
+		repoUrl = strings.TrimPrefix(fluxConfig.Spec.Git.RepositoryUrl, "ssh://")
 		repo = path.Base(strings.TrimSuffix(repoUrl, filepath.Ext(repoUrl)))
 	default:
 		return nil, fmt.Errorf("no valid git provider in FluxConfigSpec. Spec: %v", fluxConfig)

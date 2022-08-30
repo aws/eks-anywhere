@@ -3,9 +3,8 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"net/url"
-
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/whilp/git-urls"
 )
 
 const (
@@ -75,7 +74,7 @@ func validateGithubProviderConfig(config GithubProviderConfig) error {
 }
 
 func validateRepositoryUrl(repositoryUrl string) error {
-	url, err := url.Parse(repositoryUrl)
+	url, err := giturls.Parse(repositoryUrl)
 	if err != nil {
 		return fmt.Errorf("unable to parse repository url: %v", err)
 	}
