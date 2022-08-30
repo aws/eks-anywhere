@@ -49,7 +49,7 @@ func init() {
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	upgradeClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
+		&uc.hardwareCSVPath,
 		TinkerbellHardwareCSVFlagName,
 		TinkerbellHardwareCSVFlagAlias,
 		"",
