@@ -457,7 +457,11 @@ func (in *CloudStackMachineConfigSpec) DeepCopyInto(out *CloudStackMachineConfig
 	*out = *in
 	out.Template = in.Template
 	out.ComputeOffering = in.ComputeOffering
-	out.DiskOffering = in.DiskOffering
+	if in.DiskOffering != nil {
+		in, out := &in.DiskOffering, &out.DiskOffering
+		*out = new(CloudStackResourceDiskOffering)
+		**out = **in
+	}
 	if in.Users != nil {
 		in, out := &in.Users, &out.Users
 		*out = make([]UserConfiguration, len(*in))

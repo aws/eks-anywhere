@@ -312,40 +312,40 @@ func TestCloudStackMachineNotEqualDiskOfferingName(t *testing.T) {
 func TestCloudStackMachineNotEqualDiskOfferingId(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	cloudStackMachineConfigSpec2.DiskOffering.Id = "newDiskOffering"
 	cloudStackMachineConfigSpec2.DiskOffering = (*cloudStackMachineConfigSpec1.DiskOffering).DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Id = "newDiskOffering"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering id comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualDiskOfferingMountPath(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	cloudStackMachineConfigSpec2.DiskOffering.MountPath = "newDiskOfferingPath"
 	cloudStackMachineConfigSpec2.DiskOffering = (*cloudStackMachineConfigSpec1.DiskOffering).DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.MountPath = "newDiskOfferingPath"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering path comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualDiskOfferingDevice(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	cloudStackMachineConfigSpec2.DiskOffering.Device = "/dev/sdb"
 	cloudStackMachineConfigSpec2.DiskOffering = (*cloudStackMachineConfigSpec1.DiskOffering).DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Device = "/dev/sdb"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering device comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualDiskOfferingLabel(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	cloudStackMachineConfigSpec2.DiskOffering.Label = "data_disk_new"
 	cloudStackMachineConfigSpec2.DiskOffering = (*cloudStackMachineConfigSpec1.DiskOffering).DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Label = "data_disk_new"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering label comparison in CloudStackMachineConfigSpec not detected")
 }
 
 func TestCloudStackMachineNotEqualDiskOfferingFilesystem(t *testing.T) {
 	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	cloudStackMachineConfigSpec2.DiskOffering.Filesystem = "ext3"
 	cloudStackMachineConfigSpec2.DiskOffering = (*cloudStackMachineConfigSpec1.DiskOffering).DeepCopy()
+	cloudStackMachineConfigSpec2.DiskOffering.Filesystem = "ext3"
 	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Disk offering filesystem comparison in CloudStackMachineConfigSpec not detected")
 }
 
