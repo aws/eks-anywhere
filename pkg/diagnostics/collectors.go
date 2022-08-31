@@ -358,7 +358,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	args := []string{"get", crdType, "-o", "json", "--all-namespaces"}
 	collectorPath := crdPath(crdType)
 	return &Collect{
-		Run: &run{
+		RunPod: &runPod{
 			collectorMeta: collectorMeta{
 				CollectorName: crdType,
 			},
@@ -381,6 +381,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 					Effect: "NoSchedule",
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
@@ -417,6 +418,7 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 					Args:    argsIP,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
@@ -436,6 +438,7 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 					Args:    argsPing,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
