@@ -31,3 +31,13 @@ func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywhere
 	}
 	return capiCluster, nil
 }
+
+// CapiClusterObjectKey generates an ObjectKey for the CAPI cluster owned by
+// the provided eks-a cluster
+func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {
+	// TODO: we should consider storing a reference to the CAPI cluster in the eksa cluster status
+	return client.ObjectKey{
+		Name:      clusterapi.ClusterName(cluster),
+		Namespace: constants.EksaSystemNamespace,
+	}
+}
