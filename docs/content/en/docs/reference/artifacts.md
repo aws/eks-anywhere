@@ -198,6 +198,8 @@ You can use a proxy server to route outbound requests to the internet. To config
    sudo apt update -y
    sudo apt install jq unzip make ansible -y
    sudo snap install yq
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 4. Get `image-builder`:
    ```bash
@@ -259,6 +261,8 @@ You can use a proxy server to route outbound requests to the internet. To config
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
    sudo chown root:kvm /dev/kvm
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
     ```bash
