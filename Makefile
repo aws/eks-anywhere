@@ -87,7 +87,7 @@ else
 endif
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
-CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
+CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base-nonroot
 CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat manager/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
 DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
@@ -289,7 +289,7 @@ copy-license-cluster-controller:
 	source scripts/attribution_helpers.sh && build::fix_licenses
 
 .PHONY: build-cluster-controller-binaries
-build-cluster-controller-binaries: eks-a-cluster-controller copy-license-cluster-controller
+build-cluster-controller-binaries: eks-a-cluster-controller 
 
 .PHONY: build-cluster-controller
 build-cluster-controller: cluster-controller-local-images cluster-controller-tarballs
@@ -304,6 +304,10 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 upload-artifacts:
 	manager/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
+.PHONY: create-cluster-controller-binaries-local
+create-cluster-controller-binaries-local:
+	$(MAKE) create-cluster-controller-binary-$(GO_OS)-$(GO_ARCH)
+
 .PHONY: create-cluster-controller-binaries
 create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
 
@@ -317,6 +321,7 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)
 	$(GO) mod vendor
 	$(MAKE) create-cluster-controller-binaries
+	$(MAKE) copy-license-cluster-controller
 	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
 	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./manager"
@@ -592,22 +597,21 @@ CONTROLLER_IMG_TAGGED ?= $(CONTROLLER_IMG)-$(ARCH):$(TAG)
 LDFLAGS := $(shell hack/version.sh)
 
 .PHONY: docker-build
-docker-build:
-	$(MAKE) ARCH=$(ARCH) docker-build-core
+docker-build: GO_OS := linux
+docker-build: GO_ARCH := amd64
+docker-build: fake-controller-image-deps $(ORGANIZE_BINARIES_TARGETS) create-cluster-controller-binaries-local docker-build-core
 
 .PHONY: docker-build-core
-docker-build-core: docker-pull-prerequisites ## Build the docker image for controller-manager
-	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAGGED) -f build/Dockerfile
+docker-build-core: ## Build the docker image for controller-manager
+	DOCKER_BUILDKIT=1 docker build \
+	--build-arg TARGETARCH=$(GO_ARCH) \
+	--build-arg TARGETOS=$(GO_OS) \
+	--build-arg BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
+    . -t $(CONTROLLER_IMG_TAGGED) -f $(DOCKERFILE_FOLDER)/Dockerfile
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
 	docker push $(CONTROLLER_IMG_TAGGED)
-
-.PHONY: docker-pull-prerequisites
-docker-pull-prerequisites:
-	docker pull docker.io/docker/dockerfile:1.1-experimental
-	docker pull docker.io/library/golang:$(GOLANG_VERSION)
-	docker pull gcr.io/distroless/static:latest
 
 ## TODO update release folder
 RELEASE_DIR := config/manifest
@@ -622,8 +626,14 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
 	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
+.PHONY: fake-controller-image-deps
+fake-controller-image-deps:
+	@mkdir -p $(OUTPUT_DIR)/LICENSES
+	touch $(OUTPUT_DIR)/LICENSES
+	touch ATTRIBUTION.txt 
+
 .PHONY: run-controller # Run eksa controller from local repo with tilt
-run-controller: $(KUSTOMIZE)
+run-controller: $(KUSTOMIZE) $(ORGANIZE_BINARIES_TARGETS) fake-controller-image-deps
 	tilt up --file manager/Tiltfile
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
