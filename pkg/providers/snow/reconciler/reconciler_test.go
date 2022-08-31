@@ -380,7 +380,6 @@ func createBundle() *releasev1.Bundles {
 					ClusterAPI:             releasev1.CoreClusterAPI{},
 					Bootstrap:              releasev1.KubeadmBootstrapBundle{},
 					ControlPlane:           releasev1.KubeadmControlPlaneBundle{},
-					Aws:                    &releasev1.AwsBundle{},
 					VSphere:                releasev1.VSphereBundle{},
 					Docker:                 releasev1.DockerBundle{},
 					Eksa:                   releasev1.EksaBundle{},
