@@ -5,5 +5,4 @@ resources:
 
 images:
 - name: controller
-  newName: cluster-controller
-  newTag: latest
+  newName: eks-a-controller-manager
