@@ -14,7 +14,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -215,14 +215,14 @@ func (dt *deployTemplateTest) assertDeployTemplateError(t *testing.T) {
 }
 
 func (dt *deployTemplateTest) assertDeployOptsMatches(t *testing.T) {
-	g := gomega.NewWithT(t)
+	g := NewWithT(t)
 
 	actual, err := ioutil.ReadFile(filepath.Join(dt.dir, executables.DeployOptsFile))
 	if err != nil {
 		t.Fatalf("failed to read deploy options file: %v", err)
 	}
 
-	g.Expect(string(actual)).To(gomega.Equal(expectedDeployOpts))
+	g.Expect(string(actual)).To(Equal(expectedDeployOpts))
 }
 
 func TestSearchTemplateItExists(t *testing.T) {
@@ -1181,5 +1181,265 @@ func TestGovcNetworkExistsFalse(t *testing.T) {
 
 	if exists {
 		t.Fatalf("Govc.NetworkExists() = true, want false")
+	}
+}
+
+func TestGovcCreateUser(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	username := "ralph"
+	password := "verysecret"
+
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "test CreateGroup success",
+			wantErr: nil,
+		},
+		{
+			name:    "test CreateGroup error",
+			wantErr: errors.New("operation failed"),
+		},
+	}
+
+	for _, tt := range tests {
+
+		executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.user.create", "-p", password, username).Return(*bytes.NewBufferString(""), tt.wantErr)
+
+		err := g.CreateUser(ctx, username, password)
+		gt := NewWithT(t)
+
+		if tt.wantErr != nil {
+			gt.Expect(err).ToNot(BeNil())
+		} else {
+			gt.Expect(err).To(BeNil())
+		}
+	}
+}
+
+func TestGovcCreateGroup(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	group := "EKSA"
+
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "test CreateGroup success",
+			wantErr: nil,
+		},
+		{
+			name:    "test CreateGroup error",
+			wantErr: errors.New("operation failed"),
+		},
+	}
+
+	for _, tt := range tests {
+
+		executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.create", group).Return(*bytes.NewBufferString(""), tt.wantErr)
+
+		err := g.CreateGroup(ctx, group)
+		gt := NewWithT(t)
+		if tt.wantErr != nil {
+			gt.Expect(err).ToNot(BeNil())
+		} else {
+			gt.Expect(err).To(BeNil())
+		}
+
+	}
+}
+
+func TestGovcCreateRole(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	role := "EKSACloudAdmin"
+	privileges := []string{"vSphereDataProtection.Recovery", "vSphereDataProtection.Protection"}
+
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "test CreateRole success",
+			wantErr: nil,
+		},
+		{
+			name:    "test CreateRole error",
+			wantErr: errors.New("operation failed"),
+		},
+	}
+
+	for _, tt := range tests {
+
+		targetArgs := append([]string{"role.create", role}, privileges...)
+		executable.EXPECT().ExecuteWithEnv(ctx, env, targetArgs).Return(*bytes.NewBufferString(""), tt.wantErr)
+
+		err := g.CreateRole(ctx, role, privileges)
+		gt := NewWithT(t)
+		if tt.wantErr != nil {
+			gt.Expect(err).ToNot(BeNil())
+		} else {
+			gt.Expect(err).To(BeNil())
+		}
+	}
+}
+
+func TestGovcGroupExistsFalse(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	group := "EKSA"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), nil)
+
+	exists, err := g.GroupExists(ctx, group)
+	gt := NewWithT(t)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(exists).To(BeFalse())
+}
+
+func TestGovcGroupExistsTrue(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	group := "EKSA"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(group), nil)
+
+	exists, err := g.GroupExists(ctx, group)
+	gt := NewWithT(t)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(exists).To(BeTrue())
+}
+
+func TestGovcGroupExistsError(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	group := "EKSA"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.ls", group).Return(*bytes.NewBufferString(""), errors.New("operation failed"))
+
+	_, err := g.GroupExists(ctx, group)
+	gt := NewWithT(t)
+	gt.Expect(err).ToNot(BeNil())
+}
+
+func TestGovcRoleExistsTrue(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	role := "EKSACloudAdmin"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(role), nil)
+
+	exists, err := g.RoleExists(ctx, role)
+	gt := NewWithT(t)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(exists).To(BeTrue())
+}
+
+func TestGovcRoleExistsFalse(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	role := "EKSACloudAdmin"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), nil)
+
+	exists, err := g.RoleExists(ctx, role)
+	gt := NewWithT(t)
+	gt.Expect(err).To(BeNil())
+	gt.Expect(exists).To(BeFalse())
+}
+
+func TestGovcRoleExistsError(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	role := "EKSACloudAdmin"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), errors.New("operation failed"))
+
+	_, err := g.RoleExists(ctx, role)
+	gt := NewWithT(t)
+	gt.Expect(err).ToNot(BeNil())
+}
+
+func TestGovcAddGroupUser(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	group := "EKSA"
+	username := "ralph"
+
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "test AddGroupUser success",
+			wantErr: nil,
+		},
+		{
+			name:    "test AddGroupUser error",
+			wantErr: errors.New("operation failed"),
+		},
+	}
+
+	for _, tt := range tests {
+
+		executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.update", "-a", username, group).Return(*bytes.NewBufferString(""), tt.wantErr)
+
+		err := g.AddGroupUser(ctx, group, username)
+		gt := NewWithT(t)
+		if tt.wantErr != nil {
+			gt.Expect(err).ToNot(BeNil())
+		} else {
+			gt.Expect(err).To(BeNil())
+		}
+
+	}
+}
+
+func TestGovcSetPermission(t *testing.T) {
+	ctx := context.Background()
+	_, g, executable, env := setup(t)
+	principal := "EKSAGroup"
+	domain := "vsphere.local"
+	role := "EKSACloudAdmin"
+	object := "/Datacenter/vm/MyVirtualMachines"
+
+	tests := []struct {
+		name    string
+		wantErr error
+	}{
+		{
+			name:    "test SetPermission success",
+			wantErr: nil,
+		},
+		{
+			name:    "test SetPermission error",
+			wantErr: errors.New("operation failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		executable.EXPECT().ExecuteWithEnv(
+			ctx,
+			env,
+			"permissions.set",
+			"-group=true",
+			"-principal",
+			principal+"@"+domain,
+			"-role",
+			role,
+			object,
+		).Return(*bytes.NewBufferString(""), tt.wantErr)
+
+		err := g.SetPermission(ctx, principal, role, object, domain)
+		gt := NewWithT(t)
+		if tt.wantErr != nil {
+			gt.Expect(err).ToNot(BeNil())
+		} else {
+			gt.Expect(err).To(BeNil())
+		}
 	}
 }

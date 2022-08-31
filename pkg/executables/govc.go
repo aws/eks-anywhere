@@ -973,11 +973,9 @@ func getDeployOptions(network string) ([]byte, error) {
 	return deployOpts, err
 }
 
-func (g *Govc) CreateUser(ctx context.Context, username string) error {
+func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
 	params := []string{
-		"sso.user.create",
-		"-p", "foobar",
-		username,
+		"sso.user.create", "-p", password, username,
 	}
 
 	if _, err := g.exec(ctx, params...); err != nil {
@@ -988,15 +986,12 @@ func (g *Govc) CreateUser(ctx context.Context, username string) error {
 
 func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	params := []string{
-		"sso.group.create",
-		name,
+		"sso.group.create", name,
 	}
 
 	if _, err := g.exec(ctx, params...); err != nil {
 		return fmt.Errorf("govc returned error %v", err)
 	}
-
-	fmt.Printf("Created vSphere Group %s\n", name)
 
 	return nil
 }
@@ -1053,10 +1048,7 @@ func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string)
 }
 
 func (g *Govc) SetPermission(ctx context.Context, principal string, role string, object string, domain string) error {
-	// permissions.set -principal $USER@vsphere.local -role Admin /dc1/host/cluster1
-	if domain != "" {
-		principal = principal + "@" + domain
-	}
+	principal = principal + "@" + domain
 
 	params := []string{
 		"permissions.set",
@@ -1065,7 +1057,6 @@ func (g *Govc) SetPermission(ctx context.Context, principal string, role string,
 		"-role", role,
 		object,
 	}
-	fmt.Println(params)
 
 	if _, err := g.exec(ctx, params...); err != nil {
 		return fmt.Errorf("govc returned error %v", err)
