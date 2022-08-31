@@ -972,3 +972,104 @@ func getDeployOptions(network string) ([]byte, error) {
 
 	return deployOpts, err
 }
+
+func (g *Govc) CreateUser(ctx context.Context, username string) error {
+	params := []string{
+		"sso.user.create",
+		"-p", "foobar",
+		username,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+	return nil
+}
+
+func (g *Govc) CreateGroup(ctx context.Context, name string) error {
+	params := []string{
+		"sso.group.create",
+		name,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	fmt.Printf("Created vSphere Group %s\n", name)
+
+	return nil
+}
+
+func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"sso.group.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+func (g *Govc) AddGroupUser(ctx context.Context, name string, username string) error {
+	params := []string{
+		"sso.group.update",
+		"-a", username,
+		name,
+	}
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"role.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string) error {
+	params := append([]string{"role.create", name}, privileges...)
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+func (g *Govc) SetPermission(ctx context.Context, principal string, role string, object string, domain string) error {
+	// permissions.set -principal $USER@vsphere.local -role Admin /dc1/host/cluster1
+	if domain != "" {
+		principal = principal + "@" + domain
+	}
+
+	params := []string{
+		"permissions.set",
+		"-group=true",
+		"-principal", principal,
+		"-role", role,
+		object,
+	}
+	fmt.Println(params)
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
