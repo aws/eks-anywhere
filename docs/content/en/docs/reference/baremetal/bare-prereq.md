@@ -46,7 +46,7 @@ Each machine should include the following features:
 
 Here are other network requirements:
 
-* All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on). The hardware does not need to be on the same layer 2 as the BMC, but the Admin machine and management cluster does need routes configured so it can communicate with the BMC API.
+* All EKS Anywhere machines, including the Admin, control plane and worker machines, must be on the same layer 2 network and have network connectivity to the BMC (IPMI, Redfish, and so on).
 
 * You must be able to run DHCP on the control plane/worker machine network.
 
