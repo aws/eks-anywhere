@@ -27,6 +27,12 @@ func NewFluxConfig(name string, opts ...FluxConfigOpt) *v1alpha1.FluxConfig {
 	return config
 }
 
+func WithFluxConfigName(n string) FluxConfigOpt {
+	return func(c *v1alpha1.FluxConfig) {
+		c.Name = n
+	}
+}
+
 func WithFluxConfigNamespace(ns string) FluxConfigOpt {
 	return func(c *v1alpha1.FluxConfig) {
 		c.Namespace = ns
