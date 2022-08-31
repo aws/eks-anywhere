@@ -15,6 +15,7 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
   verbs:
@@ -34,6 +35,7 @@ rules:
   - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
+  - snowmachineconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
   verbs:
@@ -47,6 +49,7 @@ rules:
   - cloudstackmachineconfigs/status
   - clusters/status
   - dockerdatacenterconfigs/status
+  - snowmachineconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
   verbs:
@@ -124,4 +127,17 @@ rules:
   verbs:
   - get
   - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - awssnowclusters
+  - awssnowmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
   - watch
