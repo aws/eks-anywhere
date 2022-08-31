@@ -12,7 +12,6 @@ const (
 	TinkerbellProviderName                  = "tinkerbell"
 	tinkerbellBootstrapIPEnvVar             = "T_TINKERBELL_BOOTSTRAP_IP"
 	tinkerbellControlPlaneNetworkCidrEnvVar = "T_TINKERBELL_CP_NETWORK_CIDR"
-	tinkerbellImageUbuntu120EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
 	tinkerbellImageUbuntu122EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
 	tinkerbellImageUbuntu123EnvVar          = "T_TINKERBELL_IMAGE_UBUNTU_1_23"
@@ -23,7 +22,6 @@ const (
 
 var requiredTinkerbellEnvVars = []string{
 	tinkerbellControlPlaneNetworkCidrEnvVar,
-	tinkerbellImageUbuntu120EnvVar,
 	tinkerbellImageUbuntu121EnvVar,
 	tinkerbellImageUbuntu122EnvVar,
 	tinkerbellImageUbuntu123EnvVar,
@@ -125,15 +123,6 @@ func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
 	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 
 	return t.clusterFillers
-}
-
-func WithUbuntu120Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu120EnvVar, api.WithTinkerbellOSImageURL),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
 }
 
 func WithUbuntu121Tinkerbell() TinkerbellOpt {
