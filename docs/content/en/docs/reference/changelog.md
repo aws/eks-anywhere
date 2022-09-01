@@ -5,6 +5,8 @@ weight: 35
 ---
 
 ## Unreleased
+
+### Added
 - Warn on vSphere cluster creation when vSphere user is missing vSphere permissions [3160](https://github.com/aws/eks-anywhere/pull/3160)
 
 ### ⚠️ Breaking changes
