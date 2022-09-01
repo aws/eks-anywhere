@@ -6,7 +6,6 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -43,22 +42,13 @@ var createClusterCmd = &cobra.Command{
 
 func init() {
 	createCmd.AddCommand(createClusterCmd)
-	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	createClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
-		TinkerbellHardwareCSVFlagName,
-		TinkerbellHardwareCSVFlagAlias,
-		"",
-		TinkerbellHardwareCSVFlagDescription,
-	)
+	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
+	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
+	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
 	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
-	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
-
-	setupTimeoutFlags(createClusterCmd, &cc.timeoutOptions)
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -79,20 +69,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
-
-		// If no flag was returned there is a developer error as the flag has been removed
-		// from the program rendering it invalid.
-		if flag == nil {
-			panic("'hardwarefile' flag not configured")
-		}
-
-		if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
-			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
-		}
-
-		if !validations.FileExists(cc.hardwareCSVPath) {
-			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareCSVPath)
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath); err != nil {
+			return err
 		}
 	}
 

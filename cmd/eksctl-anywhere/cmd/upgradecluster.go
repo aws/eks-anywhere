@@ -43,20 +43,11 @@ var upgradeClusterCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
-	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	applyClusterOptionFlags(upgradeClusterCmd.Flags(), &uc.clusterOptions)
+	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
+	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
-	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	upgradeClusterCmd.Flags().StringVarP(
-		&uc.hardwareCSVPath,
-		TinkerbellHardwareCSVFlagName,
-		TinkerbellHardwareCSVFlagAlias,
-		"",
-		TinkerbellHardwareCSVFlagDescription,
-	)
-
-	setupTimeoutFlags(upgradeClusterCmd, &uc.timeoutOptions)
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -77,16 +68,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
-
-		// If no flag was returned there is a developer error as the flag has been removed
-		// from the program rendering it invalid.
-		if flag == nil {
-			panic("'hardwarefile' flag not configured")
-		}
-
-		if len(uc.hardwareCSVPath) != 0 && !validations.FileExists(uc.hardwareCSVPath) {
-			return fmt.Errorf("hardware config file %s does not exist", uc.hardwareCSVPath)
+		if err := checkTinkerbellFlags(cmd.Flags(), uc.hardwareCSVPath); err != nil {
+			return err
 		}
 	}
 
