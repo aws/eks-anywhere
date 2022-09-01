@@ -44,7 +44,7 @@ var upgradeClusterCmd = &cobra.Command{
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
 	applyClusterOptionFlags(upgradeClusterCmd.Flags(), &uc.clusterOptions)
-	applyTimeoutFlags(upgradeClusterCmd, &uc.timeoutOptions)
+	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
 	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")

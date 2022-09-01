@@ -43,7 +43,7 @@ var createClusterCmd = &cobra.Command{
 func init() {
 	createCmd.AddCommand(createClusterCmd)
 	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
-	applyTimeoutFlags(createClusterCmd, &cc.timeoutOptions)
+	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
 	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
 	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
