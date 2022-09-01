@@ -155,6 +155,9 @@ https://github.com/tinkerbell/rufio
 ** github.com/tinkerbell/tink/pkg/apis/core/v1alpha1; version v0.6.1-0.20220509141453-30fe9e015575 --
 https://github.com/tinkerbell/tink
 
+** github.com/vmware/govmomi; version v0.29.0 --
+https://github.com/vmware/govmomi
+
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
 https://github.com/xanzy/ssh-agent
 
@@ -728,6 +731,9 @@ https://github.com/aws/aws-sdk-go-v2
 
 ** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
 https://github.com/ProtonMail/go-crypto
+
+** github.com/vmware/govmomi/vim25/xml; version v0.29.0 --
+https://github.com/vmware/govmomi
 
 ** golang.org/go; version go1.18.5 --
 https://github.com/golang/go

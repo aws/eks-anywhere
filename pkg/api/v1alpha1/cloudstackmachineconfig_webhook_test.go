@@ -34,7 +34,7 @@ func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
 
 	features.ClearCache()
 	c := cloudstackMachineConfig()
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -57,7 +57,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t 
 
 	features.ClearCache()
 	c := cloudstackMachineConfig()
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -80,7 +80,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *
 
 	features.ClearCache()
 	c := cloudstackMachineConfig()
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -103,7 +103,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem
 
 	features.ClearCache()
 	c := cloudstackMachineConfig()
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -126,7 +126,7 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 
 	features.ClearCache()
 	c := cloudstackMachineConfig()
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -305,7 +305,7 @@ func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -316,7 +316,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
@@ -332,7 +332,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPath(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -343,7 +343,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPat
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
@@ -359,7 +359,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailInvalidMountPat
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -370,7 +370,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
@@ -386,7 +386,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyDevice(t *
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -397,7 +397,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
@@ -413,7 +413,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyFilesystem
 func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -424,7 +424,7 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingMutableFailEmptyLabel(t *t
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
@@ -498,7 +498,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testi
 
 func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	vOld.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "oldDiskOffering",
 		},
@@ -506,7 +506,7 @@ func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},

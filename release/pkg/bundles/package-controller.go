@@ -30,8 +30,6 @@ import (
 )
 
 func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.PackageBundle, error) {
-	//artifacts := r.BundleArtifactsTable["eks-anywhere-packages"]
-
 	artifacts := map[string][]releasetypes.Artifact{
 		"eks-anywhere-packages": r.BundleArtifactsTable["eks-anywhere-packages"],
 		"ecr-token-refresher":   r.BundleArtifactsTable["ecr-token-refresher"],

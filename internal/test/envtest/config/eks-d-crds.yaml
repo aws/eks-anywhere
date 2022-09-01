@@ -1,0 +1,159 @@
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  creationTimestamp: null
+  name: releases.distro.eks.amazonaws.com
+spec:
+  group: distro.eks.amazonaws.com
+  names:
+    kind: Release
+    listKind: ReleaseList
+    plural: releases
+    shortNames:
+    - rel
+    singular: release
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: The release channel
+      jsonPath: .spec.channel
+      name: Release Channel
+      type: string
+    - description: Release number
+      jsonPath: .spec.number
+      name: Release
+      type: integer
+    - description: The date the release was published
+      format: date-time
+      jsonPath: .status.date
+      name: Release Date
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Release is the Schema for the releases API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReleaseSpec defines the desired state of Release
+            properties:
+              buildRepoCommit:
+                type: string
+              channel:
+                type: string
+              number:
+                description: Monotonically increasing release number
+                minimum: 1
+                type: integer
+            type: object
+          status:
+            description: ReleaseStatus defines the observed state of Release
+            properties:
+              components:
+                items:
+                  description: A component of a release
+                  properties:
+                    assets:
+                      items:
+                        properties:
+                          arch:
+                            description: Architectures of the asset
+                            items:
+                              type: string
+                            type: array
+                          archive:
+                            properties:
+                              sha256:
+                                description: The sha256 of the asset, only applies
+                                  for 'file' store
+                                type: string
+                              sha512:
+                                description: The sha512 of the asset, only applies
+                                  for 'file' store
+                                type: string
+                              uri:
+                                description: The URI where the asset is located
+                                type: string
+                            type: object
+                          description:
+                            type: string
+                          image:
+                            properties:
+                              imageDigest:
+                                description: SHA256 digest for the image
+                                type: string
+                              uri:
+                                description: The image repository, name, and tag
+                                type: string
+                            type: object
+                          name:
+                            description: The asset name
+                            type: string
+                          os:
+                            description: Operating system of the asset
+                            enum:
+                            - linux
+                            - darwin
+                            - windows
+                            type: string
+                          type:
+                            description: The type of the asset
+                            enum:
+                            - Archive
+                            - Image
+                            type: string
+                        type: object
+                      type: array
+                    gitCommit:
+                      description: Git commit the component is built from, before
+                        any patches
+                      type: string
+                    gitTag:
+                      description: Git tag the component is built from, before any
+                        patches
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                type: array
+              date:
+                format: date-time
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

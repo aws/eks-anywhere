@@ -109,7 +109,7 @@ func TestDownloadRun(t *testing.T) {
 	tt := newDownloadArtifactsTest(t)
 	tt.reader.EXPECT().ReadBundlesForVersion("v1.0.0").Return(tt.bundles, nil)
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
@@ -123,7 +123,7 @@ func TestDownloadErrorReadingImages(t *testing.T) {
 	tt := newDownloadArtifactsTest(t)
 	tt.reader.EXPECT().ReadBundlesForVersion("v1.0.0").Return(tt.bundles, nil)
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(nil, errors.New("error reading images"))
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(nil, errors.New("error reading images"))
 
 	tt.Expect(tt.command.Run(tt.ctx)).To(MatchError(ContainSubstring("downloading images: error reading images")))
 }

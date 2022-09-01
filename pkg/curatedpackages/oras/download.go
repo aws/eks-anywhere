@@ -25,7 +25,7 @@ func NewBundleDownloader(dstFolder string) *BundleDownloader {
 func (bd *BundleDownloader) Download(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		data, err := curatedpackages.Pull(ctx, a)
+		data, err := curatedpackages.PullLatestBundle(ctx, a)
 		if err != nil {
 			fmt.Printf("unable to download bundle %v \n", err)
 			continue

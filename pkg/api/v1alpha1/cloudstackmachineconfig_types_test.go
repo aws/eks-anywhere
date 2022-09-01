@@ -4,12 +4,13 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -32,7 +33,7 @@ func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingEqualSelf(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -42,11 +43,11 @@ func TestCloudStackMachineConfigDiskOfferingEqualSelf(t *testing.T) {
 		Label:      "data_disk",
 	}
 	g := NewWithT(t)
-	g.Expect(diskOffering1.Equal(&diskOffering1)).To(BeTrue())
+	g.Expect(diskOffering1.Equal(diskOffering1)).To(BeTrue())
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualNil(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -60,7 +61,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualNil(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualName(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -83,7 +84,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualName(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualMountPath(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -106,7 +107,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualMountPath(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualDevice(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -129,7 +130,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualDevice(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualFilesystem(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -152,7 +153,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualFilesystem(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingNotEqualLabel(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -175,7 +176,7 @@ func TestCloudStackMachineConfigDiskOfferingNotEqualLabel(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingValidMountPath(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -192,7 +193,7 @@ func TestCloudStackMachineConfigDiskOfferingValidMountPath(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidNoIDAndName(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{},
 		MountPath:                    "/data",
 		Device:                       "/dev/vdb",
@@ -208,7 +209,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidNoIDAndName(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{},
 	}
 	g := NewWithT(t)
@@ -219,7 +220,7 @@ func TestCloudStackMachineConfigDiskOfferingValidNoIDAndName(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -237,7 +238,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRoot(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -255,7 +256,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidMountPathRelative(t *testing.
 }
 
 func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -272,7 +273,7 @@ func TestCloudStackMachineConfigDiskOfferingValid(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyDevice(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -290,7 +291,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyDevice(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyFilesystem(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -308,7 +309,7 @@ func TestCloudStackMachineConfigDiskOfferingInValidEmptyFilesystem(t *testing.T)
 }
 
 func TestCloudStackMachineConfigDiskOfferingInValidEmptyLabel(t *testing.T) {
-	diskOffering1 := v1alpha1.CloudStackResourceDiskOffering{
+	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "diskOffering1",
 		},
@@ -356,4 +357,61 @@ func TestCloudStackMachineConfigSymlinksInValidComma(t *testing.T) {
 	g.Expect(fieldName == "symlinks").To(BeTrue())
 	g.Expect(fieldValue == "/data/var/log,d").To(BeTrue())
 	g.Expect(err.Error() == "has char not in portable file name set").To(BeTrue())
+}
+
+func TestCloudStackMachineConfigSerialize(t *testing.T) {
+	tests := map[string]struct {
+		machineConfig interface{}
+		expected      string
+	}{
+		"Serialize machine config": {
+			machineConfig: v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
+						CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+							Name: "diskOffering1",
+						},
+						MountPath:  "/data",
+						Device:     "/dev/sda1",
+						Filesystem: "ext4",
+						Label:      "data_disk",
+					},
+				},
+			},
+			expected: `metadata:
+  creationTimestamp: null
+spec:
+  computeOffering: {}
+  diskOffering:
+    device: /dev/sda1
+    filesystem: ext4
+    label: data_disk
+    mountPath: /data
+    name: diskOffering1
+  template: {}
+status: {}
+`,
+		},
+		"diskOffering should not appear when it's not defined": {
+			machineConfig: v1alpha1.CloudStackMachineConfig{
+				Spec: v1alpha1.CloudStackMachineConfigSpec{},
+			},
+			expected: `metadata:
+  creationTimestamp: null
+spec:
+  computeOffering: {}
+  template: {}
+status: {}
+`,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			actual, err := yaml.Marshal(tc.machineConfig)
+			g := NewWithT(t)
+			g.Expect(err).To(BeNil())
+			g.Expect(string(actual)).To(Equal(tc.expected))
+		})
+	}
 }

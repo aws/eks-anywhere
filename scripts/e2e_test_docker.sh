@@ -18,6 +18,12 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+delete_cluster_controller_image() {
+    aws ecr-public batch-delete-image --repository-name eks-anywhere-cluster-controller --image-ids=imageTag=${PULL_PULL_SHA}.${PULL_BASE_REF} --region us-east-1
+}
+
+trap 'unset AWS_PROFILE; delete_cluster_controller_image' EXIT
+
 if [ "$AWS_ROLE_ARN" == "" ]; then
     echo "Empty AWS_ROLE_ARN, this script must be run in a postsubmit pod with IAM Roles for Service Accounts"
     exit 1

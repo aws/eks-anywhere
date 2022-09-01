@@ -91,9 +91,16 @@ DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
 
 IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
+# Tagging with the commit hash and the branch the PR is raised against
+ifeq ($(JOB_NAME),eks-anywhere-e2e-presubmit)
+	IMAGE_PLATFORMS=linux/amd64
+	IMAGE_TAG=$(PULL_PULL_SHA).$(PULL_BASE_REF)
+	IMAGES_TO_BUILD?=$(CLUSTER_CONTROLLER_IMAGE)
+endif
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
 CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(LATEST)
+IMAGES_TO_BUILD?=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)
 
 # Branch builds should look at the current branch latest image for cache as well as main branch latest for cache to cover the cases
 # where its the first build from a new release branch
@@ -315,7 +322,7 @@ cluster-controller-local-images: cluster-controller-binaries $(ORGANIZE_BINARIES
 	$(BUILDCTL)
 
 .PHONY: cluster-controller-images
-cluster-controller-images: IMAGE_PLATFORMS = linux/amd64,linux/arm64
+cluster-controller-images: IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
 cluster-controller-images: IMAGE_OUTPUT_TYPE = image
 cluster-controller-images: IMAGE_OUTPUT = push=true
 cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
@@ -385,7 +392,7 @@ capd-test: ## Run default e2e capd test locally
 	$(MAKE) local-e2e LOCAL_E2E_TESTS=$(DOCKER_E2E_TEST)
 
 .PHONY: docker-e2e-test
-docker-e2e-test: e2e ## Run docker integration test in new ec2 instance
+docker-e2e-test: release-cluster-controller e2e ## Run docker integration test in new ec2 instance
 	scripts/e2e_test_docker.sh $(DOCKER_E2E_TEST) $(BRANCH_NAME)
 
 .PHONY: e2e-cleanup
@@ -465,6 +472,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/kubectlrunner.go -package=mocks -source "pkg/curatedpackages/kubectlrunner.go" KubectlRunner
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packageinstaller.go -package=mocks -source "pkg/curatedpackages/packageinstaller.go" PackageController PackageHandler
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/reader.go -package=mocks -source "pkg/curatedpackages/bundle.go" Reader BundleRegistry
+	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packagereader.go -package=mocks -source "pkg/curatedpackages/reader.go" ManifestReader
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/bundlemanager.go -package=mocks -source "pkg/curatedpackages/bundlemanager.go" Manager
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
@@ -505,12 +513,11 @@ eks-a-e2e:
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 			scripts/get_bundle.sh; \
 		else \
-			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
 			make eks-a; \
 		fi \
 	else \
-		make check-eksa-components-override; \
+		make eksa-components-override; \
 		make eks-a; \
 	fi
 
@@ -532,9 +539,9 @@ conformance:
 conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
-.PHONY: check-eksa-components-override
-check-eksa-components-override:
-	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
+.PHONY: eksa-components-override
+eksa-components-override:
+	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL) $(CLUSTER_CONTROLLER_IMAGE)
 
 .PHONY: help
 help:  ## Display this help
@@ -631,7 +638,7 @@ define BUILDCTL
 		--progress plain \
 		--local dockerfile=$(DOCKERFILE_FOLDER) \
 		--local context=. \
-		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",$(IMAGE_OUTPUT) \
+		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(IMAGES_TO_BUILD)\",$(IMAGE_OUTPUT) \
 		$(if $(filter push=true,$(IMAGE_OUTPUT)),--export-cache type=inline,) \
 		$(foreach IMPORT_CACHE,$(IMAGE_IMPORT_CACHE),--import-cache $(IMPORT_CACHE))
 

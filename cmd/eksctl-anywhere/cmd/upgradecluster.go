@@ -6,8 +6,6 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -33,7 +31,7 @@ var upgradeClusterCmd = &cobra.Command{
 	Use:          "cluster",
 	Short:        "Upgrade workload cluster",
 	Long:         "This command is used to upgrade workload clusters",
-	PreRunE:      preRunUpgradeCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := uc.upgradeCluster(cmd); err != nil {
@@ -41,16 +39,6 @@ var upgradeClusterCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func preRunUpgradeCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func init() {
@@ -61,7 +49,7 @@ func init() {
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	upgradeClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
+		&uc.hardwareCSVPath,
 		TinkerbellHardwareCSVFlagName,
 		TinkerbellHardwareCSVFlagAlias,
 		"",
@@ -111,7 +99,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := uc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err
 	}

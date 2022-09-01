@@ -621,7 +621,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
+	csSpec.Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,

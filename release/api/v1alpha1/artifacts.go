@@ -16,11 +16,6 @@ package v1alpha1
 
 func (vb *VersionsBundle) Manifests() map[string][]*string {
 	return map[string][]*string{
-		"cluster-api-provider-aws": {
-			&vb.Aws.Components.URI,
-			&vb.Aws.ClusterTemplate.URI,
-			&vb.Aws.Metadata.URI,
-		},
 		"core-cluster-api": {
 			&vb.ClusterAPI.Components.URI,
 			&vb.ClusterAPI.Metadata.URI,
@@ -187,11 +182,5 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
 		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
-	}
-}
-
-func (vb *VersionsBundle) PackageControllerImage() []Image {
-	return []Image{
-		vb.PackageController.Controller,
 	}
 }

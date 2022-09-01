@@ -827,7 +827,11 @@ func (in *VersionsBundle) DeepCopyInto(out *VersionsBundle) {
 	in.ClusterAPI.DeepCopyInto(&out.ClusterAPI)
 	in.Bootstrap.DeepCopyInto(&out.Bootstrap)
 	in.ControlPlane.DeepCopyInto(&out.ControlPlane)
-	in.Aws.DeepCopyInto(&out.Aws)
+	if in.Aws != nil {
+		in, out := &in.Aws, &out.Aws
+		*out = new(AwsBundle)
+		(*in).DeepCopyInto(*out)
+	}
 	in.VSphere.DeepCopyInto(&out.VSphere)
 	in.CloudStack.DeepCopyInto(&out.CloudStack)
 	in.Docker.DeepCopyInto(&out.Docker)
