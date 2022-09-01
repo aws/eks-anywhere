@@ -25,6 +25,8 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/clients"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
+
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -59,26 +61,30 @@ func CreateReleaseHelmDriver(r *releasetypes.ReleaseConfig) (*helmDriver, error)
 	if r.ReleaseEnvironment == "development" {
 		sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
 		if err != nil {
-			fmt.Printf("Error creating clients: %v\n", err)
-			os.Exit(1)
+			return nil, errors.Wrap(err, "Error creating Staging Clients")
 		}
 		authToken, err = ecr.GetAuthToken(sourceClients.ECR.EcrClient)
-		authTokenPublic, err = ecr.GetAuthTokenPublic(releaseClients.ECRPublic.Client)
 		if err != nil {
-			//TODO
+			return nil, errors.Wrap(err, "Error getting ecr Auth token Client")
+		}
+		authTokenPublic, err = ecrpublic.GetAuthToken(releaseClients.ECRPublic.Client)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error getting ecr public Auth token Client")
 		}
 	}
 
 	if r.ReleaseEnvironment == "production" {
 		sourceClients, releaseClients, err = clients.CreateProdReleaseClients()
 		if err != nil {
-			fmt.Printf("Error creating clients: %v\n", err)
-			os.Exit(1)
+			return nil, errors.Wrap(err, "Error creating Production Clients")
 		}
 		authToken, err = ecr.GetAuthToken(sourceClients.ECR.EcrClient)
-		authTokenPublic, err = ecr.GetAuthTokenPublic(releaseClients.ECRPublic.Client)
 		if err != nil {
-			//TODO
+			return nil, errors.Wrap(err, "Error getting ecr Auth token Client")
+		}
+		authTokenPublic, err = ecrpublic.GetAuthToken(releaseClients.ECRPublic.Client)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error getting ecr public Auth token Client")
 		}
 	}
 	dockerReleaseStruct := &DockerAuth{
