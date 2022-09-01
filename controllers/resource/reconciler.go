@@ -63,6 +63,13 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	if err != nil {
 		return err
 	}
+
+	if cs.Spec.BundlesRef == nil {
+		if err := cor.setBundlesRef(ctx, cs); err != nil {
+			return err
+		}
+	}
+
 	spec, err := cor.FetchAppliedSpec(ctx, cs)
 	if err != nil {
 		return err
@@ -162,6 +169,16 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 	}
 	return cor.applyTemplates(ctx, cs, resources, dryRun)
+}
+
+func (cor *clusterReconciler) setBundlesRef(ctx context.Context, cluster *anywherev1.Cluster) error {
+	mgmtClusterKey := types.NamespacedName{Name: cluster.ManagedBy(), Namespace: cluster.Namespace}
+	mgmtCluster, err := cor.FetchCluster(ctx, mgmtClusterKey)
+	if err != nil {
+		return err
+	}
+	cluster.Spec.BundlesRef = mgmtCluster.Spec.BundlesRef
+	return nil
 }
 
 func (cor *clusterReconciler) applyTemplates(ctx context.Context, cs *anywherev1.Cluster, resources []*unstructured.Unstructured, dryRun bool) error {
