@@ -5597,7 +5597,6 @@ spec:
           readOnly: true
       securityContext:
         fsGroup: 1000
-        runAsNonRoot: true
       serviceAccountName: eksa-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:

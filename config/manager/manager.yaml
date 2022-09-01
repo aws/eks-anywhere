@@ -42,5 +42,3 @@ spec:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
       serviceAccountName: manager
-      securityContext:
-        runAsNonRoot: true
