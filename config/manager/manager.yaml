@@ -36,6 +36,7 @@ spec:
             port: healthz
         securityContext:
           allowPrivilegeEscalation: false
+          runAsNonRoot: true
       terminationGracePeriodSeconds: 10
       tolerations:
         - effect: NoSchedule
