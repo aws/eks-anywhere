@@ -48,8 +48,8 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapvSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapvSystemNamespace)))
 	for _, collector := range collectors[1:7] {
-		g.Expect(collector.Run.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
-		g.Expect(collector.Run.Namespace).To(Equal("eksa-diagnostics"))
+		g.Expect(collector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+		g.Expect(collector.RunPod.Namespace).To(Equal("eksa-diagnostics"))
 	}
 	g.Expect(collectors[8].RunPod.PodSpec.Containers[0].Name).To(Equal("check-host-port"))
 	g.Expect(collectors[9].RunPod.PodSpec.Containers[0].Name).To(Equal("ping-host-ip"))
@@ -65,8 +65,8 @@ func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapcSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapcSystemNamespace)))
 	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.Run.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.Run.Namespace))
+		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
+		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
 
@@ -80,7 +80,7 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CaptSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CaptSystemNamespace)))
 	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.Run.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.Run.Namespace))
+		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
+		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
