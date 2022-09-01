@@ -68,8 +68,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		err := checkTinkerbellFlags(cmd, uc.hardwareCSVPath)
-		if err != nil {
+		if err := checkTinkerbellFlags(cmd, uc.hardwareCSVPath); err != nil {
 			return err
 		}
 	}
