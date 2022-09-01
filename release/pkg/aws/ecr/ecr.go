@@ -22,6 +22,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/ecrpublic"
+
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 
@@ -55,6 +57,16 @@ func GetAuthToken(ecrClient *ecr.ECR) (string, error) {
 		return "", errors.Cause(err)
 	}
 	authToken := *authTokenOutput.AuthorizationData[0].AuthorizationToken
+
+	return authToken, nil
+}
+
+func GetAuthTokenPublic(ecrClient *ecrpublic.ECRPublic) (string, error) {
+	authTokenOutput, err := ecrClient.GetAuthorizationToken(&ecrpublic.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	authToken := *authTokenOutput.AuthorizationData.AuthorizationToken
 
 	return authToken, nil
 }
