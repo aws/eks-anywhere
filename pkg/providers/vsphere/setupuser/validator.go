@@ -123,3 +123,27 @@ func setDefaults(c *VSphereSetupUserConfig) {
 		c.Spec.Username = DefaultUsername
 	}
 }
+
+// ValidateVSphereObjects validates objects do not exist before configuring user.
+func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc GovcClient) error {
+	exists, err := govc.GroupExists(ctx, c.Spec.GroupName)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("group %s already exists, please use force=true to ignore", c.Spec.GroupName)
+	}
+
+	roles := []string{c.Spec.GlobalRole, c.Spec.UserRole, c.Spec.AdminRole}
+	for _, r := range roles {
+		exists, err := govc.RoleExists(ctx, r)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("role %s already exists, please use force=true to ignore", r)
+		}
+	}
+
+	return nil
+}
