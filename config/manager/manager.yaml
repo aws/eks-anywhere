@@ -34,6 +34,8 @@ spec:
           httpGet:
             path: /healthz
             port: healthz
+        securityContext:
+          allowPrivilegeEscalation: false
       terminationGracePeriodSeconds: 10
       tolerations:
         - effect: NoSchedule
