@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -26,15 +26,15 @@ type timeoutOptions struct {
 	perMachineWaitTimeout   string
 }
 
-func setupTimeoutFlags(cmd *cobra.Command, t *timeoutOptions) {
-	cmd.Flags().StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout (60m).")
-	markFlagHidden(cmd, cpWaitTimeoutFlag)
+func applyTimeoutFlags(flagSet *pflag.FlagSet, t *timeoutOptions) {
+	flagSet.StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout (60m).")
+	markFlagHidden(flagSet, cpWaitTimeoutFlag)
 
-	cmd.Flags().StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout (60m)")
-	markFlagHidden(cmd, externalEtcdWaitTimeoutFlag)
+	flagSet.StringVar(&t.externalEtcdWaitTimeout, externalEtcdWaitTimeoutFlag, clustermanager.DefaultEtcdWait.String(), "Override the default external etcd wait timeout (60m)")
+	markFlagHidden(flagSet, externalEtcdWaitTimeoutFlag)
 
-	cmd.Flags().StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout (10m)/per machine ")
-	markFlagHidden(cmd, perMachineWaitTimeoutFlag)
+	flagSet.StringVar(&t.perMachineWaitTimeout, perMachineWaitTimeoutFlag, clustermanager.DefaultMaxWaitPerMachine.String(), "Override the default machine wait timeout (10m)/per machine ")
+	markFlagHidden(flagSet, perMachineWaitTimeoutFlag)
 }
 
 func buildClusterManagerOpts(t timeoutOptions) ([]clustermanager.ClusterManagerOpt, error) {
@@ -108,8 +108,8 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 	return clusterSpec, nil
 }
 
-func markFlagHidden(cmd *cobra.Command, flagName string) {
-	if err := cmd.Flags().MarkHidden(flagName); err != nil {
+func markFlagHidden(flagSet *pflag.FlagSet, flagName string) {
+	if err := flagSet.MarkHidden(flagName); err != nil {
 		logger.V(5).Info("Warning: Failed to mark flag as hidden: " + flagName)
 	}
 }
