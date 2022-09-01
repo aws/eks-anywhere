@@ -26,7 +26,7 @@ type timeoutOptions struct {
 	perMachineWaitTimeout   string
 }
 
-func setupTimeoutFlags(cmd *cobra.Command, t *timeoutOptions) {
+func applyTimeoutFlags(cmd *cobra.Command, t *timeoutOptions) {
 	cmd.Flags().StringVar(&t.cpWaitTimeout, cpWaitTimeoutFlag, clustermanager.DefaultControlPlaneWait.String(), "Override the default control plane wait timeout (60m).")
 	markFlagHidden(cmd, cpWaitTimeoutFlag)
 

@@ -10,6 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
+const (
+	TinkerbellHardwareCSVFlagName        = "hardware-csv"
+	TinkerbellHardwareCSVFlagAlias       = "z"
+	TinkerbellHardwareCSVFlagDescription = "Path to a CSV file containing hardware data."
+)
+
 func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 	var err error
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
@@ -21,15 +27,15 @@ func bindFlagsToViper(cmd *cobra.Command, args []string) error {
 	return err
 }
 
-func setupClusterOptionFlags(cmd *cobra.Command, clusterOpt *clusterOptions) {
-	cmd.Flags().StringVarP(&clusterOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	cmd.Flags().StringVar(&clusterOpt.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	cmd.Flags().StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
+func applyClusterOptionFlags(flagSet *pflag.FlagSet, clusterOpt *clusterOptions) {
+	flagSet.StringVarP(&clusterOpt.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	flagSet.StringVar(&clusterOpt.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	flagSet.StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 }
 
-func applyTinkerbellHardwareFlag(cmd *cobra.Command, pathOut *string) {
-	cmd.Flags().StringVarP(
-		path,
+func applyTinkerbellHardwareFlag(flagSet *pflag.FlagSet, pathOut *string) {
+	flagSet.StringVarP(
+		pathOut,
 		TinkerbellHardwareCSVFlagName,
 		TinkerbellHardwareCSVFlagAlias,
 		"",
@@ -37,8 +43,8 @@ func applyTinkerbellHardwareFlag(cmd *cobra.Command, pathOut *string) {
 	)
 }
 
-func checkTinkerbellFlags(cmd *cobra.Command, hardwareCSVPath string) error {
-	flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
+func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string) error {
+	flag := flagSet.Lookup(TinkerbellHardwareCSVFlagName)
 
 	// If no flag was returned there is a developer error as the flag has been removed
 	// from the program rendering it invalid.

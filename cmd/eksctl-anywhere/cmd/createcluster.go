@@ -42,9 +42,9 @@ var createClusterCmd = &cobra.Command{
 
 func init() {
 	createCmd.AddCommand(createClusterCmd)
-	setupClusterOptionFlags(createClusterCmd, &cc.clusterOptions)
-	setupTimeoutFlags(createClusterCmd, &cc.timeoutOptions)
-	addTinkerbellFlag(createClusterCmd, &cc.hardwareCSVPath)
+	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
+	applyTimeoutFlags(createClusterCmd, &cc.timeoutOptions)
+	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
 	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -69,8 +69,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		err := checkTinkerbellFlags(cmd, cc.hardwareCSVPath)
-		if err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath); err != nil {
 			return err
 		}
 	}

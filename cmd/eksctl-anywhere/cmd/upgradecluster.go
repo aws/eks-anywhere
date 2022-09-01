@@ -43,9 +43,9 @@ var upgradeClusterCmd = &cobra.Command{
 
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
-	setupClusterOptionFlags(upgradeClusterCmd, &uc.clusterOptions)
-	setupTimeoutFlags(upgradeClusterCmd, &uc.timeoutOptions)
-	addTinkerbellFlag(upgradeClusterCmd, &uc.hardwareCSVPath)
+	applyClusterOptionFlags(upgradeClusterCmd.Flags(), &uc.clusterOptions)
+	applyTimeoutFlags(upgradeClusterCmd, &uc.timeoutOptions)
+	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 
@@ -68,7 +68,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		if err := checkTinkerbellFlags(cmd, uc.hardwareCSVPath); err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), uc.hardwareCSVPath); err != nil {
 			return err
 		}
 	}
