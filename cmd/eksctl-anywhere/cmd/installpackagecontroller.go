@@ -69,9 +69,11 @@ func installPackageController(ctx context.Context) error {
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		registryEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	}
+	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
 	helmChart := versionBundle.PackageController.HelmChart
 	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
 	eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+
 	ctrlClient := curatedpackages.NewPackageControllerClient(
 		deps.Helm,
 		deps.Kubectl,
@@ -83,6 +85,9 @@ func installPackageController(ctx context.Context) error {
 		curatedpackages.WithEksaRegion(eksaRegion),
 		curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 		curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
+		curatedpackages.WithHttpProxy(proxyConfiguration.HttpProxy),
+		curatedpackages.WithHttpsProxy(proxyConfiguration.HttpsProxy),
+		curatedpackages.WithNoProxy(proxyConfiguration.NoProxy),
 	)
 
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
