@@ -2,13 +2,13 @@ package kubeconfig
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 
 	"k8s.io/client-go/tools/clientcmd"
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 // FromClusterFormat defines the format of the kubeconfig of the
@@ -30,90 +30,26 @@ func FromEnvironment() string {
 	return os.Getenv(EnvName)
 }
 
-// Loader abstracts the unmarshaling of a kubeconfig file into a Config.
+// ValidateFile loads a file to validate it's basic contents.
 //
-// This is essentially building an interface around the clientcmd.Load
-// function so that it can be swapped out for tests.
-type Loader interface {
-	// Load a Config from a byte slice.
-	//
-	// (Why do the k8s authors avoid io.Reader, forcing me to waste heap space
-	// with extra byte slices?)
-	Load([]byte) (*clientcmdapi.Config, error)
-}
-
-// clientcmdLoader loads a Config via the clientcmd.Load function.
-type clientcmdLoader struct{}
-
-var _ Loader = (*clientcmdLoader)(nil)
-
-// Load implements Loader.
-func (l *clientcmdLoader) Load(b []byte) (*clientcmdapi.Config, error) {
-	return clientcmd.Load(b)
-}
-
-// Validator abstracts the validation of kubeconfig data.
-type Validator interface {
-	// Validate config data from an io.Reader.
-	Validate(r io.Reader) error
-
-	// ValidateFile validates config data from a filename.
-	ValidateFile(filename string) error
-}
-
-type validator struct {
-	loader Loader
-}
-
-var _ Validator = (*validator)(nil)
-
-// NewValidatorWithLoader creates a Validator that loads config data with
-// Loader.
-//
-// Most users will want to use NewValidator, which uses a default Loader.
-func NewValidatorWithLoader(loader Loader) Validator {
-	// Use the default if nil is passed, to avoid a nil pointer dereference.
-	if loader == nil {
-		loader = &clientcmdLoader{}
-	}
-	return &validator{
-		loader: loader,
-	}
-}
-
-// NewValidator creates a default Validator for kubeconfig data.
-func NewValidator() Validator {
-	return NewValidatorWithLoader(&clientcmdLoader{})
-}
-
-// Validate implements the Validator interface.
-func (v *validator) Validate(r io.Reader) error {
-	kubeConfigData, err := ioutil.ReadAll(r)
-	if err != nil {
-		return err
+// The values of the fields within aren't validated, but the file's existence
+// and basic structure are checked.
+func ValidateFile(filename string) error {
+	wrapError := func(err error) error {
+		return fmt.Errorf("validating kubeconfig %q: %w", filename, err)
 	}
 
-	// This is the only validation done at the moment. However, it
-	// accomplishes a few things:
-	//   1. Checks that the data exist (size > 0).
-	//   2. Checks that the data fits the basic schema of a Config.
-	//   3. If called via ValidateFile, checks that the file exists.
-	if _, err := v.loader.Load(kubeConfigData); err != nil {
-		return fmt.Errorf("validating kubeconfig: %w", err)
+	if !validations.FileExists(filename) {
+		return wrapError(fs.ErrNotExist)
 	}
-	return nil
-}
 
-// ValidateFile implements the Validator interface.
-func (v *validator) ValidateFile(filename string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("%q: %w", filename, err)
+	if !validations.FileExistsAndIsNotEmpty(filename) {
+		return wrapError(fmt.Errorf("is empty"))
 	}
-	defer f.Close()
 
-	if err := v.Validate(f); err != nil {
-		return fmt.Errorf("%q: %w", filename, err)
+	if _, err := clientcmd.LoadFromFile(filename); err != nil {
+		return wrapError(err)
 	}
+
 	return nil
 }

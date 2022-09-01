@@ -23,12 +23,9 @@ type upgradeClusterOptions struct {
 	forceClean            bool
 	hardwareCSVPath       string
 	tinkerbellBootstrapIP string
-	kubeconfigValidator   kubeconfig.Validator
 }
 
-var uc = &upgradeClusterOptions{
-	kubeconfigValidator: kubeconfig.NewValidator(),
-}
+var uc = &upgradeClusterOptions{}
 
 var upgradeClusterCmd = &cobra.Command{
 	Use:          "cluster",
@@ -174,7 +171,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
-	if err := uc.kubeconfigValidator.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
 		return nil, err
 	}
 

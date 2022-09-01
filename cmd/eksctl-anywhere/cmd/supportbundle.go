@@ -24,12 +24,9 @@ type createSupportBundleOptions struct {
 	bundleConfig          string
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
-	kubeconfigValidator   kubeconfig.Validator
 }
 
-var csbo = &createSupportBundleOptions{
-	kubeconfigValidator: kubeconfig.NewValidator(),
-}
+var csbo = &createSupportBundleOptions{}
 
 var supportbundleCmd = &cobra.Command{
 	Use:          "support-bundle -f my-cluster.yaml",
@@ -68,7 +65,7 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	}
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if err := csbo.kubeconfigValidator.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
 		return err
 	}
 

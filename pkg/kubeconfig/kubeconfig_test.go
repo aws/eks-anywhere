@@ -3,63 +3,68 @@ package kubeconfig
 import (
 	"bytes"
 	"errors"
-	"fmt"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
-
-	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-func TestValidate(t *testing.T) {
-	t.Run("reports errors from validator", func(t *testing.T) {
-		v := NewValidatorWithLoader(newTestLoader(testError))
+var kindTypo = []byte(`apiVersion: v1\nkind: Conf`)
 
-		if err := v.Validate(&bytes.Buffer{}); err == nil {
+var goodKubeconfigFile = []byte(`
+apiVersion: v1
+clusters:
+- cluster:
+    insecure-skip-tls-verify: true
+    server: https://127.0.0.1:38471
+  name: test
+contexts:
+- context:
+    cluster: test
+    user: test-admin
+  name: test-admin@test
+current-context: test-admin@test
+kind: Config
+preferences: {}
+users:
+- name: test-admin
+  user:
+    client-certificate-data: test
+    client-key-data: test
+`)
+
+func TestValidateFile(t *testing.T) {
+	t.Run("reports errors from validator", func(t *testing.T) {
+		badFile := withFakeFileContents(t, bytes.NewReader(kindTypo))
+		if err := ValidateFile(badFile.Name()); err == nil {
 			t.Fatalf("expected error, got nil")
 		}
 	})
 
-	t.Run("returns nil when valid", func(t *testing.T) {
-		v := NewValidatorWithLoader(newTestLoader(nil))
-
-		if err := v.Validate(&bytes.Buffer{}); err != nil {
-			t.Fatalf("expected no error, got %s", err)
+	t.Run("reports errors for files that are empty", func(t *testing.T) {
+		emptyFile := withFakeFileContents(t, bytes.NewReader([]byte("")))
+		if err := ValidateFile(emptyFile.Name()); err == nil {
+			t.Fatalf("expected error, got nil")
 		}
 	})
-}
 
-func TestValidateFile(t *testing.T) {
 	t.Run("reports errors for files that don't exist", func(t *testing.T) {
 		doesntExist := filepath.Join(t.TempDir(), "does-not-exist")
-		v := NewValidator()
-		err := v.ValidateFile(doesntExist)
+		err := ValidateFile(doesntExist)
 		if err == nil || !errors.Is(err, fs.ErrNotExist) {
 			t.Fatalf("expected fs.IsNotExist, got %s", err)
 		}
 	})
 
-	t.Run("reports errors from validator", func(t *testing.T) {
-		v := NewValidatorWithLoader(newTestLoader(testError))
-
-		if err := v.ValidateFile(withFakeFile(t).Name()); err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-	})
-
-	t.Run("returns nil if valid", func(t *testing.T) {
-		v := NewValidatorWithLoader(newTestLoader(nil))
-
-		if err := v.ValidateFile(withFakeFile(t).Name()); err != nil {
+	t.Run("returns nil when valid", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
+		if err := ValidateFile(goodFile.Name()); err != nil {
 			t.Fatalf("expected no error, got %s", err)
 		}
 	})
 }
-
-// testError is... a test error!
-var testError = fmt.Errorf("test error")
 
 // withFakeFile returns a throwaway file in a test-specific directory.
 //
@@ -77,19 +82,15 @@ func withFakeFile(t *testing.T) (f *os.File) {
 	return f
 }
 
-type testLoader struct {
-	testError error
-}
-
-var _ Loader = (*testLoader)(nil)
-
-func newTestLoader(err error) *testLoader {
-	return &testLoader{testError: err}
-}
-
-func (t *testLoader) Load([]byte) (*clientcmdapi.Config, error) {
-	if t.testError != nil {
-		return nil, t.testError
+// withFakeFileContents returns a file containing some data.
+//
+// The file is automatically closed and removed when the test ends.
+func withFakeFileContents(t *testing.T, r io.Reader) (f *os.File) {
+	f = withFakeFile(t)
+	_, err := io.Copy(f, r)
+	if err != nil {
+		t.Fatalf("copying contents into fake file %q: %s", f.Name(), err)
 	}
-	return &clientcmdapi.Config{}, nil
+
+	return f
 }
