@@ -27,7 +27,7 @@ func setupClusterOptionFlags(cmd *cobra.Command, clusterOpt *clusterOptions) {
 	cmd.Flags().StringVar(&clusterOpt.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 }
 
-func addTinkerbellFlag(cmd *cobra.Command, path *string) {
+func applyTinkerbellHardwareFlag(cmd *cobra.Command, pathOut *string) {
 	cmd.Flags().StringVarP(
 		path,
 		TinkerbellHardwareCSVFlagName,
