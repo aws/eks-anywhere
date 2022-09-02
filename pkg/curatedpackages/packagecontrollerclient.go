@@ -156,7 +156,7 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 	}
 }
 
-func WithHttpProxy(httpProxy string) func(client *PackageControllerClient) {
+func WithHTTPProxy(httpProxy string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.httpProxy = httpProxy
 	}
