@@ -67,12 +67,18 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", pc.httpProxy)
-	httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", pc.httpsProxy)
-	noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
-	logger.Info(fmt.Sprintf("httpProxy: %s, httpsProxy: %s, noProxy: %s", pc.httpProxy, pc.httpsProxy, pc.noProxy))
+	values := []string{sourceRegistry, clusterName}
 
-	values := []string{sourceRegistry, clusterName, httpProxy, httpsProxy, noProxy}
+	// Provide proxy details for curated packages helm chart when proxy details provided
+	if pc.httpProxy != "" {
+		httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", pc.httpProxy)
+		httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", pc.httpsProxy)
+
+		// Helm requires commas to be escaped: https://github.com/rancher/rancher/issues/16195
+		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
+		values = append(values, httpProxy, httpsProxy, noProxy)
+	}
+
 	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
 	if err != nil {
 		return err

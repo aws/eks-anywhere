@@ -851,6 +851,8 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+
+		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
@@ -863,6 +865,9 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
+			curatedpackages.WithHttpProxy(httpProxy),
+			curatedpackages.WithHttpsProxy(httpsProxy),
+			curatedpackages.WithNoProxy(noProxy),
 		)
 		return nil
 	})
@@ -1086,4 +1091,12 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	})
 
 	return f
+}
+
+func getProxyConfiguration(clusterSpec *cluster.Spec) (string, string, []string) {
+	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
+	if proxyConfiguration != nil {
+		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
+	}
+	return "", "", []string{}
 }

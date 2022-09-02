@@ -3,15 +3,12 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/spf13/cobra"
+	"log"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -56,39 +53,12 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	versionBundle, err := curatedpackages.GetVersionBundle(deps.ManifestReader, version.Get().GitVersion, clusterSpec.Cluster)
-	if err != nil {
-		return err
-	}
-	registryEndpoint := ""
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		registryEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-	}
-	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
-	helmChart := versionBundle.PackageController.HelmChart
-	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
-	eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
-
-	ctrlClient := curatedpackages.NewPackageControllerClient(
-		deps.Helm,
-		deps.Kubectl,
-		clusterSpec.Cluster.Name,
-		kubeConfig,
-		imageUrl,
-		helmChart.Name,
-		helmChart.Tag(),
-		curatedpackages.WithEksaRegion(eksaRegion),
-		curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
-		curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
-		curatedpackages.WithHttpProxy(proxyConfiguration.HttpProxy),
-		curatedpackages.WithHttpsProxy(proxyConfiguration.HttpsProxy),
-		curatedpackages.WithNoProxy(proxyConfiguration.NoProxy),
-	)
+	ctrlClient := deps.PackageControllerClient
 
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
 		return err
@@ -105,4 +75,12 @@ func installPackageController(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func getProxyConfiguration(clusterSpec *cluster.Spec) (string, string, []string) {
+	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
+	if proxyConfiguration != nil {
+		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
+	}
+	return "", "", []string{}
 }
