@@ -833,6 +833,16 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
+	cOld := createCluster()
+	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
+	c := cOld.DeepCopy()
+	c.Spec.BundlesRef = nil
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testing.T) {
 	cOld := createCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{
@@ -1674,6 +1684,11 @@ func createCluster() *v1alpha1.Cluster {
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
 				},
+			},
+			BundlesRef: &v1alpha1.BundlesRef{
+				Name: "bundle-1",
+				Namespace: constants.EksaSystemNamespace,
+				APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",

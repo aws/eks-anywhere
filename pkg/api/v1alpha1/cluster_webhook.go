@@ -213,6 +213,12 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("ControlPlaneConfiguration"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration)))
 	}
 
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+		allErrs = append(
+			allErrs,
+			field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
 	return allErrs
 }
 
