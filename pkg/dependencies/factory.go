@@ -1093,7 +1093,7 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
-func getProxyConfiguration(clusterSpec *cluster.Spec) (string, string, []string) {
+func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
 	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
 	if proxyConfiguration != nil {
 		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
