@@ -6,12 +6,12 @@
 
 **Problem:** Users do not have a method to validate configuration files to be used with EKS Anywhere without attempting to create a cluster. 
 
-With more complex provider configurations, users may need to review and modify their configuration multiple times before arriving at a valid configuration for cluster creation. Running the create cluster command for validation commits the user to attempting to create a cluster and generates artifacts that need to be removed.
+With more complex provider configurations, users may need to review and modify their configuration multiple times before arriving at a valid configuration for cluster creation. Running the `create cluster` command for validation commits the user to attempting to create a cluster and generates artifacts that need to be removed.
 
 ### Tenets
 
-* ****Simple:**** simple to use, simple to understand, simple to maintain
-* **Informative**: output should lead user to take action and guide next steps 
+* **Simple:** simple to use, simple to understand, simple to maintain
+* **Informative:** output should lead user to take action and guide next steps 
 * **Non-invasive:** minimal permanent changes should be left as a result of this command
 * **Intuitive:** validation should be accomplished following the same patterns users have come to expect with EKS-A CLI
 
@@ -52,22 +52,22 @@ The existing validations should continue to be run as part of  `create cluster` 
 
 #### Validations Overview
 
-The `validate` command architecture will differ from the `create cluster` workflow by first creating all the necessary dependencies to run validations, then running all validations the aggregated together in the validations/createcluster package. The initial dependency generation will be a prerequisite to run validations and any failure during this will result in an err response for the command. 
+The `validate` command architecture will differ from the `create cluster` workflow by first creating all the necessary dependencies to run validations, then running all validations aggregated together in the validations/createcluster package. The initial dependency generation will be a prerequisite for the the validations and any failure during dependency generation will result in an err response for the command. 
 
 Running the validations together after dependency generation will allow better aggregation for the validation results, as well as ensure that the `validate` runs all validations possible instead of returning early on individual validation failure. 
 
-Ideally, the dependency generation process should be separate from the their validation to enable this architecture and allow the generation and validations to be called independently and or together as needed.
+Ideally, the dependency generation process for any individual component should be separate from its validation to enable this architecture and allow the generation and validations to be called independently and/or together as needed.
 
 #### Sequence Diagram
 
 ![preflight checks sequence diagram](images/preflight-checks-sequence.png)
 #### Validation Location
 
-The `validate` command includes validations from the following locations originally based off the `create cluster` command validations. This does not include all code dependencies for the `validate` command. 
+The `validate` command relies on logic in the following locations to run the `create cluster` validations. This does not include all code dependencies for the `validate` command. 
 
 ```
 
-`.
+.
 └── eks-anywhere
     ├── cmd/eks-a/cmd
     │   ├── experiment.go
@@ -92,18 +92,21 @@ Primary validation components called by validations/createcluster include the fo
 
 * Addonmanager/addonclients validation ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/addonmanager/addonclients/fluxaddonclient.go#L289))
     * fluxaddonclient
-* Additional functions in validations/createcluster called directly for preflight validation tasks
+* Additional individual validation functions in validations/createcluster called directly to replicate `create cluster` validation tasks
 
 #### Usage:
 
 `exp` - subcommand, introduce all subcommands as experimental
-`eks-a exp validate [flags]`
+
+`eks-a exp validate create cluster [flags]`
 
 * **Flags**:
 
 `-f, --filename string Filename that contains EKS-A cluster configuration`
+
 `-z, --hardware-csv string Path to a CSV file containing hardware data`
-`-tinkerbell-bootstrap-ip string Override the`
+
+`-tinkerbell-bootstrap-ip string Override the local tinkerbell IP in the bootstrap cluster`
 
 * **Global Flags:**
 
@@ -119,9 +122,9 @@ The preflight check relies on the existing validations used by `create cluster` 
 
 For now, the only way to validate a cluster configuration is by running `create cluster`.
 
-After the preflight check command is created, users can run just the validations for EKS-A as by invoking `exp validate create -f workload-spec.yaml` . Users can then run this command as in preparation for configuration or during a proof of concept phase.  The usage of this command is in-line with other EKS-A CLI commands and should provide a unified user experience.
+After the preflight check command is created, users will be able to run only the validations for `create cluster` by invoking `exp validate create cluster -f workload-spec.yaml` . Users can then run this command as in preparation for configuration or during a proof of concept phase.  The usage of this command is in-line with other EKS-A CLI commands and should provide a unified user experience.
 
-Targeted user experience is to receive a full list of validation failures and optimally a suggestion for remediation on the error if available.
+Targeted user experience is to receive a full list of validation failures and a suggestion for remediation on the error if available.
 
 ### Security
 
