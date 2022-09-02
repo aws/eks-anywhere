@@ -27,7 +27,7 @@ As a Kubernetes administrator I want to:
 
 **In scope**
 
-* Existing preflight validation checks for `create cluster` are run with `exp validate create` command
+* Existing preflight validation checks for `create cluster` are run with `exp validate create cluster` command
 * Adding more in-depth provider validations should be prioritized on a per-provider basis
 * Ensure design is extensible to easily incorporate additional validations in the future
 
@@ -44,7 +44,7 @@ As a Kubernetes administrator I want to:
 
 ## Overview of solution
 
-EKS Anywhere includes extensive preflight checks already run as part of the create cluster command. These validations will be incorporated into an independent `validate` command. This command will initially be introduced as a subcommand under the `exp` command to indicate this is an experimental command. The `validate` command will be easily extensible for additional preflight-specific validations and different provider configurations.  
+EKS Anywhere includes extensive preflight checks already run as part of the create cluster command. These validations will be incorporated into an independent `validate` command. This command will initially be introduced as a subcommand under the `exp` command to indicate this is an experimental command. 
 
 The existing validations should continue to be run as part of  `create cluster`  to prevent any possible regressions or invalid cluster creation from being overlooked.
 
@@ -52,22 +52,22 @@ The existing validations should continue to be run as part of  `create cluster` 
 
 #### Validations Overview
 
-The `validate` command architecture will differ from the `create cluster` workflow by first creating all the necessary dependencies to run validations, then running all validations the aggregated together in the validatevalidations package. The initial dependency generation will be a prerequisite to run validations and any failure during this will result in an err response for the command. 
+The `validate` command architecture will differ from the `create cluster` workflow by first creating all the necessary dependencies to run validations, then running all validations the aggregated together in the validations/createcluster package. The initial dependency generation will be a prerequisite to run validations and any failure during this will result in an err response for the command. 
 
 Running the validations together after dependency generation will allow better aggregation for the validation results, as well as ensure that the `validate` runs all validations possible instead of returning early on individual validation failure. 
 
-Ideally, the dependency generation process should be separate from the their validation to enable this architecture and allow the generation and validations to be called independently and/or together as needed.
+Ideally, the dependency generation process should be separate from the their validation to enable this architecture and allow the generation and validations to be called independently and or together as needed.
 
 #### Sequence Diagram
 
 ![preflight checks sequence diagram](images/preflight-checks-sequence.png)
 #### Validation Location
 
-The `validate` command adds components in the following locations to run the `create cluster` command validations. This does not include all code dependencies for the `validate` command. 
+The `validate` command includes validations from the following locations originally based off the `create cluster` command validations. This does not include all code dependencies for the `validate` command. 
 
 ```
 
-.
+`.
 └── eks-anywhere
     ├── cmd/eks-a/cmd
     │   ├── experiment.go
@@ -78,11 +78,12 @@ The `validate` command adds components in the following locations to run the `cr
         └── validations
             └── createcluster
                 ├── createcluster.go
-                └── createcluster_test.go
+                └── createcluster_test.go`
 
 ```
 
-Primary existing validation components called by commandvalidations include the following:
+
+Primary validation components called by validations/createcluster include the following:
 
 * General `create` validations under `pkg/validations/createvalidations` ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/validations/createvalidations/preflightvalidations.go))
     * `validate` will continue to run the general `create` validations in `validations/createvalidations` as part of the preflight checks to ensure a single source of truth for maintenance and consistency in user experience
@@ -91,7 +92,7 @@ Primary existing validation components called by commandvalidations include the 
 
 * Addonmanager/addonclients validation ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/addonmanager/addonclients/fluxaddonclient.go#L289))
     * fluxaddonclient
-* Additional functions in validations/createcluster called directly for preflight validation tasks performed in `create cluster`
+* Additional functions in validations/createcluster called directly for preflight validation tasks
 
 #### Usage:
 
@@ -101,8 +102,8 @@ Primary existing validation components called by commandvalidations include the 
 * **Flags**:
 
 `-f, --filename string Filename that contains EKS-A cluster configuration`
-`-tinkerbell-bootstrap-ip string Override the local tinkerbell IP in the bootstrap cluster`
-`-z, --hardware-csv string Path to a CSV file containing hardware data.`
+`-z, --hardware-csv string Path to a CSV file containing hardware data`
+`-tinkerbell-bootstrap-ip string Override the`
 
 * **Global Flags:**
 
@@ -110,7 +111,7 @@ Primary existing validation components called by commandvalidations include the 
 
 ### Dependencies and consumers
 
-The preflight check relies on the existing validations used by `create cluster` .  In order to keep the user experience consistent, `validate` should inform the user of situations where a `create cluster` would fail.
+The preflight check relies on the existing validations used by `create cluster` .  In order to keep the user experience consistent, `validate` should inform the user of situations where a `create cluster` would fail. 
 
 ## Major considerations
 
@@ -128,10 +129,8 @@ The preflight validations should be minimally invasive and not result in artifac
 
 Currently there are already safeguards in place to redact any personal and credential information during validations. These safeguards should also be incorporated into any new validations added. 
 
-
 ## Alternative designs
 
 We chose to add the `validate` command to EKS-A as opposed to creating a standalone preflight check utility. A standalone utility would add to the steps needed to run validations and require separate deployment. Users would be more likely to skip this or not leverage the preflight check functionality as a result.
 
 Additionally, an independent command was chosen instead of modifying the existing create cluster command to run validations only for simplicity in execution as well as to allow the `validate` command to be expanded independently of `create cluster`.
-
