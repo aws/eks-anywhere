@@ -207,6 +207,6 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
 		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
-		"tinkerbell-chart": &vb.Tinkerbell.TinkerbellStack.TinkebellChart,
+		"tinkerbell-chart":      &vb.Tinkerbell.TinkerbellStack.TinkebellChart,
 	}
 }
