@@ -78,7 +78,7 @@ The `validate` command relies on logic in the following locations to run the `cr
         └── validations
             └── createcluster
                 ├── createcluster.go
-                └── createcluster_test.go`
+                └── createcluster_test.go
 
 ```
 
@@ -102,15 +102,15 @@ Primary validation components called by validations/createcluster include the fo
 
 * **Flags**:
 
-`-f, --filename string Filename that contains EKS-A cluster configuration`
+    `-f, --filename string Filename that contains EKS-A cluster configuration`
 
-`-z, --hardware-csv string Path to a CSV file containing hardware data`
+    `-z, --hardware-csv string Path to a CSV file containing hardware data`
 
-`-tinkerbell-bootstrap-ip string Override the local tinkerbell IP in the bootstrap cluster`
+    `-tinkerbell-bootstrap-ip string Override the local tinkerbell IP in the bootstrap cluster`
 
 * **Global Flags:**
 
-`-v, --verbosity int Set the log level verbosity`
+    `-v, --verbosity int Set the log level verbosity`
 
 ### Dependencies and consumers
 
