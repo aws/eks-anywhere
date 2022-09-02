@@ -1364,7 +1364,7 @@ func TestGovcRoleExistsError(t *testing.T) {
 	gt.Expect(err).ToNot(BeNil())
 }
 
-func TestGovcAddGroupUser(t *testing.T) {
+func TestGovcAddUserToGroup(t *testing.T) {
 	ctx := context.Background()
 	_, g, executable, env := setup(t)
 	group := "EKSA"
@@ -1375,11 +1375,11 @@ func TestGovcAddGroupUser(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "test AddGroupUser success",
+			name:    "test AddUserToGroup success",
 			wantErr: nil,
 		},
 		{
-			name:    "test AddGroupUser error",
+			name:    "test AddUserToGroup error",
 			wantErr: errors.New("operation failed"),
 		},
 	}
@@ -1388,7 +1388,7 @@ func TestGovcAddGroupUser(t *testing.T) {
 
 		executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.group.update", "-a", username, group).Return(*bytes.NewBufferString(""), tt.wantErr)
 
-		err := g.AddGroupUser(ctx, group, username)
+		err := g.AddUserToGroup(ctx, group, username)
 		gt := NewWithT(t)
 		if tt.wantErr != nil {
 			gt.Expect(err).ToNot(BeNil())
@@ -1399,7 +1399,7 @@ func TestGovcAddGroupUser(t *testing.T) {
 	}
 }
 
-func TestGovcSetPermission(t *testing.T) {
+func TestGovcSetGroupRoleOnObject(t *testing.T) {
 	ctx := context.Background()
 	_, g, executable, env := setup(t)
 	principal := "EKSAGroup"
@@ -1412,11 +1412,11 @@ func TestGovcSetPermission(t *testing.T) {
 		wantErr error
 	}{
 		{
-			name:    "test SetPermission success",
+			name:    "test SetGroupRoleOnObject success",
 			wantErr: nil,
 		},
 		{
-			name:    "test SetPermission error",
+			name:    "test SetGroupRoleOnObject error",
 			wantErr: errors.New("operation failed"),
 		},
 	}
@@ -1434,7 +1434,7 @@ func TestGovcSetPermission(t *testing.T) {
 			object,
 		).Return(*bytes.NewBufferString(""), tt.wantErr)
 
-		err := g.SetPermission(ctx, principal, role, object, domain)
+		err := g.SetGroupRoleOnObject(ctx, principal, role, object, domain)
 		gt := NewWithT(t)
 		if tt.wantErr != nil {
 			gt.Expect(err).ToNot(BeNil())

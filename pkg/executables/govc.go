@@ -973,6 +973,7 @@ func getDeployOptions(network string) ([]byte, error) {
 	return deployOpts, err
 }
 
+// Create a user
 func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
 	params := []string{
 		"sso.user.create", "-p", password, username,
@@ -984,6 +985,7 @@ func (g *Govc) CreateUser(ctx context.Context, username string, password string)
 	return nil
 }
 
+// Create a group
 func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	params := []string{
 		"sso.group.create", name,
@@ -996,6 +998,7 @@ func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	return nil
 }
 
+// Check if group exists
 func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 	params := []string{
 		"sso.group.ls",
@@ -1010,7 +1013,8 @@ func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 	return response.Len() > 0, nil
 }
 
-func (g *Govc) AddGroupUser(ctx context.Context, name string, username string) error {
+// Add a user to a group
+func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string) error {
 	params := []string{
 		"sso.group.update",
 		"-a", username,
@@ -1023,6 +1027,7 @@ func (g *Govc) AddGroupUser(ctx context.Context, name string, username string) e
 	return nil
 }
 
+// Check if a role exists
 func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
 	params := []string{
 		"role.ls",
@@ -1037,6 +1042,7 @@ func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
 	return response.Len() > 0, nil
 }
 
+// Create a role
 func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string) error {
 	params := append([]string{"role.create", name}, privileges...)
 
@@ -1047,7 +1053,8 @@ func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string)
 	return nil
 }
 
-func (g *Govc) SetPermission(ctx context.Context, principal string, role string, object string, domain string) error {
+// Set role for a given group on target object
+func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
 	principal = principal + "@" + domain
 
 	params := []string{
