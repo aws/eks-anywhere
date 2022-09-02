@@ -146,10 +146,10 @@ func WithCloudStackStringFromEnvVar(envVar string, opt func(string) CloudStackFi
 	return opt(os.Getenv(envVar))
 }
 
-func WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar, cloudstackManagementServerVar string, opt func(zone anywherev1.CloudStackAvailabilityZone) CloudStackFiller) CloudStackFiller {
+func WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar, cloudstackManagementServerVar string, opt func(zone anywherev1.CloudStackAvailabilityZone) CloudStackFiller) CloudStackFiller {
 	az := anywherev1.CloudStackAvailabilityZone{
 		Name:           strings.ToLower(fmt.Sprintf("az-%s", os.Getenv(cloudstackZoneVar))),
-		CredentialsRef: "global",
+		CredentialsRef: os.Getenv(cloudstackCredentialsVar),
 		Zone: anywherev1.CloudStackZone{
 			Name: os.Getenv(cloudstackZoneVar),
 			Network: anywherev1.CloudStackResourceIdentifier{
