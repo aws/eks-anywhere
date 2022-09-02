@@ -1685,8 +1685,8 @@ func createCluster() *v1alpha1.Cluster {
 				},
 			},
 			BundlesRef: &v1alpha1.BundlesRef{
-				Name: "bundle-1",
-				Namespace: constants.EksaSystemNamespace,
+				Name:       "bundle-1",
+				Namespace:  constants.EksaSystemNamespace,
 				APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
