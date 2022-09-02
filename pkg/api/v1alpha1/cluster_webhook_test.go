@@ -835,7 +835,6 @@ func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
 
 func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	cOld := createCluster()
-	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{}
 	c := cOld.DeepCopy()
 	c.Spec.BundlesRef = nil
 
