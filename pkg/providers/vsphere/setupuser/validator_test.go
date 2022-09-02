@@ -107,7 +107,7 @@ func TestGenerateConfigSetDefaults(t *testing.T) {
 	}{
 		{
 			name:     "test populating config with defaults happy path",
-			filepath: "./testdata/configs/missing_objects.yaml",
+			filepath: "./testdata/configs/valid_minimal.yaml",
 		},
 	}
 
@@ -123,11 +123,6 @@ func TestGenerateConfigSetDefaults(t *testing.T) {
 			g.Expect(c.Spec.GlobalRole).To(Equal(setupuser.DefaultGlobalRole))
 			g.Expect(c.Spec.UserRole).To(Equal(setupuser.DefaultUserRole))
 			g.Expect(c.Spec.AdminRole).To(Equal(setupuser.DefaultAdminRole))
-			g.Expect(c.Spec.Objects.Networks).To(Equal([]string{}))
-			g.Expect(c.Spec.Objects.Datastores).To(Equal([]string{}))
-			g.Expect(c.Spec.Objects.ResourcePools).To(Equal([]string{}))
-			g.Expect(c.Spec.Objects.Folders).To(Equal([]string{}))
-			g.Expect(c.Spec.Objects.Templates).To(BeNil())
 		},
 		)
 	}

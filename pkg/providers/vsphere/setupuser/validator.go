@@ -155,32 +155,4 @@ func setDefaults(c *VSphereSetupUserConfig) {
 	if c.Spec.Username == "" {
 		c.Spec.Username = DefaultUsername
 	}
-
-	if c.Spec.Objects.Networks == nil {
-		c.Spec.Objects.Networks = []string{}
-	}
-
-	if c.Spec.Objects.Networks == nil {
-		c.Spec.Objects.Networks = []string{}
-	}
-
-	if c.Spec.Objects.Networks == nil {
-		c.Spec.Objects.Networks = []string{}
-	}
-
-	if c.Spec.Objects.Datastores == nil {
-		c.Spec.Objects.Datastores = []string{}
-	}
-
-	if c.Spec.Objects.ResourcePools == nil {
-		c.Spec.Objects.ResourcePools = []string{}
-	}
-
-	if c.Spec.Objects.Folders == nil {
-		c.Spec.Objects.Folders = []string{}
-	}
-
-	if c.Spec.Objects.Folders == nil {
-		c.Spec.Objects.Folders = []string{}
-	}
 }
