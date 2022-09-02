@@ -21,27 +21,40 @@ For information on how to configure a Emissary Ingress curated package for EKS A
 
 3. Install Emissary Ingress: Follow the instructions here [Add Emissary Ingress]({{< relref "../../tasks/packages/emissary" >}})
 
-4. Create Ambassador Service with Type LoadBalancer.
-
+4. Create Emissary Listeners on your cluster (This is a one time setup).
+   
     ```bash
     kubectl apply -f - <<EOF
     ---
-    apiVersion: v1
-    kind: Service
+    apiVersion: getambassador.io/v3alpha1
+    kind: Listener
     metadata:
-      name: ambassador
+      name: http-listener
+      namespace: default
     spec:
-      type: LoadBalancer
-      externalTrafficPolicy: Local
-      ports:
-      - port: 80
-        targetPort: 8080
-      selector:
-        service: ambassador
+      port: 8080
+      protocol: HTTPS
+      securityModel: XFP
+      hostBinding:
+        namespace:
+          from: ALL
+    ---
+    apiVersion: getambassador.io/v3alpha1
+    kind: Listener
+    metadata:
+      name: https-listener
+      namespace: default
+    spec:
+      port: 8443
+      protocol: HTTPS
+      securityModel: XFP
+      hostBinding:
+        namespace:
+          from: ALL
     EOF
     ```
 
-5. Create a Mapping on your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the quote Service.
+5. Create a Mapping on your cluster. This Mapping tells Emissary-ingress to route all traffic inbound to the /backend/ path to the Hello EKS Anywhere Service. This hostname IP is the IP found from the LoadBalancer resource deployed by MetalLB for you.
 
     ```bash
     kubectl apply -f - <<EOF
@@ -53,6 +66,7 @@ For information on how to configure a Emissary Ingress curated package for EKS A
     spec:
       prefix: /backend/
       service: hello-eks-a
+      hostname: "195.16.99.65"
     EOF
     ```  
  
