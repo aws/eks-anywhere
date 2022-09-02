@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 const (
@@ -82,56 +81,24 @@ func readConfig(ctx context.Context, filepath string) (*VSphereSetupUserConfig, 
 }
 
 func validate(c *VSphereSetupUserConfig) error {
-	results := []validations.ValidationResult{
-		{
-			Name:        "validate datacenter",
-			Remediation: "",
-			Err:         validateDatacenter(c),
-		},
-		{
-			Name:        "validate vspheredomain",
-			Remediation: "",
-			Err:         validateVSphereDomain(c),
-		},
-		{
-			Name:        "validate connection",
-			Remediation: "",
-			Err:         validateConnection(c),
-		},
+	errs := []string{}
+
+	if c.Spec.Datacenter == "" {
+		errs = append(errs, "datacenter cannot be empty")
 	}
 
-	errs := []string{}
-	for _, r := range results {
-		if r.Err != nil {
-			errs = append(errs, r.Err.Error())
-		}
+	if c.Spec.VSphereDomain == "" {
+		errs = append(errs, "vSphereDomain cannot be empty")
+	}
+
+	if c.Spec.Connection.Server == "" {
+		errs = append(errs, "server cannot be empty")
 	}
 
 	if len(errs) > 0 {
-		return &validations.ValidationError{Errs: errs}
+		return fmt.Errorf("validations failed: %s", strings.Join(errs[:], ","))
 	}
 
-	return nil
-}
-
-func validateDatacenter(c *VSphereSetupUserConfig) error {
-	if c.Spec.Datacenter == "" {
-		return fmt.Errorf("datacenter cannot be empty")
-	}
-	return nil
-}
-
-func validateVSphereDomain(c *VSphereSetupUserConfig) error {
-	if c.Spec.VSphereDomain == "" {
-		return fmt.Errorf("vSphereDomain cannot be empty")
-	}
-	return nil
-}
-
-func validateConnection(c *VSphereSetupUserConfig) error {
-	if c.Spec.Connection.Server == "" {
-		return fmt.Errorf("server cannot be empty")
-	}
 	return nil
 }
 

@@ -91,7 +91,7 @@ func TestGenerateConfigValidations(t *testing.T) {
 				g.Expect(err).To(BeNil())
 				g.Expect(c).ToNot(BeNil())
 			} else {
-				g.Expect(err).To(ContainSubstring(tt.wantErr))
+				g.Expect(err.Error()).To(ContainSubstring(tt.wantErr))
 			}
 		},
 		)
