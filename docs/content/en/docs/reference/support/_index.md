@@ -14,19 +14,18 @@ If you have a problem, open an [issue](https://github.com/aws/eks-anywhere/issue
 If you discover a potential security issue in this project, we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
 Please do not create a public GitHub issue for security problems.
 
-## EKS Anywhere support policy
+## EKS Anywhere version support policy
 
 The Amazon EKS Anywhere versions represent the capabilities of the EKS Anywhere components such as the `eksctl anywhere` command-line functions, EKS Anywhere Controllers, as well as the Kubernetes versions it supports.
-EKS Anywhere also supports a limited number of operating systems for use as EKS Anywhere nodes.
 
-### Kubernetes support
+## Kubernetes support
 
 Each EKS Anywhere version generally includes support for multiple Kubernetes versions, with the exception of the initial few releases.
 Starting from EKS Anywhere version 0.11, the latest version supports at least four recent versions of Kubernetes.
 The end of support date of a Kubernetes version aligns with Amazon EKS in AWS as documented on the [Amazon EKS Kubernetes release calendar](https://docs.aws.amazon.com/eks/latest/userguide/kubernetes-versions.html#kubernetes-release-calendar). 
 
 Common vulnerabilities and exposures (CVE) patches and bug fixes, including those for the supported Kubernetes versions, are back-ported to the latest EKS Anywhere version (version n) and the previous one version (version n-1).
-The following table shows EKS Anywhere support for different Kubernetes versions:
+The following table shows EKS Anywhere version support for different Kubernetes versions:
 
 | Kubernetes version      | Supported EKS Anywhere version | First supported | End of support  |
 |------------|---------------------|---------------------------------|-------------------------|
@@ -51,7 +50,7 @@ The following table notes which EKS Anywhere and related Kubernetes versions are
 
 * [Amazon EKS Anywhere Enterprise subscription](https://aws.amazon.com/eks/eks-anywhere/pricing/) is required to receive AWS support on any Amazon EKS Anywhere clusters.
 
-### Operating system support
+## Operating system support
 
 EKS Anywhere has some level of support for the following operating system nodes:
 
@@ -60,11 +59,11 @@ Bottlerocket OVAs and images are distributed by the EKS Anywhere project.
 See the [Artifacts]({{< relref "../artifacts" >}}) page for details.
 
 * **Ubuntu**: EKS Anywhere has also been tested with Ubuntu-based nodes.
-Amazon will assist with troubleshooting and configuration guidance with Ubuntu-based nodes.
-To build your own Ubuntu-based EKS Anywhere node, see [Building Ubuntu-based node images]({{< relref "../artifacts/#building-ubuntu-based-node-images" >}}).
+Amazon will assist with troubleshooting and configuration guidance with Ubuntu-based nodes under the [EKS Anywhere Enterprise Subscription.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+To build your own Ubuntu-based EKS Anywhere node, see [Building Ubuntu-based node images.]({{< relref "../artifacts/#building-ubuntu-based-node-images" >}})
 For official Ubuntu support, see the Canonical [Support](https://ubuntu.com/support) page.
 
-## EKS Anywhere support FAQs
+## EKS Anywhere version support FAQs
 
 ### What is the difference between an Amazon EKS Anywhere minor version versus a patch version?
 
