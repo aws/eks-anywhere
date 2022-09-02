@@ -34,7 +34,7 @@ When you have been notified that your account has been given access to curated p
                 "ecr:BatchGetImage",
                 "ecr:DescribeImages",
                 "ecr:DescribeRepositories",
-                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchCheckLayerAvailability"
             ],
             "Resource": "*"
         }
