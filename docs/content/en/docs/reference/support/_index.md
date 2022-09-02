@@ -6,8 +6,8 @@ description: >
   Support for EKS Anywhere
 ---
 
-EKS Anywhere support licenses are available to AWS customers who pay for enterprise support.
-If you would like business support for your EKS Anywhere clusters please contact your Technical Account Manager (TAM) for details.
+Enterprise support for Amazon EKS Anywhere is available to Amazon customers who pay for the [Amazon EKS Anywhere Enterprise subscription.](https://aws.amazon.com/eks/eks-anywhere/pricing/)
+If you would like to purchase the Amazon EKS Anywhere Enterprise Subscription, contact an [AWS specialist.](https://aws.amazon.com/contact-us/sales-support-eks/) 
 
 EKS Anywhere is an open source project and it is supported by the community.
 If you have a problem, open an [issue](https://github.com/aws/eks-anywhere/issues) and someone will get back to you as soon as possible.
