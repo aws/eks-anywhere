@@ -162,7 +162,7 @@ func WithHTTPProxy(httpProxy string) func(client *PackageControllerClient) {
 	}
 }
 
-func WithHttpsProxy(httpsProxy string) func(client *PackageControllerClient) {
+func WithHTTPSProxy(httpsProxy string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
 		config.httpsProxy = httpsProxy
 	}
