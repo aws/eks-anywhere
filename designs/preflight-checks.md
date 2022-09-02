@@ -56,14 +56,14 @@ The `validate` command architecture will differ from the `create cluster` workfl
 
 Running the validations together after dependency generation will allow better aggregation for the validation results, as well as ensure that the `validate` runs all validations possible instead of returning early on individual validation failure. 
 
-Ideally, the dependency generation process should be separate from the their validation to enable this architecture and allow the generation and validations to be called independently and or together as needed.
+Ideally, the dependency generation process should be separate from the their validation to enable this architecture and allow the generation and validations to be called independently and/or together as needed.
 
 #### Sequence Diagram
 
 ![preflight checks sequence diagram](images/preflight-checks-sequence.png)
 #### Validation Location
 
-The `validate` command includes validations from the following locations originally based off the `create cluster` command validations. This does not include all code dependencies for the `validate` command. 
+The `validate` command adds components in the following locations to run the `create cluster` command validations. This does not include all code dependencies for the `validate` command. 
 
 ```
 
@@ -72,21 +72,17 @@ The `validate` command includes validations from the following locations origina
     ├── cmd/eks-a/cmd
     │   ├── experiment.go
     │   ├── validate.go
+    │   ├── validatecreate.go
     │   └── validatecreatecluster.go
     └── pkg
         └── validations
-            ├── commandvalidations
-            │   ├── commandvalidations.go
-            │   ├── dockerexec.go
-            │   ├── kubeconfig.go
-            │   └── validateprovider.go
-            └── utils.go
+            └── createcluster
+                ├── createcluster.go
+                └── createcluster_test.go
 
 ```
 
-New validation for `validate` should be added following the same validation architecture when possible. Ideally, validations should be separated into configuration-specific validations that can be preformed directly based only off the provided configuration file, and ones that require provider access or queries to be run.  The configuration-specific validations can be run independently of provider validations for users that want config only validation or whose provider environment may not be ready yet.
-
-Primary validation components called by commandvalidations include the following:
+Primary existing validation components called by commandvalidations include the following:
 
 * General `create` validations under `pkg/validations/createvalidations` ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/validations/createvalidations/preflightvalidations.go))
     * `validate` will continue to run the general `create` validations in `validations/createvalidations` as part of the preflight checks to ensure a single source of truth for maintenance and consistency in user experience
@@ -95,7 +91,7 @@ Primary validation components called by commandvalidations include the following
 
 * Addonmanager/addonclients validation ([link](https://github.com/aws/eks-anywhere/blob/b4a4eb84c03091d1a646c1e49b9760b8b63961d3/pkg/addonmanager/addonclients/fluxaddonclient.go#L289))
     * fluxaddonclient
-* Additional functions in validations/commandvalidations called directly for preflight validation tasks
+* Additional functions in validations/createcluster called directly for preflight validation tasks performed in `create cluster`
 
 #### Usage:
 
@@ -105,6 +101,7 @@ Primary validation components called by commandvalidations include the following
 * **Flags**:
 
 `-f, --filename string Filename that contains EKS-A cluster configuration`
+`-tinkerbell-bootstrap-ip string Override the local tinkerbell IP in the bootstrap cluster`
 `-z, --hardware-csv string Path to a CSV file containing hardware data.`
 
 * **Global Flags:**
