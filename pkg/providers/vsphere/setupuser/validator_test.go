@@ -25,12 +25,12 @@ func TestGenerateConfigReadFile(t *testing.T) {
 		{
 			name:     "test generateconfig read file bad yaml",
 			filepath: "./testdata/configs/not_yaml.yaml",
-			wantErr:  "Failed to parse ./testdata/configs/not_yaml.yaml, err = yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `this is...` ",
+			wantErr:  "failed to parse ./testdata/configs/not_yaml.yaml, err = yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `this is...` ",
 		},
 		{
 			name:     "test generateconfig read file does not exist",
 			filepath: "./testdata/configs/not_a_file.yaml",
-			wantErr:  "Failed to read file ./testdata/configs/not_a_file.yaml",
+			wantErr:  "failed to read file ./testdata/configs/not_a_file.yaml",
 		},
 	}
 
