@@ -18,12 +18,12 @@ const (
 	DefaultAdminRole  = "EKSACloudAdminRole"
 )
 
-type connection struct {
+type Connection struct {
 	Server   string `yaml:"server"`
 	Insecure bool   `yaml:"insecure"`
 }
 
-type objects struct {
+type Objects struct {
 	Networks      []string `yaml:"networks"`
 	Datastores    []string `yaml:"datastores"`
 	ResourcePools []string `yaml:"resourcePools"`
@@ -31,11 +31,11 @@ type objects struct {
 	Templates     []string `yaml:"templates"`
 }
 
-type vSphereUserSpec struct {
+type VSphereUserSpec struct {
 	Datacenter    string     `yaml:"datacenter"`
 	VSphereDomain string     `yaml:"vSphereDomain"`
-	Connection    connection `yaml:"connection"`
-	Objects       objects    `yaml:"objects"`
+	Connection    Connection `yaml:"connection"`
+	Objects       Objects    `yaml:"objects"`
 	// Below are optional fields with defaults
 	Username   string `yaml:"username"`
 	GroupName  string `yaml:"group"`
@@ -47,7 +47,7 @@ type vSphereUserSpec struct {
 type VSphereSetupUserConfig struct {
 	ApiVersion string          `yaml:"apiVersion"`
 	Kind       string          `yaml:"kind"`
-	Spec       vSphereUserSpec `yaml:"spec"`
+	Spec       VSphereUserSpec `yaml:"spec"`
 }
 
 func GenerateConfig(ctx context.Context, filepath string) (*VSphereSetupUserConfig, error) {
