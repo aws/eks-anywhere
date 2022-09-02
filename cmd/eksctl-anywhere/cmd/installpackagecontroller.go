@@ -3,14 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/spf13/cobra"
 	"log"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/spf13/cobra"
 )
 
 type installControllerOptions struct {
@@ -75,12 +74,4 @@ func installPackageController(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func getProxyConfiguration(clusterSpec *cluster.Spec) (string, string, []string) {
-	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
-	if proxyConfiguration != nil {
-		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
-	}
-	return "", "", []string{}
 }

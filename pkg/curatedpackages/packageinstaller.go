@@ -80,11 +80,3 @@ func (pi *Installer) installPackages(ctx context.Context) error {
 	}
 	return nil
 }
-
-func getProxyConfiguration(clusterSpec *cluster.Spec) (string, string, []string) {
-	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
-	if proxyConfiguration != nil {
-		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
-	}
-	return "", "", []string{}
-}
