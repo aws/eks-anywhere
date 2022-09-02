@@ -98,7 +98,7 @@ Primary validation components called by validations/createcluster include the fo
 
 `exp` - subcommand, introduce all subcommands as experimental
 
-`eks-a exp validate create cluster [flags]`
+`eksctl anywhere exp validate create cluster [flags]`
 
 * **Flags**:
 
