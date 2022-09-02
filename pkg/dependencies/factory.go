@@ -865,8 +865,8 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
-			curatedpackages.WithHttpProxy(httpProxy),
-			curatedpackages.WithHttpsProxy(httpsProxy),
+			curatedpackages.WithHTTPProxy(httpProxy),
+			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
 		)
 		return nil

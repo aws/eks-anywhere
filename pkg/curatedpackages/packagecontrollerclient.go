@@ -94,7 +94,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Context) error {
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) error {
 	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
 	if found {
 		return errors.New("curated Packages controller exists in the current cluster")

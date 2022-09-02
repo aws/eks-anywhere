@@ -48,18 +48,18 @@ func (mr *MockPackageControllerMockRecorder) InstallController(ctx interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallController", reflect.TypeOf((*MockPackageController)(nil).InstallController), ctx)
 }
 
-// ValidateControllerDoesNotExist mocks base method.
-func (m *MockPackageController) ValidateControllerDoesNotExist(ctx context.Context) error {
+// IsInstalled mocks base method.
+func (m *MockPackageController) IsInstalled(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateControllerDoesNotExist", ctx)
+	ret := m.ctrl.Call(m, "IsInstalled", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ValidateControllerDoesNotExist indicates an expected call of ValidateControllerDoesNotExist.
-func (mr *MockPackageControllerMockRecorder) ValidateControllerDoesNotExist(ctx interface{}) *gomock.Call {
+// IsInstalled indicates an expected call of IsInstalled.
+func (mr *MockPackageControllerMockRecorder) IsInstalled(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControllerDoesNotExist", reflect.TypeOf((*MockPackageController)(nil).ValidateControllerDoesNotExist), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInstalled", reflect.TypeOf((*MockPackageController)(nil).IsInstalled), ctx)
 }
 
 // MockPackageHandler is a mock of PackageHandler interface.

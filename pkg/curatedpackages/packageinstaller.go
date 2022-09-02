@@ -10,7 +10,7 @@ import (
 
 type PackageController interface {
 	InstallController(ctx context.Context) error
-	ValidateControllerDoesNotExist(ctx context.Context) error
+	IsInstalled(ctx context.Context) error
 }
 
 type PackageHandler interface {

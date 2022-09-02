@@ -64,7 +64,7 @@ func installPackageController(ctx context.Context) error {
 		return err
 	}
 
-	if err = ctrlClient.ValidateControllerDoesNotExist(ctx); err != nil {
+	if err = ctrlClient.IsInstalled(ctx); err != nil {
 		return err
 	}
 

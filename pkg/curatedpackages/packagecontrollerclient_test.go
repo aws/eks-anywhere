@@ -105,8 +105,8 @@ func TestInstallControllerWithProxy(t *testing.T) {
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
-		curatedpackages.WithHttpProxy(tt.httpProxy),
-		curatedpackages.WithHttpsProxy(tt.httpsProxy),
+		curatedpackages.WithHTTPProxy(tt.httpProxy),
+		curatedpackages.WithHTTPSProxy(tt.httpsProxy),
 		curatedpackages.WithNoProxy(tt.noProxy),
 	)
 
@@ -139,8 +139,8 @@ func TestInstallControllerWithEmptyProxy(t *testing.T) {
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
-		curatedpackages.WithHttpProxy(""),
-		curatedpackages.WithHttpsProxy(""),
+		curatedpackages.WithHTTPProxy(""),
+		curatedpackages.WithHTTPSProxy(""),
 		curatedpackages.WithNoProxy([]string{}),
 	)
 
@@ -225,7 +225,7 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 
 	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
 
-	err := tt.command.ValidateControllerDoesNotExist(tt.ctx)
+	err := tt.command.IsInstalled(tt.ctx)
 	if err == nil {
 		t.Errorf("Get Active Controller should not succeed when controller exists")
 	}
@@ -236,7 +236,7 @@ func TestGetActiveControllerFail(t *testing.T) {
 
 	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, errors.New("controller doesn't exist"))
 
-	err := tt.command.ValidateControllerDoesNotExist(tt.ctx)
+	err := tt.command.IsInstalled(tt.ctx)
 	if err != nil {
 		t.Errorf("Get Active Controller should succeed when controller doesn't exist")
 	}
