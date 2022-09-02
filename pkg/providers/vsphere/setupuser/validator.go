@@ -56,12 +56,12 @@ func GenerateConfig(ctx context.Context, filepath string) (*VSphereSetupUserConf
 		return nil, err
 	}
 
-	err = validate(ctx, c)
+	err = validate(c)
 	if err != nil {
 		return nil, err
 	}
 
-	setDefaults(ctx, c)
+	setDefaults(c)
 
 	return c, nil
 }
@@ -81,22 +81,22 @@ func readConfig(ctx context.Context, filepath string) (*VSphereSetupUserConfig, 
 	return &c, nil
 }
 
-func validate(ctx context.Context, c *VSphereSetupUserConfig) error {
+func validate(c *VSphereSetupUserConfig) error {
 	results := []validations.ValidationResult{
 		{
 			Name:        "validate datacenter",
 			Remediation: "",
-			Err:         validateDatacenter(ctx, c),
+			Err:         validateDatacenter(c),
 		},
 		{
 			Name:        "validate vspheredomain",
 			Remediation: "",
-			Err:         validateVSphereDomain(ctx, c),
+			Err:         validateVSphereDomain(c),
 		},
 		{
 			Name:        "validate connection",
 			Remediation: "",
-			Err:         validateConnection(ctx, c),
+			Err:         validateConnection(c),
 		},
 	}
 
@@ -114,28 +114,28 @@ func validate(ctx context.Context, c *VSphereSetupUserConfig) error {
 	return nil
 }
 
-func validateDatacenter(ctx context.Context, c *VSphereSetupUserConfig) error {
+func validateDatacenter(c *VSphereSetupUserConfig) error {
 	if c.Spec.Datacenter == "" {
 		return fmt.Errorf("datacenter cannot be empty")
 	}
 	return nil
 }
 
-func validateVSphereDomain(ctx context.Context, c *VSphereSetupUserConfig) error {
+func validateVSphereDomain(c *VSphereSetupUserConfig) error {
 	if c.Spec.VSphereDomain == "" {
 		return fmt.Errorf("vSphereDomain cannot be empty")
 	}
 	return nil
 }
 
-func validateConnection(ctx context.Context, c *VSphereSetupUserConfig) error {
+func validateConnection(c *VSphereSetupUserConfig) error {
 	if c.Spec.Connection.Server == "" {
 		return fmt.Errorf("server cannot be empty")
 	}
 	return nil
 }
 
-func setDefaults(ctx context.Context, c *VSphereSetupUserConfig) {
+func setDefaults(c *VSphereSetupUserConfig) {
 	if c.Spec.GlobalRole == "" {
 		c.Spec.GlobalRole = DefaultGlobalRole
 	}
