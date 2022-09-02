@@ -2,8 +2,13 @@ package kubeconfig
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+
+	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 // FromClusterFormat defines the format of the kubeconfig of the
@@ -25,15 +30,26 @@ func FromEnvironment() string {
 	return os.Getenv(EnvName)
 }
 
-type missingFileError struct {
-	Path string
-}
+// ValidateFile loads a file to validate it's basic contents.
+//
+// The values of the fields within aren't validated, but the file's existence
+// and basic structure are checked.
+func ValidateFile(filename string) error {
+	wrapError := func(err error) error {
+		return fmt.Errorf("validating kubeconfig %q: %w", filename, err)
+	}
 
-// NewMissingFileError creates a missing kubeconfig file error.
-func NewMissingFileError(path string) error {
-	return missingFileError{Path: path}
-}
+	if !validations.FileExists(filename) {
+		return wrapError(fs.ErrNotExist)
+	}
 
-func (m missingFileError) Error() string {
-	return fmt.Sprintf("kubeconfig file missing: path=%v", m.Path)
+	if !validations.FileExistsAndIsNotEmpty(filename) {
+		return wrapError(fmt.Errorf("is empty"))
+	}
+
+	if _, err := clientcmd.LoadFromFile(filename); err != nil {
+		return wrapError(err)
+	}
+
+	return nil
 }
