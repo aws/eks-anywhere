@@ -2,17 +2,17 @@ package diagnostics
 
 import (
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"log"
 
 	ui "github.com/replicatedhq/termui/v3"
 	"github.com/replicatedhq/termui/v3/widgets"
+
+	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
 var (
 	selectedResult = 0
 	table          = widgets.NewTable()
-	isShowingSaved = false
 )
 
 func printOutput(supportBundleName string, analyzers []*executables.SupportBundleAnalysis) {
@@ -36,9 +36,9 @@ func printOutput(supportBundleName string, analyzers []*executables.SupportBundl
 					selectedResult++
 				} else {
 					selectedResult = 0
-					//table.SelectedRow = 0
+					table.SelectedRow = 0
 				}
-				//table.ScrollDown()
+				table.ScrollDown()
 				ui.Clear()
 				drawUI(supportBundleName, analyzers)
 			case "<Up>":
@@ -46,15 +46,14 @@ func printOutput(supportBundleName string, analyzers []*executables.SupportBundl
 					selectedResult--
 				} else {
 					selectedResult = len(analyzers) - 1
-					//table.SelectedRow = len(analyzeResults)
+					table.SelectedRow = len(analyzers)
 				}
-				//table.ScrollUp()
+				table.ScrollUp()
 				ui.Clear()
 				drawUI(supportBundleName, analyzers)
 			}
 		}
 	}
-
 }
 
 func drawUI(supportBundleName string, analyzeResults []*executables.SupportBundleAnalysis) {
@@ -79,11 +78,12 @@ func drawHeader(supportBundleName string) {
 	title.SetRect(left, 0, right, 1)
 	ui.Render(title)
 }
+
 func drawFooter() {
 	termWidth, termHeight := ui.TerminalDimensions()
 
 	instructions := widgets.NewParagraph()
-	instructions.Text = "[q] quit    [s] save    [↑][↓] scroll"
+	instructions.Text = "[q] quit       [↑][↓] scroll"
 	instructions.Border = false
 
 	left := 0
@@ -99,6 +99,7 @@ func drawGrid(analyzeResults []*executables.SupportBundleAnalysis) {
 	drawAnalyzersTable(analyzeResults)
 	drawDetails(analyzeResults[selectedResult])
 }
+
 func drawAnalyzersTable(analyzeResults []*executables.SupportBundleAnalysis) {
 	termWidth, termHeight := ui.TerminalDimensions()
 
@@ -144,6 +145,7 @@ func drawAnalyzersTable(analyzeResults []*executables.SupportBundleAnalysis) {
 
 	ui.Render(table)
 }
+
 func drawDetails(analysisResult *executables.SupportBundleAnalysis) {
 	termWidth, _ := ui.TerminalDimensions()
 
@@ -181,6 +183,7 @@ func drawDetails(analysisResult *executables.SupportBundleAnalysis) {
 		currentTop = currentTop + height + 1
 	}
 }
+
 func estimateNumberOfLines(text string, width int) int {
 	lines := len(text)/width + 1
 	return lines

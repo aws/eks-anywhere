@@ -215,13 +215,7 @@ func (e *EksaDiagnosticBundle) PrintAnalysis() error {
 		return nil
 	}
 	printOutput(e.bundle.Name, e.analysis)
-	analysis, err := yaml.Marshal(e.analysis)
 
-	if err != nil {
-		return fmt.Errorf("outputing yaml: %v", err)
-	}
-
-	fmt.Println(string(analysis))
 	return nil
 }
 
