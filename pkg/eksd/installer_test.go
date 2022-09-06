@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/eksd/mocks"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -89,6 +90,7 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 
 func TestInstallEksdManifestErrorReadingManifest(t *testing.T) {
 	tt := newInstallerTest(t)
+	tt.eksdInstaller.SetRetrier(retrier.NewWithMaxRetries(1, 0))
 	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "fake.yaml"
 
 	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
