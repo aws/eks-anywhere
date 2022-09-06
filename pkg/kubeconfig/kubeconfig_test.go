@@ -94,3 +94,57 @@ func withFakeFileContents(t *testing.T, r io.Reader) (f *os.File) {
 
 	return f
 }
+
+func TestFromEnvironment(t *testing.T) {
+	t.Run("returns the filename from the env var", func(t *testing.T) {
+		expected := "file one"
+		t.Setenv("KUBECONFIG", expected)
+		got := FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("works with longer paths", func(t *testing.T) {
+		expected := "/home/user/some/long/path/or file/directory structure/config"
+		t.Setenv("KUBECONFIG", expected)
+		got := FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("returns the first file in a list", func(t *testing.T) {
+		expected := "file one"
+		t.Setenv("KUBECONFIG", expected+":filetwo")
+		got := FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("returns an empty string if no files are found", func(t *testing.T) {
+		expected := ""
+		t.Setenv("KUBECONFIG", "")
+		got := FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+
+	t.Run("trims whitespace, so as not to return 'empty' filenames", func(t *testing.T) {
+		expected := ""
+		t.Setenv("KUBECONFIG", " ")
+		got := FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+
+		expected = ""
+		t.Setenv("KUBECONFIG", "\t")
+		got = FromEnvironment()
+		if got != expected {
+			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+}
