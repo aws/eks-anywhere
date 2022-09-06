@@ -185,11 +185,16 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	if err != nil {
 		return nil, err
 	}
-	configManager.RegisterDefaulters(BundlesRefDefaulter(bundlesManifest))
+	configManager.RegisterDefaulters(BundlesRefDefaulter())
 
 	if err = configManager.SetDefaults(clusterConfig); err != nil {
 		return nil, err
 	}
+
+	// We are pulling the latest available Bundles, so making sure we update the ref to make the spec consistent
+	clusterConfig.Cluster.Spec.BundlesRef.Name = bundlesManifest.Name
+	clusterConfig.Cluster.Spec.BundlesRef.Namespace = bundlesManifest.Namespace
+	clusterConfig.Cluster.Spec.BundlesRef.APIVersion = v1alpha1.GroupVersion.String()
 
 	versionsBundle, err := GetVersionsBundle(clusterConfig.Cluster, bundlesManifest)
 	if err != nil {
@@ -425,14 +430,10 @@ func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
 }
 
-func BundlesRefDefaulter(bundles *v1alpha1.Bundles) Defaulter {
+func BundlesRefDefaulter() Defaulter {
 	return func(c *Config) error {
 		if c.Cluster.Spec.BundlesRef == nil {
-			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{
-				Name:       bundles.Name,
-				Namespace:  bundles.Namespace,
-				APIVersion: v1alpha1.GroupVersion.String(),
-			}
+			c.Cluster.Spec.BundlesRef = &eksav1alpha1.BundlesRef{}
 		}
 		return nil
 	}
