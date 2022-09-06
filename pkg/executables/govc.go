@@ -985,6 +985,21 @@ func (g *Govc) CreateUser(ctx context.Context, username string, password string)
 	return nil
 }
 
+// UserExists checks if a user exists.
+func (g *Govc) UserExists(ctx context.Context, username string) (bool, error) {
+	params := []string{
+		"sso.user.ls",
+		username,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
 // CreateGroup creates a group.
 func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	params := []string{
