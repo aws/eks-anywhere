@@ -8,12 +8,12 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
@@ -55,7 +55,7 @@ func TestControlPlaneObjects(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt}))
 }
 
 func TestControlPlaneObjectsUpgradeFromBetaMachineTemplateName(t *testing.T) {
@@ -94,7 +94,7 @@ func TestControlPlaneObjectsUpgradeFromBetaMachineTemplateName(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), kcp, mt}))
 }
 
 func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
@@ -114,7 +114,7 @@ func TestControlPlaneObjectsOldControlPlaneNotExists(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt}))
 }
 
 func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
@@ -145,7 +145,7 @@ func TestControlPlaneObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	got, err := snow.ControlPlaneObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantCAPICluster(), wantSnowCluster(), wantKubeadmControlPlane(), mt}))
 }
 
 func TestControlPlaneObjectsGetOldControlPlaneError(t *testing.T) {
@@ -234,7 +234,7 @@ func TestWorkersObjects(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{md, wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{md, wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
@@ -293,7 +293,7 @@ func TestWorkersObjectsFromBetaMachineTemplateName(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{md, kct, mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{md, kct, mt}))
 }
 
 func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
@@ -310,7 +310,7 @@ func TestWorkersObjectsOldMachineDeploymentNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
@@ -348,7 +348,7 @@ func TestWorkersObjectsOldKubeadmConfigTemplateNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
@@ -389,7 +389,7 @@ func TestWorkersObjectsOldMachineTemplateNotExists(t *testing.T) {
 
 	got, err := snow.WorkersObjects(g.ctx, g.clusterSpec, g.kubeconfigClient)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{wantMachineDeployment(), wantKubeadmConfigTemplate(), mt}))
 }
 
 func TestWorkersObjectsTaintsUpdated(t *testing.T) {
@@ -448,7 +448,7 @@ func TestWorkersObjectsTaintsUpdated(t *testing.T) {
 	mt.SetName("snow-test-md-0-2")
 
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal([]runtime.Object{md, kct, mt}))
+	g.Expect(got).To(Equal([]kubernetes.Object{md, kct, mt}))
 }
 
 func TestWorkersObjectsLabelsUpdated(t *testing.T) {

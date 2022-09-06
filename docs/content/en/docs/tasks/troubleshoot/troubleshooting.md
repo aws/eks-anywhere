@@ -75,9 +75,10 @@ To verify cgroups version
 ```
 To use _cgroups v1_ you need to _sudo_ and edit _/etc/default/grub_ to set _GRUB_CMDLINE_LINUX_ to "systemd.unified_cgroup_hierarchy=0" and reboot.
 ```
-%sudo <editor> /etc/default/group
+%sudo <editor> /etc/default/grub
 GRUB_CMDLINE_LINUX="systemd.unified_cgroup_hierarchy=0"
 
+sudo update-grub
 sudo reboot now
 ```
 Then verify you are using _cgroups v1_.

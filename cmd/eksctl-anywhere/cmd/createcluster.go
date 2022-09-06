@@ -3,24 +3,16 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -29,6 +21,7 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	forceClean            bool
 	skipIpCheck           bool
 	hardwareCSVPath       string
@@ -42,41 +35,24 @@ var createClusterCmd = &cobra.Command{
 	Use:          "cluster -f <cluster-config-file> [flags]",
 	Short:        "Create workload cluster",
 	Long:         "This command is used to create workload clusters",
-	PreRunE:      preRunCreateCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE:         cc.createCluster,
 }
 
 func init() {
 	createCmd.AddCommand(createClusterCmd)
-	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	createClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
-		TinkerbellHardwareCSVFlagName,
-		TinkerbellHardwareCSVFlagAlias,
-		"",
-		TinkerbellHardwareCSVFlagDescription,
-	)
+	applyClusterOptionFlags(createClusterCmd.Flags(), &cc.clusterOptions)
+	applyTimeoutFlags(createClusterCmd.Flags(), &cc.timeoutOptions)
+	applyTinkerbellHardwareFlag(createClusterCmd.Flags(), &cc.hardwareCSVPath)
 	createClusterCmd.Flags().StringVar(&cc.tinkerbellBootstrapIP, "tinkerbell-bootstrap-ip", "", "Override the local tinkerbell IP in the bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
-	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	createClusterCmd.Flags().StringVar(&cc.installPackages, "install-packages", "", "Location of curated packages configuration files to install to the cluster")
 
 	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
-}
-
-func preRunCreateCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
@@ -93,20 +69,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
-
-		// If no flag was returned there is a developer error as the flag has been removed
-		// from the program rendering it invalid.
-		if flag == nil {
-			panic("'hardwarefile' flag not configured")
-		}
-
-		if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
-			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
-		}
-
-		if !validations.FileExists(cc.hardwareCSVPath) {
-			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareCSVPath)
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath); err != nil {
+			return err
 		}
 	}
 
@@ -138,15 +102,20 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig, cc.installPackages)
 	if err != nil {
 		return err
+	}
+
+	clusterManagerOpts, err := buildClusterManagerOpts(cc.timeoutOptions)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareCSVPath, cc.forceClean, cc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -206,42 +175,4 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	cleanup(deps, &err)
 	return err
-}
-
-func (cc *createClusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig) ([]string, error) {
-	dirs := cc.mountDirs()
-	fluxConfig := clusterSpec.FluxConfig
-	if fluxConfig != nil && fluxConfig.Spec.Git != nil {
-		dirs = append(dirs, filepath.Dir(cliConfig.GitPrivateKeyFile))
-		dirs = append(dirs, filepath.Dir(cliConfig.GitKnownHostsFile))
-		dirs = append(dirs, filepath.Dir(cc.installPackages))
-	}
-
-	if clusterSpec.Config.Cluster.Spec.DatacenterRef.Kind == v1alpha1.CloudStackDatacenterKind {
-		env, found := os.LookupEnv(decoder.EksaCloudStackHostPathToMount)
-		if found && len(env) > 0 {
-			mountDirs := strings.Split(env, ",")
-			for _, dir := range mountDirs {
-				if _, err := os.Stat(dir); err != nil {
-					return nil, fmt.Errorf("invalid host path to mount: %v", err)
-				}
-				dirs = append(dirs, dir)
-			}
-		}
-	}
-
-	return dirs, nil
-}
-
-func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
-	cliConfig := &config.CliConfig{
-		MaxWaitPerMachine: config.GetMaxWaitPerMachine(),
-	}
-	if clusterSpec.FluxConfig != nil && clusterSpec.FluxConfig.Spec.Git != nil {
-		cliConfig.GitSshKeyPassphrase = os.Getenv(config.EksaGitPassphraseTokenEnv)
-		cliConfig.GitPrivateKeyFile = os.Getenv(config.EksaGitPrivateKeyTokenEnv)
-		cliConfig.GitKnownHostsFile = os.Getenv(config.EksaGitKnownHostsFileEnv)
-	}
-
-	return cliConfig
 }

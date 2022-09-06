@@ -27,6 +27,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/features"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -54,6 +55,7 @@ func init() {
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
 	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(snowv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

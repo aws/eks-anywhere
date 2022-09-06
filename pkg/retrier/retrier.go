@@ -63,9 +63,18 @@ func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 // Retry runs the fn function until it either successful completes (not error),
 // the set timeout reached or the retry policy aborts the execution
 func (r *Retrier) Retry(fn func() error) error {
+	// While it seems aberrant to call a method with a nil receiver, several unit tests actually do.  With a previous
+	// version of this module (which didn't attempt to dereference the receiver until after the wrapped function failed)
+	// these passed.  Changes below, to log the receiver struct's key params changed that breaking the unit tests.
+	// The below conditional block restores the original behavior, enabling these tests to again pass.
+	if r == nil {
+		return fn()
+	}
+
 	start := time.Now()
 	retries := 0
 	var err error
+	logger.V(5).Info("Retrier:", "timeout", r.timeout, "backoffFactor", r.backoffFactor)
 	for retry := true; retry; retry = time.Since(start) < r.timeout {
 		err = fn()
 		retries += 1
@@ -81,8 +90,17 @@ func (r *Retrier) Retry(fn func() error) error {
 			return err
 		}
 		if r.backoffFactor != nil {
-			wait = wait * time.Duration(*r.backoffFactor*float32(retries))
+			wait = time.Duration(float32(wait) * (*r.backoffFactor * float32(retries)))
 		}
+
+		// If there's not enough time left for the policy-proposed wait, there's no value in waiting that duration
+		// before quitting at the bottom of the loop.  Just do it now.
+		retrierTimeoutTime := start.Add(r.timeout)
+		policyTimeoutTime := time.Now().Add(wait)
+		if retrierTimeoutTime.Before(policyTimeoutTime) {
+			break
+		}
+
 		logger.V(5).Info("Sleeping before next retry", "time", wait)
 		time.Sleep(wait)
 	}

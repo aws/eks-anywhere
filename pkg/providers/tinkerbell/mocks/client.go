@@ -273,6 +273,20 @@ func (mr *MockProviderKubectlClientMockRecorder) UpdateAnnotation(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotation", reflect.TypeOf((*MockProviderKubectlClient)(nil).UpdateAnnotation), varargs...)
 }
 
+// WaitForBaseboardManagements mocks base method.
+func (m *MockProviderKubectlClient) WaitForBaseboardManagements(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForBaseboardManagements", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForBaseboardManagements indicates an expected call of WaitForBaseboardManagements.
+func (mr *MockProviderKubectlClientMockRecorder) WaitForBaseboardManagements(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForBaseboardManagements", reflect.TypeOf((*MockProviderKubectlClient)(nil).WaitForBaseboardManagements), arg0, arg1, arg2, arg3, arg4)
+}
+
 // WaitForDeployment mocks base method.
 func (m *MockProviderKubectlClient) WaitForDeployment(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4, arg5 string) error {
 	m.ctrl.T.Helper()

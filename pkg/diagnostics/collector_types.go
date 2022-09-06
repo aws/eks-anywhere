@@ -12,7 +12,6 @@ type Collect struct {
 	Logs             *logs             `json:"logs,omitempty"`
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
-	Run              *run              `json:"run,omitempty"`
 	RunPod           *runPod           `json:"runPod,omitempty"`
 }
 
@@ -70,13 +69,6 @@ type exec struct {
 	Timeout       string   `json:"timeout,omitempty"`
 }
 
-type run struct {
-	collectorMeta `json:",inline"`
-	Name          string      `json:"name,omitempty"`
-	Namespace     string      `json:"namespace"`
-	PodSpec       *v1.PodSpec `json:"podSpec,omitempty"`
-}
-
 type imagePullSecrets struct {
 	Name       string            `json:"name,omitempty"`
 	Data       map[string]string `json:"data,omitempty"`
@@ -89,8 +81,9 @@ type collectorMeta struct {
 }
 
 type runPod struct {
+	collectorMeta    `json:",inline"`
 	Name             string      `json:"name,omitempty"`
-	Namespaces       string      `json:"namespace"`
+	Namespace        string      `json:"namespace"`
 	PodSpec          *v1.PodSpec `json:"podSpec,omitempty"`
 	Timeout          string      `json:"timeout,omitempty"`
 	imagePullSecrets `json:",inline"`

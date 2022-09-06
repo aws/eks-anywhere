@@ -88,7 +88,7 @@ func newImportArtifactsTest(t *testing.T) *importArtifactsTest {
 
 func TestImportRun(t *testing.T) {
 	tt := newImportArtifactsTest(t)
-	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
+	tt.reader.EXPECT().ReadImagesFromBundles(tt.ctx, tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
 	tt.reader.EXPECT().ReadChartsFromBundles(tt.ctx, tt.bundles).Return(tt.charts)
 	tt.fileImporter.EXPECT().Push(tt.ctx, tt.bundles)

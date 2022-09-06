@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -33,8 +34,6 @@ const (
 	govcDatacenterKey    = "GOVC_DATACENTER"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
-	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
 	DeployOptsFile       = "deploy-opts.json"
@@ -517,14 +516,14 @@ func (g *Govc) validateAndSetupCreds() (map[string]string, error) {
 	var vSphereUsername, vSpherePassword, vSphereURL string
 	var ok bool
 	var envMap map[string]string
-	if vSphereUsername, ok = os.LookupEnv(vSphereUsernameKey); ok && len(vSphereUsername) > 0 {
+	if vSphereUsername, ok = os.LookupEnv(config.EksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(govcUsernameKey, vSphereUsername); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", govcUsernameKey, err)
 		}
 	} else if govcUsername, ok := os.LookupEnv(govcUsernameKey); !ok || len(govcUsername) <= 0 {
 		return nil, fmt.Errorf("%s is not set or is empty: %t", govcUsernameKey, ok)
 	}
-	if vSpherePassword, ok = os.LookupEnv(vSpherePasswordKey); ok && len(vSpherePassword) > 0 {
+	if vSpherePassword, ok = os.LookupEnv(config.EksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
 		if err := os.Setenv(govcPasswordKey, vSpherePassword); err != nil {
 			return nil, fmt.Errorf("unable to set %s: %v", govcPasswordKey, err)
 		}
@@ -972,4 +971,118 @@ func getDeployOptions(network string) ([]byte, error) {
 	}
 
 	return deployOpts, err
+}
+
+// CreateUser creates a user.
+func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
+	params := []string{
+		"sso.user.create", "-p", password, username,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+	return nil
+}
+
+// UserExists checks if a user exists.
+func (g *Govc) UserExists(ctx context.Context, username string) (bool, error) {
+	params := []string{
+		"sso.user.ls",
+		username,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// CreateGroup creates a group.
+func (g *Govc) CreateGroup(ctx context.Context, name string) error {
+	params := []string{
+		"sso.group.create", name,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// GroupExists checks if a group exists.
+func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"sso.group.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// AddUserToGroup adds a user to a group.
+func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string) error {
+	params := []string{
+		"sso.group.update",
+		"-a", username,
+		name,
+	}
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// RoleExists checks if a role exists.
+func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"role.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// CreateRole creates a role with specified privileges.
+func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string) error {
+	params := append([]string{"role.create", name}, privileges...)
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// SetGroupRoleOnObject sets a role for a given group on target object.
+func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+	principal = principal + "@" + domain
+
+	params := []string{
+		"permissions.set",
+		"-group=true",
+		"-principal", principal,
+		"-role", role,
+		object,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
 }

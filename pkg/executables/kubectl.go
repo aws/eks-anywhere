@@ -7,12 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -31,12 +34,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
-	kubectlPath = "kubectl"
+	kubectlPath        = "kubectl"
+	timeoutPrecision   = 2
+	minimumWaitTimeout = 0.01 // Smallest express-able timeout value given the precision
 )
 
 var (
@@ -47,6 +53,7 @@ var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	TinkerbellHardwareResourceType       = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
+	rufioBaseboardManagementResourceType = fmt.Sprintf("baseboardmanagements.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -59,6 +66,8 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
+	connectionRefusedRegex               = regexp.MustCompile("The connection to the server .* was refused")
+	ioTimeoutRegex                       = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
 )
 
 type Kubectl struct {
@@ -332,9 +341,66 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
-func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string) error {
-	_, err := k.Execute(ctx, "wait", "--timeout", timeout,
-		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
+func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *types.Cluster, timeout string, condition string, namespace string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
+}
+
+func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
+	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
+	timeoutDuration, err := time.ParseDuration(timeout)
+	if err != nil {
+		return fmt.Errorf("unparsable timeout specified: %v", err)
+	}
+	if timeoutDuration < 0 {
+		return fmt.Errorf("negative timeout specified: %v", err)
+	}
+	timeoutTime := time.Now().Add(timeoutDuration)
+
+	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
+	err = retrier.Retry(
+		func() error {
+			return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace, opts...)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("executing wait: %v", err)
+	}
+	return nil
+}
+
+func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+
+	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
+	if totalRetries < 1 {
+		totalRetries = 1
+	}
+	const networkFaultBaseRetryTime = 10 * time.Second
+	const backoffFactor = 1.5
+	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
+
+	if match := connectionRefusedRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	if match := ioTimeoutRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	return false, 0
+}
+
+func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
+	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
+		return fmt.Errorf("error: timed out waiting for condition %v on %v", forCondition, property)
+	}
+	kubectlTimeoutString := fmt.Sprintf("%.*fs", timeoutPrecision, secondsRemainingUntilTimeout)
+	params := []string{
+		"wait", "--timeout", kubectlTimeoutString,
+		"--for=condition=" + forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace,
+	}
+	applyOpts(&params, opts...)
+	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("executing wait: %v", err)
 	}
@@ -866,6 +932,10 @@ func WithSkipTLSVerify() KubectlOpt {
 
 func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
+}
+
+func WithWaitAll() KubectlOpt {
+	return appendOpt("--all")
 }
 
 func appendOpt(new ...string) KubectlOpt {

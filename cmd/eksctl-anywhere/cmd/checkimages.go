@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -57,7 +56,7 @@ func checkImages(context context.Context, spec string) error {
 		return err
 	}
 
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
+	clusterSpec, err := readAndValidateClusterSpec(spec, version.Get())
 	if err != nil {
 		return err
 	}

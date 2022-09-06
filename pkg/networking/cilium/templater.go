@@ -5,15 +5,22 @@ import (
 	_ "embed"
 	"fmt"
 	"strings"
+	"time"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 //go:embed network_policy.yaml
 var networkPolicyAllowAll string
+
+const (
+	maxRetries           = 10
+	defaultBackOffPeriod = 5 * time.Second
+)
 
 type Helm interface {
 	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
@@ -57,6 +64,7 @@ type ManifestOpt func(*ManifestConfig)
 
 type ManifestConfig struct {
 	values      values
+	retrier     *retrier.Retrier
 	kubeVersion string
 	namespaces  []string
 }
@@ -67,6 +75,13 @@ type ManifestConfig struct {
 func WithKubeVersion(kubeVersion string) ManifestOpt {
 	return func(c *ManifestConfig) {
 		c.kubeVersion = kubeVersion
+	}
+}
+
+// WithRetrier introduced for optimizing unit tests
+func WithRetrier(retrier *retrier.Retrier) ManifestOpt {
+	return func(c *ManifestConfig) {
+		c.retrier = retrier
 	}
 }
 
@@ -95,14 +110,18 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 	c := &ManifestConfig{
 		values:      templateValues(spec),
 		kubeVersion: kubeVersion,
+		retrier:     retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod),
 	}
 	for _, o := range opts {
 		o(c)
 	}
 
 	uri, version := getChartUriAndVersion(spec)
-
-	manifest, err := t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
+	var manifest []byte
+	err = c.retrier.Retry(func() error {
+		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
+		return err
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}

@@ -19,6 +19,23 @@ const (
 	nodeGroupLabel2 = "md-1"
 )
 
+func TestTinkerbellKubernetes122WithNodesPoweredOn(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("15m"))
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestTinkerbellKubernetes122SkipPowerActions(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -34,7 +51,7 @@ func TestTinkerbellKubernetes122SkipPowerActions(t *testing.T) {
 	test.PowerOffHardware()
 	test.PXEBootHardware()
 	test.PowerOnHardware()
-	test.CreateCluster(framework.WithForce())
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("15m"))
 	test.DeleteCluster()
 	test.PowerOffHardware()
 	test.ValidateHardwareDecommissioned()
@@ -65,7 +82,7 @@ func TestTinkerbellKubernetes122UbuntuWorkerNodeGroupsTaintsAndLabels(t *testing
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("15m"))
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints, framework.ValidateWorkerNodeLabels)
 	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints, framework.ValidateControlPlaneLabels)
 	test.DeleteCluster()

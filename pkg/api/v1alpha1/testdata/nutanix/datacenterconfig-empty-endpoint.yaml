@@ -1,0 +1,8 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixDatacenterConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  endpoint: ""
+  port: 9440

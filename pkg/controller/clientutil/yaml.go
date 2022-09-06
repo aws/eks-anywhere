@@ -3,11 +3,11 @@ package clientutil
 import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/aws/eks-anywhere/pkg/unstructuredutil"
+	"github.com/aws/eks-anywhere/pkg/utils/unstructured"
 )
 
 func YamlToClientObjects(yamlObjects []byte) ([]client.Object, error) {
-	unstructuredObjs, err := unstructuredutil.YamlToUnstructured(yamlObjects)
+	unstructuredObjs, err := unstructured.YamlToUnstructured(yamlObjects)
 	if err != nil {
 		return nil, err
 	}

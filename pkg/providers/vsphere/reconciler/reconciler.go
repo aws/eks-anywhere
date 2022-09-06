@@ -17,6 +17,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -77,12 +78,12 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 	vsphereUsername := secret.Data["username"]
 	vspherePassword := secret.Data["password"]
 
-	if err := os.Setenv(vsphere.EksavSphereUsernameKey, string(vsphereUsername)); err != nil {
-		return fmt.Errorf("failed setting env %s: %v", vsphere.EksavSphereUsernameKey, err)
+	if err := os.Setenv(config.EksavSphereUsernameKey, string(vsphereUsername)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSphereUsernameKey, err)
 	}
 
-	if err := os.Setenv(vsphere.EksavSpherePasswordKey, string(vspherePassword)); err != nil {
-		return fmt.Errorf("failed setting env %s: %v", vsphere.EksavSpherePasswordKey, err)
+	if err := os.Setenv(config.EksavSpherePasswordKey, string(vspherePassword)); err != nil {
+		return fmt.Errorf("failed setting env %s: %v", config.EksavSpherePasswordKey, err)
 	}
 
 	if err := vsphere.SetupEnvVars(vsphereDatacenter); err != nil {

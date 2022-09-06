@@ -349,6 +349,32 @@ func TestPostWorkloadInitSuccess(t *testing.T) {
 	}
 }
 
+func TestPostBootstrapSetupSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	kubectl.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+
+	err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
+	if err != nil {
+		t.Fatalf("failed PostBootstrapSetup: %v", err)
+	}
+}
+
 func TestTinkerbellProviderGenerateDeploymentFileWithFullOIDC(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell_full_oidc.yaml"
 	mockCtrl := gomock.NewController(t)

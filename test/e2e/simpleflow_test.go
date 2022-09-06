@@ -31,7 +31,7 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce())
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("15m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
@@ -183,6 +183,16 @@ func TestCloudStackKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestCloudStackKubernetes121MultiEndpointSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121(),
+			framework.WithCloudStackFillers(framework.UpdateAddCloudStackAz2())),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestCloudStackKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -236,17 +246,6 @@ func TestTinkerbellKubernetes122SimpleFlow(t *testing.T) {
 	runTinkerbellSimpleFlow(test)
 }
 
-func TestTinkerbellKubernetes122OSImageURLOverride(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithCustomUbuntu122Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
-}
-
 func TestTinkerbellKubernetes123SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -263,6 +262,17 @@ func TestTinkerbellKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 		t,
 		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes123BottleRocketSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithControlPlaneHardware(1),
 		framework.WithWorkerHardware(1),
 	)

@@ -108,6 +108,7 @@ func isCapcV1beta1ToV1beta2Upgrade(new, old *CloudStackDatacenterConfigSpec) boo
 
 func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConfig) field.ErrorList {
 	var allErrs field.ErrorList
+	specPath := field.NewPath("spec")
 
 	// Check for CAPC v1beta1 -> CAPC v1beta2 upgrade
 	if isCapcV1beta1ToV1beta2Upgrade(&new.Spec, &old.Spec) {
@@ -121,28 +122,10 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 	for _, oldAz := range old.Spec.AvailabilityZones {
 		if newAz, ok := newAzMap[oldAz.Name]; ok {
 			atLeastOneAzOverlap = true
-			if newAz.ManagementApiEndpoint != oldAz.ManagementApiEndpoint {
+			if !newAz.Equal(&oldAz) {
 				allErrs = append(
 					allErrs,
-					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "managementApiEndpoint"), newAz.ManagementApiEndpoint, "field is immutable"),
-				)
-			}
-			if newAz.Domain != oldAz.Domain {
-				allErrs = append(
-					allErrs,
-					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "domain"), newAz.Domain, "field is immutable"),
-				)
-			}
-			if newAz.Account != oldAz.Account {
-				allErrs = append(
-					allErrs,
-					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "account"), newAz.Account, "field is immutable"),
-				)
-			}
-			if !newAz.Zone.Equal(&oldAz.Zone) {
-				allErrs = append(
-					allErrs,
-					field.Invalid(field.NewPath("spec", "availabilityZone", oldAz.Name, "zone"), newAz.Zone, "field is immutable"),
+					field.Forbidden(specPath.Child("availabilityZone", oldAz.Name), "availabilityZone is immutable"),
 				)
 			}
 		}

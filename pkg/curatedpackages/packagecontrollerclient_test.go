@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	cronJobName = "cronjob/ecr-refresher"
+	cronJobName = "cronjob/cron-ecr-renew"
 	jobName     = "eksa-auth-refresher"
 )
 

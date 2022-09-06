@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
-GOLANG_VERSION?="1.17"
+GOLANG_VERSION?="1.18"
 GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
 GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
@@ -91,9 +91,16 @@ DOCKERFILE_FOLDER = ./manager/docker/linux/eks-anywhere-cluster-controller
 
 IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
+# Tagging with the commit hash and the branch the PR is raised against
+ifeq ($(JOB_NAME),eks-anywhere-e2e-presubmit)
+	IMAGE_PLATFORMS=linux/amd64
+	IMAGE_TAG=$(PULL_PULL_SHA).$(PULL_BASE_REF)
+	IMAGES_TO_BUILD?=$(CLUSTER_CONTROLLER_IMAGE)
+endif
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
 CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(LATEST)
+IMAGES_TO_BUILD?=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)
 
 # Branch builds should look at the current branch latest image for cache as well as main branch latest for cache to cover the cases
 # where its the first build from a new release branch
@@ -315,7 +322,7 @@ cluster-controller-local-images: cluster-controller-binaries $(ORGANIZE_BINARIES
 	$(BUILDCTL)
 
 .PHONY: cluster-controller-images
-cluster-controller-images: IMAGE_PLATFORMS = linux/amd64,linux/arm64
+cluster-controller-images: IMAGE_PLATFORMS ?= linux/amd64,linux/arm64
 cluster-controller-images: IMAGE_OUTPUT_TYPE = image
 cluster-controller-images: IMAGE_OUTPUT = push=true
 cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
@@ -385,7 +392,7 @@ capd-test: ## Run default e2e capd test locally
 	$(MAKE) local-e2e LOCAL_E2E_TESTS=$(DOCKER_E2E_TEST)
 
 .PHONY: docker-e2e-test
-docker-e2e-test: e2e ## Run docker integration test in new ec2 instance
+docker-e2e-test: release-cluster-controller e2e ## Run docker integration test in new ec2 instance
 	scripts/e2e_test_docker.sh $(DOCKER_E2E_TEST) $(BRANCH_NAME)
 
 .PHONY: e2e-cleanup
@@ -418,6 +425,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,SSHAuthKeyGenerator
 	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
+	${GOPATH}/bin/mockgen -destination=pkg/govmomi/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/govmomi" VSphereClient,VMOMIAuthorizationManager,VMOMIFinder,VMOMISessionBuilder,VMOMIFinderBuilder,VMOMIAuthorizationManagerBuilder
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
 	${GOPATH}/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth
 	${GOPATH}/bin/mockgen -destination=pkg/gitops/flux/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/gitops/flux" FluxClient,KubeClient,GitOpsFluxClient,GitClient,Templater
@@ -459,16 +467,21 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/client.go -package=mocks -source "pkg/providers/snow/snow.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/clientregistry.go -package=mocks -source "pkg/providers/snow/clientregistry.go"
 	${GOPATH}/bin/mockgen -destination=pkg/eksd/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/eksd" EksdInstallerClient
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/kubectlrunner.go -package=mocks -source "pkg/curatedpackages/kubectlrunner.go" KubectlRunner
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packageinstaller.go -package=mocks -source "pkg/curatedpackages/packageinstaller.go" PackageController PackageHandler
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/reader.go -package=mocks -source "pkg/curatedpackages/bundle.go" Reader BundleRegistry
+	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packagereader.go -package=mocks -source "pkg/curatedpackages/reader.go" ManifestReader
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/bundlemanager.go -package=mocks -source "pkg/curatedpackages/bundlemanager.go" Manager
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client_builder.go -package=mocks -source "pkg/cluster/client_builder.go"
 	${GOPATH}/bin/mockgen -destination=controllers/mocks/factory.go -package=mocks "github.com/aws/eks-anywhere/controllers" Manager
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -500,12 +513,11 @@ eks-a-e2e:
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 			scripts/get_bundle.sh; \
 		else \
-			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
 			make eks-a; \
 		fi \
 	else \
-		make check-eksa-components-override; \
+		make eksa-components-override; \
 		make eks-a; \
 	fi
 
@@ -527,9 +539,9 @@ conformance:
 conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
-.PHONY: check-eksa-components-override
-check-eksa-components-override:
-	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
+.PHONY: eksa-components-override
+eksa-components-override:
+	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL) $(CLUSTER_CONTROLLER_IMAGE)
 
 .PHONY: help
 help:  ## Display this help
@@ -626,7 +638,7 @@ define BUILDCTL
 		--progress plain \
 		--local dockerfile=$(DOCKERFILE_FOLDER) \
 		--local context=. \
-		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",$(IMAGE_OUTPUT) \
+		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(IMAGES_TO_BUILD)\",$(IMAGE_OUTPUT) \
 		$(if $(filter push=true,$(IMAGE_OUTPUT)),--export-cache type=inline,) \
 		$(foreach IMPORT_CACHE,$(IMAGE_IMPORT_CACHE),--import-cache $(IMPORT_CACHE))
 

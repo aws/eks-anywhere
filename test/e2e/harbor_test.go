@@ -9,6 +9,13 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+const (
+	eksAnywherePackagesHelmChartName = "eks-anywhere-packages"
+	eksAnywherePackagesHelmUri       = "oci://public.ecr.aws/l0g8r8j6/eks-anywhere-packages"
+	eksAnywherePackagesHelmVersion   = "0.1.14-eks-a-v0.0.0-dev-build.3481"
+	eksAnywherePackagesBundleUri     = "oci://public.ecr.aws/l0g8r8j6/eks-anywhere-packages-bundles:v1-21-latest"
+)
+
 func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
 		framework.WithPackageConfig(t, eksAnywherePackagesBundleUri,
@@ -20,7 +27,6 @@ func TestCPackagesHarborInstallSimpleFlow(t *testing.T) {
 
 func runHarborInstallSimpleFlow(test *framework.ClusterE2ETest) {
 	test.WithCluster(func(test *framework.ClusterE2ETest) {
-		test.InstallCuratedPackagesController()
 		if _, ok := test.Provider.(*framework.Docker); ok {
 			test.InstallLocalStorageProvisioner()
 		}

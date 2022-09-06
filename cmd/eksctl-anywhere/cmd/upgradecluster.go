@@ -2,13 +2,10 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -21,6 +18,7 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
+	timeoutOptions
 	wConfig               string
 	forceClean            bool
 	hardwareCSVPath       string
@@ -33,7 +31,7 @@ var upgradeClusterCmd = &cobra.Command{
 	Use:          "cluster",
 	Short:        "Upgrade workload cluster",
 	Long:         "This command is used to upgrade workload clusters",
-	PreRunE:      preRunUpgradeCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := uc.upgradeCluster(cmd); err != nil {
@@ -43,30 +41,13 @@ var upgradeClusterCmd = &cobra.Command{
 	},
 }
 
-func preRunUpgradeCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
-}
-
 func init() {
 	upgradeCmd.AddCommand(upgradeClusterCmd)
-	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	applyClusterOptionFlags(upgradeClusterCmd.Flags(), &uc.clusterOptions)
+	applyTimeoutFlags(upgradeClusterCmd.Flags(), &uc.timeoutOptions)
+	applyTinkerbellHardwareFlag(upgradeClusterCmd.Flags(), &uc.hardwareCSVPath)
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
-	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
-	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	upgradeClusterCmd.Flags().StringVarP(
-		&cc.hardwareCSVPath,
-		TinkerbellHardwareCSVFlagName,
-		TinkerbellHardwareCSVFlagAlias,
-		"",
-		TinkerbellHardwareCSVFlagDescription,
-	)
 
 	if err := upgradeClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -87,16 +68,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		flag := cmd.Flags().Lookup(TinkerbellHardwareCSVFlagName)
-
-		// If no flag was returned there is a developer error as the flag has been removed
-		// from the program rendering it invalid.
-		if flag == nil {
-			panic("'hardwarefile' flag not configured")
-		}
-
-		if len(uc.hardwareCSVPath) != 0 && !validations.FileExists(uc.hardwareCSVPath) {
-			return fmt.Errorf("hardware config file %s does not exist", uc.hardwareCSVPath)
+		if err := checkTinkerbellFlags(cmd.Flags(), uc.hardwareCSVPath); err != nil {
+			return err
 		}
 	}
 
@@ -109,15 +82,20 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := uc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err
+	}
+
+	clusterManagerOpts, err := buildClusterManagerOpts(uc.timeoutOptions)
+	if err != nil {
+		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
-		WithClusterManager(clusterSpec.Cluster).
+		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareCSVPath, uc.forceClean, uc.tinkerbellBootstrapIP).
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
@@ -130,10 +108,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(cmd *cobra.Command) error {
 		return err
 	}
 	defer close(ctx, deps)
-
-	if deps.Provider.Name() == "tinkerbell" {
-		return errors.New("upgrade operation is not supported for provider tinkerbell")
-	}
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
@@ -180,8 +154,8 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return nil, kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+		return nil, err
 	}
 
 	return clusterConfig, nil

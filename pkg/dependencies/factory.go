@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -26,6 +25,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	gitfactory "github.com/aws/eks-anywhere/pkg/git/factory"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/manifests"
@@ -52,7 +52,7 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Cmk                       *executables.Cmk
-	SnowAwsClient             aws.Clients
+	SnowAwsClientRegistry     *snow.AwsClientRegistry
 	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -62,6 +62,7 @@ type Dependencies struct {
 	Helm                      *executables.Helm
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
+	CiliumTemplater           *cilium.Templater
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
@@ -84,9 +85,9 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	SnowValidator             *snow.AwsClientValidator
 	CloudStackValidator       *cloudstack.Validator
 	CloudStackDefaulter       *cloudstack.Defaulter
-	SnowValidator             *snow.Validator
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
@@ -489,8 +490,8 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 			return nil
 		}
 
-		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
-		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+		validator := snow.NewValidator(f.dependencies.SnowAwsClientRegistry)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClientRegistry, f.dependencies.Writer)
 
 		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
 
@@ -502,16 +503,16 @@ func (f *Factory) WithSnowConfigManager() *Factory {
 
 func (f *Factory) WithAwsSnow() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.SnowAwsClient != nil {
+		if f.dependencies.SnowAwsClientRegistry != nil {
 			return nil
 		}
 
-		builder := aws.NewSnowAwsClientBuilder()
-		deviceClientMap, err := builder.BuildSnowAwsClientMap(ctx)
+		clientRegistry := snow.NewAwsClientRegistry()
+		err := clientRegistry.Build(ctx)
 		if err != nil {
 			return err
 		}
-		f.dependencies.SnowAwsClient = deviceClientMap
+		f.dependencies.SnowAwsClientRegistry = clientRegistry
 
 		return nil
 	})
@@ -642,6 +643,21 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
+func (f *Factory) WithCiliumTemplater() *Factory {
+	f.WithHelm()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CiliumTemplater != nil {
+			return nil
+		}
+		f.dependencies.CiliumTemplater = cilium.NewTemplater(f.dependencies.Helm)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithAwsIamAuth() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
@@ -681,16 +697,12 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster, opts ...clustermanager.ClusterManagerOpt) *Factory {
 	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
 			return nil
-		}
-		maxWaitPerMachine := config.DefaultMaxWaitPerMachine
-		if f.dependencies.CliConfig != nil {
-			maxWaitPerMachine = f.dependencies.CliConfig.MaxWaitPerMachine
 		}
 
 		f.dependencies.ClusterManager = clustermanager.New(
@@ -702,7 +714,7 @@ func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
 			f.dependencies.Writer,
 			f.dependencies.DignosticCollectorFactory,
 			f.dependencies.AwsIamAuth,
-			maxWaitPerMachine,
+			opts...,
 		)
 		return nil
 	})
@@ -1048,8 +1060,13 @@ func (f *Factory) WithVSphereValidator() *Factory {
 		if f.dependencies.VSphereValidator != nil {
 			return nil
 		}
-
-		f.dependencies.VSphereValidator = vsphere.NewValidator(f.dependencies.Govc, &networkutils.DefaultNetClient{})
+		vcb := govmomi.NewVMOMIClientBuilder()
+		v := vsphere.NewValidator(
+			f.dependencies.Govc,
+			&networkutils.DefaultNetClient{},
+			vcb,
+		)
+		f.dependencies.VSphereValidator = v
 
 		return nil
 	})

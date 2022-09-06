@@ -62,7 +62,9 @@ func vsphereEntry() *ConfigManagerEntry {
 func processVSphereDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.VSphereDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		c.VSphereDatacenter = datacenter.(*anywherev1.VSphereDatacenterConfig)
+		if datacenter != nil {
+			c.VSphereDatacenter = datacenter.(*anywherev1.VSphereDatacenterConfig)
+		}
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -17,76 +18,82 @@ const (
 	/*
 		This certificate was generated using the following commands and is valid only for `127.0.0.1`
 		openssl genrsa -out ca.key 2048
-		openssl req -new -x509 -days 3650 -key ca.key -out ca.crt
+		openssl req -new -x509 -sha256 -days 3650 -key ca.key -out ca.crt
 		openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr
-		openssl x509 -req -extfile <(printf "subjectAltName=IP:127.0.0.1") -days 365 -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt
+		openssl x509 -req -extfile <(printf "subjectAltName=IP:127.0.0.1") -sha256 -days 365 -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt
 	*/
 	caCert = `
 -----BEGIN CERTIFICATE-----
-MIICrjCCAZYCCQD6stMfKEVAGTANBgkqhkiG9w0BAQsFADAZMQswCQYDVQQGEwJV
-UzEKMAgGA1UEAwwBKjAeFw0yMjA2MTUwNzE4MDRaFw0zMjA2MTIwNzE4MDRaMBkx
-CzAJBgNVBAYTAlVTMQowCAYDVQQDDAEqMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
-MIIBCgKCAQEAv25FFUfMGKdF9wRb3GBBmE0F0ifMz8nUb52nEX0+BGFg+x6Q8gRD
-xTCvCwZoMOo2uRZpaz6KtGQywFuuQ5h8VrYB3WcuDPcpg1OJueWrITRY0NHUBMjh
-JbvvqZGs8I/DfKoQOyxcXoeIMfbSW2IHnMeHzTfE9lkGiZatQVqlRQAOkshFIed6
-YZ2p3hgxrzkPmTTiDNoQQotluTN0FcNgUwiKYGINVlmH4LaDobranBaMLztulWsK
-0tQiDw2e7aaAZmxqaUN6QRMzwc1g2mvj+PXNf/V3/WGymsXUShy9zCx4PiMDuINW
-fA/EhAdkZk0MrpYbfk221gSfxxvnd1xFLwIDAQABMA0GCSqGSIb3DQEBCwUAA4IB
-AQCwRcvdYlSPYypWh7B1gCvqoq4XNk8YiRPs8X4JLly41uXlgQLfDw9oJUnR0h8c
-TNObdEZEdsneinC8Gwg9hscooB2R5iYyqDjST0NAS7jPDDx9x42iRY6naUW7zuVZ
-2IC/9ss4BZYlS0zztUOBDax9YOJxV3dwROwnfFqGiiiYqWuDfhlfUaHj6q+NAX9/
-xISi7YOoym7wHgMlMIEwGKfMLPOgvZBnU8vMqVqhbxMjAx42VdWyyV8AOcIZxasq
-jXcaCczmsh5VMZHNocnTmivmY3KwmUXgC+/4w7E/fRGPblh+2CKxBO6Wlz+ZyN1n
-CNgC8QQ1opc4yanhaAZgn/Yd
+MIIDazCCAlOgAwIBAgIUWn739ioGaXBxeHg8FNAHHfag37IwDQYJKoZIhvcNAQEL
+BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yMjA4MTgyMTM0MTRaFw0zMjA4
+MTUyMTM0MTRaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQDhDQ1KESLi3DtHTQllnLZ7wasKgcz6bDF5QmI6hQL2
+2CRLF1GWw8xg3qTTDPy0FwEYq+8dAdRqE6Lft/ZzpNtXyFa8iPZdH5egNqxS2rrd
+xXKicu5ce4MDj/hmpDsfEKJKKOVl8u0vUUccmcsGaS6bqVrXJvenNbeYOXOKjuIG
+Z8jDRx906G//uMsUn+ISfB91aFyHRvYfmRp1aQY1i5qxr0oCMUiG6VOBY9mvYZB+
+CQbJVv0Tldmtpx0phGRZycIvAGHkxMvylyepZG3NaiYABJnV5ZtpXEmcHJnXrkeU
+seLa1HQt9uyO9phw7jJl6uhmXmNIjSI7E2PacnknyDpnAgMBAAGjUzBRMB0GA1Ud
+DgQWBBRcM9kTVIvbh3LriH71BhVQwU5EZDAfBgNVHSMEGDAWgBRcM9kTVIvbh3Lr
+iH71BhVQwU5EZDAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBa
+pRUG9O9oPd2VorOEOiQa/kUHXT8i3zyljOv9TUGaWB7KvyJPy8V0UMCXQdLfuNp9
+Jj8nhQpVN0LpDxq0jMkhWC21RdcCQ8uBpIZb87qvUNxBcHRnWHvVFFrb1l6d2TzT
+EAdbMOOj8rWHhuq0rGZkhYz7hUUK873YZP9FMuhppiGcapDmfUJpR4956AYtkv8f
+rvMLWhytaYxZJQrN2r8uNsklhQytJc9ZjfgGOmHkSvxUPkG6e4bts2leFVBK/g8m
+NlyAQFLn7C06paTuNQkjtXypFT1ndHy4+hYewW+Yz9KvpmdmIZ4UqjEspX8vA3Lr
+JvkUkvQfzDkQWnyL7D6D
 -----END CERTIFICATE-----
 `
 	serverKey = `
 -----BEGIN PRIVATE KEY-----
-MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDZzMrH+mOavXSn
-XHV9lMywwmZARE0TLpuyUTBDuYwVHG13Yx5X7br3uwEtyp2tTUBMHRh+2uVf/7lm
-fQfy0AoE5O2qa4EvuOc4zS8eHr1gW4rFC++EzA2FrTMLGczIwKzPPa4VAMteQyCj
-LYmfdrOSLSM0Fn7TPFJ1c3DBjj1pY/DdIs/GPItPnL7B2m+gNSQ9E5lRJ/DmP1j8
-2+hnScbB5GiLqdZBASd7T+Dwp7gUqZInMKdW6JJjbUY9xNXcHrCS7GINuXHbo5CK
-z9Z19nl7+v0fzQbcVP6fH2jWAo7vfFd9IR+Tz/7zJ76UescRS1ONEu6071KfTA7j
-fW1dhgqLAgMBAAECggEAdbH0NsK5Boqwuiv9laJORoqWpM4D9ISwQFkdQsvGxjW5
-ddWLNSrTaUGV7n/aWycuwrLKZOq3Hvxa3OZd4DnJ4EExqXE0u2wpDwnaF2W3IpX1
-VGwRv+pguEcTGUGU5zsvZ0JGizUFsOeHgIaAIzsK6MgZiPFLEa08Rhne6cmKqCMI
-tueV7Rqwbbd6+pvnvHFqSrA9KHaJax9+GY0rDr3KlzuJkjK0Wy1D13j/1fkDzalN
-opsxF3rShEuTHAVEiwjS+nzD5g6KZ3q2WDTRSKVAbh50rBOEPE9ERwY0vlEQRgKP
-4YX/UH1DLDRiDguM2Fr4nhIiTlL98nF6EVLnD7dugQKBgQD+8ZWrvgRlvcqVJmB8
-BloKWsoyJp3BgBO77ys0j1fgmQe+TPLpsnVetGmjIK75EQmv/30/lFoLXIM9sfcY
-4WgOsnndXFS8gKLfvG8+yMVoSwxNIR/2dNnqZuohqp5LCMlamb7Xvb2rkeSMOx4P
-Q0OkTgd0YSl2l7VUwCmBs0VBSwKBgQDas89DAkBVN6q0NRd3iqrjcAN5kKchFO3W
-IyDVwrrqhodnx7c7GncPULacMjOs1FPDrhiBoE7x5pDO4v30uVQKrKRZbmN4EHJC
-lAUVGKBJFG5RFGzqWrCWf4Hdzynlv5na2SYtGfcmEV5F5ja9ZoDxsOdnjvy6yh0p
-E44mtB3TwQKBgGVxASn2EM/e5eXVAF05Ncia+Ytc/DaLXM7RyrI+Oyw+F+uruJgu
-jy8gwEvNbHHkSqOCGHcc83tD02DQGE8JGZuHfqAK5hifYq99zhIAVzQ5cGqcPJiX
-REJVsuG0fwnCNERdmqdDc136TiNSPpK6JAcTmTnAk3wBv4A6egmGqI7jAoGAG4Vb
-BIyo+dBKe+jebh2WCY7T8R1B2sjecP70p9GcYdzR9z5LkXVwHA5FHHy4wfvqGoqy
-7MT2ijxAZrhryrrzl3BIMjTQ8Y/oQPaNeS0jJm8avrs6RXdqF1YuSnJCTHYC72Y6
-Bpzo2/J9kYA5zTWz7jYbuI1mwj6i0sNyNO6ffkECgYBJ3xZ/h5zDsrbxPDiTsXCs
-3liEvmzCibkoCexflz/sN524E1d3F5jj+gsTvcXTvYTaSKLkjRgvtGT9deSCJt76
-wKprVZnZJeY+y21aOW1+HM22zfrGJ1GLt1Qjx33GLDzxPJDL9gsHzyRM0S2wLa8u
-z9TAYr37qFPTWOJJtmRitg==
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDOAsPAhhGBid9s
+fabdjKPkqt8gl9Kp52CXTkgVGR1t0FQy1oYo5vTAOb2gliUTIs3uoxr3T7xf3O6v
+Sxu/TjUV+/6G1NNjid0Nohzt37riauwPOIUNQ8eZ8DThhddS23kopQg3iGSO7GVI
+jLhD9KqAA8BYa6+AFodnJfS4xC5MUFTSYQYWReI5UPPvMAwb/Qi2MDh42I3Y5m1Y
+Nq+07+uCrqt1gFdR6sapB86LTF0/KRO5BBA8LKU1LKDnibS9ydBCThD9rJyYrXTp
+IIa8gHZvDpgidHe3Eq3IdKeIgrULIgqP5Gt0u4uTage1AnAKzq2C/wwheSZJ+oKX
+aiwnQgljAgMBAAECggEAcfsNm2OSI/3IZBpRTJsXwtjXgwz9PYwK4SwqraGrqqpt
+K4ONzuuZ1xEbXdI0yRWkorgTn2m6a7+tP8dqnroCnRtDhA4Utyn76CMdpm7203cd
+DH7U/rXVpdJFL9IBhJJxwo8ssK0CFiGtGCrjeJXSD+oDbeiGvXO5jtRtRh0lEIsS
+oAbRC2ZM41WlCfUIXHvrPmTk0OuLAYO+q0GQnyWtaAbhYyRtk8XuuM+RuD5hOoQu
+yRJJK/F0y2BhJ4jCGVUIPnGuepW5er+Wb5nCK+U05EYRvCbZGHo1rxk1yuev65KT
+88k+tbUFvrfuERpNdi8GrjVzFu2XCmjpi9kFomtYoQKBgQD5sC/8kwGIYIZXSrxX
+P4IKNsWwAlYwdHaE8AD9F6vw1rJ1DATmMp4pKFnJc2NAVCEfBg5LiVWuDGlJ4Ymg
+Sa74rkhRBqMK2d9Oma7n+j5ILfJRANCdvRbdD6d83sal4u/RIhQZAx82YBrcASaE
+6iv6S0Ya6SbtdF866Jnc7qyrbQKBgQDTN+0yKdWBSYmvMv7NgSYTsKNqO5jYQlwU
+688LXn+7bekcq7F9NTBp406/MxPGIPXfbNTS+Ph0FtmspjHw6YjwzPhNBjq1EiKq
+QW9npmO5jeAch3FgfZ4R5EV2/wnl9ZmPQ2qVCtEz71nP1DhU2z7HdRaM4P8uW3BF
+Isd86wc2DwKBgCJuDh/o8YQpszykPJZXVoosBVSA7fueg51PLwO3WOlL4a3MK3zG
+rBKG0uK5e40qTKrnfd8in+LxKS+b3wtwPaVi+uvZW3AqnOVMwdaRJjdzxn8u+pVV
+tqpi9zh7y66iPWl8JoNQb+RimjGOIw6e79OCv7cEQW7q5hrMajMR4lN9AoGBAMgU
+hVNsf3xOLefRlb8T5P7n55TdSacqDVIgImvxo2vn7Nek6Kfjt63GjjTebI/VbzOr
+Q1tqTuihMKe0c0Bz6K26bEeCbCBUQpQnEiIMYxFFjRNZVhQCSrdGFmtnone8lC86
+vH7c1VmuFNSjgo0Xdru4dZkUFYZTReGn1XLGrHkPAoGAHpmv09bLs51SpSSo1w2u
+az3O3LMNWXsdeDYRu3KYUMSEkZiowiHSdRSp194OBm4NQ+8qBqpb3e07VxMeS8Ue
+oWvhek8oBOpk7yCoi4zB/wi0ceKgjq0t2jJ/KMuiCqgm2EkUbT6MVp1lV0uoT13J
+VQ9QJpWnSd6LTuoWuzCbY80=
 -----END PRIVATE KEY-----
 `
 	serverCert = `
 -----BEGIN CERTIFICATE-----
-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
+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
 -----END CERTIFICATE-----
 `
 	incorrectCert = `
@@ -123,6 +130,15 @@ invalidCert
 )
 
 func TestIsSignedByUnknownAuthority(t *testing.T) {
+	// We need to add this check as newer version of macos require the adding trusted certs manually to test for this,
+	// through `security add-trusted-cert`, so we are only able to run this test on linux for now.
+	// This is a known issue here: https://github.com/golang/go/issues/52010
+	// Refer to https://go-review.googlesource.com/c/go/+/353132 and https://github.com/helm/helm/pull/11160
+	// Follow up tracking issue for us to fix: https://github.com/aws/eks-anywhere/issues/3267
+	if runtime.GOOS == "darwin" {
+		t.Skipf("Skipping as this test will fail on darwin because newer versions require this cert " +
+			"to be added to the system trust store")
+	}
 	certSvr, err := runTestServerWithCert(serverCert, serverKey)
 	if err != nil {
 		t.Fatalf("starting test server with certs: %v", err)

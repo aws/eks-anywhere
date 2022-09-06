@@ -1,6 +1,7 @@
 package tinkerbell
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -70,6 +71,19 @@ func AssertWorkerNodeGroupMachineRefsExists(spec *ClusterSpec) error {
 	}
 
 	return nil
+}
+
+// AssertK8SVersionNot120 ensures Kubernetes version is not set to v1.20
+func AssertK8SVersionNot120(spec *ClusterSpec) error {
+	if spec.Cluster.Spec.KubernetesVersion == v1alpha1.Kube120 {
+		return errors.New("kubernetes version v1.20 is not supported for Bare Metal")
+	}
+
+	return nil
+}
+
+func AssertOsFamilyValid(spec *ClusterSpec) error {
+	return validateOsFamily(spec)
 }
 
 // AssertcontrolPlaneIPNotInUse ensures the endpoint host for the control plane isn't in use.

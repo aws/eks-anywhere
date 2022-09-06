@@ -66,7 +66,6 @@ type VersionsBundle struct {
 	ClusterAPI             CoreClusterAPI              `json:"clusterAPI"`
 	Bootstrap              KubeadmBootstrapBundle      `json:"bootstrap"`
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
-	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
 	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
@@ -82,6 +81,8 @@ type VersionsBundle struct {
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
 	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 	Snow                   SnowBundle                  `json:"snow,omitempty"`
+	// This field has been deprecated
+	Aws *AwsBundle `json:"aws,omitempty"`
 }
 
 type EksDRelease struct {
@@ -122,11 +123,13 @@ type EksDRelease struct {
 
 	// Crictl points to the crictl binary/tarball built for this eks-d kube version
 	Crictl Archive `json:"crictl,omitempty"`
+
+	// ImageBuilder points to the image-builder binary used to build eks-D based node images
+	ImageBuilder Archive `json:"imagebuilder,omitempty"`
 }
 
 type OSImageBundle struct {
 	Bottlerocket Archive `json:"bottlerocket,omitempty"`
-	Ubuntu       Archive `json:"ubuntu,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {
@@ -233,9 +236,10 @@ type FluxBundle struct {
 }
 
 type PackageBundle struct {
-	Version    string `json:"version,omitempty"`
-	Controller Image  `json:"packageController"`
-	HelmChart  Image  `json:"helmChart,omitempty"`
+	Version        string `json:"version,omitempty"`
+	Controller     Image  `json:"packageController"`
+	TokenRefresher Image  `json:"tokenRefresher"`
+	HelmChart      Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {

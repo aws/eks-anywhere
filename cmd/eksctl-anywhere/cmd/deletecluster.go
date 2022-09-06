@@ -3,11 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -32,7 +29,7 @@ var deleteClusterCmd = &cobra.Command{
 	Use:          "cluster (<cluster-name>|-f <config-file>)",
 	Short:        "Workload cluster",
 	Long:         "This command is used to delete workload clusters created by eksctl anywhere",
-	PreRunE:      preRunDeleteCluster,
+	PreRunE:      bindFlagsToViper,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := dc.validate(cmd.Context(), args); err != nil {
@@ -43,16 +40,6 @@ var deleteClusterCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func preRunDeleteCluster(cmd *cobra.Command, args []string) error {
-	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-		err := viper.BindPFlag(flag.Name, flag)
-		if err != nil {
-			log.Fatalf("Error initializing flags: %v", err)
-		}
-	})
-	return nil
 }
 
 func init() {
@@ -82,8 +69,8 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+		return err
 	}
 
 	return nil
@@ -96,7 +83,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	cliConfig := buildCliConfig(clusterSpec)
-	dirs, err := cc.directoriesToMount(clusterSpec, cliConfig)
+	dirs, err := dc.directoriesToMount(clusterSpec, cliConfig)
 	if err != nil {
 		return err
 	}
@@ -123,6 +110,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deps.Provider,
 		deps.ClusterManager,
 		deps.GitOpsFlux,
+		deps.Writer,
 	)
 
 	var cluster *types.Cluster

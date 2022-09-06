@@ -596,8 +596,10 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 			CredentialsRef: fd.ACSEndpoint.Name,
 			Zone: anywherev1.CloudStackZone{
 				Name: fd.Zone.Name,
+				Id:   fd.Zone.ID,
 				Network: anywherev1.CloudStackResourceIdentifier{
 					Name: fd.Zone.Network.Name,
+					Id:   fd.Zone.Network.ID,
 				},
 			},
 			Domain:  fd.Domain,
@@ -619,7 +621,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering = anywherev1.CloudStackResourceDiskOffering{
+	csSpec.Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
 			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,

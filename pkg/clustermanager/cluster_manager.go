@@ -19,7 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -34,29 +33,33 @@ import (
 )
 
 const (
-	maxRetries             = 30
-	backOffPeriod          = 5 * time.Second
-	machineBackoff         = 1 * time.Second
-	machinesMinWait        = 30 * time.Minute
-	moveCAPIWait           = 15 * time.Minute
-	clusterWaitStr         = "60m"
-	ctrlPlaneWaitStr       = "60m"
-	deploymentWaitStr      = "30m"
-	ctrlPlaneInProgressStr = "1m"
-	etcdInProgressStr      = "1m"
+	maxRetries                = 30
+	defaultBackOffPeriod      = 5 * time.Second
+	machineBackoff            = 1 * time.Second
+	defaultMachinesMinWait    = 30 * time.Minute
+	moveCAPIWait              = 15 * time.Minute
+	DefaultMaxWaitPerMachine  = 10 * time.Minute
+	clusterWaitStr            = "60m"
+	DefaultControlPlaneWait   = 60 * time.Minute
+	deploymentWaitStr         = "30m"
+	controlPlaneInProgressStr = "1m"
+	etcdInProgressStr         = "1m"
+	DefaultEtcdWait           = 60 * time.Minute
 )
 
 type ClusterManager struct {
 	*Upgrader
-	clusterClient      *retrierClient
-	writer             filewriter.FileWriter
-	networking         Networking
-	diagnosticsFactory diagnostics.DiagnosticBundleFactory
-	Retrier            *retrier.Retrier
-	machineMaxWait     time.Duration
-	machineBackoff     time.Duration
-	machinesMinWait    time.Duration
-	awsIamAuth         AwsIamAuth
+	clusterClient           *retrierClient
+	writer                  filewriter.FileWriter
+	networking              Networking
+	diagnosticsFactory      diagnostics.DiagnosticBundleFactory
+	Retrier                 *retrier.Retrier
+	machineMaxWait          time.Duration
+	machineBackoff          time.Duration
+	machinesMinWait         time.Duration
+	awsIamAuth              AwsIamAuth
+	controlPlaneWaitTimeout time.Duration
+	externalEtcdWaitTimeout time.Duration
 }
 
 type ClusterClient interface {
@@ -118,20 +121,22 @@ type AwsIamAuth interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, maxWaitPerMachine time.Duration, opts ...ClusterManagerOpt) *ClusterManager {
-	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
+	retrier := retrier.NewWithMaxRetries(maxRetries, defaultBackOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		Upgrader:           NewUpgrader(retrierClient),
-		clusterClient:      retrierClient,
-		writer:             writer,
-		networking:         networking,
-		Retrier:            retrier,
-		diagnosticsFactory: diagnosticBundleFactory,
-		machineMaxWait:     maxWaitPerMachine,
-		machineBackoff:     machineBackoff,
-		machinesMinWait:    machinesMinWait,
-		awsIamAuth:         awsIamAuth,
+		Upgrader:                NewUpgrader(retrierClient),
+		clusterClient:           retrierClient,
+		writer:                  writer,
+		networking:              networking,
+		Retrier:                 retrier,
+		diagnosticsFactory:      diagnosticBundleFactory,
+		machineMaxWait:          DefaultMaxWaitPerMachine,
+		machineBackoff:          machineBackoff,
+		machinesMinWait:         defaultMachinesMinWait,
+		awsIamAuth:              awsIamAuth,
+		controlPlaneWaitTimeout: DefaultControlPlaneWait,
+		externalEtcdWaitTimeout: DefaultEtcdWait,
 	}
 
 	for _, o := range opts {
@@ -141,11 +146,33 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 	return c
 }
 
-func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Duration) ClusterManagerOpt {
+func WithControlPlaneWaitTimeout(timeout time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.controlPlaneWaitTimeout = timeout
+	}
+}
+
+func WithExternalEtcdWaitTimeout(timeout time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.externalEtcdWaitTimeout = timeout
+	}
+}
+
+func WithMachineBackoff(machineBackoff time.Duration) ClusterManagerOpt {
 	return func(c *ClusterManager) {
 		c.machineBackoff = machineBackoff
+	}
+}
+
+func WithMachineMaxWait(machineMaxWait time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
 		c.machineMaxWait = machineMaxWait
-		c.machinesMinWait = machinesMinWait
+	}
+}
+
+func WithMachineMinWait(machineMinWait time.Duration) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.machinesMinWait = machineMinWait
 	}
 }
 
@@ -228,18 +255,14 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		return nil, err
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("applying capi spec: %v", err)
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", workloadCluster.Name)
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, config.GetExternalEtcdTimeout(), workloadCluster.Name)
+		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, c.externalEtcdWaitTimeout.String(), workloadCluster.Name)
 		if err != nil {
 			return nil, fmt.Errorf("waiting for external etcd for workload cluster to be ready: %v", err)
 		}
@@ -248,7 +271,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -359,11 +382,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if err = c.writeCAPISpecFile(newClusterSpec.Cluster.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("applying capi control plane spec: %v", err)
 	}
@@ -381,8 +400,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		}
 
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
-		etcdWait := config.GetExternalEtcdTimeout()
-		if err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWait, newClusterSpec.Cluster.Name); err != nil {
+		if err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, c.externalEtcdWaitTimeout.String(), newClusterSpec.Cluster.Name); err != nil {
 			if err := c.clusterClient.RemoveAnnotationInNamespace(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Cluster.Name),
 				etcdv1.UpgradeInProgressAnnotation,
 				managementCluster,
@@ -396,7 +414,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
-	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, controlPlaneInProgressStr, newClusterSpec.Cluster.Name)
 	if err != nil {
 		if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
 			return fmt.Errorf("error waiting for control plane not ready: %v", err)
@@ -411,7 +429,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -422,7 +440,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Cluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, c.controlPlaneWaitTimeout.String(), newClusterSpec.Cluster.Name)
 	if err != nil {
 		return fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -438,11 +456,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster control plane replicas to be ready: %v", err)
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, mdContent, constants.EksaSystemNamespace)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, mdContent, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("applying capi machine deployment spec: %v", err)
 	}
@@ -543,12 +557,7 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 	if err != nil {
 		return fmt.Errorf("generating networking manifest: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent)
-		},
-	)
-	if err != nil {
+	if err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkingManifestContent); err != nil {
 		return fmt.Errorf("applying networking manifest spec: %v", err)
 	}
 	return nil
@@ -574,11 +583,7 @@ func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types
 	}
 
 	logger.Info("Installing storage class on cluster")
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
-		},
-	)
+	err := c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, storageClass)
 	if err != nil {
 		return fmt.Errorf("applying storage class manifest: %v", err)
 	}
@@ -591,11 +596,7 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, cluster
 		return err
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, mhc)
 	if err != nil {
 		return fmt.Errorf("applying machine health checks: %v", err)
 	}
@@ -609,11 +610,7 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluste
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
@@ -629,11 +626,7 @@ func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
 	}
@@ -940,11 +933,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 		return fmt.Errorf("outputting bundle yaml: %v", err)
 	}
 	logger.V(1).Info("Applying Bundles to cluster")
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
-		},
-	)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)
 	if err != nil {
 		return fmt.Errorf("applying bundle spec: %v", err)
 	}
@@ -953,32 +942,20 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 
 func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	pausedAnnotation := map[string]string{clusterSpec.Cluster.PausedAnnotation(): "true"}
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
 		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err := c.Retrier.Retry(
-				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-				},
-			)
+			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing cluster reconciliation: %v", err)
 	}
@@ -987,32 +964,20 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
 	pausedAnnotation := clusterSpec.Cluster.PausedAnnotation()
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
 		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err := c.Retrier.Retry(
-				func() error {
-					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-				},
-			)
+			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
-		},
-	)
+	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing cluster reconciliation: %v", err)
 	}
@@ -1023,11 +988,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 }
 
 func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Cluster, resourcesSpec []byte) error {
-	err := c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, resourcesSpec)
-		},
-	)
+	err := c.clusterClient.ApplyKubeSpecFromBytesForce(ctx, cluster, resourcesSpec)
 	if err != nil {
 		return fmt.Errorf("applying eks-a spec: %v", err)
 	}

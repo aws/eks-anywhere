@@ -22,6 +22,7 @@ import (
 	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
+	"github.com/aws/eks-anywhere/pkg/govmomi"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -46,7 +47,9 @@ func newVsphereClusterReconcilerTest(t *testing.T, objs ...runtime.Object) *vsph
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
 
-	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
+	vcb := govmomi.NewVMOMIClientBuilder()
+
+	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{}, vcb)
 	defaulter := vsphere.NewDefaulter(govcClient)
 
 	reconciler := vspherereconciler.New(
@@ -424,7 +427,6 @@ func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 					ClusterAPI:             v1alpha1.CoreClusterAPI{},
 					Bootstrap:              v1alpha1.KubeadmBootstrapBundle{},
 					ControlPlane:           v1alpha1.KubeadmControlPlaneBundle{},
-					Aws:                    v1alpha1.AwsBundle{},
 					VSphere:                v1alpha1.VSphereBundle{},
 					Docker:                 v1alpha1.DockerBundle{},
 					Eksa:                   v1alpha1.EksaBundle{},

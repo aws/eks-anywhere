@@ -46,6 +46,18 @@ type Tinkerbell struct {
 	inventoryCsvFilePath string
 }
 
+func UpdateTinkerbellUbuntuTemplate121Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate122Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL)
+}
+
+func UpdateTinkerbellUbuntuTemplate123Var() api.TinkerbellFiller {
+	return api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL)
+}
+
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	cidr := os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar)
@@ -86,6 +98,12 @@ func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
 }
 
+func (t *Tinkerbell) WithProviderUpgrade(fillers ...api.TinkerbellFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = t.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
+	}
+}
+
 func (t *Tinkerbell) CleanupVMs(_ string) error {
 	return nil
 }
@@ -112,7 +130,7 @@ func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
 func WithUbuntu120Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu120EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu120EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}
@@ -121,22 +139,13 @@ func WithUbuntu120Tinkerbell() TinkerbellOpt {
 func WithUbuntu121Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}
 }
 
 func WithUbuntu122Tinkerbell() TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithImageUrlForAllTinkerbellMachines),
-			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
-		)
-	}
-}
-
-func WithCustomUbuntu122Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithTinkerbellOSImageURL),
@@ -148,7 +157,7 @@ func WithCustomUbuntu122Tinkerbell() TinkerbellOpt {
 func WithUbuntu123Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
-			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu123EnvVar, api.WithTinkerbellOSImageURL),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}

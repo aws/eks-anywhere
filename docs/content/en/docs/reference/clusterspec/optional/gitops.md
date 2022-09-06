@@ -8,7 +8,7 @@ description: >
 
 # GitOps Support (Optional)
 EKS Anywhere can create clusters that supports GitOps configuration management with Flux. 
-In order to add GitOps support, you need to configure your cluster by updating the configuration file before creating the cluster.
+In order to add GitOps support, you need to configure your cluster by specifying the configuration file with `gitOpsRef` field when creating or upgrading the cluster.
 We currently support two types of configurations: `FluxConfig` and `GitOpsConfig`.
 
 ## Flux Configuration
@@ -141,8 +141,8 @@ spec:
 
 ### git Configuration Spec Details
 ### repositoryUrl (required)
-
-* __Description__: The URL of an existing repository where EKS Anywhere will store your cluster configuration and sync it to the cluster.
+>**_NOTE:_** The `repositoryUrl` value for private SSH repositories is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. For example, the github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present.
+* __Description__: The URL of an existing repository where EKS Anywhere will store your cluster configuration and sync it to the cluster. For private repositories, the SSH URL will be of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`
 * __Type__: string
 
 ### sshKeyAlgorithm (optional)

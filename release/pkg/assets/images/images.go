@@ -20,13 +20,13 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/aws/eks-anywhere/release/pkg/assets/tagger"
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
-	"github.com/aws/eks-anywhere/release/pkg/filereader"
 	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-func GetImageAssets(rc *releasetypes.ReleaseConfig, image *assettypes.Image, imageRepoPrefix string, imageTagOptions []string, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ImageArtifact, string, error) {
+func GetImageAssets(rc *releasetypes.ReleaseConfig, ac *assettypes.AssetConfig, image *assettypes.Image, imageRepoPrefix string, imageTagOptions []string, gitTag, projectPath, gitTagPath, eksDReleaseChannel, eksDReleaseNumber, kubeVersion string) (*releasetypes.ImageArtifact, string, error) {
 	repoName, assetName := image.RepoName, image.RepoName
 	if image.AssetName != "" {
 		assetName = image.AssetName
@@ -38,10 +38,10 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, image *assettypes.Image, ima
 	sourceRepoName, releaseRepoName := repoName, repoName
 	if image.TrimEksAPrefix {
 		if rc.ReleaseEnvironment == "production" {
-			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			sourceRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 		if !rc.DevRelease {
-			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere")
+			releaseRepoName = strings.TrimPrefix(repoName, "eks-anywhere-")
 		}
 	}
 
@@ -65,28 +65,21 @@ func GetImageAssets(rc *releasetypes.ReleaseConfig, image *assettypes.Image, ima
 		}
 	}
 
-	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration)
+	sourceImageUri, sourcedFromBranch, err := images.GetSourceImageURI(rc, assetName, sourceRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
 	if err != nil {
 		return nil, "", errors.Cause(err)
 	}
 	if sourcedFromBranch != rc.BuildRepoBranchName {
-		gitTag, err = filereader.ReadGitTag(gitTagPath, rc.BuildRepoSource, sourcedFromBranch)
+		gitTag, err := tagger.GetGitTagAssigner(ac)(rc, gitTagPath, sourcedFromBranch)
 		if err != nil {
 			return nil, "", errors.Cause(err)
 		}
 		imageTagOptionsMap["gitTag"] = gitTag
 	}
 
-	if image.TrimVersionSignifier {
-		sourceImageUri = strings.ReplaceAll(sourceImageUri, ":v", ":")
-	}
-
-	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration)
+	releaseImageUri, err := images.GetReleaseImageURI(rc, assetName, releaseRepoName, imageTagOptionsMap, image.ImageTagConfiguration, image.TrimVersionSignifier)
 	if err != nil {
 		return nil, "", errors.Cause(err)
-	}
-	if image.TrimVersionSignifier {
-		releaseImageUri = strings.ReplaceAll(releaseImageUri, ":v", ":")
 	}
 
 	imageArtifact := &releasetypes.ImageArtifact{

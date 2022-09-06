@@ -2,13 +2,19 @@ package framework
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	filereader "github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"github.com/aws/eks-anywhere/pkg/manifests/releases"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -40,6 +46,7 @@ const (
 	govcUrlVar                  = "VSPHERE_SERVER"
 	govcInsecureVar             = "GOVC_INSECURE"
 	govcDatacenterVar           = "GOVC_DATACENTER"
+	vsphereTemplateEnvVarPrefix = "T_VSPHERE_TEMPLATE_"
 )
 
 var requiredEnvVars = []string{
@@ -310,6 +317,14 @@ func RequiredVsphereEnvVars() []string {
 	return requiredEnvVars
 }
 
+// VSphereExtraEnvVarPrefixes returns prefixes for env vars that although not always required,
+// might be necessary for certain tests
+func VSphereExtraEnvVarPrefixes() []string {
+	return []string{
+		vsphereTemplateEnvVarPrefix,
+	}
+}
+
 func vSphereMachineConfig(name string, fillers ...api.VSphereMachineConfigFiller) api.VSphereFiller {
 	f := make([]api.VSphereMachineConfigFiller, 0, len(fillers)+6)
 	// Need to add these because at this point the default fillers that assign these
@@ -332,4 +347,40 @@ func buildVSphereWorkerNodeGroupClusterFiller(machineConfigName string, workerNo
 	workerNodeGroup.MachineConfigKind = anywherev1.VSphereMachineConfigKind
 	workerNodeGroup.MachineConfigName = machineConfigName
 	return workerNodeGroup.ClusterFiller()
+}
+
+func WithUbuntuForRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
+	return optionToSetTemplateForRelease("ubuntu", release, kubeVersion)
+}
+
+func WithBottlerocketFromRelease(release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
+	return optionToSetTemplateForRelease("bottlerocket", release, kubeVersion)
+}
+
+func optionToSetTemplateForRelease(osFamily string, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) VSphereOpt {
+	return func(v *VSphere) {
+		versionsBundle := readVersionsBundles(v.t, release, kubeVersion)
+		eksDName := versionsBundle.EksD.Name
+
+		templateEnvVarName := fmt.Sprintf("T_VSPHERE_TEMPLATE_%s_%s", strings.ToUpper(osFamily), strings.ToUpper(strings.ReplaceAll(eksDName, "-", "_")))
+
+		template, ok := os.LookupEnv(templateEnvVarName)
+		if !ok || template == "" {
+			v.t.Fatalf("%s env var not set or empty, required to run tests for release %s", templateEnvVarName, release.Version)
+		}
+
+		v.fillers = append(v.fillers,
+			api.WithTemplateForAllMachines(template),
+		)
+	}
+}
+
+func readVersionsBundles(t testing.TB, release *releasev1.EksARelease, kubeVersion anywherev1.KubernetesVersion) *releasev1.VersionsBundle {
+	reader := filereader.NewReader(filereader.WithUserAgent("eks-a-e2e-tests"))
+	b, err := releases.ReadBundlesForRelease(reader, release)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return bundles.VersionsBundleForKubernetesVersion(b, string(kubeVersion))
 }

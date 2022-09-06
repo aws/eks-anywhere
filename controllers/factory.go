@@ -9,10 +9,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/controller/clusters"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	ciliumreconciler "github.com/aws/eks-anywhere/pkg/networking/cilium/reconciler"
+	cnireconciler "github.com/aws/eks-anywhere/pkg/networking/reconciler"
 	cloudstackreconciler "github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	snowreconciler "github.com/aws/eks-anywhere/pkg/providers/snow/reconciler"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
 )
@@ -26,13 +28,14 @@ type Factory struct {
 	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers       Reconcilers
 
-	tracker                     *remote.ClusterCacheTracker
-	registry                    *clusters.ProviderClusterReconcilerRegistry
-	vsphereClusterReconciler    *vspherereconciler.Reconciler
+	tracker                  *remote.ClusterCacheTracker
+	registry                 *clusters.ProviderClusterReconcilerRegistry
 	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
-	snowClusterReconciler       *snowreconciler.Reconciler
-	logger                      logr.Logger
-	deps                        *dependencies.Dependencies
+	vsphereClusterReconciler *vspherereconciler.Reconciler
+	snowClusterReconciler    *snowreconciler.Reconciler
+	cniReconciler            *cnireconciler.Reconciler
+	logger                   logr.Logger
+	deps                     *dependencies.Dependencies
 }
 
 type Reconcilers struct {
@@ -138,10 +141,11 @@ func (f *Factory) WithSnowMachineConfigReconciler() *Factory {
 			return nil
 		}
 
+		client := f.manager.GetClient()
 		f.reconcilers.SnowMachineConfigReconciler = NewSnowMachineConfigReconciler(
-			f.manager.GetClient(),
+			client,
 			f.logger,
-			aws.NewSnowAwsClientBuilder(),
+			snow.NewValidator(snowreconciler.NewAwsClientBuilder(client)),
 		)
 		return nil
 	})
@@ -257,13 +261,35 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 }
 
 func (f *Factory) withSnowClusterReconciler() *Factory {
+	f.withCNIReconciler().withTracker()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.snowClusterReconciler != nil {
 			return nil
 		}
 
-		f.snowClusterReconciler = snowreconciler.New()
+		f.snowClusterReconciler = snowreconciler.New(
+			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
+		)
 		f.registryBuilder.Add(anywherev1.SnowDatacenterKind, f.snowClusterReconciler)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) withCNIReconciler() *Factory {
+	f.dependencyFactory.WithCiliumTemplater()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.cniReconciler != nil {
+			return nil
+		}
+
+		f.cniReconciler = cnireconciler.New(ciliumreconciler.New(f.deps.CiliumTemplater))
 
 		return nil
 	})

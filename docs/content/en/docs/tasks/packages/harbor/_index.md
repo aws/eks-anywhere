@@ -7,11 +7,7 @@ description: >
   Install/upgrade/uninstall Harbor
 ---
 
-{{% alert title="Important" color="warning" %}}
-
-If your cluster was created with a release of EKS Anywhere prior to v0.9.0, you may need to [install the package controller.]({{< relref ".." >}})
-
-{{% /alert %}}
+{{< content "../prereq.md" >}}
 
 ## Install
 

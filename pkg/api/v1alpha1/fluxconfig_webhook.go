@@ -90,7 +90,7 @@ func validateImmutableFluxFields(new, old *FluxConfig) field.ErrorList {
 	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", FluxConfigKind), new, "config is immutable"),
+			field.Forbidden(field.NewPath(FluxConfigKind), "config is immutable"),
 		)
 	}
 

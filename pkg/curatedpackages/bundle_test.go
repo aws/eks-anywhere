@@ -30,6 +30,7 @@ type bundleTest struct {
 	packageBundle *packagesv1.PackageBundle
 	registry      *mocks.MockBundleRegistry
 	cliVersion    version.Info
+	activeCluster string
 }
 
 func newBundleTest(t *testing.T) *bundleTest {
@@ -40,6 +41,7 @@ func newBundleTest(t *testing.T) *bundleTest {
 	kubeVersion := "1.21"
 	registry := mocks.NewMockBundleRegistry(ctrl)
 	activeBundle := "v1.21-1000"
+	activeCluster := "test-cluster"
 	cliVersion := version.Info{GitVersion: "v1.0.0"}
 	bundleCtrl := packagesv1.PackageBundleController{
 		Spec: packagesv1.PackageBundleControllerSpec{
@@ -68,11 +70,13 @@ func newBundleTest(t *testing.T) *bundleTest {
 		activeBundle:  activeBundle,
 		registry:      registry,
 		cliVersion:    cliVersion,
+		activeCluster: activeCluster,
 	}
 }
 
 func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 	tt := newBundleTest(t)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.activeCluster), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundleCtrl), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.packageBundle), nil)
 

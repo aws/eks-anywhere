@@ -19,7 +19,7 @@ Once a change has been detected by the GitOps controller running in your cluster
 
 If you'd like to learn more about GitOps, and the associated best practices, [check out this introduction from Weaveworks](https://www.weave.works/technologies/gitops/).
 
->**_NOTE:_** Installing a GitOps controller needs to be done during cluster creation.
+>**_NOTE:_** Installing a GitOps controller can be done during cluster creation or through upgrade.
 In the event that GitOps installation fails, EKS Anywhere cluster creation will continue.
 
 ### Supported Cluster Properties
@@ -171,6 +171,18 @@ For a full spec reference see the [Cluster Spec reference]({{< relref "../../ref
     eksctl anywhere create cluster -f ${CLUSTER_NAME}.yaml
     ```
 
+### Enable GitOps in an existing cluster
+
+You can also install Flux and enable GitOps in an existing cluster by running the upgrade command with updated cluster configuration.
+For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/optional/gitops" >}}).
+
+1. Upgrade an EKS Anywhere cluster with GitOps enabled.
+
+    ```bash
+    CLUSTER_NAME=gitops
+    eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml
+    ```
+
 ### Test GitOps controller
 
 After your cluster has been created, you can test the GitOps controller by modifying the cluster specification.
@@ -253,6 +265,8 @@ This will generate a known hosts file which contains only the entry necessary to
 
 ### Example FluxConfig cluster configuration for a generic git provider
 For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/optional/gitops" >}}).
+
+>**_NOTE:_** The `repositoryUrl` value is of the format `ssh://git@provider.com/$REPO_OWNER/$REPO_NAME.git`. This may differ from the default SSH URL given by your provider. For Example, the github.com user interface provides an SSH URL containing a `:` before the repository owner, rather than a `/`. Make sure to replace this `:` with a `/`, if present.
 
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

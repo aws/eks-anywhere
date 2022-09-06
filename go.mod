@@ -1,14 +1,15 @@
 module github.com/aws/eks-anywhere
 
-go 1.17
+go 1.18
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/aws-sdk-go-v2 v1.16.2
 	github.com/aws/aws-sdk-go-v2/config v1.15.3
+	github.com/aws/aws-sdk-go-v2/credentials v1.11.2
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
-	github.com/aws/eks-anywhere-packages v0.2.0-alpha.3
+	github.com/aws/eks-anywhere-packages v0.2.0-alpha.6
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/aws/smithy-go v1.11.2
@@ -65,7 +66,6 @@ require (
 	github.com/ReneKroon/ttlcache v1.7.0 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/apache/cloudstack-go/v2 v2.13.0 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.9 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.4.3 // indirect
@@ -149,6 +149,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/stmcginnis/gofish v0.12.1-0.20220311113027-6072260f4c8d // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/vmware/govmomi v0.29.0
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect

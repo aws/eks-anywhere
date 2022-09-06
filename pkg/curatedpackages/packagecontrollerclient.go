@@ -17,7 +17,7 @@ var awsSecretYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
-	cronJobName       = "cronjob/ecr-refresher"
+	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
 )
 
@@ -69,11 +69,11 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	}
 
 	if err = pc.ApplySecret(ctx); err != nil {
-		logger.Info("Warning: not able to create secret. Package installation might fail.", "error", err)
+		logger.Info("Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.")
 	}
 
 	if err = pc.CreateCronJob(ctx); err != nil {
-		logger.Info("Warning: not able to trigger cron job. Package installation might fail.", "error", err)
+		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
 	}
 	return nil
 }
@@ -114,7 +114,7 @@ func (pc *PackageControllerClient) CreateCronJob(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("executing cron job %v", err)
 	}
-	fmt.Println(stdOut)
+	fmt.Print(&stdOut)
 	return nil
 }
 

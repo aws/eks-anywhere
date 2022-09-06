@@ -7,6 +7,7 @@ import (
 	"k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
@@ -61,10 +62,10 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	return collectors
 }
 
-func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect {
+func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, spec *cluster.Spec) []*Collect {
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
-		return c.eksaVsphereCollectors()
+		return c.eksaVsphereCollectors(spec)
 	case v1alpha1.DockerDatacenterKind:
 		return c.eksaDockerCollectors()
 	case v1alpha1.CloudStackDatacenterKind:
@@ -88,7 +89,8 @@ func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
 	return append(tinkerbellLogs, c.tinkerbellCrdCollectors()...)
 }
 
-func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
+func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect {
+	var collectors []*Collect
 	vsphereLogs := []*Collect{
 		{
 			Logs: &logs{
@@ -97,7 +99,11 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 			},
 		},
 	}
-	return append(vsphereLogs, c.vsphereCrdCollectors()...)
+	collectors = append(collectors, vsphereLogs...)
+	collectors = append(collectors, c.vsphereCrdCollectors()...)
+	collectors = append(collectors, c.apiServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)...)
+	collectors = append(collectors, c.vmsAccessCollector(spec.Cluster.Spec.ControlPlaneConfiguration))
+	return collectors
 }
 
 func (c *collectorFactory) eksaCloudstackCollectors() []*Collect {
@@ -353,7 +359,7 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	args := []string{"get", crdType, "-o", "json", "--all-namespaces"}
 	collectorPath := crdPath(crdType)
 	return &Collect{
-		Run: &run{
+		RunPod: &runPod{
 			collectorMeta: collectorMeta{
 				CollectorName: crdType,
 			},
@@ -376,12 +382,13 @@ func (c *collectorFactory) crdCollector(crdType string) *Collect {
 					Effect: "NoSchedule",
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
 
-// APIServerCollectors collect connection info when running a pod on an existing cluster
-func (c *collectorFactory) APIServerCollectors(controlPlaneIP string) []*Collect {
+// apiServerCollectors collect connection info when running a pod on an existing cluster
+func (c *collectorFactory) apiServerCollectors(controlPlaneIP string) []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.controlPlaneNetworkPathCollector(controlPlaneIP)...)
 	return collectors
@@ -402,16 +409,17 @@ func (c *collectorFactory) hostPortCollector(ports []string, hostIP string) *Col
 	argsIP := []string{tempIPRequest}
 	return &Collect{
 		RunPod: &runPod{
-			Name:       "run-ip",
-			Namespaces: constants.EksaDiagnosticsNamespace,
+			Name:      "check-host-port",
+			Namespace: constants.EksaDiagnosticsNamespace,
 			PodSpec: &v1.PodSpec{
 				Containers: []v1.Container{{
-					Name:    "run-ip",
+					Name:    "check-host-port",
 					Image:   c.DiagnosticCollectorImage,
 					Command: []string{"/bin/sh", "-c"},
 					Args:    argsIP,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
 }
@@ -421,18 +429,108 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 	argsPing := []string{tempPingRequest}
 	return &Collect{
 		RunPod: &runPod{
-			Name:       "run-ping",
-			Namespaces: constants.EksaDiagnosticsNamespace,
+			Name:      "ping-host-ip",
+			Namespace: constants.EksaDiagnosticsNamespace,
 			PodSpec: &v1.PodSpec{
 				Containers: []v1.Container{{
-					Name:    "run-ping",
+					Name:    "ping-host-ip",
 					Image:   c.DiagnosticCollectorImage,
 					Command: []string{"/bin/sh", "-c"},
 					Args:    argsPing,
 				}},
 			},
+			Timeout: "30s",
 		},
 	}
+}
+
+// vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
+// on control plane node
+func (c *collectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
+	controlPlaneEndpointHost := controlPlaneConfiguration.Endpoint.Host
+	taints := controlPlaneConfiguration.Taints
+	tolerations := makeTolerations(taints)
+
+	makeConnection := fmt.Sprintf("curl --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt -H \"Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)\" https://%s:6443/", controlPlaneEndpointHost)
+	getLogs := "kubectl logs -n kube-system -l k8s-app=vsphere-cloud-controller-manager"
+	args := []string{fmt.Sprintf("%s && %s", makeConnection, getLogs)}
+	return &Collect{
+		RunPod: &runPod{
+			Name:      "check-cloud-controller",
+			Namespace: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    "check-cloud-controller",
+					Image:   c.DiagnosticCollectorImage,
+					Command: []string{"/bin/sh", "-c"},
+					Args:    args,
+				}},
+				ServiceAccountName: "default",
+				HostNetwork:        true,
+				Tolerations:        tolerations,
+				Affinity: &v1.Affinity{
+					NodeAffinity: &v1.NodeAffinity{
+						PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{
+							{
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/control-plane",
+										Operator: "Exists",
+									}},
+								},
+							}, {
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/master",
+										Operator: "Exists",
+									}},
+								},
+							},
+						},
+					},
+				},
+			},
+			Timeout: "20s",
+		},
+	}
+}
+
+func makeTolerations(taints []v1.Taint) []v1.Toleration {
+	tolerations := []v1.Toleration{
+		{
+			Key:    "node.cloudprovider.kubernetes.io/uninitialized",
+			Value:  "true",
+			Effect: "NoSchedule",
+		},
+		{
+			Key:    "node.kubernetes.io/not-ready",
+			Effect: "NoSchedule",
+		},
+	}
+	if taints == nil {
+		toleration := v1.Toleration{
+			Effect: "NoSchedule",
+			Key:    "node-role.kubernetes.io/master",
+		}
+		tolerations = append(tolerations, toleration)
+	} else {
+		for _, taint := range taints {
+			var toleration v1.Toleration
+			if taint.Key != "" {
+				toleration.Key = taint.Key
+			}
+			if taint.Value != "" {
+				toleration.Value = taint.Value
+			}
+			if taint.Effect != "" {
+				toleration.Effect = taint.Effect
+			}
+			tolerations = append(tolerations, toleration)
+		}
+	}
+	return tolerations
 }
 
 func logpath(namespace string) string {

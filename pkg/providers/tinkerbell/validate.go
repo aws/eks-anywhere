@@ -61,6 +61,30 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 	return nil
 }
 
+func validateOsFamily(spec *ClusterSpec) error {
+	controlPlaneRef := spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef
+	controlPlaneOsFamily := spec.MachineConfigs[controlPlaneRef.Name].OSFamily()
+
+	if spec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineRef := spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef
+		if spec.MachineConfigs[etcdMachineRef.Name].OSFamily() != controlPlaneOsFamily {
+			return fmt.Errorf("etcd osFamily cannot be different from control plane osFamily")
+		}
+	}
+
+	for _, group := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		groupRef := group.MachineGroupRef
+		if spec.MachineConfigs[groupRef.Name].OSFamily() != controlPlaneOsFamily {
+			return fmt.Errorf("worker node group osFamily cannot be different from control plane osFamily")
+		}
+	}
+
+	if controlPlaneOsFamily != v1alpha1.Bottlerocket && spec.DatacenterConfig.Spec.OSImageURL == "" {
+		return fmt.Errorf("please use bottlerocket as osFamily for auto-importing or provide a valid osImageURL")
+	}
+	return nil
+}
+
 func validateObjectMeta(meta metav1.ObjectMeta) error {
 	if meta.Name == "" {
 		return errors.New("missing name")

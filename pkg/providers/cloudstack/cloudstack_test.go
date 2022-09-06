@@ -978,6 +978,9 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
 					},
+					KubeRbacProxy: releasev1alpha1.Image{
+						URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
+					},
 					KubeVip: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kube-vip/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 					},
@@ -1632,6 +1635,7 @@ func TestClusterUpgradeNeededMachineConfigsChangedDiskOffering(t *testing.T) {
 		func(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 			if cloudstackMachineConfigName == "test" {
 				modifiedMachineConfig := machineConfigsMap["test"].DeepCopy()
+				modifiedMachineConfig.Spec.DiskOffering = (*machineConfigsMap["test"].Spec.DiskOffering).DeepCopy()
 				modifiedMachineConfig.Spec.DiskOffering.Name = "shiny-new-diskoffering"
 				return modifiedMachineConfig, nil
 			}
@@ -1705,6 +1709,41 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
 	}
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+}
+
+func TestAnyImmutableFieldChangedDomain(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
+func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	secondAz := dcConfig.Spec.AvailabilityZones[0].DeepCopy()
+	secondAz.Name = "shinyNewAz"
+	dcConfig.Spec.AvailabilityZones = append(dcConfig.Spec.AvailabilityZones, *secondAz)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+}
+
+func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
+	// We currently can't retrieve ManagementApiEndpoint for an AZ from the CloudStackCluster resource, so a difference there should be ignored
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
 }
 
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {

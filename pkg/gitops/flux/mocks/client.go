@@ -83,34 +83,6 @@ func (mr *MockFluxClientMockRecorder) Reconcile(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockFluxClient)(nil).Reconcile), arg0, arg1, arg2)
 }
 
-// ResumeKustomization mocks base method.
-func (m *MockFluxClient) ResumeKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResumeKustomization", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ResumeKustomization indicates an expected call of ResumeKustomization.
-func (mr *MockFluxClientMockRecorder) ResumeKustomization(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeKustomization", reflect.TypeOf((*MockFluxClient)(nil).ResumeKustomization), arg0, arg1, arg2)
-}
-
-// SuspendKustomization mocks base method.
-func (m *MockFluxClient) SuspendKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SuspendKustomization", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SuspendKustomization indicates an expected call of SuspendKustomization.
-func (mr *MockFluxClientMockRecorder) SuspendKustomization(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SuspendKustomization", reflect.TypeOf((*MockFluxClient)(nil).SuspendKustomization), arg0, arg1, arg2)
-}
-
 // Uninstall mocks base method.
 func (m *MockFluxClient) Uninstall(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
 	m.ctrl.T.Helper()
@@ -175,6 +147,25 @@ func (m *MockKubeClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluste
 func (mr *MockKubeClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockKubeClient)(nil).GetEksaCluster), arg0, arg1, arg2)
+}
+
+// RemoveAnnotation mocks base method.
+func (m *MockKubeClient) RemoveAnnotation(arg0 context.Context, arg1, arg2, arg3 string, arg4 ...executables.KubectlOpt) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2, arg3}
+	for _, a := range arg4 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveAnnotation", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveAnnotation indicates an expected call of RemoveAnnotation.
+func (mr *MockKubeClientMockRecorder) RemoveAnnotation(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotation", reflect.TypeOf((*MockKubeClient)(nil).RemoveAnnotation), varargs...)
 }
 
 // UpdateAnnotation mocks base method.
@@ -261,6 +252,34 @@ func (mr *MockGitOpsFluxClientMockRecorder) DeleteSystemSecret(arg0, arg1, arg2 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSystemSecret", reflect.TypeOf((*MockGitOpsFluxClient)(nil).DeleteSystemSecret), arg0, arg1, arg2)
 }
 
+// DisableResourceReconcile mocks base method.
+func (m *MockGitOpsFluxClient) DisableResourceReconcile(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DisableResourceReconcile", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DisableResourceReconcile indicates an expected call of DisableResourceReconcile.
+func (mr *MockGitOpsFluxClientMockRecorder) DisableResourceReconcile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisableResourceReconcile", reflect.TypeOf((*MockGitOpsFluxClient)(nil).DisableResourceReconcile), arg0, arg1, arg2, arg3, arg4)
+}
+
+// EnableResourceReconcile mocks base method.
+func (m *MockGitOpsFluxClient) EnableResourceReconcile(arg0 context.Context, arg1 *types.Cluster, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableResourceReconcile", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EnableResourceReconcile indicates an expected call of EnableResourceReconcile.
+func (mr *MockGitOpsFluxClientMockRecorder) EnableResourceReconcile(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableResourceReconcile", reflect.TypeOf((*MockGitOpsFluxClient)(nil).EnableResourceReconcile), arg0, arg1, arg2, arg3, arg4)
+}
+
 // ForceReconcile mocks base method.
 func (m *MockGitOpsFluxClient) ForceReconcile(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
 	m.ctrl.T.Helper()
@@ -302,34 +321,6 @@ func (m *MockGitOpsFluxClient) Reconcile(arg0 context.Context, arg1 *types.Clust
 func (mr *MockGitOpsFluxClientMockRecorder) Reconcile(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reconcile", reflect.TypeOf((*MockGitOpsFluxClient)(nil).Reconcile), arg0, arg1, arg2)
-}
-
-// ResumeKustomization mocks base method.
-func (m *MockGitOpsFluxClient) ResumeKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ResumeKustomization", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ResumeKustomization indicates an expected call of ResumeKustomization.
-func (mr *MockGitOpsFluxClientMockRecorder) ResumeKustomization(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeKustomization", reflect.TypeOf((*MockGitOpsFluxClient)(nil).ResumeKustomization), arg0, arg1, arg2)
-}
-
-// SuspendKustomization mocks base method.
-func (m *MockGitOpsFluxClient) SuspendKustomization(arg0 context.Context, arg1 *types.Cluster, arg2 *v1alpha1.FluxConfig) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SuspendKustomization", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// SuspendKustomization indicates an expected call of SuspendKustomization.
-func (mr *MockGitOpsFluxClientMockRecorder) SuspendKustomization(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SuspendKustomization", reflect.TypeOf((*MockGitOpsFluxClient)(nil).SuspendKustomization), arg0, arg1, arg2)
 }
 
 // Uninstall mocks base method.

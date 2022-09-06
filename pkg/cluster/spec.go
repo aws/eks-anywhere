@@ -190,9 +190,6 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	if err = configManager.SetDefaults(clusterConfig); err != nil {
 		return nil, err
 	}
-	if err = ValidateConfig(clusterConfig); err != nil {
-		return nil, err
-	}
 
 	versionsBundle, err := GetVersionsBundle(clusterConfig.Cluster, bundlesManifest)
 	if err != nil {
@@ -292,15 +289,6 @@ func (s *Spec) newReader() *files.Reader {
 	return files.NewReader(files.WithEmbedFS(s.configFS), files.WithUserAgent(s.userAgent))
 }
 
-func (s *Spec) getVersionsBundle(kubeVersion eksav1alpha1.KubernetesVersion, bundles *v1alpha1.Bundles) (*v1alpha1.VersionsBundle, error) {
-	for _, versionsBundle := range bundles.Spec.VersionsBundles {
-		if versionsBundle.KubeVersion == string(kubeVersion) {
-			return &versionsBundle, nil
-		}
-	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", kubeVersion, bundles.Spec.Number)
-}
-
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	bundlesURL := s.bundlesManifestURL
 	if bundlesURL == "" {
@@ -385,17 +373,6 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	}
 
 	return i.Image()[:lastInd], i.Tag()
-}
-
-// GetVersionsBundleForVersion returns the  versionBundle for gitVersion and kubernetes version
-func GetVersionsBundleForVersion(cliVersion version.Info, kubernetesVersion eksav1alpha1.KubernetesVersion) (*v1alpha1.VersionsBundle, error) {
-	s := newWithCliVersion(cliVersion)
-	bundles, err := s.GetBundles(cliVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.getVersionsBundle(kubernetesVersion, bundles)
 }
 
 type Manifest struct {
