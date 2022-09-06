@@ -441,7 +441,7 @@ func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121AddRemoveAz(t *testing.T) {
-	provider := framework.NewCloudStackWithAzs(t, framework.WithCloudStackRedhat121())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
