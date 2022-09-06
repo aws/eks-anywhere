@@ -141,7 +141,7 @@ func TestInstallControllerWithEmptyProxy(t *testing.T) {
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithHTTPProxy(""),
 		curatedpackages.WithHTTPSProxy(""),
-		curatedpackages.WithNoProxy([]string{}),
+		curatedpackages.WithNoProxy(nil),
 	)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)

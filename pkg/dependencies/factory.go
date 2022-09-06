@@ -1098,5 +1098,5 @@ func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy str
 	if proxyConfiguration != nil {
 		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
 	}
-	return "", "", []string{}
+	return "", "", nil
 }

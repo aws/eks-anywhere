@@ -170,6 +170,8 @@ func WithHTTPSProxy(httpsProxy string) func(client *PackageControllerClient) {
 
 func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
 	return func(config *PackageControllerClient) {
-		config.noProxy = noProxy
+		if noProxy != nil {
+			config.noProxy = noProxy
+		}
 	}
 }
