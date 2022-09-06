@@ -17,7 +17,10 @@ const (
 	cloudstackAccountVar               = "T_CLOUDSTACK_ACCOUNT"
 	cloudstackNetworkVar               = "T_CLOUDSTACK_NETWORK"
 	cloudstackNetwork2Var              = "T_CLOUDSTACK_NETWORK_2"
+	cloudstackCredentialsVar           = "T_CLOUDSTACK_CREDENTIALS"
+	cloudstackCredentials2Var          = "T_CLOUDSTACK_CREDENTIALS_2"
 	cloudstackManagementServerVar      = "T_CLOUDSTACK_MANAGEMENT_SERVER"
+	cloudstackManagementServer2Var     = "T_CLOUDSTACK_MANAGEMENT_SERVER_2"
 	cloudstackSshAuthorizedKeyVar      = "T_CLOUDSTACK_SSH_AUTHORIZED_KEY"
 	cloudstackTemplateRedhat120Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_20"
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
@@ -36,10 +39,13 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackDomainVar,
 	cloudstackZoneVar,
 	cloudstackZone2Var,
+	cloudstackCredentialsVar,
+	cloudstackCredentials2Var,
 	cloudstackAccountVar,
 	cloudstackNetworkVar,
 	cloudstackNetwork2Var,
 	cloudstackManagementServerVar,
+	cloudstackManagementServer2Var,
 	cloudstackSshAuthorizedKeyVar,
 	cloudstackTemplateRedhat120Var,
 	cloudstackTemplateRedhat121Var,
@@ -72,12 +78,12 @@ func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
 }
 
 func UpdateAddCloudStackAz2() api.CloudStackFiller {
-	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone2Var, cloudstackNetwork2Var,
-		cloudstackManagementServerVar, api.WithCloudStackAz)
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZone2Var, cloudstackCredentials2Var, cloudstackNetwork2Var,
+		cloudstackManagementServer2Var, api.WithCloudStackAz)
 }
 
 func UpdateAddCloudStackAz1() api.CloudStackFiller {
-	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar,
+	return api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 		cloudstackManagementServerVar, api.WithCloudStackAz)
 }
 
@@ -91,7 +97,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 		t: t,
 		fillers: []api.CloudStackFiller{
 			api.RemoveCloudStackAzs(),
-			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackNetworkVar,
+			api.WithCloudStackAzFromEnvVars(cloudstackAccountVar, cloudstackDomainVar, cloudstackZoneVar, cloudstackCredentialsVar, cloudstackNetworkVar,
 				cloudstackManagementServerVar, api.WithCloudStackAz),
 			api.WithCloudStackStringFromEnvVar(cloudstackSshAuthorizedKeyVar, api.WithCloudStackSSHAuthorizedKey),
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),

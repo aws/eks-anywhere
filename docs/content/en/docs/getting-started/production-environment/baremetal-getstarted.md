@@ -60,7 +60,6 @@ Follow these steps to create an EKS Anywhere cluster.
 
    If you are going to use packages, set up authentication:
    ```bash
-   export EKSA_AWS_REGION="your-region"
    export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
    export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"  
    ```

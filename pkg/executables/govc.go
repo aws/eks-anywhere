@@ -972,3 +972,117 @@ func getDeployOptions(network string) ([]byte, error) {
 
 	return deployOpts, err
 }
+
+// CreateUser creates a user.
+func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
+	params := []string{
+		"sso.user.create", "-p", password, username,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+	return nil
+}
+
+// UserExists checks if a user exists.
+func (g *Govc) UserExists(ctx context.Context, username string) (bool, error) {
+	params := []string{
+		"sso.user.ls",
+		username,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// CreateGroup creates a group.
+func (g *Govc) CreateGroup(ctx context.Context, name string) error {
+	params := []string{
+		"sso.group.create", name,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// GroupExists checks if a group exists.
+func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"sso.group.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// AddUserToGroup adds a user to a group.
+func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string) error {
+	params := []string{
+		"sso.group.update",
+		"-a", username,
+		name,
+	}
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// RoleExists checks if a role exists.
+func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
+	params := []string{
+		"role.ls",
+		name,
+	}
+
+	response, err := g.exec(ctx, params...)
+	if err != nil {
+		return false, err
+	}
+
+	return response.Len() > 0, nil
+}
+
+// CreateRole creates a role with specified privileges.
+func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string) error {
+	params := append([]string{"role.create", name}, privileges...)
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
+
+// SetGroupRoleOnObject sets a role for a given group on target object.
+func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+	principal = principal + "@" + domain
+
+	params := []string{
+		"permissions.set",
+		"-group=true",
+		"-principal", principal,
+		"-role", role,
+		object,
+	}
+
+	if _, err := g.exec(ctx, params...); err != nil {
+		return fmt.Errorf("govc returned error %v", err)
+	}
+
+	return nil
+}
