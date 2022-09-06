@@ -39,7 +39,6 @@ type Reconcilers struct {
 	ClusterReconciler              *ClusterReconciler
 	VSphereDatacenterReconciler    *VSphereDatacenterReconciler
 	CloudStackDatacenterReconciler *CloudStackDatacenterReconciler
-	CloudStackMachineConfigReconciler    *CloudStackMachineConfigReconciler
 	SnowMachineConfigReconciler    *SnowMachineConfigReconciler
 }
 
@@ -126,25 +125,6 @@ func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
 			f.logger,
 			f.deps.CloudStackValidator,
 			f.deps.CloudStackDefaulter,
-		)
-
-		return nil
-	})
-	return f
-}
-
-func (f *Factory) WithCloudStackMachineConfigReconciler() *Factory {
-	f.dependencyFactory.WithCloudStackDefaulter().WithCloudStackValidator()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.reconcilers.CloudStackMachineConfigReconciler != nil {
-			return nil
-		}
-
-		f.reconcilers.CloudStackMachineConfigReconciler = NewCloudStackMachineConfigReconciler(
-			f.manager.GetClient(),
-			f.logger,
-			f.deps.CloudStackValidator,
 		)
 
 		return nil
