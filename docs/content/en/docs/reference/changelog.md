@@ -6,11 +6,13 @@ weight: 35
 
 ## Unreleased
 
-### Added
-- Warn on vSphere cluster creation when vSphere user is missing vSphere permissions [3160](https://github.com/aws/eks-anywhere/pull/3160)
-
 ### ⚠️ Breaking changes
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
+
+## [v0.11.2](https://github.com/aws/eks-anywhere/releases/tag/v0.11.2)
+
+### Added
+- Warn on vSphere cluster creation when vSphere user is missing vSphere permissions [3160](https://github.com/aws/eks-anywhere/pull/3160)
 
 ## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
 
