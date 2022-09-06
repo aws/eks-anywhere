@@ -81,7 +81,7 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
-	PackageControllerClient   curatedpackages.PackageController
+	PackageControllerClient   *curatedpackages.PackageControllerClient
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter

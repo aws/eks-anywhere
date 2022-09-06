@@ -225,7 +225,7 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 
 	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
 
-	err := tt.command.IsInstalled(tt.ctx)
+	_, err := tt.command.IsInstalled(tt.ctx)
 	if err == nil {
 		t.Errorf("Get Active Controller should not succeed when controller exists")
 	}
@@ -236,7 +236,7 @@ func TestGetActiveControllerFail(t *testing.T) {
 
 	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, errors.New("controller doesn't exist"))
 
-	err := tt.command.IsInstalled(tt.ctx)
+	_, err := tt.command.IsInstalled(tt.ctx)
 	if err != nil {
 		t.Errorf("Get Active Controller should succeed when controller doesn't exist")
 	}

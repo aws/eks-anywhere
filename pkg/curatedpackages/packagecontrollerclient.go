@@ -94,12 +94,12 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) IsInstalled(ctx context.Context) error {
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
 	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
 	if found {
-		return errors.New("curated Packages controller exists in the current cluster")
+		return true, errors.New("curated Packages controller exists in the current cluster")
 	}
-	return nil
+	return false, nil
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {

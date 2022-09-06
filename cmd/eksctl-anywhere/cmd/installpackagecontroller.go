@@ -64,7 +64,7 @@ func installPackageController(ctx context.Context) error {
 		return err
 	}
 
-	if err = ctrlClient.IsInstalled(ctx); err != nil {
+	if isInstalled, err := ctrlClient.IsInstalled(ctx); isInstalled {
 		return err
 	}
 
