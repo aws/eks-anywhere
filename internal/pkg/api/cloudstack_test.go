@@ -94,12 +94,14 @@ func TestCloudStackAzFromEnvVars(t *testing.T) {
 	zoneVar := "CLOUDSTACK_ZONE"
 	networkVar := "CLOUDSTACK_NETWORK"
 	endpointVar := "CLOUDSTACK_ENDPOINT"
+	credentialsVar := "CLOUDSTACK_CREDENTIALS"
 
 	t.Setenv(accountVar, testAz.Account)
 	t.Setenv(domainVar, testAz.Domain)
 	t.Setenv(zoneVar, testAz.Zone.Name)
 	t.Setenv(networkVar, testAz.Zone.Network.Name)
 	t.Setenv(endpointVar, testAz.ManagementApiEndpoint)
+	t.Setenv(credentialsVar, testAz.CredentialsRef)
 	g := NewWithT(t)
 	config, err := cluster.ParseConfigFromFile(clusterConfigFile)
 	if err != nil {
@@ -110,7 +112,7 @@ func TestCloudStackAzFromEnvVars(t *testing.T) {
 		datacenterConfig: config.CloudStackDatacenter,
 	}
 	RemoveCloudStackAzs()(cloudStackConfig)
-	WithCloudStackAzFromEnvVars(accountVar, domainVar, zoneVar, networkVar, endpointVar, WithCloudStackAz)(cloudStackConfig)
+	WithCloudStackAzFromEnvVars(accountVar, domainVar, zoneVar, credentialsVar, networkVar, endpointVar, WithCloudStackAz)(cloudStackConfig)
 	g.Expect(len(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones)).To(Equal(1))
 	g.Expect(cloudStackConfig.datacenterConfig.Spec.AvailabilityZones[0]).To(Equal(testAz))
 }
