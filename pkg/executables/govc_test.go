@@ -1260,7 +1260,7 @@ func TestGovcUserExistsFalse(t *testing.T) {
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.user.ls", username).Return(*bytes.NewBufferString(""), nil)
 
-	exists, err := g.GroupExists(ctx, username)
+	exists, err := g.UserExists(ctx, username)
 	gt := NewWithT(t)
 	gt.Expect(err).To(BeNil())
 	gt.Expect(exists).To(BeFalse())
@@ -1273,7 +1273,7 @@ func TestGovcUserExistsTrue(t *testing.T) {
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.user.ls", username).Return(*bytes.NewBufferString(username), nil)
 
-	exists, err := g.GroupExists(ctx, username)
+	exists, err := g.UserExists(ctx, username)
 	gt := NewWithT(t)
 	gt.Expect(err).To(BeNil())
 	gt.Expect(exists).To(BeTrue())
@@ -1286,7 +1286,7 @@ func TestGovcUserExistsError(t *testing.T) {
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "sso.user.ls", username).Return(*bytes.NewBufferString(""), errors.New("operation failed"))
 
-	_, err := g.GroupExists(ctx, username)
+	_, err := g.UserExists(ctx, username)
 	gt := NewWithT(t)
 	gt.Expect(err).ToNot(BeNil())
 }
