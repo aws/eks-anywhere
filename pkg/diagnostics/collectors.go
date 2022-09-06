@@ -102,6 +102,7 @@ func (c *collectorFactory) eksaVsphereCollectors(spec *cluster.Spec) []*Collect 
 	collectors = append(collectors, vsphereLogs...)
 	collectors = append(collectors, c.vsphereCrdCollectors()...)
 	collectors = append(collectors, c.apiServerCollectors(spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)...)
+	collectors = append(collectors, c.vmsAccessCollector(spec.Cluster.Spec.ControlPlaneConfiguration))
 	return collectors
 }
 
@@ -441,6 +442,95 @@ func (c *collectorFactory) pingHostCollector(hostIP string) *Collect {
 			Timeout: "30s",
 		},
 	}
+}
+
+// vmsAccessCollector will connect to API server first, then collect vsphere-cloud-controller-manager logs
+// on control plane node
+func (c *collectorFactory) vmsAccessCollector(controlPlaneConfiguration v1alpha1.ControlPlaneConfiguration) *Collect {
+	controlPlaneEndpointHost := controlPlaneConfiguration.Endpoint.Host
+	taints := controlPlaneConfiguration.Taints
+	tolerations := makeTolerations(taints)
+
+	makeConnection := fmt.Sprintf("curl --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt -H \"Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)\" https://%s:6443/", controlPlaneEndpointHost)
+	getLogs := "kubectl logs -n kube-system -l k8s-app=vsphere-cloud-controller-manager"
+	args := []string{fmt.Sprintf("%s && %s", makeConnection, getLogs)}
+	return &Collect{
+		RunPod: &runPod{
+			Name:      "check-cloud-controller",
+			Namespace: constants.EksaDiagnosticsNamespace,
+			PodSpec: &v1.PodSpec{
+				Containers: []v1.Container{{
+					Name:    "check-cloud-controller",
+					Image:   c.DiagnosticCollectorImage,
+					Command: []string{"/bin/sh", "-c"},
+					Args:    args,
+				}},
+				ServiceAccountName: "default",
+				HostNetwork:        true,
+				Tolerations:        tolerations,
+				Affinity: &v1.Affinity{
+					NodeAffinity: &v1.NodeAffinity{
+						PreferredDuringSchedulingIgnoredDuringExecution: []v1.PreferredSchedulingTerm{
+							{
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/control-plane",
+										Operator: "Exists",
+									}},
+								},
+							}, {
+								Weight: 10,
+								Preference: v1.NodeSelectorTerm{
+									MatchExpressions: []v1.NodeSelectorRequirement{{
+										Key:      "node-role.kubernetes.io/master",
+										Operator: "Exists",
+									}},
+								},
+							},
+						},
+					},
+				},
+			},
+			Timeout: "20s",
+		},
+	}
+}
+
+func makeTolerations(taints []v1.Taint) []v1.Toleration {
+	tolerations := []v1.Toleration{
+		{
+			Key:    "node.cloudprovider.kubernetes.io/uninitialized",
+			Value:  "true",
+			Effect: "NoSchedule",
+		},
+		{
+			Key:    "node.kubernetes.io/not-ready",
+			Effect: "NoSchedule",
+		},
+	}
+	if taints == nil {
+		toleration := v1.Toleration{
+			Effect: "NoSchedule",
+			Key:    "node-role.kubernetes.io/master",
+		}
+		tolerations = append(tolerations, toleration)
+	} else {
+		for _, taint := range taints {
+			var toleration v1.Toleration
+			if taint.Key != "" {
+				toleration.Key = taint.Key
+			}
+			if taint.Value != "" {
+				toleration.Value = taint.Value
+			}
+			if taint.Effect != "" {
+				toleration.Effect = taint.Effect
+			}
+			tolerations = append(tolerations, toleration)
+		}
+	}
+	return tolerations
 }
 
 func logpath(namespace string) string {
