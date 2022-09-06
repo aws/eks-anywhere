@@ -6,6 +6,8 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 	return NewConfigClientBuilder().Register(
 		getSnowDatacenter,
 		getSnowMachineConfigs,
+		getCloudStackDatacenter,
+		getCloudStackMachineConfigs,
 		getOIDC,
 		getAWSIam,
 		getGitOps,

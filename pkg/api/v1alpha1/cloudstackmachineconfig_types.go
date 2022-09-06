@@ -191,6 +191,13 @@ func (c *CloudStackMachineConfig) Validate() error {
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	// SpecValid is set to true if cloudstackmachineconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true
