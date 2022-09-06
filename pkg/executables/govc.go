@@ -973,7 +973,7 @@ func getDeployOptions(network string) ([]byte, error) {
 	return deployOpts, err
 }
 
-// Create a user
+// CreateUser creates a user.
 func (g *Govc) CreateUser(ctx context.Context, username string, password string) error {
 	params := []string{
 		"sso.user.create", "-p", password, username,
@@ -985,7 +985,7 @@ func (g *Govc) CreateUser(ctx context.Context, username string, password string)
 	return nil
 }
 
-// Create a group
+// CreateGroup creates a group.
 func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	params := []string{
 		"sso.group.create", name,
@@ -998,7 +998,7 @@ func (g *Govc) CreateGroup(ctx context.Context, name string) error {
 	return nil
 }
 
-// Check if group exists
+// GroupExists checks if a group exists.
 func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 	params := []string{
 		"sso.group.ls",
@@ -1013,7 +1013,7 @@ func (g *Govc) GroupExists(ctx context.Context, name string) (bool, error) {
 	return response.Len() > 0, nil
 }
 
-// Add a user to a group
+// AddUserToGroup adds a user to a group.
 func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string) error {
 	params := []string{
 		"sso.group.update",
@@ -1027,7 +1027,7 @@ func (g *Govc) AddUserToGroup(ctx context.Context, name string, username string)
 	return nil
 }
 
-// Check if a role exists
+// RoleExists checks if a role exists.
 func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
 	params := []string{
 		"role.ls",
@@ -1042,7 +1042,7 @@ func (g *Govc) RoleExists(ctx context.Context, name string) (bool, error) {
 	return response.Len() > 0, nil
 }
 
-// Create a role
+// CreateRole creates a role with specified privileges.
 func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string) error {
 	params := append([]string{"role.create", name}, privileges...)
 
@@ -1053,7 +1053,7 @@ func (g *Govc) CreateRole(ctx context.Context, name string, privileges []string)
 	return nil
 }
 
-// Set role for a given group on target object
+// SetGroupRoleOnObject sets a role for a given group on target object.
 func (g *Govc) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
 	principal = principal + "@" + domain
 
