@@ -148,7 +148,6 @@ func drawAnalyzersTable(analyzeResults []*executables.SupportBundleAnalysis) {
 
 func drawDetails(analysisResult *executables.SupportBundleAnalysis) {
 	termWidth, _ := ui.TerminalDimensions()
-
 	currentTop := 4
 	title := widgets.NewParagraph()
 	title.Text = analysisResult.Title
@@ -180,7 +179,6 @@ func drawDetails(analysisResult *executables.SupportBundleAnalysis) {
 		height = estimateNumberOfLines(uri.Text, termWidth/2)
 		uri.SetRect(termWidth/2, currentTop, termWidth, currentTop+height)
 		ui.Render(uri)
-		currentTop = currentTop + height + 1
 	}
 }
 
