@@ -21,13 +21,17 @@ var lpo = &listPackagesOption{}
 
 func init() {
 	listCmd.AddCommand(listPackagesCommand)
-	listPackagesCommand.Flags().Var(&lpo.source, "source", "Discovery Location. Options (cluster, registry)")
-	err := listPackagesCommand.MarkFlagRequired("source")
-	if err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
+
+	listPackagesCommand.Flags().Var(&lpo.source, "source",
+		"Packages info discovery source. Options: cluster, registry.")
+	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "",
+		"Kubernetes version of the packages to list, for example: \"1.23\".")
+	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "",
+		"Specifies an alternative registry for packages discovery.")
+
+	if err := listPackagesCommand.MarkFlagRequired("source"); err != nil {
+		log.Fatalf("marking source flag required: %s", err)
 	}
-	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
-	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "", "Used to specify an alternative registry for discovery")
 }
 
 var listPackagesCommand = &cobra.Command{
