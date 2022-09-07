@@ -138,10 +138,10 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 			Name:      profile.Name,
 		},
 		StringData: map[string]string{
-			"api-url":    profile.ManagementUrl,
-			"api-key":    profile.ApiKey,
-			"secret-key": profile.SecretKey,
-			"verify-ssl": profile.VerifySsl,
+			decoder.ApiUrlKey:    profile.ManagementUrl,
+			decoder.ApiKeyKey:    profile.ApiKey,
+			decoder.SecretKeyKey: profile.SecretKey,
+			decoder.VerifySslKey: profile.VerifySsl,
 		},
 	}
 }
@@ -378,7 +378,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	} else {
 		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)
 	}
-	execConfig, err := decoder.ParseCloudStackSecret()
+	execConfig, err := decoder.ParseCloudStackCredsFromEnv()
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
@@ -421,10 +421,10 @@ func (p *cloudstackProvider) validateSecretsUnchanged(ctx context.Context, clust
 }
 
 func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStackProfileConfig) bool {
-	return string(secret.Data["api-url"]) != profile.ManagementUrl ||
-		string(secret.Data["api-key"]) != profile.ApiKey ||
-		string(secret.Data["secret-key"]) != profile.SecretKey ||
-		string(secret.Data["verify-ssl"]) != profile.VerifySsl
+	return string(secret.Data[decoder.ApiUrlKey]) != profile.ManagementUrl ||
+		string(secret.Data[decoder.ApiKeyKey]) != profile.ApiKey ||
+		string(secret.Data[decoder.SecretKeyKey]) != profile.SecretKey ||
+		string(secret.Data[decoder.VerifySslKey]) != profile.VerifySsl
 }
 
 func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {

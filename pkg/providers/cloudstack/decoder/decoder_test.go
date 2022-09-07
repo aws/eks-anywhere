@@ -132,7 +132,7 @@ func TestCloudStackConfigDecoder(t *testing.T) {
 			encodedConfig := base64.StdEncoding.EncodeToString([]byte(configString))
 			tt.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, encodedConfig)
 
-			gotConfig, err := decoder.ParseCloudStackSecret()
+			gotConfig, err := decoder.ParseCloudStackCredsFromEnv()
 			if tc.wantErr {
 				g.Expect(err).NotTo(BeNil())
 			} else {
@@ -149,7 +149,7 @@ func TestCloudStackConfigDecoderInvalidEncoding(t *testing.T) {
 	g := NewWithT(t)
 	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, "xxx")
 
-	_, err := decoder.ParseCloudStackSecret()
+	_, err := decoder.ParseCloudStackCredsFromEnv()
 	g.Expect(err).NotTo(BeNil())
 }
 
@@ -160,7 +160,7 @@ func TestCloudStackConfigDecoderNoEnvVariable(t *testing.T) {
 
 	g := NewWithT(t)
 
-	_, err := decoder.ParseCloudStackSecret()
+	_, err := decoder.ParseCloudStackCredsFromEnv()
 	g.Expect(err).NotTo(BeNil())
 	tctx.restoreContext()
 }

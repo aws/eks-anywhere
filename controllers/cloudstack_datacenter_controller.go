@@ -3,6 +3,11 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -20,13 +25,13 @@ type CloudStackDatacenterReconciler struct {
 	log       logr.Logger
 	client    client.Client
 	defaulter *cloudstack.Defaulter
-	validator *cloudstack.Validator
+	cmk       *executables.Cmk
 }
 
-func NewCloudStackDatacenterReconciler(client client.Client, log logr.Logger, validator *cloudstack.Validator, defaulter *cloudstack.Defaulter) *CloudStackDatacenterReconciler {
+func NewCloudStackDatacenterReconciler(client client.Client, log logr.Logger, cmk *executables.Cmk, defaulter *cloudstack.Defaulter) *CloudStackDatacenterReconciler {
 	return &CloudStackDatacenterReconciler{
 		client:    client,
-		validator: validator,
+		cmk:       cmk,
 		defaulter: defaulter,
 		log:       log,
 	}
@@ -57,7 +62,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 
 	defer func() {
 		// Always attempt to patch the object and status after each reconciliation.
-		patchOpts := []patch.Option{}
+		var patchOpts []patch.Option
 		if reterr == nil {
 			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
 		}
@@ -80,7 +85,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-	// Set up envs for executing Govc cmd and default values for datacenter config
+	// Set up envs for executing Cmk cmd and default values for datacenter config
 	if err := reconciler.SetupEnvVars(ctx, cloudstackDatacenter, r.client); err != nil {
 		log.Error(err, "Failed to set up env vars and default values for CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
@@ -88,8 +93,18 @@ func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudsta
 	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed setting default values for cloudstack datacenter config: %v", err)
 	}
+	secrets, err := r.fetchDatacenterSecrets(ctx, cloudstackDatacenter)
+	if err != nil {
+		return ctrl.Result{}, fmt.Errorf("retreiving secrets from cloudstack datacenter config: %v", err)
+	}
+	execConfig, err := decoder.ParseCloudStackCredsFromSecrets(secrets)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	r.cmk.SetExecConfig(execConfig)
+	validator := cloudstack.NewValidator(r.cmk)
 	// Determine if CloudStackDatacenterConfig is valid
-	if err := r.validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
+	if err := validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
 		log.Error(err, "Failed to validate CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
 	}
@@ -101,4 +116,21 @@ func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudsta
 
 func (r *CloudStackDatacenterReconciler) reconcileDelete(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (ctrl.Result, error) {
 	return ctrl.Result{}, nil
+}
+
+func (r *CloudStackDatacenterReconciler) fetchDatacenterSecrets(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig) ([]apiv1.Secret, error) {
+	var secrets []apiv1.Secret
+	for _, az := range cloudstackDatacenter.Spec.AvailabilityZones {
+		secret := &apiv1.Secret{}
+		namespacedName := types.NamespacedName{
+			Name: az.CredentialsRef,
+			Namespace: constants.EksaSystemNamespace,
+		}
+		if err := r.client.Get(ctx, namespacedName, secret); err != nil {
+			return nil, err
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	return secrets, nil
 }

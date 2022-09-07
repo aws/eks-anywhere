@@ -338,16 +338,21 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, profile string, accoun
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, configs []decoder.CloudStackProfileConfig) *Cmk {
-	configMap := map[string]decoder.CloudStackProfileConfig{}
-	for _, config := range configs {
-		configMap[config.Name] = config
-	}
-
-	return &Cmk{
+func NewCmk(executable Executable, writer filewriter.FileWriter, config *decoder.CloudStackExecConfig) *Cmk {
+	cmk := &Cmk{
 		writer:     writer,
 		executable: executable,
-		configMap:  configMap,
+	}
+
+	cmk.SetExecConfig(config)
+
+	return cmk
+}
+
+func (c *Cmk) SetExecConfig(config *decoder.CloudStackExecConfig) {
+	c.configMap = map[string]decoder.CloudStackProfileConfig{}
+	for _, profile := range config.Profiles {
+		c.configMap[profile.Name] = profile
 	}
 }
 

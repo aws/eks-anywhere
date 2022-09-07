@@ -126,7 +126,7 @@ func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
 		f.reconcilers.CloudStackDatacenterReconciler = NewCloudStackDatacenterReconciler(
 			f.manager.GetClient(),
 			f.logger,
-			f.deps.CloudStackValidator,
+			f.deps.Cmk,
 			f.deps.CloudStackDefaulter,
 		)
 
