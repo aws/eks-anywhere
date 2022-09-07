@@ -288,11 +288,7 @@ func TestBundlesRefDefaulter(t *testing.T) {
 			want: &cluster.Config{
 				Cluster: &anywherev1.Cluster{
 					Spec: anywherev1.ClusterSpec{
-						BundlesRef: &anywherev1.BundlesRef{
-							Name:       "bundles-1",
-							Namespace:  "eksa-system",
-							APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
-						},
+						BundlesRef: &anywherev1.BundlesRef{},
 					},
 				},
 			},
@@ -331,7 +327,7 @@ func TestBundlesRefDefaulter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			defaulter := cluster.BundlesRefDefaulter(tt.bundles)
+			defaulter := cluster.BundlesRefDefaulter()
 			g.Expect(defaulter(tt.config)).To(Succeed())
 			g.Expect(tt.config).To(Equal(tt.want))
 		})
