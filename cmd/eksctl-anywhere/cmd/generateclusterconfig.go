@@ -218,6 +218,39 @@ func generateClusterConfig(clusterName string) error {
 			return fmt.Errorf("generating cluster yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
+	case constants.NutanixProviderName:
+		if !features.IsActive(features.NutanixProvider()) {
+			return fmt.Errorf("the nutanix infrastructure provider is still under development")
+		}
+
+		datacenterConfig := v1alpha1.NewNutanixDatacenterConfigGenerate(clusterName)
+		dcYaml, err := yaml.Marshal(datacenterConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		datacenterYaml = dcYaml
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(3),
+			v1alpha1.WorkerNodeConfigCount(3),
+			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
+		)
+
+		cpMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
+		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithCPMachineGroupRef(cpMachineConfig))
+
+		workerMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(clusterName)
+		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig))
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	default:
 		return fmt.Errorf("not a valid provider")
 	}
