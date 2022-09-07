@@ -540,3 +540,18 @@ func TestGenerateManagementClusterBundleDockerProvider(t *testing.T) {
 		}
 	})
 }
+
+func TestPrintAnalysis(t *testing.T) {
+	kubeconfig := "testcluster.kubeconfig"
+	f := diagnostics.NewFactory(getOpts(t))
+	mockArchivePath := "/tmp/archive/path"
+	b := f.DiagnosticBundleCustom(kubeconfig, mockArchivePath)
+
+	t.Run(t.Name(), func(t *testing.T) {
+		err := b.PrintAnalysis()
+		if err != nil {
+			t.Errorf("PrintAnalysis() error = %v, wantErr nil", err)
+			return
+		}
+	})
+}

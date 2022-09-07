@@ -214,8 +214,10 @@ func (e *EksaDiagnosticBundle) PrintAnalysis() error {
 	if e.analysis == nil {
 		return nil
 	}
-	printOutput(e.bundle.Name, e.analysis)
-
+	err := printOutput(e.bundle.Name, e.analysis)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

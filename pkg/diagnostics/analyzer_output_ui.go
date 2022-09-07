@@ -15,9 +15,11 @@ var (
 	table          = widgets.NewTable()
 )
 
-func printOutput(supportBundleName string, analyzers []*executables.SupportBundleAnalysis) {
+func printOutput(supportBundleName string, analyzers []*executables.SupportBundleAnalysis) error {
 	if err := ui.Init(); err != nil {
 		log.Fatalf("failed to initialize termui: %v", err)
+		ui.Close()
+		return err
 	}
 	defer ui.Close()
 	drawUI(supportBundleName, analyzers)
@@ -28,9 +30,9 @@ func printOutput(supportBundleName string, analyzers []*executables.SupportBundl
 		case e := <-uiEvents:
 			switch e.ID {
 			case "<C-c>":
-				return
+				return nil
 			case "q":
-				return
+				return nil
 			case "<Down>":
 				if selectedResult < len(analyzers)-1 {
 					selectedResult++
@@ -66,7 +68,7 @@ func drawHeader(supportBundleName string) {
 	termWidth, _ := ui.TerminalDimensions()
 
 	title := widgets.NewParagraph()
-	title.Text = fmt.Sprintf("%s Support Bundle Analysis", supportBundleName)
+	title.Text = fmt.Sprintf("--- %s Support Bundle Analysis ---", supportBundleName)
 	title.TextStyle.Fg = ui.ColorWhite
 	title.TextStyle.Bg = ui.ColorClear
 	title.TextStyle.Modifier = ui.ModifierBold
@@ -81,7 +83,6 @@ func drawHeader(supportBundleName string) {
 
 func drawFooter() {
 	termWidth, termHeight := ui.TerminalDimensions()
-
 	instructions := widgets.NewParagraph()
 	instructions.Text = "[q] quit       [↑][↓] scroll"
 	instructions.Border = false
@@ -183,6 +184,6 @@ func drawDetails(analysisResult *executables.SupportBundleAnalysis) {
 }
 
 func estimateNumberOfLines(text string, width int) int {
-	lines := len(text)/width + 1
+	lines := len(text)/(width+1) + 1
 	return lines
 }
