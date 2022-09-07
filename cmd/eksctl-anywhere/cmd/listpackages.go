@@ -9,12 +9,16 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type listPackagesOption struct {
 	kubeVersion string
 	source      curatedpackages.BundleSource
 	registry    string
+	// kubeConfig is an optional kubeconfig file to use when querying an
+	// existing cluster
+	kubeConfig string
 }
 
 var lpo = &listPackagesOption{}
@@ -23,11 +27,13 @@ func init() {
 	listCmd.AddCommand(listPackagesCommand)
 
 	listPackagesCommand.Flags().Var(&lpo.source, "source",
-		"Packages info discovery source. Options: cluster, registry.")
+		"Packages discovery source. Options: cluster, registry.")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "",
-		"Kubernetes version of the packages to list, for example: \"1.23\".")
+		"Kubernetes version <major>.<minor> of the packages to list, for example: \"1.23\".")
 	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "",
 		"Specifies an alternative registry for packages discovery.")
+	listPackagesCommand.Flags().StringVar(&lpo.kubeConfig, "kubeconfig", "",
+		"Path to a kubeconfig file to use when source is a cluster.")
 
 	if err := listPackagesCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("marking source flag required: %s", err)
@@ -52,7 +58,12 @@ var listPackagesCommand = &cobra.Command{
 }
 
 func listPackages(ctx context.Context) error {
-	kubeConfig := kubeconfig.FromEnvironment()
+	kubeConfig := lpo.kubeConfig
+	if kubeConfig == "" {
+		kubeConfig = kubeconfig.FromEnvironment()
+	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
+		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	}
 	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(lpo.registry), WithKubeVersion(lpo.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
