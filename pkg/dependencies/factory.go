@@ -282,7 +282,11 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelm()
+		if clusterConfig.Spec.RegistryMirrorConfiguration != nil {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm(executables.WithInsecure())
+		} else {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm()
+		}
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
