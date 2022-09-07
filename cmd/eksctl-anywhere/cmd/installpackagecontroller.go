@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
@@ -64,8 +65,8 @@ func installPackageController(ctx context.Context) error {
 		return err
 	}
 
-	if isInstalled, err := ctrlClient.IsInstalled(ctx); isInstalled {
-		return err
+	if ctrlClient.IsInstalled(ctx) {
+		return errors.New("curated Packages controller exists in the current cluster")
 	}
 
 	curatedpackages.PrintLicense()

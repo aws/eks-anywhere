@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -94,12 +93,9 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
 	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
-	if found {
-		return true, errors.New("curated Packages controller exists in the current cluster")
-	}
-	return false, nil
+	return found
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
