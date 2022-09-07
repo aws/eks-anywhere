@@ -69,7 +69,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath); err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath, Create); err != nil {
 			return err
 		}
 	}

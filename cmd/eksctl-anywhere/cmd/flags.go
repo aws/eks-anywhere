@@ -43,7 +43,7 @@ func applyTinkerbellHardwareFlag(flagSet *pflag.FlagSet, pathOut *string) {
 	)
 }
 
-func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string) error {
+func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string, operationType Operation) error {
 	flag := flagSet.Lookup(TinkerbellHardwareCSVFlagName)
 
 	// If no flag was returned there is a developer error as the flag has been removed
@@ -53,7 +53,10 @@ func checkTinkerbellFlags(flagSet *pflag.FlagSet, hardwareCSVPath string) error 
 	}
 
 	if !viper.IsSet(TinkerbellHardwareCSVFlagName) || viper.GetString(TinkerbellHardwareCSVFlagName) == "" {
-		return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
+		if operationType == Create { // For upgrade, hardware-csv is an optional flag
+			return fmt.Errorf("required flag \"%v\" not set", TinkerbellHardwareCSVFlagName)
+		}
+		return nil
 	}
 
 	if !validations.FileExists(hardwareCSVPath) {
