@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -12,7 +13,7 @@ import (
 
 type Bootstrapper interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterOption) (*types.Cluster, error)
-	DeleteBootstrapCluster(context.Context, *types.Cluster, bool) error
+	DeleteBootstrapCluster(context.Context, *types.Cluster, constants.Operation, bool) error
 }
 
 type ClusterManager interface {

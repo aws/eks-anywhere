@@ -41,3 +41,11 @@ const (
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 )
+
+type Operation int
+
+const (
+	Create  Operation = 0
+	Upgrade Operation = 1
+	Delete  Operation = 2
+)

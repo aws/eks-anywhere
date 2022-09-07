@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -37,7 +38,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: workloadCluster.Name,
-		}, false); err != nil {
+		}, constants.Delete, forceCleanup); err != nil {
 			return err
 		}
 	}
@@ -230,7 +231,7 @@ func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.
 		collector.Run(ctx, commandContext)
 	}
 	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
-		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
+		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Delete, false); err != nil {
 			commandContext.SetError(err)
 		}
 		return nil

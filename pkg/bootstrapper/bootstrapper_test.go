@@ -121,7 +121,7 @@ func TestBootstrapperDeleteBootstrapClusterNoBootstrap(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().ClusterExists(ctx, cluster.Name).Return(false, nil)
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -142,7 +142,7 @@ func TestBootstrapperDeleteBootstrapClusterNoKubeconfig(t *testing.T) {
 	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -161,7 +161,7 @@ func TestBootstrapperDeleteBootstrapClusterNoClusterCRD(t *testing.T) {
 	client.EXPECT().ValidateClustersCRD(ctx, cluster).Return(errors.New("cluster crd not found"))
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -181,7 +181,7 @@ func TestBootstrapperDeleteBootstrapClusterNoManagement(t *testing.T) {
 	client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 	client.EXPECT().GetClusters(ctx, cluster).Return(nil, nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, false)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 	if err != nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error = %v, wantErr nil", err)
 	}
@@ -211,7 +211,7 @@ func TestBootstrapperDeleteBootstrapClusterErrorWithManagement(t *testing.T) {
 	}
 	client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 
-	err := b.DeleteBootstrapCluster(ctx, cluster, true)
+	err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 	if err == nil {
 		t.Fatalf("Bootstrapper.DeleteBootstrapCluster() error == nil, wantErr %v", err)
 	}
@@ -266,7 +266,7 @@ func TestBootstrapperDeleteBootstrapClusterCreateOrDelete(t *testing.T) {
 			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil)
 
-			err := b.DeleteBootstrapCluster(ctx, cluster, false)
+			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Delete, false)
 			if err != nil {
 				t.Fatalf("It shoud be possible to delete a management cluster while in %s phase. Expected error == nil, got %v", tt.clusterPhase, err)
 			}
@@ -327,7 +327,7 @@ func TestBootstrapperDeleteBootstrapClusterUpgrade(t *testing.T) {
 			client.EXPECT().GetClusters(ctx, cluster).Return(capiClusters, nil)
 			client.EXPECT().DeleteBootstrapCluster(ctx, cluster).Return(nil).Times(0)
 
-			err := b.DeleteBootstrapCluster(ctx, cluster, true)
+			err := b.DeleteBootstrapCluster(ctx, cluster, constants.Upgrade, false)
 			if err == nil {
 				t.Fatalf("upgrade should not delete a management cluster. Expected error == nil, got %v", err)
 			}

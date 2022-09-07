@@ -92,12 +92,13 @@ func (c *deleteTestSetup) expectDeleteBootstrap() {
 	gomock.InOrder(
 		c.bootstrapper.EXPECT().DeleteBootstrapCluster(
 			c.ctx, c.bootstrapCluster,
+			gomock.Any(),
 			gomock.Any()).Return(nil),
 	)
 }
 
 func (c *deleteTestSetup) expectNotToDeleteBootstrap() {
-	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Return(nil).Times(0)
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Return(nil).Times(0)
 }
 
 func (c *deleteTestSetup) expectDeleteWorkload(cluster *types.Cluster) {
