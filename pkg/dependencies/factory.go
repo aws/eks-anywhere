@@ -844,7 +844,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.PackageControllerClient != nil {
+		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
 		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
