@@ -1,0 +1,51 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+  name: "{{.clusterName}}-wmd"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  clusterName: "{{.clusterName}}"
+  replicas: {{.workerReplicas}}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{.clusterName}}-kcfg-0"
+      clusterName: "{{.clusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "{{.clusterName}}-mt-0"
+      version: "{{.kubernetesVersion}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.clusterName}}-mt-0"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.vcpusPerSocket}}
+      vcpuSockets: {{.vcpuSockets}}
+      memorySize: {{.memorySize}}
+      systemDiskSize: {{.systemDiskSize}}
+      image:
+        type: name
+        name: "{{.imageName}}"
+      cluster:
+        type: name
+        name: "{{.nutanixPEClusterName}}"
+      subnet:
+        - type: name
+          name: "{{.subnetName}}"

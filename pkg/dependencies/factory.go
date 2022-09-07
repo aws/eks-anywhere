@@ -36,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -403,6 +404,22 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Kubectl,
 				time.Now,
 			)
+		case v1alpha1.NutanixDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			provider, err := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, time.Now)
+			if err != nil {
+				return fmt.Errorf("unable to create Nutanix provider: %v", err)
+			}
+			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
