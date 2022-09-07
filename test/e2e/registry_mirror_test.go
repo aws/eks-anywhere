@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
@@ -19,6 +20,17 @@ func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
+func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.ImportImages()
+	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
+	test.CreateCluster(framework.WithForce())
+	test.StopIfFailed()
+	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestVSphereKubernetes123UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -27,7 +39,7 @@ func TestVSphereKubernetes123UbuntuRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithRegistryMirrorEndpointAndCert(),
+		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -40,7 +52,7 @@ func TestVSphereKubernetes123BottlerocketRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
-		framework.WithRegistryMirrorEndpointAndCert(),
+		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
 }
@@ -53,7 +65,31 @@ func TestCloudStackKubernetes121RedhatRegistryMirrorAndCert(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithRegistryMirrorEndpointAndCert(),
+		framework.WithRegistryMirrorEndpointAndCert(constants.CloudStackProviderName),
 	)
 	runRegistryMirrorConfigFlow(test)
+}
+
+func TestTinkerbellKubernetes122UbuntuRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu122Tinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
+}
+
+func TestTinkerbellKubernetes122BottlerocketRegistryMirror(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithBottleRocketTinkerbell()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithControlPlaneHardware(1),
+		framework.WithWorkerHardware(1),
+		framework.WithRegistryMirrorEndpointAndCert(constants.TinkerbellProviderName),
+	)
+	runTinkerbellRegistryMirrorFlow(test)
 }
