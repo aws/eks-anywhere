@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 	"strings"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -30,7 +31,10 @@ var defaultCAPIConfigCP string
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
 
-const TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
+const (
+	TinkerbellMachineTemplateKind = "TinkerbellMachineTemplate"
+	defaultRegistry               = "public.ecr.aws"
+)
 
 type TemplateBuilder struct {
 	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
@@ -402,10 +406,20 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
-		"controlPlanetemplateOverride": cpTemplateOverride,
 		"hardwareSelector":             controlPlaneMachineSpec.HardwareSelector,
 		"controlPlaneTaints":           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
 	}
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values = populateRegistryMirrorValues(clusterSpec, values)
+		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
+		localRegistry := values["registryMirrorConfiguration"].(string)
+		cpTemplateOverride = strings.ReplaceAll(cpTemplateOverride, defaultRegistry, localRegistry)
+		etcdTemplateOverride = strings.ReplaceAll(etcdTemplateOverride, defaultRegistry, localRegistry)
+	}
+
+	values["controlPlanetemplateOverride"] = cpTemplateOverride
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
@@ -446,7 +460,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
-		"workertemplateOverride": workerTemplateOverride,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
 	}
@@ -458,6 +471,15 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values = populateRegistryMirrorValues(clusterSpec, values)
+		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
+		localRegistry := values["registryMirrorConfiguration"].(string)
+		workerTemplateOverride = strings.ReplaceAll(workerTemplateOverride, defaultRegistry, localRegistry)
+	}
+
+	values["workertemplateOverride"] = workerTemplateOverride
 
 	return values
 }
@@ -484,4 +506,13 @@ func omitTinkerbellMachineTemplate(inputSpec []byte) ([]byte, error) {
 		}
 	}
 	return unstructuredutil.UnstructuredToYaml(outSpec)
+}
+
+func populateRegistryMirrorValues(clusterSpec *cluster.Spec, values map[string]interface{}) map[string]interface{} {
+	values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+	if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+		values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+	}
+
+	return values
 }
