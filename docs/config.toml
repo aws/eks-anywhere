@@ -76,6 +76,11 @@ weight = 1
 section = ["HTML", "print"]
 
 [[menu.main]]
+    name = "Contact us"
+    weight = 70
+    url = "https://aws.amazon.com/contact-us/sales-support-eks/"
+
+[[menu.main]]
     name = "GitHub"
     weight = 50
     url = "https://github.com/aws/eks-anywhere"
