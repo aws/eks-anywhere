@@ -34,10 +34,11 @@ spec:
           httpGet:
             path: /healthz
             port: healthz
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
       terminationGracePeriodSeconds: 10
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/master
       serviceAccountName: manager
-      securityContext:
-        runAsNonRoot: true
