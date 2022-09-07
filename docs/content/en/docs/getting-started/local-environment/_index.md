@@ -68,7 +68,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       * [proxy]({{< relref "../../reference/clusterspec/optional/proxy" >}})
       * [gitops]({{< relref "../../reference/clusterspec/optional/gitops" >}})
 
-2. Configure Curated Packages
+1. Configure Curated Packages
 
    **The Amazon EKS Anywhere Curated Packages are only available to customers with the Amazon EKS Anywhere Enterprise Subscription. To request a free trial, talk to your Amazon representative or connect with one [here](https://aws.amazon.com/contact-us/sales-support-eks/). Cluster creation will succeed if authentication is not set up, but some warnings may be genered.  Detailed package configurations can be found [here]({{< relref "../../tasks/packages" >}}).**
 
@@ -111,7 +111,7 @@ To install the EKS Anywhere binaries and see system requirements please follow t
       ```
       **Note** to install curated packages during cluster creation, use `--install-packages packages.yaml` flag  
    
-4. Use the cluster
+1. Use the cluster
 
    Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
 
