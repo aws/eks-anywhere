@@ -3,6 +3,7 @@ package resource_test
 import (
 	"context"
 	_ "embed"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -94,6 +96,18 @@ var cloudstackMachineConfigSpecPath string
 
 //go:embed testdata/cloudstackKubeadmconfigTemplateSpec.yaml
 var cloudstackKubeadmconfigTemplateSpecPath string
+
+//go:embed testdata/nutanix/datacenterConfig.yaml
+var nutanixDatacenterConfigSpec string
+
+//go:embed testdata/nutanix/cpMachineConfig.yaml
+var nutanixCPMachineConfigSpec string
+
+//go:embed testdata/nutanix/workerMachineConfig.yaml
+var nutanixWorkerMachineConfigSpec string
+
+//go:embed testdata/nutanix/etcdMachineConfig.yaml
+var nutanixEtcdMachineConfigSpec string
 
 func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 	type args struct {
@@ -1156,6 +1170,318 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			fetcher := mocks.NewMockResourceFetcher(mockCtrl)
 			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
 			tt.prepare(ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
+
+			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
+
+			if err := cor.Reconcile(ctx, tt.args.objectKey, false); (err != nil) != tt.wantErr {
+				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClusterReconcilerReconcileNutanix(t *testing.T) {
+	err := os.Setenv(features.NutanixProviderEnvVar, "true")
+	require.NoError(t, err)
+	assert.True(t, features.NutanixProvider().IsActive())
+
+	type args struct {
+		objectKey types.NamespacedName
+		name      string
+		namespace string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    controllerruntime.Result
+		wantErr bool
+		prepare func(context.Context, *mocks.MockResourceFetcher, string, string)
+	}{
+		{
+			name: "node reconcile - no error",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			want: controllerruntime.Result{},
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
+
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixCPMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixWorkerMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixEtcdMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch cluster",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("error"))
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch applied spec",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(nil, fmt.Errorf("error"))
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch datacenter config",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {}).Return(fmt.Errorf("error"))
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch control plane node machine config",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
+
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {}).Return(fmt.Errorf("error"))
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch worker node machine config",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
+
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixCPMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {}).Return(fmt.Errorf("error"))
+			},
+		},
+		{
+			name: "node reconcile - failure to fetch etcd node machine config",
+			args: args{
+				namespace: "namespaceA",
+				name:      "nameA",
+				objectKey: types.NamespacedName{
+					Name:      "nameA",
+					Namespace: "namespaceA",
+				},
+			},
+			wantErr: true,
+			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, name string, namespace string) {
+				cluster := &anywherev1.Cluster{}
+				cluster.SetName(name)
+				cluster.SetNamespace(namespace)
+
+				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
+
+				spec := test.NewFullClusterSpec(t, "testdata/nutanix/eksa-cluster.yaml")
+				cluster.Spec = spec.Cluster.Spec
+
+				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
+
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixCPMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.NutanixMachineConfig{}
+					if err := yaml.Unmarshal([]byte(nutanixWorkerMachineConfigSpec), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.NutanixMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "eksa-unit-test", "expected Name to be test-cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {}).Return(fmt.Errorf("error"))
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+			fetcher := mocks.NewMockResourceFetcher(mockCtrl)
+			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
+			tt.prepare(ctx, fetcher, tt.args.name, tt.args.namespace)
 
 			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
 

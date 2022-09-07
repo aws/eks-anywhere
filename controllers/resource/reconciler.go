@@ -30,6 +30,7 @@ type clusterReconciler struct {
 	cloudStackTemplate   CloudStackTemplate
 	dockerTemplate       DockerTemplate
 	awsIamConfigTemplate AWSIamConfigTemplate
+	nutanixTemplate      NutanixTemplate
 }
 
 func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater ResourceUpdater, now anywhereTypes.NowFunc, log logr.Logger) *clusterReconciler {
@@ -53,6 +54,10 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 		},
 		awsIamConfigTemplate: AWSIamConfigTemplate{
 			ResourceFetcher: resourceFetcher,
+		},
+		nutanixTemplate: NutanixTemplate{
+			ResourceFetcher: resourceFetcher,
+			now:             now,
 		},
 	}
 }
@@ -142,6 +147,40 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		resources = append(resources, r...)
 	case anywherev1.DockerDatacenterKind:
 		r, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
+		if err != nil {
+			return err
+		}
+		resources = append(resources, r...)
+	case anywherev1.NutanixDatacenterKind:
+		if !features.IsActive(features.NutanixProvider()) {
+			return fmt.Errorf("nutanix provider is not supported in eks-a controller")
+		}
+		dcConf := &anywherev1.NutanixDatacenterConfig{}
+		if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, dcConf); err != nil {
+			return err
+		}
+
+		controlPlaneMachineConf := &anywherev1.NutanixMachineConfig{}
+		if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, controlPlaneMachineConf); err != nil {
+			return err
+		}
+
+		workerMachineConfs := make(map[string]anywherev1.NutanixMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations))
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+			workerMachineConf := &anywherev1.NutanixMachineConfig{}
+			if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerMachineConf); err != nil {
+				return err
+			}
+			workerMachineConfs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerMachineConf
+		}
+
+		etcdMachineConf := &anywherev1.NutanixMachineConfig{}
+		if cs.Spec.ExternalEtcdConfiguration != nil {
+			if err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdMachineConf); err != nil {
+				return err
+			}
+		}
+		r, err := cor.nutanixTemplate.TemplateResources(ctx, cs, spec, *dcConf, *controlPlaneMachineConf, *etcdMachineConf, workerMachineConfs)
 		if err != nil {
 			return err
 		}
