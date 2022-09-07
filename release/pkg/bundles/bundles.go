@@ -175,6 +175,11 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
+		nutanixBundle, err := GetNutanixBundle(r, channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Nutanix infrastructure provider")
+		}
+
 		bottlerocketBootstrapBundle, err := GetBottlerocketBootstrapBundle(r, channel, number, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
@@ -202,6 +207,7 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			Tinkerbell:             tinkerbellBundle,
 			Haproxy:                haproxyBundle,
 			Snow:                   snowBundle,
+			Nutanix:                nutanixBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
