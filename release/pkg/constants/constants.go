@@ -42,4 +42,12 @@ const (
 	KindProjectPath                     = "projects/kubernetes-sigs/kind"
 	KubeRbacProxyProjectPath            = "projects/brancz/kube-rbac-proxy"
 	PackagesProjectPath                 = "projects/aws/eks-anywhere-packages"
+
+	// Date format with standard reference time values
+	// The reference time used is the specific time stamp:
+	//
+	//	01/02 03:04:05PM '06 -0700
+	//
+	// (January 2, 15:04:05, 2006, in time zone seven hours west of GMT).
+	YYYYMMDD = "2006-01-02"
 )

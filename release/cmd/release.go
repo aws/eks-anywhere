@@ -75,7 +75,9 @@ var releaseCmd = &cobra.Command{
 		cdn := viper.GetString("cdn")
 		devRelease := viper.GetBool("dev-release")
 		dryRun := viper.GetBool("dry-run")
+		weekly := viper.GetBool("weekly")
 		releaseTime := time.Now().UTC()
+		releaseDate := releaseTime.Format(constants.YYYYMMDD)
 
 		var bundleRelease bool
 		var releaseEnvironment string
@@ -105,9 +107,11 @@ var releaseCmd = &cobra.Command{
 			BundleNumber:             bundleNumber,
 			ReleaseNumber:            releaseNumber,
 			ReleaseVersion:           releaseVersion,
-			ReleaseDate:              releaseTime,
+			ReleaseDate:              releaseDate,
+			ReleaseTime:              releaseTime,
 			DevRelease:               devRelease,
 			DryRun:                   dryRun,
+			Weekly:                   weekly,
 			ReleaseEnvironment:       releaseEnvironment,
 		}
 
@@ -203,7 +207,7 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 
-				bundleReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, constants.BundlesKind, releaseConfig.BuildRepoBranchName)
+				bundleReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.Weekly, releaseConfig.BundleNumber, constants.BundlesKind, releaseConfig.BuildRepoBranchName, releaseConfig.ReleaseDate)
 				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
@@ -274,7 +278,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, constants.ReleaseKind, releaseConfig.BuildRepoBranchName)
+			eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.Weekly, releaseConfig.BundleNumber, constants.ReleaseKind, releaseConfig.BuildRepoBranchName, releaseConfig.ReleaseDate)
 			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)
@@ -311,8 +315,9 @@ func init() {
 	releaseCmd.Flags().String("release-bucket", "eks-a-release-bucket", "The bucket name where released artifacts live")
 	releaseCmd.Flags().String("source-container-registry", "", "The container registry to pull images from for a dev release")
 	releaseCmd.Flags().String("release-container-registry", "", "The container registry that images wll be pushed to")
-	releaseCmd.Flags().Bool("dev-release", true, "Flag to indicate its a dev release")
+	releaseCmd.Flags().Bool("dev-release", true, "Flag to indicate a dev release")
 	releaseCmd.Flags().Bool("bundle-release", true, "Flag to indicate a bundle release")
 	releaseCmd.Flags().String("release-environment", "", "Release environment")
 	releaseCmd.Flags().Bool("dry-run", false, "Flag to indicate if the release is a dry run")
+	releaseCmd.Flags().Bool("weekly", false, "Flag to indicate a weekly bundle release")
 }
