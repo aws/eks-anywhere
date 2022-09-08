@@ -55,7 +55,7 @@ var releaseConfig = &releasetypes.ReleaseConfig{
 	BundleNumber:             1,
 	ReleaseNumber:            1,
 	ReleaseVersion:           "vDev",
-	ReleaseDate:              time.Unix(0, 0),
+	ReleaseTime:              time.Unix(0, 0),
 	DevRelease:               true,
 	DryRun:                   true,
 }
@@ -201,7 +201,7 @@ func TestReleaseConfigNewBaseBundles(t *testing.T) {
 	now := time.Now()
 	releaseConfig := &releasetypes.ReleaseConfig{
 		BundleNumber: 10,
-		ReleaseDate:  now,
+		ReleaseTime:  now,
 	}
 	wantBundles := &anywherev1alpha1.Bundles{
 		TypeMeta: metav1.TypeMeta{

@@ -50,7 +50,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-19-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-20-20-eks-a-v0.0.0-dev-release-0.11-build.1
     certManager:
       acmesolver:
         arch:
@@ -262,7 +262,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.1/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -271,21 +271,21 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.20.15-eks-d-1-20-20-eks-a-v0.0.0-dev-release-0.11-build.1
       kubeVersion: v1.20.15
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-19.yaml
-      name: kubernetes-1-20-eks-19
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-20/kubernetes-1-20-eks-20.yaml
+      name: kubernetes-1-20-eks-20
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-20-19 release
-          name: bottlerocket-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-20-20 release
+          name: bottlerocket-v1.20.15-eks-d-1-20-20-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-20/1-20-19/bottlerocket-v1.20.15-eks-d-1-20-19-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-20/1-20-20/bottlerocket-v1.20.15-eks-d-1-20-20-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
       raw:
         bottlerocket: {}
     eksa:
@@ -769,7 +769,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-17-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-21-18-eks-a-v0.0.0-dev-release-0.11-build.1
     certManager:
       acmesolver:
         arch:
@@ -981,7 +981,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.1/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -990,32 +990,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-release-0.11-build.1
-      kubeVersion: v1.21.13
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-17.yaml
-      name: kubernetes-1-21-eks-17
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.21.14-eks-d-1-21-18-eks-a-v0.0.0-dev-release-0.11-build.1
+      kubeVersion: v1.21.14
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-18.yaml
+      name: kubernetes-1-21-eks-18
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-21-17 release
-          name: bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-21-18 release
+          name: bottlerocket-v1.21.14-eks-d-1-21-18-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-21/1-21-17/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-21/1-21-18/bottlerocket-v1.21.14-eks-d-1-21-18-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-21-17 release
-          name: bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-21-18 release
+          name: bottlerocket-v1.21.14-eks-d-1-21-18-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-21/1-21-17/bottlerocket-v1.21.13-eks-d-1-21-17-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-21/1-21-18/bottlerocket-v1.21.14-eks-d-1-21-18-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -1497,7 +1497,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-9-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-22-10-eks-a-v0.0.0-dev-release-0.11-build.1
     certManager:
       acmesolver:
         arch:
@@ -1709,7 +1709,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.1/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -1718,32 +1718,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-release-0.11-build.1
-      kubeVersion: v1.22.10
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-9.yaml
-      name: kubernetes-1-22-eks-9
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.22.12-eks-d-1-22-10-eks-a-v0.0.0-dev-release-0.11-build.1
+      kubeVersion: v1.22.12
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-22/kubernetes-1-22-eks-10.yaml
+      name: kubernetes-1-22-eks-10
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-22-9 release
-          name: bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-22-10 release
+          name: bottlerocket-v1.22.12-eks-d-1-22-10-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-22/1-22-10/bottlerocket-v1.22.12-eks-d-1-22-10-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-22-9 release
-          name: bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-22-10 release
+          name: bottlerocket-v1.22.12-eks-d-1-22-10-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-22/1-22-9/bottlerocket-v1.22.10-eks-d-1-22-9-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-22/1-22-10/bottlerocket-v1.22.12-eks-d-1-22-10-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:
@@ -2225,7 +2225,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: bottlerocket-bootstrap
         os: linux
-        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-4-eks-a-v0.0.0-dev-release-0.11-build.1
+        uri: public.ecr.aws/release-container-registry/bottlerocket-bootstrap:v1-23-5-eks-a-v0.0.0-dev-release-0.11-build.1
     certManager:
       acmesolver:
         arch:
@@ -2437,7 +2437,7 @@ spec:
         os: linux
         sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.0/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
+        uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/image-builder/0.1.1/image-builder-v0.0.0-dev-release-0.11-build.0-linux-amd64.tar.gz
       kindNode:
         arch:
         - amd64
@@ -2446,32 +2446,32 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-release-0.11-build.1
-      kubeVersion: v1.23.7
-      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-4.yaml
-      name: kubernetes-1-23-eks-4
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.23.9-eks-d-1-23-5-eks-a-v0.0.0-dev-release-0.11-build.1
+      kubeVersion: v1.23.9
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-23/kubernetes-1-23-eks-5.yaml
+      name: kubernetes-1-23-eks-5
       ova:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Ova image for EKS-D 1-23-4 release
-          name: bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          description: Bottlerocket Ova image for EKS-D 1-23-5 release
+          name: bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-23/1-23-4/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/ova/1-23/1-23-5/bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.ova
       raw:
         bottlerocket:
           arch:
           - amd64
-          description: Bottlerocket Raw image for EKS-D 1-23-4 release
-          name: bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          description: Bottlerocket Raw image for EKS-D 1-23-5 release
+          name: bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
           os: linux
           osName: bottlerocket
           sha256: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           sha512: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-23/1-23-4/bottlerocket-v1.23.7-eks-d-1-23-4-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
+          uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/eks-distro/raw/1-23/1-23-5/bottlerocket-v1.23.9-eks-d-1-23-5-eks-a-v0.0.0-dev-release-0.11-build.0-amd64.img.gz
     eksa:
       cliTools:
         arch:

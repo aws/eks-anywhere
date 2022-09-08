@@ -30,7 +30,7 @@ func IsImageNotFoundError(err error) bool {
 	return err.Error() == "Requested image not found"
 }
 
-func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string) string {
+func GetManifestFilepaths(devRelease, weekly bool, bundleNumber int, kind, branch, releaseDate string) string {
 	var manifestFilepath string
 	switch kind {
 	case constants.BundlesKind:
@@ -39,6 +39,9 @@ func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string
 				manifestFilepath = fmt.Sprintf("%s/bundle-release.yaml", branch)
 			} else {
 				manifestFilepath = "bundle-release.yaml"
+				if weekly {
+					manifestFilepath = fmt.Sprintf("weekly-releases/bundles/%s/manifest.yaml", releaseDate)
+				}
 			}
 		} else {
 			manifestFilepath = fmt.Sprintf("releases/bundles/%d/manifest.yaml", bundleNumber)
@@ -49,6 +52,9 @@ func GetManifestFilepaths(devRelease bool, bundleNumber int, kind, branch string
 				manifestFilepath = fmt.Sprintf("%s/eks-a-release.yaml", branch)
 			} else {
 				manifestFilepath = "eks-a-release.yaml"
+				if weekly {
+					manifestFilepath = fmt.Sprintf("weekly-releases/eks-a/manifest.yaml")
+				}
 			}
 		} else {
 			manifestFilepath = "releases/eks-a/manifest.yaml"

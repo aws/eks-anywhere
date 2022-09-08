@@ -41,7 +41,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              NewBundlesName(r),
-			CreationTimestamp: metav1.Time{Time: r.ReleaseDate},
+			CreationTimestamp: metav1.Time{Time: r.ReleaseTime},
 		},
 		Spec: anywherev1alpha1.BundlesSpec{
 			Number: r.BundleNumber,
