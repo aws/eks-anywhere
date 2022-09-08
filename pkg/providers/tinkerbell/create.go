@@ -146,6 +146,7 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 	}
 
+	clusterSpecValidator.Register(AssertTinkerbellIPNotInUse(p.netClient))
 	// Validate must happen last beacuse we depend on the catalogue entries for some checks.
 	if err := clusterSpecValidator.Validate(spec); err != nil {
 		return err

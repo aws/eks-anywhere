@@ -178,6 +178,40 @@ func TestNewIPNotInUseAssertion_InUseFails(t *testing.T) {
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertTinkerbellIPNotInUse_NotInUseSucceeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
+		Times(5).
+		Return(nil, errors.New("failed to connect"))
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertTinkerbellIPNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertTinkerbellIPNotInUse_InUseFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	server, client := net.Pipe()
+	defer server.Close()
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
+		Return(client, nil)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertTinkerbellIPNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
+}
+
 func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 
