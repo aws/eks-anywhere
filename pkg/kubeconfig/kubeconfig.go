@@ -48,17 +48,51 @@ func ValidateFile(filename string) error {
 		return fmt.Errorf("validating kubeconfig %q: %w", filename, err)
 	}
 
-	if !validations.FileExists(filename) {
+	// Trim whitespace from the beginning and end of the filename. While these
+	// could technically be valid filenames, it's far more likely a typo or
+	// shell-parsing bug.
+	trimmed := strings.TrimSpace(filename)
+
+	if !validations.FileExists(trimmed) {
 		return wrapError(fs.ErrNotExist)
 	}
 
-	if !validations.FileExistsAndIsNotEmpty(filename) {
+	if !validations.FileExistsAndIsNotEmpty(trimmed) {
 		return wrapError(fmt.Errorf("is empty"))
 	}
 
-	if _, err := clientcmd.LoadFromFile(filename); err != nil {
+	if _, err := clientcmd.LoadFromFile(trimmed); err != nil {
 		return wrapError(err)
 	}
 
 	return nil
+}
+
+// ValidateFileOrEnv validates the given filename if it's not empty. If it's
+// empty, it attempts to validate the filename returned from the
+// FromEnvironment function. If that too is empty, it returns the empty
+// string.
+func ValidateFileOrEnv(filename string) (string, error) {
+	var err error
+
+	// Trim whitespace from the beginning and end of the filename. While these
+	// could technically be valid filenames, it's far more likely a typo or
+	// shell-parsing bug.
+	if trimmed := strings.TrimSpace(filename); trimmed != "" {
+		err = ValidateFile(trimmed)
+		if err != nil {
+			return "", err
+		}
+		return trimmed, nil
+	}
+
+	if envFilename := FromEnvironment(); envFilename != "" {
+		err = ValidateFile(envFilename)
+		if err != nil {
+			return "", err
+		}
+		return envFilename, nil
+	}
+
+	return "", nil
 }
