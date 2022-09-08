@@ -148,7 +148,7 @@ Failed to create cluster {"error": "error initializing capi resources in cluster
 This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
-### NTP Time sync issues between Master Nodes and Worker nodes
+### NTP Time sync issues between control plane nodes and worker nodes
 ```
 level=error msg=k8sError error="github.com/cilium/cilium/pkg/k8s/watchers/endpoint_slice.go:91: Failed to watch *v1beta1.EndpointSlice: failed to list *v1beta1.EndpointSlice: Unauthorized" subsys=k8s
 ```
