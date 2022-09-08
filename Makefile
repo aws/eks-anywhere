@@ -482,6 +482,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
