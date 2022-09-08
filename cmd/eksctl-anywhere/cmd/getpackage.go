@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type getPackageOptions struct {
@@ -35,11 +32,9 @@ var getPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig := gpo.kubeConfig
-		if kubeConfig == "" {
-			kubeConfig = kubeconfig.FromEnvironment()
-		} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-			return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+		kubeConfig, err := kubeconfig.ValidateFileOrEnv(gpo.kubeConfig)
+		if err != nil {
+			return err
 		}
 		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, args)
 	},
