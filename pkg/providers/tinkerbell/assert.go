@@ -98,7 +98,7 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
-// AssertTinkerbellIPNotInUse ensures tinkerbell ip isn't in use
+//AssertTinkerbellIPNotInUse ensures tinkerbell ip isn't in use
 func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
 	return func(spec *ClusterSpec) error {
 		ip := spec.DatacenterConfig.Spec.TinkerbellIP
@@ -109,7 +109,7 @@ func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssert
 	}
 }
 
-// AssertTinkerbellIPAndControlPlaneIPNotSame ensures tinkerbell ip and controlplane ip are not the same
+//AssertTinkerbellIPAndControlPlaneIPNotSame ensures tinkerbell ip and controlplane ip are not the same
 func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	tinkerbellIP := spec.DatacenterConfig.Spec.TinkerbellIP
 	controlPlaneIP := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
