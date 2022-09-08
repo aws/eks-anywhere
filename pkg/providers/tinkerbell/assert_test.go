@@ -212,6 +212,24 @@ func TestAssertTinkerbellIPNotInUse_InUseFails(t *testing.T) {
 	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertTinkerbellIPAndControlPlaneIPNotSame_DifferentSucceeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	clusterSpec.DatacenterConfig.Spec.TinkerbellIP = "1.1.1.2"
+
+	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertTinkerbellIPAndControlPlaneIPNotSame_SameFails(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).ToNot(gomega.Succeed())
+}
+
 func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 
