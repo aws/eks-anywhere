@@ -31,7 +31,12 @@ func (v *AwsClientValidator) ValidateEC2SshKeyNameExists(ctx context.Context, m 
 		return err
 	}
 
-	for ip, client := range clientMap {
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
 		keyExists, err := client.EC2KeyNameExists(ctx, m.Spec.SshKeyName)
 		if err != nil {
 			return fmt.Errorf("describe key pair on snow device [%s]: %v", ip, err)
@@ -54,7 +59,12 @@ func (v *AwsClientValidator) ValidateEC2ImageExistsOnDevice(ctx context.Context,
 		return err
 	}
 
-	for ip, client := range clientMap {
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
 		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {
 			return fmt.Errorf("describe image on snow device [%s]: %v", ip, err)

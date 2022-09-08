@@ -36,6 +36,7 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 	awsClients := snow.AwsClientMap{
 		"device-1": mockaws,
 		"device-2": mockaws,
+		"device-3": mockaws,
 	}
 	mockClientRegistry := mocks.NewMockClientRegistry(ctrl)
 	mockClientRegistry.EXPECT().Get(ctx).Return(awsClients, nil).AnyTimes()
@@ -136,6 +137,13 @@ func TestValidateEC2SshKeyNameClientMapError(t *testing.T) {
 	g.Expect(err).NotTo(Succeed())
 }
 
+func TestValidateEC2SshKeyNameDeviceNotFoundInClientMapError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
+}
+
 func TestValidateEC2ImageExistsOnDevice(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(true, nil).Times(2)
@@ -168,6 +176,13 @@ func TestValidateEC2ImageExistsOnDeviceClientMapError(t *testing.T) {
 	g := newConfigManagerTestClientMapError(t)
 	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateEC2ImageExistsOnDeviceNotFoundInClientMapError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
 }
 
 func TestValidateMachineDeviceIPs(t *testing.T) {
