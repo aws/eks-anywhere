@@ -61,3 +61,11 @@ func TestSetDefaultSshKeyClientMapError(t *testing.T) {
 	err := g.machineConfigDefaulters.SetupDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }
+
+func TestSetDefaultSshKeyDeviceNotFoundInClientMap(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.SshKeyName = ""
+	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	err := g.machineConfigDefaulters.SetupDefaultSshKey(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
+}
