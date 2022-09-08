@@ -548,7 +548,7 @@ func TestPrintAnalysis(t *testing.T) {
 	b := f.DiagnosticBundleCustom(kubeconfig, mockArchivePath)
 
 	t.Run(t.Name(), func(t *testing.T) {
-		err := b.PrintAnalysis()
+		err := b.PrintAnalysis(false)
 		if err != nil {
 			t.Errorf("PrintAnalysis() error = %v, wantErr nil", err)
 			return

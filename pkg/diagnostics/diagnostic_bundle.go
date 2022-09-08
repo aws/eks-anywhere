@@ -210,13 +210,21 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	return nil
 }
 
-func (e *EksaDiagnosticBundle) PrintAnalysis() error {
+func (e *EksaDiagnosticBundle) PrintAnalysis(interactive bool) error {
 	if e.analysis == nil {
 		return nil
 	}
-	err := printOutput(e.bundle.Name, e.analysis)
-	if err != nil {
-		return err
+	if interactive {
+		err := printOutput(e.bundle.Name, e.analysis)
+		if err != nil {
+			return fmt.Errorf("outputing interactive UI: %v", err)
+		}
+	} else {
+		analysis, err := yaml.Marshal(e.analysis)
+		if err != nil {
+			return fmt.Errorf("outputing yaml: %v", err)
+		}
+		fmt.Println(string(analysis))
 	}
 	return nil
 }

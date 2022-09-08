@@ -24,6 +24,7 @@ type createSupportBundleOptions struct {
 	bundleConfig          string
 	hardwareFileName      string
 	tinkerbellBootstrapIP string
+	interactive           bool
 }
 
 var csbo = &createSupportBundleOptions{}
@@ -38,7 +39,7 @@ var supportbundleCmd = &cobra.Command{
 		if err := csbo.validate(cmd.Context()); err != nil {
 			return err
 		}
-		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
+		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig, csbo.interactive); err != nil {
 			return fmt.Errorf("failed to create support bundle: %v", err)
 		}
 		return nil
@@ -52,6 +53,7 @@ func init() {
 	supportbundleCmd.Flags().StringVarP(&csbo.bundleConfig, "bundle-config", "", "", "Bundle Config file to use when generating support bundle")
 	supportbundleCmd.Flags().StringVarP(&csbo.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	supportbundleCmd.Flags().StringVarP(&csbo.wConfig, "w-config", "w", "", "Kubeconfig file to use when creating support bundle for a workload cluster")
+	supportbundleCmd.Flags().BoolVarP(&csbo.interactive, "interactive", "i", false, "Enable/disable interactive mode when displaying analysis outcomes, default is false/disabled")
 	err := supportbundleCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -82,7 +84,7 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
+func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string, interactive bool) error {
 	clusterSpec, err := readAndValidateClusterSpec(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
@@ -113,7 +115,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return fmt.Errorf("collecting and analyzing bundle: %v", err)
 	}
 
-	err = supportBundle.PrintAnalysis()
+	err = supportBundle.PrintAnalysis(interactive)
 	if err != nil {
 		return fmt.Errorf("printing analysis")
 	}
