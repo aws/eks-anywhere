@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type installPackageOptions struct {
@@ -17,23 +18,35 @@ type installPackageOptions struct {
 	packageName   string
 	registry      string
 	customConfigs []string
+	// kubeConfig is an optional kubeconfig file to use when querying an
+	// existing cluster
+	kubeConfig string
 }
 
 var ipo = &installPackageOptions{}
 
 func init() {
 	installCmd.AddCommand(installPackageCommand)
-	installPackageCommand.Flags().Var(&ipo.source, "source", "Location to find curated packages: (cluster, registry)")
+
+	installPackageCommand.Flags().Var(&ipo.source, "source",
+		"Location to find curated packages: (cluster, registry)")
+	installPackageCommand.Flags().StringVar(&ipo.kubeVersion, "kube-version", "",
+		"Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	installPackageCommand.Flags().StringVarP(&ipo.packageName, "package-name", "n",
+		"", "Custom name of the curated package to install")
+	installPackageCommand.Flags().StringVar(&ipo.registry, "registry",
+		"", "Used to specify an alternative registry for discovery")
+	installPackageCommand.Flags().StringArrayVar(&ipo.customConfigs, "set",
+		[]string{}, "Provide custom configurations for curated packages. Format key:value")
+	installPackageCommand.Flags().StringVar(&ipo.kubeConfig, "kubeconfig", "",
+		"Path to an optional kubeconfig file to use.")
+
 	if err := installPackageCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
+		log.Fatalf("marking source flag as required: %s", err)
 	}
-	installPackageCommand.Flags().StringVar(&ipo.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
-	installPackageCommand.Flags().StringVarP(&ipo.packageName, "package-name", "n", "", "Custom name of the curated package to install")
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
+		log.Fatalf("marking package-name flag as required: %s", err)
 	}
-	installPackageCommand.Flags().StringVar(&ipo.registry, "registry", "", "Used to specify an alternative registry for discovery")
-	installPackageCommand.Flags().StringArrayVar(&ipo.customConfigs, "set", []string{}, "Provide custom configurations for curated packages. Format key:value")
 }
 
 var installPackageCommand = &cobra.Command{
@@ -56,7 +69,12 @@ func runInstallPackages(cmd *cobra.Command, args []string) error {
 }
 
 func installPackages(ctx context.Context, args []string) error {
-	kubeConfig := kubeconfig.FromEnvironment()
+	kubeConfig := ipo.kubeConfig
+	if kubeConfig == "" {
+		kubeConfig = kubeconfig.FromEnvironment()
+	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
+		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	}
 	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(ipo.registry), WithKubeVersion(ipo.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

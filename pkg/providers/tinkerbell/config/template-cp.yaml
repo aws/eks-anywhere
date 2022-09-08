@@ -112,6 +112,14 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
+{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{.registryMirrorConfiguration}}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
+        {{- end }}
+{{- end }}
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
@@ -225,6 +233,32 @@ spec:
         owner: root:root
         path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
+{{- if (ne .format "bottlerocket") }}
+{{- if .registryCACert }}
+      - content: |
+{{ .registryCACert | indent 10 }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://{{.registryMirrorConfiguration}}"]
+            {{- if .registryCACert }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+              ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+            {{- end }}
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+{{- end }}
+{{- end }}
+{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+    preKubeadmCommands:
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
+{{- end }}
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:
@@ -274,6 +308,14 @@ spec:
         sshAuthorizedKeys:
           - '{{.etcdSshAuthorizedKey}}'
         sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .registryMirrorConfiguration }}
+    registryMirror:
+      endpoint: {{.registryMirrorConfiguration}}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
+{{- end }}
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellMachineTemplate

@@ -73,6 +73,9 @@ BUILDKIT := $(BUILD_LIB)/buildkit.sh
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
+GO_VULNCHECK_BIN := govulncheck
+GO_VULNCHECK := $(TOOLS_BIN_DIR)/$(GO_VULNCHECK_BIN)
+
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
 
@@ -258,6 +261,14 @@ bin/golangci-lint: ## Download golangci-lint
 bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -)
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
+
+.PHONY: vulncheck
+vulncheck: govulncheck
+	$(TOOLS_BIN_DIR)/govulncheck ./...
+
+govulncheck: ## Download and install govulncheck
+govulncheck:
+	$(call go-get-tool,$(GO_VULNCHECK),golang.org/x/vuln/cmd/govulncheck@latest)
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
@@ -482,6 +493,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/reconciler/mocks/templater.go -package=mocks -source "pkg/networking/cilium/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
+	${GOPATH}/bin/mockgen -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

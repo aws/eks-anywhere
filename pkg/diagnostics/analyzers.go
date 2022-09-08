@@ -362,3 +362,33 @@ func (a *analyzerFactory) controlPlaneIPAnalyzer() []*Analyze {
 		},
 	}
 }
+
+// vmsAccessAnalyzer will analyze if vms have access to the API server of vSphere cluster
+func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze {
+	runBashPod := "check-cloud-controller"
+	runBashPodLog := fmt.Sprintf("%s.log", runBashPod)
+	vSphereCloudControllerPodLogPath := path.Join(runBashPod, runBashPodLog)
+	return &Analyze{
+		TextAnalyze: &textAnalyze{
+			analyzeMeta: analyzeMeta{
+				CheckName: fmt.Sprintf("%s: Virtual Machine has no access to vSphere APi serveer. Logs: %s", logAnalysisAnalyzerPrefix, vSphereCloudControllerPodLogPath),
+			},
+			FileName:     vSphereCloudControllerPodLogPath,
+			RegexPattern: `Failed to create new client. err: Post (.*) dial tcp (.*) connect: connection timed out\n(.*)Failed to create govmomi client. err: Post (.*) dial tcp (.*) connect: connection timed out`,
+			Outcomes: []*outcome{
+				{
+					Fail: &singleOutcome{
+						When:    "true",
+						Message: fmt.Sprintf("Failed to create client, Virtural Machines have no access to vSphere API server. See the cloud controller log in control plane node: %s", vSphereCloudControllerPodLogPath),
+					},
+				},
+				{
+					Pass: &singleOutcome{
+						When:    "false",
+						Message: fmt.Sprintf("Virtual Machines have access to vSphere API server. See %s \nPlease ignore the result when this analyzer is running on bootstrap cluster", vSphereCloudControllerPodLogPath),
+					},
+				},
+			},
+		},
+	}
+}

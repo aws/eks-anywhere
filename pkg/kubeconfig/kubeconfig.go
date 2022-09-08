@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -25,9 +26,17 @@ func FromClusterName(clusterName string) string {
 	return filepath.Join(clusterName, fmt.Sprintf(FromClusterFormat, clusterName))
 }
 
-// FromEnvironment reads the KubeConfig path from the standard KUBECONFIG environment variable.
+// FromEnvironment returns the first kubeconfig file specified in the
+// KUBECONFIG environment variable.
+//
+// The environment variable can contain a list of files, much like how the
+// PATH environment variable contains a list of directories.
 func FromEnvironment() string {
-	return os.Getenv(EnvName)
+	trimmed := strings.TrimSpace(os.Getenv(EnvName))
+	for _, filename := range filepath.SplitList(trimmed) {
+		return filename
+	}
+	return ""
 }
 
 // ValidateFile loads a file to validate it's basic contents.
