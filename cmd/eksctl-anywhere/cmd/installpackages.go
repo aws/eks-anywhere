@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type installPackageOptions struct {
@@ -69,11 +68,9 @@ func runInstallPackages(cmd *cobra.Command, args []string) error {
 }
 
 func installPackages(ctx context.Context, args []string) error {
-	kubeConfig := ipo.kubeConfig
-	if kubeConfig == "" {
-		kubeConfig = kubeconfig.FromEnvironment()
-	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	kubeConfig, err := kubeconfig.ValidateFileOrEnv(ipo.kubeConfig)
+	if err != nil {
+		return err
 	}
 	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(ipo.registry), WithKubeVersion(ipo.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
