@@ -152,7 +152,7 @@ You can also try using techniques from [Generic cluster unavailable]({{< relref 
 ```
 level=error msg=k8sError error="github.com/cilium/cilium/pkg/k8s/watchers/endpoint_slice.go:91: Failed to watch *v1beta1.EndpointSlice: failed to list *v1beta1.EndpointSlice: Unauthorized" subsys=k8s
 ```
-You might notice Unauthorized errors if your EKS Anywhere control plane nodes and worker nodes are out of sync. Please ensure to make them configured with same healthy NTP servers to avoid out of sync issues.
+You might notice authorization errors if the timestamps on your EKS Anywhere control plane nodes and worker nodes are out of sync. Please ensure that all the nodes are configured with same healthy NTP servers to avoid out of sync issues.
 
 ### The connection to the server localhost:8080 was refused 
 ```
