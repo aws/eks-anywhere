@@ -79,6 +79,13 @@ The cluster creation process starts by creating a temporary Kubernetes bootstrap
 Containerized components of the Tinkerbell provisioner run either as pods on the bootstrap cluster (hegel, rufio, and tink) or directly as containers on Docker (boots).
 Those Tinkerbell components drive the provisioning of the operating systems and Kubernetes components on each of the physical computers.
 
+With the information gathered from the cluster specification and the hardware CSV file, three custom resource definitions (CRDs) are created.
+These include:
+
+* Hardware custom resources: Which store hardware information for each machine
+* Template custom resources: Which store the tasks and actions
+* Workflow custom resources: Which put together the complete hardware and template information for each machine. There are different workflows for control plane and worker nodes.
+
 As the bootstrap cluster comes up and Tinkerbell components are started, you should see messages like the following:
 
 ```bash
@@ -104,13 +111,9 @@ See [Overview of Tinkerbell in EKS Anywhere]({{< relref "../reference/baremetal/
 
 #### 1. Tinkerbell PXE boots and configures nodes
 
-* Rufio uses BMC information to set the power state for the first control plane node it wants to provision and tells boots which machine to netboot and how.
+* Rufio uses BMC information to set the power state for the first control plane node it wants to provision.
 * When the node boots from its NIC, it talks to the Boots DHCP server, which fetches the kernel and initramfs (HookOS) needed to PXE boot the machine via HTTP.
 * With HookOS running on the node, the operating system identified by `IMG_URL` in the cluster specification is copied to the identified `DEST_DISK` on the machine.
-* With the information gathered from the cluster specification and the hardware CSV file, the tink controller creates and stores custom resources (CRs) from three custom resource definitions (CRDs). These include:
-    * Hardware custom resources: Which store hardware information for each machine
-    * Template custom resources: Which store the tasks and actions
-    * Workflow custom resources: Which put together the complete hardware and template information for each machine. There are different workflows for control plane and worker nodes.
 * The hegel components provides data stores that contain information used by services such as cloud-init to configure each system.
 * Next, the workflow is run on the first control plane node, followed by PXE booting and running the workflow for each subsequent control plane node.
 * Once the control plane is up, worker nodes are PXE booted and workflows are run to deploy each node.
