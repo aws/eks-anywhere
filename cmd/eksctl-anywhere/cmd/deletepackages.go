@@ -8,10 +8,22 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
+
+type deletePackageOptions struct {
+	// kubeConfig is an optional kubeconfig file to use when querying an
+	// existing cluster
+	kubeConfig string
+}
+
+var delPkgOpts = deletePackageOptions{}
 
 func init() {
 	deleteCmd.AddCommand(deletePackageCommand)
+
+	deletePackageCommand.Flags().StringVar(&delPkgOpts.kubeConfig, "kubeconfig", "",
+		"Path to an optional kubeconfig file to use.")
 }
 
 var deletePackageCommand = &cobra.Command{
@@ -28,7 +40,12 @@ var deletePackageCommand = &cobra.Command{
 }
 
 func deleteResources(ctx context.Context, args []string) error {
-	kubeConfig := kubeconfig.FromEnvironment()
+	kubeConfig := delPkgOpts.kubeConfig
+	if kubeConfig == "" {
+		kubeConfig = kubeconfig.FromEnvironment()
+	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
+		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	}
 	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

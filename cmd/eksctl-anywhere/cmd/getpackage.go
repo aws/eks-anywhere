@@ -1,18 +1,30 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
+
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type getPackageOptions struct {
 	output string
+	// kubeConfig is an optional kubeconfig file to use when querying an
+	// existing cluster
+	kubeConfig string
 }
 
 var gpo = &getPackageOptions{}
 
 func init() {
 	getCmd.AddCommand(getPackageCommand)
-	getPackageCommand.Flags().StringVarP(&gpo.output, "output", "o", "", "Specifies the output format (valid option: json, yaml)")
+
+	getPackageCommand.Flags().StringVarP(&gpo.output, "output", "o", "",
+		"Specifies the output format (valid option: json, yaml)")
+	getPackageCommand.Flags().StringVar(&gpo.kubeConfig, "kubeconfig", "",
+		"Path to an optional kubeconfig file.")
 }
 
 var getPackageCommand = &cobra.Command{
@@ -23,6 +35,12 @@ var getPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return getResources(cmd.Context(), "packages", gpo.output, args)
+		kubeConfig := gpo.kubeConfig
+		if kubeConfig == "" {
+			kubeConfig = kubeconfig.FromEnvironment()
+		} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
+			return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+		}
+		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, args)
 	},
 }
