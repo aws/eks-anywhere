@@ -17,7 +17,6 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/reconciler"
 )
 
 // CloudStackDatacenterReconciler reconciles a CloudStackDatacenterConfig object
@@ -85,11 +84,6 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-	// Set up envs for executing Cmk cmd and default values for datacenter config
-	if err := reconciler.SetupEnvVars(ctx, cloudstackDatacenter, r.client); err != nil {
-		log.Error(err, "Failed to set up env vars and default values for CloudStackDatacenterConfig")
-		return ctrl.Result{}, err
-	}
 	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed setting default values for cloudstack datacenter config: %v", err)
 	}

@@ -248,7 +248,7 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 
 		f.cloudstackClusterReconciler = cloudstackreconciler.New(
 			f.manager.GetClient(),
-			f.deps.CloudStackValidator,
+			f.deps.Cmk,
 			f.deps.CloudStackDefaulter,
 			f.tracker,
 		)

@@ -2,6 +2,9 @@ package reconciler
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	apiv1 "k8s.io/api/core/v1"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -39,22 +42,18 @@ const (
 
 type Reconciler struct {
 	client    client.Client
-	validator *cloudstack.Validator
+	cmk       *executables.Cmk
 	defaulter *cloudstack.Defaulter
 	tracker   *remote.ClusterCacheTracker
 }
 
-func New(client client.Client, validator *cloudstack.Validator, defaulter *cloudstack.Defaulter, tracker *remote.ClusterCacheTracker) *Reconciler {
+func New(client client.Client, cmk *executables.Cmk, defaulter *cloudstack.Defaulter, tracker *remote.ClusterCacheTracker) *Reconciler {
 	return &Reconciler{
 		client:    client,
-		validator: validator,
+		cmk: cmk,
 		defaulter: defaulter,
 		tracker:   tracker,
 	}
-}
-
-func SetupEnvVars(_ context.Context, _ *anywherev1.CloudStackDatacenterConfig, _ client.Client) error {
-	return nil
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
@@ -64,11 +63,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		return controller.Result{}, err
 	}
 	dataCenterConfig.SetDefaults()
-	// Set up envs for executing Cmk cmd and default values for datacenter config
-	if err := SetupEnvVars(ctx, dataCenterConfig, r.client); err != nil {
-		log.Error(err, "Failed to set up env vars and default values for CloudStackDatacenterConfig")
-		return controller.Result{}, err
-	}
 	if !dataCenterConfig.Status.SpecValid {
 		log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
 		return controller.Result{
@@ -97,8 +91,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 	}
 
 	cloudstackClusterSpec := cloudstack.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
-
-	if err := r.validator.ValidateClusterMachineConfigs(ctx, cloudstackClusterSpec); err != nil {
+	secrets, err := r.fetchDatacenterSecrets(ctx, dataCenterConfig)
+	if err != nil {
+		return controller.Result{}, fmt.Errorf("retreiving secrets from cloudstack datacenter config: %v", err)
+	}
+	execConfig, err := decoder.ParseCloudStackCredsFromSecrets(secrets)
+	if err != nil {
+		return controller.Result{}, err
+	}
+	r.cmk.SetExecConfig(execConfig)
+	validator := cloudstack.NewValidator(r.cmk)
+	if err := validator.ValidateClusterMachineConfigs(ctx, cloudstackClusterSpec); err != nil {
 		return controller.Result{}, err
 	}
 
@@ -274,4 +277,21 @@ func (r *Reconciler) reconcileControlPlaneSpec(ctx context.Context, cluster *any
 		conditions.MarkTrue(cluster, controlSpecPlaneAppliedCondition)
 	}
 	return controller.Result{}, nil
+}
+
+func (r *Reconciler) fetchDatacenterSecrets(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig) ([]apiv1.Secret, error) {
+	var secrets []apiv1.Secret
+	for _, az := range cloudstackDatacenter.Spec.AvailabilityZones {
+		secret := &apiv1.Secret{}
+		namespacedName := types.NamespacedName{
+			Name: az.CredentialsRef,
+			Namespace: constants.EksaSystemNamespace,
+		}
+		if err := r.client.Get(ctx, namespacedName, secret); err != nil {
+			return nil, err
+		}
+		secrets = append(secrets, *secret)
+	}
+
+	return secrets, nil
 }

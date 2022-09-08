@@ -99,7 +99,7 @@ func CleanUpCloudstackTestResources(ctx context.Context, clusterName string, dry
 	if err != nil {
 		return fmt.Errorf("building cmk executable: %v", err)
 	}
-	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig.Profiles)
+	cmk := executableBuilder.BuildCmkExecutable(tmpWriter, execConfig)
 	defer cmk.Close(ctx)
 
 	errorsMap := map[string]error{}
