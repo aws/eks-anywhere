@@ -1,8 +1,12 @@
+// - https://github.com/replicatedhq/troubleshoot/blob/main/cmd/troubleshoot/cli/interactive_results.go
+// Modifications:
+// - remove the isShowingSaved variable
+// - remove the uiEvents of saving analyzer outputs because saving process have been invoked before the UI be saved automatically
+
 package diagnostics
 
 import (
 	"fmt"
-	"log"
 
 	ui "github.com/replicatedhq/termui/v3"
 	"github.com/replicatedhq/termui/v3/widgets"
@@ -17,9 +21,7 @@ var (
 
 func printOutput(supportBundleName string, analyzers []*executables.SupportBundleAnalysis) error {
 	if err := ui.Init(); err != nil {
-		log.Fatalf("failed to initialize termui: %v", err)
-		ui.Close()
-		return err
+		return fmt.Errorf("failed initialized terminal ui %s", err)
 	}
 	defer ui.Close()
 	drawUI(supportBundleName, analyzers)
