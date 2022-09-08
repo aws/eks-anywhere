@@ -10,16 +10,16 @@ Log level:
 
 The loggers only support verbosity levels (V-levels) instead of semantic levels.
 Level zero, the default, matters most. Increasing levels matter less and less.
-	* 0: You always want to see this.
-	* 1: Common logging that you don't want to show by default.
-	* 2: Useful steady state information about the operation and important log messages that may correlate to significant changes in the system.
-	* 3: Extended information about changes. Somehow useful information to the user that is not important enough for level 2.
-	* 4: Debugging information. Starting from this level, all logs are oriented to developers and troubleshooting.
-	* 5: Traces. Information to follow the code path.
-	* 6: Information about interaction with external resources. External binary commands, api calls.
-	* 7: Extra information passed to external systems. Configuration files, kubernetes manifests, etc.
-	* 8: Truncated external binaries and clients output/responses.
-	* 9: Full external binaries and clients output/responses.
+  - 0: You always want to see this.
+  - 1: Common logging that you don't want to show by default.
+  - 2: Useful steady state information about the operation and important log messages that may correlate to significant changes in the system.
+  - 3: Extended information about changes. Somehow useful information to the user that is not important enough for level 2.
+  - 4: Debugging information. Starting from this level, all logs are oriented to developers and troubleshooting.
+  - 5: Traces. Information to follow the code path.
+  - 6: Information about interaction with external resources. External binary commands, api calls.
+  - 7: Extra information passed to external systems. Configuration files, kubernetes manifests, etc.
+  - 8: Truncated external binaries and clients output/responses.
+  - 9: Full external binaries and clients output/responses.
 
 Logging WithValues:
 
