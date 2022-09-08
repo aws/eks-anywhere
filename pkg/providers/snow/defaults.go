@@ -63,10 +63,15 @@ func NewMachineConfigDefaulters(d *Defaulters) *MachineConfigDefaulters {
 	}
 }
 
-func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context, clientMap AwsClientMap) (int, error) {
+func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context, clientMap AwsClientMap, m *v1alpha1.SnowMachineConfig) (int, error) {
 	var count int
 
-	for ip, client := range clientMap {
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return count, fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
 		keyExists, err := client.EC2KeyNameExists(ctx, defaultAwsSshKeyName)
 		if err != nil {
 			return count, fmt.Errorf("describing key pair on snow device [deviceIP=%s]: %v", ip, err)
@@ -75,6 +80,7 @@ func (md *MachineConfigDefaulters) defaultKeyCount(ctx context.Context, clientMa
 			count += 1
 		}
 	}
+
 	return count, nil
 }
 
@@ -93,16 +99,16 @@ func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1
 		return err
 	}
 
-	keyCount, err := md.defaultKeyCount(ctx, clientMap)
+	keyCount, err := md.defaultKeyCount(ctx, clientMap, m)
 	if err != nil {
 		return err
 	}
 
-	if keyCount > 0 && keyCount < len(clientMap) {
+	if keyCount > 0 && keyCount < len(m.Spec.Devices) {
 		return fmt.Errorf("default key [keyName=%s] only exists on some of the devices. Use 'aws ec2 import-key-pair' to import this key to all the devices", defaultAwsSshKeyName)
 	}
 
-	if keyCount == len(clientMap) {
+	if keyCount == len(m.Spec.Devices) {
 		md.keyGenerated = true
 		m.Spec.SshKeyName = defaultAwsSshKeyName
 		return nil
@@ -115,7 +121,12 @@ func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1
 		return err
 	}
 
-	for ip, client := range clientMap {
+	for _, ip := range m.Spec.Devices {
+		client, ok := clientMap[ip]
+		if !ok {
+			return fmt.Errorf("credentials not found for device [%s]", ip)
+		}
+
 		err := client.EC2ImportKeyPair(ctx, defaultAwsSshKeyName, []byte(key))
 		if err != nil {
 			return fmt.Errorf("importing key pair on snow device [deviceIP=%s]: %v", ip, err)
