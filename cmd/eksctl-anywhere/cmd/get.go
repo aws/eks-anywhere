@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
 
 var getCmd = &cobra.Command{
@@ -32,9 +31,7 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getResources(ctx context.Context, resourceType string, output string, args []string) error {
-	kubeConfig := kubeconfig.FromEnvironment()
-
+func getResources(ctx context.Context, resourceType, output, kubeConfig string, args []string) error {
 	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
