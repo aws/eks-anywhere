@@ -217,8 +217,6 @@ func TestAssertTinkerbellIPAndControlPlaneIPNotSame_DifferentSucceeds(t *testing
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 
-	clusterSpec.DatacenterConfig.Spec.TinkerbellIP = "1.1.1.2"
-
 	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).To(gomega.Succeed())
 }
 
@@ -226,6 +224,7 @@ func TestAssertTinkerbellIPAndControlPlaneIPNotSame_SameFails(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+	clusterSpec.DatacenterConfig.Spec.TinkerbellIP = "1.1.1.1"
 
 	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).ToNot(gomega.Succeed())
 }

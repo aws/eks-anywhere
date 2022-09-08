@@ -20,7 +20,7 @@ import (
 
 const (
 	testDataDir = "testdata"
-	testIP      = "1.2.3.4"
+	testIP      = "5.6.7.8"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
