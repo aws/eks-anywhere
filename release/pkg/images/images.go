@@ -226,36 +226,37 @@ func GetReleaseImageURI(r *releasetypes.ReleaseConfig, name, repoName string, ta
 	if r.DevRelease {
 		if r.Weekly {
 			semver = r.DevReleaseUriVersion
-		}
-		currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration, trimVersionSignifier)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-
-		previousReleaseImageSemver, err := GetPreviousReleaseImageSemver(r, releaseImageUri)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-		if previousReleaseImageSemver == "" {
-			semver = r.DevReleaseUriVersion
 		} else {
-			fmt.Printf("Previous release image semver for %s image: %s\n", repoName, previousReleaseImageSemver)
-			previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
-
-			sameDigest, err := CompareHashWithPreviousBundle(r, currentSourceImageUri, previousReleaseImageUri)
+			currentSourceImageUri, _, err := GetSourceImageURI(r, name, repoName, tagOptions, imageTagConfiguration, trimVersionSignifier)
 			if err != nil {
 				return "", errors.Cause(err)
 			}
-			if sameDigest {
-				semver = previousReleaseImageSemver
-				fmt.Printf("Image digest for %s image has not changed, tagging with previous dev release semver: %s\n", repoName, semver)
+
+			previousReleaseImageSemver, err := GetPreviousReleaseImageSemver(r, releaseImageUri)
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+			if previousReleaseImageSemver == "" {
+				semver = r.DevReleaseUriVersion
 			} else {
-				newSemver, err := filereader.GenerateNewDevReleaseVersion(previousReleaseImageSemver, "vDev", r.BuildRepoBranchName)
+				fmt.Printf("Previous release image semver for %s image: %s\n", repoName, previousReleaseImageSemver)
+				previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
+
+				sameDigest, err := CompareHashWithPreviousBundle(r, currentSourceImageUri, previousReleaseImageUri)
 				if err != nil {
 					return "", errors.Cause(err)
 				}
-				semver = strings.ReplaceAll(newSemver, "+", "-")
-				fmt.Printf("Image digest for %s image has changed, tagging with new dev release semver: %s\n", repoName, semver)
+				if sameDigest {
+					semver = previousReleaseImageSemver
+					fmt.Printf("Image digest for %s image has not changed, tagging with previous dev release semver: %s\n", repoName, semver)
+				} else {
+					newSemver, err := filereader.GenerateNewDevReleaseVersion(previousReleaseImageSemver, "vDev", r.BuildRepoBranchName)
+					if err != nil {
+						return "", errors.Cause(err)
+					}
+					semver = strings.ReplaceAll(newSemver, "+", "-")
+					fmt.Printf("Image digest for %s image has changed, tagging with new dev release semver: %s\n", repoName, semver)
+				}
 			}
 		}
 	} else {

@@ -19,7 +19,7 @@ set -x
 set -o pipefail
 
 ARTIFACTS_DIR="${1?Specify first argument - artifacts path}"
-BUNDLE_MANIFEST_URL="${2?Specify second argument - weekly bundle manifest URL}"
+WEEKLY_RELEASES_URL_PREFIX="${2?Specify second argument - weekly releases URL prefix}"
 
 SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 RELEASE_NOTES_PATH="$SCRIPT_ROOT/github-bundle-release-notes"
@@ -33,7 +33,9 @@ envsubst '$DATE_YYYYMMDD:$BUILD_REPO_HEAD:$CLI_REPO_HEAD' \
 
 # Downloading the weekly bundle release manifest
 mkdir -p $ARTIFACTS_DIR
-wget $BUNDLE_MANIFEST_URL -O $ARTIFACTS_DIR/$DATE_YYYYMMDD-bundle-release.yaml
+for releasetype in bundle eks-a; do
+    wget $WEEKLY_RELEASES_URL_PREFIX/$DATE_YYYYMMDD/$releasetype-release.yaml -O $ARTIFACTS_DIR/$DATE_YYYYMMDD-$releasetype-release.yaml
+done
 
 # Publish the asset as a Github pre-release on main branch with a new dated tag
-gh release create $RELEASE_TAG $ARTIFACTS_DIR/$DATE_YYYYMMDD-bundle-release.yaml --notes-file "$RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
+gh release create $RELEASE_TAG $ARTIFACTS_DIR/*.yaml --notes-file "$RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
