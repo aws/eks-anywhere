@@ -16,7 +16,6 @@ import (
 type Validator interface {
 	ValidateEC2SshKeyNameExists(ctx context.Context, m *anywherev1.SnowMachineConfig) error
 	ValidateEC2ImageExistsOnDevice(ctx context.Context, m *anywherev1.SnowMachineConfig) error
-	ValidateMachineDeviceIPs(ctx context.Context, m *anywherev1.SnowMachineConfig) error
 }
 
 // SnowMachineConfigReconciler reconciles a SnowMachineConfig object
@@ -81,9 +80,6 @@ func (r *SnowMachineConfigReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *SnowMachineConfigReconciler) reconcile(ctx context.Context, snowMachineConfig *anywherev1.SnowMachineConfig) (_ ctrl.Result, reterr error) {
 	var allErrs []error
-	if err := r.validator.ValidateMachineDeviceIPs(ctx, snowMachineConfig); err != nil {
-		allErrs = append(allErrs, err)
-	}
 	if err := r.validator.ValidateEC2ImageExistsOnDevice(ctx, snowMachineConfig); err != nil {
 		allErrs = append(allErrs, err)
 	}
