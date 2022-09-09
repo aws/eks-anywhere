@@ -26,9 +26,6 @@ RELEASE_NOTES_PATH="$SCRIPT_ROOT/github-bundle-release-notes"
 export DATE_YYYYMMDD=$(date "+%F")
 RELEASE_TAG="weekly.$DATE_YYYYMMDD"
 
-# Authenticating to GitHub with the bot token
-echo "$GITHUB_TOKEN" | gh auth login --with-token
-
 # Filling in values for the GitHub Release notes template
 envsubst '$DATE_YYYYMMDD:$BUILD_REPO_HEAD:$CLI_REPO_HEAD' \
     < "$RELEASE_NOTES_PATH.tmpl" \
@@ -36,7 +33,7 @@ envsubst '$DATE_YYYYMMDD:$BUILD_REPO_HEAD:$CLI_REPO_HEAD' \
 
 # Downloading the weekly bundle release manifest
 mkdir -p $ARTIFACTS_DIR
-wget $BUNDLE_MANIFEST_URL $ARTIFACTS_DIR/weekly-bundle-release.yaml
+wget $BUNDLE_MANIFEST_URL -O $ARTIFACTS_DIR/$DATE_YYYYMMDD-bundle-release.yaml
 
 # Publish the asset as a Github pre-release on main branch with a new dated tag
-gh release create $RELEASE_TAG $ARTIFACTS_DIR/weekly-bundle-release.yaml --notes-file "RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
+gh release create $RELEASE_TAG $ARTIFACTS_DIR/$DATE_YYYYMMDD-bundle-release.yaml --notes-file "$RELEASE_NOTES_PATH" --prerelease --repo "github.com/aws/eks-anywhere" --title "Weekly Release $DATE_YYYYMMDD" --target "main"
