@@ -223,7 +223,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	}
 
 	standardBundleRef := regexp.MustCompile(`^bundle-[0-9]+$`)
-	if standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
 		oldIndex, _ := strconv.Atoi(strings.Split(old.Spec.BundlesRef.Name, "-")[1])
 		newIndex, _ := strconv.Atoi(strings.Split(new.Spec.BundlesRef.Name, "-")[1])
 		if newIndex < oldIndex {
