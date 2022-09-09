@@ -467,13 +467,6 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "testdata/fake_manifest.yaml",
 			},
 		},
-		Aws: v1alpha1.AwsBundle{
-			Version: "v0.6.4",
-			Controller: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244",
-			},
-			KubeProxy: kubeProxyVersion08,
-		},
 		Snow: v1alpha1.SnowBundle{
 			Version: "v0.0.0",
 		},

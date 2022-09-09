@@ -170,19 +170,6 @@ func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
-func TestTinkerbellKubernetes120ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(2)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithControlPlaneHardware(3),
-		framework.WithWorkerHardware(2),
-	)
-	runTinkerbellConformanceFlow(test)
-}
-
 func TestTinkerbellKubernetes121ThreeReplicasTwoWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

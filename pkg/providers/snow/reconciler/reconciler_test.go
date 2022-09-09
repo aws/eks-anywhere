@@ -3,13 +3,16 @@ package reconciler_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	eksdv1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -17,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	clusterspec "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -31,9 +35,21 @@ const (
 
 func TestReconcilerReconcileSuccess(t *testing.T) {
 	tt := newReconcilerTest(t)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
 	tt.createAllObjs()
 
-	result, err := tt.reconciler().Reconcile(tt.ctx, test.NewNullLogger(), tt.cluster)
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, tt.buildSpec())
+
+	result, err := tt.reconciler().Reconcile(tt.ctx, logger, tt.cluster)
 
 	tt.Expect(err).NotTo(HaveOccurred())
 	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
@@ -92,11 +108,65 @@ func TestReconcilerReconcileControlPlane(t *testing.T) {
 	tt.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestReconcilerCheckControlPlaneReadyItIsReady(t *testing.T) {
+	tt := newReconcilerTest(t)
+	capiCluster := capiCluster(func(c *clusterv1.Cluster) {
+		c.Name = tt.cluster.Name
+	})
+	tt.eksaSupportObjs = append(tt.eksaSupportObjs, capiCluster)
+	tt.withFakeClient()
+
+	result, err := tt.reconciler().CheckControlPlaneReady(tt.ctx, test.NewNullLogger(), tt.buildSpec())
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileCNISuccess(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	remoteClient := fake.NewClientBuilder().Build()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(remoteClient, nil)
+	tt.cniReconciler.EXPECT().Reconcile(tt.ctx, logger, remoteClient, spec)
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestReconcilerReconcileCNIErrorClientRegistry(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	logger := test.NewNullLogger()
+	spec := tt.buildSpec()
+
+	tt.remoteClientRegistry.EXPECT().GetClient(
+		tt.ctx, client.ObjectKey{Name: "workload-cluster", Namespace: "eksa-system"},
+	).Return(nil, errors.New("building client"))
+
+	result, err := tt.reconciler().ReconcileCNI(tt.ctx, logger, spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("building client")))
+	tt.Expect(tt.cluster.Status.FailureMessage).To(BeZero())
+	tt.Expect(result).To(Equal(controller.Result{}))
+}
+
 type reconcilerTest struct {
 	t testing.TB
 	*WithT
 	ctx                       context.Context
 	cniReconciler             *mocks.MockCNIReconciler
+	remoteClientRegistry      *mocks.MockRemoteClientRegistry
 	cluster                   *anywherev1.Cluster
 	client                    client.Client
 	env                       *envtest.Environment
@@ -108,6 +178,7 @@ type reconcilerTest struct {
 func newReconcilerTest(t testing.TB) *reconcilerTest {
 	ctrl := gomock.NewController(t)
 	cniReconciler := mocks.NewMockCNIReconciler(ctrl)
+	remoteClientRegistry := mocks.NewMockRemoteClientRegistry(ctrl)
 	client := env.Client()
 
 	bundle := createBundle()
@@ -168,12 +239,13 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 	})
 
 	tt := &reconcilerTest{
-		t:             t,
-		WithT:         NewWithT(t),
-		ctx:           context.Background(),
-		cniReconciler: cniReconciler,
-		client:        client,
-		env:           env,
+		t:                    t,
+		WithT:                NewWithT(t),
+		ctx:                  context.Background(),
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
+		client:               client,
+		env:                  env,
 		eksaSupportObjs: []envtest.Object{
 			namespace(clusterNamespace),
 			namespace(constants.EksaSystemNamespace),
@@ -193,7 +265,7 @@ func newReconcilerTest(t testing.TB) *reconcilerTest {
 
 func (tt *reconcilerTest) cleanup() {
 	for _, obj := range tt.allObjs() {
-		_, isNamespace := obj.(*v1.Namespace)
+		_, isNamespace := obj.(*corev1.Namespace)
 		if isNamespace {
 			// namespaces can't be deleted with envtest
 			continue
@@ -221,7 +293,7 @@ func (tt *reconcilerTest) withFakeClient() {
 }
 
 func (tt *reconcilerTest) reconciler() *reconciler.Reconciler {
-	return reconciler.New(tt.client, tt.cniReconciler)
+	return reconciler.New(tt.client, tt.cniReconciler, tt.remoteClientRegistry)
 }
 
 func (tt *reconcilerTest) createAllObjs() {
@@ -308,7 +380,6 @@ func createBundle() *releasev1.Bundles {
 					ClusterAPI:             releasev1.CoreClusterAPI{},
 					Bootstrap:              releasev1.KubeadmBootstrapBundle{},
 					ControlPlane:           releasev1.KubeadmControlPlaneBundle{},
-					Aws:                    releasev1.AwsBundle{},
 					VSphere:                releasev1.VSphereBundle{},
 					Docker:                 releasev1.DockerBundle{},
 					Eksa:                   releasev1.EksaBundle{},
@@ -409,8 +480,8 @@ func snowMachineConfig(opts ...snowMachineOpt) *anywherev1.SnowMachineConfig {
 	return m
 }
 
-func namespace(name string) *v1.Namespace {
-	return &v1.Namespace{
+func namespace(name string) *corev1.Namespace {
+	return &corev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "namespace",
 			APIVersion: "v1",
@@ -419,4 +490,34 @@ func namespace(name string) *v1.Namespace {
 			Name: name,
 		},
 	}
+}
+
+type capiClusterOpt func(*clusterv1.Cluster)
+
+func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
+	c := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "eksa-system",
+		},
+		Status: clusterv1.ClusterStatus{
+			Conditions: clusterv1.Conditions{
+				{
+					Type:               clusterapi.ControlPlaneReadyCondition,
+					Status:             corev1.ConditionTrue,
+					LastTransitionTime: metav1.NewTime(time.Now()),
+				},
+			},
+		},
+	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }

@@ -26,7 +26,6 @@ const (
 	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
 
 	// Project paths
-	CapaProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-aws"
 	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
 	CapcProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
@@ -43,4 +42,12 @@ const (
 	KindProjectPath                     = "projects/kubernetes-sigs/kind"
 	KubeRbacProxyProjectPath            = "projects/brancz/kube-rbac-proxy"
 	PackagesProjectPath                 = "projects/aws/eks-anywhere-packages"
+
+	// Date format with standard reference time values
+	// The reference time used is the specific time stamp:
+	//
+	//	01/02 03:04:05PM '06 -0700
+	//
+	// (January 2, 15:04:05, 2006, in time zone seven hours west of GMT).
+	YYYYMMDD = "2006-01-02"
 )

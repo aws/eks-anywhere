@@ -7,3 +7,11 @@ const (
 	externalEtcdWaitTimeoutFlag = "external-etcd-wait-timeout"
 	perMachineWaitTimeoutFlag   = "per-machine-wait-timeout"
 )
+
+type Operation int
+
+const (
+	Create  Operation = 0
+	Upgrade Operation = 1
+	Delete  Operation = 2
+)

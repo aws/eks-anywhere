@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -66,8 +65,8 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	}
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(kubeconfigPath)
+	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+		return err
 	}
 
 	return nil

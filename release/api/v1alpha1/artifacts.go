@@ -16,11 +16,6 @@ package v1alpha1
 
 func (vb *VersionsBundle) Manifests() map[string][]*string {
 	return map[string][]*string{
-		"cluster-api-provider-aws": {
-			&vb.Aws.Components.URI,
-			&vb.Aws.ClusterTemplate.URI,
-			&vb.Aws.Metadata.URI,
-		},
 		"core-cluster-api": {
 			&vb.ClusterAPI.Components.URI,
 			&vb.ClusterAPI.Metadata.URI,
@@ -127,6 +122,30 @@ func (vb *VersionsBundle) SnowImages() []Image {
 	return i
 }
 
+func (vb *VersionsBundle) TinkerbellImages() []Image {
+	return []Image{
+		vb.Tinkerbell.ClusterAPIController,
+		vb.Tinkerbell.KubeVip,
+		vb.Tinkerbell.Envoy,
+		vb.Tinkerbell.TinkerbellStack.Actions.Cexec,
+		vb.Tinkerbell.TinkerbellStack.Actions.Kexec,
+		vb.Tinkerbell.TinkerbellStack.Actions.ImageToDisk,
+		vb.Tinkerbell.TinkerbellStack.Actions.OciToDisk,
+		vb.Tinkerbell.TinkerbellStack.Actions.WriteFile,
+		vb.Tinkerbell.TinkerbellStack.Actions.Reboot,
+		vb.Tinkerbell.TinkerbellStack.Boots,
+		vb.Tinkerbell.TinkerbellStack.Cfssl,
+		vb.Tinkerbell.TinkerbellStack.Hegel,
+		vb.Tinkerbell.TinkerbellStack.Hook.Bootkit,
+		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
+		vb.Tinkerbell.TinkerbellStack.Hook.Kernel,
+		vb.Tinkerbell.TinkerbellStack.Rufio,
+		vb.Tinkerbell.TinkerbellStack.Tink.TinkController,
+		vb.Tinkerbell.TinkerbellStack.Tink.TinkServer,
+		vb.Tinkerbell.TinkerbellStack.Tink.TinkWorker,
+	}
+}
+
 func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
@@ -168,6 +187,7 @@ func (vb *VersionsBundle) Images() []Image {
 		vb.VsphereImages(),
 		vb.CloudStackImages(),
 		vb.SnowImages(),
+		vb.TinkerbellImages(),
 	}
 
 	size := 0
@@ -187,11 +207,6 @@ func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
 		"cilium":                &vb.Cilium.HelmChart,
 		"eks-anywhere-packages": &vb.PackageController.HelmChart,
-	}
-}
-
-func (vb *VersionsBundle) PackageControllerImage() []Image {
-	return []Image{
-		vb.PackageController.Controller,
+		"tinkerbell-chart":      &vb.Tinkerbell.TinkerbellStack.TinkebellChart,
 	}
 }

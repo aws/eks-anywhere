@@ -136,11 +136,18 @@ func NewProvider(
 		}
 	}
 
+	var registryMirror *v1alpha1.RegistryMirrorConfiguration
+	if clusterConfig.Spec.RegistryMirrorConfiguration != nil {
+		registryMirror = clusterConfig.Spec.RegistryMirrorConfiguration
+	} else {
+		registryMirror = nil
+	}
+
 	return &Provider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
-		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0]),
+		stackInstaller:        stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0], registryMirror),
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &TemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,

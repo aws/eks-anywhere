@@ -31,7 +31,7 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("15m"))
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
 }
@@ -183,6 +183,16 @@ func TestCloudStackKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestCloudStackKubernetes121MultiEndpointSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat121(),
+			framework.WithCloudStackFillers(framework.UpdateAddCloudStackAz2())),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestCloudStackKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -201,17 +211,6 @@ func TestVSphereKubernetes121CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *test
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 	)
 	runSimpleFlow(test)
-}
-
-func TestTinkerbellKubernetes120SimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellSimpleFlow(test)
 }
 
 func TestTinkerbellKubernetes121SimpleFlow(t *testing.T) {

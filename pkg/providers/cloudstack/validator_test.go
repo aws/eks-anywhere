@@ -216,11 +216,11 @@ func TestSetupAndValidateDiskOfferingEmpty(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -255,9 +255,9 @@ func TestSetupAndValidateValidDiskOffering(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -267,7 +267,7 @@ func TestSetupAndValidateValidDiskOffering(t *testing.T) {
 		Label:      "data_disk",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -302,9 +302,9 @@ func TestSetupAndValidateInvalidDiskOfferingNotPresent(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -314,7 +314,7 @@ func TestSetupAndValidateInvalidDiskOfferingNotPresent(t *testing.T) {
 		Label:      "data_disk",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -348,9 +348,9 @@ func TestSetupAndValidateInValidDiskOfferingBadMountPath(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -360,7 +360,7 @@ func TestSetupAndValidateInValidDiskOfferingBadMountPath(t *testing.T) {
 		Label:      "data_disk",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -392,9 +392,9 @@ func TestSetupAndValidateInValidDiskOfferingEmptyDevice(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -404,7 +404,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyDevice(t *testing.T) {
 		Label:      "data_disk",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -436,9 +436,9 @@ func TestSetupAndValidateInValidDiskOfferingEmptyFilesystem(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -448,7 +448,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyFilesystem(t *testing.T) {
 		Label:      "data_disk",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 
@@ -480,9 +480,9 @@ func TestSetupAndValidateInValidDiskOfferingEmptyLabel(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 	workerNodeMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "DiskOffering",
 		},
@@ -492,7 +492,7 @@ func TestSetupAndValidateInValidDiskOfferingEmptyLabel(t *testing.T) {
 		Label:      "",
 	}
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = v1alpha1.CloudStackResourceDiskOffering{}
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{}
 
 	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
 

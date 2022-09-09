@@ -79,7 +79,7 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 3. Download the root role tuftool will use to download the bottlerocket images
 ```
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
+sha512sum -c <<<"b81af4d8eb86743539fbc4709d33ada7b118d9f929f0c2f6c04e1d41f46241ed80423666d169079d736ab79965b4dd25a5a6db5f01578b397496d49ce11a3aa2  root.json"
 ```
 4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.23, 1.22, 1.21 and 1.20
 ```
@@ -143,6 +143,8 @@ To use `image-builder` you must meet the following prerequisites:
   * anywhere-assets.eks.amazonaws.com (to download the EKS Anywhere binaries, manifests and OVAs)
   * distro.eks.amazonaws.com (to download EKS Distro binaries and manifests)
   * d2glxqk2uabbnd.cloudfront.net (for EKS Anywhere and EKS Distro ECR container images)
+  * api.ecr.us-west-2.amazonaws.com (for EKS Anywhere package authentication matching your region)
+  * d5l0dvt14r5h8.cloudfront.net (for EKS Anywhere package ECR container)
 * vSphere only:
   * Required vSphere user permissions:
     * Inventory:
@@ -198,6 +200,8 @@ You can use a proxy server to route outbound requests to the internet. To config
    sudo apt update -y
    sudo apt install jq unzip make ansible -y
    sudo snap install yq
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 4. Get `image-builder`:
    ```bash
@@ -259,6 +263,8 @@ You can use a proxy server to route outbound requests to the internet. To config
    sudo usermod -a -G kvm $USER
    sudo chmod 666 /dev/kvm
    sudo chown root:kvm /dev/kvm
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
    ```
 1. Get `image-builder`:
     ```bash

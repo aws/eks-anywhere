@@ -362,7 +362,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:        anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering: anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					DiskOffering: anywherev1.CloudStackResourceDiskOffering{
+					DiskOffering: &anywherev1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 							Name: "Small",
 						},
@@ -447,7 +447,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:        anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering: anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					DiskOffering: anywherev1.CloudStackResourceDiskOffering{
+					DiskOffering: &anywherev1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
 							Name: "Small",
 						},
@@ -456,6 +456,40 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 						Filesystem: "ext4",
 						Label:      "data_disk",
 					},
+					Affinity:          "anti",
+					AffinityGroupIds:  []string{"c", "d"},
+					UserCustomDetails: map[string]string{"foo": "bar"},
+					Symlinks:          map[string]string{},
+				},
+			},
+		},
+		{
+			name:    "Diskoffering empty",
+			wantErr: false,
+			args: args{
+				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							"symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1": "",
+						},
+					},
+					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
+						Spec: cloudstackv1.CloudStackMachineTemplateResource{
+							Spec: cloudstackv1.CloudStackMachineSpec{
+								Offering:         cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template:         cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								Affinity:         "anti",
+								AffinityGroupIDs: []string{"c", "d"},
+								Details:          map[string]string{"foo": "bar"},
+							},
+						},
+					},
+				},
+			},
+			want: &anywherev1.CloudStackMachineConfig{
+				Spec: anywherev1.CloudStackMachineConfigSpec{
+					Template:          anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+					ComputeOffering:   anywherev1.CloudStackResourceIdentifier{Name: "large"},
 					Affinity:          "anti",
 					AffinityGroupIds:  []string{"c", "d"},
 					UserCustomDetails: map[string]string{"foo": "bar"},

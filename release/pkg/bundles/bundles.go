@@ -43,7 +43,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              NewBundlesName(r),
-			CreationTimestamp: metav1.Time{Time: r.ReleaseDate},
+			CreationTimestamp: metav1.Time{Time: r.ReleaseTime},
 		},
 		Spec: anywherev1alpha1.BundlesSpec{
 			Number: r.BundleNumber,
@@ -74,11 +74,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 	kubeadmControlPlaneBundle, err := GetKubeadmControlPlaneBundle(r, imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for cluster-api kubeadm-control-plane")
-	}
-
-	awsBundle, err := GetAwsBundle(r, imageDigests)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error getting bundle for AWS infrastructure provider")
 	}
 
 	dockerBundle, err := GetDockerBundle(r, imageDigests)
@@ -192,7 +187,6 @@ func GetVersionsBundles(r *releasetypes.ReleaseConfig, imageDigests map[string]s
 			ClusterAPI:             coreClusterApiBundle,
 			Bootstrap:              kubeadmBootstrapBundle,
 			ControlPlane:           kubeadmControlPlaneBundle,
-			Aws:                    awsBundle,
 			VSphere:                vsphereBundle,
 			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,

@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"path/filepath"
 	"strings"
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -51,6 +54,7 @@ type Installer struct {
 	filewriter      filewriter.FileWriter
 	helm            Helm
 	podCidrRange    string
+	registryMirror  *v1alpha1.RegistryMirrorConfiguration
 	namespace       string
 	createNamespace bool
 	bootsOnDocker   bool
@@ -102,13 +106,14 @@ func WithLoadBalancer() InstallOption {
 }
 
 // NewInstaller returns a Tinkerbell StackInstaller which can be used to install or uninstall the Tinkerbell stack
-func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace, podCidrRange string) StackInstaller {
+func NewInstaller(docker Docker, filewriter filewriter.FileWriter, helm Helm, namespace string, podCidrRange string, registryMirror *v1alpha1.RegistryMirrorConfiguration) StackInstaller {
 	return &Installer{
-		docker:       docker,
-		filewriter:   filewriter,
-		helm:         helm,
-		namespace:    namespace,
-		podCidrRange: podCidrRange,
+		docker:         docker,
+		filewriter:     filewriter,
+		helm:           helm,
+		registryMirror: registryMirror,
+		namespace:      namespace,
+		podCidrRange:   podCidrRange,
 	}
 }
 
@@ -204,7 +209,7 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
-		fmt.Sprintf("oci://%s", bundle.TinkerbellStack.TinkebellChart.Image()),
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
 		bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
@@ -251,7 +256,7 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 		"-dhcp-addr", "0.0.0.0:67",
 		"-osie-path-override", osiePath,
 	}
-	if err := s.docker.Run(ctx, bundle.Boots.URI, boots, cmd, flags...); err != nil {
+	if err := s.docker.Run(ctx, s.localRegistryURL(bundle.Boots.URI), boots, cmd, flags...); err != nil {
 		return fmt.Errorf("running boots with docker: %v", err)
 	}
 
@@ -259,11 +264,17 @@ func (s *Installer) installBootsOnDocker(ctx context.Context, bundle releasev1al
 }
 
 func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, tinkServerIP string) map[string]string {
+	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
+	if s.registryMirror != nil {
+		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
+	}
+
 	return map[string]string{
 		"DATA_MODEL_VERSION":        "kubernetes",
 		"TINKERBELL_TLS":            "false",
 		"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
-		"BOOTS_EXTRA_KERNEL_ARGS":   fmt.Sprintf("tink_worker_image=%s", bundle.Tink.TinkWorker.URI),
+		"BOOTS_EXTRA_KERNEL_ARGS":   extraKernelArgs,
 	}
 }
 
@@ -310,4 +321,12 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 
 	// finally, return an "already exists" error if boots exists and forceCleanup is not set
 	return errors.New("boots container already exists, delete the container manually or re-run the command with --force-cleanup")
+}
+
+func (s *Installer) localRegistryURL(originalURL string) string {
+	if s.registryMirror != nil {
+		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		return urls.ReplaceHost(originalURL, localRegistry)
+	}
+	return originalURL
 }

@@ -83,7 +83,7 @@ Installing helm chart on cluster	{"chart": "eks-anywhere-packages", "version": "
 Warning: No AWS key/license provided. Please be aware this will prevent the package controller from installing curated packages.
 ```
 
-If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_REGION`, `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
+If the `No AWS key/license provided` message appears during package controller installation, make sure you set and export the `EKSA_AWS_ACCESS_KEY_ID` and `EKSA_AWS_SECRET_ACCESS_KEY` varialbles to the access key and secret key of your AWS account. This will allow you to get access to container images in private ECR. A subscription is required to access the packages. If you forgot to set those values before cluster creation, the next section describes how you would create or update the secret after creation.
 
 ### ImagePullBackOff on Package or Package Controller
 
@@ -123,7 +123,7 @@ If the image downloads successfully, it worked!
 You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
 ```
 kubectl delete secret -n eksa-packages aws-secret
-kubectl create secret -n eksa-packages generic aws-secret --from-literal=REGION=${EKSA_AWS_REGION=us-west-2} --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}
+kubectl create secret -n eksa-packages generic aws-secret --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}
 ```
 
 ### Error: cert-manager is not present in the cluster

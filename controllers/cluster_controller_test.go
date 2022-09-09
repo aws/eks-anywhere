@@ -427,7 +427,6 @@ func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 					ClusterAPI:             v1alpha1.CoreClusterAPI{},
 					Bootstrap:              v1alpha1.KubeadmBootstrapBundle{},
 					ControlPlane:           v1alpha1.KubeadmControlPlaneBundle{},
-					Aws:                    v1alpha1.AwsBundle{},
 					VSphere:                v1alpha1.VSphereBundle{},
 					Docker:                 v1alpha1.DockerBundle{},
 					Eksa:                   v1alpha1.EksaBundle{},

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -25,6 +26,13 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 					Endpoint: &eksav1alpha1.Endpoint{
 						Host: "1.1.1.1",
 					},
+					Taints: []v1.Taint{
+						{
+							Key:    "test-key",
+							Value:  "test-value",
+							Effect: "NoSchedule",
+						},
+					},
 				},
 				DatacenterRef: eksav1alpha1.Ref{
 					Kind: eksav1alpha1.VSphereDatacenterKind,
@@ -44,15 +52,16 @@ func TestVsphereDataCenterConfigCollectors(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.VSphereDatacenterKind}
 	factory := diagnostics.NewDefaultCollectorFactory()
 	collectors := factory.DataCenterConfigCollectors(datacenter, spec)
-	g.Expect(collectors).To(HaveLen(10), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
+	g.Expect(collectors).To(HaveLen(11), "DataCenterConfigCollectors() mismatch between number of desired collectors and actual")
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapvSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapvSystemNamespace)))
 	for _, collector := range collectors[1:7] {
-		g.Expect(collector.Run.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
-		g.Expect(collector.Run.Namespace).To(Equal("eksa-diagnostics"))
+		g.Expect(collector.RunPod.PodSpec.Containers[0].Command).To(Equal([]string{"kubectl"}))
+		g.Expect(collector.RunPod.Namespace).To(Equal("eksa-diagnostics"))
 	}
 	g.Expect(collectors[8].RunPod.PodSpec.Containers[0].Name).To(Equal("check-host-port"))
 	g.Expect(collectors[9].RunPod.PodSpec.Containers[0].Name).To(Equal("ping-host-ip"))
+	g.Expect(collectors[10].RunPod.PodSpec.Containers[0].Name).To(Equal("check-cloud-controller"))
 }
 
 func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
@@ -65,8 +74,8 @@ func TestCloudStackDataCenterConfigCollectors(t *testing.T) {
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CapcSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CapcSystemNamespace)))
 	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.Run.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.Run.Namespace))
+		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
+		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
 
@@ -80,7 +89,7 @@ func TestTinkerbellDataCenterConfigCollectors(t *testing.T) {
 	g.Expect(collectors[0].Logs.Namespace).To(Equal(constants.CaptSystemNamespace))
 	g.Expect(collectors[0].Logs.Name).To(Equal(fmt.Sprintf("logs/%s", constants.CaptSystemNamespace)))
 	for _, collector := range collectors[1:] {
-		g.Expect([]string{"kubectl"}).To(Equal(collector.Run.PodSpec.Containers[0].Command))
-		g.Expect("eksa-diagnostics").To(Equal(collector.Run.Namespace))
+		g.Expect([]string{"kubectl"}).To(Equal(collector.RunPod.PodSpec.Containers[0].Command))
+		g.Expect("eksa-diagnostics").To(Equal(collector.RunPod.Namespace))
 	}
 }
