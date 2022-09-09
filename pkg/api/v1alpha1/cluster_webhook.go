@@ -16,10 +16,11 @@ package v1alpha1
 
 import (
 	"fmt"
-	"github.com/aws/eks-anywhere/release/pkg/bundles"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/aws/eks-anywhere/release/pkg/bundles"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
