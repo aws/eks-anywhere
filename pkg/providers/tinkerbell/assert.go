@@ -98,6 +98,27 @@ func NewIPNotInUseAssertion(client networkutils.NetClient) ClusterSpecAssertion 
 	}
 }
 
+// AssertTinkerbellIPNotInUse ensures tinkerbell ip isn't in use
+func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
+	return func(spec *ClusterSpec) error {
+		ip := spec.DatacenterConfig.Spec.TinkerbellIP
+		if err := validateIPUnused(client, ip); err != nil {
+			return fmt.Errorf("tinkerbellIP <%s> is already in use, please provide a unique IP", ip)
+		}
+		return nil
+	}
+}
+
+// AssertTinkerbellIPAndControlPlaneIPNotSame ensures tinkerbell ip and controlplane ip are not the same
+func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
+	tinkerbellIP := spec.DatacenterConfig.Spec.TinkerbellIP
+	controlPlaneIP := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if tinkerbellIP == controlPlaneIP {
+		return fmt.Errorf("controlPlaneConfiguration.endpoint.host and tinkerbellIP are the same (%s), please provide two unique IPs", tinkerbellIP)
+	}
+	return nil
+}
+
 // HardwareSatisfiesOnlyOneSelectorAssertion ensures hardware in catalogue only satisfies 1
 // of the MachineConfig's HardwareSelector's from the spec.
 func HardwareSatisfiesOnlyOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
