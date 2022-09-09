@@ -75,3 +75,11 @@ func TestIsActiveWithFeatureGatesTrue(t *testing.T) {
 
 	g.Expect(IsActive(fakeFeatureWithGate())).To(BeTrue())
 }
+
+func TestWithNutanixFeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(NutanixProviderEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(NutanixProvider())).To(BeTrue())
+}
