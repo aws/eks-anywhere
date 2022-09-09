@@ -5223,6 +5223,9 @@ spec:
           httpGet:
             path: /readyz
             port: healthz
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
