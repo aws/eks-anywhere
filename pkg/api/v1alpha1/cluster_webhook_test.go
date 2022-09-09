@@ -842,6 +842,15 @@ func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateBundleRefRollbackInvalid(t *testing.T) {
+	cOld := createCluster()
+	c := cOld.DeepCopy()
+	c.Spec.BundlesRef.Name = "bundle-0"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
 func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testing.T) {
 	cOld := createCluster()
 	cOld.Spec.IdentityProviderRefs = []v1alpha1.Ref{

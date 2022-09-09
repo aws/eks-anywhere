@@ -16,6 +16,9 @@ package v1alpha1
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -217,6 +220,17 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	standardBundleRef := regexp.MustCompile(`^bundle-[0-9]+$`)
+	if standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
+		oldIndex, _ := strconv.Atoi(strings.Split(old.Spec.BundlesRef.Name, "-")[1])
+		newIndex, _ := strconv.Atoi(strings.Split(new.Spec.BundlesRef.Name, "-")[1])
+		if newIndex < oldIndex {
+			allErrs = append(
+				allErrs,
+				field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
+		}
 	}
 
 	return allErrs
