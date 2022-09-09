@@ -22,7 +22,7 @@ description: >
 
    Please see [complete configuration options]({{< relref "../../../reference/packagespec/emissary" >}}) for all configuration options and their default values.
 
-    Example package file with bgp configuration:
+    Example package file with standard configuration.
     ```yaml
     apiVersion: packages.eks.amazonaws.com/v1alpha1
     kind: Package
