@@ -292,6 +292,11 @@ func (p *SnowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Clu
 	return nil
 }
 
+func (p *SnowProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
+	// NOOP
+	return nil
+}
+
 func (p *SnowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
