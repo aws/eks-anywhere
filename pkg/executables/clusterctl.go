@@ -4,10 +4,13 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"io/ioutil"
+	"math"
 	"os"
 	"path"
 	"path/filepath"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -26,6 +29,7 @@ const (
 	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
 	etcdadmControllerProviderName = "etcdadm-controller"
 	kubeadmBootstrapProviderName  = "kubeadm"
+	clusterctlMoveTimeout         = 30 * time.Minute
 )
 
 //go:embed config/clusterctl.yaml
@@ -148,12 +152,39 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 	return nil
 }
 
+func ClusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
+
+	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
+	if totalRetries < 1 {
+		totalRetries = 1
+	}
+	const networkFaultBaseRetryTime = 10 * time.Second
+	const backoffFactor = 1.5
+	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
+
+	if match := connectionRefusedRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	if match := ioTimeoutRegex.MatchString(err.Error()); match {
+		return true, waitTime
+	}
+	return false, 0
+}
+
 func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
 	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}
-	_, err := c.Execute(ctx, params...)
+
+	retrier := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(ClusterctlMoveRetryPolicy))
+	err := retrier.Retry(
+		func() error {
+			_, err := c.Execute(ctx, params...)
+			return err
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("failed moving management cluster: %v", err)
 	}
