@@ -303,11 +303,6 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "worker node count equals  0",
-			fileName: "testdata/cluster_invalid_worker_node_count.yaml",
-			wantErr:  true,
-		},
-		{
 			testName: "namespace mismatch between cluster and datacenter",
 			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
 			wantErr:  true,
@@ -824,6 +819,56 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 		{
 			testName:    "with not supported CNI",
 			fileName:    "testdata/cluster_not_supported_cni.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName: "without worker nodes",
+			fileName: "testdata/cluster_without_worker_nodes.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "single-node",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube123,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 1,
+						Endpoint: &Endpoint{
+							Host: "10.80.8.90",
+						},
+						MachineGroupRef: &Ref{
+							Kind: TinkerbellMachineConfigKind,
+							Name: "single-node-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: nil,
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "single-node",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					ManagementCluster: ManagementCluster{
+						Name: "single-node",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName:    "without worker nodes but has control plane taints",
+			fileName:    "testdata/cluster_without_worker_nodes_has_cp_taints.yaml",
 			wantCluster: nil,
 			wantErr:     true,
 		},
