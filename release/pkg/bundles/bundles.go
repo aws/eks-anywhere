@@ -29,8 +29,10 @@ import (
 	sliceutils "github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
+const Prefix = "bundles"
+
 func NewBundlesName(r *releasetypes.ReleaseConfig) string {
-	return fmt.Sprintf("bundles-%d", r.BundleNumber)
+	return fmt.Sprintf("%s-%d", Prefix, r.BundleNumber)
 }
 
 func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {

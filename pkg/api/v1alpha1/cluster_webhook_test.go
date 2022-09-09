@@ -845,7 +845,7 @@ func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 func TestClusterValidateUpdateBundleRefRollbackInvalid(t *testing.T) {
 	cOld := createCluster()
 	c := cOld.DeepCopy()
-	c.Spec.BundlesRef.Name = "bundle-0"
+	c.Spec.BundlesRef.Name = "bundles-0"
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
@@ -1694,7 +1694,7 @@ func createCluster() *v1alpha1.Cluster {
 				},
 			},
 			BundlesRef: &v1alpha1.BundlesRef{
-				Name:       "bundle-1",
+				Name:       "bundles-1",
 				Namespace:  constants.EksaSystemNamespace,
 				APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
 			},
