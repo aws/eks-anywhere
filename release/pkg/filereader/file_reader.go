@@ -196,21 +196,18 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 	fmt.Println("              Dev Release Version Computation")
 	fmt.Println("==========================================================")
 
-	var latestBuildVersion string
 	var newDevReleaseVersion string
-	tempFileName := "latest-dev-release-version"
-
-	var latestReleaseKey string
-
-	if r.BuildRepoBranchName == "main" {
-		latestReleaseKey = "LATEST_RELEASE_VERSION"
-	} else {
-		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
-	}
-
 	if r.Weekly {
 		newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev+build.%s", r.ReleaseDate)
 	} else {
+		tempFileName := "latest-dev-release-version"
+
+		var latestReleaseKey string
+		if r.BuildRepoBranchName == "main" {
+			latestReleaseKey = "LATEST_RELEASE_VERSION"
+		} else {
+			latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
+		}
 		if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
 			err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
 			if err != nil {
@@ -222,7 +219,7 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 			if err != nil {
 				return "", errors.Cause(err)
 			}
-			latestBuildVersion = string(latestBuildS3)
+			latestBuildVersion := string(latestBuildS3)
 			newDevReleaseVersion, err = GenerateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
 			if err != nil {
 				return "", errors.Cause(err)
