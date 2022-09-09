@@ -40,7 +40,7 @@ func GetManifestFilepaths(devRelease, weekly bool, bundleNumber int, kind, branc
 			} else {
 				manifestFilepath = "bundle-release.yaml"
 				if weekly {
-					manifestFilepath = fmt.Sprintf("weekly-releases/bundles/%s/manifest.yaml", releaseDate)
+					manifestFilepath = fmt.Sprintf("weekly-releases/%s/bundle-release.yaml", releaseDate)
 				}
 			}
 		} else {
@@ -53,7 +53,7 @@ func GetManifestFilepaths(devRelease, weekly bool, bundleNumber int, kind, branc
 			} else {
 				manifestFilepath = "eks-a-release.yaml"
 				if weekly {
-					manifestFilepath = fmt.Sprintf("weekly-releases/eks-a/manifest.yaml")
+					manifestFilepath = fmt.Sprintf("weekly-releases/%s/eks-a-release.yaml", releaseDate)
 				}
 			}
 		} else {

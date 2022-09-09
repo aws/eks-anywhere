@@ -285,10 +285,12 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = filereader.PutEksAReleaseVersion(releaseVersion, releaseConfig)
-			if err != nil {
-				fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
-				os.Exit(1)
+			if !weekly {
+				err = filereader.PutEksAReleaseVersion(releaseVersion, releaseConfig)
+				if err != nil {
+					fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
+					os.Exit(1)
+				}
 			}
 			fmt.Printf("%s Successfully completed EKS-A release\n", constants.SuccessIcon)
 		}

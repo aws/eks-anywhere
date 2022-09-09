@@ -30,7 +30,7 @@ DRY_RUN=false
 endif
 DATE_YYYYMMDD=$(shell date "+%F")
 WEEKLY?=false
-WEEKLY_BUNDLE_MANIFEST_URL=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/weekly-releases/bundles/$(DATE_YYYYMMDD)/manifest.yaml
+WEEKLY_RELEASES_URL_PREFIX=https://dev-release-assets.eks-anywhere.model-rocket.aws.dev/weekly-releases
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -142,7 +142,7 @@ eks-a-release: build ## Perform EKS-A CLI release
 	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
 
 github-bundle-release:
-	scripts/github-bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(WEEKLY_BUNDLE_MANIFEST_URL)
+	scripts/github-bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(WEEKLY_RELEASES_URL_PREFIX)
 
 ##@ Deployment
 
