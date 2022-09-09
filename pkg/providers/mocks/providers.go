@@ -311,6 +311,20 @@ func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClusterDeleteValidate", reflect.TypeOf((*MockProvider)(nil).PostClusterDeleteValidate), arg0, arg1)
 }
 
+// PostMoveManagementToBootstrap mocks base method.
+func (m *MockProvider) PostMoveManagementToBootstrap(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostMoveManagementToBootstrap", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PostMoveManagementToBootstrap indicates an expected call of PostMoveManagementToBootstrap.
+func (mr *MockProviderMockRecorder) PostMoveManagementToBootstrap(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostMoveManagementToBootstrap", reflect.TypeOf((*MockProvider)(nil).PostMoveManagementToBootstrap), arg0, arg1)
+}
+
 // PostWorkloadInit mocks base method.
 func (m *MockProvider) PostWorkloadInit(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
