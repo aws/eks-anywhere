@@ -62,17 +62,3 @@ func (mr *MockValidatorMockRecorder) ValidateEC2SshKeyNameExists(ctx, m interfac
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEC2SshKeyNameExists", reflect.TypeOf((*MockValidator)(nil).ValidateEC2SshKeyNameExists), ctx, m)
 }
-
-// ValidateMachineDeviceIPs mocks base method.
-func (m_2 *MockValidator) ValidateMachineDeviceIPs(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
-	m_2.ctrl.T.Helper()
-	ret := m_2.ctrl.Call(m_2, "ValidateMachineDeviceIPs", ctx, m)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateMachineDeviceIPs indicates an expected call of ValidateMachineDeviceIPs.
-func (mr *MockValidatorMockRecorder) ValidateMachineDeviceIPs(ctx, m interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateMachineDeviceIPs", reflect.TypeOf((*MockValidator)(nil).ValidateMachineDeviceIPs), ctx, m)
-}
