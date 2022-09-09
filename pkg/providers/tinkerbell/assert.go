@@ -113,8 +113,8 @@ func AssertTinkerbellIPNotInUse(client networkutils.NetClient) ClusterSpecAssert
 func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	tinkerbellIP := spec.DatacenterConfig.Spec.TinkerbellIP
 	controlPlaneIP := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if err := validateIPNotSame(tinkerbellIP, controlPlaneIP); err != nil {
-		return fmt.Errorf("control plane ip and tinkerbell ip are the same, please provide two unique IPs")
+	if tinkerbellIP == controlPlaneIP {
+		return fmt.Errorf("controlPlaneConfiguration.endpoint.host and tinkerbellIP are the same (%s), please provide two unique IPs", tinkerbellIP)
 	}
 	return nil
 }

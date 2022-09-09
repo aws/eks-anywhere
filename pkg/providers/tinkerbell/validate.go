@@ -125,13 +125,6 @@ func validateIPUnused(client networkutils.NetClient, ip string) error {
 	return nil
 }
 
-func validateIPNotSame(tinkerbellIP string, controlPlaneIP string) error {
-	if tinkerbellIP == controlPlaneIP {
-		return fmt.Errorf("control plane ip and tinkerbell ip are the same, please provide two unique IPs")
-	}
-	return nil
-}
-
 // minimumHardwareRequirement defines the minimum requirement for a hardware selector.
 type minimumHardwareRequirement struct {
 	// MinCount is the minimum number of hardware required to satisfy the requirement
