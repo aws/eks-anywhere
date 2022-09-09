@@ -185,23 +185,70 @@ func TestValidateEC2ImageExistsOnDeviceNotFoundInClientMapError(t *testing.T) {
 	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
 }
 
-func TestValidateMachineDeviceIPs(t *testing.T) {
+func TestValidateDeviceIsUnlocked(t *testing.T) {
 	g := newConfigManagerTest(t)
-	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
+	g.aws.EXPECT().IsSnowballDeviceUnlocked(g.ctx).Return(true, nil).Times(2)
+	err := g.validator.ValidateDeviceIsUnlocked(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 }
 
-func TestValidateMachineDeviceIPsClientMapError(t *testing.T) {
-	g := newConfigManagerTestClientMapError(t)
-	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
+func TestValidateDeviceIsUnlockedLocked(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().IsSnowballDeviceUnlocked(g.ctx).Return(false, nil)
+	err := g.validator.ValidateDeviceIsUnlocked(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("Please unlock the device before you proceed")))
+}
+
+func TestValidateDeviceIsUnlockedError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().IsSnowballDeviceUnlocked(g.ctx).Return(false, errors.New("error"))
+	err := g.validator.ValidateDeviceIsUnlocked(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }
 
-func TestValidateMachineDeviceIPsNotValid(t *testing.T) {
-	g := newConfigManagerTest(t)
-	g.machineConfig.Spec.Devices = []string{
-		"device-not-exists",
-	}
-	err := g.validator.ValidateMachineDeviceIPs(g.ctx, g.machineConfig)
+func TestValidateDeviceIsUnlockedClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
+	err := g.validator.ValidateDeviceIsUnlocked(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateDeviceIsUnlockedNotFoundInClientMapError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	err := g.validator.ValidateDeviceIsUnlocked(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
+}
+
+func TestValidateDeviceSoftware(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("102", nil).Times(2)
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).To(Succeed())
+}
+
+func TestValidateDeviceSoftwareVersionTooLow(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("101", nil)
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("below the minimum supported version")))
+}
+
+func TestValidateDeviceSoftwareVersionError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.aws.EXPECT().SnowballDeviceSoftwareVersion(g.ctx).Return("", errors.New("error"))
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateDeviceSoftwareClientMapError(t *testing.T) {
+	g := newConfigManagerTestClientMapError(t)
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).NotTo(Succeed())
+}
+
+func TestValidateDeviceSoftwareNotFoundInClientMapError(t *testing.T) {
+	g := newConfigManagerTest(t)
+	g.machineConfig.Spec.Devices = []string{"device-not-exist"}
+	err := g.validator.ValidateDeviceSoftware(g.ctx, g.machineConfig)
+	g.Expect(err).To(MatchError(ContainSubstring("credentials not found for device")))
 }
