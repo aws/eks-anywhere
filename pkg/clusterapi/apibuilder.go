@@ -252,15 +252,16 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 	replicas := int32(workerNodeGroupConfig.Count)
 	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
 
-	return clusterv1.MachineDeployment{
+	md := &clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterAPIVersion,
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      MachineDeploymentName(clusterSpec, workerNodeGroupConfig),
-			Namespace: constants.EksaSystemNamespace,
-			Labels:    capiObjectLabels(clusterSpec),
+			Name:        MachineDeploymentName(clusterSpec, workerNodeGroupConfig),
+			Namespace:   constants.EksaSystemNamespace,
+			Labels:      capiObjectLabels(clusterSpec),
+			Annotations: map[string]string{},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: clusterName,
@@ -291,4 +292,8 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywhere
 			Replicas: &replicas,
 		},
 	}
+
+	ConfigureAutoscalingInMachineDeployment(md, workerNodeGroupConfig.AutoScalingConfiguration)
+
+	return *md
 }

@@ -402,8 +402,12 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
-		if workerNodeGroupConfig.Count <= 0 {
-			return errors.New("worker node count must be positive")
+		if workerNodeGroupConfig.AutoScalingConfiguration == nil && workerNodeGroupConfig.Count <= 0 {
+			return errors.New("worker node count must be positive if autoscaling is not enabled")
+		}
+
+		if err := validateAutoscalingConfig(workerNodeGroupConfig.AutoScalingConfiguration); err != nil {
+			return fmt.Errorf("validating autoscaling configuration: %v", err)
 		}
 
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
@@ -437,6 +441,20 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 
 	if len(workerNodeGroupConfigs) == 0 && len(clusterConfig.Spec.ControlPlaneConfiguration.Taints) != 0 {
 		return errors.New("cannot taint control plane when there is no worker node")
+	}
+
+	return nil
+}
+
+func validateAutoscalingConfig(autoscalingConfig *AutoScalingConfiguration) error {
+	if autoscalingConfig == nil {
+		return nil
+	}
+	if autoscalingConfig.MinCount < 0 {
+		return errors.New("min count must be non negative")
+	}
+	if autoscalingConfig.MinCount > autoscalingConfig.MaxCount {
+		return errors.New("min count must be no greater than max count")
 	}
 
 	return nil

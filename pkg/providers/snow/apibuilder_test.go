@@ -426,6 +426,7 @@ func wantMachineDeployment() *clusterv1.MachineDeployment {
 				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "snow-test",
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
 			},
+			Annotations: map[string]string{},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: "snow-test",
