@@ -41,4 +41,12 @@ const (
 
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
+
+	// provider specific env vars
+	VSphereUsernameKey = "VSPHERE_USERNAME"
+	VSpherePasswordKey = "VSPHERE_PASSWORD"
+	GovcUsernameKey    = "GOVC_USERNAME"
+	GovcPasswordKey    = "GOVC_PASSWORD"
+	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
+	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
 )

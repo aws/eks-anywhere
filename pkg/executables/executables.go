@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
@@ -19,12 +19,19 @@ const (
 )
 
 var redactedEnvKeys = []string{
-	config.EksavSphereUsernameKey,
-	config.EksavSpherePasswordKey,
+	constants.VSphereUsernameKey,
+	constants.VSpherePasswordKey,
+	constants.GovcUsernameKey,
+	constants.GovcPasswordKey,
 	decoder.CloudStackCloudConfigB64SecretKey,
 	eksaGithubTokenEnv,
+	githubTokenEnv,
 	config.EksaAccessKeyIdEnv,
-	config.EksaSecretAcessKeyEnv,
+	config.EksaSecretAccessKeyEnv,
+	config.AwsAccessKeyIdEnv,
+	config.AwsSecretAccessKeyEnv,
+	constants.SnowCredentialsKey,
+	constants.SnowCertsKey,
 }
 
 type executable struct {
@@ -63,20 +70,17 @@ func (e *executable) Command(ctx context.Context, args ...string) *Command {
 }
 
 func (e *executable) Run(cmd *Command) (stdout bytes.Buffer, err error) {
-	for k, v := range cmd.envVars {
-		os.Setenv(k, v)
-	}
-	return execute(cmd.ctx, e.cli, cmd.stdIn, cmd.args...)
+	return execute(cmd.ctx, e.cli, cmd.stdIn, cmd.envVars, cmd.args...)
 }
 
 func (e *executable) Close(ctx context.Context) error {
 	return nil
 }
 
-func redactCreds(cmd string) string {
+func redactCreds(cmd string, envMap map[string]string) string {
 	redactedEnvs := []string{}
 	for _, redactedEnvKey := range redactedEnvKeys {
-		if env, found := os.LookupEnv(redactedEnvKey); found {
+		if env, found := envMap[redactedEnvKey]; found {
 			redactedEnvs = append(redactedEnvs, env)
 		}
 	}
@@ -87,10 +91,10 @@ func redactCreds(cmd string) string {
 	return cmd
 }
 
-func execute(ctx context.Context, cli string, in []byte, args ...string) (stdout bytes.Buffer, err error) {
+func execute(ctx context.Context, cli string, in []byte, envVars map[string]string, args ...string) (stdout bytes.Buffer, err error) {
 	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, cli, args...)
-	logger.V(6).Info("Executing command", "cmd", redactCreds(cmd.String()))
+	logger.V(6).Info("Executing command", "cmd", redactCreds(cmd.String(), envVars))
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if len(in) != 0 {
