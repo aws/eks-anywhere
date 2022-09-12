@@ -124,19 +124,7 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 
 	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
 		oldIndex := getBundleIdFromBundleRefName(old.Spec.BundlesRef.Name)
-		if oldIndex == -1 {
-			allErrs = append(
-				allErrs,
-				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("failed parsing bundle id number from bundle ref name %s", old.Spec.BundlesRef.Name)))
-			return allErrs
-		}
 		newIndex := getBundleIdFromBundleRefName(new.Spec.BundlesRef.Name)
-		if newIndex == -1 {
-			allErrs = append(
-				allErrs,
-				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("failed parsing bundle id number from bundle ref name %s", new.Spec.BundlesRef.Name)))
-			return allErrs
-		}
 		if newIndex < oldIndex {
 			allErrs = append(
 				allErrs,
@@ -150,10 +138,6 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 func getBundleIdFromBundleRefName(bundleRefName string) int {
 	matches := standardBundleRef.FindStringSubmatch(bundleRefName)
 	// expect two matches - e.g. [bundles-10 10]. Take the second one.
-	if len(matches) != 2 {
-		return -1
-	}
-
 	idInt, _ := strconv.Atoi(matches[1])
 	return idInt
 }
