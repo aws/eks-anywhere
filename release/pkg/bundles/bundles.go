@@ -29,6 +29,8 @@ import (
 	sliceutils "github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
+// NewBundlesName provides a strict format for bundle names, which is validated against in the Cluster webhook
+// Numbers must be monotonically increasing to be upgraded.
 func NewBundlesName(r *releasetypes.ReleaseConfig) string {
 	return fmt.Sprintf("bundles-%d", r.BundleNumber)
 }
