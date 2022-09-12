@@ -20,8 +20,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aws/eks-anywhere/release/pkg/bundles"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -224,7 +222,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
 	}
 
-	standardBundleRef := regexp.MustCompile(fmt.Sprintf(`^%s-[0-9]+$`, bundles.Prefix))
+	standardBundleRef := regexp.MustCompile(`^bundles-[0-9]+$`)
 	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
 		oldIndex, _ := strconv.Atoi(strings.Split(old.Spec.BundlesRef.Name, "-")[1])
 		newIndex, _ := strconv.Atoi(strings.Split(new.Spec.BundlesRef.Name, "-")[1])
