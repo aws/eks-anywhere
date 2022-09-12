@@ -223,22 +223,22 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 func TestGetActiveControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
 
-	found := tt.command.IsInstalled(tt.ctx)
-	if !found {
-		t.Errorf("Get Active Controller should return true when controller exists")
+	found, err := tt.command.IsInstalled(tt.ctx)
+	if err != nil || found {
+		t.Errorf("Get Active Controller should return false when controller doesn't exist")
 	}
 }
 
 func TestGetActiveControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, errors.New("controller doesn't exist"))
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, errors.New("controller doesn't exist"))
 
-	found := tt.command.IsInstalled(tt.ctx)
-	if found {
-		t.Errorf("Get Active Controller should return false when controller doesn't exist")
+	found, err := tt.command.IsInstalled(tt.ctx)
+	if !found || err == nil {
+		t.Errorf("Get Active Controller should return true when controller exists")
 	}
 }
 

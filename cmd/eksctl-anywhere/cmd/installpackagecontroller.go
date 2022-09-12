@@ -64,8 +64,12 @@ func installPackageController(ctx context.Context) error {
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
 		return err
 	}
+	installed, err := ctrlClient.IsInstalled(ctx)
+	if err != nil {
+		return err
+	}
 
-	if ctrlClient.IsInstalled(ctx) {
+	if installed {
 		return errors.New("curated Packages controller exists in the current cluster")
 	}
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -93,9 +92,8 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
-	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
-	return found
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
+	return pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {

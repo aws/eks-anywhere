@@ -49,11 +49,12 @@ func (mr *MockPackageControllerMockRecorder) InstallController(ctx interface{}) 
 }
 
 // IsInstalled mocks base method.
-func (m *MockPackageController) IsInstalled(ctx context.Context) bool {
+func (m *MockPackageController) IsInstalled(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsInstalled", ctx)
 	ret0, _ := ret[0].(bool)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // IsInstalled indicates an expected call of IsInstalled.
