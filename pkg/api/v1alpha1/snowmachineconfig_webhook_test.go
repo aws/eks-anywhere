@@ -61,6 +61,17 @@ func TestSnowMachineConfigValidateUpdate(t *testing.T) {
 	g.Expect(sNew.ValidateUpdate(&sOld)).To(Succeed())
 }
 
+func TestSnowMachineConfigValidateUpdateNoDevices(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := snowMachineConfig()
+	sNew := sOld.DeepCopy()
+	sNew.Spec.AMIID = "testAMI"
+	sNew.Spec.InstanceType = v1alpha1.SbeCLarge
+
+	g.Expect(sNew.ValidateUpdate(&sOld)).NotTo(Succeed())
+}
+
 // Unit test to pass the code coverage job
 func TestSnowMachineConfigValidateDelete(t *testing.T) {
 	g := NewWithT(t)
