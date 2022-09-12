@@ -31,7 +31,7 @@ import (
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
-var standardBundleRef = regexp.MustCompile(`bundles-(?P<bundleid>\d+)`)
+var standardBundleRef = regexp.MustCompile(`^bundles-(?P<bundleid>\d+)$`)
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -122,22 +122,26 @@ func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
 	}
 
-	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
-		oldIndex := getBundleIdFromBundleRefName(old.Spec.BundlesRef.Name)
-		newIndex := getBundleIdFromBundleRefName(new.Spec.BundlesRef.Name)
-		if newIndex < oldIndex {
-			allErrs = append(
-				allErrs,
-				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
-		}
+	oldIndex := getBundleIdFromBundlesRef(old.Spec.BundlesRef)
+	newIndex := getBundleIdFromBundlesRef(new.Spec.BundlesRef)
+	if oldIndex != -1 && newIndex != -1 && newIndex < oldIndex {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
 	}
 
 	return allErrs
 }
 
-func getBundleIdFromBundleRefName(bundleRefName string) int {
-	matches := standardBundleRef.FindStringSubmatch(bundleRefName)
+func getBundleIdFromBundlesRef(bundlesRef *BundlesRef) int {
+	if bundlesRef == nil {
+		return -1
+	}
+	matches := standardBundleRef.FindStringSubmatch(bundlesRef.Name)
 	// expect two matches - e.g. [bundles-10 10]. Take the second one.
+	if len(matches) != 2 {
+		return -1
+	}
 	idInt, _ := strconv.Atoi(matches[1])
 	return idInt
 }
