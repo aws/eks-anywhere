@@ -309,7 +309,7 @@ func TestClusterctlMoveManagementWithRetry(t *testing.T) {
 
 	wantMoveArgs := []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"}
 
-	firstTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("The connection to the server 127.0.0.1:56789 was refused"))
+	firstTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
 	secondTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
 	gomock.InOrder(
 		firstTry,
@@ -416,8 +416,8 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 }
 
 func TestClusterctlWaitRetryPolicy(t *testing.T) {
-	connectionRefusedError := fmt.Errorf("The connection to the server 127.0.0.1:56789 was refused")
-	ioTimeoutError := fmt.Errorf("Unable to connect to the server 127.0.0.1:56789, i/o timeout\n")
+	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused\n")
+	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout\n")
 	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
 
 	_, wait := executables.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
