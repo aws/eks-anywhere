@@ -232,6 +232,8 @@ type WorkerNodeGroupConfiguration struct {
 	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
+	// AutoScalingConfiguration defines the auto scaling configuration
+	AutoScalingConfiguration *AutoScalingConfiguration `json:"autoscalingConfiguration,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 	// Taints define the set of taints to be applied on worker nodes
@@ -243,7 +245,10 @@ type WorkerNodeGroupConfiguration struct {
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
 	key = c.Name
 	if c.MachineGroupRef != nil {
-		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+		key += c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+	}
+	if c.AutoScalingConfiguration != nil {
+		key += "autoscaling" + strconv.Itoa(c.AutoScalingConfiguration.MaxCount) + strconv.Itoa(c.AutoScalingConfiguration.MinCount)
 	}
 	return strconv.Itoa(c.Count) + key
 }
@@ -701,6 +706,17 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 		return false
 	}
 	return n.ServiceAccountIssuer == o.ServiceAccountIssuer
+}
+
+// AutoScalingConfiguration defines the configuration for the node autoscaling feature
+type AutoScalingConfiguration struct {
+	// MinCount defines the minimum number of nodes for the associated resource group.
+	// +optional
+	MinCount int `json:"minCount,omitempty"`
+
+	// MaxCount defines the maximum number of nodes for the associated resource group.
+	// +optional
+	MaxCount int `json:"maxCount,omitempty"`
 }
 
 // +kubebuilder:object:root=true

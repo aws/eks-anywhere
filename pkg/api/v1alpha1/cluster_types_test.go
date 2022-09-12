@@ -397,6 +397,63 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			want: false,
 		},
 		{
+			testName: "both exist, autoscaling config diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: nil,
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, autoscaling config min diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 2,
+						MaxCount: 3,
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, autoscaling config max diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 2,
+					},
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					AutoScalingConfiguration: &v1alpha1.AutoScalingConfiguration{
+						MinCount: 1,
+						MaxCount: 3,
+					},
+				},
+			},
+			want: false,
+		},
+		{
 			testName: "both exist, ref diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
