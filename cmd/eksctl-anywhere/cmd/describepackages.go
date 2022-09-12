@@ -40,7 +40,7 @@ var describePackagesCommand = &cobra.Command{
 }
 
 func describeResources(ctx context.Context, args []string) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(dpo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(dpo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

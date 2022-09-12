@@ -154,7 +154,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
-	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return nil, err
 	}
 

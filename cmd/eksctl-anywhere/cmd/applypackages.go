@@ -50,7 +50,7 @@ var applyPackagesCommand = &cobra.Command{
 }
 
 func applyPackages(ctx context.Context) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(apo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(apo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

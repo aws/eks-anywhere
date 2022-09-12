@@ -65,7 +65,7 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	}
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
-	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return err
 	}
 
