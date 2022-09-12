@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -38,6 +39,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithKubectl().
 		WithHelm(executables.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
+		WithPackageControllerClient(config.spec).
 		Build(ctx)
 }
 
@@ -47,6 +49,7 @@ type PackageConfig struct {
 	registryName string
 	kubeVersion  string
 	mountPaths   []string
+	spec         *cluster.Spec
 }
 
 func New(options ...PackageOpt) *PackageConfig {
@@ -72,5 +75,11 @@ func WithKubeVersion(kubeVersion string) func(*PackageConfig) {
 func WithMountPaths(mountPaths ...string) func(*PackageConfig) {
 	return func(config *PackageConfig) {
 		config.mountPaths = mountPaths
+	}
+}
+
+func WithClusterSpec(spec *cluster.Spec) func(config *PackageConfig) {
+	return func(config *PackageConfig) {
+		config.spec = spec
 	}
 }

@@ -3,10 +3,9 @@ package curatedpackages
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
+	"strings"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -34,6 +33,9 @@ type PackageControllerClient struct {
 	eksaAccessKeyId     string
 	eksaSecretAccessKey string
 	eksaRegion          string
+	httpProxy           string
+	httpsProxy          string
+	noProxy             []string
 }
 
 type ChartInstaller interface {
@@ -60,9 +62,21 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
+
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
 	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	values := []string{sourceRegistry, clusterName}
+
+	// Provide proxy details for curated packages helm chart when proxy details provided
+	if pc.httpProxy != "" {
+		httpProxy := fmt.Sprintf("proxy.HTTP_PROXY=%s", pc.httpProxy)
+		httpsProxy := fmt.Sprintf("proxy.HTTPS_PROXY=%s", pc.httpsProxy)
+
+		// Helm requires commas to be escaped: https://github.com/rancher/rancher/issues/16195
+		noProxy := fmt.Sprintf("proxy.NO_PROXY=%s", strings.Join(pc.noProxy, "\\,"))
+		values = append(values, httpProxy, httpsProxy, noProxy)
+	}
+
 	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
 	if err != nil {
 		return err
@@ -78,12 +92,8 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) ValidateControllerDoesNotExist(ctx context.Context) error {
-	found, _ := pc.kubectl.GetResource(ctx, "packageBundleController", packagesv1.PackageBundleControllerName, pc.kubeConfig, constants.EksaPackagesName)
-	if found {
-		return errors.New("curated Packages controller exists in the current cluster")
-	}
-	return nil
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
+	return pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
@@ -136,6 +146,26 @@ func WithEksaRegion(eksaRegion string) func(client *PackageControllerClient) {
 			config.eksaRegion = eksaRegion
 		} else {
 			config.eksaRegion = eksaDefaultRegion
+		}
+	}
+}
+
+func WithHTTPProxy(httpProxy string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.httpProxy = httpProxy
+	}
+}
+
+func WithHTTPSProxy(httpsProxy string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.httpsProxy = httpsProxy
+	}
+}
+
+func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		if noProxy != nil {
+			config.noProxy = noProxy
 		}
 	}
 }
