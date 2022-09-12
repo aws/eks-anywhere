@@ -425,7 +425,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -434,7 +434,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -443,8 +443,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.2.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
+      version: v0.2.7+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
@@ -1171,7 +1171,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1180,7 +1180,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1189,8 +1189,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.2.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
+      version: v0.2.7+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
@@ -1917,7 +1917,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1926,7 +1926,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1935,8 +1935,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.2.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
+      version: v0.2.7+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
@@ -2663,7 +2663,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2672,7 +2672,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2681,8 +2681,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.2.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
+      version: v0.2.7+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
@@ -3391,7 +3391,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -3400,7 +3400,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.6-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3409,8 +3409,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.6-eks-a-v0.0.0-dev-build.1
-      version: v0.2.6+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
+      version: v0.2.7+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.6/infrastructure-components.yaml
