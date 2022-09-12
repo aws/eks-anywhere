@@ -2298,6 +2298,54 @@ func TestValidateMirrorConfig(t *testing.T) {
 	}
 }
 
+func TestValidateAutoscalingConfig(t *testing.T) {
+	tests := []struct {
+		name              string
+		wantErr           string
+		autoscalingConfig *AutoScalingConfiguration
+	}{
+		{
+			name:              "autoscaling config nil",
+			wantErr:           "",
+			autoscalingConfig: nil,
+		},
+		{
+			name:    "autoscaling config valid",
+			wantErr: "",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: 1,
+				MaxCount: 2,
+			},
+		},
+		{
+			name:    "negative min count",
+			wantErr: "min count must be non negative",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: -1,
+			},
+		},
+		{
+			name:    "min count > max count",
+			wantErr: "min count must be no greater than max count",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: 2,
+				MaxCount: 1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateAutoscalingConfig(tt.autoscalingConfig)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestClusterRegistryMirror(t *testing.T) {
 	tests := []struct {
 		name    string

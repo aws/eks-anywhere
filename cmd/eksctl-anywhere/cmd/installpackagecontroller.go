@@ -2,16 +2,14 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -56,41 +54,23 @@ func installPackageController(ctx context.Context) error {
 		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
+	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig), WithClusterSpec(clusterSpec))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	versionBundle, err := curatedpackages.GetVersionBundle(deps.ManifestReader, version.Get().GitVersion, clusterSpec.Cluster)
-	if err != nil {
-		return err
-	}
-	registryEndpoint := ""
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		registryEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-	}
-	helmChart := versionBundle.PackageController.HelmChart
-	imageUrl := urls.ReplaceHost(helmChart.Image(), registryEndpoint)
-	eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
-	ctrlClient := curatedpackages.NewPackageControllerClient(
-		deps.Helm,
-		deps.Kubectl,
-		clusterSpec.Cluster.Name,
-		kubeConfig,
-		imageUrl,
-		helmChart.Name,
-		helmChart.Tag(),
-		curatedpackages.WithEksaRegion(eksaRegion),
-		curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
-		curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
-	)
+	ctrlClient := deps.PackageControllerClient
 
 	if err = curatedpackages.VerifyCertManagerExists(ctx, deps.Kubectl, kubeConfig); err != nil {
 		return err
 	}
 
-	if err = ctrlClient.ValidateControllerDoesNotExist(ctx); err != nil {
-		return err
+	// ignore the error because if the crds don't exist in the cluster
+	// this will return an error. If this is the case, we should still
+	// go ahead and install the controller since lack of crds indicates
+	// the controller doesn't exist
+	if installed, _ := ctrlClient.IsInstalled(ctx); installed {
+		return errors.New("curated Packages controller exists in the current cluster")
 	}
 
 	curatedpackages.PrintLicense()

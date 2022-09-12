@@ -247,12 +247,52 @@ func TestFactoryBuildWithPackageClient(t *testing.T) {
 	tt.Expect(deps.PackageClient).NotTo(BeNil())
 }
 
-func TestFactoryBuildWithPackageControllerClient(t *testing.T) {
+func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
 			Cluster: &anywherev1.Cluster{
 				ObjectMeta: v1.ObjectMeta{
 					Name: "test-cluster",
+				},
+			},
+		},
+		VersionsBundle: &cluster.VersionsBundle{
+			VersionsBundle: &v1alpha1.VersionsBundle{
+				PackageController: v1alpha1.PackageBundle{
+					HelmChart: v1alpha1.Image{
+						URI:  "test_registry/test/eks-anywhere-packages:v1",
+						Name: "test_chart",
+					},
+				},
+			},
+		},
+	}
+
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithHelm(executables.WithInsecure()).
+		WithKubectl().
+		WithPackageControllerClient(spec).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.PackageControllerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
+	spec := &cluster.Spec{
+		Config: &cluster.Config{
+			Cluster: &anywherev1.Cluster{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				Spec: anywherev1.ClusterSpec{
+					ProxyConfiguration: &anywherev1.ProxyConfiguration{
+						HttpProxy:  "1.1.1.1",
+						HttpsProxy: "1.1.1.1",
+						NoProxy:    []string{"1.1.1.1"},
+					},
 				},
 			},
 		},
