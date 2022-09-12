@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"errors"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,12 +57,10 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return fmt.Errorf("SnowMachineConfig ContainersVolume.Size must be no smaller than %d Gi", MinimumContainerVolumeSize)
 	}
 
-	// TODO: temporarily remove this validation since `devices` is a newly added, required field.
-	// This validation runs in snowmachineconfig webhook and ValidateUpdate fails when upgrading from older eks-a version
-	// without the `devices` field. We will add this validation back once users update their clusters to latest version.
-	// if len(config.Spec.Devices) == 0 {
-	// 	return errors.New("SnowMachineConfig Devices must contain at least one device IP")
-	// }
+	if len(config.Spec.Devices) == 0 {
+		return errors.New("SnowMachineConfig Devices must contain at least one device IP")
+	}
+
 	return nil
 }
 
