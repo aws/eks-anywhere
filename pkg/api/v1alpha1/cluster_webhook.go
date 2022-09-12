@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +31,7 @@ import (
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
+var standardBundleRef = regexp.MustCompile(`bundles-(?P<bundleid>\d+)`)
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -95,6 +95,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
+	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
@@ -108,6 +110,52 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 
 	return nil
+}
+
+func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
+
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
+		oldIndex := getBundleIdFromBundleRefName(old.Spec.BundlesRef.Name)
+		if oldIndex == -1 {
+			allErrs = append(
+				allErrs,
+				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("failed parsing bundle id number from bundle ref name %s", old.Spec.BundlesRef.Name)))
+			return allErrs
+		}
+		newIndex := getBundleIdFromBundleRefName(new.Spec.BundlesRef.Name)
+		if newIndex == -1 {
+			allErrs = append(
+				allErrs,
+				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("failed parsing bundle id number from bundle ref name %s", new.Spec.BundlesRef.Name)))
+			return allErrs
+		}
+		if newIndex < oldIndex {
+			allErrs = append(
+				allErrs,
+				field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
+		}
+	}
+
+	return allErrs
+}
+
+func getBundleIdFromBundleRefName(bundleRefName string) int {
+	matches := standardBundleRef.FindStringSubmatch(bundleRefName)
+	// expect two matches - e.g. [bundles-10 10]. Take the second one.
+	if len(matches) != 2 {
+		return -1
+	}
+
+	idInt, _ := strconv.Atoi(matches[1])
+	return idInt
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
@@ -214,23 +262,6 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Forbidden(specPath.Child("ControlPlaneConfiguration"), fmt.Sprintf("field is immutable %v", new.Spec.ControlPlaneConfiguration)))
-	}
-
-	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
-		allErrs = append(
-			allErrs,
-			field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
-	}
-
-	standardBundleRef := regexp.MustCompile(`^bundles-[0-9]+$`)
-	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef != nil && standardBundleRef.MatchString(old.Spec.BundlesRef.Name) && standardBundleRef.MatchString(new.Spec.BundlesRef.Name) {
-		oldIndex, _ := strconv.Atoi(strings.Split(old.Spec.BundlesRef.Name, "-")[1])
-		newIndex, _ := strconv.Atoi(strings.Split(new.Spec.BundlesRef.Name, "-")[1])
-		if newIndex < oldIndex {
-			allErrs = append(
-				allErrs,
-				field.Forbidden(specPath.Child("BundlesRef"), fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
-		}
 	}
 
 	return allErrs

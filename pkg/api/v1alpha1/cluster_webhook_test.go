@@ -842,6 +842,24 @@ func TestClusterValidateUpdateUnsetBundlesRefImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateBundleRefIncreasing(t *testing.T) {
+	cOld := createCluster()
+	c := cOld.DeepCopy()
+	c.Spec.BundlesRef.Name = "bundles-10"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateBundleRefSetCustomName(t *testing.T) {
+	cOld := createCluster()
+	c := cOld.DeepCopy()
+	c.Spec.BundlesRef.Name = "bundles-custom"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateBundleRefRollbackInvalid(t *testing.T) {
 	cOld := createCluster()
 	c := cOld.DeepCopy()
