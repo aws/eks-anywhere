@@ -16,6 +16,8 @@ package v1alpha1
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,6 +31,7 @@ import (
 
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
+var standardBundleRef = regexp.MustCompile(`^bundles-(?P<bundleid>\d+)$`)
 
 func (r *Cluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -92,6 +95,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
+	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
@@ -105,6 +110,40 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 
 	return nil
+}
+
+func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
+
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	oldIndex := getBundleIdFromBundlesRef(old.Spec.BundlesRef)
+	newIndex := getBundleIdFromBundlesRef(new.Spec.BundlesRef)
+	if oldIndex != -1 && newIndex != -1 && newIndex < oldIndex {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("bundle id must be monotonically increasing. Previous value %v, new value %v", old.Spec.BundlesRef, new.Spec.BundlesRef)))
+	}
+
+	return allErrs
+}
+
+func getBundleIdFromBundlesRef(bundlesRef *BundlesRef) int {
+	if bundlesRef == nil {
+		return -1
+	}
+	matches := standardBundleRef.FindStringSubmatch(bundlesRef.Name)
+	// expect two matches - e.g. [bundles-10 10]. Take the second one.
+	if len(matches) != 2 {
+		return -1
+	}
+	idInt, _ := strconv.Atoi(matches[1])
+	return idInt
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
