@@ -13,7 +13,6 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -30,6 +29,7 @@ type packageControllerTest struct {
 	kubectl        *mocks.MockKubectlRunner
 	chartInstaller *mocks.MockChartInstaller
 	command        *curatedpackages.PackageControllerClient
+	clusterName    string
 	kubeConfig     string
 	ociUri         string
 	chartName      string
@@ -53,17 +53,19 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 	eksaAccessId := "test-access-id"
 	eksaAccessKey := "test-access-key"
 	eksaRegion := "test-region"
+	clusterName := "billy"
 	return &packageControllerTest{
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
 		kubectl:        k,
 		chartInstaller: ci,
 		command: curatedpackages.NewPackageControllerClient(
-			ci, k, "billy", kubeConfig, uri, chartName, chartVersion,
+			ci, k, clusterName, kubeConfig, uri, chartName, chartVersion,
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
 		),
+		clusterName:   clusterName,
 		kubeConfig:    kubeConfig,
 		ociUri:        uri,
 		chartName:     chartName,
@@ -223,7 +225,7 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 func TestGetActiveControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
 
 	found, err := tt.command.IsInstalled(tt.ctx)
 	if err != nil || found {
@@ -234,7 +236,7 @@ func TestGetActiveControllerSuccess(t *testing.T) {
 func TestGetActiveControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", packagesv1.PackageBundleControllerName, tt.kubeConfig, constants.EksaPackagesName).Return(true, errors.New("controller doesn't exist"))
+	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(true, errors.New("controller doesn't exist"))
 
 	found, err := tt.command.IsInstalled(tt.ctx)
 	if !found || err == nil {
