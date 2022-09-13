@@ -38,7 +38,7 @@ func DescribeTag(gitRoot string) (string, error) {
 }
 
 func GetRepoTagsDescending(gitRoot string) (string, error) {
-	cmd := exec.Command("git", "-C", gitRoot, "tag", "-l", "--sort", "-v:refname")
+	cmd := exec.Command("git", "-C", gitRoot, "tag", "-l", "v*.*.*", "--sort", "-v:refname")
 	return commandutils.ExecCommand(cmd)
 }
 
