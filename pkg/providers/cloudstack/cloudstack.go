@@ -135,7 +135,7 @@ func generateSecret(profile decoder.CloudStackProfileConfig) *corev1.Secret {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: constants.EksaSystemNamespace,
-			Name:      profile.Name,
+			Name:      strings.ToLower(profile.Name),
 		},
 		StringData: map[string]string{
 			"api-url":    profile.ManagementUrl,
