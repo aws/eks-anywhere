@@ -248,6 +248,9 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.managementCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
+		c.provider.EXPECT().PostMoveManagementToBootstrap(
+			c.ctx, c.bootstrapCluster,
+		),
 	)
 }
 

@@ -42,6 +42,8 @@ type Provider interface {
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error
 	PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error
+	// PostMoveManagementToBootstrap is called after the CAPI management is moved back to the bootstrap cluster.
+	PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error
 }
 
 type DatacenterConfig interface {
