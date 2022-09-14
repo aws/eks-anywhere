@@ -142,6 +142,8 @@ func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 		HardwareSatisfiesOnlyOneSelectorAssertion(p.catalogue),
 	)
 
+	clusterSpecValidator.Register(AssertPort80IsNotInUse(p.netClient))
+
 	if !p.skipIpCheck {
 		clusterSpecValidator.Register(NewIPNotInUseAssertion(p.netClient))
 		clusterSpecValidator.Register(AssertTinkerbellIPNotInUse(p.netClient))

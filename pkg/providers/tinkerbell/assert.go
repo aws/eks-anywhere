@@ -119,6 +119,17 @@ func AssertTinkerbellIPAndControlPlaneIPNotSame(spec *ClusterSpec) error {
 	return nil
 }
 
+func AssertPort80IsNotInUse(client networkutils.NetClient) ClusterSpecAssertion {
+	return func(spec *ClusterSpec) error {
+		port := "80"
+		host := "0.0.0.0"
+		if networkutils.IsPortInUse(client, host, port) {
+			return fmt.Errorf("port 80 of host is already in use")
+		}
+		return nil
+	}
+}
+
 // HardwareSatisfiesOnlyOneSelectorAssertion ensures hardware in catalogue only satisfies 1
 // of the MachineConfig's HardwareSelector's from the spec.
 func HardwareSatisfiesOnlyOneSelectorAssertion(catalogue *hardware.Catalogue) ClusterSpecAssertion {
