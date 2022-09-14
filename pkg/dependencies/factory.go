@@ -857,7 +857,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
-		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
