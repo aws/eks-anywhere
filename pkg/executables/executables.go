@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -70,6 +71,9 @@ func (e *executable) Command(ctx context.Context, args ...string) *Command {
 }
 
 func (e *executable) Run(cmd *Command) (stdout bytes.Buffer, err error) {
+	for k, v := range cmd.envVars {
+		os.Setenv(k, v)
+	}
 	return execute(cmd.ctx, e.cli, cmd.stdIn, cmd.envVars, cmd.args...)
 }
 
@@ -77,7 +81,7 @@ func (e *executable) Close(ctx context.Context) error {
 	return nil
 }
 
-func redactCreds(cmd string, envMap map[string]string) string {
+func RedactCreds(cmd string, envMap map[string]string) string {
 	redactedEnvs := []string{}
 	for _, redactedEnvKey := range redactedEnvKeys {
 		if env, found := envMap[redactedEnvKey]; found {
@@ -94,7 +98,7 @@ func redactCreds(cmd string, envMap map[string]string) string {
 func execute(ctx context.Context, cli string, in []byte, envVars map[string]string, args ...string) (stdout bytes.Buffer, err error) {
 	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, cli, args...)
-	logger.V(6).Info("Executing command", "cmd", redactCreds(cmd.String(), envVars))
+	logger.V(6).Info("Executing command", "cmd", RedactCreds(cmd.String(), envVars))
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if len(in) != 0 {
