@@ -84,6 +84,7 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a Cluster but got a %T", old))
 	}
 
+	clusterlog.Info("Attributes", "isReconcilePaused", r.IsReconcilePaused())
 	if r.IsSelfManaged() && !r.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) {
 		return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
 	}

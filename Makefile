@@ -121,7 +121,7 @@ GO_OS:=$(shell go env GOOS)
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
 CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
-FETCH_BINARIES_TARGETS = eksa/vmware/govmomi eksa/helm/helm
+FETCH_BINARIES_TARGETS = eksa/vmware/govmomi eksa/helm/helm eksa/apache/cloudstack-cloudmonkey
 ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_DIR)/linux-,amd64 arm64))
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
