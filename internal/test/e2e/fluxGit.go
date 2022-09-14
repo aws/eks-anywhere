@@ -9,11 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/git"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
@@ -36,7 +37,7 @@ func (f *fileFromBytes) contentString() string {
 func (e *E2ESession) setupFluxGitEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*GitFlux.*$`)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running Flux Generic Git Provider tests, skipping environment setup")
+		e.logger.V(2).Info("Not running Flux Generic Git Provider tests, skipping environment setup")
 		return nil
 	}
 
@@ -79,25 +80,25 @@ func buildFluxGitFiles(envVars map[string]string) []s3Files {
 }
 
 func (e *E2ESession) writeFileToInstance(file fileFromBytes) error {
-	logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
+	e.logger.V(1).Info("Writing bytes to file in instance", "file", file.dstPath)
 
 	command := fmt.Sprintf("echo $'%s' >> %s && chmod %d %[2]s", file.contentString(), file.dstPath, file.permission)
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("writing file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully wrote file", "file", file.dstPath)
+	e.logger.V(1).Info("Successfully wrote file", "file", file.dstPath)
 
 	return nil
 }
 
 func (e *E2ESession) downloadFileInInstance(file s3Files) error {
-	logger.V(1).Info("Downloading from s3 in instance", "file", file.key)
+	e.logger.V(1).Info("Downloading from s3 in instance", "file", file.key)
 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s %s && chmod %d %[3]s", e.storageBucket, file.key, file.dstPath, file.permission)
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully downloaded file", "file", file.key)
+	e.logger.V(1).Info("Successfully downloaded file", "file", file.key)
 
 	return nil
 }
@@ -105,16 +106,16 @@ func (e *E2ESession) downloadFileInInstance(file s3Files) error {
 func (e *E2ESession) setUpSshAgent(privateKeyFile string) error {
 	command := fmt.Sprintf("eval $(ssh-agent -s) ssh-add %s", privateKeyFile)
 
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("starting SSH agent on instance: %v", err)
 	}
-	logger.V(1).Info("Successfully started SSH agent on instance")
+	e.logger.V(1).Info("Successfully started SSH agent on instance")
 
 	return nil
 }
 
 func (e *E2ESession) setupGithubRepo() (*git.Repository, error) {
-	logger.V(1).Info("setting up Github repo for test")
+	e.logger.V(1).Info("setting up Github repo for test")
 	owner := e.testEnvVars[e2etests.GithubUserVar]
 	repo := strings.ReplaceAll(e.jobId, ":", "-") // Github API urls get funky if you use ":" in the repo name
 
@@ -149,7 +150,7 @@ func (e *E2ESession) setupGithubRepo() (*git.Repository, error) {
 		return nil, fmt.Errorf("generating key pair for git tests: %v", err)
 	}
 
-	logger.Info("Create Deploy Key Configuration for Git Flux tests", "owner", owner, "repo", repo)
+	e.logger.Info("Create Deploy Key Configuration for Git Flux tests", "owner", owner, "repo", repo)
 	// Add the newly generated public key to the newly created repository as a deploy key
 	ko := git.AddDeployKeyOpts{
 		Owner:      owner,

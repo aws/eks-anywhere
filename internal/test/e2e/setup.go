@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
@@ -44,6 +44,7 @@ type E2ESession struct {
 	requiredFiles       []string
 	branchName          string
 	hardware            []*api.Hardware
+	logger              logr.Logger
 }
 
 func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error) {
@@ -60,6 +61,7 @@ func newE2ESession(instanceId string, conf instanceRunConf) (*E2ESession, error)
 		requiredFiles:       requiredFiles,
 		branchName:          conf.branchName,
 		hardware:            conf.hardware,
+		logger:              conf.logger,
 	}
 
 	return e, nil
@@ -71,7 +73,7 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
-	logger.V(1).Info("Waiting until SSM is ready")
+	e.logger.V(1).Info("Waiting until SSM is ready")
 	err = ssm.WaitForSSMReady(e.session, e.instanceId)
 	if err != nil {
 		return fmt.Errorf("waiting for ssm in new instance: %v", err)
@@ -157,10 +159,10 @@ func (e *E2ESession) setup(regex string) error {
 func (e *E2ESession) updateFSInotifyResources() error {
 	command := fmt.Sprintf("sudo sysctl fs.inotify.max_user_watches=%v && sudo sysctl fs.inotify.max_user_instances=%v", maxUserWatches, maxUserInstances)
 
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("updating fs inotify resources: %v", err)
 	}
-	logger.V(1).Info("Successfully updates the fs inotify user watches and instances")
+	e.logger.V(1).Info("Successfully updates the fs inotify user watches and instances")
 
 	return nil
 }
@@ -168,7 +170,7 @@ func (e *E2ESession) updateFSInotifyResources() error {
 func (e *E2ESession) uploadRequiredFile(file string) error {
 	uploadFile := fmt.Sprintf("bin/%s", file)
 	key := fmt.Sprintf("%s/%s", e.jobId, file)
-	logger.V(1).Info("Uploading file to s3 bucket", "file", file, "key", key)
+	e.logger.V(1).Info("Uploading file to s3 bucket", "file", file, "key", key)
 	err := s3.UploadFile(e.session, uploadFile, key, e.storageBucket)
 	if err != nil {
 		return fmt.Errorf("uploading file [%s]: %v", file, err)
@@ -183,7 +185,7 @@ func (e *E2ESession) uploadRequiredFiles() error {
 		if _, err := os.Stat(fmt.Sprintf("bin/%s", eksAComponentsManifestFile)); err == nil {
 			e.requiredFiles = append(e.requiredFiles, eksAComponentsManifestFile)
 		} else if errors.Is(err, os.ErrNotExist) {
-			logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
+			e.logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
 				"If the EKS-A components have changed be sure to provide a components override!")
 		} else {
 			return err
@@ -200,13 +202,13 @@ func (e *E2ESession) uploadRequiredFiles() error {
 }
 
 func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
-	logger.V(1).Info("Downloading from s3 in instance", "file", file)
+	e.logger.V(1).Info("Downloading from s3 in instance", "file", file)
 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("downloading file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully downloaded file")
+	e.logger.V(1).Info("Successfully downloaded file")
 
 	return nil
 }
@@ -224,10 +226,10 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 func (e *E2ESession) createTestNameFile(testName string) error {
 	command := fmt.Sprintf("echo \"%s\" > %s", testName, testNameFile)
 
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("creating test name file in instance: %v", err)
 	}
-	logger.V(1).Info("Successfully created test name file")
+	e.logger.V(1).Info("Successfully created test name file")
 
 	return nil
 }
@@ -254,10 +256,10 @@ func clusterPrefix(branch, instanceId string) (clusterPrefix string) {
 	return clusterPrefix
 }
 
-func clusterName(branch, instanceId, testName string) (clusterName string) {
+func (e *E2ESession) clusterName(branch, instanceId, testName string) (clusterName string) {
 	clusterName = fmt.Sprintf("%s-%s", clusterPrefix(branch, instanceId), e2etests.GetTestNameHash(testName))
 	if len(clusterName) > 63 {
-		logger.Info("Cluster name is longer than 63 characters; truncating to 63 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:63])
+		e.logger.Info("Cluster name is longer than 63 characters; truncating to 63 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:63])
 		clusterName = clusterName[:63]
 	}
 	return clusterName

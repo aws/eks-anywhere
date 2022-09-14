@@ -4,14 +4,13 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 func (e *E2ESession) setupFluxEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*Flux.*$`)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running Flux tests, skipping Env variable setup")
+		e.logger.V(2).Info("Not running Flux tests, skipping Env variable setup")
 		return nil
 	}
 

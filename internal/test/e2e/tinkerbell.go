@@ -5,9 +5,10 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -25,7 +26,7 @@ const (
 func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 	re := regexp.MustCompile(tinkerbellTestsRe)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running Tinkerbell tests, skipping Env variable setup")
+		e.logger.V(2).Info("Not running Tinkerbell tests, skipping Env variable setup")
 		return nil
 	}
 
@@ -36,13 +37,13 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 		}
 	}
 
-	inventoryFileName := fmt.Sprintf("%s.csv", getTestRunnerName(e.jobId))
+	inventoryFileName := fmt.Sprintf("%s.csv", getTestRunnerName(e.logger, e.jobId))
 	inventoryFilePath := fmt.Sprintf("bin/%s", inventoryFileName)
 
 	if _, err := os.Stat(inventoryFilePath); err == nil {
-		e := os.Remove(inventoryFilePath)
-		if e != nil {
-			logger.V(1).Info("WARN: Failed to clean up existing inventory csv", "file", inventoryFilePath)
+		err = os.Remove(inventoryFilePath)
+		if err != nil {
+			e.logger.V(1).Info("WARN: Failed to clean up existing inventory csv", "file", inventoryFilePath)
 		}
 	}
 
@@ -78,14 +79,14 @@ func (e *E2ESession) setupTinkerbellEnv(testRegex string) error {
 }
 
 func (e *E2ESession) setTinkerbellBootstrapIPInInstance(tinkInterface string) error {
-	logger.V(1).Info("Setting Tinkerbell Bootstrap IP in instance")
+	e.logger.V(1).Info("Setting Tinkerbell Bootstrap IP in instance")
 
 	command := fmt.Sprintf("export T_TINKERBELL_BOOTSTRAP_IP=$(/sbin/ip -o -4 addr list %s | awk '{print $4}' | cut -d/ -f1) && echo T_TINKERBELL_BOOTSTRAP_IP=\"$T_TINKERBELL_BOOTSTRAP_IP\" | tee -a /etc/environment", tinkInterface)
-	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+	if err := ssm.Run(e.session, logr.Discard(), e.instanceId, command); err != nil {
 		return fmt.Errorf("setting tinkerbell boostrap ip: %v", err)
 	}
 
-	logger.V(1).Info("Successfully set tinkerbell boostrap ip")
+	e.logger.V(1).Info("Successfully set tinkerbell boostrap ip")
 
 	return nil
 }
