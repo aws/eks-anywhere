@@ -18,7 +18,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+var testdataFile = "testdata/testdata.yaml"
 
 type installerTest struct {
 	*WithT
@@ -61,9 +64,9 @@ func TestInstallEksdCRDsSuccess(t *testing.T) {
 	}
 
 	tt := newInstallerTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/testdata.yaml"
+	tt.clusterSpec.Bundles = bundle()
 
-	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.Components).Return([]byte("test data"), nil)
+	tt.reader.EXPECT().ReadFile(testdataFile).Return([]byte("test data"), nil).Times(1)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
 	if err := tt.eksdInstaller.InstallEksdCRDs(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("Eksd.InstallEksdCRDs() error = %v, wantErr nil", err)
@@ -79,10 +82,10 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 	}
 
 	tt := newInstallerTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/testdata.yaml"
+	tt.clusterSpec.Bundles = bundle()
 
-	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte("test data"), nil)
-	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
+	tt.reader.EXPECT().ReadFile(testdataFile).Return([]byte("test data"), nil).Times(2)
+	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil).Times(2)
 	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("Eksd.InstallEksdManifest() error = %v, wantErr nil", err)
 	}
@@ -91,10 +94,32 @@ func TestInstallEksdManifestSuccess(t *testing.T) {
 func TestInstallEksdManifestErrorReadingManifest(t *testing.T) {
 	tt := newInstallerTest(t)
 	tt.eksdInstaller.SetRetrier(retrier.NewWithMaxRetries(1, 0))
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "fake.yaml"
+	tt.clusterSpec.Bundles = bundle()
+	tt.clusterSpec.Bundles.Spec.VersionsBundles[0].EksD.EksDReleaseUrl = "fake.yaml"
 
-	tt.reader.EXPECT().ReadFile(tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
+	tt.reader.EXPECT().ReadFile(tt.clusterSpec.Bundles.Spec.VersionsBundles[0].EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
 	if err := tt.eksdInstaller.InstallEksdManifest(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
 		t.Error("Eksd.InstallEksdManifest() error = nil, wantErr not nil")
+	}
+}
+
+func bundle() *v1alpha1.Bundles {
+	return &v1alpha1.Bundles{
+		Spec: v1alpha1.BundlesSpec{
+			VersionsBundles: []v1alpha1.VersionsBundle{
+				{
+					EksD: v1alpha1.EksDRelease{
+						Components:     testdataFile,
+						EksDReleaseUrl: testdataFile,
+					},
+				},
+				{
+					EksD: v1alpha1.EksDRelease{
+						Components:     testdataFile,
+						EksDReleaseUrl: testdataFile,
+					},
+				},
+			},
+		},
 	}
 }

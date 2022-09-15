@@ -69,7 +69,7 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
-	tt.newSpec.VersionsBundle.EksD.Components = "testdata/testdata.yaml"
+	tt.newSpec.Bundles = bundle()
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
@@ -81,7 +81,7 @@ func TestEksdUpgradeSuccess(t *testing.T) {
 		},
 	}
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.Components).Return([]byte("test data"), nil)
+	tt.reader.EXPECT().ReadFile(testdataFile).Return([]byte("test data"), nil)
 	tt.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, tt.cluster, []byte("test data"), constants.EksaSystemNamespace).Return(nil)
 	tt.Expect(tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
@@ -90,8 +90,11 @@ func TestUpgraderEksdUpgradeInstallError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.eksdUpgrader.SetRetrier(retrier.NewWithMaxRetries(1, 0))
 	tt.newSpec.VersionsBundle.EksD.Name = "eks-d-2"
+	tt.newSpec.Bundles = bundle()
+	tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components = ""
+	tt.newSpec.Bundles.Spec.VersionsBundles[1].EksD.Components = ""
 
-	tt.reader.EXPECT().ReadFile(tt.newSpec.VersionsBundle.EksD.EksDReleaseUrl).Return([]byte(""), fmt.Errorf("error"))
+	tt.reader.EXPECT().ReadFile(tt.newSpec.Bundles.Spec.VersionsBundles[0].EksD.Components).Return([]byte(""), fmt.Errorf("error"))
 	// components file not set so this should return an error in failing to load manifest
 	_, err := tt.eksdUpgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
 	tt.Expect(err).NotTo(BeNil())
