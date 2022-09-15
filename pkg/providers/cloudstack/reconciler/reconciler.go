@@ -43,15 +43,13 @@ const (
 type Reconciler struct {
 	client    client.Client
 	cmk       *executables.Cmk
-	defaulter *cloudstack.Defaulter
 	tracker   *remote.ClusterCacheTracker
 }
 
-func New(client client.Client, cmk *executables.Cmk, defaulter *cloudstack.Defaulter, tracker *remote.ClusterCacheTracker) *Reconciler {
+func New(client client.Client, cmk *executables.Cmk, tracker *remote.ClusterCacheTracker) *Reconciler {
 	return &Reconciler{
 		client:    client,
 		cmk: cmk,
-		defaulter: defaulter,
 		tracker:   tracker,
 	}
 }

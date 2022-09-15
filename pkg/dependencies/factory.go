@@ -1099,38 +1099,6 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
-func (f *Factory) WithCloudStackValidator() *Factory {
-	f.WithCmk()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.CloudStackValidator != nil {
-			return nil
-		}
-
-		f.dependencies.CloudStackValidator = cloudstack.NewValidator(f.dependencies.Cmk)
-
-		return nil
-	})
-
-	return f
-}
-
-func (f *Factory) WithCloudStackDefaulter() *Factory {
-	f.WithCmk()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.CloudStackDefaulter != nil {
-			return nil
-		}
-
-		f.dependencies.CloudStackDefaulter = cloudstack.NewDefaulter(f.dependencies.Cmk)
-
-		return nil
-	})
-
-	return f
-}
-
 func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
 	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
 	if proxyConfiguration != nil {

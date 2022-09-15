@@ -23,15 +23,13 @@ import (
 type CloudStackDatacenterReconciler struct {
 	log       logr.Logger
 	client    client.Client
-	defaulter *cloudstack.Defaulter
 	cmk       *executables.Cmk
 }
 
-func NewCloudStackDatacenterReconciler(client client.Client, log logr.Logger, cmk *executables.Cmk, defaulter *cloudstack.Defaulter) *CloudStackDatacenterReconciler {
+func NewCloudStackDatacenterReconciler(client client.Client, log logr.Logger, cmk *executables.Cmk) *CloudStackDatacenterReconciler {
 	return &CloudStackDatacenterReconciler{
 		client:    client,
 		cmk:       cmk,
-		defaulter: defaulter,
 		log:       log,
 	}
 }
@@ -84,9 +82,7 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed setting default values for cloudstack datacenter config: %v", err)
-	}
+
 	secrets, err := r.fetchDatacenterSecrets(ctx, cloudstackDatacenter)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("retreiving secrets from cloudstack datacenter config: %v", err)
@@ -96,9 +92,11 @@ func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudsta
 		return ctrl.Result{}, err
 	}
 	r.cmk.SetExecConfig(execConfig)
-	validator := cloudstack.NewValidator(r.cmk)
+	if err = cloudstack.NewDefaulter(r.cmk).SetDefaultsForDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed setting default values for cloudstack datacenter config: %v", err)
+	}
 	// Determine if CloudStackDatacenterConfig is valid
-	if err := validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
+	if err := cloudstack.NewValidator(r.cmk).ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter); err != nil {
 		log.Error(err, "Failed to validate CloudStackDatacenterConfig")
 		return ctrl.Result{}, err
 	}

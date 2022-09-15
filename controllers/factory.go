@@ -116,7 +116,6 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 }
 
 func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
-	f.dependencyFactory.WithCloudStackDefaulter().WithCloudStackValidator()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.CloudStackDatacenterReconciler != nil {
@@ -127,7 +126,6 @@ func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
 			f.manager.GetClient(),
 			f.logger,
 			f.deps.Cmk,
-			f.deps.CloudStackDefaulter,
 		)
 
 		return nil
@@ -239,7 +237,6 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withCloudStackClusterReconciler() *Factory {
-	f.dependencyFactory.WithCloudStackDefaulter().WithCloudStackValidator()
 	f.withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cloudstackClusterReconciler != nil {
@@ -249,7 +246,6 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 		f.cloudstackClusterReconciler = cloudstackreconciler.New(
 			f.manager.GetClient(),
 			f.deps.Cmk,
-			f.deps.CloudStackDefaulter,
 			f.tracker,
 		)
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
