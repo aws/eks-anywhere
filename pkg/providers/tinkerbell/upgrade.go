@@ -179,8 +179,7 @@ func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 }
 
 func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	allHardware := p.catalogue.AllHardware()
-	if len(allHardware) == 0 {
+	if p.catalogue.TotalHardware() == 0 {
 		return nil
 	}
 
