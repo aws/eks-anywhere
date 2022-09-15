@@ -3,34 +3,34 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-	apiv1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/go-logr/logr"
+	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 // CloudStackDatacenterReconciler reconciles a CloudStackDatacenterConfig object
 type CloudStackDatacenterReconciler struct {
-	log       logr.Logger
-	client    client.Client
-	cmk       *executables.Cmk
+	log    logr.Logger
+	client client.Client
+	cmk    *executables.Cmk
 }
 
 func NewCloudStackDatacenterReconciler(client client.Client, log logr.Logger, cmk *executables.Cmk) *CloudStackDatacenterReconciler {
 	return &CloudStackDatacenterReconciler{
-		client:    client,
-		cmk:       cmk,
-		log:       log,
+		client: client,
+		cmk:    cmk,
+		log:    log,
 	}
 }
 
@@ -82,7 +82,6 @@ func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func (r *CloudStackDatacenterReconciler) reconcile(ctx context.Context, cloudstackDatacenter *anywherev1.CloudStackDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-
 	secrets, err := r.fetchDatacenterSecrets(ctx, cloudstackDatacenter)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("retreiving secrets from cloudstack datacenter config: %v", err)
@@ -115,7 +114,7 @@ func (r *CloudStackDatacenterReconciler) fetchDatacenterSecrets(ctx context.Cont
 	for _, az := range cloudstackDatacenter.Spec.AvailabilityZones {
 		secret := &apiv1.Secret{}
 		namespacedName := types.NamespacedName{
-			Name: az.CredentialsRef,
+			Name:      az.CredentialsRef,
 			Namespace: constants.EksaSystemNamespace,
 		}
 		if err := r.client.Get(ctx, namespacedName, secret); err != nil {

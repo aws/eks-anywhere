@@ -28,14 +28,14 @@ type Factory struct {
 	registryBuilder   *clusters.ProviderClusterReconcilerRegistryBuilder
 	reconcilers       Reconcilers
 
-	tracker                  *remote.ClusterCacheTracker
-	registry                 *clusters.ProviderClusterReconcilerRegistry
+	tracker                     *remote.ClusterCacheTracker
+	registry                    *clusters.ProviderClusterReconcilerRegistry
 	cloudstackClusterReconciler *cloudstackreconciler.Reconciler
-	vsphereClusterReconciler *vspherereconciler.Reconciler
-	snowClusterReconciler    *snowreconciler.Reconciler
-	cniReconciler            *cnireconciler.Reconciler
-	logger                   logr.Logger
-	deps                     *dependencies.Dependencies
+	vsphereClusterReconciler    *vspherereconciler.Reconciler
+	snowClusterReconciler       *snowreconciler.Reconciler
+	cniReconciler               *cnireconciler.Reconciler
+	logger                      logr.Logger
+	deps                        *dependencies.Dependencies
 }
 
 type Reconcilers struct {
@@ -116,7 +116,6 @@ func (f *Factory) WithVSphereDatacenterReconciler() *Factory {
 }
 
 func (f *Factory) WithCloudStackDatacenterReconciler() *Factory {
-
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.reconcilers.CloudStackDatacenterReconciler != nil {
 			return nil

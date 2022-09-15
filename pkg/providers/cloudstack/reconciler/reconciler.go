@@ -3,11 +3,10 @@ package reconciler
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
-	apiv1 "k8s.io/api/core/v1"
 	"time"
 
 	"github.com/go-logr/logr"
+	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
@@ -25,6 +24,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 )
 
@@ -41,16 +41,16 @@ const (
 )
 
 type Reconciler struct {
-	client    client.Client
-	cmk       *executables.Cmk
-	tracker   *remote.ClusterCacheTracker
+	client  client.Client
+	cmk     *executables.Cmk
+	tracker *remote.ClusterCacheTracker
 }
 
 func New(client client.Client, cmk *executables.Cmk, tracker *remote.ClusterCacheTracker) *Reconciler {
 	return &Reconciler{
-		client:    client,
-		cmk: cmk,
-		tracker:   tracker,
+		client:  client,
+		cmk:     cmk,
+		tracker: tracker,
 	}
 }
 
@@ -282,7 +282,7 @@ func (r *Reconciler) fetchDatacenterSecrets(ctx context.Context, cloudstackDatac
 	for _, az := range cloudstackDatacenter.Spec.AvailabilityZones {
 		secret := &apiv1.Secret{}
 		namespacedName := types.NamespacedName{
-			Name: az.CredentialsRef,
+			Name:      az.CredentialsRef,
 			Namespace: constants.EksaSystemNamespace,
 		}
 		if err := r.client.Get(ctx, namespacedName, secret); err != nil {

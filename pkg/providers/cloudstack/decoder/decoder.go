@@ -3,12 +3,12 @@ package decoder
 import (
 	b64 "encoding/base64"
 	"fmt"
-	apiv1 "k8s.io/api/core/v1"
 	"os"
 	"strconv"
 	"strings"
 
 	"gopkg.in/ini.v1"
+	apiv1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -24,10 +24,8 @@ const (
 	VerifySslKey = "verify-ssl"
 )
 
-
 // ParseCloudStackCredsFromSecrets parses the list of secrets to extract out the api keys, secret keys, and urls
 func ParseCloudStackCredsFromSecrets(secrets []apiv1.Secret) (*CloudStackExecConfig, error) {
-
 	var cloudstackProfiles []CloudStackProfileConfig
 	for _, secret := range secrets {
 		apiKey, ok := secret.Data[ApiKeyKey]
