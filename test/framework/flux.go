@@ -907,9 +907,17 @@ func (e *ClusterE2ETest) clusterConfigGitPath() string {
 }
 
 func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
+	var opts []cluster.SpecOpt
+	if getBundlesOverride() == "true" {
+		// This makes sure that the cluster.Spec uses the same Bundles we pass to the CLI
+		// It avoids the budlesRef getting overwritten with whatever default Bundles the
+		// e2e test build is configured to use
+		opts = append(opts, cluster.WithOverrideBundlesManifest(defaultBundleReleaseManifestFile))
+	}
 	s, err := cluster.NewSpecFromClusterConfig(
 		e.clusterConfigGitPath(),
 		version.Get(),
+		opts...,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build spec from git: %v", err)
