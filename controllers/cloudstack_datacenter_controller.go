@@ -43,7 +43,7 @@ func (r *CloudStackDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 // TODO: add here kubebuilder permissions as neeeded
 func (r *CloudStackDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.log.WithValues("cloudstackDatacenter", req.NamespacedName)
+	log := r.log.WithValues("cloudstackDatacenter reconciler", req.NamespacedName)
 
 	// Fetch the CloudStackDatacenter object
 	cloudstackDatacenter := &anywherev1.CloudStackDatacenterConfig{}

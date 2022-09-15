@@ -479,6 +479,10 @@ func (f *Factory) WithCmk(fromEnvVar bool) *Factory {
 			if err != nil {
 				return fmt.Errorf("building cmk executable: %v", err)
 			}
+		} else {
+			execConfig = &decoder.CloudStackExecConfig{
+				Profiles: []decoder.CloudStackProfileConfig{},
+			}
 		}
 
 		f.dependencies.Cmk = f.executablesConfig.builder.BuildCmkExecutable(f.dependencies.Writer, execConfig)

@@ -246,6 +246,7 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 			f.manager.GetClient(),
 			f.deps.Cmk,
 			f.tracker,
+			f.logger,
 		)
 		f.registryBuilder.Add(anywherev1.CloudStackDatacenterKind, f.cloudstackClusterReconciler)
 

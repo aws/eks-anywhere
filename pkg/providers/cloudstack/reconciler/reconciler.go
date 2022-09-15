@@ -44,17 +44,20 @@ type Reconciler struct {
 	client  client.Client
 	cmk     *executables.Cmk
 	tracker *remote.ClusterCacheTracker
+	log     logr.Logger
 }
 
-func New(client client.Client, cmk *executables.Cmk, tracker *remote.ClusterCacheTracker) *Reconciler {
+func New(client client.Client, cmk *executables.Cmk, tracker *remote.ClusterCacheTracker, log logr.Logger) *Reconciler {
 	return &Reconciler{
 		client:  client,
 		cmk:     cmk,
 		tracker: tracker,
+		log:     log,
 	}
 }
 
 func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	log.Info("Reconciling cloudstack provider reconciler")
 	dataCenterConfig := &anywherev1.CloudStackDatacenterConfig{}
 	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
 	if err := r.client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
