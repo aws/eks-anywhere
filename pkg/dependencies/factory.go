@@ -280,7 +280,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
 	case v1alpha1.CloudStackDatacenterKind:
-		f.WithKubectl().WithCmk().WithWriter()
+		f.WithKubectl().WithCmk(true).WithWriter()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
@@ -464,7 +464,7 @@ func (f *Factory) WithGovc() *Factory {
 	return f
 }
 
-func (f *Factory) WithCmk() *Factory {
+func (f *Factory) WithCmk(fromEnvVar bool) *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -472,9 +472,13 @@ func (f *Factory) WithCmk() *Factory {
 			return nil
 		}
 
-		execConfig, err := decoder.ParseCloudStackCredsFromEnv()
-		if err != nil {
-			return fmt.Errorf("building cmk executable: %v", err)
+		var execConfig *decoder.CloudStackExecConfig
+		if fromEnvVar {
+			var err error
+			execConfig, err = decoder.ParseCloudStackCredsFromEnv()
+			if err != nil {
+				return fmt.Errorf("building cmk executable: %v", err)
+			}
 		}
 
 		f.dependencies.Cmk = f.executablesConfig.builder.BuildCmkExecutable(f.dependencies.Writer, execConfig)

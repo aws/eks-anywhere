@@ -76,7 +76,7 @@ func (f *Factory) Build(ctx context.Context) (*Reconcilers, error) {
 }
 
 func (f *Factory) WithClusterReconciler(capiProviders []clusterctlv1.Provider) *Factory {
-	f.dependencyFactory.WithGovc().WithCmk()
+	f.dependencyFactory.WithGovc().WithCmk(false)
 	f.withTracker().WithProviderClusterReconcilerRegistry(capiProviders)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
