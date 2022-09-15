@@ -71,12 +71,20 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		return err
 	}
 
+	// Create a catalogue for new hardware only so we can apply it to the cluster later.
+	newHardwareCatalogue := hardware.NewCatalogue()
+
 	// If we've been given a CSV with additional hardware for the cluster, validate it and
 	// write it to the catalogue so it can be used for further processing.
 	if p.hardwareCSVIsProvided() {
 		machineCatalogueWriter := hardware.NewMachineCatalogueWriter(p.catalogue)
+		newHardwareCatalogueWriter := hardware.NewMachineCatalogueWriter(newHardwareCatalogue)
 
-		writer := hardware.MultiMachineWriter(machineCatalogueWriter, &p.diskExtractor)
+		writer := hardware.MultiMachineWriter(
+			machineCatalogueWriter,
+			newHardwareCatalogueWriter,
+			&p.diskExtractor,
+		)
 
 		machines, err := hardware.NewNormalizedCSVReaderFromFile(p.hardwareCSVFile)
 		if err != nil {
@@ -130,7 +138,15 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		}
 	}
 
-	return p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec)
+	if err := p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec); err != nil {
+		return err
+	}
+
+	// Configure the provider catalogue to contain new hardware only so it can be applied in
+	// a post bootstrap cluster setup stage later.
+	p.catalogue = newHardwareCatalogue
+
+	return nil
 }
 
 func (p *Provider) validateAvailableHardwareForUpgrade(ctx context.Context, currentSpec, newClusterSpec *cluster.Spec) (err error) {
