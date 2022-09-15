@@ -364,7 +364,7 @@ func createBundle() *releasev1.Bundles {
 			APIVersion: releasev1.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "bundle-1",
+			Name:      "bundles-1",
 			Namespace: "default",
 		},
 		Spec: releasev1.BundlesSpec{

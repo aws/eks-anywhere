@@ -6,7 +6,9 @@ const (
 	EksaGitKnownHostsFileEnv  = "EKSA_GIT_KNOWN_HOSTS"
 	SshKnownHostsEnv          = "SSH_KNOWN_HOSTS"
 	EksaAccessKeyIdEnv        = "EKSA_AWS_ACCESS_KEY_ID"
-	EksaSecretAcessKeyEnv     = "EKSA_AWS_SECRET_ACCESS_KEY"
+	EksaSecretAccessKeyEnv    = "EKSA_AWS_SECRET_ACCESS_KEY"
+	AwsAccessKeyIdEnv         = "AWS_ACCESS_KEY_ID"
+	AwsSecretAccessKeyEnv     = "AWS_SECRET_ACCESS_KEY"
 	EksaRegionEnv             = "EKSA_AWS_REGION"
 )
 

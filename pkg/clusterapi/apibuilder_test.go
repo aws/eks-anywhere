@@ -360,12 +360,10 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestMachineDeployment(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	got := clusterapi.MachineDeployment(tt.clusterSpec, *tt.workerNodeGroupConfig, tt.kubeadmConfigTemplate, tt.providerMachineTemplate)
+func wantMachineDeployment() clusterv1.MachineDeployment {
 	replicas := int32(3)
 	version := "v1.21.5-eks-1-21-9"
-	want := clusterv1.MachineDeployment{
+	return clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.x-k8s.io/v1beta1",
 			Kind:       "MachineDeployment",
@@ -378,6 +376,7 @@ func TestMachineDeployment(t *testing.T) {
 				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "test-cluster",
 				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "my-namespace",
 			},
+			Annotations: map[string]string{},
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
 			ClusterName: "test-cluster",
@@ -410,7 +409,13 @@ func TestMachineDeployment(t *testing.T) {
 			Replicas: &replicas,
 		},
 	}
-	tt.Expect(got).To(Equal(want))
+}
+
+func TestMachineDeployment(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	got := clusterapi.MachineDeployment(tt.clusterSpec, *tt.workerNodeGroupConfig, tt.kubeadmConfigTemplate, tt.providerMachineTemplate)
+
+	tt.Expect(got).To(Equal(wantMachineDeployment()))
 }
 
 func TestClusterName(t *testing.T) {

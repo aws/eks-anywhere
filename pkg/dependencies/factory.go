@@ -81,7 +81,7 @@ type Dependencies struct {
 	CliConfig                 *config.CliConfig
 	PackageInstaller          interfaces.PackageInstaller
 	BundleRegistry            curatedpackages.BundleRegistry
-	PackageControllerClient   curatedpackages.PackageController
+	PackageControllerClient   *curatedpackages.PackageControllerClient
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
@@ -284,7 +284,11 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithDocker().WithKubectl().WithWriter().WithHelm()
+		if clusterConfig.Spec.RegistryMirrorConfiguration != nil {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm(executables.WithInsecure())
+		} else {
+			f.WithDocker().WithKubectl().WithWriter().WithHelm()
+		}
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
 	}
@@ -846,14 +850,16 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.PackageControllerClient != nil {
+		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
 		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
-		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAcessKeyEnv), os.Getenv(config.EksaRegionEnv)
+
+		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
+		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
 		f.dependencies.PackageControllerClient = curatedpackages.NewPackageControllerClient(
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
@@ -865,6 +871,9 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
 			curatedpackages.WithEksaSecretAccessKey(eksaSecretKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
+			curatedpackages.WithHTTPProxy(httpProxy),
+			curatedpackages.WithHTTPSProxy(httpsProxy),
+			curatedpackages.WithNoProxy(noProxy),
 		)
 		return nil
 	})
@@ -1120,4 +1129,12 @@ func (f *Factory) WithCloudStackDefaulter() *Factory {
 	})
 
 	return f
+}
+
+func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
+	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
+	if proxyConfiguration != nil {
+		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
+	}
+	return "", "", nil
 }

@@ -173,18 +173,6 @@ func TestVSphereKubernetes122To123AWSIamAuthUpgrade(t *testing.T) {
 	)
 }
 
-func TestTinkerbellKubernetes120AWSIamAuth(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithControlPlaneHardware(1),
-		framework.WithWorkerHardware(1),
-	)
-	runTinkerbellAWSIamAuthFlow(test)
-}
-
 func TestTinkerbellKubernetes121AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,

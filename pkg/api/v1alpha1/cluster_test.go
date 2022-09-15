@@ -303,11 +303,6 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			testName: "worker node count equals  0",
-			fileName: "testdata/cluster_invalid_worker_node_count.yaml",
-			wantErr:  true,
-		},
-		{
 			testName: "namespace mismatch between cluster and datacenter",
 			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
 			wantErr:  true,
@@ -824,6 +819,56 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 		{
 			testName:    "with not supported CNI",
 			fileName:    "testdata/cluster_not_supported_cni.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName: "without worker nodes",
+			fileName: "testdata/cluster_without_worker_nodes.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "single-node",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube123,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 1,
+						Endpoint: &Endpoint{
+							Host: "10.80.8.90",
+						},
+						MachineGroupRef: &Ref{
+							Kind: TinkerbellMachineConfigKind,
+							Name: "single-node-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: nil,
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+						Name: "single-node",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+					ManagementCluster: ManagementCluster{
+						Name: "single-node",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName:    "without worker nodes but has control plane taints",
+			fileName:    "testdata/cluster_without_worker_nodes_has_cp_taints.yaml",
 			wantCluster: nil,
 			wantErr:     true,
 		},
@@ -2244,6 +2289,54 @@ func TestValidateMirrorConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
 			err := validateMirrorConfig(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
+func TestValidateAutoscalingConfig(t *testing.T) {
+	tests := []struct {
+		name              string
+		wantErr           string
+		autoscalingConfig *AutoScalingConfiguration
+	}{
+		{
+			name:              "autoscaling config nil",
+			wantErr:           "",
+			autoscalingConfig: nil,
+		},
+		{
+			name:    "autoscaling config valid",
+			wantErr: "",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: 1,
+				MaxCount: 2,
+			},
+		},
+		{
+			name:    "negative min count",
+			wantErr: "min count must be non negative",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: -1,
+			},
+		},
+		{
+			name:    "min count > max count",
+			wantErr: "min count must be no greater than max count",
+			autoscalingConfig: &AutoScalingConfiguration{
+				MinCount: 2,
+				MaxCount: 1,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateAutoscalingConfig(tt.autoscalingConfig)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {

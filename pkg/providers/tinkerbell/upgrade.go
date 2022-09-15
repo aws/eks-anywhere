@@ -176,10 +176,16 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
-	err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
-	if err != nil {
+
+	return nil
+}
+
+func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
+	// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
+	if err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace); err != nil {
 		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}
+
 	return nil
 }
 

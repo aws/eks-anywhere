@@ -7,6 +7,7 @@ const (
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
+	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
 )
 
 func FeedGates(featureGates []string) {
@@ -59,5 +60,13 @@ func CheckpointEnabled() Feature {
 	return Feature{
 		Name:     "Checkpoint to rerun commands enabled",
 		IsActive: globalFeatures.isActiveForEnvVar(CheckpointEnabledEnvVar),
+	}
+}
+
+// NutanixProvider returns a feature that is active if the NUTANIX_PROVIDER environment variable is true
+func NutanixProvider() Feature {
+	return Feature{
+		Name:     "Nutanix provider support",
+		IsActive: globalFeatures.isActiveForEnvVar(NutanixProviderEnvVar),
 	}
 }

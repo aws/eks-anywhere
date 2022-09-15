@@ -55,6 +55,12 @@ type TinkerbellTemplate struct {
 	now anywhereTypes.NowFunc
 }
 
+// NutanixTemplate is a struct that implements the TemplateResources method for Nutanix Provider
+type NutanixTemplate struct {
+	ResourceFetcher
+	now anywhereTypes.NowFunc
+}
+
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmcs))
 	for _, wnConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
@@ -480,4 +486,18 @@ func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpe
 		}
 	}
 	return resources, nil
+}
+
+// TemplateResources generates the templated resources for the nutanix cluster
+// TODO(nutanix): This is currently a placeholder for the actual implementation
+func (r *NutanixTemplate) TemplateResources(
+	ctx context.Context,
+	cluster *anywherev1.Cluster,
+	clusterSpec *cluster.Spec,
+	dcConf anywherev1.NutanixDatacenterConfig,
+	controlPlaneMachineConf anywherev1.NutanixMachineConfig,
+	etcdMachineConf anywherev1.NutanixMachineConfig,
+	workerMachineConfs map[string]anywherev1.NutanixMachineConfig,
+) ([]*unstructured.Unstructured, error) {
+	return []*unstructured.Unstructured{}, nil
 }

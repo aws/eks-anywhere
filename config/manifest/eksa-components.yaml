@@ -3659,6 +3659,19 @@ spec:
               workerNodeGroupConfigurations:
                 items:
                   properties:
+                    autoscalingConfiguration:
+                      description: AutoScalingConfiguration defines the auto scaling
+                        configuration
+                      properties:
+                        maxCount:
+                          description: MaxCount defines the maximum number of nodes
+                            for the associated resource group.
+                          type: integer
+                        minCount:
+                          description: MinCount defines the minimum number of nodes
+                            for the associated resource group.
+                          type: integer
+                      type: object
                     count:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
@@ -5588,13 +5601,15 @@ spec:
           httpGet:
             path: /readyz
             port: healthz
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
         volumeMounts:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
       securityContext:
         fsGroup: 1000
-        runAsNonRoot: true
       serviceAccountName: eksa-controller-manager
       terminationGracePeriodSeconds: 10
       tolerations:

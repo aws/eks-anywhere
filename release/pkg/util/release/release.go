@@ -41,7 +41,7 @@ func GetPreviousReleaseIfExists(r *releasetypes.ReleaseConfig) (*anywherev1alpha
 	}
 
 	release := &anywherev1alpha1.Release{}
-	eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(r.DevRelease, r.BundleNumber, constants.ReleaseKind, r.BuildRepoBranchName)
+	eksAReleaseManifestKey := artifactutils.GetManifestFilepaths(r.DevRelease, r.Weekly, r.BundleNumber, constants.ReleaseKind, r.BuildRepoBranchName, r.ReleaseDate)
 	eksAReleaseManifestUrl := fmt.Sprintf("%s/%s", r.CDN, eksAReleaseManifestKey)
 
 	if s3.KeyExists(r.ReleaseBucket, eksAReleaseManifestKey) {

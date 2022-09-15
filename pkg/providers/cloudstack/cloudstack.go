@@ -1206,6 +1206,11 @@ func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *typ
 	return nil
 }
 
+func (p *cloudstackProvider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Cluster) error {
+	// NOOP
+	return nil
+}
+
 func (p *cloudstackProvider) GenerateStorageClass() []byte {
 	return nil
 }

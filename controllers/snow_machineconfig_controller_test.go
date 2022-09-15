@@ -42,7 +42,6 @@ func TestSnowMachineConfigReconcilerSuccess(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	validator := mocks.NewMockValidator(ctrl)
-	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
 
@@ -127,40 +126,6 @@ func TestSnowMachineConfigReconcilerDelete(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 }
 
-func TestSnowMachineConfigReconcilerFailureMachineDeviceIps(t *testing.T) {
-	g := NewWithT(t)
-	ctrl := gomock.NewController(t)
-	ctx := context.Background()
-
-	config := createSnowMachineConfig()
-	validator := mocks.NewMockValidator(ctrl)
-	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
-	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
-	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error"))
-
-	objs := []runtime.Object{config}
-
-	cb := fake.NewClientBuilder()
-	cl := cb.WithRuntimeObjects(objs...).Build()
-
-	r := controllers.NewSnowMachineConfigReconciler(cl, logf.Log, validator)
-
-	req := reconcile.Request{
-		NamespacedName: types.NamespacedName{
-			Name:      name,
-			Namespace: namespace,
-		},
-	}
-
-	_, err := r.Reconcile(ctx, req)
-	g.Expect(err).To(HaveOccurred())
-	snowMachineConfig := &anywherev1.SnowMachineConfig{}
-	err = cl.Get(ctx, req.NamespacedName, snowMachineConfig)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(snowMachineConfig.Status.FailureMessage).NotTo(BeNil())
-	g.Expect(snowMachineConfig.Status.SpecValid).To(BeFalse())
-}
-
 func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
@@ -168,7 +133,6 @@ func TestSnowMachineConfigReconcilerFailureImageExists(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	validator := mocks.NewMockValidator(ctrl)
-	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error"))
 
@@ -202,7 +166,6 @@ func TestSnowMachineConfigReconcilerFailureKeyNameExists(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	validator := mocks.NewMockValidator(ctrl)
-	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(nil)
 	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error"))
 
@@ -238,9 +201,8 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 
 	config := createSnowMachineConfig()
 	validator := mocks.NewMockValidator(ctrl)
-	validator.EXPECT().ValidateMachineDeviceIPs(ctx, config).Return(errors.New("test error1"))
-	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error2"))
-	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error3"))
+	validator.EXPECT().ValidateEC2ImageExistsOnDevice(ctx, config).Return(errors.New("test error1"))
+	validator.EXPECT().ValidateEC2SshKeyNameExists(ctx, config).Return(errors.New("test error2"))
 
 	objs := []runtime.Object{config}
 
@@ -264,7 +226,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	g.Expect(err.Error()).To(ContainSubstring(errorPrefix))
 	result := strings.TrimPrefix(err.Error(), errorPrefix)
 	errors := strings.Split(result, ", ")
-	g.Expect(len(errors)).To(BeIdenticalTo(3))
+	g.Expect(len(errors)).To(BeIdenticalTo(2))
 
 	snowMachineConfig := &anywherev1.SnowMachineConfig{}
 	err = cl.Get(ctx, req.NamespacedName, snowMachineConfig)
@@ -274,7 +236,7 @@ func TestSnowMachineConfigReconcilerFailureAggregate(t *testing.T) {
 	// Now check to make sure failure message status contains substring and right number of aggregate of errors
 	g.Expect(snowMachineConfig.Status.FailureMessage).NotTo(BeNil())
 	errors = strings.Split(*snowMachineConfig.Status.FailureMessage, ", ")
-	g.Expect(len(errors)).To(BeIdenticalTo(3))
+	g.Expect(len(errors)).To(BeIdenticalTo(2))
 }
 
 func createSnowMachineConfig() *anywherev1.SnowMachineConfig {

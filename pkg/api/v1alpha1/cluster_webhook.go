@@ -94,6 +94,8 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
+	allErrs = append(allErrs, validateBundlesRefCluster(r, oldCluster)...)
+
 	if len(allErrs) != 0 {
 		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
@@ -107,6 +109,19 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 
 	return nil
+}
+
+func validateBundlesRefCluster(new, old *Cluster) field.ErrorList {
+	var allErrs field.ErrorList
+	bundlesRefPath := field.NewPath("spec").Child("BundlesRef")
+
+	if old.Spec.BundlesRef != nil && new.Spec.BundlesRef == nil {
+		allErrs = append(
+			allErrs,
+			field.Invalid(bundlesRefPath, new.Spec.BundlesRef, fmt.Sprintf("field cannot be removed after setting. Previous value %v", old.Spec.BundlesRef)))
+	}
+
+	return allErrs
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {

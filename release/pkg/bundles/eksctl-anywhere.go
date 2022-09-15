@@ -88,7 +88,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 
 	artifacts := r.EksAArtifactsTable["eks-a-cli"]
 
-	bundleManifestFilePath := artifactutils.GetManifestFilepaths(r.DevRelease, r.BundleNumber, constants.BundlesKind, r.BuildRepoBranchName)
+	bundleManifestFilePath := artifactutils.GetManifestFilepaths(r.DevRelease, r.Weekly, r.BundleNumber, constants.BundlesKind, r.BuildRepoBranchName, r.ReleaseDate)
 	bundleManifestUrl, err := artifactutils.GetURI(r.CDN, bundleManifestFilePath)
 	if err != nil {
 		return anywherev1alpha1.EksARelease{}, errors.Cause(err)
@@ -118,7 +118,7 @@ func GetEksARelease(r *releasetypes.ReleaseConfig) (anywherev1alpha1.EksARelease
 	}
 
 	eksARelease := anywherev1alpha1.EksARelease{
-		Date:      r.ReleaseDate.String(),
+		Date:      r.ReleaseTime.String(),
 		Version:   r.ReleaseVersion,
 		Number:    r.ReleaseNumber,
 		GitCommit: r.CliRepoHead,

@@ -69,7 +69,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 
 	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
-		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath); err != nil {
+		if err := checkTinkerbellFlags(cmd.Flags(), cc.hardwareCSVPath, Create); err != nil {
 			return err
 		}
 	}
@@ -133,6 +133,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
+	}
+
+	if !features.IsActive(features.NutanixProvider()) && deps.Provider.Name() == constants.NutanixProviderName {
+		return fmt.Errorf("provider nutanix is not supported in this release")
 	}
 
 	createCluster := workflows.NewCreate(

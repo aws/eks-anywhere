@@ -621,16 +621,19 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
-	csSpec.Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
-		CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
-			Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
-			Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
-		},
-		CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
-		MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
-		Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
+	emptyOffering := cloudstackv1.CloudStackResourceDiskOffering{}
+	if csMachineTemplate.Spec.Spec.Spec.DiskOffering != emptyOffering {
+		csSpec.Spec.DiskOffering = &anywherev1.CloudStackResourceDiskOffering{
+			CloudStackResourceIdentifier: anywherev1.CloudStackResourceIdentifier{
+				Id:   csMachineTemplate.Spec.Spec.Spec.DiskOffering.ID,
+				Name: csMachineTemplate.Spec.Spec.Spec.DiskOffering.Name,
+			},
+			CustomSize: csMachineTemplate.Spec.Spec.Spec.DiskOffering.CustomSize,
+			MountPath:  csMachineTemplate.Annotations["mountpath.diskoffering."+constants.CloudstackAnnotationSuffix],
+			Device:     csMachineTemplate.Annotations["device.diskoffering."+constants.CloudstackAnnotationSuffix],
+			Filesystem: csMachineTemplate.Annotations["filesystem.diskoffering."+constants.CloudstackAnnotationSuffix],
+			Label:      csMachineTemplate.Annotations["label.diskoffering."+constants.CloudstackAnnotationSuffix],
+		}
 	}
 
 	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity

@@ -29,27 +29,28 @@ containerdConfigPatches:
         insecure_skip_verify = true
 {{- else }}
         ca_file = "/etc/containerd/certs.d/{{.RegistryMirrorEndpoint}}/ca.crt"
+{{- end }}
+{{- end }}
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) (ne (len .ExtraPortMappings) 0)}}
 nodes:
 - role: control-plane
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) }}
   extraMounts:
+{{- if (ne .RegistryCACertPath "") }}
     - containerPath: /etc/containerd/certs.d
       hostPath: {{.RegistryCACertPath}}
       readOnly: true
 {{- end }}
-{{- end }}
 {{- if .DockerExtraMounts }}
-nodes:
-- role: control-plane
-  extraMounts:
     - hostPath: /var/run/docker.sock
       containerPath: /var/run/docker.sock
 {{- end }}
+{{- end }}
 {{- if ne (len .ExtraPortMappings) 0 }}
-nodes:
-- role: control-plane
   extraPortMappings:
 {{- range .ExtraPortMappings }}
   - containerPort: {{ . }}
     hostPort: {{ . }}
+{{- end }}
 {{- end }}
 {{- end }}

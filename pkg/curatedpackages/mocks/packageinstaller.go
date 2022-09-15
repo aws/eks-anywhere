@@ -48,6 +48,21 @@ func (mr *MockPackageControllerMockRecorder) InstallController(ctx interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallController", reflect.TypeOf((*MockPackageController)(nil).InstallController), ctx)
 }
 
+// IsInstalled mocks base method.
+func (m *MockPackageController) IsInstalled(ctx context.Context) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsInstalled", ctx)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsInstalled indicates an expected call of IsInstalled.
+func (mr *MockPackageControllerMockRecorder) IsInstalled(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInstalled", reflect.TypeOf((*MockPackageController)(nil).IsInstalled), ctx)
+}
+
 // MockPackageHandler is a mock of PackageHandler interface.
 type MockPackageHandler struct {
 	ctrl     *gomock.Controller

@@ -98,10 +98,11 @@ func TestSnowValidate(t *testing.T) {
 			wantErr: "",
 		},
 		{
-			name: "valid without ami and devices",
+			name: "valid without ami",
 			obj: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType: DefaultSnowInstanceType,
+					Devices:      []string{"1.2.3.4"},
 				},
 			},
 			wantErr: "",
@@ -116,6 +117,16 @@ func TestSnowValidate(t *testing.T) {
 				},
 			},
 			wantErr: "InstanceType invalid-instance-type is not supported",
+		},
+		{
+			name: "empty devices",
+			obj: &SnowMachineConfig{
+				Spec: SnowMachineConfigSpec{
+					AMIID:        "ami-1",
+					InstanceType: DefaultSnowInstanceType,
+				},
+			},
+			wantErr: "Devices must contain at least one device IP",
 		},
 		{
 			name: "invalid container volume",

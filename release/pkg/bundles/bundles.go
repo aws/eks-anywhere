@@ -29,6 +29,8 @@ import (
 	sliceutils "github.com/aws/eks-anywhere/release/pkg/util/slices"
 )
 
+// NewBundlesName provides a strict format for bundle names, which is validated against in the Cluster webhook
+// Numbers must be monotonically increasing to be upgraded.
 func NewBundlesName(r *releasetypes.ReleaseConfig) string {
 	return fmt.Sprintf("bundles-%d", r.BundleNumber)
 }
@@ -41,7 +43,7 @@ func NewBaseBundles(r *releasetypes.ReleaseConfig) *anywherev1alpha1.Bundles {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              NewBundlesName(r),
-			CreationTimestamp: metav1.Time{Time: r.ReleaseDate},
+			CreationTimestamp: metav1.Time{Time: r.ReleaseTime},
 		},
 		Spec: anywherev1alpha1.BundlesSpec{
 			Number: r.BundleNumber,

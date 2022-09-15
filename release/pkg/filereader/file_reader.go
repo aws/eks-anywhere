@@ -196,42 +196,44 @@ func GetCurrentEksADevReleaseVersion(releaseVersion string, r *releasetypes.Rele
 	fmt.Println("              Dev Release Version Computation")
 	fmt.Println("==========================================================")
 
-	var latestBuildVersion string
 	var newDevReleaseVersion string
-	tempFileName := "latest-dev-release-version"
-
-	var latestReleaseKey string
-
-	if r.BuildRepoBranchName == "main" {
-		latestReleaseKey = "LATEST_RELEASE_VERSION"
+	if r.Weekly {
+		newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev+build.%s", r.ReleaseDate)
 	} else {
-		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
+		tempFileName := "latest-dev-release-version"
+
+		var latestReleaseKey string
+		if r.BuildRepoBranchName == "main" {
+			latestReleaseKey = "LATEST_RELEASE_VERSION"
+		} else {
+			latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
+		}
+		if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
+			err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+
+			// Check if current version and latest version are the same semver
+			latestBuildS3, err := ioutil.ReadFile(tempFileName)
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+			latestBuildVersion := string(latestBuildS3)
+			newDevReleaseVersion, err = GenerateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+			fmt.Printf("Previous release version: %s\n", latestBuildVersion)
+			fmt.Printf("Current release version provided: %s\n", releaseVersion)
+		} else {
+			newDevReleaseVersion = "v0.0.0-dev+build.0"
+			if r.BuildRepoBranchName != "main" {
+				newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev-%s+build.0", r.BuildRepoBranchName)
+			}
+		}
 	}
 
-	if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
-		err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-
-		// Check if current version and latest version are the same semver
-		latestBuildS3, err := ioutil.ReadFile(tempFileName)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-		latestBuildVersion = string(latestBuildS3)
-		newDevReleaseVersion, err = GenerateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-		fmt.Printf("Previous release version: %s\n", latestBuildVersion)
-		fmt.Printf("Current release version provided: %s\n", releaseVersion)
-	} else {
-		newDevReleaseVersion = "v0.0.0-dev+build.0"
-		if r.BuildRepoBranchName != "main" {
-			newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev-%s+build.0", r.BuildRepoBranchName)
-		}
-	}
 	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
 
 	fmt.Printf("%s Successfully computed current dev release version\n", constants.SuccessIcon)

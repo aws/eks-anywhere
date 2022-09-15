@@ -5,6 +5,7 @@ run:
   skip-dirs:
   - ".*/mocks"
   - "manager/tilt_modules"
+  - "internal/aws-sdk-go-v2"
 linters:
   enable:
     - gofumpt

@@ -392,7 +392,7 @@ func validateControlPlaneLabels(clusterConfig *Cluster) error {
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
-		return errors.New("worker node group must be specified")
+		logger.Info("Warning: No configurations provided for worker node groups, pods will be scheduled on control-plane nodes")
 	}
 
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
@@ -402,8 +402,12 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
-		if workerNodeGroupConfig.Count <= 0 {
-			return errors.New("worker node count must be positive")
+		if workerNodeGroupConfig.AutoScalingConfiguration == nil && workerNodeGroupConfig.Count <= 0 {
+			return errors.New("worker node count must be positive if autoscaling is not enabled")
+		}
+
+		if err := validateAutoscalingConfig(workerNodeGroupConfig.AutoScalingConfiguration); err != nil {
+			return fmt.Errorf("validating autoscaling configuration: %v", err)
 		}
 
 		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
@@ -431,8 +435,26 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
 
-	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
+	if len(workerNodeGroupConfigs) > 0 && len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
 		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
+	}
+
+	if len(workerNodeGroupConfigs) == 0 && len(clusterConfig.Spec.ControlPlaneConfiguration.Taints) != 0 {
+		return errors.New("cannot taint control plane when there is no worker node")
+	}
+
+	return nil
+}
+
+func validateAutoscalingConfig(autoscalingConfig *AutoScalingConfiguration) error {
+	if autoscalingConfig == nil {
+		return nil
+	}
+	if autoscalingConfig.MinCount < 0 {
+		return errors.New("min count must be non negative")
+	}
+	if autoscalingConfig.MinCount > autoscalingConfig.MaxCount {
+		return errors.New("min count must be no greater than max count")
 	}
 
 	return nil

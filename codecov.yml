@@ -14,3 +14,4 @@ ignore:
   - internal/test/envtest
   - "**/zz_generated.deepcopy.go"
   - "test/framework" 
+  - "internal/aws-sdk-go-v2"

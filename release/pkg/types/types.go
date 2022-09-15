@@ -42,9 +42,11 @@ type ReleaseConfig struct {
 	ReleaseContainerRegistry string
 	CDN                      string
 	ReleaseNumber            int
-	ReleaseDate              time.Time
+	ReleaseDate              string
+	ReleaseTime              time.Time
 	DevRelease               bool
 	DryRun                   bool
+	Weekly                   bool
 	ReleaseEnvironment       string
 	SourceClients            *clients.SourceClients
 	ReleaseClients           *clients.ReleaseClients
