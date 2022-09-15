@@ -66,6 +66,11 @@ description: >
             - default
     ```
 
+1. Create the namespace
+  (If overriding `targetNamespace`, change `metallb-system` to the value of `targetNamespace`)
+   ```bash
+   kubectl create namespace metallb-system
+   ```
 
 1. Install MetalLB
 
