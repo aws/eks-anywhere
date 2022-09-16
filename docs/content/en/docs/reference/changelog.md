@@ -9,6 +9,36 @@ weight: 35
 ### ⚠️ Breaking changes
 - Certificates signed with SHA-1 are not supported anymore for Registry Mirror. Users with a registry mirror and providing a custom CA cert will need to rotate the certificate served by the registry mirror endpoint before using the new EKS-A version. This is true for both new clusters (`create cluster` command) and existing clusters (`upgrade cluster` command).
 
+## [v0.11.3](https://github.com/aws/eks-anywhere/releases/tag/v0.11.3)
+
+### Added
+- Add some bundleRef validation
+- Enable kube-rbac-proxy on CloudStack cluster controller's metrics port
+
+### Fixed
+- Fix issue with fetching EKS-D CRDs/manifests with retries
+- Update BundlesRef when building a Spec from file
+- Fix worker node upgrade inconsistency in Cloudstack
+
+## [v0.11.2](https://github.com/aws/eks-anywhere/releases/tag/v0.11.2)
+
+### Added
+- Add a preflight check to validate vSphere user's permissions [#2744](https://github.com/aws/eks-anywhere/issues/2744)
+
+### Changed
+- Make `DiskOffering` in `CloudStackMachineConfig` optional
+
+### Fixed
+- Fix upgrade failure when flux is enabled [#3091](https://github.com/aws/eks-anywhere/issues/3091)[#3093](https://github.com/aws/eks-anywhere/issues/3093)
+- Add token-refresher to default images to fix import/download images commands
+- Improve retry logic for transient issues with kubectl applies and helm pulls [#3167](https://github.com/aws/eks-anywhere/issues/3167)
+- Fix issue fetching curated packages images
+
+## [v0.11.1](https://github.com/aws/eks-anywhere/releases/tag/v0.11.1)
+
+### Added
+- Add `--insecure` flag to import/download images commands [#2878](https://github.com/aws/eks-anywhere/issues/2878)
+
 ## [v0.11.0](https://github.com/aws/eks-anywhere/releases/tag/v0.11.0)
 
 ### Breaking Changes
