@@ -13,11 +13,11 @@ type E2EIPManager struct {
 }
 
 func newE2EIPManager(logger logr.Logger, networkCidr string) *E2EIPManager {
-	ipman := &E2EIPManager{
+	return &E2EIPManager{
 		networkCidr: networkCidr,
 		networkIPs:  make(map[string]bool),
+		logger:      logger,
 	}
-	return ipman
 }
 
 func (ipman *E2EIPManager) reserveIP() string {
