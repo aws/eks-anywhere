@@ -2,6 +2,7 @@ package serverside
 
 import (
 	"context"
+	"fmt"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -29,16 +30,20 @@ func NewObjectApplier(client client.Client) *ObjectApplier {
 // objects from another package, like a provider
 // This is mostly a helper for generate objects + serverside apply
 func (a *ObjectApplier) Apply(ctx context.Context, generateObjects ObjectGenerator) (controller.Result, error) {
+	fmt.Println("[DEBUG] Inside apply")
 	return controller.Result{}, reconcileKubernetesObjects(ctx, a.client, generateObjects)
 }
 
 func reconcileKubernetesObjects(ctx context.Context, client client.Client, generateObjects ObjectGenerator) error {
+	fmt.Println("[DEBUG] Inside reconcileKubernetesObjects")
 	objs, err := generateObjects()
 	if err != nil {
 		return err
 	}
-
-	if err = ReconcileObjects(ctx, client, clientutil.ObjectsToClientObjects(objs)); err != nil {
+	fmt.Println("[DEBUG] Generated objects. Proceeding to convert objects to client objects")
+	convertedObjs := clientutil.ObjectsToClientObjects(objs)
+	fmt.Println("[DEBUG] Reconciling converted objects")
+	if err = ReconcileObjects(ctx, client, convertedObjs); err != nil {
 		return err
 	}
 

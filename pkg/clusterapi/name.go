@@ -62,6 +62,12 @@ func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	return clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig)
 }
 
+func EtcdClusterName(clusterSpec *cluster.Spec, etcdConfiguration v1alpha1.ExternalEtcdConfiguration) string {
+	// Adding cluster name prefix guarantees the machine deployment name uniqueness
+	// among clusters under the same management cluster setting.
+	return clusterEtcdNodeGroupName(clusterSpec, etcdConfiguration)
+}
+
 func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
 	return DefaultObjectName(clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig))
 }
@@ -70,8 +76,16 @@ func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
 
+func clusterEtcdNodeGroupName(clusterSpec *cluster.Spec, etcdConfiguration v1alpha1.ExternalEtcdConfiguration) string {
+	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, etcdConfiguration.MachineGroupRef.Name)
+}
+
 func ControlPlaneMachineTemplateName(clusterSpec *cluster.Spec) string {
 	return DefaultObjectName(fmt.Sprintf("%s-control-plane", clusterSpec.Cluster.Name))
+}
+
+func EtcdMachineTemplateName(clusterSpec *cluster.Spec) string {
+	return DefaultObjectName(fmt.Sprintf("%s-etcd", clusterSpec.Cluster.Name))
 }
 
 func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {

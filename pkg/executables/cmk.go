@@ -420,11 +420,13 @@ func (c *Cmk) exec(ctx context.Context, profile string, args ...string) (stdout 
 	}
 
 	configFile, err := c.buildCmkConfigFile(profile)
+	fmt.Printf("Created config file at %s\n", configFile)
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
 	}
 
 	argsWithConfigFile := append([]string{"-c", configFile}, args...)
+	fmt.Printf("Executing with args `%s`\n", argsWithConfigFile)
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 

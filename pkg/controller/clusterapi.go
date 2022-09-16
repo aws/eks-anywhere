@@ -32,6 +32,25 @@ func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywhere
 	return capiCluster, nil
 }
 
+// GetEtcdCluster reads a EtcdadmCluster for an eks-a cluster using a kube client
+// If the EtcdadmCluster is not found, the method returns (nil, nil)
+func GetEtcdCluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*clusterv1.Cluster, error) {
+	capiClusterName := clusterapi.ClusterName(cluster)
+
+	capiCluster := &clusterv1.Cluster{}
+	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: capiClusterName}
+
+	err := client.Get(ctx, key, capiCluster)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return capiCluster, nil
+}
+
 // CapiClusterObjectKey generates an ObjectKey for the CAPI cluster owned by
 // the provided eks-a cluster
 func CapiClusterObjectKey(cluster *anywherev1.Cluster) client.ObjectKey {

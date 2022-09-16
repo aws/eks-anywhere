@@ -122,6 +122,7 @@ func (r *CloudStackDatacenterReconciler) fetchDatacenterSecrets(ctx context.Cont
 		}
 		secrets = append(secrets, *secret)
 	}
+	r.log.Info("Retrieved secrets (datacenter reconciler)", "secrets", secrets)
 
 	return secrets, nil
 }

@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -44,4 +45,16 @@ func KubeadmConfigTemplateInCluster(ctx context.Context, kubeclient KubeClient, 
 		return nil, err
 	}
 	return kct, nil
+}
+
+func EtcdClusterInCluster(ctx context.Context, kubeclient KubeClient, clusterSpec *cluster.Spec, etcdConfig v1alpha1.ExternalEtcdConfiguration) (*etcdv1.EtcdadmCluster, error) {
+	etcdCluster := &etcdv1.EtcdadmCluster{}
+	err := kubeclient.Get(ctx, EtcdClusterName(clusterSpec, etcdConfig), constants.EksaSystemNamespace, etcdCluster)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return etcdCluster, nil
 }

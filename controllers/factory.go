@@ -236,7 +236,7 @@ func (f *Factory) withVSphereClusterReconciler() *Factory {
 }
 
 func (f *Factory) withCloudStackClusterReconciler() *Factory {
-	f.withTracker()
+	f.withCNIReconciler().withTracker()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.cloudstackClusterReconciler != nil {
 			return nil
@@ -244,6 +244,8 @@ func (f *Factory) withCloudStackClusterReconciler() *Factory {
 
 		f.cloudstackClusterReconciler = cloudstackreconciler.New(
 			f.manager.GetClient(),
+			f.cniReconciler,
+			f.tracker,
 			f.deps.Cmk,
 			f.tracker,
 			f.logger,
