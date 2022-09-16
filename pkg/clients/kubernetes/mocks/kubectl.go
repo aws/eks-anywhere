@@ -35,6 +35,20 @@ func (m *MockKubectlGetter) EXPECT() *MockKubectlGetterMockRecorder {
 	return m.recorder
 }
 
+// Apply mocks base method.
+func (m *MockKubectlGetter) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Apply", ctx, kubeconfig, obj)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Apply indicates an expected call of Apply.
+func (mr *MockKubectlGetterMockRecorder) Apply(ctx, kubeconfig, obj interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockKubectlGetter)(nil).Apply), ctx, kubeconfig, obj)
+}
+
 // Delete mocks base method.
 func (m *MockKubectlGetter) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
 	m.ctrl.T.Helper()

@@ -35,13 +35,13 @@ func oldControlPlaneMachineTemplate(ctx context.Context, kubeClient kubernetes.C
 	return mt, nil
 }
 
-func oldWorkerMachineTemplate(ctx context.Context, kubeclient kubernetes.Client, clusterSpec *cluster.Spec, md *clusterv1.MachineDeployment) (*snowv1.AWSSnowMachineTemplate, error) {
+func oldWorkerMachineTemplate(ctx context.Context, kubeClient kubernetes.Client, md *clusterv1.MachineDeployment) (*snowv1.AWSSnowMachineTemplate, error) {
 	if md == nil {
 		return nil, nil
 	}
 
 	mt := &snowv1.AWSSnowMachineTemplate{}
-	err := kubeclient.Get(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, mt)
+	err := kubeClient.Get(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, mt)
 	if apierrors.IsNotFound(err) {
 		return nil, nil
 	}

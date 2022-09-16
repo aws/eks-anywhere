@@ -543,7 +543,7 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 	return nil
 }
 
-func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	var contents bytes.Buffer
 	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
@@ -557,7 +557,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
+func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}

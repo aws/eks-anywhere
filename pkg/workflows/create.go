@@ -261,7 +261,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 
 		logger.Info("Installing EKS-A secrets on workload cluster")
-		err := commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster)
+		err := commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}

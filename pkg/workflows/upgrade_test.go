@@ -132,7 +132,7 @@ func (c *upgradeTestSetup) expectSetupToFail() {
 
 func (c *upgradeTestSetup) expectUpdateSecrets(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.provider.EXPECT().UpdateSecrets(c.ctx, expectedCluster).Return(nil),
+		c.provider.EXPECT().UpdateSecrets(c.ctx, expectedCluster, c.newClusterSpec).Return(nil),
 	)
 }
 

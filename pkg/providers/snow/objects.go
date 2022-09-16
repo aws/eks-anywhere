@@ -2,7 +2,10 @@ package snow
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -15,7 +18,13 @@ import (
 )
 
 func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
-	snowCluster := SnowCluster(clusterSpec)
+	capasCredentialsSecret, err := capasCredentialsSecret(clusterSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	snowCluster := SnowCluster(clusterSpec, capasCredentialsSecret)
+
 	new := SnowMachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 
 	old, err := oldControlPlaneMachineTemplate(ctx, kubeClient, clusterSpec)
@@ -31,7 +40,7 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 	}
 	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
 
-	return []kubernetes.Object{capiCluster, snowCluster, kubeadmControlPlane, new}, nil
+	return []kubernetes.Object{capiCluster, snowCluster, kubeadmControlPlane, new, capasCredentialsSecret}, nil
 }
 
 func WorkersObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeClient kubernetes.Client) ([]kubernetes.Object, error) {
@@ -82,7 +91,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 		}
 
 		// fetch the existing machineTemplate from cluster
-		oldMachineTemplate, err := oldWorkerMachineTemplate(ctx, kubeClient, clusterSpec, md)
+		oldMachineTemplate, err := oldWorkerMachineTemplate(ctx, kubeClient, md)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -155,4 +164,28 @@ func recreateKubeadmConfigTemplateNeeded(new, old *bootstrapv1.KubeadmConfigTemp
 		return true
 	}
 	return !equality.Semantic.DeepDerivative(new.Spec, old.Spec)
+}
+
+// credentialsSecret generates the credentials secret(s) used for provisioning a snow cluster.
+// - eks-a credentials secret: user managed secret referred from snowdatacenterconfig identityRef
+// - snow credentials secret: eks-a creates, updates and deletes in eksa-system namespace. this secret is fully managed by eks-a. User shall treat it as a "read-only" object
+func capasCredentialsSecret(clusterSpec *cluster.Spec) (*v1.Secret, error) {
+	if clusterSpec.SnowCredentialsSecret == nil {
+		return nil, errors.New("snowCredentialsSecret in clusterSpec shall not be nil")
+	}
+
+	// we reconcile the snow credentials secret to be in sync with the eks-a credentials secret user manages.
+	// notice for cli upgrade, we handle the eks-a credentials secret update in a separate step - under provider.UpdateSecrets
+	// which runs before the actual cluster upgrade.
+	// for controller secret, the user is responsible for making sure the eks-a credentials secret is created and up to date.
+	credsB64, ok := clusterSpec.SnowCredentialsSecret.Data["credentials"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve credentials from secret [%s]", clusterSpec.SnowCredentialsSecret.GetName())
+	}
+	certsB64, ok := clusterSpec.SnowCredentialsSecret.Data["ca-bundle"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve ca-bundle from secret [%s]", clusterSpec.SnowCredentialsSecret.GetName())
+	}
+
+	return CAPASCredentialsSecret(clusterSpec, credsB64, certsB64), nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -160,10 +161,31 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 			},
 		},
 	}
+	secret := &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-secret",
+			Namespace: "default",
+		},
+		Data: map[string][]byte{
+			"credentials": []byte("creds"),
+			"ca-bundle":   []byte("certs"),
+		},
+		Type: "Opaque",
+	}
 	datacenter := &anywherev1.SnowDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "datacenter",
 			Namespace: "default",
+		},
+		Spec: anywherev1.SnowDatacenterConfigSpec{
+			IdentityRef: anywherev1.Ref{
+				Kind: "Secret",
+				Name: secret.Name,
+			},
 		},
 	}
 	machineControlPlane := &anywherev1.SnowMachineConfig{
@@ -184,6 +206,7 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
 			d := obj.(*anywherev1.SnowDatacenterConfig)
 			d.ObjectMeta = datacenter.ObjectMeta
+			d.Spec = datacenter.Spec
 			return nil
 		},
 	)
@@ -192,6 +215,17 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
 			m := obj.(*anywherev1.SnowMachineConfig)
 			m.ObjectMeta = machineControlPlane.ObjectMeta
+			return nil
+		},
+	)
+
+	client.EXPECT().Get(ctx, secret.Name, "default", &corev1.Secret{}).Return(nil).DoAndReturn(
+		func(ctx context.Context, name, namespace string, obj runtime.Object) error {
+			d := obj.(*corev1.Secret)
+			d.ObjectMeta = secret.ObjectMeta
+			d.TypeMeta = secret.TypeMeta
+			d.Data = secret.Data
+			d.Type = secret.Type
 			return nil
 		},
 	)
@@ -212,6 +246,7 @@ func TestDefaultConfigClientBuilderSnowCluster(t *testing.T) {
 	g.Expect(len(config.SnowMachineConfigs)).To(Equal(2))
 	g.Expect(config.SnowMachineConfigs["machine-1"]).To(Equal(machineControlPlane))
 	g.Expect(config.SnowMachineConfigs["machine-2"]).To(Equal(machineWorker))
+	g.Expect(config.SnowCredentialsSecret).To(Equal(secret))
 }
 
 func TestParseConfigMissingSnowDatacenter(t *testing.T) {
@@ -220,4 +255,59 @@ func TestParseConfigMissingSnowDatacenter(t *testing.T) {
 
 	g.Expect(err).To(Not(HaveOccurred()))
 	g.Expect(got.DockerDatacenter).To(BeNil())
+}
+
+func TestSetSnowDatacenterIndentityRefDefault(t *testing.T) {
+	tests := []struct {
+		name   string
+		before *anywherev1.SnowDatacenterConfig
+		after  *anywherev1.SnowDatacenterConfig
+	}{
+		{
+			name: "identity ref empty",
+			before: &anywherev1.SnowDatacenterConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: anywherev1.SnowDatacenterConfigSpec{},
+			},
+			after: &anywherev1.SnowDatacenterConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+				Spec: anywherev1.SnowDatacenterConfigSpec{
+					IdentityRef: anywherev1.Ref{
+						Name: "test-snow-credentials",
+						Kind: "Secret",
+					},
+				},
+			},
+		},
+		{
+			name: "identity ref exists",
+			before: &anywherev1.SnowDatacenterConfig{
+				Spec: anywherev1.SnowDatacenterConfigSpec{
+					IdentityRef: anywherev1.Ref{
+						Name: "creds-1",
+						Kind: "Secret",
+					},
+				},
+			},
+			after: &anywherev1.SnowDatacenterConfig{
+				Spec: anywherev1.SnowDatacenterConfigSpec{
+					IdentityRef: anywherev1.Ref{
+						Name: "creds-1",
+						Kind: "Secret",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			cluster.SetSnowDatacenterIndentityRefDefault(tt.before)
+			g.Expect(tt.before).To(Equal(tt.after))
+		})
+	}
 }

@@ -56,7 +56,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 }
 
 func (c *deleteTestSetup) expectSetup() {
-	c.provider.EXPECT().SetupAndValidateDeleteCluster(c.ctx, c.workloadCluster)
+	c.provider.EXPECT().SetupAndValidateDeleteCluster(c.ctx, c.workloadCluster, c.clusterSpec)
 }
 
 func (c *deleteTestSetup) expectCreateBootstrap() {
