@@ -1530,29 +1530,43 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 	tests := []struct {
 		name               string
 		featureGateEnabled bool
-		clusterNew         *v1alpha1.Cluster
+		oldCluster         *v1alpha1.Cluster
+		updateCluster      clusterOpt
 	}{
 		{
-			name: "Paused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+			name:       "Paused self-managed cluster, feature gate off",
+			oldCluster: createCluster(),
+			updateCluster: func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
-			}),
+			},
 			featureGateEnabled: false,
 		},
 		{
-			name: "Unpaused self-managed cluster, feature gate off",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+			name:       "Unpaused self-managed cluster, feature gate off",
+			oldCluster: createCluster(),
+			updateCluster: func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
-			}),
+			},
 			featureGateEnabled: false,
 		},
 		{
-			name: "Paused self-managed cluster, feature gate on",
-			clusterNew: newCluster(func(c *v1alpha1.Cluster) {
+			name:       "Paused self-managed cluster, feature gate on",
+			oldCluster: createCluster(),
+			updateCluster: func(c *v1alpha1.Cluster) {
 				c.SetSelfManaged()
 				c.PauseReconcile()
-			}),
+			},
+			featureGateEnabled: true,
+		},
+		{
+			name: "Unpaused self-managed cluster, feature gate on, no changes",
+			oldCluster: createCluster(
+				func(c *v1alpha1.Cluster) {
+					c.SetSelfManaged()
+				},
+			),
+			updateCluster:      func(c *v1alpha1.Cluster) {},
 			featureGateEnabled: true,
 		},
 	}
@@ -1562,8 +1576,8 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 			if tt.featureGateEnabled {
 				t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 			}
-			clusterOld := createCluster()
-			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
+
+			tt.oldCluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
 				Count: 4,
 				MachineGroupRef: &v1alpha1.Ref{
@@ -1572,8 +1586,11 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 				},
 			}}
 
+			newCluster := tt.oldCluster.DeepCopy()
+			tt.updateCluster(newCluster)
+
 			g := NewWithT(t)
-			err := tt.clusterNew.ValidateUpdate(clusterOld)
+			err := newCluster.ValidateUpdate(tt.oldCluster)
 			g.Expect(err).To(Succeed())
 		})
 	}
@@ -1647,8 +1664,8 @@ func TestClusterValidateUpdateInvalidRequest(t *testing.T) {
 	cOld.SetSelfManaged()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 
-	cNew := createCluster()
-	cNew.SetSelfManaged()
+	cNew := cOld.DeepCopy()
+	cNew.Spec.ControlPlaneConfiguration.Count = cNew.Spec.ControlPlaneConfiguration.Count + 1
 	g := NewWithT(t)
 	err := cNew.ValidateUpdate(cOld)
 	g.Expect(err).To(MatchError(ContainSubstring("upgrading self managed clusters is not supported")))
@@ -1663,8 +1680,10 @@ func newCluster(opts ...func(*v1alpha1.Cluster)) *v1alpha1.Cluster {
 	return c
 }
 
-func createCluster() *v1alpha1.Cluster {
-	return &v1alpha1.Cluster{
+type clusterOpt func(c *v1alpha1.Cluster)
+
+func createCluster(opts ...clusterOpt) *v1alpha1.Cluster {
+	c := &v1alpha1.Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       v1alpha1.ClusterKind,
 			APIVersion: v1alpha1.SchemeBuilder.GroupVersion.String(),
@@ -1712,4 +1731,10 @@ func createCluster() *v1alpha1.Cluster {
 			},
 		},
 	}
+
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
 }
