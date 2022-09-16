@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	snowEC2Port = 8243
+	snowEC2Port        = 8243
+	snowballDevicePort = 9092
 )
 
 func BuildClients(ctx context.Context) (Clients, error) {
@@ -41,11 +42,18 @@ func BuildClients(ctx context.Context) (Clients, error) {
 	return deviceClientMap, nil
 }
 
-func snowEndpoint(deviceIP string) *ServiceEndpoint {
-	return &ServiceEndpoint{
-		ServiceID:     "EC2",
-		SigningRegion: "snow",
-		URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowEC2Port),
+func snowEndpoints(deviceIP string) []ServiceEndpoint {
+	return []ServiceEndpoint{
+		{
+			ServiceID:     "EC2",
+			SigningRegion: "snow",
+			URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowEC2Port),
+		},
+		{
+			ServiceID:     "Snowball Device",
+			SigningRegion: "snow",
+			URL:           fmt.Sprintf("https://%s:%d", deviceIP, snowballDevicePort),
+		},
 	}
 }
 
@@ -81,12 +89,13 @@ func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsCon
 
 func SnowEndpointResolver(deviceIP string) aws.EndpointResolverWithOptionsFunc {
 	return aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		endpoint := snowEndpoint(deviceIP)
-		if service == endpoint.ServiceID {
-			return aws.Endpoint{
-				URL:           endpoint.URL,
-				SigningRegion: endpoint.SigningRegion,
-			}, nil
+		for _, endpoint := range snowEndpoints(deviceIP) {
+			if service == endpoint.ServiceID {
+				return aws.Endpoint{
+					URL:           endpoint.URL,
+					SigningRegion: endpoint.SigningRegion,
+				}, nil
+			}
 		}
 		// returning EndpointNotFoundError allows the service to fallback to it's default resolution
 		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
