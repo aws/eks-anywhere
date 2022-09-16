@@ -70,11 +70,6 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 		return nil, err
 	}
 
-	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)
-	if err != nil {
-		return nil, fmt.Errorf("applying extra objects to bootstrap cluster: %v", err)
-	}
-
 	return c, nil
 }
 
