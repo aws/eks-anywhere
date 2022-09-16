@@ -1,16 +1,18 @@
 package e2e
 
 import (
-	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/go-logr/logr"
+
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 type E2EIPManager struct {
 	networkCidr string
 	networkIPs  map[string]bool
+	logger      logr.Logger
 }
 
-func newE2EIPManager(networkCidr string) *E2EIPManager {
+func newE2EIPManager(logger logr.Logger, networkCidr string) *E2EIPManager {
 	ipman := &E2EIPManager{
 		networkCidr: networkCidr,
 		networkIPs:  make(map[string]bool),
@@ -19,7 +21,7 @@ func newE2EIPManager(networkCidr string) *E2EIPManager {
 }
 
 func (ipman *E2EIPManager) reserveIP() string {
-	return getUniqueIP(ipman.networkCidr, ipman.networkIPs)
+	return ipman.getUniqueIP(ipman.networkCidr, ipman.networkIPs)
 }
 
 func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
@@ -30,15 +32,15 @@ func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
 	return pool
 }
 
-func getUniqueIP(cidr string, usedIPs map[string]bool) string {
+func (ipman *E2EIPManager) getUniqueIP(cidr string, usedIPs map[string]bool) string {
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	ip, err := ipgen.GenerateUniqueIP(cidr)
 	for ; err != nil || usedIPs[ip]; ip, err = ipgen.GenerateUniqueIP(cidr) {
 		if err != nil {
-			logger.V(2).Info("Warning: getting unique IP for vsphere failed", "error", err)
+			ipman.logger.V(2).Info("Warning: getting unique IP for vsphere failed", "error", err)
 		}
 		if usedIPs[ip] {
-			logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
+			ipman.logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
 		}
 	}
 	usedIPs[ip] = true

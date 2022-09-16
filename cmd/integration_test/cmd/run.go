@@ -107,6 +107,7 @@ func runE2E(ctx context.Context) error {
 		BranchName:             branchName,
 		TestInstanceConfigFile: instanceConfigFile,
 		BaremetalBranchName:    baremetalBranchName,
+		Logger:                 logger.Get(),
 	}
 
 	err := e2e.RunTestsInParallel(runConf)

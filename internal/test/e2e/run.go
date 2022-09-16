@@ -9,17 +9,18 @@ import (
 	"sync"
 
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
-	passedStatus = "pass"
-	failedStatus = "fail"
+	testResultPass  = "pass"
+	testResultFail  = "fail"
+	testResultError = "error"
 
 	maxIPPoolSize = 10
 	minIPPoolSize = 1
@@ -39,6 +40,7 @@ type ParallelRunConf struct {
 	TestReportFolder       string
 	BranchName             string
 	BaremetalBranchName    string
+	Logger                 logr.Logger
 }
 
 type (
@@ -56,7 +58,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 		return err
 	}
 
-	logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
+	conf.Logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
 
 	if conf.TestReportFolder != "" {
 		if err = os.MkdirAll(conf.TestReportFolder, os.ModePerm); err != nil {
@@ -72,7 +74,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	results := make([]instanceTestsResults, 0, len(instancesConf))
-	logTestGroups(instancesConf)
+	logTestGroups(conf.Logger, instancesConf)
 	maxConcurrentTests := conf.MaxConcurrentTests
 	// Add a blocking channel to only allow for certain number of tests to run at a time
 	queue := make(chan struct{}, maxConcurrentTests)
@@ -97,22 +99,37 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	close(queue)
 
 	failedInstances := 0
+	totalInstances := len(instancesConf)
+	completedInstances := 0
 	for _, r := range results {
+		var result string
+		// TODO: keeping the old logs temporarily for compatibility with the test tool
+		// Once the tool is updated to support the unified message, remove them
 		if r.err != nil {
-			logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
+			result = testResultError
+			conf.Logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", testResultFail)
 			failedInstances += 1
 		} else if !r.testCommandResult.Successful() {
-			logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", failedStatus)
-			logResult(r.testCommandResult)
+			result = testResultFail
+			conf.Logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultFail)
 			failedInstances += 1
 		} else {
-			logger.Info("Instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
-			logResult(r.testCommandResult)
+			result = testResultPass
+			conf.Logger.Info("Instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", testResultPass)
 		}
+		completedInstances += 1
+		conf.Logger.Info("Instance tests run finished",
+			"result", result,
+			"tests", r.conf.regex,
+			"jobId", r.conf.jobId,
+			"instanceId", r.conf.instanceId,
+			"completedInstances", completedInstances,
+			"totalInstances", totalInstances,
+		)
 	}
 
 	if failedInstances > 0 {
-		return fmt.Errorf("%d/%d e2e instances failed", failedInstances, len(instancesConf))
+		return fmt.Errorf("%d/%d e2e instances failed", failedInstances, totalInstances)
 	}
 
 	return nil
@@ -128,6 +145,7 @@ type instanceRunConf struct {
 	testRunnerType                                                            TestRunnerType
 	testRunnerConfig                                                          TestInfraConfig
 	cleanupVms                                                                bool
+	logger                                                                    logr.Logger
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
@@ -144,7 +162,7 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 	defer func() {
 		err := testRunner.decommInstance(conf)
 		if err != nil {
-			logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
+			conf.logger.V(1).Info("WARN: Failed to decomm e2e test runner instance", "error", err)
 		}
 	}()
 
@@ -178,7 +196,7 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 }
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
-	logger.V(1).Info("Running e2e tests", "regex", regex)
+	e.logger.V(1).Info("Running e2e tests", "regex", regex)
 	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
 
 	if regex != "" {
@@ -191,6 +209,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 
 	testCommandResult, err = ssm.RunCommand(
 		e.session,
+		e.logger.V(4),
 		e.instanceId,
 		command,
 		opt,
@@ -245,15 +264,15 @@ func splitTests(testsList []string, conf ParallelRunConf) ([]instanceRunConf, er
 	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
-	ipman := newE2EIPManager(os.Getenv(cidrVar))
-	privateIpMan := newE2EIPManager(os.Getenv(privateNetworkCidrVar))
+	ipman := newE2EIPManager(conf.Logger, os.Getenv(cidrVar))
+	privateIpMan := newE2EIPManager(conf.Logger, os.Getenv(privateNetworkCidrVar))
 
 	awsSession, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("creating aws session for tests: %v", err)
 	}
 
-	testRunnerConfig, err := NewTestRunnerConfigFromFile(conf.TestInstanceConfigFile)
+	testRunnerConfig, err := NewTestRunnerConfigFromFile(conf.Logger, conf.TestInstanceConfigFile)
 	if err != nil {
 		return nil, fmt.Errorf("creating test runner config for tests: %v", err)
 	}
@@ -318,13 +337,13 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 		}
 	}
 
-	logger.V(1).Info("INFO:", "totalHardware", len(hardware))
+	conf.Logger.V(1).Info("INFO:", "totalHardware", len(hardware))
 
 	tinkerbellTests := getTinkerbellTests(testsList)
-	logger.V(1).Info("INFO:", "tinkerbellTests", len(tinkerbellTests))
+	conf.Logger.V(1).Info("INFO:", "tinkerbellTests", len(tinkerbellTests))
 
 	tinkTestInstances := len(hardware) / maxHardwarePerE2ETest
-	logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
+	conf.Logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
 
 	tinkTestsPerInstance := 1
 	var remainingTests int
@@ -338,21 +357,21 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 		}
 	}
 
-	logger.V(1).Info("INFO:", "tinkTestsPerInstance", tinkTestsPerInstance)
-	logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
-	logger.V(1).Info("INFO:", "remainingTests", remainingTests)
+	conf.Logger.V(1).Info("INFO:", "tinkTestsPerInstance", tinkTestsPerInstance)
+	conf.Logger.V(1).Info("INFO:", "tinkTestInstances", tinkTestInstances)
+	conf.Logger.V(1).Info("INFO:", "remainingTests", remainingTests)
 
 	hardwareChunks := api.SplitHardware(hardware, maxHardwarePerE2ETest)
 
-	ipman := newE2EIPManager(os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
+	ipman := newE2EIPManager(conf.Logger, os.Getenv(tinkerbellControlPlaneNetworkCidrEnvVar))
 
 	testsInVSphereInstance := make([]string, 0, tinkTestsPerInstance)
 	for i, testName := range tinkerbellTests {
 		testsInVSphereInstance = append(testsInVSphereInstance, testName)
 
 		if len(testsInVSphereInstance) == tinkTestsPerInstance || (len(testsList)-1) == i {
-			logger.V(1).Info("INFO:", "hardwareChunksSize", len(hardwareChunks))
-			logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
+			conf.Logger.V(1).Info("INFO:", "hardwareChunksSize", len(hardwareChunks))
+			conf.Logger.V(1).Info("INFO:", "hardwareSize", len(hardware))
 
 			// each tinkerbell test requires 2 floating ip's (cp & tink server)
 			ips := ipman.reserveIPPool(tinkTestsPerInstance * 2)
@@ -380,11 +399,12 @@ func splitTinkerbellTests(awsSession *session.Session, testsList []string, conf 
 }
 
 func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNumber int, testRegex string, ipPool networkutils.IPPool, hardware []*api.Hardware, testRunnerType TestRunnerType, testRunnerConfig *TestInfraConfig) instanceRunConf {
+	jobID := fmt.Sprintf("%s-%d", conf.JobId, jobNumber)
 	return instanceRunConf{
 		session:             awsSession,
 		instanceProfileName: conf.InstanceProfileName,
 		storageBucket:       conf.StorageBucket,
-		jobId:               fmt.Sprintf("%s-%d", conf.JobId, jobNumber),
+		jobId:               jobID,
 		parentJobId:         conf.JobId,
 		regex:               testRegex,
 		ipPool:              ipPool,
@@ -395,19 +415,14 @@ func newInstanceRunConf(awsSession *session.Session, conf ParallelRunConf, jobNu
 		cleanupVms:          conf.CleanupVms,
 		testRunnerType:      testRunnerType,
 		testRunnerConfig:    *testRunnerConfig,
+		logger:              conf.Logger.WithValues("jobID", jobID, "test", testRegex),
 	}
 }
 
-func logTestGroups(instancesConf []instanceRunConf) {
+func logTestGroups(logger logr.Logger, instancesConf []instanceRunConf) {
 	testGroups := make([]string, 0, len(instancesConf))
 	for _, i := range instancesConf {
 		testGroups = append(testGroups, i.regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
-}
-
-func logResult(t *testCommandResult) {
-	// Because of the way we run tests with gotestsum and test2json
-	// both cli output and test logs get conveniently combined in stdout
-	fmt.Println(string(t.StdOut))
 }

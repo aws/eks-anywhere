@@ -8,6 +8,7 @@ import (
 	"time"
 
 	aws_ssm "github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/go-logr/logr"
 	"gopkg.in/yaml.v2"
 
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/vsphere"
 	"github.com/aws/eks-anywhere/internal/test/cleanup"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
@@ -64,13 +64,15 @@ type TestInfraConfig struct {
 	VSphereTestRunner `yaml:"vSphere,omitempty"`
 }
 
-func NewTestRunnerConfigFromFile(configFile string) (*TestInfraConfig, error) {
+func NewTestRunnerConfigFromFile(logger logr.Logger, configFile string) (*TestInfraConfig, error) {
 	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create test runner config from file: %v", err)
 	}
 
 	config := TestInfraConfig{}
+	config.VSphereTestRunner.logger = logger
+	config.Ec2TestRunner.logger = logger
 
 	err = yaml.Unmarshal(file, &config)
 	if err != nil {
@@ -82,6 +84,7 @@ func NewTestRunnerConfigFromFile(configFile string) (*TestInfraConfig, error) {
 
 type testRunner struct {
 	InstanceID string
+	logger     logr.Logger
 }
 
 type Ec2TestRunner struct {
@@ -128,8 +131,8 @@ func (v *VSphereTestRunner) setEnvironment() (map[string]string, error) {
 }
 
 func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
-	name := getTestRunnerName(c.jobId)
-	logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
+	name := getTestRunnerName(v.logger, c.jobId)
+	v.logger.V(1).Info("Creating vSphere Test Runner instance", "name", name)
 
 	ssmActivationInfo, err := ssm.CreateActivation(c.session, name, c.instanceProfileName)
 	if err != nil {
@@ -176,19 +179,19 @@ func (v *VSphereTestRunner) createInstance(c instanceRunConf) (string, error) {
 }
 
 func (e *Ec2TestRunner) createInstance(c instanceRunConf) (string, error) {
-	name := getTestRunnerName(c.jobId)
-	logger.V(1).Info("Creating ec2 Test Runner instance", "name", name)
+	name := getTestRunnerName(e.logger, c.jobId)
+	e.logger.V(1).Info("Creating ec2 Test Runner instance", "name", name)
 	instanceId, err := ec2.CreateInstance(c.session, e.AmiID, key, tag, c.instanceProfileName, e.SubnetID, name)
 	if err != nil {
 		return "", fmt.Errorf("creating instance for e2e tests: %v", err)
 	}
-	logger.V(1).Info("Instance created", "instance-id", instanceId)
+	e.logger.V(1).Info("Instance created", "instance-id", instanceId)
 	e.InstanceID = instanceId
 	return instanceId, nil
 }
 
 func (v *VSphereTestRunner) tagInstance(c instanceRunConf, key, value string) error {
-	vmName := getTestRunnerName(c.jobId)
+	vmName := getTestRunnerName(v.logger, c.jobId)
 	vmPath := fmt.Sprintf("/%s/vm/%s/%s", v.Datacenter, v.Folder, vmName)
 	tag := fmt.Sprintf("%s:%s", key, value)
 
@@ -209,7 +212,7 @@ func (e *Ec2TestRunner) tagInstance(c instanceRunConf, key, value string) error 
 func (v *VSphereTestRunner) decommInstance(c instanceRunConf) error {
 	_, deregisterError := ssm.DeregisterInstance(c.session, v.InstanceID)
 	_, deactivateError := ssm.DeleteActivation(c.session, v.ActivationId)
-	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(c.jobId), executables.WithGovcEnvMap(v.envMap))
+	deleteError := cleanup.VsphereRmVms(context.Background(), getTestRunnerName(v.logger, c.jobId), executables.WithGovcEnvMap(v.envMap))
 
 	if deregisterError != nil {
 		return fmt.Errorf("failed to decommission vsphere test runner ssm instance: %v", deregisterError)
@@ -230,7 +233,7 @@ func (v *Ec2TestRunner) decommInstance(c instanceRunConf) error {
 	return nil
 }
 
-func getTestRunnerName(jobId string) string {
+func getTestRunnerName(logger logr.Logger, jobId string) string {
 	name := fmt.Sprintf("eksa-e2e-%s", jobId)
 	if len(name) > 80 {
 		logger.V(1).Info("Truncating test runner name to 80 chars", "original_name", name)
