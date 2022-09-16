@@ -26,7 +26,7 @@ Create a `tilt-settings.json` file in this folder
   "allowed_contexts": ["yyyyyy@zzzzz"]
 }
 ```
-* `default_registry`: your own registry where you want to push the controller images built by tilt. If using ECR, you will need to create the repository in advance (repo name is `cluster-controller`, same as the var `IMG` in the Tiltfile). You will need to be authenticated and have permissions to push images. Example for ECR:
+* `default_registry`: your own registry where you want to push the controller images built by tilt. If using ECR, you will need to create the repository in advance (repo name is `eks-a-controller-manager`, same as the var `IMG` in the Tiltfile). You will need to be authenticated and have permissions to push images. Example for ECR:
 ```sh
 aws ecr-public get-login-password --region ${REGION} | docker login --username AWS --password-stdin public.ecr.aws/${REGISTRY_ALIAS}
 ```
