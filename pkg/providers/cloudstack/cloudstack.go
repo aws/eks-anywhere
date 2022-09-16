@@ -73,7 +73,7 @@ func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *typ
 
 func (p *cloudstackProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.Info("Installing secrets on bootstrap cluster")
-	return p.UpdateSecrets(ctx, cluster)
+	return p.UpdateSecrets(ctx, cluster, nil)
 }
 
 func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
@@ -92,7 +92,7 @@ func (p *cloudstackProvider) PostWorkloadInit(ctx context.Context, cluster *type
 	return nil
 }
 
-func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	contents, err := p.generateSecrets(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("creating secrets object: %v", err)
@@ -503,7 +503,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	return nil
 }
 
-func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
+func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
 		return fmt.Errorf("validating environment variables: %v", err)

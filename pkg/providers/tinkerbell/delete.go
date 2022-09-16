@@ -7,7 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
+func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// noop
 	return nil
 }

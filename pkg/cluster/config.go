@@ -3,6 +3,8 @@ package cluster
 import (
 	"reflect"
 
+	v1 "k8s.io/api/core/v1"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
@@ -20,6 +22,7 @@ type Config struct {
 	AWSIAMConfigs            map[string]*anywherev1.AWSIamConfig
 	GitOpsConfig             *anywherev1.GitOpsConfig
 	FluxConfig               *anywherev1.FluxConfig
+	SnowCredentialsSecret    *v1.Secret
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {

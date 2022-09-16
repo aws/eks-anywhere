@@ -194,7 +194,7 @@ func (p *Provider) MachineResourceType() string {
 	return eksaTinkerbellMachineResourceType
 }
 
-func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// TODO: implement
 	return nil
 }

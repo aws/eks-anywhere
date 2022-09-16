@@ -3,9 +3,11 @@ package snow
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -119,7 +121,7 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 	return m
 }
 
-func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
+func SnowCluster(clusterSpec *cluster.Spec, credentialsSecret *v1.Secret) *snowv1.AWSSnowCluster {
 	cluster := &snowv1.AWSSnowCluster{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
@@ -135,9 +137,44 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 				Host: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 				Port: 6443,
 			},
+			IdentityRef: &snowv1.AWSSnowIdentityReference{
+				Name: credentialsSecret.GetName(),
+				Kind: snowv1.AWSSnowIdentityKind(credentialsSecret.GetObjectKind().GroupVersionKind().Kind),
+			},
 		},
 	}
 	return cluster
+}
+
+func CredentialsSecret(name, namespace string, credsB64, certsB64 []byte) *v1.Secret {
+	return &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1.SchemeGroupVersion.String(),
+			Kind:       string(snowv1.SecretKind),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Data: map[string][]byte{
+			v1alpha1.SnowCredentialsKey:  credsB64,
+			v1alpha1.SnowCertificatesKey: certsB64,
+		},
+		Type: v1.SecretTypeOpaque,
+	}
+}
+
+func CAPASCredentialsSecret(clusterSpec *cluster.Spec, credsB64, certsB64 []byte) *v1.Secret {
+	s := CredentialsSecret(CredentialsSecretName(clusterSpec), constants.EksaSystemNamespace, credsB64, certsB64)
+	label := map[string]string{
+		clusterctlv1.ClusterctlMoveLabelName: "true",
+	}
+	s.SetLabels(label)
+	return s
+}
+
+func EksaCredentialsSecret(datacenter *v1alpha1.SnowDatacenterConfig, credsB64, certsB64 []byte) *v1.Secret {
+	return CredentialsSecret(datacenter.Spec.IdentityRef.Name, datacenter.GetNamespace(), credsB64, certsB64)
 }
 
 func SnowMachineTemplate(name string, machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {

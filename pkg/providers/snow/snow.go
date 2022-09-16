@@ -40,7 +40,6 @@ var (
 type SnowProvider struct {
 	kubeUnAuthClient KubeUnAuthClient
 	retrier          *retrier.Retrier
-	bootstrapCreds   bootstrapCreds
 	configManager    *ConfigManager
 	skipIpCheck      bool
 }
@@ -48,6 +47,7 @@ type SnowProvider struct {
 type KubeUnAuthClient interface {
 	KubeconfigClient(kubeconfig string) kubernetes.Client
 	Delete(ctx context.Context, name, namespace, kubeconfig string, obj runtime.Object) error
+	Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error
 }
 
 func NewProvider(kubeUnAuthClient KubeUnAuthClient, configManager *ConfigManager, skipIpCheck bool) *SnowProvider {
@@ -65,9 +65,6 @@ func (p *SnowProvider) Name() string {
 }
 
 func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("setting up credentials: %v", err)
-	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
@@ -82,23 +79,23 @@ func (p *SnowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 }
 
 func (p *SnowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, _ *cluster.Spec) error {
-	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("setting up credentials: %v", err)
-	}
 	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting defaults and validate snow config: %v", err)
 	}
 	return nil
 }
 
-func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
-	if err := p.setupBootstrapCreds(); err != nil {
+func (p *SnowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := SetupEksaCredentialsSecret(clusterSpec.Config); err != nil {
 		return fmt.Errorf("setting up credentials: %v", err)
 	}
 	return nil
 }
 
-func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *SnowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	if err := p.kubeUnAuthClient.Apply(ctx, cluster.KubeconfigFile, clusterSpec.SnowCredentialsSecret); err != nil {
+		return fmt.Errorf("applying eks-a snow credentials secret in cluster: %v", err)
+	}
 	return nil
 }
 
@@ -186,8 +183,8 @@ func (p *SnowProvider) Version(clusterSpec *cluster.Spec) string {
 
 func (p *SnowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
-	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
-	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
+	envMap[snowCredentialsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCredentialsKey])
+	envMap[snowCertsKey] = string(clusterSpec.SnowCredentialsSecret.Data[v1alpha1.SnowCertificatesKey])
 
 	envMap["SNOW_CONTROLLER_IMAGE"] = clusterSpec.VersionsBundle.Snow.Manager.VersionedImage()
 

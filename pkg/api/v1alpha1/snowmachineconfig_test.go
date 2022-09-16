@@ -9,7 +9,7 @@ import (
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
-func TestSnowSetDefaults(t *testing.T) {
+func TestSnowMachineConfigSetDefaults(t *testing.T) {
 	tests := []struct {
 		name   string
 		before *SnowMachineConfig
@@ -80,7 +80,7 @@ func TestSnowSetDefaults(t *testing.T) {
 	}
 }
 
-func TestSnowValidate(t *testing.T) {
+func TestSnowMachineConfigValidate(t *testing.T) {
 	tests := []struct {
 		name    string
 		obj     *SnowMachineConfig
@@ -156,14 +156,14 @@ func TestSnowValidate(t *testing.T) {
 	}
 }
 
-func TestSetControlPlaneAnnotation(t *testing.T) {
+func TestSnowMachineConfigSetControlPlaneAnnotation(t *testing.T) {
 	g := NewWithT(t)
 	m := &SnowMachineConfig{}
 	m.SetControlPlaneAnnotation()
 	g.Expect(m.Annotations).To(Equal(map[string]string{"anywhere.eks.amazonaws.com/control-plane": "true"}))
 }
 
-func TestSetEtcdAnnotation(t *testing.T) {
+func TestSnowMachineConfigSetEtcdAnnotation(t *testing.T) {
 	g := NewWithT(t)
 	m := &SnowMachineConfig{}
 	m.SetEtcdAnnotation()

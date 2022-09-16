@@ -2,11 +2,13 @@ package snow_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,6 +118,7 @@ func givenClusterSpec() *cluster.Spec {
 			},
 		}
 		s.SnowDatacenter = givenDatacenterConfig()
+		s.SnowCredentialsSecret = wantEksaCredentialsSecret()
 		s.SnowMachineConfigs = givenMachineConfigs()
 		s.VersionsBundle = &cluster.VersionsBundle{
 			KubeDistro: &cluster.KubeDistro{
@@ -172,13 +175,21 @@ func givenDatacenterConfig() *v1alpha1.SnowDatacenterConfig {
 			Name:      "test",
 			Namespace: "test-namespace",
 		},
-		Spec: v1alpha1.SnowDatacenterConfigSpec{},
+		Spec: v1alpha1.SnowDatacenterConfigSpec{
+			IdentityRef: v1alpha1.Ref{
+				Kind: "Secret",
+				Name: "test-snow-credentials",
+			},
+		},
 	}
 }
 
 func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 	return map[string]*v1alpha1.SnowMachineConfig{
 		"test-cp": {
+			TypeMeta: metav1.TypeMeta{
+				Kind: "SnowMachineConfig",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-cp",
 				Namespace: "test-namespace",
@@ -195,6 +206,9 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 			},
 		},
 		"test-wn": {
+			TypeMeta: metav1.TypeMeta{
+				Kind: "SnowMachineConfig",
+			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "test-wn",
 				Namespace: "test-namespace",
@@ -267,6 +281,13 @@ func TestName(t *testing.T) {
 	tt.Expect(tt.provider.Name()).To(Equal(expectedSnowProviderName))
 }
 
+func wantEksaCredentialsSecretWithEnvCreds() *v1.Secret {
+	secret := wantEksaCredentialsSecret()
+	secret.Data["credentials"] = []byte("WzEuMi4zLjRdCmF3c19hY2Nlc3Nfa2V5X2lkID0gQUJDREVGR0hJSktMTU5PUFFSMlQKYXdzX3NlY3JldF9hY2Nlc3Nfa2V5ID0gQWZTRDdzWXovVEJadHprUmVCbDZQdXVJU3pKMld0TmtlZVB3K25OekoKcmVnaW9uID0gc25vdw==")
+	secret.Data["ca-bundle"] = []byte("LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURYakNDQWthZ0F3SUJBZ0lJYjVtMFJsakpDTUV3RFFZSktvWklodmNOQVFFTkJRQXdPREUyTURRR0ExVUUKQXd3dFNrbEVMVEl3TmpnME16UXlNREF3TWkweE9USXRNVFk0TFRFdE1qTTFMVEl5TFRBeExUQTJMVEl5TFRBMApNQjRYRFRJeE1ERXhNVEl5TURjMU9Gb1hEVEkxTVRJeE5qSXlNRGMxT0Zvd09ERTJNRFFHQTFVRUF3d3RTa2xFCkxUSXdOamcwTXpReU1EQXdNaTB4T1RJdE1UWTRMVEV0TWpNMUxUSXlMVEF4TFRBMkxUSXlMVEEwTUlJQklqQU4KQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBbU9UUURCZkJ0UGNWREZnL2E1OWRrK3JZclBSVQpmNXpsN0pnRkFFdzFuODJTa2JObTRzcndsb2o4cEN1RDFuSkFsTiszTEtvaWJ5OWpVOFpxb1FLcXBwSmFLMVFLCmR2MjdKWU5sV29yRzlyNktyRmtpRVRuMmN4dUF3Y1JCdnE0VUY3NldkTnI3ekZqSTEwOGJ5UHA5UGQwbXhLaVEKNldWYXhjS1g5QUVjYXJCL0dmaWRITzk1QWF5NnRpQlUxU1F2QkpybzNMMS9VRnU1U1RTcFphaTl6eCtWa1dUSgpEMEpYaDdlTEY0eUwwTjFvVTBoWDJDR0R4RHo0VmxKbUJPdmJuUnV3c09ydVJNdFVGUlV5NTljUHpyLy80ZmpkCjRTN0FZYmVPVlB3RVA3cTE5Tlo2K1A3RTcxalRxMXJ6OFJoQW5XL0pjYlRLUzBLcWdCVVB6MFU0cVFJREFRQUIKbzJ3d2FqQU1CZ05WSFJNRUJUQURBUUgvTUIwR0ExVWREZ1FXQkJRVGFaekwyZ29xcTcvTWJKRWZOUnV6YndpaAprVEE3QmdOVkhSRUVOREF5aGpCSlJEcEtTVVF0TWpBMk9EUXpOREl3TURBeUxURTVNaTB4TmpndE1TMHlNelV0Ck1qSXRNREV0TURZdE1qSXRNRFF3RFFZSktvWklodmNOQVFFTkJRQURnZ0VCQUV6ZWwrVXNwaFV4NDlFVkF5V0IKUHpTem9FN1g2MmZnL2I0Z1U3aWZGSHBXcFlwQVBzYmFwejkvVHl3YzRUR1JJdGZjdFhZWnNqY2hKS2l1dEdVMgp6WDRydDFOU0hreDcyaU1sM29iUTJqUW1URDhmOUx5Q3F5YStRTTRDQTc0a2s2djJuZzFFaXdNWXZRbFR2V1k0CkZFV3YyMXlOUnMyeWlSdUhXalJZSDRURjU0Y0NvRFFHcEZwc09GaTBMNFYveW8xWHVpbVNMeDJ2dktaMGxDTnQKS3hDMW9DZ0N4eE5rT2EvNmlMazZxVkFOb1g1S0lWc2F0YVZodkdLKzltd1duOCtkbk1GbmVNaVdkL2p2aStkaApleXdsZFZFTEJXUktFTERkQmM5WGI0aTVCRVRGNmRVbG12cFdncE9YWE8zdUpsSVJHWkNWRkxzZ1E1MTFvTXhNCnJFQT0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ==")
+	return secret
+}
+
 func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
@@ -275,6 +296,7 @@ func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(Succeed())
 }
 
@@ -302,6 +324,7 @@ func TestSetupAndValidateUpgradeClusterSuccess(t *testing.T) {
 	tt.aws.EXPECT().IsSnowballDeviceUnlocked(tt.ctx).Return(true, nil).Times(4)
 	tt.aws.EXPECT().SnowballDeviceSoftwareVersion(tt.ctx).Return("102", nil).Times(4)
 	err := tt.provider.SetupAndValidateUpgradeCluster(tt.ctx, tt.cluster, tt.clusterSpec, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(Succeed())
 }
 
@@ -324,7 +347,8 @@ func TestSetupAndValidateUpgradeClusterNoCertsEnv(t *testing.T) {
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, tt.clusterSpec)
+	tt.Expect(tt.clusterSpec.SnowCredentialsSecret).To(Equal(wantEksaCredentialsSecretWithEnvCreds()))
 	tt.Expect(err).To(Succeed())
 }
 
@@ -332,7 +356,7 @@ func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
@@ -340,7 +364,7 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster, tt.clusterSpec)
 	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
@@ -760,4 +784,26 @@ func TestChangeDiffWithChange(t *testing.T) {
 		OldVersion:    "v1.0.2",
 	}
 	g.Expect(provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(want))
+}
+
+func TestUpdateSecrets(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().Apply(
+		tt.ctx,
+		tt.cluster.KubeconfigFile,
+		tt.clusterSpec.SnowCredentialsSecret,
+	).Return(nil)
+
+	tt.Expect(tt.provider.UpdateSecrets(tt.ctx, tt.cluster, tt.clusterSpec)).To(Succeed())
+}
+
+func TestUpdateSecretsApplyError(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubeUnAuthClient.EXPECT().Apply(
+		tt.ctx,
+		tt.cluster.KubeconfigFile,
+		tt.clusterSpec.SnowCredentialsSecret,
+	).Return(errors.New("error"))
+
+	tt.Expect(tt.provider.UpdateSecrets(tt.ctx, tt.cluster, tt.clusterSpec)).NotTo(Succeed())
 }

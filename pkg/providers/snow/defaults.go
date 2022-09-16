@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -136,6 +138,22 @@ func (md *MachineConfigDefaulters) SetupDefaultSshKey(ctx context.Context, m *v1
 	md.keyGenerated = true
 
 	m.Spec.SshKeyName = defaultAwsSshKeyName
+
+	return nil
+}
+
+func SetupEksaCredentialsSecret(c *cluster.Config) error {
+	creds, err := aws.EncodeFileFromEnv(eksaSnowCredentialsFileKey)
+	if err != nil {
+		return fmt.Errorf("setting up snow credentials: %v", err)
+	}
+
+	certs, err := aws.EncodeFileFromEnv(eksaSnowCABundlesFileKey)
+	if err != nil {
+		return fmt.Errorf("setting up snow certificates: %v", err)
+	}
+
+	c.SnowCredentialsSecret = EksaCredentialsSecret(c.SnowDatacenter, []byte(creds), []byte(certs))
 
 	return nil
 }
