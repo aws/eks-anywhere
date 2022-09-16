@@ -103,39 +103,23 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, log log
 		switch obj.GetObjectKind().GroupVersionKind().Kind {
 		case "Cluster":
 			log.Info("[DEBUG] Found Cluster object")
-			//capiCluster = obj.(*clusterv1.Cluster)
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), capiCluster)
-			if err != nil {
+			if err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), capiCluster); err != nil {
 				return nil, err
-			} else {
-				log.Info("[DEBUG] It's not nil!")
 			}
 		case "CloudStackCluster":
 			log.Info("[DEBUG] Found CloudStackCluster object")
-			//cloudstackCluster = obj.(*cloudstackv1.CloudStackCluster)
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), cloudstackCluster)
-			if err != nil {
+			if err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), cloudstackCluster); err != nil {
 				return nil, err
-			} else {
-				log.Info("[DEBUG] It's not nil!")
 			}
 		case "KubeadmControlPlane":
 			log.Info("[DEBUG] Found KubeadmControlPlane object")
-			//kubeadmCP = obj.(*controlplanev1.KubeadmControlPlane)
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), kubeadmCP)
-			if err != nil {
+			if err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), kubeadmCP); err != nil {
 				return nil, err
-			} else {
-				log.Info("[DEBUG] It's not nil!")
 			}
 		case "EtcdadmCluster":
 			log.Info("[DEBUG] Found EtcdadmCluster object")
-			//etcdadmCluster = obj.(*etcdv1.EtcdadmCluster)
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), etcdadmCluster)
-			if err != nil {
+			if err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), etcdadmCluster); err != nil {
 				return nil, err
-			} else {
-				log.Info("[DEBUG] It's not nil!")
 			}
 		}
 	}
@@ -234,8 +218,7 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 	for _, obj := range objs {
 		switch obj.GetObjectKind().GroupVersionKind().Kind {
 		case "KubeadmConfigTemplate":
-			err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), newConfigTemplate)
-			if err != nil {
+			if err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), newConfigTemplate); err != nil {
 				return nil, nil, err
 			}
 		}

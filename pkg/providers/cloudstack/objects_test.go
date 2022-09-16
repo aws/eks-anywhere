@@ -1,12 +1,5 @@
 package cloudstack_test
 
-import (
-	"github.com/aws/eks-anywhere/pkg/utils/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"testing"
-)
-
 //func TestControlPlaneObjects(t *testing.T) {
 //	g := newSnowTest(t)
 //	mt := wantSnowMachineTemplate()
@@ -640,72 +633,3 @@ import (
 //		})
 //	}
 //}
-
-func TestAdHocConversion(t *testing.T) {
-	inputString := `
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: Cluster
-metadata:
-  creationTimestamp: "2022-09-15T17:12:08Z"
-  finalizers:
-  - cluster.cluster.x-k8s.io
-  generation: 1
-  labels:
-    cluster.x-k8s.io/cluster-name: eksa-drib-2ffeb29-w-0
-  name: eksa-drib-2ffeb29-w-0
-  namespace: eksa-system
-  resourceVersion: "792453"
-  uid: f9f15407-8756-4c6d-a845-81fddb857ef1
-spec:
-  clusterNetwork:
-    pods:
-      cidrBlocks:
-      - 192.169.0.0/16
-    services:
-      cidrBlocks:
-      - 10.96.0.0/12
-  controlPlaneEndpoint:
-    host: 10.11.199.251
-    port: 6443
-  controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
-    kind: KubeadmControlPlane
-    name: eksa-drib-2ffeb29-w-0
-    namespace: eksa-system
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-    kind: CloudStackCluster
-    name: eksa-drib-2ffeb29-w-0
-    namespace: eksa-system
-status:
-  conditions:
-  - lastTransitionTime: "2022-09-16T18:22:38Z"
-    status: "True"
-    type: Ready
-  - lastTransitionTime: "2022-09-15T17:15:27Z"
-    status: "True"
-    type: ControlPlaneInitialized
-  - lastTransitionTime: "2022-09-16T18:22:38Z"
-    status: "True"
-    type: ControlPlaneReady
-  - lastTransitionTime: "2022-09-15T17:12:44Z"
-    status: "True"
-    type: InfrastructureReady
-  controlPlaneReady: true
-  failureDomains:
-    az-zone4:
-      attributes:
-        MetaHashName: a55ea3cb8b8e4304db72fa693515fb45
-      controlPlane: true
-  infrastructureReady: true
-  observedGeneration: 1
-  phase: Provisioned
-`
-	obj, err := unstructured.YamlToUnstructured([]byte(inputString))
-	if err != nil {
-		t.Fail()
-	}
-	capiCluster := clusterv1.Cluster{}
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj[0].UnstructuredContent(), &capiCluster)
-	t.Log(capiCluster)
-}

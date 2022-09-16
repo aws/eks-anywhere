@@ -199,7 +199,6 @@ func (r *Reconciler) fetchDatacenterSecrets(ctx context.Context, cloudstackDatac
 		}
 		secrets = append(secrets, *secret)
 	}
-	r.log.Info("Retrieved secrets (provider reconciler)", "secrets", secrets)
 
 	return secrets, nil
 }
