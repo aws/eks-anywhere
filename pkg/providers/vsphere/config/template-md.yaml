@@ -145,7 +145,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.workerVsphereDatastore}}
       diskGiB: {{.workloadDiskGiB}}
       folder: '{{.workerVsphereFolder}}'

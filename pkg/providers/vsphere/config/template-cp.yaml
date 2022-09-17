@@ -50,7 +50,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.controlPlaneVsphereDatastore}}
       diskGiB: {{.controlPlaneDiskGiB}}
       folder: '{{.controlPlaneVsphereFolder}}'
@@ -514,7 +514,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.etcdVsphereDatastore}}
       diskGiB: {{.etcdDiskGiB}}
       folder: '{{.etcdVsphereFolder}}'
