@@ -44,7 +44,7 @@ require (
 	k8s.io/client-go v0.23.4
 	oras.land/oras-go v1.1.0
 	sigs.k8s.io/cluster-api v1.1.3
-	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1
+	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc3
 	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
 	sigs.k8s.io/cluster-api/test v1.0.0
 	sigs.k8s.io/controller-runtime v0.11.1
