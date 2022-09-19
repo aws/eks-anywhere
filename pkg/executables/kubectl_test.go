@@ -21,6 +21,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -2447,4 +2448,19 @@ func TestWaitForBaseboardManagements(t *testing.T) {
 	).Return(bytes.Buffer{}, nil)
 
 	kt.Expect(kt.k.WaitForBaseboardManagements(kt.ctx, kt.cluster, timeout, "Contactable", "eksa-system")).To(Succeed())
+}
+
+func TestKubectlApply(t *testing.T) {
+	tt := newKubectlTest(t)
+	secret := &corev1.Secret{}
+	b, err := yaml.Marshal(secret)
+	tt.Expect(err).To(Succeed())
+
+	tt.e.EXPECT().ExecuteWithStdin(
+		tt.ctx,
+		b,
+		"apply", "-f", "-", "--kubeconfig", tt.kubeconfig,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.Apply(tt.ctx, tt.kubeconfig, secret)).To(Succeed())
 }

@@ -1,11 +1,24 @@
 package v1alpha1
 
-import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+import (
+	"fmt"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	SnowIdentityKind    = "Secret"
+	SnowCredentialsKey  = "credentials"
+	SnowCertificatesKey = "ca-bundle"
+)
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // SnowDatacenterConfigSpec defines the desired state of SnowDatacenterConfig
 type SnowDatacenterConfigSpec struct { // Important: Run "make generate" to regenerate code after modifying this file
+
+	// IdentityRef is a reference to an identity for the Snow API to be used when reconciling this cluster
+	IdentityRef Ref `json:"identityRef,omitempty"`
 }
 
 // SnowDatacenterConfigStatus defines the observed state of SnowDatacenterConfig
@@ -42,6 +55,21 @@ func (s *SnowDatacenterConfig) ClearPauseAnnotation() {
 	if s.Annotations != nil {
 		delete(s.Annotations, pausedAnnotation)
 	}
+}
+
+func (s *SnowDatacenterConfig) Validate() error {
+	if len(s.Spec.IdentityRef.Name) == 0 {
+		return fmt.Errorf("SnowDatacenterConfig IdetityRef name must not be empty")
+	}
+
+	if len(s.Spec.IdentityRef.Kind) == 0 {
+		return fmt.Errorf("SnowDatacenterConfig IdetityRef kind must not be empty")
+	}
+
+	if s.Spec.IdentityRef.Kind != SnowIdentityKind {
+		return fmt.Errorf("SnowDatacenterConfig IdetityRef kind %s is invalid, the only supported kind is %s", s.Spec.IdentityRef.Kind, SnowIdentityKind)
+	}
+	return nil
 }
 
 func (s *SnowDatacenterConfig) ConvertConfigToConfigGenerateStruct() *SnowDatacenterConfigGenerate {

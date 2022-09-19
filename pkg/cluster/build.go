@@ -8,6 +8,7 @@ func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 		getSnowMachineConfigs,
 		getCloudStackDatacenter,
 		getCloudStackMachineConfigs,
+		getSnowIdentitySecret,
 		getOIDC,
 		getAWSIam,
 		getGitOps,

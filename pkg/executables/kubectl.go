@@ -1660,6 +1660,17 @@ func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, 
 	return nil
 }
 
+func (k *Kubectl) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	b, err := yaml.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf("marshalling object: %v", err)
+	}
+	if _, err := k.ExecuteWithStdin(ctx, b, "apply", "-f", "-", "--kubeconfig", kubeconfig); err != nil {
+		return fmt.Errorf("applying object with kubectl: %v", err)
+	}
+	return nil
+}
+
 func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
 	obj := &eksdv1alpha1.Release{}
 	if err := k.GetObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {

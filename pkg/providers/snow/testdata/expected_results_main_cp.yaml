@@ -44,6 +44,9 @@ spec:
   controlPlaneEndpoint:
     host: 1.2.3.4
     port: 6443
+  identityRef:
+    kind: Secret
+    name: snow-test-snow-credentials
   region: snow
 status:
   ready: false
@@ -140,5 +143,19 @@ spec:
       instanceType: sbe-c.large
       physicalNetworkConnectorType: SFP_PLUS
       sshKeyName: default
+
+---
+apiVersion: v1
+data:
+  ca-bundle: Y2VydHM=
+  credentials: Y3JlZHM=
+kind: Secret
+metadata:
+  creationTimestamp: null
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: snow-test-snow-credentials
+  namespace: eksa-system
+type: Opaque
 
 ---

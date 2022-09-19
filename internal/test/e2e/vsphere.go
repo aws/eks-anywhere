@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -19,7 +18,7 @@ const (
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 	re := regexp.MustCompile(vsphereRegex)
 	if !re.MatchString(testRegex) {
-		logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
+		e.logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
 		return nil
 	}
 

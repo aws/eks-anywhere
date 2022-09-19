@@ -12,6 +12,7 @@ import (
 type KubectlGetter interface {
 	GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error
 	Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error
+	Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error
 }
 
 // UnAuthClient is a generic kubernetes API client that takes a kubeconfig
@@ -59,6 +60,10 @@ func (c *UnAuthClient) Delete(ctx context.Context, name, namespace, kubeconfig s
 	}
 
 	return c.kubectl.Delete(ctx, resourceType, name, namespace, kubeconfig)
+}
+
+func (c *UnAuthClient) Apply(ctx context.Context, kubeconfig string, obj runtime.Object) error {
+	return c.kubectl.Apply(ctx, kubeconfig, obj)
 }
 
 func (c *UnAuthClient) resourceTypeForObj(obj runtime.Object) (string, error) {

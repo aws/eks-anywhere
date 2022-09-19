@@ -33,12 +33,11 @@ const defaultRequeueTime = time.Minute
 
 // TODO move these constants
 const (
-	managedEtcdReadyCondition             clusterv1.ConditionType = "ManagedEtcdReady"
-	controlSpecPlaneAppliedCondition      clusterv1.ConditionType = "ControlPlaneSpecApplied"
-	workerNodeSpecPlaneAppliedCondition   clusterv1.ConditionType = "WorkerNodeSpecApplied"
-	extraObjectsSpecPlaneAppliedCondition clusterv1.ConditionType = "ExtraObjectsSpecApplied"
-	cniSpecAppliedCondition               clusterv1.ConditionType = "CNISpecApplied"
-	controlPlaneReadyCondition            clusterv1.ConditionType = "ControlPlaneReady"
+	managedEtcdReadyCondition           clusterv1.ConditionType = "ManagedEtcdReady"
+	controlSpecPlaneAppliedCondition    clusterv1.ConditionType = "ControlPlaneSpecApplied"
+	workerNodeSpecPlaneAppliedCondition clusterv1.ConditionType = "WorkerNodeSpecApplied"
+	cniSpecAppliedCondition             clusterv1.ConditionType = "CNISpecApplied"
+	controlPlaneReadyCondition          clusterv1.ConditionType = "ControlPlaneReady"
 )
 
 type Reconciler struct {
@@ -205,10 +204,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, log logr.Logger, cluster *an
 		}}, err
 	}
 
-	if result, err := r.reconcileExtraObjects(ctx, cluster, capiCluster, specWithBundles); err != nil {
-		return result, err
-	}
-
 	if result, err := r.reconcileCNI(ctx, cluster, capiCluster, specWithBundles, log); err != nil {
 		return result, err
 	}
@@ -244,20 +239,6 @@ func (r *Reconciler) reconcileCNI(ctx context.Context, cluster *anywherev1.Clust
 			return controller.Result{}, err
 		}
 		conditions.MarkTrue(cluster, cniSpecAppliedCondition)
-	}
-	return controller.Result{}, nil
-}
-
-func (r *Reconciler) reconcileExtraObjects(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec) (controller.Result, error) {
-	if !conditions.IsTrue(capiCluster, extraObjectsSpecPlaneAppliedCondition) {
-		extraObjects := c.BuildExtraObjects(specWithBundles)
-
-		for _, spec := range extraObjects.Values() {
-			if err := serverside.ReconcileYaml(ctx, r.client, spec); err != nil {
-				return controller.Result{}, err
-			}
-		}
-		conditions.MarkTrue(cluster, extraObjectsSpecPlaneAppliedCondition)
 	}
 	return controller.Result{}, nil
 }

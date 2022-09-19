@@ -130,7 +130,7 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	return nil
 }
 
-func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
+func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }
 
@@ -138,7 +138,7 @@ func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.
 	return nil
 }
 
-func (p *provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+func (p *provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, _ *cluster.Spec) error {
 	// Not implemented
 	return nil
 }

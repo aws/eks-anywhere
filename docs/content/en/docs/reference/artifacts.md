@@ -53,13 +53,13 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.23 - `eksdRelease:kubernetes-1-23-eks-4`
+1.23 - `eksdRelease:kubernetes-1-23-eks-5`
 
-1.22 - `eksdRelease:kubernetes-1-22-eks-9`
+1.22 - `eksdRelease:kubernetes-1-22-eks-10`
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-17`
+1.21 - `eksdRelease:kubernetes-1-21-eks-18`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-19`
+1.20 - `eksdRelease:kubernetes-1-20-eks-20`
 
 ### Ubuntu OVAs
 EKS Anywhere no longer distributes Ubuntu OVAs for use with EKS Anywhere clusters.
@@ -89,7 +89,7 @@ export KUBEVERSION="1.23"
 
     a. To download VMware variant Bottlerocket OVA
     ```
-    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.0.ova"
+    OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.9.2.ova"
     tuftool download ${TMPDIR:-/tmp/bottlerocket-ovas} --target-name "${OVA}" \
        --root ./root.json \
        --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -288,13 +288,13 @@ You can use a proxy server to route outbound requests to the internet. To config
    ├── hook
    │   ├── initramfs-x86_64
    │   └── vmlinuz-x86_64
-   └── my-ubuntu-v1.23.7-eks-a-12-amd64.gz
+   └── my-ubuntu-v1.23.9-eks-a-17-amd64.gz
    ```
 
 1. Then create the [Bare metal configuration]({{< relref "./clusterspec/baremetal/" >}}) file, setting the `osImageURL` field to the location of the image. For example:
 
    ```
-   osImageURL: "http://my-web-server/my-ubuntu-v1.23.7-eks-a-12-amd64.gz"
+   osImageURL: "http://my-web-server/my-ubuntu-v1.23.9-eks-a-17-amd64.gz"
    ```
 
    See descriptions of [osImageURL]({{< relref "./clusterspec/baremetal/#osimageurl" >}}) for further information.

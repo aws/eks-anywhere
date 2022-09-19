@@ -3,7 +3,6 @@ package bootstrapper_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -14,11 +13,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
+func TestBootstrapperCreateBootstrapClusterSuccess(t *testing.T) {
 	kubeconfigFile := "c.kubeconfig"
 	clusterName := "cluster-name"
 	clusterSpec, wantCluster := given(t, clusterName, kubeconfigFile)
@@ -49,48 +47,6 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 				t.Fatalf("Bootstrapper.CreateBootstrapCluster() cluster = %#v, want %#v", got, wantCluster)
 			}
 		})
-	}
-}
-
-func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
-	kubeconfigFile := "c.kubeconfig"
-	clusterName := "cluster-name"
-	clusterSpec, wantCluster := given(t, clusterName, kubeconfigFile)
-	clusterSpec.VersionsBundle.KubeVersion = "1.20"
-	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
-
-	ctx := context.Background()
-	b, client := newBootstrapper(t)
-	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
-	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
-
-	got, err := b.CreateBootstrapCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("Bootstrapper.CreateBootstrapCluster() error = %v, wantErr nil", err)
-	}
-
-	if !reflect.DeepEqual(got, wantCluster) {
-		t.Fatalf("Bootstrapper.CreateBootstrapCluster() cluster = %#v, want %#v", got, wantCluster)
-	}
-}
-
-func TestBootstrapperCreateBootstrapClusterFailApplyExtraObjects(t *testing.T) {
-	kubeconfigFile := "c.kubeconfig"
-	clusterName := "cluster-name"
-	clusterSpec, wantCluster := given(t, clusterName, kubeconfigFile)
-	clusterSpec.VersionsBundle.KubeVersion = "1.20"
-	clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
-
-	ctx := context.Background()
-	b, client := newBootstrapper(t, bootstrapper.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
-	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
-	client.EXPECT().CreateNamespaceIfNotPresent(ctx, kubeconfigFile, constants.EksaSystemNamespace)
-	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any()).Return(fmt.Errorf("error"))
-
-	_, err := b.CreateBootstrapCluster(ctx, clusterSpec)
-	if err == nil {
-		t.Fatalf("expected error when creating bootstrap cluster")
 	}
 }
 

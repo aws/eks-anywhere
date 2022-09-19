@@ -41,6 +41,9 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			func(c *cluster.Config) error {
 				return cm.defaulters.GenerateDefaultSshKeys(ctx, c.SnowMachineConfigs)
 			},
+			func(c *cluster.Config) error {
+				return SetupEksaCredentialsSecret(c)
+			},
 		},
 		Validations: []cluster.Validation{
 			func(c *cluster.Config) error {

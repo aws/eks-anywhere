@@ -110,6 +110,41 @@ func TestUnAuthClientDeleteSuccess(t *testing.T) {
 	}
 }
 
+func TestUnAuthClientApplySuccess(t *testing.T) {
+	tests := []struct {
+		name      string
+		namespace string
+		obj       runtime.Object
+	}{
+		{
+			name:      "eksa cluster",
+			namespace: "eksa-system",
+			obj:       &anywherev1.Cluster{},
+		},
+		{
+			name:      "capi cluster",
+			namespace: "eksa-system",
+			obj:       &clusterapiv1.Cluster{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			ctx := context.Background()
+			ctrl := gomock.NewController(t)
+			kubectl := mocks.NewMockKubectlGetter(ctrl)
+			kubeconfig := "k.kubeconfig"
+
+			kubectl.EXPECT().Apply(ctx, kubeconfig, tt.obj)
+
+			c := kubernetes.NewUnAuthClient(kubectl)
+			g.Expect(c.Init()).To(Succeed())
+
+			g.Expect(c.Apply(ctx, kubeconfig, tt.obj)).To(Succeed())
+		})
+	}
+}
+
 func TestUnAuthClientDeleteUnknownObjType(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()

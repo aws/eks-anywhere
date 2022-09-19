@@ -365,62 +365,6 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdTimeoutOverrideSucce
 	}
 }
 
-func TestClusterManagerRunPostCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Name = clusterName
-		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
-		s.VersionsBundle.KubeVersion = "1.20"
-		s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
-	})
-
-	mgmtCluster := &types.Cluster{
-		Name:           clusterName,
-		KubeconfigFile: "mgmt-kubeconfig",
-	}
-	workloadCluster := &types.Cluster{
-		Name:           clusterName,
-		KubeconfigFile: "workload-kubeconfig",
-	}
-
-	c, m := newClusterManager(t)
-	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, workloadCluster, gomock.Any())
-	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err != nil {
-		t.Errorf("ClusterManager.RunPostCreateWorkloadCluster() error = %v, wantErr nil", err)
-	}
-}
-
-func TestClusterManagerRunPostCreateWorkloadClusterErrorApplyingExtraObjects(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Name = clusterName
-		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
-		s.VersionsBundle.KubeVersion = "1.20"
-		s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
-	})
-
-	mgmtCluster := &types.Cluster{
-		Name:           clusterName,
-		KubeconfigFile: "mgmt-kubeconfig",
-	}
-	workloadCluster := &types.Cluster{
-		Name:           clusterName,
-		KubeconfigFile: "workload-kubeconfig",
-	}
-
-	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
-	m.client.EXPECT().GetMachines(ctx, mgmtCluster, mgmtCluster.Name).Return([]types.Machine{}, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, workloadCluster, gomock.Any()).Return(errors.New("error applying"))
-	if err := c.RunPostCreateWorkloadCluster(ctx, mgmtCluster, workloadCluster, clusterSpec); err == nil {
-		t.Error("ClusterManager.RunPostCreateWorkloadCluster() error = nil, wantErr not nil", err)
-	}
-}
-
 func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"

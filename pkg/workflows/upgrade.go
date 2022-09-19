@@ -178,7 +178,7 @@ func (s *setupAndValidateTasks) Checkpoint() *task.CompletedTask {
 }
 
 func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	err := commandContext.Provider.UpdateSecrets(ctx, commandContext.ManagementCluster)
+	err := commandContext.Provider.UpdateSecrets(ctx, commandContext.ManagementCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

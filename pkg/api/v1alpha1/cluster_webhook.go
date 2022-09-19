@@ -85,10 +85,9 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	}
 	clusterlog.Info("Attributes", "isReconcilePaused", r.IsReconcilePaused())
 
-	// Makes it so mgmt cluster creation with CLI fails when attempting to unpause reconciliation
-	//if r.IsSelfManaged() && !oldCluster.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) {
-	//	return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
-	//}
+	if r.IsSelfManaged() && !r.IsReconcilePaused() && features.IsActive(features.FullLifecycleAPI()) && !r.Equal(oldCluster) {
+		return apierrors.NewBadRequest(fmt.Sprintf("upgrading self managed clusters is not supported: %s", r.Name))
+	}
 
 	var allErrs field.ErrorList
 
