@@ -44,11 +44,8 @@ const (
 var (
 	affinityGroupIds = []string{"ag1", "ag2"}
 	testSymLinks     = map[string]string{
-		"sym":  "link",
+		"sym": "link",
 	}
-)
-
-var (
 	testSymLinksString = "sym:link"
 	testDetails        = map[string]string{
 		"user": "details",
