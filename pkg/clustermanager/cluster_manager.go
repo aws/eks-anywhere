@@ -15,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
@@ -46,6 +47,8 @@ const (
 	etcdInProgressStr         = "1m"
 	DefaultEtcdWait           = 60 * time.Minute
 )
+
+var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 
 type ClusterManager struct {
 	*Upgrader
@@ -105,6 +108,7 @@ type ClusterClient interface {
 	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
+	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
 }
 
 type Networking interface {
@@ -930,49 +934,107 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 }
 
 func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	pausedAnnotation := map[string]string{clusterSpec.Cluster.PausedAnnotation(): "true"}
-	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	if clusterSpec.Cluster.IsSelfManaged() {
+		return c.pauseEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
+	}
+
+	return c.pauseReconcileForCluster(ctx, cluster, clusterSpec.Cluster, provider)
+}
+
+func (c *ClusterManager) pauseEksaReconcileForManagementAndWorkloadClusters(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	clusters := &v1alpha1.ClusterList{}
+	err := c.clusterClient.ListObjects(ctx, eksaClusterResourceType, clusterSpec.Cluster.Namespace, managementCluster.KubeconfigFile, clusters)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters.Items {
+		if w.ManagedBy() != clusterSpec.Cluster.Name {
+			continue
+		}
+
+		if err := c.pauseReconcileForCluster(ctx, managementCluster, &w, provider); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) pauseReconcileForCluster(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster, provider providers.Provider) error {
+	pausedAnnotation := map[string]string{cluster.PausedAnnotation(): "true"}
+	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+		for _, machineConfigRef := range cluster.MachineConfigRefs() {
+			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing cluster reconciliation: %v", err)
 	}
 	return nil
 }
 
+func (c *ClusterManager) resumeEksaReconcileForManagementAndWorkloadClusters(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	clusters := &v1alpha1.ClusterList{}
+	err := c.clusterClient.ListObjects(ctx, eksaClusterResourceType, clusterSpec.Cluster.Namespace, managementCluster.KubeconfigFile, clusters)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters.Items {
+		if w.ManagedBy() != clusterSpec.Cluster.Name {
+			continue
+		}
+
+		if err := c.resumeReconcileForCluster(ctx, managementCluster, &w, provider); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	pausedAnnotation := clusterSpec.Cluster.PausedAnnotation()
-	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	// clear pause annotation
+	clusterSpec.Cluster.ClearPauseAnnotation()
+	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
+
+	if clusterSpec.Cluster.IsSelfManaged() {
+		return c.resumeEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
+	}
+
+	return c.resumeReconcileForCluster(ctx, cluster, clusterSpec.Cluster, provider)
+}
+
+func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster, provider providers.Provider) error {
+	pausedAnnotation := cluster.PausedAnnotation()
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+		for _, machineConfigRef := range cluster.MachineConfigRefs() {
+			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing cluster reconciliation: %v", err)
 	}
-	// clear pause annotation
-	clusterSpec.Cluster.ClearPauseAnnotation()
-	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
+
 	return nil
 }
 
