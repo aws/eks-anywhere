@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -91,6 +93,12 @@ func eksaCluster() *anywherev1.Cluster {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "my-cluster",
 		},
+		Spec: anywherev1.ClusterSpec{
+			ExternalEtcdConfiguration: &anywherev1.ExternalEtcdConfiguration{
+				Count:           1,
+				MachineGroupRef: nil,
+			},
+		},
 	}
 }
 
@@ -110,6 +118,83 @@ func capiCluster(opts ...capiClusterOpt) *clusterv1.Cluster {
 
 	for _, opt := range opts {
 		opt(c)
+	}
+
+	return c
+}
+
+func TestCheckEtcdReadyItIsReady(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	etcdCluster := etcdCluster(true)
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, etcdCluster).Build()
+
+	result, err := clusters.CheckEtcdReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(controller.Result{}))
+}
+
+func TestCheckEtcdReadyNoCluster(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster).Build()
+
+	result, err := clusters.CheckEtcdReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 5 * time.Second}}),
+	)
+}
+
+func TestCheckEtcdReadyNotReady(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	etcdCluster := etcdCluster(false)
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster, etcdCluster).Build()
+
+	result, err := clusters.CheckEtcdReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(
+		controller.Result{Result: &controllerruntime.Result{RequeueAfter: 30 * time.Second}}),
+	)
+}
+
+func TestCheckEtcdReadyErrorReading(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+
+	// This should make the client fail because CRDs are not registered
+	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
+
+	_, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
+}
+
+func etcdCluster(isReady bool) *etcdv1.EtcdadmCluster {
+	c := &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "EtcdadmCluster",
+			APIVersion: etcdv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster-etcd",
+			Namespace: "eksa-system",
+		},
+	}
+	if isReady {
+		c.Status.Conditions = clusterv1.Conditions{
+			{
+				Type:   clusters.ManagedEtcdReadyCondition,
+				Status: corev1.ConditionTrue,
+			},
+		}
 	}
 
 	return c

@@ -2,7 +2,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -30,6 +32,22 @@ func GetCAPICluster(ctx context.Context, client client.Client, cluster *anywhere
 		return nil, err
 	}
 	return capiCluster, nil
+}
+
+// GetEtcdCluster reads a EtcdadmCluster for an eks-a cluster using a kube client
+// If the EtcdadmCluster is not found, the method returns (nil, nil)
+func GetEtcdCluster(ctx context.Context, client client.Client, cluster *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error) {
+	etcdClusterName := fmt.Sprintf("%s-etcd", clusterapi.ClusterName(cluster))
+
+	etcdCluster := &etcdv1.EtcdadmCluster{}
+	key := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: etcdClusterName}
+
+	err := client.Get(ctx, key, etcdCluster)
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+
+	return etcdCluster, err
 }
 
 // CapiClusterObjectKey generates an ObjectKey for the CAPI cluster owned by

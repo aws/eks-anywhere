@@ -13,6 +13,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/controller"
 )
 
+const ManagedEtcdReadyCondition = "ManagedEtcdReady"
+
 // CheckControlPlaneReady is a controller helper to check whether a CAPI cluster CP for
 // an eks-a cluster is ready or not. This is intended to be used from cluster reconcilers
 // due its signature and that it returns controller results with appropriate wait times whenever
@@ -35,5 +37,33 @@ func CheckControlPlaneReady(ctx context.Context, client client.Client, log logr.
 	}
 
 	log.Info("CAPI control plane is ready")
+	return controller.Result{}, nil
+}
+
+// CheckEtcdReady is a controller helper to check whether an external etcdadm cluster for
+// an eks-a cluster is ready or not. This is intended to be used from cluster reconcilers
+// due its signature and that it returns controller results with appropriate wait times whenever
+// the cluster is not ready
+func CheckEtcdReady(ctx context.Context, client client.Client, log logr.Logger, cluster *anywherev1.Cluster) (controller.Result, error) {
+	if cluster.Spec.ExternalEtcdConfiguration == nil {
+		return controller.Result{}, nil
+	}
+	etcdadmCluster, err := controller.GetEtcdCluster(ctx, client, cluster)
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	if etcdadmCluster == nil {
+		log.Info("Etcdadm cluster does not exist yet, requeuing")
+		return controller.ResultWithRequeue(5 * time.Second), nil
+	}
+
+	if !conditions.IsTrue(etcdadmCluster, ManagedEtcdReadyCondition) {
+		log.Info("ManagedEtcd is not ready yet, requeuing")
+		// TODO: eventually this can be implemented with controller watches
+		return controller.ResultWithRequeue(30 * time.Second), nil
+	}
+
+	log.Info("Etcdadm cluster is ready")
 	return controller.Result{}, nil
 }
