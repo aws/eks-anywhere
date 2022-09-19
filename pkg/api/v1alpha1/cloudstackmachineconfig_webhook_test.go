@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -12,12 +11,8 @@ import (
 )
 
 func TestCloudStackMachineConfigValidateCreateFeatureDisabled(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Unsetenv(features.CloudStackProviderEnvVar)
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "false")
 
 	c := cloudstackMachineConfig()
 	g := NewWithT(t)
@@ -25,14 +20,8 @@ func TestCloudStackMachineConfigValidateCreateFeatureDisabled(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -48,14 +37,8 @@ func TestCloudStackMachineConfigValidateCreateValidDiskOffering(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -71,14 +54,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingBadMountPath(t 
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -94,14 +71,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyDevice(t *
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -117,14 +88,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyFilesystem
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
@@ -140,14 +105,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidDiskOfferingEmptyLabel(t *t
 }
 
 func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib.a": "/_data/var-redirect/log.d",
@@ -157,14 +116,8 @@ func TestCloudStackMachineConfigValidateCreateValidSymlinks(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log:d",
@@ -174,14 +127,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksColon(t *testing.T)
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib:a": "/_data/var-redirect/log,d",
@@ -191,14 +138,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksComma(t *testing.T)
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"var/lib": "/data/var/log",
@@ -208,14 +149,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyNotStartWithRoot
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRoot(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "data/var/log",
@@ -225,14 +160,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueNotStartWithRo
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib/": "/data/var/log",
@@ -242,14 +171,8 @@ func TestCloudStackMachineConfigValidateCreateInvalidSymlinksKeyEndWithRoot(t *t
 }
 
 func TestCloudStackMachineConfigValidateCreateInvalidSymlinksValueEndWithRoot(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Setenv(features.CloudStackProviderEnvVar, "true")
-	if err != nil {
-		return
-	}
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-
 	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
 	c := cloudstackMachineConfig()
 	c.Spec.Symlinks = v1alpha1.SymlinkMaps{
 		"/var/lib": "/data/var/log/",

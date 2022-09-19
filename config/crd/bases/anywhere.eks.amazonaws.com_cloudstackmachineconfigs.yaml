@@ -166,9 +166,8 @@ spec:
                   reconciling the state, and will be set to a descriptive error message.
                 type: string
               specValid:
-                description: 'Important: Run "make" to regenerate code after modifying
-                  this file SpecValid is set to true if cloudstackmachineconfig is
-                  validated.'
+                description: SpecValid is set to true if cloudstackmachineconfig is
+                  validated.
                 type: boolean
             type: object
         type: object
