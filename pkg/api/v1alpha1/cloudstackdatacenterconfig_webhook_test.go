@@ -1,7 +1,6 @@
 package v1alpha1_test
 
 import (
-	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -12,13 +11,37 @@ import (
 )
 
 func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	os.Unsetenv(features.CloudStackProviderEnvVar)
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "false")
 
 	c := cloudstackDatacenterConfig()
 	g := NewWithT(t)
 	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackDatacenterValidateCreateLifecycleApiDisabled(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
+	t.Setenv(features.FullLifecycleAPIEnvVar, "false")
+
+	c := cloudstackDatacenterConfig()
+	g := NewWithT(t)
+
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
+
+func TestCloudStackDatacenterValidateCreateLifecycleApiEnabled(t *testing.T) {
+	features.ClearCache()
+	t.Setenv(features.CloudStackProviderEnvVar, "true")
+	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
+
+	c := cloudstackDatacenterConfig()
+	g := NewWithT(t)
+	err := c.ValidateCreate()
+	if err != nil {
+	}
+
+	g.Expect(c.ValidateCreate()).To(Succeed())
 }
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {

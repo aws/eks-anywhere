@@ -55,7 +55,10 @@ func (r *CloudStackDatacenterConfig) ValidateCreate() error {
 		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil
 	}
-	return apierrors.NewBadRequest("Creating new CloudStackDatacenterConfig on existing cluster is not supported")
+	if !features.IsActive(features.FullLifecycleAPI()) {
+		return apierrors.NewBadRequest("Creating new CloudStackDatacenterConfig on existing cluster is not supported")
+	}
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
