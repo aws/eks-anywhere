@@ -40,7 +40,7 @@ spec:
         datacenters: SDDC-Datacenter
         thumbprint: ABCDEFG
     workspace:
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       folder: /SDDC-Datacenter/vm
       resourcePool: '*/Resources'
@@ -60,7 +60,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: /SDDC-Datacenter/vm
