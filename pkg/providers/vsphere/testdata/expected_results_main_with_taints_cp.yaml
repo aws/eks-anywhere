@@ -48,7 +48,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
@@ -456,7 +456,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
