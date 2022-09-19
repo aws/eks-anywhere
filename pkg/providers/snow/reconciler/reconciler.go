@@ -3,8 +3,11 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -75,12 +78,21 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 	return controller.Result{}, nil
 }
 
-func (s *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileControlPlane")
 	log.Info("Applying control plane CAPI objects")
 
-	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
-		return snow.ControlPlaneObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
+	// Ensure that the control plane machine config exists before reconciling
+	cpMachineConfig := types.NamespacedName{Name: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, Namespace: clusterSpec.Cluster.Namespace}
+	if err := r.getSnowMachineConfig(ctx, cpMachineConfig); err != nil {
+		if apierrors.IsNotFound(err) {
+			log.Info("Snow machine config does not exist yet, requeuing", "machine config", cpMachineConfig.Name)
+			return controller.ResultWithRequeue(5 * time.Second), nil
+		}
+	}
+
+	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
+		return snow.ControlPlaneObjects(ctx, clusterSpec, clientutil.NewKubeClient(r.client))
 	})
 }
 
@@ -89,22 +101,41 @@ func (r *Reconciler) CheckControlPlaneReady(ctx context.Context, log logr.Logger
 	return clusters.CheckControlPlaneReady(ctx, r.client, log, clusterSpec.Cluster)
 }
 
-func (s *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileCNI")
 
-	client, err := s.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
 	if err != nil {
 		return controller.Result{}, err
 	}
 
-	return s.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
+	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
 
-func (s *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
+func (r *Reconciler) ReconcileWorkers(ctx context.Context, log logr.Logger, clusterSpec *cluster.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "reconcileWorkers")
 	log.Info("Applying worker CAPI objects")
 
-	return s.Apply(ctx, func() ([]kubernetes.Object, error) {
-		return snow.WorkersObjects(ctx, clusterSpec, clientutil.NewKubeClient(s.client))
+	// Ensure that the worker node machine configs exist before reconciling
+	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		wnMachineConfig := types.NamespacedName{Name: workerNodeGroupConfig.MachineGroupRef.Name, Namespace: clusterSpec.Cluster.Namespace}
+		if err := r.getSnowMachineConfig(ctx, wnMachineConfig); err != nil {
+			if apierrors.IsNotFound(err) {
+				log.Info("Snow machine config does not exist yet, requeuing", "machine config", wnMachineConfig.Name)
+				return controller.ResultWithRequeue(5 * time.Second), nil
+			}
+		}
+	}
+
+	return r.Apply(ctx, func() ([]kubernetes.Object, error) {
+		return snow.WorkersObjects(ctx, clusterSpec, clientutil.NewKubeClient(r.client))
 	})
+}
+
+func (r *Reconciler) getSnowMachineConfig(ctx context.Context, machineConfigName types.NamespacedName) error {
+	snowMachineConfig := &anywherev1.SnowMachineConfig{}
+	if err := r.client.Get(ctx, machineConfigName, snowMachineConfig); err != nil {
+		return err
+	}
+	return nil
 }
