@@ -657,10 +657,22 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		buildOption(values)
 	}
 
+	cpCsMtTemplateName, ok := values["controlPlaneTemplateName"]
+	if !ok {
+		return nil, fmt.Errorf("unable to determine control plane template name")
+	}
+	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtTemplateName), cs.controlPlaneMachineSpec)
+	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
+	}
+
+	// TODO: Extract out etcd MachineTemplates from templates to use apibuilder instead
 	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
+	bytes = append(bytes, cpMachineTemplateBytes...)
 
 	return bytes, nil
 }
@@ -672,6 +684,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
+		// TODO: Extract out worker MachineTemplates and MachineDeployments from templates to use apibuilder instead
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
 			return nil, err

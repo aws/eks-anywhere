@@ -51,72 +51,6 @@ spec:
       namespace: eksa-system
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-kind: CloudStackMachineTemplate
-metadata:
-  name: {{.controlPlaneTemplateName}}
-  namespace: {{.eksaSystemNamespace}}
-{{- if .cloudstackControlPlaneAnnotations}}
-  annotations:
-{{- end }}
-{{- if .cloudstackControlPlaneDiskOfferingProvided}}
-    mountpath.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingPath}}
-    device.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingDevice}}
-    filesystem.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
-    label.diskoffering.{{.cloudstackAnnotationSuffix}}: {{.cloudstackControlPlaneDiskOfferingLabel}}
-{{- end }}
-{{- if .cloudstackControlPlaneSymlinks }}
-    symlinks.{{.cloudstackAnnotationSuffix}}: {{ $first := true }}{{- range $key, $value := .cloudstackControlPlaneSymlinks}}{{if not $first}},{{else}}{{$first = false}}{{- end}}{{$key}}:{{$value}}{{- end}}
-{{- end}}
-spec:
-  template:
-    spec:
-      offering:
-{{- if .cloudstackControlPlaneComputeOfferingId}}
-        id: {{.cloudstackControlPlaneComputeOfferingId}}
-{{- end}}
-{{- if .cloudstackControlPlaneComputeOfferingName}}
-        name: {{.cloudstackControlPlaneComputeOfferingName}}
-{{- end}}
-      template:
-{{- if .cloudstackControlPlaneTemplateOfferingId}}
-        id: {{.cloudstackControlPlaneTemplateOfferingId}}
-{{- end}}
-{{- if .cloudstackControlPlaneTemplateOfferingName}}
-        name: {{.cloudstackControlPlaneTemplateOfferingName}}
-{{- end}}
-{{- if .cloudstackControlPlaneDiskOfferingProvided}}
-      diskOffering:
-{{- if .cloudstackControlPlaneDiskOfferingId}}
-        id: {{.cloudstackControlPlaneDiskOfferingId}}
-{{- end}}
-{{- if .cloudstackControlPlaneDiskOfferingName}}
-        name: {{.cloudstackControlPlaneDiskOfferingName}}
-{{- end}}
-{{- if gt .cloudstackControlPlaneDiskOfferingCustomSize 0}}
-        customSizeInGB: {{.cloudstackControlPlaneDiskOfferingCustomSize}}
-{{- end}}
-        mountPath: {{.cloudstackControlPlaneDiskOfferingPath}}
-        device: {{.cloudstackControlPlaneDiskOfferingDevice}}
-        filesystem: {{.cloudstackControlPlaneDiskOfferingFilesystem}}
-        label: {{.cloudstackControlPlaneDiskOfferingLabel}}
-{{- end}}
-{{- if .cloudstackControlPlaneCustomDetails }}
-      details:
-{{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
-        {{$key}}: {{$value}}
-{{- end}}
-{{- end}}
-{{- if .cloudstackControlPlaneAffinity }}
-      affinity: '{{ .cloudstackControlPlaneAffinity }}'
-{{- end }}
-{{- if .cloudstackControlPlaneAffinityGroupIds }}
-      affinityGroupIDs:
-      {{- range .cloudstackControlPlaneAffinityGroupIds}}
-      - {{.}}
-      {{- end }}
-{{- end }}
----
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
@@ -560,3 +494,4 @@ spec:
       {{- end }}
 {{- end }}
 {{- end }}
+---

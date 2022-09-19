@@ -2,7 +2,6 @@ package cloudstack_test
 
 import (
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -10,13 +9,14 @@ import (
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 )
 
 type apiBuilderTest struct {
 	*WithT
-	machineConfig *v1alpha1.CloudStackMachineConfig
+	machineConfig *v1alpha1.CloudStackMachineConfigSpec
 }
 
 func newApiBuilderTest(t *testing.T) apiBuilderTest {
@@ -56,40 +56,31 @@ var (
 	}
 )
 
-func givenMachineConfig() *v1alpha1.CloudStackMachineConfig {
-	return &v1alpha1.CloudStackMachineConfig{
-		TypeMeta: metav1.TypeMeta{
-			Kind: "CloudStackMachineConfig",
+func givenMachineConfig() *v1alpha1.CloudStackMachineConfigSpec {
+	return &v1alpha1.CloudStackMachineConfigSpec{
+		ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
+			Id:   computeOfferingId,
+			Name: computeOfferingName,
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-cp",
-			Namespace: "test-namespace",
+		DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
+			CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+				Name: diskOfferingName,
+				Id:   diskOfferingId,
+			},
+			CustomSize: testDiskSize,
+			MountPath:  testMountPath,
+			Device:     testDevice,
+			Filesystem: testFilesystem,
+			Label:      testLabel,
 		},
-		Spec: v1alpha1.CloudStackMachineConfigSpec{
-			ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
-				Id:   computeOfferingId,
-				Name: computeOfferingName,
-			},
-			DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
-				CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
-					Name: diskOfferingName,
-					Id:   diskOfferingId,
-				},
-				CustomSize: testDiskSize,
-				MountPath:  testMountPath,
-				Device:     testDevice,
-				Filesystem: testFilesystem,
-				Label:      testLabel,
-			},
-			Template: v1alpha1.CloudStackResourceIdentifier{
-				Id:   templateId,
-				Name: templateName,
-			},
-			Symlinks:          testSymLinks,
-			UserCustomDetails: testDetails,
-			AffinityGroupIds:  affinityGroupIds,
-			Affinity:          proAffinity,
+		Template: v1alpha1.CloudStackResourceIdentifier{
+			Id:   templateId,
+			Name: templateName,
 		},
+		Symlinks:          testSymLinks,
+		UserCustomDetails: testDetails,
+		AffinityGroupIds:  affinityGroupIds,
+		Affinity:          proAffinity,
 	}
 }
 

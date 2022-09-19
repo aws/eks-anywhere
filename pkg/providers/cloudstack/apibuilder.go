@@ -37,19 +37,19 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 	return m
 }
 
-func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineConfig) map[string]string {
+func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineConfigSpec) map[string]string {
 	annotations := make(map[string]string, 0)
-	if machineConfig.Spec.DiskOffering != nil {
-		annotations[fmt.Sprintf("mountpath.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.Spec.DiskOffering.MountPath
-		annotations[fmt.Sprintf("device.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.Spec.DiskOffering.Device
-		annotations[fmt.Sprintf("filesystem.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.Spec.DiskOffering.Filesystem
-		annotations[fmt.Sprintf("label.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.Spec.DiskOffering.Label
+	if machineConfig.DiskOffering != nil {
+		annotations[fmt.Sprintf("mountpath.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.DiskOffering.MountPath
+		annotations[fmt.Sprintf("device.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.DiskOffering.Device
+		annotations[fmt.Sprintf("filesystem.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.DiskOffering.Filesystem
+		annotations[fmt.Sprintf("label.diskoffering.%s", constants.CloudstackAnnotationSuffix)] = machineConfig.DiskOffering.Label
 	}
 
-	if machineConfig.Spec.Symlinks != nil {
+	if machineConfig.Symlinks != nil {
 		links := make([]string, 0)
-		for key := range machineConfig.Spec.Symlinks {
-			links = append(links, fmt.Sprintf("%s:%s", key, machineConfig.Spec.Symlinks[key]))
+		for key := range machineConfig.Symlinks {
+			links = append(links, fmt.Sprintf("%s:%s", key, machineConfig.Symlinks[key]))
 		}
 		annotations[fmt.Sprintf("symlinks.%s", constants.CloudstackAnnotationSuffix)] = strings.Join(links, ",")
 	}
@@ -57,25 +57,25 @@ func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineCon
 	return annotations
 }
 
-func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfig, template *cloudstackv1.CloudStackMachineTemplate) {
-	if machineConfig.Spec.DiskOffering == nil {
+func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfigSpec, template *cloudstackv1.CloudStackMachineTemplate) {
+	if machineConfig.DiskOffering == nil {
 		return
 	}
 
 	template.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
-			ID:   machineConfig.Spec.DiskOffering.Id,
-			Name: machineConfig.Spec.DiskOffering.Name,
+			ID:   machineConfig.DiskOffering.Id,
+			Name: machineConfig.DiskOffering.Name,
 		},
-		CustomSize: machineConfig.Spec.DiskOffering.CustomSize,
-		MountPath:  machineConfig.Spec.DiskOffering.MountPath,
-		Device:     machineConfig.Spec.DiskOffering.Device,
-		Filesystem: machineConfig.Spec.DiskOffering.Filesystem,
-		Label:      machineConfig.Spec.DiskOffering.Label,
+		CustomSize: machineConfig.DiskOffering.CustomSize,
+		MountPath:  machineConfig.DiskOffering.MountPath,
+		Device:     machineConfig.DiskOffering.Device,
+		Filesystem: machineConfig.DiskOffering.Filesystem,
+		Label:      machineConfig.DiskOffering.Label,
 	}
 }
 
-func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfig) *cloudstackv1.CloudStackMachineTemplate {
+func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec) *cloudstackv1.CloudStackMachineTemplate {
 	template := &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: CloudStackInfrastructureAPIVersion,
@@ -89,17 +89,17 @@ func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMa
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
 			Spec: cloudstackv1.CloudStackMachineTemplateResource{
 				Spec: cloudstackv1.CloudStackMachineSpec{
-					Details: machineConfig.Spec.UserCustomDetails,
+					Details: machineConfig.UserCustomDetails,
 					Offering: cloudstackv1.CloudStackResourceIdentifier{
-						ID:   machineConfig.Spec.ComputeOffering.Id,
-						Name: machineConfig.Spec.ComputeOffering.Name,
+						ID:   machineConfig.ComputeOffering.Id,
+						Name: machineConfig.ComputeOffering.Name,
 					},
 					Template: cloudstackv1.CloudStackResourceIdentifier{
-						ID:   machineConfig.Spec.Template.Id,
-						Name: machineConfig.Spec.Template.Name,
+						ID:   machineConfig.Template.Id,
+						Name: machineConfig.Template.Name,
 					},
-					AffinityGroupIDs: machineConfig.Spec.AffinityGroupIds,
-					Affinity:         machineConfig.Spec.Affinity,
+					AffinityGroupIDs: machineConfig.AffinityGroupIds,
+					Affinity:         machineConfig.Affinity,
 				},
 			},
 		},
