@@ -2,6 +2,7 @@ package cloudstack_test
 
 import (
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -146,4 +147,11 @@ func TestFullCloudStackMachineTemplate(t *testing.T) {
 	want := fullCloudStackMachineTemplate()
 	tt.Expect(got.Spec.Spec.Spec).To(Equal(want.Spec.Spec.Spec))
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))
+}
+
+func TestCloudStackMachineDeployment(t *testing.T) {
+	tt := newApiBuilderTest(t)
+	spec := &cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: v1alpha1.ClusterSpec{WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{}}}}}
+	got := cloudstack.MachineDeployments(spec, nil, nil)
+	tt.Expect(len(got)).To(Equal(0))
 }
