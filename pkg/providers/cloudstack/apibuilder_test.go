@@ -2,105 +2,57 @@ package cloudstack_test
 
 import (
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	. "github.com/onsi/gomega"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 type apiBuilderTest struct {
 	*WithT
-	machineConfig  *v1alpha1.CloudStackMachineConfig
+	machineConfig *v1alpha1.CloudStackMachineConfig
 }
 
 func newApiBuilderTest(t *testing.T) apiBuilderTest {
 	return apiBuilderTest{
-		WithT:          NewWithT(t),
+		WithT:         NewWithT(t),
 		machineConfig: givenMachineConfig(),
 	}
 }
 
-func wantMachineDeployment() *clusterv1.MachineDeployment {
-	wantVersion := "v1.21.5-eks-1-21-9"
-	wantReplicas := int32(3)
-	return &clusterv1.MachineDeployment{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.x-k8s.io/v1beta1",
-			Kind:       "MachineDeployment",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "cloudstack-test-md-0",
-			Namespace: "eksa-system",
-			Labels: map[string]string{
-				"cluster.x-k8s.io/cluster-name":                        "cloudstack-test",
-				"cluster.anywhere.eks.amazonaws.com/cluster-name":      "cloudstack-test",
-				"cluster.anywhere.eks.amazonaws.com/cluster-namespace": "test-namespace",
-			},
-			Annotations: map[string]string{},
-		},
-		Spec: clusterv1.MachineDeploymentSpec{
-			ClusterName: "cloudstack-test",
-			Selector: metav1.LabelSelector{
-				MatchLabels: map[string]string{},
-			},
-			Template: clusterv1.MachineTemplateSpec{
-				ObjectMeta: clusterv1.ObjectMeta{
-					Labels: map[string]string{
-						"cluster.x-k8s.io/cluster-name": "cloudstack-test",
-					},
-				},
-				Spec: clusterv1.MachineSpec{
-					Bootstrap: clusterv1.Bootstrap{
-						ConfigRef: &v1.ObjectReference{
-							APIVersion: "bootstrap.cluster.x-k8s.io/v1beta1",
-							Kind:       "KubeadmConfigTemplate",
-							Name:       "cloudstack-test-md-0-1",
-						},
-					},
-					ClusterName: "cloudstack-test",
-					InfrastructureRef: v1.ObjectReference{
-						APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
-						Kind:       "CloudStackMachineTemplate",
-						Name:       "cloudstack-test-md-0-1",
-					},
-					Version: &wantVersion,
-				},
-			},
-			Replicas: &wantReplicas,
-		},
-	}
-}
-
 const (
-	testMountPath = "testMountPath"
-	testDevice = "testDevice"
-	testFilesystem = "testFilesystem"
-	testLabel = "testLabel"
-	testDiskSize = 5
-	computeOfferingId = "computeOfferingId"
+	testMountPath       = "testMountPath"
+	testDevice          = "testDevice"
+	testFilesystem      = "testFilesystem"
+	testLabel           = "testLabel"
+	testDiskSize        = 5
+	computeOfferingId   = "computeOfferingId"
 	computeOfferingName = "computeOfferingName"
-	diskOfferingId = "diskOfferingId"
-	diskOfferingName = "diskOfferingName"
-	templateId = "templateId"
-	templateName = "templateName"
-	proAffinity = "pro"
+	diskOfferingId      = "diskOfferingId"
+	diskOfferingName    = "diskOfferingName"
+	templateId          = "templateId"
+	templateName        = "templateName"
+	proAffinity         = "pro"
 )
 
-var affinityGroupIds = []string{"ag1", "ag2"}
-var testSymLinks = map[string]string{
-	"sym": "link",
-	"sym2": "link2",
-}
-var testSymLinksString = "sym:link,sym2:link2"
-var testDetails = map[string]string{
-	"user": "details",
-}
+var (
+	affinityGroupIds = []string{"ag1", "ag2"}
+	testSymLinks     = map[string]string{
+		"sym":  "link",
+		"sym2": "link2",
+	}
+)
+var (
+	testSymLinksString = "sym:link,sym2:link2"
+	testDetails        = map[string]string{
+		"user": "details",
+	}
+)
 
 func givenMachineConfig() *v1alpha1.CloudStackMachineConfig {
 	return &v1alpha1.CloudStackMachineConfig{
@@ -119,22 +71,22 @@ func givenMachineConfig() *v1alpha1.CloudStackMachineConfig {
 			DiskOffering: &v1alpha1.CloudStackResourceDiskOffering{
 				CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 					Name: diskOfferingName,
-					Id: diskOfferingId,
+					Id:   diskOfferingId,
 				},
-				CustomSize:                   testDiskSize,
-				MountPath:                    testMountPath,
-				Device:                       testDevice,
-				Filesystem:                   testFilesystem,
-				Label:                        testLabel,
+				CustomSize: testDiskSize,
+				MountPath:  testMountPath,
+				Device:     testDevice,
+				Filesystem: testFilesystem,
+				Label:      testLabel,
 			},
 			Template: v1alpha1.CloudStackResourceIdentifier{
 				Id:   templateId,
 				Name: templateName,
 			},
-			Symlinks: testSymLinks,
+			Symlinks:          testSymLinks,
 			UserCustomDetails: testDetails,
-			AffinityGroupIds: affinityGroupIds,
-			Affinity: proAffinity,
+			AffinityGroupIds:  affinityGroupIds,
+			Affinity:          proAffinity,
 		},
 	}
 }
@@ -149,11 +101,11 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 			Name:      "cloudstack-test-md-0-1",
 			Namespace: "eksa-system",
 			Annotations: map[string]string{
-				fmt.Sprintf("mountpath.diskoffering.%s", constants.CloudstackAnnotationSuffix): testMountPath,
-				fmt.Sprintf("device.diskoffering.%s", constants.CloudstackAnnotationSuffix): testDevice,
+				fmt.Sprintf("mountpath.diskoffering.%s", constants.CloudstackAnnotationSuffix):  testMountPath,
+				fmt.Sprintf("device.diskoffering.%s", constants.CloudstackAnnotationSuffix):     testDevice,
 				fmt.Sprintf("filesystem.diskoffering.%s", constants.CloudstackAnnotationSuffix): testFilesystem,
-				fmt.Sprintf("label.diskoffering.%s", constants.CloudstackAnnotationSuffix): testLabel,
-				fmt.Sprintf("symlinks.%s", constants.CloudstackAnnotationSuffix): testSymLinksString,
+				fmt.Sprintf("label.diskoffering.%s", constants.CloudstackAnnotationSuffix):      testLabel,
+				fmt.Sprintf("symlinks.%s", constants.CloudstackAnnotationSuffix):                testSymLinksString,
 			},
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
@@ -169,17 +121,17 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 						Name: templateName,
 					},
 					AffinityGroupIDs: affinityGroupIds,
-					Affinity: proAffinity,
+					Affinity:         proAffinity,
 					DiskOffering: cloudstackv1.CloudStackResourceDiskOffering{
 						CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
-							ID: diskOfferingId,
+							ID:   diskOfferingId,
 							Name: diskOfferingName,
 						},
-						CustomSize:                   testDiskSize,
-						MountPath:                    testMountPath,
-						Device:                       testDevice,
-						Filesystem:                   testFilesystem,
-						Label:                        testLabel,
+						CustomSize: testDiskSize,
+						MountPath:  testMountPath,
+						Device:     testDevice,
+						Filesystem: testFilesystem,
+						Label:      testLabel,
 					},
 				},
 			},

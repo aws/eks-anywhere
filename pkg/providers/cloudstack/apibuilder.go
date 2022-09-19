@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
+	CloudStackMachineTemplateKind      = "CloudStackMachineTemplate"
 	CloudStackInfrastructureAPIVersion = "infrastructure.cluster.x-k8s.io/v1beta2"
 )
 
@@ -49,7 +49,7 @@ func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineCon
 	if machineConfig.Spec.Symlinks != nil {
 		links := make([]string, 0)
 		for key := range machineConfig.Spec.Symlinks {
-			links = append(links, fmt.Sprintf("%s:%s",key, machineConfig.Spec.Symlinks[key]))
+			links = append(links, fmt.Sprintf("%s:%s", key, machineConfig.Spec.Symlinks[key]))
 		}
 		annotations[fmt.Sprintf("symlinks.%s", constants.CloudstackAnnotationSuffix)] = strings.Join(links, ",")
 	}
@@ -64,14 +64,14 @@ func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfig, template *
 
 	template.Spec.Spec.Spec.DiskOffering = cloudstackv1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: cloudstackv1.CloudStackResourceIdentifier{
-			ID: machineConfig.Spec.DiskOffering.Id,
+			ID:   machineConfig.Spec.DiskOffering.Id,
 			Name: machineConfig.Spec.DiskOffering.Name,
 		},
-		CustomSize:                   machineConfig.Spec.DiskOffering.CustomSize,
-		MountPath:                    machineConfig.Spec.DiskOffering.MountPath,
-		Device:                       machineConfig.Spec.DiskOffering.Device,
-		Filesystem:                   machineConfig.Spec.DiskOffering.Filesystem,
-		Label:                        machineConfig.Spec.DiskOffering.Label,
+		CustomSize: machineConfig.Spec.DiskOffering.CustomSize,
+		MountPath:  machineConfig.Spec.DiskOffering.MountPath,
+		Device:     machineConfig.Spec.DiskOffering.Device,
+		Filesystem: machineConfig.Spec.DiskOffering.Filesystem,
+		Label:      machineConfig.Spec.DiskOffering.Label,
 	}
 }
 
@@ -82,8 +82,8 @@ func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMa
 			Kind:       CloudStackMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: constants.EksaSystemNamespace,
+			Name:        name,
+			Namespace:   constants.EksaSystemNamespace,
 			Annotations: fillMachineTemplateAnnotations(machineConfig),
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
@@ -99,7 +99,7 @@ func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMa
 						Name: machineConfig.Spec.Template.Name,
 					},
 					AffinityGroupIDs: machineConfig.Spec.AffinityGroupIds,
-					Affinity: machineConfig.Spec.Affinity,
+					Affinity:         machineConfig.Spec.Affinity,
 				},
 			},
 		},
