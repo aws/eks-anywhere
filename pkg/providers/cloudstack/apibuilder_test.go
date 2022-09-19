@@ -45,12 +45,11 @@ var (
 	affinityGroupIds = []string{"ag1", "ag2"}
 	testSymLinks     = map[string]string{
 		"sym":  "link",
-		"sym2": "link2",
 	}
 )
 
 var (
-	testSymLinksString = "sym:link,sym2:link2"
+	testSymLinksString = "sym:link"
 	testDetails        = map[string]string{
 		"user": "details",
 	}
