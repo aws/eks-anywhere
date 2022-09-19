@@ -35,8 +35,8 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
 {{- if .autoscalingConfig }}
   annotations:
-    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ printf "%#v" .autoscalingConfig.MinCount }}"
-    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ printf "%#v" .autoscalingConfig.MaxCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ .autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ .autoscalingConfig.MaxCount }}"
 {{- end }}
 spec:
   clusterName: {{.clusterName}}
