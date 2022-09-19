@@ -251,6 +251,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		"workerReplicas":        workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
+		"autoscalingConfig":     workerNodeGroupConfiguration.AutoScalingConfiguration,
 	}
 
 	return values

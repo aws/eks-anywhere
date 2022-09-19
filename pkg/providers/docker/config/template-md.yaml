@@ -33,6 +33,11 @@ kind: MachineDeployment
 metadata:
   name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
+{{- if .autoscalingConfig }}
+  annotations:
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-min-size: "{{ printf "%#v" .autoscalingConfig.MinCount }}"
+    cluster.x-k8s.io/cluster-api-autoscaler-node-group-max-size: "{{ printf "%#v" .autoscalingConfig.MaxCount }}"
+{{- end }}
 spec:
   clusterName: {{.clusterName}}
   replicas: {{.workerReplicas}}
