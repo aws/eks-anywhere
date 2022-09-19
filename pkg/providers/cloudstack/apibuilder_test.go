@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
-
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 )
 
 type apiBuilderTest struct {
@@ -47,6 +47,7 @@ var (
 		"sym2": "link2",
 	}
 )
+
 var (
 	testSymLinksString = "sym:link,sym2:link2"
 	testDetails        = map[string]string{
