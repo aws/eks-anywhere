@@ -533,6 +533,12 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 			wantCPFile:        "testdata/expected_results_minimal_cp.yaml",
 			wantMDFile:        "testdata/expected_results_minimal_md.yaml",
 		},
+		{
+			testName:          "minimal_autoscaler",
+			clusterconfigFile: "cluster_minimal_autoscaling.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_cp.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_autoscaling_md.yaml",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
