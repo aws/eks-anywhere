@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"github.com/spf13/cobra"
+
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser"
 )
 
 type vSphereSetupUserOptions struct {
@@ -42,11 +45,20 @@ func init() {
 
 
 func (vsuo *vSphereSetupUserOptions) setupUser(cmd *cobra.Command, _ []string) error {
-	// ctx := cmd.Context()
+	ctx := cmd.Context()
 
 	if vsuo.force && vsuo.password != "" {
 		return fmt.Errorf("--password and --force are mutually exclusive. --force may only be run on an existing user.")
 	}
+
+	deps, err := dependencies.NewFactory().WithGovc().Build(ctx)
+	if err != nil {
+		return err
+	}
+	defer close(ctx, deps)
+
+	c, err := setupuser.GenerateConfig(ctx, vsuo.fileName)
+	err = setupuser.SetupUser(ctx, c, deps)
 
 	return nil
 }
