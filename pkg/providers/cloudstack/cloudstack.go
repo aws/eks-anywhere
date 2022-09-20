@@ -39,6 +39,8 @@ import (
 const (
 	eksaLicense                = "EKSA_LICENSE"
 	controlEndpointDefaultPort = "6443"
+	etcdTemplateNameKey        = "etcdTemplateName"
+	cpTemplateNameKey          = "controlPlaneTemplateName"
 )
 
 //go:embed config/template-cp.yaml
@@ -657,7 +659,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		buildOption(values)
 	}
 
-	cpCsMtTemplateName, ok := values["controlPlaneTemplateName"]
+	cpCsMtTemplateName, ok := values[cpTemplateNameKey]
 	if !ok {
 		return nil, fmt.Errorf("unable to determine control plane template name")
 	}
@@ -674,7 +676,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	bytes = append(bytes, cpMachineTemplateBytes...)
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdCsMtTemplateName, ok := values["etcdTemplateName"]
+		etcdCsMtTemplateName, ok := values[etcdTemplateNameKey]
 		if !ok {
 			return nil, fmt.Errorf("unable to determine etcd template name")
 		}
@@ -703,10 +705,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		}
 		workerSpecs = append(workerSpecs, bytes)
 
-		workerCsMtTemplateName, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		if !ok {
-			return nil, fmt.Errorf("unable to determine workload template name")
-		}
+		workerCsMtTemplateName, _ := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		workerMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", workerCsMtTemplateName), &machineConfig, cs.now)
 		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
@@ -918,10 +917,10 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+		values[cpTemplateNameKey] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 		values["cloudstackControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
 		values["cloudstackEtcdSshAuthorizedKey"] = etcdSshAuthorizedKey
-		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+		values[etcdTemplateNameKey] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -1076,10 +1075,10 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values[cpTemplateNameKey] = controlPlaneTemplateName
 		values["cloudstackControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
 		values["cloudstackEtcdSshAuthorizedKey"] = etcdSshAuthorizedKey
-		values["etcdTemplateName"] = etcdTemplateName
+		values[etcdTemplateNameKey] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
