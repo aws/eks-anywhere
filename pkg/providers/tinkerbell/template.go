@@ -383,31 +383,32 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
-		"clusterName":                  clusterSpec.Cluster.Name,
-		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
-		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
-		"eksaSystemNamespace":          constants.EksaSystemNamespace,
-		"format":                       format,
-		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 bundle.Tinkerbell.KubeVip.VersionedImage(),
-		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":           apiServerExtraArgs.ToPartialYaml(),
-		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
-		"osDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
-		"osVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL
-		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
-		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
-		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
-		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
-		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
-		"kubeletExtraArgs":             kubeletExtraArgs.ToPartialYaml(),
-		"hardwareSelector":             controlPlaneMachineSpec.HardwareSelector,
-		"controlPlaneTaints":           clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
+		"clusterName":                   clusterSpec.Cluster.Name,
+		"controlPlaneEndpointIp":        clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		"controlPlaneReplicas":          clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"controlPlaneSshAuthorizedKey":  controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
+		"controlPlaneSshUsername":       controlPlaneMachineSpec.Users[0].Name,
+		"eksaSystemNamespace":           constants.EksaSystemNamespace,
+		"format":                        format,
+		"kubernetesVersion":             bundle.KubeDistro.Kubernetes.Tag,
+		"kubeVipImage":                  bundle.Tinkerbell.KubeVip.VersionedImage(),
+		"podCidrs":                      clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                  clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":            apiServerExtraArgs.ToPartialYaml(),
+		"baseRegistry":                  "", // TODO: need to get this values for creating template IMAGE_URL
+		"osDistro":                      "", // TODO: need to get this values for creating template IMAGE_URL
+		"osVersion":                     "", // TODO: need to get this values for creating template IMAGE_URL
+		"kubernetesRepository":          bundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":             bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                bundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":                bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                  bundle.KubeDistro.Etcd.Tag,
+		"externalEtcdVersion":           bundle.KubeDistro.EtcdVersion,
+		"etcdCipherSuites":              crypto.SecureCipherSuitesString(),
+		"kubeletExtraArgs":              kubeletExtraArgs.ToPartialYaml(),
+		"hardwareSelector":              controlPlaneMachineSpec.HardwareSelector,
+		"controlPlaneTaints":            clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints,
+		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
