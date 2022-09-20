@@ -3,6 +3,7 @@ package cloudstack_test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -130,7 +131,7 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 
 func TestFullCloudStackMachineTemplate(t *testing.T) {
 	tt := newApiBuilderTest(t)
-	got := cloudstack.CloudStackMachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig)
+	got := cloudstack.CloudStackMachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig, time.Now)
 	want := fullCloudStackMachineTemplate()
 	tt.Expect(got.Spec.Spec.Spec).To(Equal(want.Spec.Spec.Spec))
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))

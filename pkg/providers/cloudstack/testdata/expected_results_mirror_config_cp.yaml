@@ -407,7 +407,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: null
+      creationTimestamp: "2009-02-13T23:31:30Z"
     spec:
       diskOffering:
         customSizeInGB: 0
@@ -431,7 +431,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: null
+      creationTimestamp: "2009-02-13T23:31:30Z"
     spec:
       diskOffering:
         customSizeInGB: 0

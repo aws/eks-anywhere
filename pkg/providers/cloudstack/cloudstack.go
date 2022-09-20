@@ -661,7 +661,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if !ok {
 		return nil, fmt.Errorf("unable to determine control plane template name")
 	}
-	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtTemplateName), cs.controlPlaneMachineSpec)
+	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtTemplateName), cs.controlPlaneMachineSpec, cs.now)
 	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
@@ -678,7 +678,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		if !ok {
 			return nil, fmt.Errorf("unable to determine etcd template name")
 		}
-		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", etcdCsMtTemplateName), &etcdMachineSpec)
+		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", etcdCsMtTemplateName), &etcdMachineSpec, cs.now)
 		etcdMachineTemplateBytes, err := templater.ObjectsToYaml(etcdMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
@@ -696,12 +696,24 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
-		// TODO: Extract out worker MachineTemplates and MachineDeployments from templates to use apibuilder instead
+		// TODO: Extract out worker MachineDeployments from templates to use apibuilder instead
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
 			return nil, err
 		}
 		workerSpecs = append(workerSpecs, bytes)
+
+		workerCsMtTemplateName, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		if !ok {
+			return nil, fmt.Errorf("unable to determine workload template name")
+		}
+		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		workerMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", workerCsMtTemplateName), &machineConfig, cs.now)
+		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
+		if err != nil {
+			return nil, fmt.Errorf("marshalling worker machine template to byte array: %v", err)
+		}
+		workerSpecs = append(workerSpecs, workerMachineTemplateBytes)
 	}
 
 	return templater.AppendYamlResources(workerSpecs...), nil

@@ -396,7 +396,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: null
+      creationTimestamp: "2009-02-13T23:31:30Z"
     spec:
       affinity: pro
       diskOffering:
@@ -421,7 +421,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: null
+      creationTimestamp: "2009-02-13T23:31:30Z"
     spec:
       affinity: "no"
       diskOffering:
