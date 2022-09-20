@@ -135,6 +135,19 @@ func TestCheckEtcdReadyItIsReady(t *testing.T) {
 	g.Expect(result).To(Equal(controller.Result{}))
 }
 
+func TestCheckEtcdReadyNoEtcdSet(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	eksaCluster := eksaCluster()
+	eksaCluster.Spec.ExternalEtcdConfiguration = nil
+
+	client := fake.NewClientBuilder().WithObjects(eksaCluster).Build()
+
+	result, err := clusters.CheckEtcdReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	g.Expect(err).NotTo(HaveOccurred())
+	g.Expect(result).To(Equal(controller.Result{}))
+}
+
 func TestCheckEtcdReadyNoCluster(t *testing.T) {
 	g := NewWithT(t)
 	ctx := context.Background()
@@ -172,7 +185,7 @@ func TestCheckEtcdReadyErrorReading(t *testing.T) {
 	// This should make the client fail because CRDs are not registered
 	client := fake.NewClientBuilder().WithScheme(runtime.NewScheme()).Build()
 
-	_, err := clusters.CheckControlPlaneReady(ctx, client, test.NewNullLogger(), eksaCluster)
+	_, err := clusters.CheckEtcdReady(ctx, client, test.NewNullLogger(), eksaCluster)
 	g.Expect(err).To(MatchError(ContainSubstring("no kind is registered for the type")))
 }
 
