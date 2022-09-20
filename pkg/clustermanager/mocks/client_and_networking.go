@@ -260,6 +260,21 @@ func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
 }
 
+// GetEksaAWSIamConfig mocks base method.
+func (m *MockClusterClient) GetEksaAWSIamConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.AWSIamConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaAWSIamConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.AWSIamConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaAWSIamConfig indicates an expected call of GetEksaAWSIamConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaAWSIamConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSIamConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaAWSIamConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaCloudStackMachineConfig mocks base method.
 func (m *MockClusterClient) GetEksaCloudStackMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackMachineConfig, error) {
 	m.ctrl.T.Helper()

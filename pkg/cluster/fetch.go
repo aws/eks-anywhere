@@ -22,10 +22,12 @@ type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1
 
 type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
 
+type AWSIamConfigFetch func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error)
+
 // BuildSpec constructs a cluster.Spec for an eks-a cluster by retrieving all
 // necessary objects using fetch methods
 // This is deprecated in favour of BuildSpec
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch) (*Spec, error) {
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, fluxConfigFetch FluxConfigFetch, oidcFetch OIDCFetch, awsIamConfigFetch AWSIamConfigFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
@@ -58,7 +60,11 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithFluxConfig(fluxConfig), WithOIDCConfig(oidcConfig))
+	awsIamConfig, err := GetAWSIamConfigForCluster(ctx, cluster, awsIamConfigFetch)
+	if err != nil {
+		return nil, err
+	}
+	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithFluxConfig(fluxConfig), WithOIDCConfig(oidcConfig), WithAWSIamConfig(awsIamConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -149,6 +155,23 @@ func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch OID
 				return nil, fmt.Errorf("failed fetching OIDCConfig for cluster: %v", err)
 			}
 			return oidc, nil
+		}
+	}
+	return nil, nil
+}
+
+func GetAWSIamConfigForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch AWSIamConfigFetch) (*v1alpha1.AWSIamConfig, error) {
+	if fetch == nil || cluster.Spec.IdentityProviderRefs == nil {
+		return nil, nil
+	}
+
+	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == v1alpha1.AWSIamConfigKind {
+			awsIamConfig, err := fetch(ctx, identityProvider.Name, cluster.Namespace)
+			if err != nil {
+				return nil, fmt.Errorf("failed fetching AWSIamConfig for cluster: %v", err)
+			}
+			return awsIamConfig, nil
 		}
 	}
 	return nil, nil
