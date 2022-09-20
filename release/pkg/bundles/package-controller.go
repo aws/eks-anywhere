@@ -51,7 +51,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 			}
 		}
 	}
-	driver, err := helm.CreateReleaseHelmDriver(r)
+	driver, err := helm.NewHelm()
 	if err != nil {
 		return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error CreateReleaseHelmDriver")
 	}

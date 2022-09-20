@@ -15,17 +15,11 @@
 package helm
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/aws/eks-anywhere/release/pkg/clients"
-
-	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
-	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
 
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/go-logr/logr"
@@ -52,79 +46,9 @@ type helmDriver struct {
 	settings *cli.EnvSettings
 }
 
-func CreateReleaseHelmDriver(r *releasetypes.ReleaseConfig) (*helmDriver, error) {
-	var sourceClients *clients.SourceClients
-	var releaseClients *clients.ReleaseClients
-	var err error
-	var authToken, authTokenPublic string
-
-	if r.ReleaseEnvironment == "development" {
-		sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
-		if err != nil {
-			return nil, errors.Wrap(err, "Error creating Staging Clients")
-		}
-		authToken, err = ecr.GetAuthToken(sourceClients.ECR.EcrClient)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error getting ecr Auth token Client")
-		}
-		authTokenPublic, err = ecrpublic.GetAuthToken(releaseClients.ECRPublic.Client)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error getting ecr public Auth token Client")
-		}
-	}
-
-	if r.ReleaseEnvironment == "production" {
-		sourceClients, releaseClients, err = clients.CreateProdReleaseClients()
-		if err != nil {
-			return nil, errors.Wrap(err, "Error creating Production Clients")
-		}
-		authToken, err = ecr.GetAuthToken(sourceClients.ECR.EcrClient)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error getting ecr Auth token Client")
-		}
-		authTokenPublic, err = ecrpublic.GetAuthToken(releaseClients.ECRPublic.Client)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error getting ecr public Auth token Client")
-		}
-	}
-	dockerReleaseStruct := &DockerAuth{
-		Auths: map[string]DockerAuthRegistry{
-			r.SourceContainerRegistry:  {Auth: authToken},
-			r.ReleaseContainerRegistry: {Auth: authTokenPublic},
-		},
-	}
-	dockerAuth, err := NewAuthFile(dockerReleaseStruct)
-	if err != nil || dockerAuth.Authfile == "" {
-		return nil, errors.Wrap(err, "Error creating Authfile")
-	}
-	driver, err := NewHelm(dockerAuth.Authfile)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error creating Helm Client")
-	}
-	return driver, nil
-}
-
-// NewAuthFile writes a new Docker Authfile from the DockerAuth struct which a user to be used by Skopeo or Helm.
-func NewAuthFile(dockerstruct *DockerAuth) (DockerAuthFile, error) {
-	jsonbytes, err := json.Marshal(*dockerstruct)
-	auth := DockerAuthFile{}
-	if err != nil {
-		return auth, fmt.Errorf("Marshalling docker auth file to json %w", err)
-	}
-	f, err := os.CreateTemp("", "dockerAuth")
-	if err != nil {
-		return auth, fmt.Errorf("Creating tempfile %w", err)
-	}
-	defer f.Close()
-	fmt.Fprint(f, string(jsonbytes))
-	auth.Authfile = f.Name()
-	return auth, nil
-}
-
-func NewHelm(authfile string) (*helmDriver, error) {
+func NewHelm() (*helmDriver, error) {
 	settings := cli.New()
-	options := registry.ClientOptCredentialsFile(authfile)
-	client, err := registry.NewClient(options)
+	client, err := registry.NewClient()
 	if err != nil {
 		return nil, fmt.Errorf("creating registry client while initializing helm driver: %w", err)
 	}
