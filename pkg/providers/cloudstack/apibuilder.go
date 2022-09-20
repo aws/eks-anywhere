@@ -2,6 +2,7 @@ package cloudstack
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,6 +53,8 @@ func fillMachineTemplateAnnotations(machineConfig *v1alpha1.CloudStackMachineCon
 		for key := range machineConfig.Symlinks {
 			links = append(links, fmt.Sprintf("%s:%s", key, machineConfig.Symlinks[key]))
 		}
+		// sorting for unit test determinism
+		sort.Strings(links)
 		annotations[fmt.Sprintf("symlinks.%s", constants.CloudstackAnnotationSuffix)] = strings.Join(links, ",")
 	}
 
