@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	cloudstackv1 "sigs.k8s.io/cluster-api-provider-cloudstack/api/v1beta2"
+	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -84,7 +85,7 @@ func givenMachineConfig() *v1alpha1.CloudStackMachineConfigSpec {
 func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 	return &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+			APIVersion: cloudstackv1.GroupVersion.String(),
 			Kind:       "CloudStackMachineTemplate",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -137,9 +138,49 @@ func TestFullCloudStackMachineTemplate(t *testing.T) {
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))
 }
 
-func TestCloudStackMachineDeployment(t *testing.T) {
+func TestBasicCloudStackMachineDeployment(t *testing.T) {
 	tt := newApiBuilderTest(t)
-	spec := &cluster.Spec{Config: &cluster.Config{Cluster: &v1alpha1.Cluster{Spec: v1alpha1.ClusterSpec{WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{}}}}}
-	got := cloudstack.MachineDeployments(spec, nil, nil)
-	tt.Expect(len(got)).To(Equal(0))
+	workerNodeGroupConfig := v1alpha1.WorkerNodeGroupConfiguration{
+		Name:  "test-worker-node-group",
+		Count: 1,
+	}
+	kubeadmConfigTemplates := map[string]*bootstrapv1.KubeadmConfigTemplate{
+		workerNodeGroupConfig.Name: {
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "KubeadmConfigTemplate",
+				APIVersion: bootstrapv1.GroupVersion.String(),
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "kubeadmConfigTemplate",
+			},
+		},
+	}
+	fullMatchineTemplate := fullCloudStackMachineTemplate()
+	matchineTemplates := map[string]*cloudstackv1.CloudStackMachineTemplate{
+		workerNodeGroupConfig.Name: fullMatchineTemplate,
+	}
+	spec := &cluster.Spec{
+		VersionsBundle: &cluster.VersionsBundle{
+			KubeDistro: &cluster.KubeDistro{
+				Kubernetes: cluster.VersionedRepository{
+					Tag: "eksd-tag",
+				},
+			},
+		},
+		Config: &cluster.Config{
+			Cluster: &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
+						workerNodeGroupConfig,
+					},
+				},
+			},
+		},
+	}
+	got := cloudstack.MachineDeployments(spec, kubeadmConfigTemplates, matchineTemplates)
+	tt.Expect(len(got)).To(Equal(workerNodeGroupConfig.Count))
+	tt.Expect(int(*got[workerNodeGroupConfig.Name].Spec.Replicas)).To(Equal(workerNodeGroupConfig.Count))
+	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Name).To(Equal(fullMatchineTemplate.Name))
+	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Kind).To(Equal(cloudstack.CloudStackMachineTemplateKind))
+	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.APIVersion).To(Equal(cloudstackv1.GroupVersion.String()))
 }

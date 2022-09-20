@@ -659,11 +659,11 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		buildOption(values)
 	}
 
-	cpCsMtTemplateName, ok := values[cpTemplateNameKey]
+	cpCsMtName, ok := values[cpTemplateNameKey]
 	if !ok {
 		return nil, fmt.Errorf("unable to determine control plane template name")
 	}
-	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtTemplateName), cs.controlPlaneMachineSpec, cs.now)
+	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtName), cs.controlPlaneMachineSpec, cs.now)
 	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)

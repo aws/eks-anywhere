@@ -18,8 +18,7 @@ import (
 )
 
 const (
-	CloudStackMachineTemplateKind      = "CloudStackMachineTemplate"
-	CloudStackInfrastructureAPIVersion = "infrastructure.cluster.x-k8s.io/v1beta2"
+	CloudStackMachineTemplateKind = "CloudStackMachineTemplate"
 )
 
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, cloudstackMachineTemplate *cloudstackv1.CloudStackMachineTemplate) clusterv1.MachineDeployment {
@@ -82,7 +81,7 @@ func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfigSpec, templa
 func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec, now anywhereTypes.NowFunc) *cloudstackv1.CloudStackMachineTemplate {
 	template := &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: CloudStackInfrastructureAPIVersion,
+			APIVersion: cloudstackv1.GroupVersion.String(),
 			Kind:       CloudStackMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
