@@ -146,6 +146,12 @@ func WithOIDCConfig(oidcConfig *eksav1alpha1.OIDCConfig) SpecOpt {
 	}
 }
 
+func WithAWSIamConfig(awsIamConfig *eksav1alpha1.AWSIamConfig) SpecOpt {
+	return func(s *Spec) {
+		s.AWSIamConfig = awsIamConfig
+	}
+}
+
 func NewSpec(opts ...SpecOpt) *Spec {
 	s := &Spec{
 		Config:              &Config{},
