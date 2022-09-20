@@ -1616,6 +1616,26 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 	assert.False(t, diff, "No changes should have been detected")
 }
 
+func TestClusterManagerClusterSpecChangedAWSIamConfigChanged(t *testing.T) {
+	tt := newSpecChangedTest(t)
+	tt.clusterSpec.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.AWSIamConfigKind, Name: tt.clusterName}}
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	tt.oldClusterConfig = tt.clusterSpec.Cluster.DeepCopy()
+	oldIamConfig := tt.clusterSpec.AWSIamConfig.DeepCopy()
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{Spec: v1alpha1.AWSIamConfigSpec{
+		MapRoles: []v1alpha1.MapRoles{},
+	}}
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
+	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
+	tt.mocks.client.EXPECT().GetEksaAWSIamConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(oldIamConfig, nil)
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec)
+
+	assert.Nil(t, err, "Error should be nil")
+	assert.True(t, diff, "Changes should have been detected")
+}
+
 type testSetup struct {
 	*WithT
 	clusterManager *clustermanager.ClusterManager
