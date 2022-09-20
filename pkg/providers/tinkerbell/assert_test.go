@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
@@ -227,6 +228,41 @@ func TestAssertTinkerbellIPAndControlPlaneIPNotSame_SameFails(t *testing.T) {
 	clusterSpec.DatacenterConfig.Spec.TinkerbellIP = "1.1.1.1"
 
 	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).ToNot(gomega.Succeed())
+}
+
+func TestAssertPortsNotInUse_Succeeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout("tcp", gomock.Any(), 500*time.Millisecond).
+		Times(3).
+		Return(nil, errors.New("failed to connect"))
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertPortsNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertPortsNotInUse_Fails(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	server, client := net.Pipe()
+	defer server.Close()
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout("tcp", gomock.Any(), 500*time.Millisecond).
+		Times(3).
+		Return(client, nil)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertPortsNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
 }
 
 func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
