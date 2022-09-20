@@ -667,12 +667,24 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
 	}
 
-	// TODO: Extract out etcd MachineTemplates from templates to use apibuilder instead
 	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
 	bytes = append(bytes, cpMachineTemplateBytes...)
+
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdCsMtTemplateName, ok := values["etcdTemplateName"]
+		if !ok {
+			return nil, fmt.Errorf("unable to determine etcd template name")
+		}
+		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", etcdCsMtTemplateName), &etcdMachineSpec)
+		etcdMachineTemplateBytes, err := templater.ObjectsToYaml(etcdMachineTemplate)
+		if err != nil {
+			return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
+		}
+		bytes = append(bytes, etcdMachineTemplateBytes...)
+	}
 
 	return bytes, nil
 }

@@ -441,21 +441,32 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
-  name: test-etcd-template-1234567890000
-  namespace: 'eksa-system'
+  creationTimestamp: null
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
       offering:
         name: m4-large
+      sshKey: ""
       template:
         name: centos7-k8s-118
+
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
   creationTimestamp: null
-  name: test-control-plane-template-1234567890000
+  name: test-etcd-template-1234567890000
   namespace: eksa-system
 spec:
   template:

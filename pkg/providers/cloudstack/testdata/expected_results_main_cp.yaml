@@ -428,33 +428,6 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
-  name: test-etcd-template-1234567890000
-  namespace: 'eksa-system'
-  annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
-    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
-    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
-    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
-    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
-      diskOffering:
-        name: Small
-        mountPath: /data-small
-        device: /dev/vdb
-        filesystem: ext4
-        label: data_disk
-      affinityGroupIDs:
-      - etcd-affinity
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-kind: CloudStackMachineTemplate
-metadata:
   annotations:
     device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
@@ -471,6 +444,39 @@ spec:
     spec:
       affinityGroupIDs:
       - control-plane-anti-affinity
+      diskOffering:
+        customSizeInGB: 0
+        device: /dev/vdb
+        filesystem: ext4
+        label: data_disk
+        mountPath: /data-small
+        name: Small
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: CloudStackMachineTemplate
+metadata:
+  annotations:
+    device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
+    filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
+    label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
+  creationTimestamp: null
+  name: test-etcd-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      affinityGroupIDs:
+      - etcd-affinity
       diskOffering:
         customSizeInGB: 0
         device: /dev/vdb
