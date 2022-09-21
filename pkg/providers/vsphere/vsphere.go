@@ -1295,6 +1295,10 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 		return fmt.Errorf("spec.storagePolicyName is immutable. Previous value %s, new value %s", prevMachineConfig.Spec.StoragePolicyName, newConfig.Spec.StoragePolicyName)
 	}
 
+	if newConfig.Spec.OSFamily != prevMachineConfig.Spec.OSFamily {
+		return fmt.Errorf("spec.osFamily os immutable. Previous value %v, new value %v", prevMachineConfig.Spec.OSFamily, newConfig.Spec.OSFamily)
+	}
+
 	return nil
 }
 
