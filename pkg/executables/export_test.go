@@ -6,6 +6,7 @@ import (
 )
 
 var KubectlWaitRetryPolicy = kubectlWaitRetryPolicy
+var ClusterctlMoveRetryPolicy = clusterctlMoveRetryPolicy
 
 func CallKubectlPrivateWait(k *Kubectl, ctx context.Context, kubeconfig string, timeoutTime time.Time, forCondition string, property string, namespace string) error {
 	return k.wait(ctx, kubeconfig, timeoutTime, forCondition, property, namespace)
