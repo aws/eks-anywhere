@@ -77,6 +77,8 @@ Three roles are needed to be able to create the EKS Anywhere cluster:
    * Edit vSphere Tag Category
    * Modify UsedBy Field For Category
    * Modify UsedBy Field For Tag
+   > Sessions
+   * Validate session
    ```
 1. **Create a user custom role**: The second role is also a custom role that you could call, for example, EKS Anywhere User.
    Define this role with the following objects and children objects. 
