@@ -13,6 +13,7 @@
   "InventoryService.Tagging.ModifyUsedByForCategory",
   "InventoryService.Tagging.ModifyUsedByForTag",
   "InventoryService.Tagging.ObjectAttachable",
+  "Sessions.ValidateSession",
   "System.Anonymous",
   "System.Read",
   "System.View"
