@@ -34,6 +34,7 @@ var (
 	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	expectedPauseAnnotation           = map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 )
 
 func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
@@ -1281,108 +1282,190 @@ func TestInstallMachineHealthChecksApplyError(t *testing.T) {
 	}
 }
 
-func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-
-	clusterObj := &types.Cluster{
-		Name: clusterName,
+func TestPauseEKSAControllerReconcileWorkloadCluster(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster = &v1alpha1.Cluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "cluster-test",
-			},
-			Spec: v1alpha1.ClusterSpec{
-				DatacenterRef: v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
-					Name: "data-center-name",
-				},
-			},
-		}
-	})
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
 
-	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
-
-	cm, m := newClusterManager(t)
-	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
-	m.provider.EXPECT().MachineResourceType().Return("")
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaClusterResourceType, clusterSpec.Cluster.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-
-	if err := cm.PauseEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
-		t.Errorf("ClusterManager.PauseEKSAControllerReconcile() error = %v, wantErr nil", err)
-	}
+	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
 }
 
-func TestClusterManagerPauseEKSAControllerReconcileSuccessWithMachineConfig(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-
-	clusterObj := &types.Cluster{
-		Name: clusterName,
-	}
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster = &v1alpha1.Cluster{
-			Spec: v1alpha1.ClusterSpec{
-				DatacenterRef: v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
-					Name: "datasourcename",
-				},
-				ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
-					MachineGroupRef: &v1alpha1.Ref{
-						Name: clusterName + "-cp",
-					},
-				},
-				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-					MachineGroupRef: &v1alpha1.Ref{
-						Name: clusterName,
-					},
-				}},
+func TestPauseEKSAControllerReconcileWorkloadClusterUpdateAnnotationError(t *testing.T) {
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
 			},
-		}
-	})
-
-	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
-
-	cm, m := newClusterManager(t)
-	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
-	m.provider.EXPECT().MachineResourceType().Return(eksaVSphereMachineResourceType).Times(3)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceType, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceType, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaClusterResourceType, clusterSpec.Cluster.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-
-	if err := cm.PauseEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
-		t.Errorf("ClusterManager.PauseEKSAControllerReconcile() error = %v, wantErr nil", err)
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
 	}
+
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(errors.New("pause eksa cluster error"))
+
+	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
 }
 
-func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-
-	clusterObj := &types.Cluster{
-		Name: clusterName,
+func TestPauseEKSAControllerReconcileManagementCluster(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: tt.clusterName,
+			},
+		},
 	}
 
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster = &v1alpha1.Cluster{
-			Spec: v1alpha1.ClusterSpec{
-				DatacenterRef: v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
-					Name: "data-center-name",
+	tt.mocks.client.EXPECT().
+		ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).
+		DoAndReturn(func(_ context.Context, _, _, _ string, obj *v1alpha1.ClusterList) error {
+			obj.Items = []v1alpha1.Cluster{
+				*tt.clusterSpec.Cluster,
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workload-cluster-1",
+					},
+					Spec: v1alpha1.ClusterSpec{
+						DatacenterRef: v1alpha1.Ref{
+							Kind: v1alpha1.VSphereDatacenterKind,
+							Name: "data-center-name",
+						},
+						ManagementCluster: v1alpha1.ManagementCluster{
+							Name: tt.clusterName,
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workload-cluster-2",
+					},
+					Spec: v1alpha1.ClusterSpec{
+						DatacenterRef: v1alpha1.Ref{
+							Kind: v1alpha1.VSphereDatacenterKind,
+							Name: "data-center-name",
+						},
+						ManagementCluster: v1alpha1.ManagementCluster{
+							Name: "mgmt-cluster-2",
+						},
+					},
+				},
+			}
+			return nil
+		})
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType).Times(2)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("").Times(2)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil).Times(2)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", expectedPauseAnnotation, tt.cluster, "").Return(nil)
+
+	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
+}
+
+func TestPauseEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: tt.clusterName,
+			},
+		},
+	}
+
+	tt.mocks.client.EXPECT().ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).Return(errors.New("list error"))
+
+	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
+}
+
+func TestPauseEKSAControllerReconcileWorkloadClusterWithMachineConfig(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "datasourcename",
+			},
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				MachineGroupRef: &v1alpha1.Ref{
+					Name: tt.clusterName + "-cp",
 				},
 			},
-		}
-	})
-	clusterSpec.Cluster.PauseReconcile()
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				MachineGroupRef: &v1alpha1.Ref{
+					Name: tt.clusterName,
+				},
+			}},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
+	}
+
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return(eksaVSphereMachineResourceType).Times(3)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereMachineResourceType, tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaVSphereMachineResourceType, tt.clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().UpdateAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, expectedPauseAnnotation, tt.cluster, "").Return(nil)
+
+	tt.Expect(tt.clusterManager.PauseEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
+}
+
+func TestResumeEKSAControllerReconcileWorkloadCluster(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
+	}
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
+			Name: tt.clusterName,
 		},
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Insecure: true,
@@ -1390,20 +1473,156 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 	}
 	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
 
-	cm, m := newClusterManager(t)
-	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
-	m.provider.EXPECT().MachineResourceType().Return("")
-	m.provider.EXPECT().DatacenterConfig(clusterSpec).Return(datacenterConfig)
-	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaClusterResourceType, clusterSpec.Cluster.Name, pauseAnnotation, clusterObj, "").Return(nil)
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(nil)
 
-	if err := cm.ResumeEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
-		t.Errorf("ClusterManager.ResumeEKSAControllerReconcile() error = %v, wantErr nil", err)
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
+}
+
+func TestResumeEKSAControllerReconcileWorkloadClusterUpdateAnnotationError(t *testing.T) {
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: "mgmt-cluster",
+			},
+		},
 	}
-	annotations := clusterSpec.Cluster.GetAnnotations()
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
+
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("")
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(errors.New("pause eksa cluster error"))
+
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
+}
+
+func TestResumeEKSAControllerReconcileManagementCluster(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			DatacenterRef: v1alpha1.Ref{
+				Kind: v1alpha1.VSphereDatacenterKind,
+				Name: "data-center-name",
+			},
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: tt.clusterName,
+			},
+		},
+	}
+
+	tt.clusterSpec.Cluster.PauseReconcile()
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
+
+	tt.mocks.client.EXPECT().
+		ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).
+		DoAndReturn(func(_ context.Context, _, _, _ string, obj *v1alpha1.ClusterList) error {
+			obj.Items = []v1alpha1.Cluster{
+				*tt.clusterSpec.Cluster,
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workload-cluster-1",
+					},
+					Spec: v1alpha1.ClusterSpec{
+						DatacenterRef: v1alpha1.Ref{
+							Kind: v1alpha1.VSphereDatacenterKind,
+							Name: "data-center-name",
+						},
+						ManagementCluster: v1alpha1.ManagementCluster{
+							Name: tt.clusterName,
+						},
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "workload-cluster-2",
+					},
+					Spec: v1alpha1.ClusterSpec{
+						DatacenterRef: v1alpha1.Ref{
+							Kind: v1alpha1.VSphereDatacenterKind,
+							Name: "data-center-name",
+						},
+						ManagementCluster: v1alpha1.ManagementCluster{
+							Name: "mgmt-cluster-2",
+						},
+					},
+				},
+			}
+			return nil
+		})
+	tt.mocks.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType).Times(2)
+	tt.mocks.provider.EXPECT().MachineResourceType().Return("").Times(2)
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaVSphereDatacenterResourceType, tt.clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, tt.cluster, "").Return(nil).Times(2)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, tt.clusterSpec.Cluster.Name, pauseAnnotation, tt.cluster, "").Return(nil)
+	tt.mocks.client.EXPECT().RemoveAnnotationInNamespace(tt.ctx, eksaClusterResourceType, "workload-cluster-1", pauseAnnotation, tt.cluster, "").Return(nil)
+
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).To(Succeed())
+	annotations := tt.clusterSpec.Cluster.GetAnnotations()
 	if _, ok := annotations[pauseAnnotation]; ok {
 		t.Errorf("%s annotation exists, should be removed", pauseAnnotation)
 	}
+}
+
+func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testing.T) {
+	tt := newTest(t)
+	tt.clusterSpec.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.ClusterSpec{
+			ManagementCluster: v1alpha1.ManagementCluster{
+				Name: tt.clusterName,
+			},
+		},
+	}
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tt.clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+
+	tt.mocks.provider.EXPECT().DatacenterConfig(tt.clusterSpec).Return(datacenterConfig)
+	tt.mocks.client.EXPECT().ListObjects(tt.ctx, eksaClusterResourceType, "", "", &v1alpha1.ClusterList{}).Return(errors.New("list error"))
+
+	tt.Expect(tt.clusterManager.ResumeEKSAControllerReconcile(tt.ctx, tt.cluster, tt.clusterSpec, tt.mocks.provider)).NotTo(Succeed())
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
@@ -1618,6 +1837,26 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, diff, "No changes should have been detected")
+}
+
+func TestClusterManagerClusterSpecChangedAWSIamConfigChanged(t *testing.T) {
+	tt := newSpecChangedTest(t)
+	tt.clusterSpec.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.AWSIamConfigKind, Name: tt.clusterName}}
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	tt.oldClusterConfig = tt.clusterSpec.Cluster.DeepCopy()
+	oldIamConfig := tt.clusterSpec.AWSIamConfig.DeepCopy()
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{Spec: v1alpha1.AWSIamConfigSpec{
+		MapRoles: []v1alpha1.MapRoles{},
+	}}
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
+	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
+	tt.mocks.client.EXPECT().GetEksaAWSIamConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(oldIamConfig, nil)
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec)
+
+	assert.Nil(t, err, "Error should be nil")
+	assert.True(t, diff, "Changes should have been detected")
 }
 
 type testSetup struct {

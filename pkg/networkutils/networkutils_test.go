@@ -63,6 +63,33 @@ func TestIsIPInUseFail(t *testing.T) {
 	g.Expect(res).To(gomega.BeTrue())
 }
 
+func TestIsPortInUsePass(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	g := gomega.NewWithT(t)
+
+	client := mocks.NewMockNetClient(ctrl)
+	client.EXPECT().DialTimeout("tcp", "10.10.10.10:80", 500*time.Millisecond).
+		Return(nil, errors.New("no connection"))
+
+	res := networkutils.IsPortInUse(client, "10.10.10.10", "80")
+	g.Expect(res).To(gomega.BeFalse())
+}
+
+func TestIsPortInUseFail(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	g := gomega.NewWithT(t)
+
+	conn := NewMockConn(ctrl)
+	conn.EXPECT().Close().Return(nil)
+
+	client := mocks.NewMockNetClient(ctrl)
+	client.EXPECT().DialTimeout("tcp", "10.10.10.10:80", 500*time.Millisecond).
+		Return(conn, nil)
+
+	res := networkutils.IsPortInUse(client, "10.10.10.10", "80")
+	g.Expect(res).To(gomega.BeTrue())
+}
+
 func TestGetLocalIP(t *testing.T) {
 	_, err := networkutils.GetLocalIP()
 	if err != nil {

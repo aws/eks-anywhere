@@ -125,6 +125,26 @@ func validateIPUnused(client networkutils.NetClient, ip string) error {
 	return nil
 }
 
+func validatePortsAvailable(client networkutils.NetClient, host string) error {
+	unavailablePorts := getPortsUnavailable(client, host)
+
+	if len(unavailablePorts) != 0 {
+		return fmt.Errorf("localhost ports [%v] are already in use, please ensure these ports are available", strings.Join(unavailablePorts, ", "))
+	}
+	return nil
+}
+
+func getPortsUnavailable(client networkutils.NetClient, host string) []string {
+	ports := []string{"80", "42113", "50061"}
+	var unavailablePorts []string
+	for _, port := range ports {
+		if networkutils.IsPortInUse(client, host, port) {
+			unavailablePorts = append(unavailablePorts, port)
+		}
+	}
+	return unavailablePorts
+}
+
 // minimumHardwareRequirement defines the minimum requirement for a hardware selector.
 type minimumHardwareRequirement struct {
 	// MinCount is the minimum number of hardware required to satisfy the requirement

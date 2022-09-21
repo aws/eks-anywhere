@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -922,6 +923,10 @@ func WithNamespace(n string) KubectlOpt {
 	return appendOpt("--namespace", n)
 }
 
+func WithResourceName(name string) KubectlOpt {
+	return appendOpt(name)
+}
+
 func WithAllNamespaces() KubectlOpt {
 	return appendOpt("-A")
 }
@@ -1639,7 +1644,38 @@ func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name str
 // and unmarshalls the response into the provdied Object
 // If the object is not found, it returns an error implementing apimachinery errors.APIStatus
 func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
-	stdOut, err := k.Execute(ctx, "get", "--ignore-not-found", "--namespace", namespace, resourceType, name, "-o", "json", "--kubeconfig", kubeconfig)
+	return k.get(ctx, resourceType, namespace, kubeconfig, obj, withGetResourceName(name))
+}
+
+func (k *Kubectl) ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error {
+	return k.get(ctx, resourceType, namespace, kubeconfig, list)
+}
+
+type (
+	getOption  func(*getOptions)
+	getOptions struct {
+		name string
+	}
+)
+
+func withGetResourceName(name string) getOption {
+	return func(o *getOptions) {
+		o.name = name
+	}
+}
+
+func (k *Kubectl) get(ctx context.Context, resourceType, namespace, kubeconfig string, obj runtime.Object, opts ...getOption) error {
+	o := &getOptions{}
+	for _, opt := range opts {
+		opt(o)
+	}
+
+	params := []string{"get", "--ignore-not-found", "--namespace", namespace, "-o", "json", "--kubeconfig", kubeconfig, resourceType}
+	if o.name != "" {
+		params = append(params, o.name)
+	}
+
+	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting %s with kubectl: %v", resourceType, err)
 	}
@@ -1650,11 +1686,11 @@ func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, 
 		if len(resourceTypeSplit) == 2 {
 			gr.Group = resourceTypeSplit[1]
 		}
-		return apierrors.NewNotFound(gr, name)
+		return apierrors.NewNotFound(gr, o.name)
 	}
 
 	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return fmt.Errorf("parsing %s response: %v", resourceType, err)
+		return fmt.Errorf("parsing get %s response: %v", resourceType, err)
 	}
 
 	return nil

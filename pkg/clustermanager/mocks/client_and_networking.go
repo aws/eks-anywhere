@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
@@ -259,6 +260,21 @@ func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
 }
 
+// GetEksaAWSIamConfig mocks base method.
+func (m *MockClusterClient) GetEksaAWSIamConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.AWSIamConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaAWSIamConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.AWSIamConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaAWSIamConfig indicates an expected call of GetEksaAWSIamConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaAWSIamConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSIamConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaAWSIamConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaCloudStackMachineConfig mocks base method.
 func (m *MockClusterClient) GetEksaCloudStackMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackMachineConfig, error) {
 	m.ctrl.T.Helper()
@@ -456,6 +472,20 @@ func (m *MockClusterClient) KubeconfigSecretAvailable(arg0 context.Context, arg1
 func (mr *MockClusterClientMockRecorder) KubeconfigSecretAvailable(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeconfigSecretAvailable", reflect.TypeOf((*MockClusterClient)(nil).KubeconfigSecretAvailable), arg0, arg1, arg2, arg3)
+}
+
+// ListObjects mocks base method.
+func (m *MockClusterClient) ListObjects(arg0 context.Context, arg1, arg2, arg3 string, arg4 kubernetes.ObjectList) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListObjects", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ListObjects indicates an expected call of ListObjects.
+func (mr *MockClusterClientMockRecorder) ListObjects(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListObjects", reflect.TypeOf((*MockClusterClient)(nil).ListObjects), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MoveManagement mocks base method.

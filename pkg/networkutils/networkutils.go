@@ -43,6 +43,17 @@ func IsIPInUse(client NetClient, ip string) bool {
 	return false
 }
 
+func IsPortInUse(client NetClient, host string, port string) bool {
+	address := net.JoinHostPort(host, port)
+	conn, err := client.DialTimeout("tcp", address, 500*time.Millisecond)
+	if err == nil {
+		conn.Close()
+		return true
+	}
+
+	return false
+}
+
 func GetLocalIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "1.2.3.4:80")
 	if err != nil {
