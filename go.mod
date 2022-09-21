@@ -39,9 +39,9 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/api v0.24.2
-	k8s.io/apimachinery v0.24.2
-	k8s.io/client-go v0.24.2
+	k8s.io/api v0.23.4
+	k8s.io/apimachinery v0.23.4
+	k8s.io/client-go v0.23.4
 	oras.land/oras-go v1.2.0
 	sigs.k8s.io/cluster-api v1.1.3
 	sigs.k8s.io/cluster-api-provider-cloudstack v0.4.7-rc1
