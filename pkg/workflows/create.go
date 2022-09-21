@@ -366,10 +366,6 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 
-	// this disables create-webhook validation during create
-	commandContext.ClusterSpec.Cluster.PauseReconcile()
-	datacenterConfig.PauseReconcile()
-
 	targetCluster := commandContext.WorkloadCluster
 	if commandContext.BootstrapCluster.ExistingManagement {
 		targetCluster = commandContext.BootstrapCluster
