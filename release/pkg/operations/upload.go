@@ -17,6 +17,7 @@ package operations
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
@@ -77,6 +78,11 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				if err != nil {
 					return errors.Cause(err)
 				}
+			}
+
+			// If the artifact is a helm chart, skip the skopeo copy as it's handled separately.
+			if strings.HasSuffix(artifact.Image.AssetName, "helm") {
+				continue
 			}
 
 			if artifact.Image != nil {
