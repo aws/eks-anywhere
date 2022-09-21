@@ -49,13 +49,15 @@ func TestVsphereDataCenterConfigAnalyzers(t *testing.T) {
 	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.VSphereDatacenterKind}
 	analyzerFactory := diagnostics.NewAnalyzerFactory()
 	analyzers := analyzerFactory.DataCenterConfigAnalyzers(datacenter)
-	g.Expect(analyzers).To(HaveLen(3), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
+	g.Expect(analyzers).To(HaveLen(4), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
 	g.Expect(analyzers[0].CustomResourceDefinition.CustomResourceDefinitionName).To(Equal("vspheredatacenterconfigs.anywhere.eks.amazonaws.com"),
 		"vSphere generateCrdAnalyzers() mismatch between desired datacenter config group version and actual")
 	g.Expect(analyzers[1].CustomResourceDefinition.CustomResourceDefinitionName).To(Equal("vspheremachineconfigs.anywhere.eks.amazonaws.com"),
 		"vSphere generateCrdAnalyzers() mismatch between desired machine config group version and actual")
 	g.Expect(analyzers[2].TextAnalyze.RegexPattern).To(Equal("exit code: 0"),
-		"controlPlaneIPAnalyzer() mismatch between desired regexPattern and actual")
+		"validControlPlaneIPAnalyzer() mismatch between desired regexPattern and actual")
+	g.Expect(analyzers[3].TextAnalyze.RegexPattern).To(Equal("session \"msg\"=\"error checking if session is active\" \"error\"=\"ServerFaultCode: Permission to perform this operation was denied.\""),
+		"vcenterSessionValidatePermissionAnalyzer() mismatch between desired regexPattern and actual")
 }
 
 func TestDockerDataCenterConfigAnalyzers(t *testing.T) {
