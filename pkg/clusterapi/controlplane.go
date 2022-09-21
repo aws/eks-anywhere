@@ -73,7 +73,7 @@ func RegisterControlPlaneMappings[T any](parser *yamlutil.Parser[T]) error {
 		"KubeadmControlPlane": func() yamlutil.APIObject {
 			return &controlplanev1.KubeadmControlPlane{}
 		},
-		"EtdcCluster": func() yamlutil.APIObject {
+		"EtcdadmCluster": func() yamlutil.APIObject {
 			return &etcdv1.EtcdadmCluster{}
 		},
 	})

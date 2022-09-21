@@ -1,11 +1,14 @@
 package docker
 
 import (
+	"time"
+
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/go-logr/logr"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
@@ -22,14 +25,19 @@ func (cp ProviderControlPlane) Objects() []kubernetes.Object {
 	return []kubernetes.Object{cp.cluster, cp.machineTemplate, cp.etcdMachineTemplate}
 }
 
-func ControlPlaneSpec(logger logr.Logger) (*ControlPlane, error) {
-	yaml := []byte{}
+func ControlPlaneSpec(logger logr.Logger, spec *cluster.Spec) (*ControlPlane, error) {
+	templateBuilder := NewDockerTemplateBuilder(time.Now)
+	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(spec)
+	if err != nil {
+		return nil, err
+	}
+
 	parser, err := newControlPlaneParser(logger)
 	if err != nil {
 		return nil, err
 	}
 
-	return parser.Parse(yaml)
+	return parser.Parse(controlPlaneYaml)
 }
 
 func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], error) {
@@ -71,7 +79,7 @@ func ProcessCluster(cp *ControlPlane, lookup yamlutil.ObjectLookup) {
 		return
 	}
 
-	dockerCluster := lookup.GetFromRef(*cp.Cluster.Spec.ControlPlaneRef)
+	dockerCluster := lookup.GetFromRef(*cp.Cluster.Spec.InfrastructureRef)
 	if dockerCluster == nil {
 		return
 	}
