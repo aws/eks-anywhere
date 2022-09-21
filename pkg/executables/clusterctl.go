@@ -155,7 +155,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 	return nil
 }
 
-func ClusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
+func clusterctlMoveRetryPolicy(totalRetries int, err error) (retry bool, wait time.Duration) {
 	// Exponential backoff on network errors.  Retrier built-in backoff is linear, so implementing here.
 
 	// Retrier first calls the policy before retry #1.  We want it zero-based for exponentiation.
@@ -182,10 +182,10 @@ func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster
 	// cluster becomes inaccessible during the move operation.  If this occurs without retries, clusterctl
 	// abandons the move operation, leaving an unpredictable subset of the CAPI components copied to target
 	// or deleted from source.  Retrying once connectivity is re-established completes the partial move.
-	// Here we use a retrier, with the above defined ClusterctlMoveRetryPolicy policy, to attempt to
+	// Here we use a retrier, with the above defined clusterctlMoveRetryPolicy policy, to attempt to
 	// wait out the network disruption and complete the move.
 
-	retrier := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(ClusterctlMoveRetryPolicy))
+	retrier := retrier.New(clusterctlMoveTimeout, retrier.WithRetryPolicy(clusterctlMoveRetryPolicy))
 	err := retrier.Retry(
 		func() error {
 			_, err := c.Execute(ctx, params...)
