@@ -3,7 +3,6 @@ package docker_test
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -452,24 +451,6 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 
 	test.AssertContentToFile(t, string(cpContent), "testdata/no_machinetemplate_update_cp_expected.yaml")
 	test.AssertContentToFile(t, string(mdContent), "testdata/no_machinetemplate_update_md_expected.yaml")
-}
-
-func TestSetupAndValidateClusterWithEndpoint(t *testing.T) {
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Cluster.Name = "test-cluster"
-		s.Cluster.Spec.ControlPlaneConfiguration.Endpoint = &v1alpha1.Endpoint{Host: "test-ip"}
-	})
-	mockCtrl := gomock.NewController(t)
-	client := dockerMocks.NewMockProviderClient(mockCtrl)
-	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
-	ctx := context.Background()
-	err := p.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	wantErr := fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
-
-	if !reflect.DeepEqual(wantErr, err) {
-		t.Errorf("got = <%v>, want = <%v>", err, wantErr)
-	}
 }
 
 func TestGetInfrastructureBundleSuccess(t *testing.T) {

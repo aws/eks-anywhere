@@ -124,9 +124,6 @@ func (p *provider) PostMoveManagementToBootstrap(_ context.Context, _ *types.Clu
 
 func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
-	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
-		return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
-	}
 	return nil
 }
 
