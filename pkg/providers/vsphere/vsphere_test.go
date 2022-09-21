@@ -2809,6 +2809,60 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 	assert.Error(t, err, "StoragePolicyName should be immutable")
 }
 
+func TestValidateNewSpecOSFamilyImmutableControlPlane(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	controlPlaneMachineConfigName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	newMachineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
+	})
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[controlPlaneMachineConfigName], nil)
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	assert.Error(t, err, "OSFamily should be immutable")
+}
+
+func TestValidateNewSpecOSFamilyImmutableWorker(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	workerMachineConfigName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newMachineConfigs[workerMachineConfigName].Spec.OSFamily = "bottlerocket"
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
+	})
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[workerMachineConfigName], nil)
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	assert.Error(t, err, "OSFamily should be immutable")
+}
+
 func TestChangeDiffNoChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := givenEmptyClusterSpec()
