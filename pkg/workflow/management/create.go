@@ -3,7 +3,6 @@ package management
 import (
 	"context"
 
-	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/workflow"
 	"github.com/aws/eks-anywhere/pkg/workflow/management/task"
@@ -27,7 +26,7 @@ type CreateCluster struct {
 	CreateBootstrapOptions task.BootstrapOptionsRetriever
 
 	// Bootstrapper creates and destroys bootstrap clusters.
-	Bootstrapper *bootstrapper.Bootstrapper
+	Bootstrapper task.Bootstrapper
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
