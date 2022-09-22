@@ -1,0 +1,119 @@
+---
+title: "AWS Distro for OpenTelemetry (ADOT)"
+linkTitle: "Add ADOT"
+weight: 13
+date: 2022-09-21
+description: >
+  Install/upgrade/uninstall ADOT
+---
+
+{{< content "../prereq.md" >}}
+
+
+## Install
+
+<!-- this content needs to be indented so the numbers are automatically incremented -->
+1. Generate the package configuration
+   ```bash
+   eksctl anywhere generate package adot --source cluster > adot.yaml
+   ```
+
+1. Add the desired configuration to `adot.yaml`
+
+   Please see [complete configuration options]({{< relref "../../../reference/packagespec/adot" >}}) for all configuration options and their default values.
+
+   Example package file with `daemonSet` mode and default configuration:
+   ```yaml
+   apiVersion: packages.eks.amazonaws.com/v1alpha1
+   kind: Package
+   metadata:
+     name: my-adot
+     namespace: eksa-packages
+   spec:
+     packageName: adot
+     targetNamespace: observability
+     config: | 
+       mode: daemonset
+   ```
+
+   Example package file with `deployment` mode and customized collector components to scrap
+   ADOT collector's own metrics:
+   ```yaml
+   apiVersion: packages.eks.amazonaws.com/v1alpha1
+   kind: Package
+   metadata:
+     name: my-adot
+     namespace: eksa-packages
+   spec:
+     packageName: adot
+     targetNamespace: observability
+     config: | 
+       mode: deployment
+       replicaCount: 2
+       config:
+         receivers:
+           prometheus:
+             config:
+               scrape_configs:
+                 - job_name: opentelemetry-collector
+                   scrape_interval: 10s
+                   static_configs:
+                     - targets:
+                         - ${MY_POD_IP}:8888
+         processors:
+           batch: {}
+           memory_limiter: null
+         exporters:
+           logging:
+             logLevel: debug
+           prometheusremotewrite:
+             endpoint: "https://my-cortex:7900/api/v1/push"
+             external_labels:
+               label_name1: label_value1
+               label_name2: label_value2
+         extensions:
+           health_check: {}
+           memory_ballast: {}
+         service:
+           pipelines:
+             metrics:
+               receivers: [prometheus]
+               processors: [batch]
+               exporters: [prometheusremotewrite]
+   ```
+
+1. Create the namespace
+  (If overriding `targetNamespace`, change `observability` to the value of `targetNamespace`)
+   ```bash
+   kubectl create namespace observability
+   ```
+
+1. Install adot
+
+   ```bash
+   eksctl anywhere create packages -f adot.yaml
+   ```
+
+1. Validate the installation
+
+   ```bash
+   eksctl anywhere get packages
+   ```
+
+   Example command output
+   ```
+   NAME   PACKAGE   AGE   STATE       CURRENTVERSION                                                            TARGETVERSION                                                                   DETAIL
+   my-adot   adot   19h   installed   0.20.0-a793cb4cd95e6ee3bd4519799f3b6e3c95ae88fdb018a6ed679a3edc88b72aee   0.20.0-a793cb4cd95e6ee3bd4519799f3b6e3c95ae88fdb018a6ed679a3edc88b72aee (latest)
+   ```
+
+## Upgrade
+
+ADOT will automatically be upgraded when a new bundle is activated.
+
+## Uninstall
+
+To uninstall ADOT, simply delete the package
+
+```bash
+eksctl anywhere delete package my-adot
+```
