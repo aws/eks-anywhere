@@ -757,9 +757,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 		ProjectPath: "projects/tinkerbell/tink",
 		Images: []*assettypes.Image{
 			{
-				RepoName: "tink-cli",
-			},
-			{
 				RepoName: "tink-controller",
 			},
 			{
