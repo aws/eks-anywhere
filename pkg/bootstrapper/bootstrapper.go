@@ -82,7 +82,7 @@ func WithRetrier(retrier *retrier.Retrier) BootstrapperOpt {
 	}
 }
 
-func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, isUpgrade bool) error {
+func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, operationType constants.Operation, isForceCleanup bool) error {
 	clusterExists, err := b.clusterClient.ClusterExists(ctx, cluster.Name)
 	if err != nil {
 		return fmt.Errorf("deleting bootstrap cluster: %v", err)
@@ -97,7 +97,7 @@ func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *type
 	}
 
 	if mgmtCluster != nil {
-		if isUpgrade || mgmtCluster.Status.Phase == "Provisioned" {
+		if !isForceCleanup && (operationType == constants.Upgrade || mgmtCluster.Status.Phase == "Provisioned") {
 			return errors.New("error deleting bootstrap cluster: management cluster in bootstrap cluster")
 		}
 	}

@@ -10,6 +10,7 @@ import (
 
 	bootstrapper "github.com/aws/eks-anywhere/pkg/bootstrapper"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
+	constants "github.com/aws/eks-anywhere/pkg/constants"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	validations "github.com/aws/eks-anywhere/pkg/validations"
@@ -60,17 +61,17 @@ func (mr *MockBootstrapperMockRecorder) CreateBootstrapCluster(arg0, arg1 interf
 }
 
 // DeleteBootstrapCluster mocks base method.
-func (m *MockBootstrapper) DeleteBootstrapCluster(arg0 context.Context, arg1 *types.Cluster, arg2 bool) error {
+func (m *MockBootstrapper) DeleteBootstrapCluster(arg0 context.Context, arg1 *types.Cluster, arg2 constants.Operation, arg3 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteBootstrapCluster", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "DeleteBootstrapCluster", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteBootstrapCluster indicates an expected call of DeleteBootstrapCluster.
-func (mr *MockBootstrapperMockRecorder) DeleteBootstrapCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockBootstrapperMockRecorder) DeleteBootstrapCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBootstrapCluster", reflect.TypeOf((*MockBootstrapper)(nil).DeleteBootstrapCluster), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBootstrapCluster", reflect.TypeOf((*MockBootstrapper)(nil).DeleteBootstrapCluster), arg0, arg1, arg2, arg3)
 }
 
 // MockClusterManager is a mock of ClusterManager interface.
