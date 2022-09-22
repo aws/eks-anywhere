@@ -1588,13 +1588,17 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"clusterName":       clusterConfig.Name,
-		"vspherePassword":   expectedVSphereUsername,
-		"vsphereUsername":   expectedVSpherePassword,
-		"vsphereServer":     datacenterConfig.Spec.Server,
-		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    datacenterConfig.Spec.Network,
-		"eksaLicense":       "",
+		"clusterName":               clusterConfig.Name,
+		"vspherePassword":           expectedVSphereUsername,
+		"vsphereUsername":           expectedVSpherePassword,
+		"eksaCSIUsername":           expectedVSphereUsername,
+		"eksaCSIPassword":           expectedVSpherePassword,
+		"eksaCloudProviderUsername": expectedVSphereUsername,
+		"eksaCloudProviderPassword": expectedVSpherePassword,
+		"vsphereServer":             datacenterConfig.Spec.Server,
+		"vsphereDatacenter":         datacenterConfig.Spec.Datacenter,
+		"vsphereNetwork":            datacenterConfig.Spec.Network,
+		"eksaLicense":               "",
 	}
 
 	var tctx testContext
@@ -1629,10 +1633,15 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"vspherePassword":     expectedVSphereUsername,
-		"vsphereUsername":     expectedVSpherePassword,
-		"eksaLicense":         "",
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"clusterName":               clusterConfig.Name,
+		"vspherePassword":           expectedVSphereUsername,
+		"vsphereUsername":           expectedVSpherePassword,
+		"eksaCSIUsername":           expectedVSphereUsername,
+		"eksaCSIPassword":           expectedVSpherePassword,
+		"eksaCloudProviderUsername": expectedVSphereUsername,
+		"eksaCloudProviderPassword": expectedVSpherePassword,
+		"eksaLicense":               "",
+		"eksaSystemNamespace":       constants.EksaSystemNamespace,
 	}
 
 	var tctx testContext

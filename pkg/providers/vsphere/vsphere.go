@@ -1098,14 +1098,19 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}
+	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]string{
-		"vspherePassword":        os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":        os.Getenv(vSphereUsernameKey),
-		"eksaLicense":            os.Getenv(eksaLicense),
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"vsphereCredentialsName": constants.VSphereCredentialsName,
-		"eksaLicenseName":        constants.EksaLicenseName,
+		"vspherePassword":           os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
+		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
+		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
+		"eksaCSIUsername":           vuc.EksaVsphereCSIUsername,
+		"eksaCSIPassword":           vuc.EksaVsphereCSIPassword,
+		"eksaLicense":               os.Getenv(eksaLicense),
+		"eksaSystemNamespace":       constants.EksaSystemNamespace,
+		"vsphereCredentialsName":    constants.VSphereCredentialsName,
+		"eksaLicenseName":           constants.EksaLicenseName,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
