@@ -1,35 +1,39 @@
 package docker
 
 import (
+	"context"
 	"time"
 
-	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
-
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/equality"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	yamlcapi "github.com/aws/eks-anywhere/pkg/clusterapi/yaml"
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
-type ControlPlane = clusterapi.ControlPlane[ProviderControlPlane]
+type ControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate, ProviderControlPlane]
 
 type ProviderControlPlane struct {
-	cluster             *dockerv1.DockerCluster
-	machineTemplate     *dockerv1.DockerMachineTemplate
-	etcdMachineTemplate *dockerv1.DockerMachineTemplate
+	clusterapi.NoObjectsProviderControlPlane
 }
 
-func (cp ProviderControlPlane) Objects() []kubernetes.Object {
-	return []kubernetes.Object{cp.cluster, cp.machineTemplate, cp.etcdMachineTemplate}
-}
-
-func ControlPlaneSpec(logger logr.Logger, spec *cluster.Spec) (*ControlPlane, error) {
+func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
 	templateBuilder := NewDockerTemplateBuilder(time.Now)
-	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(spec)
+	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(
+		spec,
+		func(values map[string]interface{}) {
+			values["controlPlaneTemplateName"] = clusterapi.ControlPlaneMachineTemplateName(spec)
+			values["etcdTemplateName"] = clusterapi.EtcdAdmMachineTemplateName(spec.Cluster)
+		},
+	)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "generating docker control plane yaml spec")
 	}
 
 	parser, err := newControlPlaneParser(logger)
@@ -37,72 +41,50 @@ func ControlPlaneSpec(logger logr.Logger, spec *cluster.Spec) (*ControlPlane, er
 		return nil, err
 	}
 
-	return parser.Parse(controlPlaneYaml)
+	cp, err := parser.Parse(controlPlaneYaml)
+	if err != nil {
+		return nil, errors.Wrap(err, "parsing docker control plane yaml")
+	}
+
+	if err = cp.UpdateImmutableObjectNames(ctx, client, machineTemplateComparator); err != nil {
+		return nil, errors.Wrap(err, "updating docker immutable object names")
+	}
+
+	return cp, nil
 }
 
 func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], error) {
-	parser := yamlutil.NewParser[ControlPlane](logger)
-
-	if err := clusterapi.RegisterControlPlaneMappings(parser); err != nil {
-		return nil, err
-	}
-
-	err := parser.RegisterMappings(map[string]yamlutil.APIObjectGenerator{
-		"DockerCluster": func() yamlutil.APIObject {
-			return &dockerv1.DockerCluster{}
-		},
-		"DockerMachineTemplate": func() yamlutil.APIObject {
-			return &dockerv1.DockerMachineTemplate{}
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	parser.RegisterProcessors(
-		// Order is important, register CAPICluster before anything else
-		clusterapi.ProcessCluster[ProviderControlPlane],
-		clusterapi.ProcessKubeadmControlPlane[ProviderControlPlane],
-		clusterapi.ProcessEtcdCluster[ProviderControlPlane],
-		ProcessCluster,
-		ProcessEtcdMachineTemplate,
+	parser, err := yamlcapi.NewControlPlaneParser[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate, ProviderControlPlane](
+		logger,
+		yamlutil.NewMapping(
+			"DockerCluster",
+			func() *dockerv1.DockerCluster {
+				return &dockerv1.DockerCluster{}
+			},
+		),
+		yamlutil.NewMapping(
+			"DockerMachineTemplate",
+			func() *dockerv1.DockerMachineTemplate {
+				return &dockerv1.DockerMachineTemplate{}
+			},
+		),
 	)
+	if err != nil {
+		return nil, errors.Wrap(err, "building docker control plane parser")
+	}
 
 	return parser, nil
 }
 
-// I suspect this is going to be very similar in all providers
-// Maybe it's worth moving this logic to the clusterapi package and
-// Parametrize the CP with the provider cluster and machinetemplate types
-func ProcessCluster(cp *ControlPlane, lookup yamlutil.ObjectLookup) {
-	if cp.Cluster == nil || cp.KubeadmControlPlane == nil {
-		return
+func machineTemplateComparator(ctx context.Context, client kubernetes.Client, m *dockerv1.DockerMachineTemplate) (bool, error) {
+	currentMachine := &dockerv1.DockerMachineTemplate{}
+	err := client.Get(ctx, m.Name, m.Namespace, currentMachine)
+	if apierrors.IsNotFound(err) {
+		currentMachine = nil
+	}
+	if err != nil {
+		return false, err
 	}
 
-	dockerCluster := lookup.GetFromRef(*cp.Cluster.Spec.InfrastructureRef)
-	if dockerCluster == nil {
-		return
-	}
-
-	cp.Provider.cluster = dockerCluster.(*dockerv1.DockerCluster)
-
-	machineTemplate := lookup.GetFromRef(cp.KubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef)
-	if machineTemplate == nil {
-		return
-	}
-
-	cp.Provider.machineTemplate = machineTemplate.(*dockerv1.DockerMachineTemplate)
-}
-
-func ProcessEtcdMachineTemplate(cp *ControlPlane, lookup yamlutil.ObjectLookup) {
-	if cp.EtcdCluster == nil {
-		return
-	}
-
-	etcdMachineTemplate := lookup.GetFromRef(cp.EtcdCluster.Spec.InfrastructureTemplate)
-	if etcdMachineTemplate == nil {
-		return
-	}
-
-	cp.Provider.etcdMachineTemplate = etcdMachineTemplate.(*dockerv1.DockerMachineTemplate)
+	return currentMachine == nil || equality.Semantic.DeepDerivative(m.Spec, currentMachine.Spec), nil
 }

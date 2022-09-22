@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	workflow "github.com/aws/eks-anywhere/pkg/workflow"
 	gomock "github.com/golang/mock/gomock"
+
+	workflow "github.com/aws/eks-anywhere/pkg/workflow"
 )
 
 // MockTask is a mock of Task interface.

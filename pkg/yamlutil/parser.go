@@ -8,11 +8,9 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"sigs.k8s.io/yaml"
-
-	apiyaml "k8s.io/apimachinery/pkg/util/yaml"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiyaml "k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/yaml"
 )
 
 type (
@@ -47,9 +45,30 @@ func (c *Parser[T]) RegisterMapping(kind string, generator APIObjectGenerator) e
 	return nil
 }
 
-func (c *Parser[T]) RegisterMappings(mappings map[string]APIObjectGenerator) error {
-	for k, g := range mappings {
-		if err := c.RegisterMapping(k, g); err != nil {
+type Mapping[T APIObject] struct {
+	New  func() T
+	Kind string
+}
+
+func NewMapping[T APIObject](kind string, new func() T) Mapping[T] {
+	return Mapping[T]{
+		Kind: kind,
+		New:  new,
+	}
+}
+
+func (m Mapping[T]) ToGenericMapping() Mapping[APIObject] {
+	return Mapping[APIObject]{
+		Kind: m.Kind,
+		New: func() APIObject {
+			return m.New()
+		},
+	}
+}
+
+func (c *Parser[T]) RegisterMappings(mappings ...Mapping[APIObject]) error {
+	for _, m := range mappings {
+		if err := c.RegisterMapping(m.Kind, m.New); err != nil {
 			return err
 		}
 	}

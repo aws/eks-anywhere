@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -70,8 +71,13 @@ func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
 
+// TODO: make take cluster only
 func ControlPlaneMachineTemplateName(clusterSpec *cluster.Spec) string {
 	return DefaultObjectName(fmt.Sprintf("%s-control-plane", clusterSpec.Cluster.Name))
+}
+
+func EtcdAdmMachineTemplateName(cluster *anywherev1.Cluster) string {
+	return DefaultObjectName(fmt.Sprintf("%s-etcd", cluster.Name))
 }
 
 func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
