@@ -13,6 +13,7 @@ type APIObject interface {
 	GetName() string
 }
 
+// ObjectLookup allows to search APIObjects by a unique key composed of apiVersion, kind and Name
 type ObjectLookup map[string]APIObject
 
 // GetFromRef searches in a ObjectLookup for an APIObject referenced by a corev1.ObjectReference

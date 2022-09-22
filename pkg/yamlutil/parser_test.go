@@ -53,13 +53,16 @@ data:
   username: YWRtaW4=
 `
 	parser := yamlutil.NewParser[yamlHolder](test.NewNullLogger())
-	// yamlutil.RegisterMapping[*corev1.Secret](parser, "Secret")
-	parser.RegisterMapping("ConfigMap", func() yamlutil.APIObject {
-		return &corev1.ConfigMap{}
-	})
-	parser.RegisterMapping("Secret", func() yamlutil.APIObject {
-		return &corev1.Secret{}
-	})
+	g.Expect(
+		parser.RegisterMappings(
+			yamlutil.NewMapping("Secret", func() yamlutil.APIObject {
+				return &corev1.Secret{}
+			}),
+			yamlutil.NewMapping("ConfigMap", func() yamlutil.APIObject {
+				return &corev1.ConfigMap{}
+			}),
+		),
+	).To(Succeed())
 	parser.RegisterProcessors(processConfigMap, processSecret)
 
 	holder, err := parser.Parse([]byte(yaml))

@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -57,17 +56,17 @@ func KubeadmControlPlaneName(clusterSpec *cluster.Spec) string {
 	return clusterSpec.Cluster.GetName()
 }
 
-func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+func MachineDeploymentName(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) string {
 	// Adding cluster name prefix guarantees the machine deployment name uniqueness
 	// among clusters under the same management cluster setting.
 	return clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig)
 }
 
-func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+func DefaultKubeadmConfigTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) string {
 	return DefaultObjectName(clusterWorkerNodeGroupName(clusterSpec, workerNodeGroupConfig))
 }
 
-func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) string {
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
 
@@ -80,7 +79,7 @@ func EtcdAdmMachineTemplateName(cluster *anywherev1.Cluster) string {
 	return DefaultObjectName(fmt.Sprintf("%s-etcd", cluster.Name))
 }
 
-func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) string {
 	return DefaultObjectName(fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name))
 }
 
@@ -88,6 +87,6 @@ func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-kcp-unhealthy", KubeadmControlPlaneName(clusterSpec))
 }
 
-func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
+func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration) string {
 	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
 }

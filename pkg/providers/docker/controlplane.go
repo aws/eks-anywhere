@@ -17,12 +17,16 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
+// ControlPlane represents a CAPI docker control plane
 type ControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate, ProviderControlPlane]
 
+// ProviderControlPlane holds the docker specific objects for a CAPI docker control plane
+// EKS-A Docker control planes don't require any additional objects
 type ProviderControlPlane struct {
 	clusterapi.NoObjectsProviderControlPlane
 }
 
+// ControlPlaneSpec builds a docker ControlPlane definition based on a eks-a cluster spec
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
 	templateBuilder := NewDockerTemplateBuilder(time.Now)
 	controlPlaneYaml, err := templateBuilder.GenerateCAPISpecControlPlane(

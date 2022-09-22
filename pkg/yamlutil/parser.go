@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"regexp"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -16,11 +15,12 @@ import (
 type (
 	// APIObjectGenerator returns an implementor of the APIObject interface
 	APIObjectGenerator func() APIObject
-	// ParsedProcessor fills the Config struct from the parsed API objects in ObjectLookup
+	// ParsedProcessor fills the struct of type T with the parsed API objects in ObjectLookup
 	ParsedProcessor[T any] func(*T, ObjectLookup)
 
-	// ConfigManager allows to parse from yaml, set defaults and validate a Cluster struct
-	// It allows to dynamically register configuration for all those operations
+	// Parser allows to parse from yaml with kubernetes style objects and
+	// store them in a type T
+	// It allows to dynamically register configuration for mappings and object processing
 	Parser[T any] struct {
 		apiObjectMapping map[string]APIObjectGenerator
 		processors       []ParsedProcessor[T]
@@ -45,6 +45,7 @@ func (c *Parser[T]) RegisterMapping(kind string, generator APIObjectGenerator) e
 	return nil
 }
 
+// Mapping mapping between a kubernetes Kind and an API concrete type of type T
 type Mapping[T APIObject] struct {
 	New  func() T
 	Kind string
@@ -57,6 +58,9 @@ func NewMapping[T APIObject](kind string, new func() T) Mapping[T] {
 	}
 }
 
+// ToGenericMapping is helper to convert from other concrete types of Mapping
+// to a APIObject Mapping
+// This is mostly to help pass Mappings to RegisterMappings
 func (m Mapping[T]) ToGenericMapping() Mapping[APIObject] {
 	return Mapping[APIObject]{
 		Kind: m.Kind,
@@ -66,6 +70,7 @@ func (m Mapping[T]) ToGenericMapping() Mapping[APIObject] {
 	}
 }
 
+// RegisterMappings records a collection of mappings
 func (c *Parser[T]) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	for _, m := range mappings {
 		if err := c.RegisterMapping(m.Kind, m.New); err != nil {
@@ -76,26 +81,17 @@ func (c *Parser[T]) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	return nil
 }
 
-type MapperRegistrar interface {
-	RegisterMapping(kind string, generator APIObjectGenerator) error
-}
-
-func RegisterMapping[K APIObject](registrar MapperRegistrar, kind string) error {
-	return registrar.RegisterMapping(kind, func() APIObject {
-		return *new(K)
-	})
-}
-
-// RegisterProcessors records setters to fill the Config struct from the parsed API objects
+// RegisterProcessors records setters to fill the struct T from the parsed API objects
 func (c *Parser[T]) RegisterProcessors(processors ...ParsedProcessor[T]) {
 	c.processors = append(c.processors, processors...)
 }
 
-// Parse reads yaml manifest with at least one cluster object and generates the corresponding Config
+// Parse reads yaml manifest content with and generates the corresponding T
 func (c *Parser[T]) Parse(yamlManifest []byte) (*T, error) {
 	return c.Read(bytes.NewReader(yamlManifest))
 }
 
+// Read reads yaml manifest and generates the corresponding T
 func (c *Parser[T]) Read(reader io.Reader) (*T, error) {
 	parsed, err := c.unmarshal(reader)
 	if err != nil {
@@ -117,8 +113,6 @@ func (k *basicAPIObject) empty() bool {
 type parsed struct {
 	objects ObjectLookup
 }
-
-var separatorRegex = regexp.MustCompile(`(?m)^---$`)
 
 func (c Parser[T]) unmarshal(reader io.Reader) (*parsed, error) {
 	parsed := &parsed{

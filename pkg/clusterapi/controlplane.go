@@ -11,31 +11,38 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 )
 
+// ProviderControlPlane represents the provider specific part of a CAPI control plane definition
 type ProviderControlPlane interface {
+	// Objects returns all provider specific API objects
 	Objects() []kubernetes.Object
 }
 
+// NoObjectsProviderControlPlane is a helper for providers that don't require extra objects in the control plane
 type NoObjectsProviderControlPlane struct{}
 
 func (NoObjectsProviderControlPlane) Objects() []kubernetes.Object {
 	return nil
 }
 
+// Object represents a kubernetes API object
 type Object interface {
 	kubernetes.Object
-	comparable
 }
 
+// ControlPlane represents the spec for a CAPI control plane for an specific provider
 type ControlPlane[C, M Object, P ProviderControlPlane] struct {
-	Cluster                 *clusterv1.Cluster
-	KubeadmControlPlane     *controlplanev1.KubeadmControlPlane
-	EtcdCluster             *etcdv1.EtcdadmCluster
-	ProviderCluster         C
-	ProviderMachineTemplate M
-	EtcdMachineTemplate     M
-	Provider                P
+	Cluster                     *clusterv1.Cluster
+	ProviderCluster             C
+	KubeadmControlPlane         *controlplanev1.KubeadmControlPlane
+	ControlPlaneMachineTemplate M
+	EtcdMachineTemplate         M
+	EtcdCluster                 *etcdv1.EtcdadmCluster
+
+	// Provider holds the provider specific components for the control plane
+	Provider P
 }
 
+// Objects returns all API objects that form a concrete control plane for an specific provider
 func (cp *ControlPlane[C, M, P]) Objects() []kubernetes.Object {
 	objs := cp.Provider.Objects()
 	objs = append(objs, cp.Cluster, cp.KubeadmControlPlane)
@@ -46,6 +53,13 @@ func (cp *ControlPlane[C, M, P]) Objects() []kubernetes.Object {
 	return objs
 }
 
+// UpdateImmutableObjectNames checks if any control plane immutable objects have changed y comparing the new definition
+// with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
+// at the end of the name
+// This is applied to all provider machine templates
+// machineTemplateComparator receives the new definition of a machine template with the name of the current one
+// if should retrieve such machine template from the cluster and return true only if only both machine templates are identical
+// Most of the time, this only requires comparing the Spec field, but that can change from provider to provider
 func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 	ctx context.Context,
 	client kubernetes.Client,
@@ -61,8 +75,8 @@ func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 		return err
 	}
 
-	cp.ProviderMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
-	if err = ensureUniqueObjectName(ctx, client, machineTemplateComparator, cp.ProviderMachineTemplate); err != nil {
+	cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
+	if err = ensureUniqueObjectName(ctx, client, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
 		return err
 	}
 
