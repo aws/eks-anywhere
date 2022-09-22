@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -676,6 +677,88 @@ func TestKubeadmConfigTemplatesWithProxyConfig(t *testing.T) {
 			want["md-0"].Spec.Template.Spec.Files = tt.wantFiles
 			want["md-0"].Spec.Template.Spec.PreKubeadmCommands = append(want["md-0"].Spec.Template.Spec.PreKubeadmCommands, wantProxyConfigCommands()...)
 			g.Expect(got).To(Equal(want))
+		})
+	}
+}
+
+func TestNewMachineTemplateName(t *testing.T) {
+	tests := []struct {
+		name     string
+		old, new *snowv1.AWSSnowMachineTemplate
+		want     string
+	}{
+		{
+			name: "remove one device",
+			old: &snowv1.AWSSnowMachineTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "old-1",
+				},
+				Spec: snowv1.AWSSnowMachineTemplateSpec{
+					Template: snowv1.AWSSnowMachineTemplateResource{
+						Spec: snowv1.AWSSnowMachineSpec{
+							Devices: []string{
+								"1",
+								"2",
+							},
+						},
+					},
+				},
+			},
+			new: &snowv1.AWSSnowMachineTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "new-1",
+				},
+				Spec: snowv1.AWSSnowMachineTemplateSpec{
+					Template: snowv1.AWSSnowMachineTemplateResource{
+						Spec: snowv1.AWSSnowMachineSpec{
+							Devices: []string{
+								"1",
+							},
+						},
+					},
+				},
+			},
+			want: "old-2",
+		},
+		{
+			name: "add one device",
+			old: &snowv1.AWSSnowMachineTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "old-1",
+				},
+				Spec: snowv1.AWSSnowMachineTemplateSpec{
+					Template: snowv1.AWSSnowMachineTemplateResource{
+						Spec: snowv1.AWSSnowMachineSpec{
+							Devices: []string{
+								"1",
+							},
+						},
+					},
+				},
+			},
+			new: &snowv1.AWSSnowMachineTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "new-1",
+				},
+				Spec: snowv1.AWSSnowMachineTemplateSpec{
+					Template: snowv1.AWSSnowMachineTemplateResource{
+						Spec: snowv1.AWSSnowMachineSpec{
+							Devices: []string{
+								"1",
+								"2",
+							},
+						},
+					},
+				},
+			},
+			want: "old-2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newSnowTest(t)
+			name := snow.NewMachineTemplateName(tt.new, tt.old)
+			g.Expect(name).To(Equal(tt.want))
 		})
 	}
 }

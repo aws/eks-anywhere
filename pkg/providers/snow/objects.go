@@ -119,16 +119,31 @@ func WorkersMachineAndConfigTemplate(ctx context.Context, kubeClient kubernetes.
 	return machines, configs, nil
 }
 
+// NewMachineTemplateName compares the existing awssnowmachinetemplate object in the cluster with the
+// awssnowmachinetemplate constructed from cluster spec, to figure out whether a new awssnowmachinetemplate
+// needs to be created. Return the awssnowmachinetemplate name.
 func NewMachineTemplateName(new, old *snowv1.AWSSnowMachineTemplate) string {
 	if old == nil {
 		return new.GetName()
 	}
 
-	if equality.Semantic.DeepDerivative(new.Spec, old.Spec) {
+	if MachineTemplateDeepDerivative(new, old) {
 		return old.GetName()
 	}
 
 	return clusterapi.IncrementNameWithFallbackDefault(old.GetName(), new.GetName())
+}
+
+// MachineTemplateDeepDerivative compares two awssnowmachinetemplates to determine if their spec fields are equal.
+// DeepDerivative is used so that unset fields in new object are not compared. Although DeepDerivative treats
+// new subset slice equal to the original slice. i.e. DeepDerivative([]int{1}, []int{1, 2}) returns true.
+// Custom logic is added to justify this usecase since removing a device from the devices list shall trigger machine
+// rollout and recreate or the snow cluster goes into a state where the machines on the removed device can’t be deleted.
+func MachineTemplateDeepDerivative(new, old *snowv1.AWSSnowMachineTemplate) bool {
+	if len(new.Spec.Template.Spec.Devices) != len(old.Spec.Template.Spec.Devices) {
+		return false
+	}
+	return equality.Semantic.DeepDerivative(new.Spec, old.Spec)
 }
 
 func NewWorkerMachineTemplateName(newMt, oldMt *snowv1.AWSSnowMachineTemplate, newKct, oldKct *bootstrapv1.KubeadmConfigTemplate) string {
