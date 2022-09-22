@@ -278,7 +278,7 @@ func (p *Provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	if p.isScaleUpDown(currentSpec, newClusterSpec) {
+	if p.isScaleUpDown(currentSpec.Cluster, newClusterSpec.Cluster) {
 		cpSpec, err := omitTinkerbellMachineTemplate(controlPlaneSpec)
 		if err == nil {
 			if wSpec, err := omitTinkerbellMachineTemplate(workersSpec); err == nil {
