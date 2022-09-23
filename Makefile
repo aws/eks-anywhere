@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
-ifneq ($(PULL_BASE_REF),)
+ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
