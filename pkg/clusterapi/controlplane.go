@@ -29,6 +29,15 @@ type Object interface {
 	kubernetes.Object
 }
 
+// ObjectComparator returns true  only if only both kubernetes Object's are identical
+// Most of the time, this only requires comparing the Spec field, but that can change
+// from object to object
+type ObjectComparator[O Object] func(current, new O) bool
+
+// ObjectRetriever gets a kubernetes API object using the provided client
+// If the object doesn't exist, it returns a NotFound error
+type ObjectRetriever[O Object] func(ctx context.Context, client kubernetes.Client, name, namespace string) (O, error)
+
 // ControlPlane represents the spec for a CAPI control plane for an specific provider
 type ControlPlane[C, M Object, P ProviderControlPlane] struct {
 	Cluster                     *clusterv1.Cluster
@@ -57,13 +66,11 @@ func (cp *ControlPlane[C, M, P]) Objects() []kubernetes.Object {
 // with the current state of the cluster. If they had, it generates a new name for them by increasing a monotonic number
 // at the end of the name
 // This is applied to all provider machine templates
-// machineTemplateComparator receives the new definition of a machine template with the name of the current one
-// if should retrieve such machine template from the cluster and return true only if only both machine templates are identical
-// Most of the time, this only requires comparing the Spec field, but that can change from provider to provider
 func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 	ctx context.Context,
 	client kubernetes.Client,
-	machineTemplateComparator func(context.Context, kubernetes.Client, M) (bool, error),
+	machineTemplateRetriever ObjectRetriever[M],
+	machineTemplateComparator ObjectComparator[M],
 ) error {
 	currentKCP := &controlplanev1.KubeadmControlPlane{}
 	err := client.Get(ctx, cp.KubeadmControlPlane.Name, cp.KubeadmControlPlane.Namespace, currentKCP)
@@ -76,7 +83,7 @@ func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 	}
 
 	cp.ControlPlaneMachineTemplate.SetName(currentKCP.Spec.MachineTemplate.InfrastructureRef.Name)
-	if err = ensureUniqueObjectName(ctx, client, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
+	if err = ensureUniqueObjectName(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.ControlPlaneMachineTemplate); err != nil {
 		return err
 	}
 
@@ -95,7 +102,7 @@ func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 	}
 
 	cp.EtcdMachineTemplate.SetName(currentEtcdCluster.Spec.InfrastructureTemplate.Name)
-	if err = ensureUniqueObjectName(ctx, client, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
+	if err = ensureUniqueObjectName(ctx, client, machineTemplateRetriever, machineTemplateComparator, cp.EtcdMachineTemplate); err != nil {
 		return err
 	}
 
@@ -104,21 +111,26 @@ func (cp *ControlPlane[C, M, P]) UpdateImmutableObjectNames(
 
 func ensureUniqueObjectName[M Object](ctx context.Context,
 	client kubernetes.Client,
-	machineTemplateComparator func(context.Context, kubernetes.Client, M) (bool, error),
-	machineTemplate M,
+	retrieve ObjectRetriever[M],
+	equal ObjectComparator[M],
+	new M,
 ) error {
-	equal, err := machineTemplateComparator(ctx, client, machineTemplate)
+	current, err := retrieve(ctx, client, new.GetName(), new.GetNamespace())
+	if apierrors.IsNotFound(err) {
+		// if object doesn't exist with same name in same namespace, no need to compare
+		return nil
+	}
 	if err != nil {
 		return err
 	}
 
-	if !equal {
-		newName, err := IncrementName(machineTemplate.GetName())
+	if !equal(new, current) {
+		newName, err := IncrementName(new.GetName())
 		if err != nil {
 			return err
 		}
 
-		machineTemplate.SetName(newName)
+		new.SetName(newName)
 	}
 
 	return nil

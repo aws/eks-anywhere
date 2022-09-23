@@ -7,7 +7,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/equality"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
@@ -50,7 +49,7 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 		return nil, errors.Wrap(err, "parsing docker control plane yaml")
 	}
 
-	if err = cp.UpdateImmutableObjectNames(ctx, client, machineTemplateComparator); err != nil {
+	if err = cp.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating docker immutable object names")
 	}
 
@@ -80,15 +79,15 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], 
 	return parser, nil
 }
 
-func machineTemplateComparator(ctx context.Context, client kubernetes.Client, m *dockerv1.DockerMachineTemplate) (bool, error) {
-	currentMachine := &dockerv1.DockerMachineTemplate{}
-	err := client.Get(ctx, m.Name, m.Namespace, currentMachine)
-	if apierrors.IsNotFound(err) {
-		currentMachine = nil
-	}
-	if err != nil {
-		return false, err
+func getMachineTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*dockerv1.DockerMachineTemplate, error) {
+	m := &dockerv1.DockerMachineTemplate{}
+	if err := client.Get(ctx, name, namespace, m); err != nil {
+		return nil, err
 	}
 
-	return currentMachine == nil || equality.Semantic.DeepDerivative(m.Spec, currentMachine.Spec), nil
+	return m, nil
+}
+
+func machineTemplateEqual(new, old *dockerv1.DockerMachineTemplate) bool {
+	return equality.Semantic.DeepDerivative(new, old)
 }
