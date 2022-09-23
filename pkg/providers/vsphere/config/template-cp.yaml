@@ -343,8 +343,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
 {{- if (eq .format "bottlerocket") }}
@@ -390,8 +388,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     preKubeadmCommands:
 {{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}

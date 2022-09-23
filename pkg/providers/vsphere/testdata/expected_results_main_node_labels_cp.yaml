@@ -340,7 +340,6 @@ spec:
           node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -351,7 +350,6 @@ spec:
           node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

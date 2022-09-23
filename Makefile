@@ -29,7 +29,7 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
-ifneq ($(PULL_BASE_REF),)
+ifneq ($(PULL_BASE_REF),) # PULL_BASE_REF originates from prow
 	BRANCH_NAME=$(PULL_BASE_REF)
 endif
 ifeq (,$(findstring $(BRANCH_NAME),main))
@@ -423,7 +423,7 @@ capd-test-%: e2e ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 
-PACKAGES_E2E_TESTS ?= TestVSphereKubernetes121PackagesInstallSimpleFlow
+PACKAGES_E2E_TESTS ?= TestCPackagesDockerUbuntuKubernetes121SimpleFlow
 ifeq ($(PACKAGES_E2E_TESTS),all)
 PACKAGES_E2E_TESTS='TestCPackages.*'
 endif

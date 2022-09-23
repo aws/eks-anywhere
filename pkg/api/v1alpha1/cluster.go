@@ -168,7 +168,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
 	// TODO(chrisdoherty) Uncomment and fix unit tests. This broke _lots_ of unit tests so will
 	// return shortly.
-	// validateControlPlaneEndpoint,
+	validateControlPlaneEndpoint,
 	// validateControlPlaneMachineRef,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
@@ -385,6 +385,13 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 func validateControlPlaneLabels(clusterConfig *Cluster) error {
 	if err := validateNodeLabels(clusterConfig.Spec.ControlPlaneConfiguration.Labels, field.NewPath("spec", "controlPlaneConfiguration", "labels")); err != nil {
 		return fmt.Errorf("labels for control plane not valid: %v", err)
+	}
+	return nil
+}
+
+func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.DatacenterRef.Kind == DockerDatacenterKind && clusterConfig.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
+		return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
 	}
 	return nil
 }
