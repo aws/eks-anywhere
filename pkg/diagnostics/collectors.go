@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -72,9 +72,23 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref, s
 		return c.eksaCloudstackCollectors()
 	case v1alpha1.TinkerbellDatacenterKind:
 		return c.eksaTinkerbellCollectors()
+	case v1alpha1.SnowDatacenterKind:
+		return c.eksaSnowCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaSnowCollectors() []*Collect {
+	snowLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapasSystemNamespace,
+				Name:      logpath(constants.CapasSystemNamespace),
+			},
+		},
+	}
+	return append(snowLogs, c.snowCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaTinkerbellCollectors() []*Collect {
@@ -288,6 +302,17 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 		"kubeadmcontrolplane.controlplane.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(mgmtCrds)
+}
+
+func (c *collectorFactory) snowCrdCollectors() []*Collect {
+	capasCrds := []string{
+		"awssnowclusters.infrastructure.cluster.x-k8s.io",
+		"awssnowmachines.infrastructure.cluster.x-k8s.io",
+		"awssnowmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"snowdatacenterconfigs.anywhere.eks.amazonaws.com",
+		"snowmachineconfigs.anywhere.eks.amazonaws.com",
+	}
+	return c.generateCrdCollectors(capasCrds)
 }
 
 func (c *collectorFactory) tinkerbellCrdCollectors() []*Collect {
