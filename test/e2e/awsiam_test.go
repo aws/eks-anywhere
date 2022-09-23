@@ -220,3 +220,33 @@ func TestTinkerbellKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
 	)
 	runTinkerbellAWSIamAuthFlow(test)
 }
+
+func TestSnowKubernetes121UbuntuAWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewSnow(t, framework.WithSnowUbuntu121()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+	)
+	runAWSIamAuthFlow(test)
+}
+
+func TestSnowKubernetes122To123AWSIamAuthUpgrade(t *testing.T) {
+	provider := framework.NewSnow(t, framework.WithSnowUbuntu122())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+	)
+	runUpgradeFlowWithAWSIamAuth(
+		test,
+		v1alpha1.Kube123,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		provider.WithProviderUpgrade(framework.UpdateSnowUbuntuTemplate123Var()),
+	)
+}
