@@ -138,6 +138,7 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -150,6 +151,7 @@ func TestSnowKubernetes123TaintsUbuntu(t *testing.T) {
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 }
 
