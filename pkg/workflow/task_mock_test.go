@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	workflow "github.com/aws/eks-anywhere/pkg/workflow"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -33,20 +32,6 @@ func NewMockTask(ctrl *gomock.Controller) *MockTask {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTask) EXPECT() *MockTaskMockRecorder {
 	return m.recorder
-}
-
-// GetName mocks base method.
-func (m *MockTask) GetName() workflow.TaskName {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetName")
-	ret0, _ := ret[0].(workflow.TaskName)
-	return ret0
-}
-
-// GetName indicates an expected call of GetName.
-func (mr *MockTaskMockRecorder) GetName() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockTask)(nil).GetName))
 }
 
 // RunTask mocks base method.

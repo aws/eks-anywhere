@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"fmt"
 )
 
 // Config is the configuration for constructing a Workflow instance.
@@ -18,7 +17,7 @@ type Workflow struct {
 	Config
 
 	// tasks are the tasks to be run as part of the core workflow.
-	tasks []Task
+	tasks []namedTask
 
 	// taskNames is a map of tasks added with AppendTask. Its used to ensure unique task names so
 	// hooks aren't accidentally overwritten.
@@ -46,13 +45,14 @@ func New(cfg Config) *Workflow {
 	return wflw
 }
 
-// AppendTask appends t to the list of workflow tasks.
-func (w *Workflow) AppendTask(t Task) error {
-	if _, found := w.taskNames[t.GetName()]; found {
-		return fmt.Errorf("duplicate task name: %v", t.GetName())
+// AppendTask appends t to the list of workflow tasks. Task names must be unique within a workflow.
+// Duplicate names will receive an ErrDuplicateTaskName
+func (w *Workflow) AppendTask(name TaskName, t Task) error {
+	if _, found := w.taskNames[name]; found {
+		return ErrDuplicateTaskName{name}
 	}
-	w.tasks = append(w.tasks, t)
-	w.taskNames[t.GetName()] = struct{}{}
+	w.tasks = append(w.tasks, namedTask{Task: t, Name: name})
+	w.taskNames[name] = struct{}{}
 	return nil
 }
 
@@ -65,7 +65,7 @@ func (w *Workflow) Execute(ctx context.Context) error {
 	}
 
 	for _, task := range w.tasks {
-		if ctx, err = w.runPreTaskHooks(ctx, task.GetName()); err != nil {
+		if ctx, err = w.runPreTaskHooks(ctx, task.Name); err != nil {
 			return w.handleError(ctx, err)
 		}
 
@@ -73,7 +73,7 @@ func (w *Workflow) Execute(ctx context.Context) error {
 			return w.handleError(ctx, err)
 		}
 
-		if ctx, err = w.runPostTaskHooks(ctx, task.GetName()); err != nil {
+		if ctx, err = w.runPostTaskHooks(ctx, task.Name); err != nil {
 			return w.handleError(ctx, err)
 		}
 	}
