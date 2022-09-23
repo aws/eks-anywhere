@@ -75,3 +75,11 @@ func TestCloudStackDataCenterConfigAnalyzers(t *testing.T) {
 	analyzers := analyzerFactory.DataCenterConfigAnalyzers(datacenter)
 	g.Expect(analyzers).To(HaveLen(2), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
 }
+
+func TestSnowAnalyzers(t *testing.T) {
+	g := NewGomegaWithT(t)
+	datacenter := eksav1alpha1.Ref{Kind: eksav1alpha1.SnowDatacenterKind}
+	analyzerFactory := diagnostics.NewAnalyzerFactory()
+	analyzers := analyzerFactory.DataCenterConfigAnalyzers(datacenter)
+	g.Expect(analyzers).To(HaveLen(3), "DataCenterConfigAnalyzers() mismatch between desired analyzers and actual")
+}

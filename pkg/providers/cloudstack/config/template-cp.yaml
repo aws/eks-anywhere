@@ -342,8 +342,6 @@ spec:
           timeAdded: {{ .TimeAdded }}
 {{- end }}
 {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
       nodeRegistration:
@@ -366,8 +364,6 @@ spec:
           timeAdded: {{ .TimeAdded }}
 {{- end }}
 {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     preKubeadmCommands:
     - swapoff -a

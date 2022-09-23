@@ -159,6 +159,8 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 		return a.eksaDockerAnalyzers()
 	case v1alpha1.CloudStackDatacenterKind:
 		return a.eksaCloudstackAnalyzers()
+	case v1alpha1.SnowDatacenterKind:
+		return a.eksaSnowAnalyzers()
 	default:
 		return nil
 	}
@@ -181,6 +183,15 @@ func (a *analyzerFactory) eksaCloudstackAnalyzers() []*Analyze {
 		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) eksaSnowAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("snowdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("snowmachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	analyzers := a.generateCrdAnalyzers(crds)
+	return append(analyzers, a.validControlPlaneIPAnalyzer())
 }
 
 func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
