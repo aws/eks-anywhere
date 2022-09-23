@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/workflow"
-	"github.com/aws/eks-anywhere/pkg/workflow/management/task"
+	"github.com/aws/eks-anywhere/pkg/workflow/task/bootstrap"
 )
 
 // Define tasks names for each task run as part of the create cluster workflow. To aid readability
@@ -30,10 +30,10 @@ type CreateCluster struct {
 	Spec *cluster.Spec
 
 	// CreateBootstrapOptions supplies bootstrap cluster options for creating bootstrap clusters.
-	CreateBootstrapOptions task.BootstrapOptionsRetriever
+	CreateBootstrapOptions bootstrap.BootstrapOptionsRetriever
 
 	// Bootstrapper creates and destroys bootstrap clusters.
-	Bootstrapper task.Bootstrapper
+	Bootstrapper bootstrap.Bootstrapper
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
@@ -63,7 +63,7 @@ func (cfg CreateCluster) build() (*workflow.Workflow, error) {
 		r.RegisterCreateManagementClusterHooks(wflw)
 	}
 
-	err := wflw.AppendTask(CreateBootstrapCluster, task.CreateBootstrapCluster{
+	err := wflw.AppendTask(CreateBootstrapCluster, bootstrap.CreateBootstrapCluster{
 		Spec:         cfg.Spec,
 		Options:      cfg.CreateBootstrapOptions,
 		Bootstrapper: cfg.Bootstrapper,
@@ -72,7 +72,7 @@ func (cfg CreateCluster) build() (*workflow.Workflow, error) {
 		return nil, err
 	}
 
-	err = wflw.AppendTask(DeleteBootstrapCluster, task.DeleteBootstrapCluster{
+	err = wflw.AppendTask(DeleteBootstrapCluster, bootstrap.DeleteBootstrapCluster{
 		Bootstrapper: cfg.Bootstrapper,
 	})
 	if err != nil {
