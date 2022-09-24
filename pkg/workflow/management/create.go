@@ -8,6 +8,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/workflow/management/task"
 )
 
+// Define tasks names for each task run as part of the create cluster workflow. To aid readability
+// the order of task names should be representative of the order of execution.
+const (
+	CreateBootstrapCluster workflow.TaskName = "CreateBootstrapCluster"
+	DeleteBootstrapCluster workflow.TaskName = "DeleteBootstrapCluster"
+)
+
 // CreateClusterHookRegistrar is a Hook registrar that binds hooks to a create management cluster
 // workflow.
 type CreateClusterHookRegistrar interface {
@@ -56,7 +63,7 @@ func (cfg CreateCluster) build() (*workflow.Workflow, error) {
 		r.RegisterCreateManagementClusterHooks(wflw)
 	}
 
-	err := wflw.AppendTask(task.CreateBootstrapCluster{
+	err := wflw.AppendTask(CreateBootstrapCluster, task.CreateBootstrapCluster{
 		Spec:         cfg.Spec,
 		Options:      cfg.CreateBootstrapOptions,
 		Bootstrapper: cfg.Bootstrapper,
@@ -65,7 +72,7 @@ func (cfg CreateCluster) build() (*workflow.Workflow, error) {
 		return nil, err
 	}
 
-	err = wflw.AppendTask(task.DeleteBootstrapCluster{
+	err = wflw.AppendTask(DeleteBootstrapCluster, task.DeleteBootstrapCluster{
 		Bootstrapper: cfg.Bootstrapper,
 	})
 	if err != nil {
