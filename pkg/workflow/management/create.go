@@ -15,6 +15,13 @@ const (
 	DeleteBootstrapCluster workflow.TaskName = "DeleteBootstrapCluster"
 )
 
+// Define tasks names for each task run as part of the create cluster workflow. To aid readability
+// the order of task names should be representative of the order of execution.
+const (
+	CreateBootstrapCluster workflow.TaskName = "CreateBootstrapCluster"
+	DeleteBootstrapCluster workflow.TaskName = "DeleteBootstrapCluster"
+)
+
 // CreateClusterHookRegistrar is a Hook registrar that binds hooks to a create management cluster
 // workflow.
 type CreateClusterHookRegistrar interface {
