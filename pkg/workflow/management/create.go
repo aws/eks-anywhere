@@ -5,7 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/workflow"
-	"github.com/aws/eks-anywhere/pkg/workflow/management/task"
+	"github.com/aws/eks-anywhere/pkg/workflow/task/bootstrap"
 )
 
 // Define tasks names for each task run as part of the create cluster workflow. To aid readability
@@ -30,10 +30,10 @@ type CreateCluster struct {
 	Spec *cluster.Spec
 
 	// CreateBootstrapOptions supplies bootstrap cluster options for creating bootstrap clusters.
-	CreateBootstrapOptions task.BootstrapOptionsRetriever
+	CreateBootstrapClusterOptions bootstrap.OptionsRetriever
 
 	// Bootstrapper creates and destroys bootstrap clusters.
-	Bootstrapper task.Bootstrapper
+	Bootstrapper bootstrap.Bootstrapper
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
@@ -41,13 +41,14 @@ type CreateCluster struct {
 }
 
 // WithHookRegistrar adds a hook registrar to the create cluster workflow builder.
-func (b *CreateCluster) WithHookRegistrar(registrar CreateClusterHookRegistrar) *CreateCluster {
-	b.hookRegistrars = append(b.hookRegistrars, registrar)
-	return b
+func (c *CreateCluster) WithHookRegistrar(registrar CreateClusterHookRegistrar) *CreateCluster {
+	c.hookRegistrars = append(c.hookRegistrars, registrar)
+	return c
 }
 
-func (b CreateCluster) Run(ctx context.Context) error {
-	wflw, err := b.build()
+// Run runs the create cluster workflow.
+func (c CreateCluster) Run(ctx context.Context) error {
+	wflw, err := c.build()
 	if err != nil {
 		return err
 	}
@@ -55,25 +56,24 @@ func (b CreateCluster) Run(ctx context.Context) error {
 	return wflw.Execute(ctx)
 }
 
-// Build builds the create cluster workflow.
-func (cfg CreateCluster) build() (*workflow.Workflow, error) {
+func (c CreateCluster) build() (*workflow.Workflow, error) {
 	wflw := workflow.New(workflow.Config{})
 
-	for _, r := range cfg.hookRegistrars {
+	for _, r := range c.hookRegistrars {
 		r.RegisterCreateManagementClusterHooks(wflw)
 	}
 
-	err := wflw.AppendTask(CreateBootstrapCluster, task.CreateBootstrapCluster{
-		Spec:         cfg.Spec,
-		Options:      cfg.CreateBootstrapOptions,
-		Bootstrapper: cfg.Bootstrapper,
+	err := wflw.AppendTask(CreateBootstrapCluster, bootstrap.CreateCluster{
+		Spec:         c.Spec,
+		Options:      c.CreateBootstrapClusterOptions,
+		Bootstrapper: c.Bootstrapper,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	err = wflw.AppendTask(DeleteBootstrapCluster, task.DeleteBootstrapCluster{
-		Bootstrapper: cfg.Bootstrapper,
+	err = wflw.AppendTask(DeleteBootstrapCluster, bootstrap.DeleteCluster{
+		Bootstrapper: c.Bootstrapper,
 	})
 	if err != nil {
 		return nil, err
