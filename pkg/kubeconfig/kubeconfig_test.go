@@ -64,6 +64,21 @@ func TestValidateFile(t *testing.T) {
 			t.Fatalf("expected no error, got %s", err)
 		}
 	})
+
+	t.Run("trims whitespace around a filename", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
+		err := ValidateFile("   " + goodFile.Name() + "\t\n")
+		if err != nil {
+			t.Fatalf("expected no error, got %s", err)
+		}
+	})
+
+	t.Run("handles a filename that is only whitespace as if it were empty", func(t *testing.T) {
+		err := ValidateFile("   \t \n")
+		if errors.Is(err, nil) {
+			t.Fatalf("expected error, got nil")
+		}
+	})
 }
 
 // withFakeFile returns a throwaway file in a test-specific directory.
@@ -145,6 +160,61 @@ func TestFromEnvironment(t *testing.T) {
 		got = FromEnvironment()
 		if got != expected {
 			t.Fatalf("expected %q, got %q", expected, got)
+		}
+	})
+}
+
+func TestValidateFileOrEnv(t *testing.T) {
+	t.Run("returns an error when the filename doesn't validate", func(t *testing.T) {
+		_, err := ValidateFileOrEnv("/dev/null")
+		if errors.Is(err, nil) {
+			t.Fatalf("expected error, got %q", err)
+		}
+	})
+
+	t.Run("returns the filename if it's valid", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
+		filename, err := ValidateFileOrEnv(goodFile.Name())
+		if err != nil {
+			t.Fatalf("expected no error, got %s", err)
+		}
+		if filename != goodFile.Name() {
+			t.Fatalf("expected %q, got %q", goodFile.Name(), filename)
+		}
+	})
+
+	t.Run("falls back to the environment if the filename is empty", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
+		t.Setenv("KUBECONFIG", goodFile.Name())
+		filename, err := ValidateFileOrEnv("")
+		if err != nil {
+			t.Fatalf("expected no error, got %s", err)
+		}
+		if filename != goodFile.Name() {
+			t.Fatalf("expected %q, got %q", goodFile.Name(), filename)
+		}
+	})
+
+	t.Run("returns an empty string if both the filename and env var are empty", func(t *testing.T) {
+		t.Setenv("KUBECONFIG", "")
+		filename, err := ValidateFileOrEnv("")
+		if err != nil {
+			t.Fatalf("expected no error, got %s", err)
+		}
+		if filename != "" {
+			t.Fatalf("expected \"\", got %q", filename)
+		}
+	})
+
+	t.Run("returns an error if the environment file's contents are invalid", func(t *testing.T) {
+		badFile := withFakeFileContents(t, bytes.NewReader(kindTypo))
+		t.Setenv("KUBECONFIG", badFile.Name())
+		filename, err := ValidateFileOrEnv("")
+		if errors.Is(err, nil) {
+			t.Fatalf("expected validation error, got %s", err)
+		}
+		if filename != "" {
+			t.Fatalf("expected \"\", got %q", filename)
 		}
 	})
 }
