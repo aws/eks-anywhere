@@ -50,6 +50,7 @@ const (
 	CleanupVmsVar                    = "T_CLEANUP_VMS"
 	hardwareYamlPath                 = "hardware.yaml"
 	hardwareCsvPath                  = "hardware.csv"
+	EksaPackagesInstallation         = "eks-anywhere-packages"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -830,9 +831,32 @@ func (e *ClusterE2ETest) InstallHelmChart() {
 	kubeconfig := e.kubeconfigFilePath()
 	ctx := context.Background()
 
-	err := e.HelmInstallConfig.HelmClient.InstallChart(ctx, e.HelmInstallConfig.chartName, e.HelmInstallConfig.chartURI, e.HelmInstallConfig.chartVersion, kubeconfig, e.HelmInstallConfig.chartValues)
+	err := e.HelmInstallConfig.HelmClient.InstallChart(
+		ctx,
+		e.HelmInstallConfig.chartName,
+		e.HelmInstallConfig.chartURI,
+		e.HelmInstallConfig.chartVersion,
+		kubeconfig,
+		e.HelmInstallConfig.chartValues,
+	)
 	if err != nil {
 		e.T.Fatalf("Error installing %s helm chart on the cluster: %v", e.HelmInstallConfig.chartName, err)
+	}
+}
+
+func (e *ClusterE2ETest) CreateNamespace(namespace string) {
+	kubeconfig := e.kubeconfigFilePath()
+	err := e.KubectlClient.CreateNamespace(context.Background(), kubeconfig, namespace)
+	if err != nil {
+		e.T.Fatalf("Namespace creation failed for %s", namespace)
+	}
+}
+
+func (e *ClusterE2ETest) DeleteNamespace(namespace string) {
+	kubeconfig := e.kubeconfigFilePath()
+	err := e.KubectlClient.DeleteNamespace(context.Background(), kubeconfig, namespace)
+	if err != nil {
+		e.T.Fatalf("Namespace deletion failed for %s", namespace)
 	}
 }
 
@@ -840,12 +864,25 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	kubeconfig := e.kubeconfigFilePath()
 	// TODO Add a test that installs the controller via the CLI.
 	ctx := context.Background()
-	err := e.PackageConfig.HelmClient.InstallChart(ctx,
-		e.PackageConfig.chartName, e.PackageConfig.chartURI,
-		e.PackageConfig.chartVersion, kubeconfig, e.PackageConfig.chartValues)
+	charts, err := e.PackageConfig.HelmClient.ListCharts(ctx, kubeconfig)
 	if err != nil {
-		e.T.Fatalf("Error installing %s helm chart on the cluster: %v",
-			e.PackageConfig.chartName, err)
+		e.T.Fatalf("Unable to list charts: %v", err)
+	}
+	installed := false
+	for _, c := range charts {
+		if c == EksaPackagesInstallation {
+			installed = true
+			break
+		}
+	}
+	if !installed {
+		err = e.PackageConfig.HelmClient.InstallChart(ctx,
+			e.PackageConfig.chartName, e.PackageConfig.chartURI,
+			e.PackageConfig.chartVersion, kubeconfig, e.PackageConfig.chartValues)
+		if err != nil {
+			e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
+				e.PackageConfig.chartName, err)
+		}
 	}
 }
 
@@ -855,8 +892,24 @@ func (e *ClusterE2ETest) InstallCuratedPackage(packageName, packagePrefix string
 	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
 	e.RunEKSA([]string{
 		"install", "package", packageName,
-		"--source=registry", "--registry=public.ecr.aws/l0g8r8j6",
-		"--package-name=" + packagePrefix, "-v=9", "--kube-version=1.21",
+		"--source=cluster",
+		"--package-name=" + packagePrefix, "-v=9",
+		strings.Join(opts, " "),
+	})
+}
+
+func (e *ClusterE2ETest) CreateResource(ctx context.Context, resource string) {
+	err := e.KubectlClient.ApplyKubeSpecFromBytes(ctx, e.cluster(), []byte(resource))
+	if err != nil {
+		e.T.Fatalf("Failed to create required resource (%s): %v", resource, err)
+	}
+}
+
+func (e *ClusterE2ETest) UninstallCuratedPackage(packagePrefix string, opts ...string) {
+	os.Setenv("CURATED_PACKAGES_SUPPORT", "true")
+	os.Setenv("KUBECONFIG", e.kubeconfigFilePath())
+	e.RunEKSA([]string{
+		"delete", "package", packagePrefix, "-v=9",
 		strings.Join(opts, " "),
 	})
 }
@@ -876,6 +929,16 @@ func (e *ClusterE2ETest) WithCluster(f func(e *ClusterE2ETest)) {
 	e.GenerateClusterConfig()
 	e.CreateCluster()
 	defer e.DeleteCluster()
+	f(e)
+}
+
+// Like WithCluster but does not delete the cluster. Useful for debugging.
+func (e *ClusterE2ETest) WithPersistentCluster(f func(e *ClusterE2ETest)) {
+	configPath := e.kubeconfigFilePath()
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		e.GenerateClusterConfig()
+		e.CreateCluster()
+	}
 	f(e)
 }
 

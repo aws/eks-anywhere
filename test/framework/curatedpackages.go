@@ -1,6 +1,8 @@
 package framework
 
-import "testing"
+import (
+	"testing"
+)
 
 type PackageConfig struct {
 	*HelmInstallConfig
