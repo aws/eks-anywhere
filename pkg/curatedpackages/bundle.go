@@ -107,8 +107,8 @@ func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.Pac
 	return obj, nil
 }
 
-func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1.PackageBundleController, newBundle string) error {
-	controller.Spec.ActiveBundle = newBundle
+func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1.PackageBundleController, newBundleVersion string) error {
+	controller.Spec.ActiveBundle = newBundleVersion
 	controllerYaml, err := yaml.Marshal(controller)
 	if err != nil {
 		return err

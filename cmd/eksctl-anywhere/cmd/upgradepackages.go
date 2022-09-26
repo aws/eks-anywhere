@@ -71,9 +71,5 @@ func upgradePackages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = b.UpgradeBundle(ctx, activeController, upo.bundleVersion)
-	if err != nil {
-		return err
-	}
-	return nil
+	return b.UpgradeBundle(ctx, activeController, upo.bundleVersion)
 }
