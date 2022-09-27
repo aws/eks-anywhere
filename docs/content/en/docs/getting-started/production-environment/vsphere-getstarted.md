@@ -159,7 +159,7 @@ Follow these steps if you want to use your initial cluster to create and manage 
    ```
 
    Refer to the initial config described earlier for the required and optional settings.
-   The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
+   Ensure workload cluster object names (`Cluster`, `vSphereDatacenterConfig`, `vSphereMachineConfig`, etc.) are distinct from management cluster object names.
 
 1. Create a workload cluster
 
