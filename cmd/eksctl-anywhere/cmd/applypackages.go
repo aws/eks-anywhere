@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type applyPackageOptions struct {
@@ -51,12 +50,11 @@ var applyPackagesCommand = &cobra.Command{
 }
 
 func applyPackages(ctx context.Context) error {
-	kubeConfig := apo.kubeConfig
-	if kubeConfig == "" {
-		kubeConfig = kubeconfig.FromEnvironment()
-	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	kubeConfig, err := kubeconfig.ValidateFileOrEnv(apo.kubeConfig)
+	if err != nil {
+		return err
 	}
+
 	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
