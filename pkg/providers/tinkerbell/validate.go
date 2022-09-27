@@ -49,11 +49,12 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.osFamily: %v", config.Name)
 	}
 
-	if config.Spec.OSFamily != v1alpha1.Ubuntu && config.Spec.OSFamily != v1alpha1.Bottlerocket {
+	if config.Spec.OSFamily != v1alpha1.Ubuntu && config.Spec.OSFamily != v1alpha1.Bottlerocket && config.Spec.OSFamily != v1alpha1.RedHat {
 		return fmt.Errorf(
-			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s",
+			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s, %s",
 			config.Spec.OSFamily,
 			v1alpha1.Ubuntu,
+			v1alpha1.RedHat,
 			v1alpha1.Bottlerocket,
 		)
 	}
