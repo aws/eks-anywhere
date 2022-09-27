@@ -165,9 +165,9 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 
 	if features.UseNewWorkflows().IsActive() {
 		err = (management.CreateCluster{
-			Spec:                          clusterSpec,
-			Bootstrapper:                  deps.Bootstrapper,
-			CreateBootstrapClusterOptions: deps.Provider,
+			Spec:                 clusterSpec,
+			Client:               deps.Bootstrapper,
+			CreateClusterOptions: deps.Provider,
 		}).Run(ctx)
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
