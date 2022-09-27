@@ -64,8 +64,8 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
-	connectionRefusedRegex               = regexp.MustCompile("The connection to the server .* was refused")
-	ioTimeoutRegex                       = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
+	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
+	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
 )
 
 type Kubectl struct {
@@ -374,10 +374,10 @@ func kubectlWaitRetryPolicy(totalRetries int, err error) (retry bool, wait time.
 	const backoffFactor = 1.5
 	waitTime := time.Duration(float64(networkFaultBaseRetryTime) * math.Pow(backoffFactor, float64(totalRetries-1)))
 
-	if match := connectionRefusedRegex.MatchString(err.Error()); match {
+	if match := kubectlConnectionRefusedRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
-	if match := ioTimeoutRegex.MatchString(err.Error()); match {
+	if match := kubectlIoTimeoutRegex.MatchString(err.Error()); match {
 		return true, waitTime
 	}
 	return false, 0
