@@ -161,15 +161,6 @@ func GetLatestBundleFromCluster(test *framework.ClusterE2ETest) (string, error) 
 	return strings.Trim(bundle, "'"), nil
 }
 
-func TestPackagesInstallSimpleFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(t, framework.NewDocker(t),
-		framework.WithPackageConfig(t, EksaPackageBundleURI, EksaPackageControllerHelmChartName,
-			EksaPackageControllerHelmURI, EksaPackageControllerHelmVersion,
-			EksaPackageControllerHelmValues),
-	)
-	runCuratedPackageInstallSimpleFlow(test) // other args as necessary
-}
-
 // packageBundleURI uses a KubernetesVersion argument to complete a package
 // bundle URI by adding the approprate tag.
 func packageBundleURI(version v1alpha1.KubernetesVersion) string {
