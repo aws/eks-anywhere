@@ -153,7 +153,6 @@ spec:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
       - echo "after kubeadm call" > /var/log/postkubeadm.log
     useExperimentalRetryJoin: true
-    verbosity: 10
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
@@ -180,4 +179,3 @@ spec:
         - echo "before kubeadm call" > /var/log/prekubeadm.log
       postKubeadmCommands:
         - echo "after kubeadm call" > /var/log/postkubeadm.log
-      verbosity: 10
