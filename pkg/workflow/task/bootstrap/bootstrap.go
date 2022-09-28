@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflow/contextutil"
 )
@@ -26,7 +27,12 @@ type Bootstrapper interface {
 	) (*types.Cluster, error)
 
 	// DeleteBootstrapCluster deletes a local cluster created with CreateCluster.
-	DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, isUpgrade bool) error
+	DeleteBootstrapCluster(
+		ctx context.Context,
+		cluster *types.Cluster,
+		operationType constants.Operation,
+		isForceCleanup bool,
+	) error
 }
 
 // CreateClusters creates a functional Kubernetes cluster that can be used to faciliate
@@ -69,7 +75,7 @@ type DeleteCluster struct {
 func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
 	cluster := contextutil.BootstrapCluster(ctx)
 
-	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, &cluster, false); err != nil {
+	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, &cluster, constants.Create, false); err != nil {
 		return ctx, err
 	}
 

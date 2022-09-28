@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
+	"github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
@@ -175,7 +176,15 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	if features.UseNewWorkflows().IsActive() {
+		err = (management.CreateCluster{
+			Spec:                          clusterSpec,
+			Bootstrapper:                  deps.Bootstrapper,
+			CreateBootstrapClusterOptions: deps.Provider,
+		}).Run(ctx)
+	} else {
+		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	}
 
 	cleanup(deps, &err)
 	return err
