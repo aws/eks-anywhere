@@ -39,7 +39,7 @@ var deletePackageCommand = &cobra.Command{
 }
 
 func deleteResources(ctx context.Context, args []string) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(delPkgOpts.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(delPkgOpts.kubeConfig, "")
 	if err != nil {
 		return err
 	}

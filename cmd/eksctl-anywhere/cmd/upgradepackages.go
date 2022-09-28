@@ -48,7 +48,7 @@ var upgradePackagesCommand = &cobra.Command{
 }
 
 func upgradePackages(ctx context.Context) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(upo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(upo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

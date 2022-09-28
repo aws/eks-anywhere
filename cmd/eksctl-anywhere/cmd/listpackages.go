@@ -57,7 +57,7 @@ var listPackagesCommand = &cobra.Command{
 }
 
 func listPackages(ctx context.Context) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(lpo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(lpo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

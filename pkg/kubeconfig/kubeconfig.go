@@ -39,11 +39,54 @@ func FromEnvironment() string {
 	return ""
 }
 
-// ValidateFile loads a file to validate it's basic contents.
+// ResolveFilename returns a path to a kubeconfig file by priority.
+//
+// The priority is:
+//
+//   1. CLI flag (flagValue)
+//   2. A file created at cluster creation, found by a combining the cluster
+//      name with present working directory.
+//   3. The first filename found in the KUBECONFIG environment variable.
+//
+// NO VALIDATION IS PERFORMED. See ValidateFile for validation.
+//
+// There are other places one may wish to consult or load a kubeconfig file
+// from, but this function tries to walk the narrow line between what the
+// kubernetes client code does (#1, #3, and some other things that we more or
+// less don't support), with some of the existing EKSA CLI tools that look for
+// kubeconfig files relative to the working directory that were created at
+// cluster creation time. These different functionalities don't always mesh,
+// and aren't always compatible, but this function tries to combine them as
+// much as possible, without breaking either.
+func ResolveFilename(flagValue, clusterName string) string {
+	if flagValue != "" {
+		return flagValue
+	}
+
+	if clusterName != "" {
+		return FromClusterName(clusterName)
+	}
+
+	return FromEnvironment()
+}
+
+// ResolveAndValidate composes ResolveFilename and ValidateFile.
+//
+// Literally, that's all it does. They're frequently called together, so
+// hopefully this is a helper.
+func ResolveAndValidateFilename(flagValue, clusterName string) (string, error) {
+	filename := ResolveFilename(flagValue, clusterName)
+	if err := ValidateFilename(filename); err != nil {
+		return "", err
+	}
+	return filename, nil
+}
+
+// ValidateFilename loads a file to validate it's basic contents.
 //
 // The values of the fields within aren't validated, but the file's existence
 // and basic structure are checked.
-func ValidateFile(filename string) error {
+func ValidateFilename(filename string) error {
 	wrapError := func(err error) error {
 		return fmt.Errorf("validating kubeconfig %q: %w", filename, err)
 	}
@@ -66,33 +109,4 @@ func ValidateFile(filename string) error {
 	}
 
 	return nil
-}
-
-// ValidateFileOrEnv validates the given filename if it's not empty. If it's
-// empty, it attempts to validate the filename returned from the
-// FromEnvironment function. If that too is empty, it returns the empty
-// string.
-func ValidateFileOrEnv(filename string) (string, error) {
-	var err error
-
-	// Trim whitespace from the beginning and end of the filename. While these
-	// could technically be valid filenames, it's far more likely a typo or
-	// shell-parsing bug.
-	if trimmed := strings.TrimSpace(filename); trimmed != "" {
-		err = ValidateFile(trimmed)
-		if err != nil {
-			return "", err
-		}
-		return trimmed, nil
-	}
-
-	if envFilename := FromEnvironment(); envFilename != "" {
-		err = ValidateFile(envFilename)
-		if err != nil {
-			return "", err
-		}
-		return envFilename, nil
-	}
-
-	return "", nil
 }

@@ -50,7 +50,7 @@ var createPackagesCommand = &cobra.Command{
 }
 
 func createPackages(ctx context.Context) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(cpo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(cpo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

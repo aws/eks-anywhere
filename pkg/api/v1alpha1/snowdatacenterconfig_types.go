@@ -59,15 +59,15 @@ func (s *SnowDatacenterConfig) ClearPauseAnnotation() {
 
 func (s *SnowDatacenterConfig) Validate() error {
 	if len(s.Spec.IdentityRef.Name) == 0 {
-		return fmt.Errorf("SnowDatacenterConfig IdetityRef name must not be empty")
+		return fmt.Errorf("SnowDatacenterConfig IdentityRef name must not be empty")
 	}
 
 	if len(s.Spec.IdentityRef.Kind) == 0 {
-		return fmt.Errorf("SnowDatacenterConfig IdetityRef kind must not be empty")
+		return fmt.Errorf("SnowDatacenterConfig IdentityRef kind must not be empty")
 	}
 
 	if s.Spec.IdentityRef.Kind != SnowIdentityKind {
-		return fmt.Errorf("SnowDatacenterConfig IdetityRef kind %s is invalid, the only supported kind is %s", s.Spec.IdentityRef.Kind, SnowIdentityKind)
+		return fmt.Errorf("SnowDatacenterConfig IdentityRef kind %s is invalid, the only supported kind is %s", s.Spec.IdentityRef.Kind, SnowIdentityKind)
 	}
 	return nil
 }

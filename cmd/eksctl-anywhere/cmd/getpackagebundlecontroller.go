@@ -32,7 +32,7 @@ var getPackageBundleControllerCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig, err := kubeconfig.ValidateFileOrEnv(gpbco.kubeConfig)
+		kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpbco.kubeConfig, "")
 		if err != nil {
 			return err
 		}

@@ -32,7 +32,7 @@ var getPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig, err := kubeconfig.ValidateFileOrEnv(gpo.kubeConfig)
+		kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpo.kubeConfig, "")
 		if err != nil {
 			return err
 		}

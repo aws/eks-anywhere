@@ -69,7 +69,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
-	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return err
 	}
 
