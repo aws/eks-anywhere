@@ -6,6 +6,7 @@ import (
 	"github.com/onsi/gomega"
 	"github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
@@ -18,6 +19,57 @@ func TestCatalogue_Hardware_Insert(t *testing.T) {
 
 	err := catalogue.InsertHardware(&v1alpha1.Hardware{})
 	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+}
+
+func TestCatalogue_Hardwares_Remove(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+
+	err := catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	err = catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw2",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardwares([]v1alpha1.Hardware{
+		{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      "hw2",
+				Namespace: "namespace",
+			},
+		},
+	})).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+}
+
+func TestCatalogue_Hardware_RemoveFail(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	catalogue := hardware.NewCatalogue()
+
+	err := catalogue.InsertHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw1",
+			Namespace: "namespace",
+		},
+	})
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(catalogue.RemoveHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw2",
+			Namespace: "namespace",
+		},
+	}, 1)).To(gomega.HaveOccurred())
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
 }
 
