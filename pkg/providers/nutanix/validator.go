@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	"github.com/nutanix-cloud-native/prism-go-client/v3"
 	"go.uber.org/multierr"
@@ -143,7 +142,7 @@ func findSubnetUUIDByName(ctx context.Context, v3Client v3Client, subnetName str
 	}
 
 	if len(res.Entities) > 1 {
-		logr.FromContextOrDiscard(ctx).Info("Found more than one (%v) subnet with name %q.", len(res.Entities), subnetName)
+		return nil, fmt.Errorf("found more than one (%v) subnet with name %q", len(res.Entities), subnetName)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
@@ -159,7 +158,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client v3Client, clusterName s
 	}
 
 	if len(res.Entities) > 1 {
-		logr.FromContextOrDiscard(ctx).Info("Found more than one (%v) cluster with name %q.", len(res.Entities), clusterName)
+		return nil, fmt.Errorf("found more than one (%v) cluster with name %q", len(res.Entities), clusterName)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
@@ -175,7 +174,7 @@ func findImageUUIDByName(ctx context.Context, v3Client v3Client, imageName strin
 	}
 
 	if len(res.Entities) > 1 {
-		logr.FromContextOrDiscard(ctx).Info("Found more than one (%v) image with name %q.", len(res.Entities), imageName)
+		return nil, fmt.Errorf("found more than one (%v) image with name %q", len(res.Entities), imageName)
 	}
 
 	return res.Entities[0].Metadata.UUID, nil
