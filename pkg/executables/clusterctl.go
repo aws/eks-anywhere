@@ -36,7 +36,7 @@ const (
 //go:embed config/clusterctl.yaml
 var clusterctlConfigTemplate string
 
-var clusterctlNetworkErrorRegex = regexp.MustCompile(".*failed to connect to the management cluster\\:.*")
+var clusterctlNetworkErrorRegex = regexp.MustCompile(`.*failed to connect to the management cluster:.*`)
 
 type Clusterctl struct {
 	Executable
