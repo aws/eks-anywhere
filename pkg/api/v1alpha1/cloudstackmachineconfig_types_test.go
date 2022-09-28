@@ -33,7 +33,7 @@ func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
 }
 
 func TestCloudStackMachineConfigEmptyDiskOfferingEqual(t *testing.T) {
-	var nilDiskOffering v1alpha1.CloudStackResourceDiskOffering
+	var nilDiskOffering *v1alpha1.CloudStackResourceDiskOffering
 	emptyDiskOffering := &v1alpha1.CloudStackResourceDiskOffering{
 		MountPath:  "",
 		Device:     "",
