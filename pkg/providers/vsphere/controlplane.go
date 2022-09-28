@@ -17,16 +17,30 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
-// ControlPlane represents a CAPI docker control plane
-type ControlPlane = clusterapi.ControlPlane[*vspherev1.VSphereCluster, *vspherev1.VSphereMachineTemplate, ProviderControlPlane]
+// BaseControlPlane represents a CAPI docker control plane
+type BaseControlPlane = clusterapi.ControlPlane[*vspherev1.VSphereCluster, *vspherev1.VSphereMachineTemplate]
 
-// ProviderControlPlane holds the vsphere specific objects for a CAPI docker control plane
-type ProviderControlPlane struct {
+type ControlPlaneBuilder struct {
+	baseBuilder *yamlcapi.ControlPlaneBuilder[*vspherev1.VSphereCluster, *vspherev1.VSphereMachineTemplate]
+	cp          *ControlPlane
+}
+
+func (b *ControlPlaneBuilder) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
+	b.baseBuilder.BuildFromParsed(lookup)
+	b.cp.BaseControlPlane = *b.baseBuilder.ControlPlane
+	processSecret(b.cp, lookup)
+
+	return nil
+}
+
+// ControlPlane holds the vsphere specific objects for a CAPI docker control plane
+type ControlPlane struct {
+	BaseControlPlane
 	Secrets []*corev1.Secret
 }
 
-func (p ProviderControlPlane) Objects() []kubernetes.Object {
-	o := make([]kubernetes.Object, 0, len(p.Secrets))
+func (p ControlPlane) Objects() []kubernetes.Object {
+	o := p.BaseControlPlane.Objects()
 	for _, s := range p.Secrets {
 		o = append(o, s)
 	}
@@ -34,7 +48,7 @@ func (p ProviderControlPlane) Objects() []kubernetes.Object {
 	return o
 }
 
-// ControlPlaneSpec builds a docker ControlPlane definition based on a eks-a cluster spec
+// ControlPlaneSpec builds a vsohere ControlPlane definition based on a eks-a cluster spec
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
 	// passing nil just for the example
 	templateBuilder := NewVsphereTemplateBuilder(nil, nil, nil, nil, time.Now, false)
@@ -50,15 +64,17 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 		return nil, errors.Wrap(err, "generating vsphere control plane yaml spec")
 	}
 
-	parser, err := newControlPlaneParser(logger)
+	parser, builder, err := newControlPlaneParser(logger)
 	if err != nil {
 		return nil, err
 	}
 
-	cp, err := parser.Parse(controlPlaneYaml)
+	err = parser.Parse(controlPlaneYaml, builder)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing docker control plane yaml")
 	}
+
+	cp := builder.cp
 
 	if err = cp.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating docker immutable object names")
@@ -67,8 +83,8 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	return cp, nil
 }
 
-func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], error) {
-	parser, err := yamlcapi.NewControlPlaneParser[*vspherev1.VSphereCluster, *vspherev1.VSphereMachineTemplate, ProviderControlPlane](
+func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *ControlPlaneBuilder, error) {
+	parser, baseBuilder, err := yamlcapi.NewControlPlaneParser(
 		logger,
 		yamlutil.NewMapping(
 			"VSphereCluster",
@@ -84,7 +100,7 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], 
 		),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "building vsphere control plane parser")
+		return nil, nil, errors.Wrap(err, "building vsphere control plane parser")
 	}
 
 	err = parser.RegisterMappings(
@@ -94,20 +110,21 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], 
 	)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "registering vsphere control plane mappings in parser")
+		return nil, nil, errors.Wrap(err, "registering vsphere control plane mappings in parser")
 	}
 
-	parser.RegisterProcessors(
-		processSecret,
-	)
+	builder := &ControlPlaneBuilder{
+		baseBuilder: baseBuilder,
+		cp:          &ControlPlane{},
+	}
 
-	return parser, nil
+	return parser, builder, nil
 }
 
 func processSecret(c *ControlPlane, lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "Secret" {
-			c.Provider.Secrets = append(c.Provider.Secrets, obj.(*corev1.Secret))
+			c.Secrets = append(c.Secrets, obj.(*corev1.Secret))
 		}
 	}
 }

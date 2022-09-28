@@ -21,22 +21,21 @@ type (
 	// Parser allows to parse from yaml with kubernetes style objects and
 	// store them in a type T
 	// It allows to dynamically register configuration for mappings and object processing
-	Parser[T any] struct {
+	Parser struct {
 		apiObjectMapping map[string]APIObjectGenerator
-		processors       []ParsedProcessor[T]
 		logger           logr.Logger
 	}
 )
 
-func NewParser[T any](logger logr.Logger) *Parser[T] {
-	return &Parser[T]{
+func NewParser(logger logr.Logger) *Parser {
+	return &Parser{
 		apiObjectMapping: make(map[string]APIObjectGenerator),
 		logger:           logger,
 	}
 }
 
 // RegisterMapping records the mapping between a kubernetes Kind and an API concrete type
-func (c *Parser[T]) RegisterMapping(kind string, generator APIObjectGenerator) error {
+func (c *Parser) RegisterMapping(kind string, generator APIObjectGenerator) error {
 	if _, ok := c.apiObjectMapping[kind]; ok {
 		return errors.Errorf("mapping for api object %s already registered", kind)
 	}
@@ -71,7 +70,7 @@ func (m Mapping[T]) ToGenericMapping() Mapping[APIObject] {
 }
 
 // RegisterMappings records a collection of mappings
-func (c *Parser[T]) RegisterMappings(mappings ...Mapping[APIObject]) error {
+func (c *Parser) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	for _, m := range mappings {
 		if err := c.RegisterMapping(m.Kind, m.New); err != nil {
 			return err
@@ -81,24 +80,24 @@ func (c *Parser[T]) RegisterMappings(mappings ...Mapping[APIObject]) error {
 	return nil
 }
 
-// RegisterProcessors records setters to fill the struct T from the parsed API objects
-func (c *Parser[T]) RegisterProcessors(processors ...ParsedProcessor[T]) {
-	c.processors = append(c.processors, processors...)
+// TODO: terrible name
+type Parseable interface {
+	BuildFromParsed(ObjectLookup) error
 }
 
 // Parse reads yaml manifest content with and generates the corresponding T
-func (c *Parser[T]) Parse(yamlManifest []byte) (*T, error) {
-	return c.Read(bytes.NewReader(yamlManifest))
+func (c *Parser) Parse(yamlManifest []byte, p Parseable) error {
+	return c.Read(bytes.NewReader(yamlManifest), p)
 }
 
 // Read reads yaml manifest and generates the corresponding T
-func (c *Parser[T]) Read(reader io.Reader) (*T, error) {
+func (c *Parser) Read(reader io.Reader, p Parseable) error {
 	parsed, err := c.unmarshal(reader)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return c.buildConfigFromParsed(parsed)
+	return c.buildConfigFromParsed(parsed, p)
 }
 
 type basicAPIObject struct {
@@ -114,7 +113,7 @@ type parsed struct {
 	objects ObjectLookup
 }
 
-func (c Parser[T]) unmarshal(reader io.Reader) (*parsed, error) {
+func (c Parser) unmarshal(reader io.Reader) (*parsed, error) {
 	parsed := &parsed{
 		objects: ObjectLookup{},
 	}
@@ -161,11 +160,6 @@ func (c Parser[T]) unmarshal(reader io.Reader) (*parsed, error) {
 	return parsed, nil
 }
 
-func (c Parser[T]) buildConfigFromParsed(p *parsed) (*T, error) {
-	t := new(T)
-	for _, processor := range c.processors {
-		processor(t, p.objects)
-	}
-
-	return t, nil
+func (c Parser) buildConfigFromParsed(parsed *parsed, p Parseable) error {
+	return p.BuildFromParsed(parsed.objects)
 }

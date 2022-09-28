@@ -11,8 +11,26 @@ import (
 	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
+func NewControlPlaneBuilder[C, M clusterapi.Object]() *ControlPlaneBuilder[C, M] {
+	return &ControlPlaneBuilder[C, M]{
+		ControlPlane: new(clusterapi.ControlPlane[C, M]),
+	}
+}
+
+type ControlPlaneBuilder[C, M clusterapi.Object] struct {
+	ControlPlane *clusterapi.ControlPlane[C, M]
+}
+
+func (cp *ControlPlaneBuilder[C, M]) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
+	ProcessCluster(cp.ControlPlane, lookup)
+	ProcessKubeadmControlPlane(cp.ControlPlane, lookup)
+	ProcessEtcdCluster(cp.ControlPlane, lookup)
+	ProcessProviderCluster(cp.ControlPlane, lookup)
+	return nil
+}
+
 // ProcessCluster finds the CAPI cluster in the parsed objects and sets it in ControlPlane
-func ProcessCluster[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](cp *clusterapi.ControlPlane[C, M, P], lookup yamlutil.ObjectLookup) {
+func ProcessCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "Cluster" {
 			cp.Cluster = obj.(*clusterv1.Cluster)
@@ -24,7 +42,7 @@ func ProcessCluster[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](c
 // ProcessCluster finds the provider cluster and the kubeadm control plane machine template in the parsed objects
 // and sets it in ControlPlane
 // Both Cluster and KubeadmControlPlane have to be processed before this
-func ProcessProviderCluster[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](cp *clusterapi.ControlPlane[C, M, P], lookup yamlutil.ObjectLookup) {
+func ProcessProviderCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	if cp.Cluster == nil || cp.KubeadmControlPlane == nil {
 		return
 	}
@@ -45,7 +63,7 @@ func ProcessProviderCluster[C, M clusterapi.Object, P clusterapi.ProviderControl
 }
 
 // ProcessKubeadmControlPlane finds the CAPI kubeadm control plane in the parsed objects and sets it in ControlPlane
-func ProcessKubeadmControlPlane[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](cp *clusterapi.ControlPlane[C, M, P], lookup yamlutil.ObjectLookup) {
+func ProcessKubeadmControlPlane[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	if cp.Cluster == nil {
 		return
 	}
@@ -59,7 +77,7 @@ func ProcessKubeadmControlPlane[C, M clusterapi.Object, P clusterapi.ProviderCon
 }
 
 // ProcessEtcdCluster finds the CAPI etcdadm cluster (for unstacked clusters) in the parsed objects and sets it in ControlPlane
-func ProcessEtcdCluster[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](cp *clusterapi.ControlPlane[C, M, P], lookup yamlutil.ObjectLookup) {
+func ProcessEtcdCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	if cp.Cluster == nil || cp.Cluster.Spec.ManagedExternalEtcdRef == nil {
 		return
 	}
@@ -81,7 +99,7 @@ func ProcessEtcdCluster[C, M clusterapi.Object, P clusterapi.ProviderControlPlan
 
 // RegisterControlPlaneMappings records the basic mappings for CAPI cluster, kubeadmcontrolplane
 // and etcdadm cluster in a Parser
-func RegisterControlPlaneMappings[T any](parser *yamlutil.Parser[T]) error {
+func RegisterControlPlaneMappings(parser *yamlutil.Parser) error {
 	err := parser.RegisterMappings(
 		yamlutil.NewMapping(
 			"Cluster", func() yamlutil.APIObject {
@@ -110,10 +128,10 @@ func RegisterControlPlaneMappings[T any](parser *yamlutil.Parser[T]) error {
 // It registers the basic shared mappings plus the provider cluster and machine template ones
 // Any extra mappings or processors for objects in the ProviderControlPlane (P) will need to be
 // registered manually
-func NewControlPlaneParser[C, M clusterapi.Object, P clusterapi.ProviderControlPlane](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineConfigMapping yamlutil.Mapping[M]) (*yamlutil.Parser[clusterapi.ControlPlane[C, M, P]], error) {
-	parser := yamlutil.NewParser[clusterapi.ControlPlane[C, M, P]](logger)
+func NewControlPlaneParser[C, M clusterapi.Object](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineConfigMapping yamlutil.Mapping[M]) (*yamlutil.Parser, *ControlPlaneBuilder[C, M], error) {
+	parser := yamlutil.NewParser(logger)
 	if err := RegisterControlPlaneMappings(parser); err != nil {
-		return nil, errors.Wrap(err, "building capi control plane parser")
+		return nil, nil, errors.Wrap(err, "building capi control plane parser")
 	}
 
 	err := parser.RegisterMappings(
@@ -121,16 +139,8 @@ func NewControlPlaneParser[C, M clusterapi.Object, P clusterapi.ProviderControlP
 		machineConfigMapping.ToGenericMapping(),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "registering provider mappings")
+		return nil, nil, errors.Wrap(err, "registering provider mappings")
 	}
 
-	parser.RegisterProcessors(
-		// Order is important, register CAPICluster before anything else
-		ProcessCluster[C, M, P],
-		ProcessKubeadmControlPlane[C, M, P],
-		ProcessEtcdCluster[C, M, P],
-		ProcessProviderCluster[C, M, P],
-	)
-
-	return parser, nil
+	return parser, NewControlPlaneBuilder[C, M](), nil
 }

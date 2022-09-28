@@ -17,13 +17,7 @@ import (
 )
 
 // ControlPlane represents a CAPI docker control plane
-type ControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate, ProviderControlPlane]
-
-// ProviderControlPlane holds the docker specific objects for a CAPI docker control plane
-// EKS-A Docker control planes don't require any additional objects
-type ProviderControlPlane struct {
-	clusterapi.NoObjectsProviderControlPlane
-}
+type ControlPlane = clusterapi.ControlPlane[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate]
 
 // ControlPlaneSpec builds a docker ControlPlane definition based on a eks-a cluster spec
 func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes.Client, spec *cluster.Spec) (*ControlPlane, error) {
@@ -39,15 +33,17 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 		return nil, errors.Wrap(err, "generating docker control plane yaml spec")
 	}
 
-	parser, err := newControlPlaneParser(logger)
+	parser, builder, err := newControlPlaneParser(logger)
 	if err != nil {
 		return nil, err
 	}
 
-	cp, err := parser.Parse(controlPlaneYaml)
+	err = parser.Parse(controlPlaneYaml, builder)
 	if err != nil {
 		return nil, errors.Wrap(err, "parsing docker control plane yaml")
 	}
+
+	cp := builder.ControlPlane
 
 	if err = cp.UpdateImmutableObjectNames(ctx, client, getMachineTemplate, machineTemplateEqual); err != nil {
 		return nil, errors.Wrap(err, "updating docker immutable object names")
@@ -56,8 +52,8 @@ func ControlPlaneSpec(ctx context.Context, logger logr.Logger, client kubernetes
 	return cp, nil
 }
 
-func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], error) {
-	parser, err := yamlcapi.NewControlPlaneParser[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate, ProviderControlPlane](
+func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser, *yamlcapi.ControlPlaneBuilder[*dockerv1.DockerCluster, *dockerv1.DockerMachineTemplate], error) {
+	parser, builder, err := yamlcapi.NewControlPlaneParser(
 		logger,
 		yamlutil.NewMapping(
 			"DockerCluster",
@@ -73,10 +69,10 @@ func newControlPlaneParser(logger logr.Logger) (*yamlutil.Parser[ControlPlane], 
 		),
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "building docker control plane parser")
+		return nil, nil, errors.Wrap(err, "building docker control plane parser")
 	}
 
-	return parser, nil
+	return parser, builder, nil
 }
 
 func getMachineTemplate(ctx context.Context, client kubernetes.Client, name, namespace string) (*dockerv1.DockerMachineTemplate, error) {
