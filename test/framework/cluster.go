@@ -24,6 +24,7 @@ import (
 	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -864,25 +865,68 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	kubeconfig := e.kubeconfigFilePath()
 	// TODO Add a test that installs the controller via the CLI.
 	ctx := context.Background()
+	// TODO are these lines necessary? I thought that helm installations were
+	// idempotent, such that we could just always run the helm install, and if
+	// it were already installed, it would be a no-op.
 	charts, err := e.PackageConfig.HelmClient.ListCharts(ctx, kubeconfig)
 	if err != nil {
 		e.T.Fatalf("Unable to list charts: %v", err)
 	}
-	installed := false
 	for _, c := range charts {
 		if c == EksaPackagesInstallation {
-			installed = true
-			break
+			return
 		}
 	}
-	if !installed {
-		err = e.PackageConfig.HelmClient.InstallChart(ctx,
-			e.PackageConfig.chartName, e.PackageConfig.chartURI,
-			e.PackageConfig.chartVersion, kubeconfig, e.PackageConfig.chartValues)
-		if err != nil {
-			e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
-				e.PackageConfig.chartName, err)
+
+	err = e.PackageConfig.HelmClient.InstallChart(ctx,
+		e.PackageConfig.chartName, e.PackageConfig.chartURI,
+		e.PackageConfig.chartVersion, kubeconfig, e.PackageConfig.chartValues)
+	if err != nil {
+		e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
+			e.PackageConfig.chartName, err)
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	err = e.waitForPackageBundleControllerActiveBundle(timeoutCtx)
+	if err != nil {
+		e.T.Fatalf("getting package bundle controller active bundle: %s", err)
+	}
+}
+
+func (e *ClusterE2ETest) waitForPackageBundleControllerActiveBundle(ctx context.Context) error {
+	done := make(chan error)
+	go func() {
+		defer close(done)
+		pbc := &packagesv1.PackageBundleController{}
+
+		for {
+			data, err := e.KubectlClient.ExecuteCommand(ctx, "get", "PackageBundleController",
+				"--namespace", packagesv1.PackageNamespace, e.ClusterName)
+			if err != nil {
+				done <- fmt.Errorf("getting package bundle controller: %w", err)
+				return
+			}
+
+			err = yaml.Unmarshal(data.Bytes(), pbc)
+			if err != nil {
+				done <- fmt.Errorf("unmarshaling YAML data: %w", err)
+				return
+			}
+
+			if pbc.Spec.ActiveBundle != "" {
+				return
+			}
+
+			time.Sleep(time.Second)
 		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+		return nil
 	}
 }
 
