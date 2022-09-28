@@ -22,7 +22,7 @@ require (
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
 	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
-	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220818171922-be34df360c50
+	github.com/nutanix-cloud-native/prism-go-client v0.3.0
 	github.com/onsi/gomega v1.19.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
