@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	"github.com/nutanix-cloud-native/prism-go-client/v3"
 	"go.uber.org/multierr"
@@ -15,24 +14,12 @@ import (
 
 // Validator is a client to validate nutanix resources
 type Validator struct {
-	v3Client client
+	client v3Client
 }
 
 // NewValidator returns a new validator client
-func NewValidator(config *anywherev1.NutanixDatacenterConfig, creds basicAuthCreds) (*Validator, error) {
-	url := fmt.Sprintf("%s:%d", config.Spec.Endpoint, config.Spec.Port)
-	nutanixCreds := prismgoclient.Credentials{
-		URL:      url,
-		Username: creds.username,
-		Password: creds.password,
-		Endpoint: config.Spec.Endpoint,
-	}
-	client, err := v3.NewV3Client(nutanixCreds)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Validator{v3Client: client.V3}, nil
+func NewValidator(client v3Client) (*Validator, error) {
+	return &Validator{client: client}, nil
 }
 
 // ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine
@@ -60,7 +47,7 @@ func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywhe
 			return fmt.Errorf("missing cluster name")
 		} else {
 			clusterName := *identifier.Name
-			clusterUUID, err := findClusterUUIDByName(ctx, v.v3Client, clusterName)
+			clusterUUID, err := findClusterUUIDByName(ctx, v.client, clusterName)
 			if err != nil {
 				return fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
 			}
@@ -73,7 +60,7 @@ func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywhe
 			return fmt.Errorf("missing cluster uuid")
 		} else {
 			clusterUUID := *identifier.UUID
-			if _, err := v.v3Client.GetCluster(ctx, clusterUUID); err != nil {
+			if _, err := v.client.GetCluster(ctx, clusterUUID); err != nil {
 				return fmt.Errorf("failed to find cluster with uuid %v: %v", clusterUUID, err)
 			}
 		}
@@ -91,7 +78,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 			return fmt.Errorf("missing image name")
 		} else {
 			imageName := *identifier.Name
-			imageUUID, err := findImageUUIDByName(ctx, v.v3Client, imageName)
+			imageUUID, err := findImageUUIDByName(ctx, v.client, imageName)
 			if err != nil {
 				return fmt.Errorf("failed to find image with name %q: %v", imageName, err)
 			}
@@ -104,7 +91,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 			return fmt.Errorf("missing image uuid")
 		} else {
 			imageUUID := *identifier.UUID
-			if _, err := v.v3Client.GetImage(ctx, imageUUID); err != nil {
+			if _, err := v.client.GetImage(ctx, imageUUID); err != nil {
 				return fmt.Errorf("failed to find image with uuid %s: %v", imageUUID, err)
 			}
 		}
@@ -122,7 +109,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 			return fmt.Errorf("missing subnet name")
 		} else {
 			subnetName := *identifier.Name
-			subnetUUID, err := findSubnetUUIDByName(ctx, v.v3Client, subnetName)
+			subnetUUID, err := findSubnetUUIDByName(ctx, v.client, subnetName)
 			if err != nil {
 				return fmt.Errorf("failed to find subnet with name %s: %v", subnetName, err)
 			} else {
@@ -135,7 +122,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 			return fmt.Errorf("missing subnet uuid")
 		} else {
 			subnetUUID := *identifier.UUID
-			if _, err := v.v3Client.GetSubnet(ctx, subnetUUID); err != nil {
+			if _, err := v.client.GetSubnet(ctx, subnetUUID); err != nil {
 				return fmt.Errorf("failed to find subnet with uuid %s: %v", subnetUUID, err)
 			}
 		}
@@ -147,7 +134,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 }
 
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name
-func findSubnetUUIDByName(ctx context.Context, v3Client client, subnetName string) (*string, error) {
+func findSubnetUUIDByName(ctx context.Context, v3Client v3Client, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", subnetName)),
 	})
@@ -163,7 +150,7 @@ func findSubnetUUIDByName(ctx context.Context, v3Client client, subnetName strin
 }
 
 // findClusterUuidByName retrieves the cluster uuid by the given cluster name
-func findClusterUUIDByName(ctx context.Context, v3Client client, clusterName string) (*string, error) {
+func findClusterUUIDByName(ctx context.Context, v3Client v3Client, clusterName string) (*string, error) {
 	res, err := v3Client.ListCluster(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", clusterName)),
 	})
@@ -179,7 +166,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client client, clusterName str
 }
 
 // findImageByName retrieves the image uuid by the given image name
-func findImageUUIDByName(ctx context.Context, v3Client client, imageName string) (*string, error) {
+func findImageUUIDByName(ctx context.Context, v3Client v3Client, imageName string) (*string, error) {
 	res, err := v3Client.ListImage(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
 	})
