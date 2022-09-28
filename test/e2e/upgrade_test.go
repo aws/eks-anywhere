@@ -484,6 +484,7 @@ func TestSnowKubernetes121To122UbuntuUpgrade(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -504,6 +505,7 @@ func TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade(t *testing.T) {
 			api.WithWorkerNodeCount(1),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -519,6 +521,7 @@ func TestSnowKubernetes122To123UbuntuMultipleFieldsUpgrade(t *testing.T) {
 			api.WithSnowPhysicalNetworkConnectorForAllMachines(v1alpha1.QSFP),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 }
 

@@ -112,6 +112,7 @@ func TestSnowKubernetes121OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runOIDCFlow(test)
 }

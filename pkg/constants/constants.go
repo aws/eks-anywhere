@@ -50,3 +50,11 @@ const (
 	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
 )
+
+type Operation int
+
+const (
+	Create  Operation = 0
+	Upgrade Operation = 1
+	Delete  Operation = 2
+)

@@ -349,6 +349,7 @@ func TestSnowKubernetes121SimpleFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -359,6 +360,7 @@ func TestSnowKubernetes122SimpleFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -369,6 +371,7 @@ func TestSnowKubernetes123SimpleFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu123()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runSimpleFlow(test)
 }

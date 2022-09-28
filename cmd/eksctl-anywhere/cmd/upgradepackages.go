@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type upgradePackageOptions struct {
@@ -49,12 +48,11 @@ var upgradePackagesCommand = &cobra.Command{
 }
 
 func upgradePackages(ctx context.Context) error {
-	kubeConfig := upo.kubeConfig
-	if kubeConfig == "" {
-		kubeConfig = kubeconfig.FromEnvironment()
-	} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-		return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+	kubeConfig, err := kubeconfig.ValidateFileOrEnv(upo.kubeConfig)
+	if err != nil {
+		return err
 	}
+
 	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
@@ -71,9 +69,5 @@ func upgradePackages(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	err = b.UpgradeBundle(ctx, activeController, upo.bundleVersion)
-	if err != nil {
-		return err
-	}
-	return nil
+	return b.UpgradeBundle(ctx, activeController, upo.bundleVersion)
 }

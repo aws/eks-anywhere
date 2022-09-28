@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -45,7 +46,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Cluster.Name,
-		}, false); err != nil {
+		}, constants.Create, forceCleanup); err != nil {
 			return err
 		}
 	}
@@ -366,10 +367,6 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 
-	// this disables create-webhook validation during create
-	commandContext.ClusterSpec.Cluster.PauseReconcile()
-	datacenterConfig.PauseReconcile()
-
 	targetCluster := commandContext.WorkloadCluster
 	if commandContext.BootstrapCluster.ExistingManagement {
 		targetCluster = commandContext.BootstrapCluster
@@ -456,7 +453,7 @@ func (s *WriteClusterConfigTask) Checkpoint() *task.CompletedTask {
 func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Deleting bootstrap cluster")
-		err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false)
+		err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Create, false)
 		if err != nil {
 			commandContext.SetError(err)
 		}

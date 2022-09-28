@@ -236,11 +236,11 @@ func (c *createTestSetup) expectWriteClusterConfig() {
 }
 
 func (c *createTestSetup) expectDeleteBootstrap() {
-	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any())
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any())
 }
 
 func (c *createTestSetup) expectNotDeleteBootstrap() {
-	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Times(0)
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Times(0)
 }
 
 func (c *createTestSetup) expectInstallMHC() {
@@ -284,7 +284,7 @@ func TestCreateRunSuccess(t *testing.T) {
 func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test := newCreateTest(t)
 	test.forceCleanup = true
-	test.bootstrapper.EXPECT().DeleteBootstrapCluster(test.ctx, &types.Cluster{Name: "cluster-name"}, gomock.Any())
+	test.bootstrapper.EXPECT().DeleteBootstrapCluster(test.ctx, &types.Cluster{Name: "cluster-name"}, gomock.Any(), gomock.Any())
 	test.expectSetup()
 	test.expectCreateBootstrap()
 	test.expectCreateWorkload()

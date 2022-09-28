@@ -193,8 +193,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
       nodeRegistration:
@@ -214,8 +212,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
   replicas: {{.control_plane_replicas}}
   version: {{.kubernetesVersion}}

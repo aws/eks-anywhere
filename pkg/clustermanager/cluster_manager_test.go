@@ -1182,9 +1182,11 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, tt.cluster, gomock.Any())
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, tt.cluster, gomock.Any(), gomock.Any()).MaxTimes(2)
-	if err := c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs); err != nil {
-		t.Errorf("ClusterManager.CreateEKSAResources() error = %v, wantErr nil", err)
-	}
+	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).To(Succeed())
+	_, ok := datacenterConfig.GetAnnotations()["anywhere.eks.amazonaws.com/paused"]
+	tt.Expect(ok).To(BeTrue())
+	_, ok = tt.clusterSpec.Cluster.GetAnnotations()["anywhere.eks.amazonaws.com/paused"]
+	tt.Expect(ok).To(BeTrue())
 }
 
 func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
@@ -1202,9 +1204,7 @@ func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
 	c, m := newClusterManager(t)
 
 	m.client.EXPECT().CreateNamespaceIfNotPresent(ctx, gomock.Any(), tt.clusterSpec.Cluster.Namespace).Return(errors.New(""))
-	if err := c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs); err == nil {
-		t.Errorf("ClusterManager.CreateEKSAResources() error = nil, wantErr not nil")
-	}
+	tt.Expect(c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs)).NotTo(Succeed())
 }
 
 var wantMHC = []byte(`apiVersion: cluster.x-k8s.io/v1beta1
