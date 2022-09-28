@@ -68,7 +68,7 @@ func runInstallPackages(cmd *cobra.Command, args []string) error {
 }
 
 func installPackages(ctx context.Context, args []string) error {
-	kubeConfig, err := kubeconfig.ValidateFileOrEnv(ipo.kubeConfig)
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(ipo.kubeConfig, "")
 	if err != nil {
 		return err
 	}

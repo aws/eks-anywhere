@@ -2,18 +2,20 @@ package kubeconfig
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var kindTypo = []byte(`apiVersion: v1\nkind: Conf`)
 
-var goodKubeconfigFile = []byte(`
+var goodKubeconfig = []byte(`
 apiVersion: v1
 clusters:
 - cluster:
@@ -34,81 +36,6 @@ users:
     client-certificate-data: test
     client-key-data: test
 `)
-
-func TestValidateFile(t *testing.T) {
-	t.Run("reports errors from validator", func(t *testing.T) {
-		badFile := withFakeFileContents(t, bytes.NewReader(kindTypo))
-		if err := ValidateFile(badFile.Name()); err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-	})
-
-	t.Run("reports errors for files that are empty", func(t *testing.T) {
-		emptyFile := withFakeFileContents(t, bytes.NewReader([]byte("")))
-		if err := ValidateFile(emptyFile.Name()); err == nil {
-			t.Fatalf("expected error, got nil")
-		}
-	})
-
-	t.Run("reports errors for files that don't exist", func(t *testing.T) {
-		doesntExist := filepath.Join(t.TempDir(), "does-not-exist")
-		err := ValidateFile(doesntExist)
-		if err == nil || !errors.Is(err, fs.ErrNotExist) {
-			t.Fatalf("expected fs.IsNotExist, got %s", err)
-		}
-	})
-
-	t.Run("returns nil when valid", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
-		if err := ValidateFile(goodFile.Name()); err != nil {
-			t.Fatalf("expected no error, got %s", err)
-		}
-	})
-
-	t.Run("trims whitespace around a filename", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
-		err := ValidateFile("   " + goodFile.Name() + "\t\n")
-		if err != nil {
-			t.Fatalf("expected no error, got %s", err)
-		}
-	})
-
-	t.Run("handles a filename that is only whitespace as if it were empty", func(t *testing.T) {
-		err := ValidateFile("   \t \n")
-		if errors.Is(err, nil) {
-			t.Fatalf("expected error, got nil")
-		}
-	})
-}
-
-// withFakeFile returns a throwaway file in a test-specific directory.
-//
-// The file is automatically closed and removed when the test ends.
-func withFakeFile(t *testing.T) (f *os.File) {
-	f, err := ioutil.TempFile(t.TempDir(), "fake-file")
-	if err != nil {
-		t.Fatalf("opening temp file: %s", err)
-	}
-
-	t.Cleanup(func() {
-		f.Close()
-	})
-
-	return f
-}
-
-// withFakeFileContents returns a file containing some data.
-//
-// The file is automatically closed and removed when the test ends.
-func withFakeFileContents(t *testing.T, r io.Reader) (f *os.File) {
-	f = withFakeFile(t)
-	_, err := io.Copy(f, r)
-	if err != nil {
-		t.Fatalf("copying contents into fake file %q: %s", f.Name(), err)
-	}
-
-	return f
-}
 
 func TestFromEnvironment(t *testing.T) {
 	t.Run("returns the filename from the env var", func(t *testing.T) {
@@ -164,57 +91,134 @@ func TestFromEnvironment(t *testing.T) {
 	})
 }
 
-func TestValidateFileOrEnv(t *testing.T) {
-	t.Run("returns an error when the filename doesn't validate", func(t *testing.T) {
-		_, err := ValidateFileOrEnv("/dev/null")
-		if errors.Is(err, nil) {
-			t.Fatalf("expected error, got %q", err)
-		}
-	})
-
-	t.Run("returns the filename if it's valid", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
-		filename, err := ValidateFileOrEnv(goodFile.Name())
-		if err != nil {
-			t.Fatalf("expected no error, got %s", err)
-		}
-		if filename != goodFile.Name() {
-			t.Fatalf("expected %q, got %q", goodFile.Name(), filename)
-		}
-	})
-
-	t.Run("falls back to the environment if the filename is empty", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfigFile))
-		t.Setenv("KUBECONFIG", goodFile.Name())
-		filename, err := ValidateFileOrEnv("")
-		if err != nil {
-			t.Fatalf("expected no error, got %s", err)
-		}
-		if filename != goodFile.Name() {
-			t.Fatalf("expected %q, got %q", goodFile.Name(), filename)
-		}
-	})
-
-	t.Run("returns an empty string if both the filename and env var are empty", func(t *testing.T) {
-		t.Setenv("KUBECONFIG", "")
-		filename, err := ValidateFileOrEnv("")
-		if err != nil {
-			t.Fatalf("expected no error, got %s", err)
-		}
-		if filename != "" {
-			t.Fatalf("expected \"\", got %q", filename)
-		}
-	})
-
-	t.Run("returns an error if the environment file's contents are invalid", func(t *testing.T) {
+func TestValidateFilename(t *testing.T) {
+	t.Run("reports errors from validator", func(t *testing.T) {
 		badFile := withFakeFileContents(t, bytes.NewReader(kindTypo))
-		t.Setenv("KUBECONFIG", badFile.Name())
-		filename, err := ValidateFileOrEnv("")
-		if errors.Is(err, nil) {
-			t.Fatalf("expected validation error, got %s", err)
-		}
-		if filename != "" {
-			t.Fatalf("expected \"\", got %q", filename)
+
+		assert.Error(t, ValidateFilename(badFile.Name()))
+	})
+
+	t.Run("reports errors for files that are empty", func(t *testing.T) {
+		emptyFile := withFakeFileContents(t, bytes.NewReader([]byte("")))
+
+		assert.Error(t, ValidateFilename(emptyFile.Name()))
+	})
+
+	t.Run("reports errors for files that don't exist", func(t *testing.T) {
+		doesntExist := filepath.Join(t.TempDir(), "does-not-exist")
+		removeFileIfExists(t, doesntExist)
+
+		assert.ErrorIs(t, ValidateFilename(doesntExist), fs.ErrNotExist)
+	})
+
+	t.Run("returns nil when valid", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+
+		assert.NoError(t, ValidateFilename(goodFile.Name()))
+	})
+
+	t.Run("trims whitespace around a filename", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+
+		assert.NoError(t, ValidateFilename("   "+goodFile.Name()+"\t\n"))
+	})
+
+	t.Run("reports errors for filenames that are the empty string", func(t *testing.T) {
+		assert.Error(t, ValidateFilename(""))
+	})
+
+	t.Run("reports errors for filenames that are only whitespace (as if it were the empty string)", func(t *testing.T) {
+		assert.Error(t, ValidateFilename("   \t \n"))
+	})
+}
+
+func TestResolveFilename(t *testing.T) {
+	t.Run("returns the flag value when provided", func(t *testing.T) {
+		expected := "flag-provided-kubeconfig"
+		filename := ResolveFilename(expected, "cluster-name")
+
+		assert.Equal(t, expected, filename)
+	})
+
+	t.Run("returns the cluster-name based filename when provided, and the flag value is empty", func(t *testing.T) {
+		clusterName := "cluster-name"
+		expected := FromClusterName(clusterName)
+
+		assert.Equal(t, expected, ResolveFilename("", clusterName))
+	})
+
+	t.Run("returns the environment value if neither the flag or cluster-name values are provided", func(t *testing.T) {
+		expected := "some-value"
+		t.Setenv("KUBECONFIG", expected)
+
+		assert.Equal(t, expected, ResolveFilename("", ""))
+	})
+}
+
+func TestResolveAndValidateFilename(t *testing.T) {
+	t.Run("returns flag value when valid", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+		filename, err := ResolveAndValidateFilename(goodFile.Name(), "")
+
+		if assert.NoError(t, err) {
+			assert.Equal(t, goodFile.Name(), filename)
 		}
 	})
+
+	t.Run("returns error when invalid", func(t *testing.T) {
+		goodFile := withFakeFileContents(t, bytes.NewBufferString("lakjdf"))
+		_, err := ResolveAndValidateFilename(goodFile.Name(), "")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("returns an error if no kubeconfig is found", func(t *testing.T) {
+		t.Setenv("KUBECONFIG", "")
+		_, err := ResolveAndValidateFilename("", "")
+
+		assert.Error(t, err)
+	})
+
+	t.Run("golden path", func(t *testing.T) {
+		t.Setenv("KUBECONFIG", "")
+		_, err := ResolveAndValidateFilename("", "")
+
+		assert.Error(t, err)
+	})
+}
+
+// withFakeFile returns a throwaway file in a test-specific directory.
+//
+// The file is automatically closed and removed when the test ends.
+func withFakeFile(t *testing.T) (f *os.File) {
+	f, err := ioutil.TempFile(t.TempDir(), "fake-file")
+	if err != nil {
+		t.Fatalf("opening temp file: %s", err)
+	}
+
+	t.Cleanup(func() {
+		f.Close()
+	})
+
+	return f
+}
+
+// withFakeFileContents returns a file containing some data.
+//
+// The file is automatically closed and removed when the test ends.
+func withFakeFileContents(t *testing.T, r io.Reader) (f *os.File) {
+	f = withFakeFile(t)
+	_, err := io.Copy(f, r)
+	if err != nil {
+		t.Fatalf("copying contents into fake file %q: %s", f.Name(), err)
+	}
+
+	return f
+}
+
+// removeFileIfExists is a helper for ValidateFilename tests.
+func removeFileIfExists(t *testing.T, filename string) {
+	if err := os.Remove(filename); err != nil {
+		require.ErrorIs(t, err, fs.ErrNotExist)
+	}
 }
