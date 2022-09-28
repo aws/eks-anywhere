@@ -64,7 +64,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Sp
 func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values := buildTemplateMapMD(clusterSpec, *ntb.controlPlaneMachineSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -145,26 +145,28 @@ func buildTemplateMapCP(
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, controlPlaneMachineSpec, workerNodeGroupMachineSpec v1alpha1.NutanixMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":            clusterSpec.Cluster.Name,
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"format":                 format,
-		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
-		"workerReplicas":         workerNodeGroupConfiguration.Count,
-		"workerPoolName":         "md-0",
-		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
-		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
-		"vcpusPerSocket":         workerNodeGroupMachineSpec.VCPUsPerSocket,
-		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
-		"memorySize":             workerNodeGroupMachineSpec.MemorySize.String(),
-		"systemDiskSize":         workerNodeGroupMachineSpec.SystemDiskSize.String(),
-		"imageName":              workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
-		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
-		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"clusterName":                  clusterSpec.Cluster.Name,
+		"eksaSystemNamespace":          constants.EksaSystemNamespace,
+		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0],
+		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
+		"format":                       format,
+		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
+		"workerReplicas":               workerNodeGroupConfiguration.Count,
+		"workerPoolName":               "md-0",
+		"workerSshAuthorizedKey":       workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
+		"workerSshUsername":            workerNodeGroupMachineSpec.Users[0].Name,
+		"vcpusPerSocket":               workerNodeGroupMachineSpec.VCPUsPerSocket,
+		"vcpuSockets":                  workerNodeGroupMachineSpec.VCPUSockets,
+		"memorySize":                   workerNodeGroupMachineSpec.MemorySize.String(),
+		"systemDiskSize":               workerNodeGroupMachineSpec.SystemDiskSize.String(),
+		"imageName":                    workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
+		"nutanixPEClusterName":         workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
+		"subnetName":                   workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
 	}
 	return values
 }
