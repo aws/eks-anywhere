@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -95,7 +96,11 @@ func TestInstallPackagesSucceeds(t *testing.T) {
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
+	// Suppress output temporarily since it is not needed for testing
+	temp := os.Stdout
+	os.Stdout = nil // turn it off
 	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
+	os.Stdout = temp // restore it
 	tt.Expect(err).To(BeNil())
 }
 
