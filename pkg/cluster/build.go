@@ -4,6 +4,8 @@ package cluster
 // default processors to build a Config
 func NewDefaultConfigClientBuilder() *ConfigClientBuilder {
 	return NewConfigClientBuilder().Register(
+		getVSphereDatacenter,
+		getVSphereMachineConfigs,
 		getSnowDatacenter,
 		getSnowMachineConfigs,
 		getSnowIdentitySecret,
