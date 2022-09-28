@@ -1626,18 +1626,29 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 	return nil
 }
 
+// KubeconfigSecretAvailable returns true if the secret exists and is non-empty.
 func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
-	return k.GetResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
+	data, err := k.GetResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
+	if err != nil {
+		return false, err
+	}
+	return data.Len() > 0, nil
 }
 
-func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
+// GetResource retrieves an API resource.
+func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (*bytes.Buffer, error) {
+	// TODO Do we really not want to ignore not found resources? I rather
+	// doubt it. I think it would be better to return an error, and let the
+	// caller decide if it's a problem or not.
 	params := []string{"get", resourceType, name, "--ignore-not-found", "-n", namespace, "--kubeconfig", kubeconfig}
 	output, err := k.Execute(ctx, params...)
-	var found bool
-	if err == nil && len(output.String()) > 0 {
-		found = true
+	if err != nil {
+		return nil, err
 	}
-	return found, err
+	if output.Len() == 0 {
+		return nil, fmt.Errorf("resource response is empty")
+	}
+	return &output, nil
 }
 
 // GetObject performs a GET call to the kube API server authenticating with a kubeconfig file

@@ -24,7 +24,6 @@ import (
 	rctrl "github.com/tinkerbell/rufio/controllers"
 	"sigs.k8s.io/yaml"
 
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -884,49 +883,6 @@ func (e *ClusterE2ETest) InstallCuratedPackagesController() {
 	if err != nil {
 		e.T.Fatalf("Unable to install %s helm chart on the cluster: %v",
 			e.PackageConfig.chartName, err)
-	}
-
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	err = e.waitForPackageBundleControllerActiveBundle(timeoutCtx)
-	if err != nil {
-		e.T.Fatalf("getting package bundle controller active bundle: %s", err)
-	}
-}
-
-func (e *ClusterE2ETest) waitForPackageBundleControllerActiveBundle(ctx context.Context) error {
-	done := make(chan error)
-	go func() {
-		defer close(done)
-		pbc := &packagesv1.PackageBundleController{}
-
-		for {
-			data, err := e.KubectlClient.ExecuteCommand(ctx, "get", "PackageBundleController",
-				"--namespace", packagesv1.PackageNamespace, e.ClusterName)
-			if err != nil {
-				done <- fmt.Errorf("getting package bundle controller: %w", err)
-				return
-			}
-
-			err = yaml.Unmarshal(data.Bytes(), pbc)
-			if err != nil {
-				done <- fmt.Errorf("unmarshaling YAML data: %w", err)
-				return
-			}
-
-			if pbc.Spec.ActiveBundle != "" {
-				return
-			}
-
-			time.Sleep(time.Second)
-		}
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case <-done:
-		return nil
 	}
 }
 

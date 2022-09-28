@@ -5,7 +5,11 @@ import (
 	_ "embed"
 	"fmt"
 	"strings"
+	"time"
 
+	"sigs.k8s.io/yaml"
+
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -92,8 +96,78 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
+// packageBundleControllerResource is the name of the package bundle controller
+// resource in the API.
+const packageBundleControllerResource string = "packageBundleController"
+
+// IsInstalled returns true when the package controller is installed.
+//
+// Installed means that the API responds with a valid package bundle
+// controller, and the active bundle specified in that controller has been
+// set.
 func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
-	return pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+	_, err := pc.kubectl.GetResource(ctx, packageBundleControllerResource, pc.clusterName,
+		pc.kubeConfig, packagesv1.PackageNamespace)
+	if err != nil {
+		return false, err
+	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	err = pc.waitForActiveBundle(timeoutCtx)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// waitForActiveBundle polls the package bundle controller for its active bundle.
+//
+// It returns nil on success. Success is defined as receiving a valid package
+// bundle controller from the API with a non-empty active bundle.
+//
+// It will poll infinitely, unless a timeout is specified on the context.
+func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) error {
+	done := make(chan error)
+	go func() {
+		defer close(done)
+		pbc := &packagesv1.PackageBundleController{}
+		for {
+			data, err := pc.kubectl.GetResource(ctx, packageBundleControllerResource,
+				pc.clusterName, pc.kubeConfig, packagesv1.PackageNamespace)
+			if err != nil {
+				done <- fmt.Errorf("getting package bundle controller: %w", err)
+				return
+			}
+
+			err = yaml.Unmarshal(data.Bytes(), pbc)
+			if err != nil {
+				logger.V(6).Info("packages bundle controller resource",
+					"clusterName", pc.clusterName, "data", data.String())
+				done <- fmt.Errorf("unmarshaling YAML data: %w", err)
+				return
+			}
+			if pbc.Spec.ActiveBundle != "" {
+				logger.V(6).Info("found packages bundle controller active bundle",
+					"name", pbc.Spec.ActiveBundle)
+				return
+			}
+
+			logger.V(6).Info("waiting for package bundle controller to activate a bundle",
+				"clusterName", pc.clusterName)
+			// TODO read a polling interval value from the context, falling
+			// back to this as a default.
+			time.Sleep(time.Second)
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-done:
+		return nil
+	}
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
