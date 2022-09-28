@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"sigs.k8s.io/yaml"
-
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -106,10 +104,13 @@ const packageBundleControllerResource string = "packageBundleController"
 // controller, and the active bundle specified in that controller has been
 // set.
 func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
-	_, err := pc.kubectl.GetResource(ctx, packageBundleControllerResource, pc.clusterName,
+	found, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName,
 		pc.kubeConfig, packagesv1.PackageNamespace)
 	if err != nil {
 		return false, err
+	}
+	if !found {
+		return false, nil
 	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -134,20 +135,13 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 		defer close(done)
 		pbc := &packagesv1.PackageBundleController{}
 		for {
-			data, err := pc.kubectl.GetResource(ctx, packageBundleControllerResource,
-				pc.clusterName, pc.kubeConfig, packagesv1.PackageNamespace)
+			err := pc.kubectl.GetObject(ctx, packageBundleControllerResource, pc.clusterName,
+				pc.kubeConfig, packagesv1.PackageNamespace, pbc)
 			if err != nil {
 				done <- fmt.Errorf("getting package bundle controller: %w", err)
 				return
 			}
 
-			err = yaml.Unmarshal(data.Bytes(), pbc)
-			if err != nil {
-				logger.V(6).Info("packages bundle controller resource",
-					"clusterName", pc.clusterName, "data", data.String())
-				done <- fmt.Errorf("unmarshaling YAML data: %w", err)
-				return
-			}
 			if pbc.Spec.ActiveBundle != "" {
 				logger.V(6).Info("found packages bundle controller active bundle",
 					"name", pbc.Spec.ActiveBundle)

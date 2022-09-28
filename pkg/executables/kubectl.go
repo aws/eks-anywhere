@@ -20,6 +20,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
@@ -1628,27 +1629,24 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 
 // KubeconfigSecretAvailable returns true if the secret exists and is non-empty.
 func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
-	data, err := k.GetResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
-	if err != nil {
-		return false, err
-	}
-	return data.Len() > 0, nil
+	return k.HasResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }
 
-// GetResource retrieves an API resource.
-func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (*bytes.Buffer, error) {
-	// TODO Do we really not want to ignore not found resources? I rather
-	// doubt it. I think it would be better to return an error, and let the
-	// caller decide if it's a problem or not.
-	params := []string{"get", resourceType, name, "--ignore-not-found", "-n", namespace, "--kubeconfig", kubeconfig}
-	output, err := k.Execute(ctx, params...)
+// HasResource implements KubectlRunner.
+func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
+	throwaway := &unstructured.Unstructured{}
+	err := k.GetObject(ctx, resourceType, name, kubeconfig, namespace, throwaway)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, &apierrors.StatusError{}) {
+			return false, fmt.Errorf("you idiot")
+		}
+		// apierrors.StatusError doesn't implement the .Is() method sadly.
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return false, err
 	}
-	if output.Len() == 0 {
-		return nil, fmt.Errorf("resource response is empty")
-	}
-	return &output, nil
+	return true, nil
 }
 
 // GetObject performs a GET call to the kube API server authenticating with a kubeconfig file
