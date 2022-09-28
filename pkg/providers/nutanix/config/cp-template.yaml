@@ -1,4 +1,4 @@
-piVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixCluster
 metadata:
   name: "{{.clusterName}}"
@@ -7,7 +7,7 @@ spec:
   prismCentral:
     address: "{{.nutanixEndpoint}}"
     port: {{.nutanixPort}}
-    insecure: true
+    insecure: {{.nutanixInsecure}}
     credentialRef:
       name: "{{.clusterName}}"
       kind: Secret

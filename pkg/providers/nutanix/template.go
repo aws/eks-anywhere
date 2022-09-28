@@ -118,6 +118,10 @@ func buildTemplateMapCP(
 		"nutanixPassword":              creds.password,
 	}
 
+	if datacenterSpec.AdditionalTrustBundle != "" {
+		values["nutanixInsecure"] = "true"
+	}
+
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
