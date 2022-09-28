@@ -126,10 +126,6 @@ files:
                 name: kubeconfig
             resources: {}
         hostNetwork: true
-        hostAliases:
-          - hostnames:
-              - kubernetes
-            ip: 127.0.0.1
         volumes:
           - name: kubeconfig
             hostPath:
