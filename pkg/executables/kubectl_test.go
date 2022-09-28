@@ -144,7 +144,7 @@ func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
 }
 
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
-	var data []byte
+	var data []byte = []byte("someData")
 	var namespace string
 
 	k, ctx, cluster, e := newKubectl(t)
@@ -155,8 +155,19 @@ func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
 	}
 }
 
-func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccessWithEmptyInput(t *testing.T) {
 	var data []byte
+	var namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Any()).Times(0)
+	if err := k.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace); err != nil {
+		t.Errorf("Kubectl.ApplyKubeSpecFromBytesWithNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
+	var data []byte = []byte("someData")
 	var namespace string
 
 	k, ctx, cluster, e := newKubectl(t)
