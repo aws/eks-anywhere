@@ -12,20 +12,26 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-type BundleDownloader struct {
-	dstFolder string
+type BundlePuller interface {
+	PullLatestBundle(ctx context.Context, art string) ([]byte, error)
 }
 
-func NewBundleDownloader(dstFolder string) *BundleDownloader {
+type BundleDownloader struct {
+	dstFolder    string
+	bundlePuller BundlePuller
+}
+
+func NewBundleDownloader(dstFolder string, bundlePuller BundlePuller) *BundleDownloader {
 	return &BundleDownloader{
-		dstFolder: dstFolder,
+		dstFolder:    dstFolder,
+		bundlePuller: bundlePuller,
 	}
 }
 
 func (bd *BundleDownloader) Download(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		data, err := curatedpackages.PullLatestBundle(ctx, a)
+		data, err := bd.bundlePuller.PullLatestBundle(ctx, a)
 		if err != nil {
 			fmt.Printf("unable to download bundle %v \n", err)
 			continue

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"oras.land/oras-go/pkg/content"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -143,7 +144,13 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
 	if includePackages {
-		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder)
+		registry, _ := content.NewRegistry(content.RegistryOptions{})
+		//if err != nil {
+		//	return fmt.Errorf("creating registry: %w", err)
+		//}
+		memoryStore := content.NewMemory()
+		bundlePusher := oras.NewPusher(registry, memoryStore)
+		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder, bundlePusher)
 	}
 	return &artifacts.Noop{}
 }

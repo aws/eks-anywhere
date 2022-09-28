@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	packageartifacts "github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
@@ -61,6 +62,8 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	if c.insecure {
 		helmOpts = append(helmOpts, executables.WithInsecure())
 	}
+
+	// Build reader in factory instead
 	deps, err := factory.
 		WithManifestReader().
 		WithHelm(helmOpts...).
@@ -111,14 +114,16 @@ func packagerForFile(file string) packager {
 
 func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reader {
 	if includePackages {
-		return curatedpackages.NewPackageReader(reader)
+		bundlePuller := oras.NewPuller(packageartifacts.NewRegistryPuller())
+		return curatedpackages.NewPackageReader(reader, bundlePuller)
 	}
 	return reader
 }
 
 func fetchManifestDownloader(downloadFolder string, includePackages bool) artifacts.ManifestDownloader {
 	if includePackages {
-		return oras.NewBundleDownloader(downloadFolder)
+		bundlePuller := oras.NewPuller(packageartifacts.NewRegistryPuller())
+		return oras.NewBundleDownloader(downloadFolder, bundlePuller)
 	}
 	return &artifacts.Noop{}
 }

@@ -1,21 +1,16 @@
 package curatedpackages
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
-
-	"oras.land/oras-go/pkg/content"
-	"oras.land/oras-go/pkg/oras"
 
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -99,50 +94,6 @@ func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeCon
 		return errors.New("cert-manager is not present in the cluster")
 	}
 
-	return nil
-}
-
-func PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
-	puller := artifacts.NewRegistryPuller()
-
-	data, err := puller.Pull(ctx, art)
-	if err != nil {
-		return nil, fmt.Errorf("unable to pull artifacts %v", err)
-	}
-	if len(bytes.TrimSpace(data)) == 0 {
-		return nil, fmt.Errorf("latest package bundle artifact is empty")
-	}
-
-	return data, nil
-}
-
-func PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error {
-	registry, err := content.NewRegistry(content.RegistryOptions{})
-	if err != nil {
-		return fmt.Errorf("creating registry: %w", err)
-	}
-	memoryStore := content.NewMemory()
-	desc, err := memoryStore.Add("bundle.yaml", "", fileContent)
-	if err != nil {
-		return err
-	}
-
-	manifest, manifestDesc, config, configDesc, err := content.GenerateManifestAndConfig(nil, nil, desc)
-	if err != nil {
-		return err
-	}
-
-	memoryStore.Set(configDesc, config)
-	err = memoryStore.StoreManifest(ref, manifestDesc, manifest)
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Pushing %s to %s...", fileName, ref))
-	desc, err = oras.Copy(ctx, memoryStore, ref, registry, "")
-	if err != nil {
-		return err
-	}
-	logger.Info(fmt.Sprintf("Pushed to %s with digest %s", ref, desc.Digest))
 	return nil
 }
 
