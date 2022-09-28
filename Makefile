@@ -289,7 +289,7 @@ copy-license-cluster-controller:
 	source scripts/attribution_helpers.sh && build::fix_licenses
 
 .PHONY: build-cluster-controller-binaries
-build-cluster-controller-binaries: eks-a-cluster-controller 
+build-cluster-controller-binaries: eks-a-cluster-controller
 
 .PHONY: build-cluster-controller
 build-cluster-controller: cluster-controller-local-images cluster-controller-tarballs
@@ -499,6 +499,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/reconciler/mocks/reconcilers.go -package=mocks -source "pkg/networking/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/reconciler/mocks/reconciler.go -package=mocks -source "pkg/providers/snow/reconciler/reconciler.go"
 	${GOPATH}/bin/mockgen -destination=pkg/workflow/task_mock_test.go -package=workflow_test -source "pkg/workflow/task.go"
+	${GOPATH}/bin/mockgen -destination=pkg/validations/createcluster/mocks/createcluster.go -package=mocks -source "pkg/validations/createcluster/createcluster.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -630,7 +631,7 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 fake-controller-image-deps:
 	@mkdir -p $(OUTPUT_DIR)/LICENSES
 	touch $(OUTPUT_DIR)/LICENSES
-	touch ATTRIBUTION.txt 
+	touch ATTRIBUTION.txt
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller: $(KUSTOMIZE) $(ORGANIZE_BINARIES_TARGETS) fake-controller-image-deps

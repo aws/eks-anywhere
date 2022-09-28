@@ -110,3 +110,18 @@ func ValidateFilename(filename string) error {
 
 	return nil
 }
+
+func ValidateKubeconfigPath(clusterName string, parentFolders ...string) error {
+	kubeconfigPath := FromClusterName(clusterName)
+	for _, folder := range parentFolders {
+		kubeconfigPath = filepath.Join(folder, kubeconfigPath)
+	}
+	info, err := os.Stat(kubeconfigPath)
+	if err == nil && info.Size() > 0 {
+		return fmt.Errorf(
+			"old cluster config file exists under %s, please use a different clusterName to proceed",
+			clusterName,
+		)
+	}
+	return nil
+}

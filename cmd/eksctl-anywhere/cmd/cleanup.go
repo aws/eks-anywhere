@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -18,5 +19,11 @@ func cleanup(deps *dependencies.Dependencies, commandErr *error) {
 func close(ctx context.Context, closer types.Closer) {
 	if err := closer.Close(ctx); err != nil {
 		logger.Error(err, "Closer failed", "closerType", fmt.Sprintf("%T", closer))
+	}
+}
+
+func cleanupDirectory(directory string) {
+	if _, err := os.Stat(directory); err == nil {
+		os.RemoveAll(directory)
 	}
 }
