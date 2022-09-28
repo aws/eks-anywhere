@@ -53,6 +53,10 @@ spec:
                 type: string
               storagePolicyName:
                 type: string
+              tagIDs:
+                items:
+                  type: string
+                type: array
               template:
                 type: string
               users:

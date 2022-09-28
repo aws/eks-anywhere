@@ -172,3 +172,6 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .workerTagIDs }}
+      tagIDs: {{.workerTagIDs}}
+{{- end }}
