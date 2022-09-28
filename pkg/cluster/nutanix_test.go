@@ -13,7 +13,7 @@ import (
 )
 
 //go:embed testdata/nutanix/eksa-cluster.yaml
-var nutanicClusterConfigSpec string
+var nutanixClusterConfigSpec string
 
 //go:embed testdata/nutanix/datacenterConfig.yaml
 var nutanixDatacenterConfigSpec string
@@ -23,7 +23,7 @@ var nutanixMachineConfigSpec string
 
 func TestValidateNutanixEntry(t *testing.T) {
 	clusterConf := &anywherev1.Cluster{}
-	err := yaml.Unmarshal([]byte(nutanicClusterConfigSpec), clusterConf)
+	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
 
 	dcConf := &anywherev1.NutanixDatacenterConfig{}
@@ -47,7 +47,7 @@ func TestValidateNutanixEntry(t *testing.T) {
 	cm, err := NewDefaultConfigManager()
 	assert.NoError(t, err)
 
-	c, err := cm.Parse([]byte(nutanicClusterConfigSpec))
+	c, err := cm.Parse([]byte(nutanixClusterConfigSpec))
 	assert.NoError(t, err)
 	fmt.Println(c)
 
