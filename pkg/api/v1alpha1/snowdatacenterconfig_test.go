@@ -68,7 +68,7 @@ func TestSnowDatacenterConfigValidate(t *testing.T) {
 			obj: &SnowDatacenterConfig{
 				Spec: SnowDatacenterConfigSpec{},
 			},
-			wantErr: "SnowDatacenterConfig IdetityRef name must not be empty",
+			wantErr: "SnowDatacenterConfig IdentityRef name must not be empty",
 		},
 		{
 			name: "identity kind empty",
@@ -79,7 +79,7 @@ func TestSnowDatacenterConfigValidate(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "SnowDatacenterConfig IdetityRef kind must not be empty",
+			wantErr: "SnowDatacenterConfig IdentityRef kind must not be empty",
 		},
 		{
 			name: "valid identity ref",
@@ -99,11 +99,11 @@ func TestSnowDatacenterConfigValidate(t *testing.T) {
 				Spec: SnowDatacenterConfigSpec{
 					IdentityRef: Ref{
 						Name: "creds-1",
-						Kind: "UnknowKind",
+						Kind: "UnknownKind",
 					},
 				},
 			},
-			wantErr: "SnowDatacenterConfig IdetityRef kind UnknowKind is invalid",
+			wantErr: "SnowDatacenterConfig IdentityRef kind UnknownKind is invalid",
 		},
 	}
 	for _, tt := range tests {

@@ -3199,6 +3199,20 @@ spec:
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
               of CloudStackDatacenterConfig
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              specValid:
+                description: SpecValid is set to true if cloudstackdatacenterconfig
+                  is validated.
+                type: boolean
             type: object
         type: object
     served: true
@@ -3372,6 +3386,15 @@ spec:
           status:
             description: CloudStackMachineConfigStatus defines the observed state
               of CloudStackMachineConfig
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              specValid:
+                description: SpecValid is set to true if cloudstackmachineconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true
@@ -5877,6 +5900,27 @@ webhooks:
     - UPDATE
     resources:
     - oidcconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-snowdatacenterconfig
+  failurePolicy: Fail
+  name: snowdatacenterconfig.kb.io
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - snowdatacenterconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1
