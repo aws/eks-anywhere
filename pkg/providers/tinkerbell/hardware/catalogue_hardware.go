@@ -161,15 +161,16 @@ func (c *Catalogue) RemoveHardware(hardware *tinkv1alpha1.Hardware, index int) e
 func (c *Catalogue) RemoveHardwares(hardware []tinkv1alpha1.Hardware) error {
 	m := make(map[string]int, len(c.hardware))
 	for i, hw := range c.hardware {
-		m[hw.Name+hw.Namespace] = i
+		m[hw.Name+":"+hw.Namespace] = i
 	}
 
 	for _, hw := range hardware {
-		if _, ok := m[hw.Name+hw.Namespace]; ok {
-			if err := c.RemoveHardware(c.hardware[m[hw.Name+hw.Namespace]], m[hw.Name+hw.Namespace]); err != nil {
+		key := hw.Name + ":" + hw.Namespace
+		if _, ok := m[key]; ok {
+			if err := c.RemoveHardware(c.hardware[m[key]], m[key]); err != nil {
 				return err
 			}
-			delete(m, hw.Name+hw.Namespace)
+			delete(m, key)
 		}
 	}
 	return nil
