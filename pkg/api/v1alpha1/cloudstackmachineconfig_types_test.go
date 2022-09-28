@@ -32,6 +32,18 @@ func TestCloudStackMachineConfigDiskOfferingEqual(t *testing.T) {
 	g.Expect(diskOffering1.Equal(diskOffering2)).To(BeTrue())
 }
 
+func TestCloudStackMachineConfigEmptyDiskOfferingEqual(t *testing.T) {
+	var nilDiskOffering v1alpha1.CloudStackResourceDiskOffering
+	emptyDiskOffering := &v1alpha1.CloudStackResourceDiskOffering{
+		MountPath:  "",
+		Device:     "",
+		Filesystem: "",
+		Label:      "",
+	}
+	g := NewWithT(t)
+	g.Expect(nilDiskOffering.Equal(emptyDiskOffering)).To(BeTrue())
+}
+
 func TestCloudStackMachineConfigDiskOfferingEqualSelf(t *testing.T) {
 	diskOffering1 := &v1alpha1.CloudStackResourceDiskOffering{
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{

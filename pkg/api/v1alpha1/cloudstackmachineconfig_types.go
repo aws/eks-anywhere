@@ -15,6 +15,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -69,7 +70,10 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 	if r == o {
 		return true
 	}
-	if r == nil || o == nil {
+	if r.IsEmpty() && o.IsEmpty() {
+		return true
+	}
+	if r.IsEmpty() || o.IsEmpty() {
 		return false
 	}
 	if r.Id != o.Id {
@@ -84,6 +88,21 @@ func (r *CloudStackResourceDiskOffering) Equal(o *CloudStackResourceDiskOffering
 		return false
 	}
 	return r.Id == "" && o.Id == "" && r.Name == o.Name
+}
+
+// IsEmpty Introduced for backwards compatibility purposes. When CloudStackResourceDiskOffering
+// was initially added to the CloudStackMachineConfig type, it was added with omitempty at the top level, but
+// the subtypes were *not* optional, so we have old clusters today with "empty" CloudStackResourceDiskOffering objects,
+// like {CustomSize: 0, MountPath: "", Label: "", Device: "", FileSystem: ""}.
+// Since then, we have made DiskOffering a pointer, and everything below it as optional. Functionally, setting DiskOffering=nil
+// is equivalent to have an "empty" DiskOffering as shown above. Introducing this check should help prevent unintended RollingUpgrades
+// when upgrading a cluster which has this "empty" DiskOffering in it.
+func (r *CloudStackResourceDiskOffering) IsEmpty() bool {
+	if r == nil {
+		return true
+	}
+	return r.Id == "" && r.Name == "" && r.Label == "" && r.Device == "" &&
+		r.Filesystem == "" && r.MountPath == "" && r.CustomSize == 0
 }
 
 func (r *CloudStackResourceDiskOffering) Validate() (err error, field string, value string) {
