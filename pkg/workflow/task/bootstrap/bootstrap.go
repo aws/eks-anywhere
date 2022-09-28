@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -61,7 +62,7 @@ func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	return workflowcontext.WithBootstrapCluster(ctx, *cluster), nil
+	return workflowcontext.WithBootstrapCluster(ctx, cluster), nil
 }
 
 // DeleteCluster deletes a bootstrap cluster. It expects the bootstrap cluster to be
@@ -74,8 +75,11 @@ type DeleteCluster struct {
 // RunTask satisfies workflow.Task.
 func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
 	cluster := workflowcontext.BootstrapCluster(ctx)
+	if cluster == nil {
+		return ctx, errors.New("bootstrap cluster not found in context")
+	}
 
-	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, &cluster, constants.Create, false); err != nil {
+	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, cluster, constants.Create, false); err != nil {
 		return ctx, err
 	}
 

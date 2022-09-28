@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -164,11 +165,13 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	createValidations := createvalidations.New(validationOpts)
 
 	if features.UseNewWorkflows().IsActive() {
-		err = (management.CreateCluster{
+		wflw := &management.CreateCluster{
 			Spec:                          clusterSpec,
 			Bootstrapper:                  deps.Bootstrapper,
 			CreateBootstrapClusterOptions: deps.Provider,
-		}).Run(ctx)
+		}
+		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
+		err = wflw.Run(ctx)
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 	}

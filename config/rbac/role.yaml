@@ -15,11 +15,11 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
-  - nutanixdatacenterconfigs
-  - nutanixmachineconfigs
   verbs:
   - create
   - delete

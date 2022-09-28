@@ -1,6 +1,7 @@
 package awsiamauth
 
 import (
+	"context"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
@@ -13,8 +14,22 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+type KubernetesClient interface {
+	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
+	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	GetClusterCATlsCert(
+		ctx context.Context,
+		clusterName string,
+		cluster *types.Cluster,
+		namespace string,
+	) ([]byte, error)
+}
 
 //go:embed config/aws-iam-authenticator.yaml
 var awsIamAuthTemplate string
@@ -29,13 +44,22 @@ type AwsIamAuth struct {
 	certgen         crypto.CertificateGenerator
 	templateBuilder *AwsIamAuthTemplateBuilder
 	clusterId       uuid.UUID
+	k8s             KubernetesClient
+	writer          filewriter.FileWriter
 }
 
-func NewAwsIamAuth(certgen crypto.CertificateGenerator, clusterId uuid.UUID) *AwsIamAuth {
+func NewAwsIamAuth(
+	certgen crypto.CertificateGenerator,
+	clusterId uuid.UUID,
+	k8s KubernetesClient,
+	writer filewriter.FileWriter,
+) *AwsIamAuth {
 	return &AwsIamAuth{
 		certgen:         certgen,
 		templateBuilder: &AwsIamAuthTemplateBuilder{},
 		clusterId:       clusterId,
+		k8s:             k8s,
+		writer:          writer,
 	}
 }
 
@@ -110,7 +134,7 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret(managementClusterName string) ([]
 	return awsIamAuthCaSecret, nil
 }
 
-func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error) {
+func (a *AwsIamAuth) generateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error) {
 	data := map[string]string{
 		"clusterName": clusterSpec.Cluster.Name,
 		"server":      serverUrl,
@@ -150,4 +174,95 @@ func (a *AwsIamAuthTemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (strin
 	s = strings.TrimSuffix(s, "\n")
 
 	return s, nil
+}
+
+func (a *AwsIamAuth) InstallAWSIAMAuth(
+	ctx context.Context,
+	management, workload *types.Cluster,
+	spec *cluster.Spec,
+) error {
+	manifest, err := a.GenerateManifest(spec)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
+	}
+
+	if err = a.k8s.ApplyKubeSpecFromBytes(ctx, workload, manifest); err != nil {
+		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
+	}
+
+	if err = a.generateKubeconfig(ctx, management, workload, spec); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AwsIamAuth) generateKubeconfig(
+	ctx context.Context,
+	management, workload *types.Cluster,
+	spec *cluster.Spec,
+) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", workload.Name)
+
+	serverUrl, err := a.k8s.GetApiServerUrl(ctx, workload)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+
+	tlsCert, err := a.k8s.GetClusterCATlsCert(
+		ctx,
+		workload.Name,
+		management,
+		constants.EksaSystemNamespace,
+	)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+
+	awsIamAuthKubeconfigContent, err := a.generateAwsIamAuthKubeconfig(spec, serverUrl, string(tlsCert))
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+
+	writtenFile, err := a.writer.Write(
+		fileName,
+		awsIamAuthKubeconfigContent,
+		filewriter.PersistentFile,
+		filewriter.Permission0600,
+	)
+	if err != nil {
+		return fmt.Errorf("writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
+	}
+
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
+
+	return nil
+}
+
+// CreateAndInstallAWSIAMAuthCASecret creates a Kubernetes Secret in cluster containing a
+// self-signed certificate and key for a cluster identified by clusterName.
+func (a *AwsIamAuth) CreateAndInstallAWSIAMAuthCASecret(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+	secret, err := a.GenerateCertKeyPairSecret(clusterName)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
+	}
+
+	if err = a.k8s.ApplyKubeSpecFromBytes(ctx, cluster, secret); err != nil {
+		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
+	}
+
+	return nil
+}
+
+func (a *AwsIamAuth) UpgradeAWSIAMAuth(ctx context.Context, cluster *types.Cluster, spec *cluster.Spec) error {
+	awsIamAuthManifest, err := a.GenerateManifestForUpgrade(spec)
+	if err != nil {
+		return fmt.Errorf("generating manifest: %v", err)
+	}
+
+	err = a.k8s.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthManifest)
+	if err != nil {
+		return fmt.Errorf("applying manifest: %v", err)
+	}
+
+	return nil
 }
