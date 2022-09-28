@@ -26,6 +26,9 @@ var defaultCAPIConfigCP string
 //go:embed config/md-template.yaml
 var defaultClusterConfigMD string
 
+//go:embed config/secret-template.yaml
+var secretTemplate string
+
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
@@ -173,7 +176,14 @@ func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ 
 }
 
 func (p *nutanixProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	// TODO(nutanix): implement
+	contents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
+	if err != nil {
+		return err
+	}
+
+	if err := p.kubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents); err != nil {
+		return fmt.Errorf("loading secrets object: %v", err)
+	}
 	return nil
 }
 

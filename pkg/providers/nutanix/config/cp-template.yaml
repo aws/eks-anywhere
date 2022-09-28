@@ -15,15 +15,6 @@ spec:
     host: "{{.controlPlaneEndpointIp}}"
     port: 6443
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: "{{.clusterName}}"
-  namespace: "{{.eksaSystemNamespace}}"
-stringData:
-  NUTANIX_PASSWORD: "{{.nutanixPassword}}"
-  NUTANIX_USER: "{{.nutanixUser}}"
----
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:

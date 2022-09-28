@@ -2,7 +2,6 @@ package nutanix
 
 import (
 	"fmt"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -78,6 +77,20 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
+func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := buildTemplateMapSecret(clusterSpec, ntb.creds)
+	for _, buildOption := range buildOptions {
+		buildOption(values)
+	}
+
+	bytes, err := templater.Execute(secretTemplate, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
@@ -151,6 +164,19 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"imageName":              workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
 		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
 		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+	}
+	return values
+}
+
+func buildTemplateMapSecret(
+	clusterSpec *cluster.Spec,
+	creds basicAuthCreds,
+) map[string]interface{} {
+	values := map[string]interface{}{
+		"clusterName":                  clusterSpec.Cluster.Name,
+		"eksaSystemNamespace":          constants.EksaSystemNamespace,
+		"nutanixUser":                  creds.username,
+		"nutanixPassword":              creds.password,
 	}
 	return values
 }
