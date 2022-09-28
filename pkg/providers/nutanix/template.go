@@ -174,10 +174,10 @@ func buildTemplateMapSecret(
 	creds basicAuthCreds,
 ) map[string]interface{} {
 	values := map[string]interface{}{
-		"clusterName":                  clusterSpec.Cluster.Name,
-		"eksaSystemNamespace":          constants.EksaSystemNamespace,
-		"nutanixUser":                  creds.username,
-		"nutanixPassword":              creds.password,
+		"clusterName":         clusterSpec.Cluster.Name,
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"nutanixUser":         creds.username,
+		"nutanixPassword":     creds.password,
 	}
 	return values
 }
