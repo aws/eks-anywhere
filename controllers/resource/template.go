@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -10,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/controllers/resource/internal"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -149,13 +149,9 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	if err != nil {
 		return nil, err
 	}
-	usernameBytes, ok := credSecret.Data["username"]
-	if !ok {
-		return nil, fmt.Errorf("unable to retrieve username from secret")
-	}
-	passwordBytes, ok := credSecret.Data["password"]
-	if !ok {
-		return nil, fmt.Errorf("unable to retrieve password from secret")
+	credValues, err := internal.GetVSphereCredValues(credSecret)
+	if err != nil {
+		return nil, err
 	}
 
 	cpOpt := func(values map[string]interface{}) {
@@ -163,8 +159,9 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
 		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
-		values["eksaVsphereUsername"] = string(usernameBytes)
-		values["eksaVspherePassword"] = string(passwordBytes)
+		for k, v := range credValues {
+			values[k] = v
+		}
 	}
 
 	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)

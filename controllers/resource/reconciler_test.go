@@ -95,6 +95,12 @@ var cloudstackMachineConfigSpecPath string
 //go:embed testdata/cloudstackKubeadmconfigTemplateSpec.yaml
 var cloudstackKubeadmconfigTemplateSpecPath string
 
+func getSecret() *corev1.Secret {
+	return &corev1.Secret{
+		Data: map[string][]byte{"username": []byte("username"), "password": []byte("password"), "usernameCSI": []byte("usernameCSI"), "passwordCSI": []byte("passwordCSI"), "usernameCP": []byte("usernameCP"), "passwordCP": []byte("passwordCP")},
+	}
+}
+
 func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 	type args struct {
 		objectKey types.NamespacedName
@@ -208,9 +214,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(workerNodeMachineConfig, nil)
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.WorkerNodeGroupConfiguration{}, nil)
-				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
-					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
-				}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(getSecret(), nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
@@ -326,9 +330,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				}
 				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
 
-				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
-					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
-				}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(getSecret(), nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
@@ -442,9 +444,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
-				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
-					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
-				}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(getSecret(), nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
@@ -561,9 +561,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
-				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
-					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
-				}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(getSecret(), nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
