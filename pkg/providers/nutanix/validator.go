@@ -46,13 +46,9 @@ func (v *Validator) validateClusterConfig(ctx context.Context, identifier anywhe
 			return fmt.Errorf("missing cluster name")
 		} else {
 			clusterName := *identifier.Name
-			clusterUUID, err := findClusterUUIDByName(ctx, v.client, clusterName)
-			if err != nil {
+			if _, err := findClusterUUIDByName(ctx, v.client, clusterName); err != nil {
 				return fmt.Errorf("failed to find cluster with name %q: %v", clusterName, err)
 			}
-
-			identifier.Type = anywherev1.NutanixIdentifierUUID
-			identifier.UUID = clusterUUID
 		}
 	case anywherev1.NutanixIdentifierUUID:
 		if identifier.UUID == nil || *identifier.UUID == "" {
@@ -77,13 +73,9 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 			return fmt.Errorf("missing image name")
 		} else {
 			imageName := *identifier.Name
-			imageUUID, err := findImageUUIDByName(ctx, v.client, imageName)
-			if err != nil {
+			if _, err := findImageUUIDByName(ctx, v.client, imageName); err != nil {
 				return fmt.Errorf("failed to find image with name %q: %v", imageName, err)
 			}
-
-			identifier.Type = anywherev1.NutanixIdentifierUUID
-			identifier.UUID = imageUUID
 		}
 	case anywherev1.NutanixIdentifierUUID:
 		if identifier.UUID == nil || *identifier.UUID == "" {
@@ -108,12 +100,8 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 			return fmt.Errorf("missing subnet name")
 		} else {
 			subnetName := *identifier.Name
-			subnetUUID, err := findSubnetUUIDByName(ctx, v.client, subnetName)
-			if err != nil {
+			if _, err := findSubnetUUIDByName(ctx, v.client, subnetName); err != nil {
 				return fmt.Errorf("failed to find subnet with name %s: %v", subnetName, err)
-			} else {
-				identifier.Type = anywherev1.NutanixIdentifierUUID
-				identifier.UUID = subnetUUID
 			}
 		}
 	case anywherev1.NutanixIdentifierUUID:
