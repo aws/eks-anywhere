@@ -43,7 +43,8 @@ type basicAuthCreds struct {
 	password string
 }
 
-type nutanixProvider struct {
+// Provider implements the Nutanix Provider
+type Provider struct {
 	clusterConfig    *v1alpha1.Cluster
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig
 	machineConfigs   map[string]*v1alpha1.NutanixMachineConfig
@@ -52,7 +53,7 @@ type nutanixProvider struct {
 	validator        *Validator
 }
 
-var _ providers.Provider = &nutanixProvider{}
+var _ providers.Provider = &Provider{}
 
 // NewProvider returns a new nutanix provider
 func NewProvider(
@@ -61,7 +62,7 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
 	now types.NowFunc,
-) (*nutanixProvider, error) {
+) (*Provider, error) {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -81,7 +82,7 @@ func NewProvider(
 		return nil, err
 	}
 
-	return &nutanixProvider{
+	return &Provider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
@@ -91,59 +92,59 @@ func NewProvider(
 	}, nil
 }
 
-func (p *nutanixProvider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
+func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
 	// TODO(nutanix): figure out if we need something else here
 	return nil, nil
 }
 
-func (p *nutanixProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *Provider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
+func (p *Provider) PostBootstrapDeleteForUpgrade(ctx context.Context) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) Name() string {
+func (p *Provider) Name() string {
 	return constants.NutanixProviderName
 }
 
-func (p *nutanixProvider) DatacenterResourceType() string {
+func (p *Provider) DatacenterResourceType() string {
 	return eksaNutanixDatacenterResourceType
 }
 
-func (p *nutanixProvider) MachineResourceType() string {
+func (p *Provider) MachineResourceType() string {
 	return eksaNutanixMachineResourceType
 }
 
-func (p *nutanixProvider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
+func (p *Provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
 	// TODO(nutanix): Add delete resource logic
 	return nil
 }
 
-func (p *nutanixProvider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
+func (p *Provider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -158,7 +159,7 @@ func (p *nutanixProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	return nil
 }
 
-func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -166,7 +167,7 @@ func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context, clu
 	return nil
 }
 
-func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
+func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec, _ *cluster.Spec) error {
 	// TODO(nutanix): Add validations when this is supported
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -175,7 +176,7 @@ func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ 
 	return errors.New("upgrade for nutanix provider isn't currently supported")
 }
 
-func (p *nutanixProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) UpdateSecrets(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	contents, err := p.templateBuilder.GenerateCAPISpecSecret(clusterSpec)
 	if err != nil {
 		return err
@@ -187,7 +188,7 @@ func (p *nutanixProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 	return nil
 }
 
-func (p *nutanixProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -213,17 +214,17 @@ func (p *nutanixProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *nutanixProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	// TODO(nutanix): implement
 	return nil, nil, nil
 }
 
-func (p *nutanixProvider) GenerateStorageClass() []byte {
+func (p *Provider) GenerateStorageClass() []byte {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *Provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
@@ -236,19 +237,19 @@ func (p *nutanixProvider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error)
 	return mhc, nil
 }
 
-func (p *nutanixProvider) UpdateKubeConfig(content *[]byte, clusterName string) error {
+func (p *Provider) UpdateKubeConfig(content *[]byte, clusterName string) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) Version(clusterSpec *cluster.Spec) string {
+func (p *Provider) Version(clusterSpec *cluster.Spec) string {
 	version := "v0.5.0"
 	// TODO(nutanix): swap version after bundle.VersionsBundle type is updated with NutanixBundle
 	// version := clusterSpec.VersionsBundle.Nutanix.Version
 	return version
 }
 
-func (p *nutanixProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
+func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO(nutanix): determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -261,13 +262,13 @@ func (p *nutanixProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	return envMap, nil
 }
 
-func (p *nutanixProvider) GetDeployments() map[string][]string {
+func (p *Provider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capx-system": {"controller-manager"},
 	}
 }
 
-func (p *nutanixProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
+func (p *Provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
 	manifests := make([]releasev1alpha1.Manifest, 0)
 	/*
 		TODO(nutanix): swap manifests after bundle.VersionsBundle type is updated with NutanixBundle
@@ -286,11 +287,11 @@ func (p *nutanixProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 	return &infraBundle
 }
 
-func (p *nutanixProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
+func (p *Provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *nutanixProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
+func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
@@ -331,32 +332,32 @@ func configsMapToSlice(c map[string]providers.MachineConfig) []providers.Machine
 	return configs
 }
 
-func (p *nutanixProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *Provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
+func (p *Provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO(nutanix): figure out if we need something else here
 	return false, nil
 }
 
-func (p *nutanixProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+func (p *Provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+func (p *Provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
 	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
 	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
 	for _, nodeGroup := range nodeGroupsToDelete {
@@ -366,16 +367,16 @@ func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 	return machineDeployments
 }
 
-func (p *nutanixProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return p.kubectlClient.SetEksaControllerEnvVar(ctx, features.NutanixProviderEnvVar, "true", kubeconfigFile)
 }
 
-func (p *nutanixProvider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
 
-func (p *nutanixProvider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
+func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
