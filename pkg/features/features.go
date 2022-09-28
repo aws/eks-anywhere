@@ -8,6 +8,7 @@ const (
 	FullLifecycleGate               = "FullLifecycleAPI"
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
+	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
 )
 
 func FeedGates(featureGates []string) {
@@ -68,5 +69,12 @@ func NutanixProvider() Feature {
 	return Feature{
 		Name:     "Nutanix provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(NutanixProviderEnvVar),
+	}
+}
+
+func UseNewWorkflows() Feature {
+	return Feature{
+		Name:     "Use new workflow logic for cluster management operations",
+		IsActive: globalFeatures.isActiveForEnvVar(UseNewWorkflowsEnvVar),
 	}
 }
