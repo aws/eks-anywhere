@@ -705,7 +705,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -743,7 +743,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -1451,7 +1451,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -1489,7 +1489,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -2197,7 +2197,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2235,7 +2235,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -2943,7 +2943,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -2981,7 +2981,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
       version: v1.3.1+abcdef1
   - bootstrap:
       components:
@@ -3671,7 +3671,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-driver
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.1
       kubeProxy:
         arch:
         - amd64
@@ -3709,6 +3709,6 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: vsphere-csi-syncer
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.4.2-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.1
       version: v1.3.1+abcdef1
 status: {}
