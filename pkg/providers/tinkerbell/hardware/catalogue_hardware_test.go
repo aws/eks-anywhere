@@ -71,6 +71,12 @@ func TestCatalogue_Hardware_RemoveFail(t *testing.T) {
 		},
 	}, 1)).To(gomega.HaveOccurred())
 	g.Expect(catalogue.TotalHardware()).To(gomega.Equal(1))
+	g.Expect(catalogue.RemoveHardware(&v1alpha1.Hardware{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "hw2",
+			Namespace: "namespace",
+		},
+	}, 2)).To(gomega.HaveOccurred())
 }
 
 func TestCatalogue_Hardware_UnknownIndexErrors(t *testing.T) {
