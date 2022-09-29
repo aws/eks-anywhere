@@ -9,7 +9,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+type BundleReader interface {
+	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
+	ReadImagesFromBundles(ctx context.Context, bundles *releasev1.Bundles) ([]releasev1.Image, error)
+	ReadChartsFromBundles(ctx context.Context, bundles *releasev1.Bundles) []releasev1.Image
+}
 
 type Bootstrapper interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterOption) (*types.Cluster, error)

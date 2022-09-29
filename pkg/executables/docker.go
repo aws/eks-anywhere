@@ -102,7 +102,6 @@ func (d *Docker) Login(ctx context.Context, endpoint, username, password string)
 }
 
 func (d *Docker) LoadFromFile(ctx context.Context, filepath string) error {
-	logger.Info("FilePath: " + filepath)
 	if _, err := d.Execute(ctx, "load", "-i", filepath); err != nil {
 		return fmt.Errorf("loading images from file: %v", err)
 	}

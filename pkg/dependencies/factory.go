@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	packageartifacts "github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -18,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -83,6 +85,7 @@ type Dependencies struct {
 	BundleRegistry            curatedpackages.BundleRegistry
 	PackageControllerClient   *curatedpackages.PackageControllerClient
 	PackageClient             curatedpackages.PackageHandler
+	BundleReader              interfaces.BundleReader
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
 	SnowValidator             *snow.AwsClientValidator
@@ -1028,6 +1031,39 @@ func (f *Factory) WithFileReader() *Factory {
 
 func (f *Factory) WithManifestReader() *Factory {
 	f.WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.ManifestReader != nil {
+			return nil
+		}
+
+		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithBundleReader(includePackages bool) *Factory {
+	f.WithManifestReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.BundleReader != nil {
+			return nil
+		}
+		f.dependencies.BundleReader = f.dependencies.ManifestReader
+		if includePackages {
+			bundlePuller := oras.NewPuller(packageartifacts.NewRegistryPuller())
+			f.dependencies.BundleReader = curatedpackages.NewPackageReader(f.dependencies.ManifestReader, bundlePuller)
+		}
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithReader() *Factory {
+	f.WithManifestReader()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ManifestReader != nil {

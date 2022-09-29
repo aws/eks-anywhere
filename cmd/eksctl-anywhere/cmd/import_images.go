@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"oras.land/oras-go/pkg/content"
 	"path/filepath"
@@ -69,6 +70,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	factory := dependencies.NewFactory()
 	deps, err := factory.
 		WithManifestReader().
+		WithBundleReader(c.includePackages).
 		Build(ctx)
 	if err != nil {
 		return err
@@ -122,8 +124,14 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	defer deps.Close(ctx)
 
 	imagesFile := filepath.Join(artifactsFolder, "images.tar")
+
+	// fileRegistry is used to push curated packages bundles to a registry
+	fileRegistry, err := fetchFileRegistry(c.RegistryEndpoint, username, password, artifactsFolder, c.includePackages)
+	if err != nil {
+		return err
+	}
 	importArtifacts := artifacts.Import{
-		Reader:  fetchReader(deps.ManifestReader, c.includePackages),
+		Reader:  deps.BundleReader,
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),
@@ -136,21 +144,21 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 			password,
 		),
 		TmpArtifactsFolder: artifactsFolder,
-		FileImporter:       fetchFileRegistry(c.RegistryEndpoint, username, password, artifactsFolder, c.includePackages),
+		FileImporter:       fileRegistry,
 	}
 
 	return importArtifacts.Run(ctx)
 }
 
-func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
+func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) (artifacts.FileImporter, error) {
 	if includePackages {
-		registry, _ := content.NewRegistry(content.RegistryOptions{})
-		//if err != nil {
-		//	return fmt.Errorf("creating registry: %w", err)
-		//}
+		registry, err := content.NewRegistry(content.RegistryOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("creating registry: %w", err)
+		}
 		memoryStore := content.NewMemory()
 		bundlePusher := oras.NewPusher(registry, memoryStore)
-		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder, bundlePusher)
+		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder, bundlePusher), nil
 	}
-	return &artifacts.Noop{}
+	return &artifacts.Noop{}, nil
 }

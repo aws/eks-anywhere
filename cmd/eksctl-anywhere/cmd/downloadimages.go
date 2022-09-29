@@ -10,13 +10,11 @@ import (
 
 	packageartifacts "github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
-	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/oras"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
-	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/tar"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -63,9 +61,8 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 		helmOpts = append(helmOpts, executables.WithInsecure())
 	}
 
-	// Build reader in factory instead
 	deps, err := factory.
-		WithManifestReader().
+		WithBundleReader(c.includePackages).
 		WithHelm(helmOpts...).
 		Build(ctx)
 	if err != nil {
@@ -79,7 +76,7 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
-		Reader: fetchReader(deps.ManifestReader, c.includePackages),
+		Reader: deps.BundleReader,
 		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
@@ -110,14 +107,6 @@ func packagerForFile(file string) packager {
 	} else {
 		return tar.NewPackager()
 	}
-}
-
-func fetchReader(reader *manifests.Reader, includePackages bool) artifacts.Reader {
-	if includePackages {
-		bundlePuller := oras.NewPuller(packageartifacts.NewRegistryPuller())
-		return curatedpackages.NewPackageReader(reader, bundlePuller)
-	}
-	return reader
 }
 
 func fetchManifestDownloader(downloadFolder string, includePackages bool) artifacts.ManifestDownloader {
