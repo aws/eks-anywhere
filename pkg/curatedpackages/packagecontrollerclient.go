@@ -137,7 +137,7 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 		pbc := &packagesv1.PackageBundleController{}
 		for {
 			err := pc.kubectl.GetObject(ctx, packageBundleControllerResource, pc.clusterName,
-				pc.kubeConfig, packagesv1.PackageNamespace, pbc)
+				packagesv1.PackageNamespace, pc.kubeConfig, pbc)
 			if err != nil {
 				done <- fmt.Errorf("getting package bundle controller: %w", err)
 				return
