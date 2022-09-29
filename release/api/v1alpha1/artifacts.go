@@ -131,6 +131,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.CertManager.Acmesolver,
 		vb.CertManager.Cainjector,
 		vb.CertManager.Controller,
+		vb.CertManager.Ctl,
 		vb.CertManager.Webhook,
 		vb.Cilium.Cilium,
 		vb.Cilium.Operator,
