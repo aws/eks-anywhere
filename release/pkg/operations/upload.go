@@ -80,11 +80,12 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				}
 			}
 
+			// If the artifact is a helm chart, skip the skopeo copy as it's handled separately.
+			if strings.HasSuffix(artifact.Image.AssetName, "helm") {
+				continue
+			}
+
 			if artifact.Image != nil {
-				// If the artifact is a helm chart, skip the skopeo copy as it's handled separately.
-				if strings.HasSuffix(artifact.Image.AssetName, "helm") {
-					continue
-				}
 				sourceImageUri := artifact.Image.SourceImageURI
 				releaseImageUri := artifact.Image.ReleaseImageURI
 				fmt.Printf("Source Image - %s\n", sourceImageUri)
