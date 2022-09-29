@@ -1062,21 +1062,6 @@ func (f *Factory) WithBundleReader(includePackages bool) *Factory {
 	return f
 }
 
-func (f *Factory) WithReader() *Factory {
-	f.WithManifestReader()
-
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.ManifestReader != nil {
-			return nil
-		}
-
-		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
-		return nil
-	})
-
-	return f
-}
-
 func (f *Factory) WithUnAuthKubeClient() *Factory {
 	f.WithKubectl()
 
