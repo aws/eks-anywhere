@@ -86,6 +86,7 @@ type ClusterClient interface {
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
 	DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error
 	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
+	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
@@ -1126,4 +1127,8 @@ func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementClust
 
 func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
+	return c.clusterClient.DeletePackageResources(ctx, managementCluster, clusterName)
 }

@@ -88,6 +88,14 @@ func (c *deleteTestSetup) expectNotToCreateBootstrap() {
 	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
+func (c *deleteTestSetup) expectDeletePackageResources() {
+	c.clusterManager.EXPECT().DeletePackageResources(c.ctx, c.clusterSpec.ManagementCluster, gomock.Any()).Return(nil)
+}
+
+func (c *deleteTestSetup) expectNotToDeletePackageResources() {
+	c.clusterManager.EXPECT().DeletePackageResources(c.ctx, c.clusterSpec.ManagementCluster, gomock.Any()).Return(nil).Times(0)
+}
+
 func (c *deleteTestSetup) expectDeleteBootstrap() {
 	gomock.InOrder(
 		c.bootstrapper.EXPECT().DeleteBootstrapCluster(
@@ -145,6 +153,7 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectDeleteWorkload(test.bootstrapCluster)
 	test.expectCleanupGitRepo()
 	test.expectMoveManagement()
+	test.expectNotToDeletePackageResources()
 	test.expectDeleteBootstrap()
 
 	err := test.run()
@@ -166,6 +175,7 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
 	test.expectCleanupGitRepo()
 	test.expectNotToMoveManagement()
+	test.expectDeletePackageResources()
 	test.expectNotToDeleteBootstrap()
 
 	err := test.run()

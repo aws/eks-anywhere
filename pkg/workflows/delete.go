@@ -71,6 +71,8 @@ type deleteWorkloadCluster struct{}
 
 type cleanupGitRepo struct{}
 
+type deletePackageResources struct{}
+
 type deleteManagementCluster struct{}
 
 func (s *setupAndValidate) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
@@ -210,7 +212,7 @@ func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandCo
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &deleteManagementCluster{}
+	return &deletePackageResources{}
 }
 
 func (s *cleanupGitRepo) Name() string {
@@ -222,6 +224,35 @@ func (s *cleanupGitRepo) Restore(ctx context.Context, commandContext *task.Comma
 }
 
 func (s *cleanupGitRepo) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
+func (s *deletePackageResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		return &deleteManagementCluster{}
+	}
+
+	logger.Info("Delete package resources", "clusterName", commandContext.WorkloadCluster.Name)
+	cluster := commandContext.ManagementCluster
+	if cluster == nil {
+		cluster = commandContext.BootstrapCluster
+	}
+	if err := commandContext.ClusterManager.DeletePackageResources(ctx, cluster, commandContext.WorkloadCluster.Name); err != nil {
+		commandContext.SetError(err)
+	}
+	// A bit odd to traverse to this state here, but it is the terminal state
+	return &deleteManagementCluster{}
+}
+
+func (s *deletePackageResources) Name() string {
+	return "package-resource-delete"
+}
+
+func (s *deletePackageResources) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *deletePackageResources) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
