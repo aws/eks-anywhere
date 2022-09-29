@@ -28,7 +28,6 @@ type ClusterClient interface {
 	WithExtraDockerMounts() BootstrapClusterClientOption
 	WithExtraPortMappings([]int) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
-	WithDefaultCNIDisabled() BootstrapClusterClientOption
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetKubeconfig(ctx context.Context, clusterName string) (string, error)
@@ -151,11 +150,5 @@ func WithExtraPortMappings(ports []int) BootstrapClusterOption {
 func WithEnv(env map[string]string) BootstrapClusterOption {
 	return func(b *Bootstrapper) BootstrapClusterClientOption {
 		return b.clusterClient.WithEnv(env)
-	}
-}
-
-func WithDefaultCNIDisabled() BootstrapClusterOption {
-	return func(b *Bootstrapper) BootstrapClusterClientOption {
-		return b.clusterClient.WithDefaultCNIDisabled()
 	}
 }

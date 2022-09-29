@@ -158,20 +158,6 @@ func (mr *MockClusterClientMockRecorder) ValidateClustersCRD(arg0, arg1 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateClustersCRD", reflect.TypeOf((*MockClusterClient)(nil).ValidateClustersCRD), arg0, arg1)
 }
 
-// WithDefaultCNIDisabled mocks base method.
-func (m *MockClusterClient) WithDefaultCNIDisabled() bootstrapper.BootstrapClusterClientOption {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WithDefaultCNIDisabled")
-	ret0, _ := ret[0].(bootstrapper.BootstrapClusterClientOption)
-	return ret0
-}
-
-// WithDefaultCNIDisabled indicates an expected call of WithDefaultCNIDisabled.
-func (mr *MockClusterClientMockRecorder) WithDefaultCNIDisabled() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithDefaultCNIDisabled", reflect.TypeOf((*MockClusterClient)(nil).WithDefaultCNIDisabled))
-}
-
 // WithEnv mocks base method.
 func (m *MockClusterClient) WithEnv(arg0 map[string]string) bootstrapper.BootstrapClusterClientOption {
 	m.ctrl.T.Helper()

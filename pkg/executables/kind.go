@@ -165,18 +165,6 @@ func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClien
 	}
 }
 
-func (k *Kind) WithDefaultCNIDisabled() bootstrapper.BootstrapClusterClientOption {
-	return func() error {
-		if k.execConfig == nil {
-			return errors.New("kind exec config is not ready")
-		}
-
-		k.execConfig.DisableDefaultCNI = true
-
-		return nil
-	}
-}
-
 func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
 	return func() error {
 		if k.execConfig == nil {
