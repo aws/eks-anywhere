@@ -1635,7 +1635,7 @@ func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig stri
 // HasResource implements KubectlRunner.
 func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
 	throwaway := &unstructured.Unstructured{}
-	err := k.GetObject(ctx, resourceType, name, kubeconfig, namespace, throwaway)
+	err := k.GetObject(ctx, resourceType, name, namespace, kubeconfig, throwaway)
 	if err != nil {
 		if errors.Is(err, &apierrors.StatusError{}) {
 			return false, fmt.Errorf("you idiot")
