@@ -87,17 +87,18 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 				var digest string
 				digest = imageDigests[imageArtifact.ReleaseImageURI]
 
-				if !r.DevRelease {
-					requires, err := helm.GetChartImageTags(driver, helmdir)
-					if err != nil {
-						return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error retrieving requires.yaml")
-					}
-					for _, images := range requires.Spec.Images {
-						if images.Repository == imageArtifact.AssetName {
-							digest = images.Digest
-						}
-					}
-				}
+				// Commenting this out for now to test more after release.
+				// if !r.DevRelease {
+				// 	requires, err := helm.GetChartImageTags(driver, helmdir)
+				// 	if err != nil {
+				// 		return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error retrieving requires.yaml")
+				// 	}
+				// 	for _, images := range requires.Spec.Images {
+				// 		if images.Repository == imageArtifact.AssetName {
+				// 			digest = images.Digest
+				// 		}
+				// 	}
+				// }
 
 				bundleImageArtifact = anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
