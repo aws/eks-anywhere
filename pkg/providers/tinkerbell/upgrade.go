@@ -130,6 +130,11 @@ func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *
 		}
 	}
 
+	// Remove all the provisioned hardware from the existing cluster if repeated from the hardware csv input.
+	if err := p.catalogue.RemoveHardwares(hardware); err != nil {
+		return err
+	}
+
 	return p.validateAvailableHardwareForUpgrade(ctx, currentClusterSpec, clusterSpec)
 }
 
