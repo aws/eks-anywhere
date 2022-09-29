@@ -420,6 +420,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1166,6 +1175,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1912,6 +1930,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2658,6 +2685,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -3386,6 +3422,15 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.24"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
