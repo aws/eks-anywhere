@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"k8s.io/apimachinery/pkg/runtime"
-	apimachinerytypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -36,36 +34,15 @@ type CreateCluster struct {
 
 	// File writes files to a specific directory context.
 	File filewriter.FileWriter
-
-	// Force indicates the bootstrap cluster should be force created. In practice, this means
-	// deleting any previously created bootstrap clusters that may contain important state.
-	Force bool
 }
 
 // RunTask satisfies workflow.Task.
 func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 	clusterName := t.Spec.Cluster.Name
 
-	// Ensure the cluster doesn't already exist.
-	exists, err := t.Client.ClusterExists(ctx, clusterName)
-	if err != nil {
-		return ctx, err
-	}
-
-	switch {
-	case exists && !t.Force:
-		return ctx, ErrClusterExists{clusterName}
-	case exists && t.Force:
-		t.Log.Info("Force deleting existing bootstrap cluster", clusterLogKey, clusterName)
-		if err := t.Client.DeleteBootstrapCluster(ctx, clusterName); err != nil {
-			return ctx, fmt.Errorf("force delete bootstrap cluster: %v", err)
-		}
-	}
-
 	// Create the bootstrap cluster.
 	opts := t.Options.GetCreateBootstrapClusterOptions(t.Spec)
-	err = t.Client.CreateBootstrapCluster(ctx, clusterName, opts)
-	if err != nil {
+	if err := t.Client.CreateBootstrapCluster(ctx, clusterName, opts); err != nil {
 		return ctx, err
 	}
 
@@ -89,11 +66,6 @@ func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 	return ctx, nil
 }
 
-// KubernetesClient is used to interact with a Kubernetes cluster.
-type KubernetesClient interface {
-	Get(ctx context.Context, kubeconfig string, key apimachinerytypes.NamespacedName, obj runtime.Object) error
-}
-
 // DeleteCluster deletes a bootstrap cluster. It expects the bootstrap cluster to be populated
 // in the context using contextutil.WithBootstrapCluster (typically done by CreateCluster).
 // If the bootstrap cluster contains irrecoverable state it returns ErrUnexpectedState. If the Force
@@ -104,13 +76,6 @@ type DeleteCluster struct {
 
 	// Client is used to delete the cluster.
 	Client Client
-
-	// K8s is a kubernetes client used to check for cluster state.
-	K8s KubernetesClient
-
-	// Force indicates the bootstrap cluster should be force deleted irrespective of state it
-	// may contain.
-	Force bool
 }
 
 // RunTask satisfies workflow.Task.
@@ -129,28 +94,6 @@ func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
 		return ctx, nil
 	}
 
-	// If the cluster contains anything we think is necessary for recovering the state of an
-	// operation then we shouldn't delete the cluster. For example, if the cluster contains
-	// CAPI objects that should no longer reside in the bootstrap cluster having been moved
-	// in a previous task, we wouldn't want to remove the clsuter without an explicit opt-in
-	// from the user.
-	hasState, err := hasIrrecoverableState(ctx, t.K8s, *cluster)
-	if err != nil {
-		return ctx, err
-	}
-
-	if !t.Force && hasState {
-		return ctx, ErrUnexpectedState{cluster.Name}
-	}
-
-	// Create a sane log statement for the various conditions.
-	switch {
-	case t.Force && hasState:
-		t.Log.Info("Force deleting bootstrap cluster containing unexpected state", clusterLogKey, cluster.Name)
-	case t.Force && !hasState:
-		t.Log.Info("Force deleting bootstrap cluster", clusterLogKey, cluster.Name)
-	}
-
 	if err := t.Client.DeleteBootstrapCluster(ctx, cluster.Name); err != nil {
 		return ctx, err
 	}
@@ -160,10 +103,4 @@ func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
 
 func toKubeconfigFilename(clusterName string) string {
 	return fmt.Sprintf("%s.kubeconfig", clusterName)
-}
-
-func hasIrrecoverableState(ctx context.Context, client KubernetesClient, cluster types.Cluster) (bool, error) {
-	// TODO(chrisdoherty) Determine if there are CAPI objects that shouldn't exist on bootstrap
-	// cluster deletion.
-	return false, nil
 }
