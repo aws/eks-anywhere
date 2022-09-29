@@ -94,7 +94,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 
 // IsInstalled checks if a package controller custom resource exists.
 func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
-	bool, err := pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+	bool, err := pc.kubectl.HasResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
 	return bool && err == nil
 }
 

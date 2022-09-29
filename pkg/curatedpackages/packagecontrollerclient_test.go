@@ -225,7 +225,7 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 func TestIsInstalledTrue(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
+	tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
 
 	found := tt.command.IsInstalled(tt.ctx)
 	if found {
@@ -236,7 +236,7 @@ func TestIsInstalledTrue(t *testing.T) {
 func TestIsInstalledFalse(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).
+	tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).
 		Return(false, errors.New("controller doesn't exist"))
 
 	found := tt.command.IsInstalled(tt.ctx)
