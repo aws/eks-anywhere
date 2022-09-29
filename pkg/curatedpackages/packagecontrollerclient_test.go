@@ -12,7 +12,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -222,25 +224,58 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	}
 }
 
+func successGetObject(t *testing.T) func(context.Context, string, string, string, string, runtime.Object) error {
+	return func(_ context.Context, _, _, _, _ string, obj runtime.Object) error {
+		o := packagesv1.PackageBundleController{
+			Spec: packagesv1.PackageBundleControllerSpec{
+				ActiveBundle: "non-empty",
+			},
+		}
+		pbc, ok := obj.(*packagesv1.PackageBundleController)
+		if !ok {
+			t.Fatalf("obj is not a package bundle controller")
+		}
+		o.DeepCopyInto(pbc)
+		return nil
+	}
+}
+
+func errorGetObject(t *testing.T) func(context.Context, string, string, string, string, runtime.Object) error {
+	return func(_ context.Context, _, _, _, _ string, obj runtime.Object) error {
+		return fmt.Errorf("test error")
+	}
+}
+
 func TestGetActiveControllerSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
+	tt.kubectl.EXPECT().
+		HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, packagesv1.PackageNamespace).
+		Return(true, nil)
+	tt.kubectl.EXPECT().
+		GetObject(gomock.Any(), "packageBundleController", tt.clusterName, tt.kubeConfig, packagesv1.PackageNamespace, gomock.Any()).
+		DoAndReturn(successGetObject(t))
 
 	found, err := tt.command.IsInstalled(tt.ctx)
-	if err != nil || found {
-		t.Errorf("Get Active Controller should return false when controller doesn't exist")
+	if err != nil || !found {
+		t.Errorf("Get Active Controller should return true when controller exists")
 	}
 }
 
 func TestGetActiveControllerFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(true, errors.New("controller doesn't exist"))
+	tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(true, nil)
+	tt.kubectl.EXPECT().GetObject(gomock.Any(), "packageBundleController",
+		tt.clusterName, tt.kubeConfig, constants.EksaPackagesName, gomock.Any()).
+		DoAndReturn(errorGetObject(t))
 
 	found, err := tt.command.IsInstalled(tt.ctx)
-	if !found || err == nil {
-		t.Errorf("Get Active Controller should return true when controller exists")
+	if found {
+		t.Fatalf("expected false, got %t", found)
+	}
+	if err == nil {
+		t.Fatalf("expected error, got %v", err)
 	}
 }
 

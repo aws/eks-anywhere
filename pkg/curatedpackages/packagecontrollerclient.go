@@ -159,7 +159,11 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-done:
+	case err := <-done:
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 }
