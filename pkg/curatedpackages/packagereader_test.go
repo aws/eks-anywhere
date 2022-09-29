@@ -2,6 +2,8 @@ package curatedpackages_test
 
 import (
 	"context"
+	"errors"
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -17,20 +19,47 @@ type packageReaderTest struct {
 	ctx            context.Context
 	command        *curatedpackages.PackageReader
 	manifestReader *mocks.MockManifestReader
+	bundlePuller   *mocks.MockBundlePuller
 	registry       string
+	workingBundle  []byte
 }
 
 func newPackageReaderTest(t *testing.T) *packageReaderTest {
 	ctrl := gomock.NewController(t)
 	r := mocks.NewMockManifestReader(ctrl)
-	registry := "public.ecr.aws/l0g8r8j6"
+	bp := mocks.NewMockBundlePuller(ctrl)
+	registry := "test_registry/local"
+	goodBundle := packagesv1.PackageBundle{
+		Spec: packagesv1.PackageBundleSpec{
+			Packages: []packagesv1.BundlePackage{
+				{
+					Name: "harbor",
+					Source: packagesv1.BundlePackageSource{
+						Versions: []packagesv1.SourceVersion{
+							{
+								Images: []packagesv1.VersionImages{
+									{
+										Repository: "harbor/harbor",
+										Digest:     "sha256:v1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	workingBundle := convertJsonToBytes(goodBundle)
 
 	return &packageReaderTest{
 		WithT:          NewWithT(t),
 		ctx:            context.Background(),
 		registry:       registry,
 		manifestReader: r,
-		command:        curatedpackages.NewPackageReader(r),
+		bundlePuller:   bp,
+		workingBundle:  workingBundle.Bytes(),
+		command:        curatedpackages.NewPackageReader(r, bp),
 	}
 }
 
@@ -51,7 +80,10 @@ func TestPackageReaderReadImagesFromBundlesSuccess(t *testing.T) {
 			},
 		},
 	}
+
+	expectedArtifact := "test_registry/local/eks-anywhere-packages-bundles:v1-21-latest"
 	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	tt.bundlePuller.EXPECT().PullLatestBundle(tt.ctx, expectedArtifact).Return(tt.workingBundle, nil)
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
 
@@ -101,7 +133,10 @@ func TestPackageReaderReadImagesFromBundlesFailWhenWrongBundle(t *testing.T) {
 			},
 		},
 	}
+
+	expectedArtifact := "fake_registry/fake_env/eks-anywhere-packages-bundles:v1-21-latest"
 	tt.manifestReader.EXPECT().ReadImagesFromBundles(tt.ctx, bundles).Return([]releasev1.Image{}, nil)
+	tt.bundlePuller.EXPECT().PullLatestBundle(tt.ctx, expectedArtifact).Return(nil, errors.New("error pulling bundle"))
 
 	images, err := tt.command.ReadImagesFromBundles(tt.ctx, bundles)
 
@@ -126,7 +161,10 @@ func TestPackageReaderReadChartsFromBundlesSuccess(t *testing.T) {
 			},
 		},
 	}
+
+	expectedArtifact := "test_registry/local/eks-anywhere-packages-bundles:v1-21-latest"
 	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	tt.bundlePuller.EXPECT().PullLatestBundle(tt.ctx, expectedArtifact).Return(tt.workingBundle, nil)
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
 
@@ -174,7 +212,10 @@ func TestPackageReaderReadChartsFromBundlesFailWhenWrongURI(t *testing.T) {
 			},
 		},
 	}
+
+	expectedArtifact := "fake_registry/fake_env/eks-anywhere-packages-bundles:v1-21-latest"
 	tt.manifestReader.EXPECT().ReadChartsFromBundles(tt.ctx, bundles).Return([]releasev1.Image{})
+	tt.bundlePuller.EXPECT().PullLatestBundle(tt.ctx, expectedArtifact).Return(nil, errors.New("error pulling bundle"))
 
 	images := tt.command.ReadChartsFromBundles(tt.ctx, bundles)
 

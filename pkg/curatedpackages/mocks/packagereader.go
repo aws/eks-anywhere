@@ -78,3 +78,41 @@ func (mr *MockManifestReaderMockRecorder) ReadImagesFromBundles(ctx, bundles int
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadImagesFromBundles", reflect.TypeOf((*MockManifestReader)(nil).ReadImagesFromBundles), ctx, bundles)
 }
+
+// MockBundlePuller is a mock of BundlePuller interface.
+type MockBundlePuller struct {
+	ctrl     *gomock.Controller
+	recorder *MockBundlePullerMockRecorder
+}
+
+// MockBundlePullerMockRecorder is the mock recorder for MockBundlePuller.
+type MockBundlePullerMockRecorder struct {
+	mock *MockBundlePuller
+}
+
+// NewMockBundlePuller creates a new mock instance.
+func NewMockBundlePuller(ctrl *gomock.Controller) *MockBundlePuller {
+	mock := &MockBundlePuller{ctrl: ctrl}
+	mock.recorder = &MockBundlePullerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBundlePuller) EXPECT() *MockBundlePullerMockRecorder {
+	return m.recorder
+}
+
+// PullLatestBundle mocks base method.
+func (m *MockBundlePuller) PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PullLatestBundle", ctx, art)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// PullLatestBundle indicates an expected call of PullLatestBundle.
+func (mr *MockBundlePullerMockRecorder) PullLatestBundle(ctx, art interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullLatestBundle", reflect.TypeOf((*MockBundlePuller)(nil).PullLatestBundle), ctx, art)
+}

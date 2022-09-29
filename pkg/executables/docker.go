@@ -83,9 +83,7 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 	return version, nil
 }
 
-func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) TagImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -93,9 +91,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 	return nil
 }
 
-func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) PushImage(ctx context.Context, image string, localImage string) error {
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err
@@ -111,6 +107,7 @@ func (d *Docker) Login(ctx context.Context, endpoint, username, password string)
 }
 
 func (d *Docker) LoadFromFile(ctx context.Context, filepath string) error {
+	logger.Info("FilePath: " + filepath)
 	if _, err := d.Execute(ctx, "load", "-i", filepath); err != nil {
 		return fmt.Errorf("loading images from file: %v", err)
 	}
@@ -164,4 +161,17 @@ func (d *Docker) CheckContainerExistence(ctx context.Context, name string) (bool
 	}
 
 	return false, fmt.Errorf("checking if a docker container with name %s exists: %v", name, err)
+}
+
+// Curated packages are currently referenced by digest
+// Docker doesn't support tagging images with digest
+// This method extracts any @ in the image tag
+func removeDigestReference(image string) string {
+	imageSplit := strings.Split(image, "@")
+	if len(imageSplit) < 2 {
+		return image
+	}
+	imageLocation, digest := imageSplit[0], imageSplit[1]
+	digestSplit := strings.Split(digest, ":")
+	return fmt.Sprintf("%s:%s", imageLocation, digestSplit[1])
 }
