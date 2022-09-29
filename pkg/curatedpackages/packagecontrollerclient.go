@@ -1,6 +1,7 @@
 package curatedpackages
 
 import (
+	"atomic"
 	"context"
 	_ "embed"
 	"fmt"
@@ -38,6 +39,10 @@ type PackageControllerClient struct {
 	httpProxy           string
 	httpsProxy          string
 	noProxy             []string
+	// isControllerInstalled indicates controller installation is complete.
+	//
+	// An atomic value is used for thread-safety.
+	isControllerInstalled *atomic.Bool
 }
 
 type ChartInstaller interface {
@@ -61,6 +66,14 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 	return pcc
 }
 
+// InstallController installs the curated packages controller.
+//
+// This includes all necessary steps for functionality. These include:
+//
+//    - helm chart installation
+//    - credentials secret creation
+//    - credentials refreshing cron job creation
+//    - activation of a curated packages bundle
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
@@ -92,12 +105,12 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
 	}
 
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	err = pc.waitForActiveBundle(timeoutCtx)
+	err = pc.waitForActiveBundle(ctx, "1m")
 	if err != nil {
 		return err
 	}
+
+	pc.isControllerInstalled.Store(true)
 
 	return nil
 }
@@ -107,21 +120,8 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 const packageBundleControllerResource string = "packageBundleController"
 
 // IsInstalled returns true when the package controller is installed.
-//
-// Installed means that the API responds with a valid package bundle
-// controller, and the active bundle specified in that controller has been
-// set.
-func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
-	found, err := pc.kubectl.HasResource(ctx, packageBundleControllerResource, pc.clusterName,
-		pc.kubeConfig, packagesv1.PackageNamespace)
-	if err != nil {
-		return false, err
-	}
-	if !found {
-		return false, nil
-	}
-
-	return true, nil
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
+	return pc.isControllerInstalled.Load()
 }
 
 // waitForActiveBundle polls the package bundle controller for its active bundle.
@@ -129,14 +129,25 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error
 // It returns nil on success. Success is defined as receiving a valid package
 // bundle controller from the API with a non-empty active bundle.
 //
+// If no timeout is specified, a default of 1 minute is used.
 // It will poll infinitely, unless a timeout is specified on the context.
-func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) error {
+func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context, timeout string) error {
+	if timeout == "" {
+		timeout = "1m"
+	}
+	dur, err := time.ParseDuration(timeout)
+	if err != nil {
+		return err
+	}
+	timeoutCtx, cancel := context.WithTimeout(ctx, dur)
+	defer cancel()
+
 	done := make(chan error)
 	go func() {
 		defer close(done)
 		pbc := &packagesv1.PackageBundleController{}
 		for {
-			err := pc.kubectl.GetObject(ctx, packageBundleControllerResource, pc.clusterName,
+			err := pc.kubectl.GetObject(timeoutCtx, packageBundleControllerResource, pc.clusterName,
 				packagesv1.PackageNamespace, pc.kubeConfig, pbc)
 			if err != nil {
 				done <- fmt.Errorf("getting package bundle controller: %w", err)
@@ -158,7 +169,7 @@ func (pc *PackageControllerClient) waitForActiveBundle(ctx context.Context) erro
 	}()
 
 	select {
-	case <-ctx.Done():
+	case <-timeoutCtx.Done():
 		return ctx.Err()
 	case err := <-done:
 		if err != nil {
