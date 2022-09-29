@@ -12,6 +12,8 @@ import (
 // These constants are temporary since currently there is a limitation on harbor
 // Harbor requires root level projects but curated packages private account currently
 // doesn't have support for root level
+// Temporary: Curated packages dev and prod accounts are currently hard coded
+// This is because there is no mechanism to extract these values as of now
 const (
 	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
 	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
@@ -42,9 +44,7 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 	logger.V(3).Info("Starting registry write", "numberOfImages", len(images))
 	err := d.processor.Process(ctx, images, func(ctx context.Context, image string) error {
 		endpoint := getUpdatedEndpoint(d.endpoint, image)
-		replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-		localImage := replacer.Replace(image)
-		localImage = removeDigestReference(localImage)
+		localImage := getLocalImage(endpoint, image)
 
 		if err := d.client.TagImage(ctx, image, localImage); err != nil {
 			return err
@@ -106,6 +106,12 @@ func getUpdatedEndpoint(originalEndpoint, image string) string {
 		return originalEndpoint + "/" + publicProdECRName
 	}
 	return originalEndpoint
+}
+
+func getLocalImage(endpoint string, image string) string {
+	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
+	localImage := replacer.Replace(image)
+	return removeDigestReference(localImage)
 }
 
 // Curated packages are currently referenced by digest
