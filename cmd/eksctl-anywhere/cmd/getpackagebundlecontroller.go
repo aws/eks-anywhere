@@ -26,7 +26,7 @@ func init() {
 
 var getPackageBundleControllerCommand = &cobra.Command{
 	Use:          "packagebundlecontroller(s) [flags]",
-	Aliases:      []string{"packagebundlecontroller", "packagebundlcontrolleres", "pbc"},
+	Aliases:      []string{"packagebundlecontroller", "packagebundlecontrollers", "pbc"},
 	Short:        "Get packagebundlecontroller(s)",
 	Long:         "This command is used to display the current packagebundlecontrollers",
 	PreRunE:      preRunPackages,
