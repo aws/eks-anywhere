@@ -22,9 +22,7 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
-	"github.com/aws/eks-anywhere/release/pkg/helm"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
-
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
@@ -38,30 +36,8 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	var sourceBranch string
 	var componentChecksum string
-	var helmdir string
-	var URI string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
-
-	// Find the source of the Helm chart prior to the initial loop.
-	for _, componentName := range sortedComponentNames {
-		for _, artifact := range artifacts[componentName] {
-			if strings.HasSuffix(artifact.Image.AssetName, "helm") {
-				URI = artifact.Image.SourceImageURI
-			}
-		}
-	}
-	driver, err := helm.NewHelm()
-	if err != nil {
-		return anywherev1alpha1.PackageBundle{}, fmt.Errorf("creating helm client: %w", err)
-	}
-
-	if !r.DevRelease {
-		helmdir, err = helm.GetHelmDest(driver, URI, "eks-anywhere-packages")
-		if err != nil {
-			return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error GetHelmDest")
-		}
-	}
 
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range artifacts[componentName] {
@@ -70,12 +46,6 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 			bundleImageArtifact := anywherev1alpha1.Image{}
 			if strings.HasSuffix(imageArtifact.AssetName, "helm") {
 				assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
-				if !r.DevRelease {
-					err := helm.ModifyChartYaml(*imageArtifact, r, driver, helmdir)
-					if err != nil {
-						return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error modifying and pushing helm Chart.yaml")
-					}
-				}
 				bundleImageArtifact = anywherev1alpha1.Image{
 					Name:        assetName,
 					Description: fmt.Sprintf("Helm chart for %s", assetName),
@@ -83,29 +53,13 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 			} else {
-				// Set the default digest, in case we're doing a dev release it won't fail.
-				var digest string
-				digest = imageDigests[imageArtifact.ReleaseImageURI]
-
-				if !r.DevRelease {
-					requires, err := helm.GetChartImageTags(driver, helmdir)
-					if err != nil {
-						return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error retrieving requires.yaml")
-					}
-					for _, images := range requires.Spec.Images {
-						if images.Repository == imageArtifact.AssetName {
-							digest = images.Digest
-						}
-					}
-				}
-
 				bundleImageArtifact = anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
 					Arch:        imageArtifact.Arch,
 					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: digest,
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 			}
 			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
