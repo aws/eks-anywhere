@@ -10,7 +10,7 @@ import (
 
 type PackageController interface {
 	InstallController(ctx context.Context) error
-	IsInstalled(ctx context.Context) (bool, error)
+	IsInstalled(ctx context.Context) bool
 }
 
 type PackageHandler interface {
