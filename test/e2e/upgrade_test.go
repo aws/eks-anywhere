@@ -103,6 +103,22 @@ func TestVSphereKubernetes122UbuntuTo123Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes123UbuntuTo124Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu123())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube124,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar("K8S_1_24_SUPPORT", "true"),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate124Var()),
+	)
+}
+
 func TestVSphereKubernetes122UbuntuTo123UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := framework.NewClusterE2ETest(

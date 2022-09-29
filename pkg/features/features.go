@@ -9,6 +9,7 @@ const (
 	CheckpointEnabledEnvVar         = "CHECKPOINT_ENABLED"
 	NutanixProviderEnvVar           = "NUTANIX_PROVIDER"
 	UseNewWorkflowsEnvVar           = "USE_NEW_WORKFLOWS"
+	K8s124SupportEnvVar             = "K8S_1_24_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -27,6 +28,13 @@ func IsActive(feature Feature) bool {
 // ClearCache is mainly used for unit tests as of now
 func ClearCache() {
 	globalFeatures.clearCache()
+}
+
+func K8s124Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.24 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s124SupportEnvVar),
+	}
 }
 
 func FullLifecycleAPI() Feature {

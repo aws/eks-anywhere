@@ -33,6 +33,7 @@ const (
 	vsphereTemplateUbuntu121Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_21"
 	vsphereTemplateUbuntu122Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_22"
 	vsphereTemplateUbuntu123Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_23"
+	vsphereTemplateUbuntu124Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_24"
 	vsphereTemplateBR120Var     = "T_VSPHERE_TEMPLATE_BR_1_20"
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTemplateBR122Var     = "T_VSPHERE_TEMPLATE_BR_1_22"
@@ -64,6 +65,7 @@ var requiredEnvVars = []string{
 	vsphereTemplateUbuntu121Var,
 	vsphereTemplateUbuntu122Var,
 	vsphereTemplateUbuntu123Var,
+	vsphereTemplateUbuntu124Var,
 	vsphereTemplateBR120Var,
 	vsphereTemplateBR121Var,
 	vsphereTemplateBR122Var,
@@ -109,6 +111,10 @@ func UpdateUbuntuTemplate123Var() api.VSphereFiller {
 	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu123Var, api.WithTemplateForAllMachines)
 }
 
+func UpdateUbuntuTemplate124Var() api.VSphereFiller {
+	return api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu124Var, api.WithTemplateForAllMachines)
+}
+
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
 	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines)
 }
@@ -152,6 +158,15 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	}
 
 	return v
+}
+
+func WithUbuntu124() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateUbuntu124Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		)
+	}
 }
 
 func WithUbuntu123() VSphereOpt {
