@@ -91,6 +91,14 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	if err = pc.CreateCronJob(ctx); err != nil {
 		logger.Info("Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.")
 	}
+
+	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	err = pc.waitForActiveBundle(timeoutCtx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -111,13 +119,6 @@ func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error
 	}
 	if !found {
 		return false, nil
-	}
-
-	timeoutCtx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-	err = pc.waitForActiveBundle(timeoutCtx)
-	if err != nil {
-		return false, err
 	}
 
 	return true, nil
