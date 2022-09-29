@@ -76,8 +76,11 @@ func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*package
 	return bundle, nil
 }
 
-func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string) (*packagesv1.PackageBundle, error) {
-	params := []string{"get", "packageBundle", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, activeBundle}
+func (b *BundleReader) getPackageBundle(ctx context.Context, bundleName string) (*packagesv1.PackageBundle, error) {
+	params := []string{"get", "packageBundle", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, bundleName}
+	if bundleName == "" {
+		return nil, fmt.Errorf("no bundle name specified")
+	}
 	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
 		return nil, err

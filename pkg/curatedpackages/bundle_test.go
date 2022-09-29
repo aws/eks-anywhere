@@ -92,6 +92,25 @@ func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
 }
 
+func TestGetLatestBundleFromClusterFailsNoBundleName(t *testing.T) {
+	tt := newBundleTest(t)
+	noActiveBundle := tt.bundleCtrl
+	noActiveBundle.Spec.ActiveBundle = ""
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.activeCluster), nil)
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(noActiveBundle), nil)
+
+	tt.Command = curatedpackages.NewBundleReader(
+		tt.kubeConfig,
+		curatedpackages.Cluster,
+		tt.kubectl,
+		tt.bundleManager,
+		tt.registry,
+	)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	tt.Expect(err).To(MatchError(ContainSubstring("no bundle name specified")))
+	tt.Expect(result).To(BeNil())
+}
+
 func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt := newBundleTest(t)
 	baseRef := "test_host/test_env/test_controller"
