@@ -24,62 +24,62 @@ description: >
 
    Example package file with `daemonSet` mode and default configuration:
    ```yaml
-   apiVersion: packages.eks.amazonaws.com/v1alpha1
-   kind: Package
-   metadata:
-     name: my-adot
-     namespace: eksa-packages
-   spec:
-     packageName: adot
-     targetNamespace: observability
-     config: | 
-       mode: daemonset
+    apiVersion: packages.eks.amazonaws.com/v1alpha1
+    kind: Package
+    metadata:
+      name: my-adot
+      namespace: eksa-packages
+    spec:
+      packageName: adot
+    targetNamespace: observability
+    config: | 
+      mode: daemonset
    ```
 
    Example package file with `deployment` mode and customized collector components to scrap
    ADOT collector's own metrics:
    ```yaml
-   apiVersion: packages.eks.amazonaws.com/v1alpha1
-   kind: Package
-   metadata:
-     name: my-adot
-     namespace: eksa-packages
-   spec:
-     packageName: adot
-     targetNamespace: observability
-     config: | 
-       mode: deployment
-       replicaCount: 2
-       config:
-         receivers:
-           prometheus:
-             config:
-               scrape_configs:
-                 - job_name: opentelemetry-collector
-                   scrape_interval: 10s
-                   static_configs:
-                     - targets:
-                         - ${MY_POD_IP}:8888
-         processors:
-           batch: {}
-           memory_limiter: null
-         exporters:
-           logging:
-             logLevel: debug
-           prometheusremotewrite:
-             endpoint: "https://my-cortex:7900/api/v1/push"
-             external_labels:
-               label_name1: label_value1
-               label_name2: label_value2
-         extensions:
-           health_check: {}
-           memory_ballast: {}
-         service:
-           pipelines:
-             metrics:
-               receivers: [prometheus]
-               processors: [batch]
-               exporters: [prometheusremotewrite]
+    apiVersion: packages.eks.amazonaws.com/v1alpha1
+    kind: Package
+    metadata:
+      name: my-adot
+      namespace: eksa-packages
+    spec:
+      packageName: adot
+      targetNamespace: observability
+      config: | 
+        mode: deployment
+        replicaCount: 2
+        config:
+          receivers:
+            prometheus:
+              config:
+                scrape_configs:
+                  - job_name: opentelemetry-collector
+                    scrape_interval: 10s
+                    static_configs:
+                      - targets:
+                          - ${MY_POD_IP}:8888
+          processors:
+            batch: {}
+            memory_limiter: null
+          exporters:
+            logging:
+              loglevel: debug
+            prometheusremotewrite:
+              endpoint: "https://my-cortex:7900/api/v1/push"
+              external_labels:
+                label_name1: label_value1
+                label_name2: label_value2
+          extensions:
+            health_check: {}
+            memory_ballast: {}
+          service:
+            pipelines:
+              metrics:
+                receivers: [prometheus]
+                processors: [batch]
+                exporters: [logging, prometheusremotewrite]
    ```
 
 1. Create the namespace
@@ -103,7 +103,7 @@ description: >
    Example command output
    ```
    NAME   PACKAGE   AGE   STATE       CURRENTVERSION                                                            TARGETVERSION                                                                   DETAIL
-   my-adot   adot   19h   installed   0.20.0-a793cb4cd95e6ee3bd4519799f3b6e3c95ae88fdb018a6ed679a3edc88b72aee   0.20.0-a793cb4cd95e6ee3bd4519799f3b6e3c95ae88fdb018a6ed679a3edc88b72aee (latest)
+   my-adot   adot   19h   installed   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef (latest)
    ```
 
 ## Upgrade
