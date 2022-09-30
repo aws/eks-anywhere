@@ -182,7 +182,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 
 func (c *upgradeTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
-		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
+		bootstrapper.WithExtraDockerMounts(),
 	}
 
 	gomock.InOrder(
