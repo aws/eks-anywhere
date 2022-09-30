@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -63,7 +64,6 @@ type cloudstackProvider struct {
 	writer                filewriter.FileWriter
 	selfSigned            bool
 	templateBuilder       *CloudStackTemplateBuilder
-	skipIpCheck           bool
 	validator             *Validator
 	execConfig            *decoder.CloudStackExecConfig
 	log                   logr.Logger
@@ -257,9 +257,8 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		skipIpCheck: skipIpCheck,
-		validator:   NewValidator(providerCmkClient),
 		log:         logger.Get(),
+		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
 	}
 }
 
@@ -474,10 +473,6 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 			return fmt.Errorf("CloudStackDatacenter %s already exists", clusterSpec.CloudStackDatacenter.Name)
 		}
 	}
-	if p.skipIpCheck {
-		p.log.Info("Skipping check for whether control plane ip is in use")
-		return nil
-	}
 
 	return nil
 }
@@ -606,12 +601,12 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 		}
 	}
 
-	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
+	if !oldCsmc.Spec.Template.Equal(&newCsmc.Spec.Template) {
 		log.Info("Old and new CloudStackMachineConfig Templates do not match", "machineConfig", oldCsmc.Name, "oldTemplate", oldCsmc.Spec.Template,
 			"newTemplate", newCsmc.Spec.Template)
 		return true
 	}
-	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
+	if !oldCsmc.Spec.ComputeOffering.Equal(&newCsmc.Spec.ComputeOffering) {
 		log.Info("Old and new CloudStackMachineConfig Compute Offerings do not match", "machineConfig", oldCsmc.Name, "oldComputeOffering", oldCsmc.Spec.ComputeOffering,
 			"newComputeOffering", newCsmc.Spec.ComputeOffering)
 		return true
@@ -645,6 +640,7 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -954,7 +950,6 @@ func (p *cloudstackProvider) getWorkloadTemplateSpecForCAPISpecUpgrade(ctx conte
 		if err != nil {
 			return nil, err
 		}
-
 		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
 		if err != nil {
 			return nil, err

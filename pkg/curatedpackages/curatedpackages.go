@@ -86,7 +86,7 @@ func PrintCertManagerDoesNotExistMsg() {
 func VerifyCertManagerExists(ctx context.Context, kubectl KubectlRunner, kubeConfig string) error {
 	// Note although we passed in a namespace parameter in the kubectl command, the GetResource command will be
 	// performed in all namespaces since CRDs are not bounded by namespaces.
-	certManagerExists, err := kubectl.GetResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig,
+	certManagerExists, err := kubectl.HasResource(ctx, "crd", "certificates.cert-manager.io", kubeConfig,
 		constants.CertManagerNamespace)
 	if err != nil {
 		return err

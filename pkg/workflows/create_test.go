@@ -83,15 +83,13 @@ func (c *createTestSetup) expectSetup() {
 }
 
 func (c *createTestSetup) expectCreateBootstrap() {
-	opts := []bootstrapper.BootstrapClusterOption{
-		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
-	}
+	opts := []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}
 
 	gomock.InOrder(
 		c.provider.EXPECT().BootstrapClusterOpts(c.clusterSpec).Return(opts, nil),
 		// Checking for not nil because in go you can't compare closures
 		c.bootstrapper.EXPECT().CreateBootstrapCluster(
-			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
+			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
 		c.provider.EXPECT().PreCAPIInstallOnBootstrap(c.ctx, c.bootstrapCluster, c.clusterSpec),
