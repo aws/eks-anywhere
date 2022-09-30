@@ -3,12 +3,12 @@ package curatedpackages_test
 import (
 	"context"
 	"errors"
-	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"

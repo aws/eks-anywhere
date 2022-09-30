@@ -19,7 +19,6 @@ func NewPuller(registryPuller *artifacts.RegistryPuller) *Puller {
 }
 
 func (bp *Puller) PullLatestBundle(ctx context.Context, art string) ([]byte, error) {
-
 	data, err := bp.registryPuller.Pull(ctx, art)
 	if err != nil {
 		return nil, fmt.Errorf("unable to pull artifacts %v", err)

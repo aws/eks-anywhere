@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"oras.land/oras-go/pkg/content"
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/config"
@@ -16,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
-	"oras.land/oras-go/pkg/content"
 )
 
 // imagesCmd represents the images command
