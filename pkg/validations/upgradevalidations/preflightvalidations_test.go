@@ -159,7 +159,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
+			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration.Count++
 			},
@@ -528,7 +528,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
+			wantErr:            composeError("spec.externalEtcdConfiguration.count is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration.Count += 1
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
@@ -546,7 +546,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
+			wantErr:            composeError("adding or removing external etcd during upgrade is not supported"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.Cluster.Spec.ExternalEtcdConfiguration = nil
 				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
