@@ -2,6 +2,7 @@ package workflows_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -176,6 +177,28 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 	test.expectCleanupGitRepo()
 	test.expectNotToMoveManagement()
 	test.expectDeletePackageResources()
+	test.expectNotToDeleteBootstrap()
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestDeleteWorkloadDeletePackageResourceError(t *testing.T) {
+	test := newDeleteTest(t)
+	test.expectSetup()
+	test.expectNotToCreateBootstrap()
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	test.clusterSpec.Cluster.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
+	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
+	test.expectCleanupGitRepo()
+	test.expectNotToMoveManagement()
+	test.clusterManager.EXPECT().DeletePackageResources(test.ctx, test.clusterSpec.ManagementCluster, gomock.Any()).Return(fmt.Errorf("boom"))
 	test.expectNotToDeleteBootstrap()
 
 	err := test.run()

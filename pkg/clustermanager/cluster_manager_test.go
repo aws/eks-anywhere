@@ -1930,3 +1930,12 @@ func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
 	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).ToNot(BeNil())
 }
+
+func TestClusterManagerDeletePackageResources(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.client.EXPECT().DeletePackageResources(tt.ctx, tt.cluster, tt.clusterName).Return(nil)
+
+	err := tt.clusterManager.DeletePackageResources(tt.ctx, tt.cluster, tt.clusterName)
+	tt.Expect(err).To(BeNil())
+}
