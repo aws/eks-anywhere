@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"oras.land/oras-go/pkg/content"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -17,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/helm"
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
+	"oras.land/oras-go/pkg/content"
 )
 
 // imagesCmd represents the images command

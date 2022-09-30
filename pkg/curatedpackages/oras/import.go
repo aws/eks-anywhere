@@ -14,6 +14,7 @@ import (
 type BundlePusher interface {
 	PushBundle(ctx context.Context, ref, fileName string, fileContent []byte) error
 }
+
 type FileRegistryImporter struct {
 	registry           string
 	username, password string
