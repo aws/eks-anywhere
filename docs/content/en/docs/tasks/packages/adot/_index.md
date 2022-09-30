@@ -67,10 +67,7 @@ description: >
             logging:
               loglevel: debug
             prometheusremotewrite:
-              endpoint: "https://my-cortex:7900/api/v1/push"
-              external_labels:
-                label_name1: label_value1
-                label_name2: label_value2
+              endpoint: "<prometheus-remote-write-end-point>"
           extensions:
             health_check: {}
             memory_ballast: {}
@@ -80,6 +77,9 @@ description: >
                 receivers: [prometheus]
                 processors: [batch]
                 exporters: [logging, prometheusremotewrite]
+            telemetry:
+              metrics:
+                address: 0.0.0.0:8888
    ```
 
 1. Create the namespace
