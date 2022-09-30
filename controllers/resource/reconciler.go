@@ -47,6 +47,7 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 			ResourceFetcher: resourceFetcher,
 			ResourceUpdater: resourceUpdater,
 			now:             now,
+			log:             log,
 		},
 		dockerTemplate: DockerTemplate{
 			ResourceFetcher: resourceFetcher,

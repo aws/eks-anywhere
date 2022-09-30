@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -1664,7 +1665,7 @@ func TestAnyImmutableFieldChangedDiskOfferingNoChange(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], logger.Get()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
@@ -1678,7 +1679,7 @@ func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.DiskOffering.Name = "newDiskOffering"
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], logger.Get()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
@@ -1692,7 +1693,7 @@ func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.Symlinks["/new/folder"] = "/data/new/folder"
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], logger.Get()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
@@ -1708,7 +1709,7 @@ func TestAnyImmutableFieldChangedSymlinksChange(t *testing.T) {
 	for k, v := range newMachineConfigsMap["test"].Spec.Symlinks {
 		newMachineConfigsMap["test"].Spec.Symlinks[k] = "/new" + v
 	}
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], logger.Get()), "Should not have any immutable fields changes")
 }
 
 func TestAnyImmutableFieldChangedDomain(t *testing.T) {
@@ -1717,7 +1718,7 @@ func TestAnyImmutableFieldChangedDomain(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newDcConfig.Spec.AvailabilityZones[0].Domain = "shinyNewDomain"
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, logger.Get()), "Should have an immutable field changed")
 }
 
 func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
@@ -1728,7 +1729,7 @@ func TestAnyImmutableFieldChangedFewerZones(t *testing.T) {
 
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 
-	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil), "Should have an immutable field changed")
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, nil, nil, logger.Get()), "Should have an immutable field changed")
 }
 
 func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) {
@@ -1743,7 +1744,7 @@ func TestAnyImmutableFieldMissingApiEndpointFromCloudStackCluster(t *testing.T) 
 	newDcConfig.Spec.AvailabilityZones[0].ManagementApiEndpoint = ""
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"]), "Should not have any immutable fields changes")
+	assert.False(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], logger.Get()), "Should not have any immutable fields changes")
 }
 
 func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
