@@ -212,7 +212,7 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterCo
 		cmk,
 		writer,
 		test.FakeNow,
-		false,
+		true,
 	)
 }
 

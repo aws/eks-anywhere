@@ -28,6 +28,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -62,7 +63,6 @@ type cloudstackProvider struct {
 	writer                filewriter.FileWriter
 	selfSigned            bool
 	templateBuilder       *CloudStackTemplateBuilder
-	skipIpCheck           bool
 	validator             *Validator
 	execConfig            *decoder.CloudStackExecConfig
 }
@@ -255,8 +255,7 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		skipIpCheck: skipIpCheck,
-		validator:   NewValidator(providerCmkClient),
+		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
 	}
 }
 
@@ -471,10 +470,6 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 			return fmt.Errorf("CloudStackDatacenter %s already exists", clusterSpec.CloudStackDatacenter.Name)
 		}
 	}
-	if p.skipIpCheck {
-		logger.Info("Skipping check for whether control plane ip is in use")
-		return nil
-	}
 
 	return nil
 }
@@ -599,10 +594,10 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 		}
 	}
 
-	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
+	if !oldCsmc.Spec.Template.Equal(&newCsmc.Spec.Template) {
 		return true
 	}
-	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
+	if !oldCsmc.Spec.ComputeOffering.Equal(&newCsmc.Spec.ComputeOffering) {
 		return true
 	}
 	if !oldCsmc.Spec.DiskOffering.Equal(newCsmc.Spec.DiskOffering) {
@@ -624,6 +619,7 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -933,7 +929,6 @@ func (p *cloudstackProvider) getWorkloadTemplateSpecForCAPISpecUpgrade(ctx conte
 		if err != nil {
 			return nil, err
 		}
-
 		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
 		if err != nil {
 			return nil, err
