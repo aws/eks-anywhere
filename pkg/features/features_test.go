@@ -83,3 +83,11 @@ func TestWithNutanixFeatureFlag(t *testing.T) {
 	g.Expect(os.Setenv(NutanixProviderEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(NutanixProvider())).To(BeTrue())
 }
+
+func TestWithK8s124FeatureFlag(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	g.Expect(os.Setenv(K8s124SupportEnvVar, "true")).To(Succeed())
+	g.Expect(IsActive(K8s124Support())).To(BeTrue())
+}
