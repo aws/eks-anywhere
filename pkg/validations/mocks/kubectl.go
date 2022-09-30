@@ -12,6 +12,7 @@ import (
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // MockKubectlClient is a mock of KubectlClient interface.
@@ -142,19 +143,18 @@ func (mr *MockKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(ctx, vsp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaVSphereDatacenterConfig), ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace)
 }
 
-// SearchEksaGitOpsConfig mocks base method.
-func (m *MockKubectlClient) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+// GetObject mocks base method.
+func (m *MockKubectlClient) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchEksaGitOpsConfig", ctx, gitOpsConfigName, kubeconfigFile, namespace)
-	ret0, _ := ret[0].([]*v1alpha1.GitOpsConfig)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetObject", ctx, resourceType, name, namespace, kubeconfig, obj)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// SearchEksaGitOpsConfig indicates an expected call of SearchEksaGitOpsConfig.
-func (mr *MockKubectlClientMockRecorder) SearchEksaGitOpsConfig(ctx, gitOpsConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+// GetObject indicates an expected call of GetObject.
+func (mr *MockKubectlClientMockRecorder) GetObject(ctx, resourceType, name, namespace, kubeconfig, obj interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchEksaGitOpsConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile, namespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlClient)(nil).GetObject), ctx, resourceType, name, namespace, kubeconfig, obj)
 }
 
 // SearchIdentityProviderConfig mocks base method.
