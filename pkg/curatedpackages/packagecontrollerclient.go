@@ -92,8 +92,10 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 	return nil
 }
 
-func (pc *PackageControllerClient) IsInstalled(ctx context.Context) (bool, error) {
-	return pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+// IsInstalled checks if a package controller custom resource exists.
+func (pc *PackageControllerClient) IsInstalled(ctx context.Context) bool {
+	bool, err := pc.kubectl.GetResource(ctx, "packageBundleController", pc.clusterName, pc.kubeConfig, constants.EksaPackagesName)
+	return bool && err == nil
 }
 
 func (pc *PackageControllerClient) ApplySecret(ctx context.Context) error {
