@@ -99,7 +99,7 @@ func getAssetsFromConfig(ac *assettypes.AssetConfig, rc *releasetypes.ReleaseCon
 
 func GetBundleReleaseAssets(supportedK8sVersions []string, eksDReleaseMap *filereader.EksDLatestReleases, rc *releasetypes.ReleaseConfig) (map[string][]releasetypes.Artifact, error) {
 	artifactsTable := map[string][]releasetypes.Artifact{}
-	assetConfigs := assetconfig.GetBundleReleaseAssetsConfigMap()
+	assetConfigs := assetconfig.GetBundleReleaseAssetsConfigMap(rc)
 	for _, release := range eksDReleaseMap.Releases {
 		channel := release.Branch
 		number := strconv.Itoa(release.Number)

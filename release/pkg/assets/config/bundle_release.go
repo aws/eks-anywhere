@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/assets/archives"
 	"github.com/aws/eks-anywhere/release/pkg/assets/tagger"
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
+	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
 var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
@@ -287,28 +288,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cluster-api-provider-nutanix artifacts
-	{
-		ProjectName: "cluster-api-provider-nutanix",
-		ProjectPath: "projects/nutanix-cloud-native/cluster-api-provider-nutanix",
-		Images: []*assettypes.Image{
-			{
-				RepoName:  "manager",
-				AssetName: "cluster-api-provider-nutanix",
-			},
-		},
-		ImageRepoPrefix: "nutanix-cloud-native/cluster-api-provider-nutanix/release",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-		Manifests: []*assettypes.ManifestComponent{
-			{
-				Name:          "infrastructure-nutanix",
-				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
-			},
-		},
-	},
+
 	// Image-builder cli artifacts
 	{
 		ProjectName: "image-builder",
@@ -835,6 +815,32 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 }
 
-func GetBundleReleaseAssetsConfigMap() []assettypes.AssetConfig {
-	return bundleReleaseAssetsConfigMap
+func GetBundleReleaseAssetsConfigMap(rc *releasetypes.ReleaseConfig) []assettypes.AssetConfig {
+	conf := bundleReleaseAssetsConfigMap
+	if rc.DevRelease && rc.BuildRepoBranchName == "main" {
+		nutanixConfig := assettypes.AssetConfig{
+			ProjectName: "cluster-api-provider-nutanix",
+			ProjectPath: "projects/nutanix-cloud-native/cluster-api-provider-nutanix",
+			Images: []*assettypes.Image{
+				{
+					RepoName:  "manager",
+					AssetName: "cluster-api-provider-nutanix",
+				},
+			},
+			ImageRepoPrefix: "nutanix-cloud-native/cluster-api-provider-nutanix/release",
+			ImageTagOptions: []string{
+				"gitTag",
+				"projectPath",
+			},
+			Manifests: []*assettypes.ManifestComponent{
+				{
+					Name:          "infrastructure-nutanix",
+					ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
+				},
+			},
+			OnlyForDevRelease: true,
+		}
+		conf = append(conf, nutanixConfig)
+	}
+	return conf
 }
