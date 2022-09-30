@@ -1220,25 +1220,6 @@ func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterN
 	return response.Items, nil
 }
 
-func (k *Kubectl) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
-	params := []string{
-		"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + gitOpsConfigName,
-	}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("searching eksa GitOpsConfig: %v", err)
-	}
-
-	response := &GitOpsConfigResponse{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("parsing GitOpsConfig response: %v", err)
-	}
-
-	return response.Items, nil
-}
-
 func (k *Kubectl) GetEksaFluxConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error) {
 	params := []string{"get", eksaFluxConfigResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
