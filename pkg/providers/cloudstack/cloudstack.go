@@ -257,7 +257,7 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		log:         logger.Get(),
+		log:       logger.Get(),
 		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
 	}
 }
