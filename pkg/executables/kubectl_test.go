@@ -2530,3 +2530,45 @@ func TestKubectlHasResourceWithGetError(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("test error")))
 	tt.Expect(has).To(BeFalse())
 }
+
+func TestKubectlDeletePackageResources(t *testing.T) {
+	t.Parallel()
+
+	t.Run("golden path", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "namespace", "eksa-packages-clusterName", "--kubeconfig", tt.kubeconfig, "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(Succeed())
+	})
+
+	t.Run("pbc failure", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), fmt.Errorf("bam"))
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(MatchError(ContainSubstring("bam")))
+	})
+
+	t.Run("namespace failure", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "namespace", "eksa-packages-clusterName", "--kubeconfig", tt.kubeconfig, "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), fmt.Errorf("boom"))
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(MatchError(ContainSubstring("boom")))
+	})
+}

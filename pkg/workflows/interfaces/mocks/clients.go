@@ -182,6 +182,20 @@ func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2, arg3, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterManager)(nil).DeleteCluster), arg0, arg1, arg2, arg3, arg4)
 }
 
+// DeletePackageResources mocks base method.
+func (m *MockClusterManager) DeletePackageResources(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePackageResources", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePackageResources indicates an expected call of DeletePackageResources.
+func (mr *MockClusterManagerMockRecorder) DeletePackageResources(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePackageResources", reflect.TypeOf((*MockClusterManager)(nil).DeletePackageResources), arg0, arg1, arg2)
+}
+
 // EKSAClusterSpecChanged mocks base method.
 func (m *MockClusterManager) EKSAClusterSpecChanged(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) (bool, error) {
 	m.ctrl.T.Helper()

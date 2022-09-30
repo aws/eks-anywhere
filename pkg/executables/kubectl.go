@@ -454,6 +454,20 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 	return nil
 }
 
+func (k *Kubectl) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
+	params := []string{"delete", "pbc", clusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("deleting package resources for %s: %v", clusterName, err)
+	}
+	params = []string{"delete", "namespace", "eksa-packages-" + clusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--ignore-not-found=true"}
+	_, err = k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("deleting package resources for %s: %v", clusterName, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteSecret(ctx context.Context, managementCluster *types.Cluster, secretName, namespace string) error {
 	params := []string{"delete", "secret", secretName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", namespace}
 	_, err := k.Execute(ctx, params...)
