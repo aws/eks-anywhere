@@ -10,6 +10,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // MockKubectlRunner is a mock of KubectlRunner interface.
@@ -73,6 +74,20 @@ func (mr *MockKubectlRunnerMockRecorder) ExecuteFromYaml(ctx, yaml interface{}, 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, yaml}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteFromYaml", reflect.TypeOf((*MockKubectlRunner)(nil).ExecuteFromYaml), varargs...)
+}
+
+// GetObject mocks base method.
+func (m *MockKubectlRunner) GetObject(ctx context.Context, resourceType, name, namespece, kubeconfig string, obj runtime.Object) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetObject", ctx, resourceType, name, namespece, kubeconfig, obj)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetObject indicates an expected call of GetObject.
+func (mr *MockKubectlRunnerMockRecorder) GetObject(ctx, resourceType, name, namespece, kubeconfig, obj interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetObject", reflect.TypeOf((*MockKubectlRunner)(nil).GetObject), ctx, resourceType, name, namespece, kubeconfig, obj)
 }
 
 // HasResource mocks base method.
