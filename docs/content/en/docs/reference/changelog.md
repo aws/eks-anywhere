@@ -15,8 +15,10 @@ weight: 35
 - Add validate session permission for vsphere
 
 ### Fixed
-- Fix datacenter naming bug for vsphere [#3381](https://github.com/aws/eks-anywhere/issues/3381)
-- Fix os family validation for vsphere
+- Fix datacenter naming bug for vSphere [#3381](https://github.com/aws/eks-anywhere/issues/3381)
+- Fix os family validation for vSphere
+- Fix controller overwriting secret for vSphere [#3404](https://github.com/aws/eks-anywhere/issues/3404)
+- Fix unintended rolling upgrades when upgrading from an older EKS-A version for CloudStack
 
 ## [v0.11.3](https://github.com/aws/eks-anywhere/releases/tag/v0.11.3)
 
