@@ -331,7 +331,7 @@ func (p *Provider) validateMachineConfigImmutability(ctx context.Context, cluste
 	}
 
 	if !reflect.DeepEqual(newConfig.Spec.HardwareSelector, prevMachineConfig.Spec.HardwareSelector) {
-		return fmt.Errorf("spec.HardwareSelector immutable. Previous value %v,   New value %v", prevMachineConfig.Spec.HardwareSelector, newConfig.Spec.HardwareSelector)
+		return fmt.Errorf("spec.HardwareSelector is immutable. Previous value %v,   New value %v", prevMachineConfig.Spec.HardwareSelector, newConfig.Spec.HardwareSelector)
 	}
 
 	return nil
