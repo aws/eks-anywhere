@@ -231,7 +231,7 @@ type ProviderKubectlClient interface {
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc) *cloudstackProvider {
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -255,7 +255,7 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}),
+		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
 	}
 }
 
@@ -426,14 +426,14 @@ func secretDifferentFromProfile(secret *corev1.Secret, profile decoder.CloudStac
 		string(secret.Data["verify-ssl"]) != profile.VerifySsl
 }
 
-func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec, skipIpCheck bool) (err error) {
+func (p *cloudstackProvider) validateClusterSpec(ctx context.Context, clusterSpec *cluster.Spec) (err error) {
 	if err := p.validator.validateCloudStackAccess(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, clusterSpec.CloudStackDatacenter); err != nil {
 		return err
 	}
-	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, clusterSpec.CloudStackDatacenter), skipIpCheck); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, NewSpec(clusterSpec, p.machineConfigs, clusterSpec.CloudStackDatacenter)); err != nil {
 		return err
 	}
 	return nil
@@ -444,8 +444,12 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := p.validateClusterSpec(ctx, clusterSpec, false); err != nil {
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
+	}
+
+	if err := p.validator.ValidateControlPlaneEndpointUniqueness(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+		return fmt.Errorf("validating control plane endpoint uniqueness: %v", err)
 	}
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
@@ -479,7 +483,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 		return fmt.Errorf("validating environment variables: %v", err)
 	}
 
-	if err := p.validateClusterSpec(ctx, clusterSpec, true); err != nil {
+	if err := p.validateClusterSpec(ctx, clusterSpec); err != nil {
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 

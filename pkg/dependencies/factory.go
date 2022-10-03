@@ -339,6 +339,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Cmk,
 				f.dependencies.Writer,
 				time.Now,
+				skipIpCheck,
 			)
 
 		case v1alpha1.SnowDatacenterKind:

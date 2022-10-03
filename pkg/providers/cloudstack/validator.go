@@ -31,10 +31,11 @@ var restrictedUserCustomDetails = [...]string{
 	"keypairnames", "controlNodeLoginUser",
 }
 
-func NewValidator(cmk ProviderCmkClient, netClient networkutils.NetClient) *Validator {
+func NewValidator(cmk ProviderCmkClient, netClient networkutils.NetClient, skipIpCheck bool) *Validator {
 	return &Validator{
-		cmk:       cmk,
-		netClient: netClient,
+		cmk:         cmk,
+		netClient:   netClient,
+		skipIpCheck: skipIpCheck,
 	}
 }
 
@@ -143,7 +144,7 @@ func generateLocalAvailabilityZones(ctx context.Context, datacenterConfig *anywh
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec, skipIpCheck bool) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
@@ -189,7 +190,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 	}
 
-	err := v.setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec, skipIpCheck)
+	err := v.setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec)
 	if err != nil {
 		return fmt.Errorf("validating controlPlaneConfiguration.Endpoint.Host: %v", err)
 	}
@@ -228,6 +229,21 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 
 	logger.MarkPass("Validated cluster Machine Configs")
 
+	return nil
+}
+
+func (v *Validator) ValidateControlPlaneEndpointUniqueness(endpoint string) error {
+	if v.skipIpCheck {
+		logger.Info("Skipping control plane endpoint uniqueness check")
+		return nil
+	}
+	host, port, err := net.SplitHostPort(endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid endpoint - not in host:port format: %v", err)
+	}
+	if networkutils.IsPortInUse(v.netClient, host, port) {
+		return fmt.Errorf("endpoint <%s> is already in use", endpoint)
+	}
 	return nil
 }
 
@@ -283,13 +299,12 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 }
 
 // setDefaultAndValidateControlPlaneHostPort checks the input host to see if it is a valid hostname. If it's valid, it checks the port
-// to see if the default port should be used and sets it. It then ensures that there is not already a process running at that host:port.
-func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec *Spec, skipIpCheck bool) error {
+// to see if the default port should be used and sets it.
+func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec *Spec) error {
 	pHost := cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	host, port, err := net.SplitHostPort(pHost)
+	_, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
-			host = pHost
 			port = controlEndpointDefaultPort
 			cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
 				cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -300,9 +315,6 @@ func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterS
 	}
 	if !networkutils.IsPortValid(port) {
 		return fmt.Errorf("host %s has an invalid port", pHost)
-	}
-	if !skipIpCheck && networkutils.IsPortInUse(v.netClient, host, port) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP:port", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	}
 	return nil
 }
