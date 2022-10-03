@@ -109,6 +109,7 @@ func packagerForFile(file string) packager {
 	}
 }
 
+// Temporary: Move to factory.go
 func fetchManifestDownloader(downloadFolder string, includePackages bool) artifacts.ManifestDownloader {
 	if includePackages {
 		bundlePuller := oras.NewPuller(packageartifacts.NewRegistryPuller())
