@@ -150,6 +150,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	return importArtifacts.Run(ctx)
 }
 
+// Temporary: Move to factory.go
 func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) (artifacts.FileImporter, error) {
 	if includePackages {
 		registry, err := content.NewRegistry(content.RegistryOptions{})
