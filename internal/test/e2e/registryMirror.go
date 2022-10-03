@@ -31,6 +31,10 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertVar], net.JoinHostPort(e.testEnvVars[e2etests.RegistryEndpointVar], e.testEnvVars[e2etests.RegistryPortVar]))
 	}
 
+	if e.testEnvVars[e2etests.RegistryCACertTinkerbellVar] != "" && e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar] != "" && e.testEnvVars[e2etests.RegistryPortTinkerbellVar] != "" {
+		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertTinkerbellVar], net.JoinHostPort(e.testEnvVars[e2etests.RegistryEndpointTinkerbellVar], e.testEnvVars[e2etests.RegistryPortTinkerbellVar]))
+	}
+
 	return nil
 }
 
