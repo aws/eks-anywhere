@@ -10,7 +10,7 @@ import (
 func TestGetAndValidateAWSIamConfig(t *testing.T) {
 	c := &Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			ClusterName: "eksa-unit-test-cluster",
+			Name: "eksa-unit-test-cluster",
 		},
 	}
 	tests := []struct {
