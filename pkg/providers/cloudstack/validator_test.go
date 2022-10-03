@@ -140,6 +140,14 @@ func TestValidateControlPlaneIpCheckInvalidPort(t *testing.T) {
 	thenErrorExpected(t, "invalid endpoint - not in host:port format: address 255.255.255.255: missing port in address", err)
 }
 
+func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, false)
+	if err := validator.ValidateControlPlaneEndpointUniqueness("1.1.1.1:6443"); err != nil {
+		t.Fatalf("Expected endpoint to be valid and unused")
+	}
+}
+
 func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
