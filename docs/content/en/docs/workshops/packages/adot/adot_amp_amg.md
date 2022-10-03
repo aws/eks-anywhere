@@ -16,7 +16,7 @@ This tutorial walks through the following procedures:
 
 {{% alert title="Note" color="primary" %}}
 
-- We included `test` sections below for critical steps to help users to validate they have completed such procedure properly. We recommend going through them in sequence as checkpoints of the progress.
+- We included `Test` sections below for critical steps to help users to validate they have completed such procedure properly. We recommend going through them in sequence as checkpoints of the progress.
 - We recommend creating all resources in the `us-west-2` region.
 
 {{% /alert %}}
@@ -33,20 +33,20 @@ An AMP workspace is created to receive metrics from the ADOT package, and respon
 
 1. Type an workspace alias (`adot-amp-test` as an example), and click on `Create workspace`.
 
-    ![ADOT AMP Set Up](/images/adot_amp_1.png)
+    ![ADOT AMP Create Workspace](/images/adot_amp_create_ws.png)
 
-1. Make notes of the URLs displayed for `Endpoint - remote write URL` and `Endpoint - query URL`. You'll need them when you configure your ADOT package to remote write metrics to this workspace and when you query metrics from this workspace. Make sure the workspace's status shows `Active` before proceeding to the next step.
+1. Make notes of the URLs displayed for `Endpoint - remote write URL` and `Endpoint - query URL`. You'll need them when you configure your ADOT package to remote write metrics to this workspace and when you query metrics from this workspace. Make sure the workspace's `Status` shows `Active` before proceeding to the next step.
 
-    ![ADOT AMP Set Up](/images/adot_amp_2.png)
+    ![ADOT AMP Identify URLs](/images/adot_amp_identify_urls.png)
 
-For additional options (i.e. through CLI) and configurations (i.e. add a tag or alias) to create AMP workspace, refer to [AWS AMP create a workspace guide.](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-create-workspace.html)
+For additional options (i.e. through CLI) and configurations (i.e. add a tag) to create an AMP workspace, refer to [AWS AMP create a workspace guide.](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-create-workspace.html)
 
 ## Create an EKS-A cluster with IRSA
 To enable ADOT pods that run in EKS-A clusters to authenticate with AWS services, a user needs to set up IRSA at cluster creation. [EKS-A cluster spec for Pod IAM](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/) gives step-by-step guidance on how to do so. There are a few things to keep in mind while working through the guide:
 
-1. While completing step [Create an OIDC provider](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible), a user should make sure: 
-    - the S3 bucket is created in the `us-west-2` region, and 
-    - an IAM policy with proper AMP access is attached to the IAM role. 
+1. While completing step [Create an OIDC provider](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible), a user should: 
+    - create the S3 bucket in the `us-west-2` region, and 
+    - attach an IAM policy with proper AMP access to the IAM role. 
       
       Below is an example that gives full access to AMP actions and resources. Refer to [AMP IAM permissions and policies guide](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-and-IAM.html) for more customized options.
 
@@ -65,7 +65,12 @@ To enable ADOT pods that run in EKS-A clusters to authenticate with AWS services
       }
       ```
 
-1. While completing step [deploy pod identity webhook](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#deploy-pod-identity-webhook), a user should make sure the service account is created in the same namespace as the ADOT package (which is controlled by the `package` definition file with field `spec.targetNamespace`). Take a note of the service account account that gets created in this step as it will be used in ADOT package installation. By default, the service account is installed in the `default` namespace with name `pod-identity-webhook`.
+1. While completing step [deploy pod identity webhook](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#deploy-pod-identity-webhook), a user should:
+    - make sure the service account is created in the same namespace as the ADOT package (which is controlled by the `package` definition file with field `spec.targetNamespace`);
+    - take a note of the service account that gets created in this step as it will be used in ADOT package installation;
+    - add an annotation `eks.amazonaws.com/role-arn: <role-arn>` to the created service account.
+
+    By default, the service account is installed in the `default` namespace with name `pod-identity-webhook`, and the annotation `eks.amazonaws.com/role-arn: <role-arn>` is not added automatically.
 
 ### IRSA Set Up Test
 To ensure IRSA is set up properly in the cluster, a user can create an `awscli` pod for testing.
@@ -113,13 +118,13 @@ The EKS-A ADOT package will be created with three components:
 
 1. the Prometheus Receiver, which is designed to be a drop-in replacement for a Prometheus Server and is capable of scraping metrics from microservices instrumented with the [Prometheus client library](https://prometheus.io/docs/instrumenting/clientlibs/);
 
-1. the Prometheus Remote Write Exporter, which employs the remote write features and send metrics to AMG for long term storage;
+1. the Prometheus Remote Write Exporter, which employs the remote write features and send metrics to AMP for long term storage;
 
 1. the Sigv4 Authentication Extension, which enables ADOT pods to authenticate to AWS services.
 
 Follow steps below to complete the ADOT package installation:
 
-1. Update the following config file. Review comments carefully and replace everything that is wrapped with a `<>` tag. Note this configuration aims to mimic the Prometheus community helm chart. A user can tailor the scrap targets further by modifying the receiver section below. Refer to [ADOT package spec]({{< relref "../../../reference/packagespec/adot" >}}) for additional explanation of each section.
+1. Update the following config file. Review comments carefully and replace everything that is wrapped with a `<>` tag. Note this configuration aims to mimic the Prometheus community helm chart. A user can tailor the scrap targets further by modifying the receiver section below. Refer to [ADOT package spec]({{< relref "../../../reference/packagespec/adot" >}}) for additional explanations of each section.
 
     <details>
       <summary>Click to expand ADOT package config</summary>
@@ -447,7 +452,7 @@ Follow steps below to complete the ADOT package installation:
       ```
     </details>
 
-1. Bind additional roles to the service account `pod-identity-webhook` created at step [Create an EKS-A cluster with IRSA](), as `pod-identity-webhook` by design does not have sufficient permissions to scrap all Kubernetes targets above. 
+1. Bind additional roles to the service account `pod-identity-webhook` (created at step [Create an EKS-A cluster with IRSA](#create-an-eks-a-cluster-with-irsa)) by applying the following file in the cluster (using `kubectl apply -f <file-name>`). This is because `pod-identity-webhook` by design does not have sufficient permissions to scrap all Kubernetes targets listed in the ADOT config file above. If modifications are made to the Prometheus Receiver, make updates to the file below to add / remove additional permissions before applying the file.
 
     <details>
       <summary>Click to expand clusterrole and clusterrolebinding config</summary>
@@ -501,7 +506,7 @@ Follow steps below to complete the ADOT package installation:
 
     </details>
 
-1. Use the config file defined above to complete the ADOT installation. Refer to [ADOT installation guide]({{< relref "../../../tasks/packages/adot" >}}) for details.
+1. Use the ADOT package config file defined above to complete the ADOT installation. Refer to [ADOT installation guide]({{< relref "../../../tasks/packages/adot" >}}) for details.
 
 ### ADOT Package Test
 To ensure the ADOT package is installed correctly in the cluster, a user can perform the following tests.
@@ -547,12 +552,12 @@ Use awscurl commands below to check if AMP received the metrics data sent by ADO
 pip install awscurl
 ```
 ```
-awscurl -X POST --region us-west-2 --service aps "$AMP_QUERY_ENDPOINT?query=up"
+awscurl -X POST --region us-west-2 --service aps "<amp-query-endpoint>?query=up"
 ```
 
 ## Create an AMG workspace and connect to the AMP workspace
 
-An AMG workspace is created to query metrics from the AMP workspace and visualize the metrics in dashboards. 
+An AMG workspace is created to query metrics from the AMP workspace and visualize the metrics in user-selected or user-built dashboards. 
 
 Follow steps below to create the AMG workspace:
 
@@ -564,26 +569,26 @@ Follow steps below to create the AMG workspace:
 
 1. In the Workspace details window, for Workspace name, enter a name for the workspace.
 
-    ![ADOT AMG Set Up](/images/adot_amg_1.png)
+    ![ADOT AMG Workspace Details](/images/adot_amg_create_ws_details.png)
 
 1. In the config settings window, choose `Authentication access` by `AWS IAM Identity Center`, and `Permission type` of `Service managed`.
 
-    ![ADOT AMG Set Up](/images/adot_amg_2.png)
+    ![ADOT AMG Workspace Configure Settings](/images/adot_amg_create_ws_config_settings.png)
 
 1. In the IAM permission access setting window, choose `Current account` access, and `Amazon Managed Service for Prometheus` as data source.
 
-    ![ADOT AMG Set Up](/images/adot_amg_3.png)
+    ![ADOT AMG Workspace Permission Settings](/images/adot_amg_create_ws_permission_settings.png)
 
 1. Review all settings and click on `Create workspace`.
 
-    ![ADOT AMG Set Up](/images/adot_amg_4.png)
-1. Once the workspace shows a status of `Active`, you can access it by clicking the `Grafana workspace URL`. Click on `Sign in with AWS IAM Identity Center` to finish the authentication.
+    ![ADOT AMG Workspace Review and Create](/images/adot_amg_create_ws_review_create.png)
+1. Once the workspace shows a `Status` of `Active`, you can access it by clicking the `Grafana workspace URL`. Click on `Sign in with AWS IAM Identity Center` to finish the authentication.
 
 Follow steps below to add the AMP workspace to AMG.
 
-1. Click on the `config` sign on the left navigation bar, select `Data sources`, then choose `Prometheus` as the `Dta source`.
+1. Click on the `config` sign on the left navigation bar, select `Data sources`, then choose `Prometheus` as the `Data source`.
 
-    ![ADOT AMG Set Up](/images/adot_amg_5.png)
+    ![ADOT AMG Add Data Source](/images/adot_amg_add_data_source.png)
 
 1. Configure Prometheus data source with the following details:
 
@@ -595,13 +600,13 @@ Follow steps below to add the AMP workspace to AMG.
       - Default Region: choose `us-west-2` (where you created the AMP workspace)
     - Select the `Save and test`, and a notification `data source is working` should be displayed.
 
-    ![ADOT AMG Set Up](/images/adot_amg_6.png)
+    ![ADOT AMG Config Data Source](/images/adot_amg_config_data_source.png)
 
 1. Import a dashboard template by clicking on the plus (+) sign on the left navigation bar. In the Import screen, type `3119` in the `Import via grafana.com` textbox and select `Import`.
     From the dropdown at the bottom, select `AMPDataSource` and select `Import`.
 
-    ![ADOT AMG Set Up](/images/adot_amg_7.png)
+    ![ADOT AMG Import Dashboard](/images/adot_amg_import_dashboard.png)
 
 1. A Kubernetes cluster monitoring (via Prometheus) dashboard will be displayed.
 
-    ![ADOT AMG Set Up](/images/adot_amg_8.png)
+    ![ADOT AMG View Dashboard](/images/adot_amg_view_dashboard.png)
