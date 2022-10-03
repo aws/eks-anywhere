@@ -448,6 +448,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("validating cluster spec: %v", err)
 	}
 
+	if err := p.validator.ValidateControlPlaneEndpointUniqueness(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+		return fmt.Errorf("validating control plane endpoint uniqueness: %v", err)
+	}
+
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
 		return fmt.Errorf("setting up SSH keys: %v", err)
 	}

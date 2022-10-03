@@ -118,6 +118,36 @@ func TestValidateCloudStackConnectionFailure(t *testing.T) {
 	thenErrorExpected(t, "validating connection to cloudstack global: exception", err)
 }
 
+func TestValidateSkipControlPlaneIpCheck(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, true)
+	if err := validator.ValidateControlPlaneEndpointUniqueness("invalid_url_skip_check"); err != nil {
+		t.Fatalf("expected no error, validation should be skipped")
+	}
+}
+
+func TestValidateControlPlaneIpCheck(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, false)
+	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255:6443")
+	thenErrorExpected(t, "endpoint <255.255.255.255:6443> is already in use", err)
+}
+
+func TestValidateControlPlaneIpCheckInvalidPort(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, false)
+	err := validator.ValidateControlPlaneEndpointUniqueness("255.255.255.255")
+	thenErrorExpected(t, "invalid endpoint - not in host:port format: address 255.255.255.255: missing port in address", err)
+}
+
+func TestValidateControlPlaneIpCheckUniqueIpSuccess(t *testing.T) {
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk, &DummyNetClient{}, false)
+	if err := validator.ValidateControlPlaneEndpointUniqueness("1.1.1.1:6443"); err != nil {
+		t.Fatalf("Expected endpoint to be valid and unused")
+	}
+}
+
 func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
@@ -138,33 +168,6 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 
 	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty", err)
-}
-
-func TestValidateMachineConfigsControlPlaneIpInUse(t *testing.T) {
-	ctx := context.Background()
-	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
-	}
-	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, &DummyNetClient{}, false)
-	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
-	if err != nil {
-		t.Fatalf("unable to get datacenter config from file")
-	}
-	cloudStackClusterSpec := &Spec{
-		Spec:                 clusterSpec,
-		datacenterConfig:     datacenterConfig,
-		machineConfigsLookup: machineConfigs,
-	}
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255"
-
-	setupMockForAvailabilityZonesValidation(cmk, ctx, datacenterConfig.Spec.AvailabilityZones)
-
-	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-
-	thenErrorExpected(t, "validating controlPlaneConfiguration.Endpoint.Host: cluster controlPlaneConfiguration.Endpoint.Host <255.255.255.255:6443> is already in use, please provide a unique IP:port", err)
 }
 
 func TestValidateMachineConfigsInvalidControlPlanePort(t *testing.T) {

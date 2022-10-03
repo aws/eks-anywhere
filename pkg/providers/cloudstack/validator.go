@@ -232,6 +232,21 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 	return nil
 }
 
+func (v *Validator) ValidateControlPlaneEndpointUniqueness(endpoint string) error {
+	if v.skipIpCheck {
+		logger.Info("Skipping control plane endpoint uniqueness check")
+		return nil
+	}
+	host, port, err := net.SplitHostPort(endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid endpoint - not in host:port format: %v", err)
+	}
+	if networkutils.IsPortInUse(v.netClient, host, port) {
+		return fmt.Errorf("endpoint <%s> is already in use", endpoint)
+	}
+	return nil
+}
+
 func (v *Validator) validateAffinityConfig(machineConfig *anywherev1.CloudStackMachineConfig) error {
 	if len(machineConfig.Spec.Affinity) > 0 && len(machineConfig.Spec.AffinityGroupIds) > 0 {
 		return fmt.Errorf("affinity and affinityGroupIds cannot be set at the same time for CloudStackMachineConfig %s. Please provide either one of them or none", machineConfig.Name)
@@ -284,13 +299,12 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 }
 
 // setDefaultAndValidateControlPlaneHostPort checks the input host to see if it is a valid hostname. If it's valid, it checks the port
-// to see if the default port should be used and sets it. It then ensures that there is not already a process running at that host:port.
+// to see if the default port should be used and sets it.
 func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec *Spec) error {
 	pHost := cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	host, port, err := net.SplitHostPort(pHost)
+	_, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
-			host = pHost
 			port = controlEndpointDefaultPort
 			cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
 				cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -301,9 +315,6 @@ func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterS
 	}
 	if !networkutils.IsPortValid(port) {
 		return fmt.Errorf("host %s has an invalid port", pHost)
-	}
-	if !v.skipIpCheck && networkutils.IsPortInUse(v.netClient, host, port) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP:port", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	}
 	return nil
 }
