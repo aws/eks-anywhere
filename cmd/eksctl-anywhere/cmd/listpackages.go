@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -84,6 +85,5 @@ func listPackages(ctx context.Context) error {
 		deps.Kubectl,
 		curatedpackages.WithBundle(bundle),
 	)
-	packages.DisplayPackages()
-	return nil
+	return packages.DisplayPackages(os.Stdout)
 }
