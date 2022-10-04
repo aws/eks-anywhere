@@ -17,8 +17,8 @@ type ImageDiskWriter interface {
 }
 
 type ImageTaggerPusher interface {
-	PushImage(ctx context.Context, image string, endpoint string) error
-	TagImage(ctx context.Context, image string, endpoint string) error
+	PushImage(ctx context.Context, image string, endpoint string, namespace string) error
+	TagImage(ctx context.Context, image string, endpoint string, namespace string) error
 }
 
 type ImagePuller interface {

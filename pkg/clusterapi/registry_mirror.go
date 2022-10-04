@@ -17,9 +17,10 @@ var containerdConfig string
 
 type values map[string]interface{}
 
-func registryMirrorConfigContent(registryAddress, registryCert string, insecureSkip bool) (string, error) {
+func registryMirrorConfigContent(registryAddress, registryNamespace, registryCert string, insecureSkip bool) (string, error) {
 	val := values{
 		"registryMirrorAddress": registryAddress,
+		"registryNamespace":     registryNamespace,
 		"registryCACert":        registryCert,
 		"insecureSkip":          insecureSkip,
 	}
@@ -33,7 +34,7 @@ func registryMirrorConfigContent(registryAddress, registryCert string, insecureS
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
 	registryAddress := net.JoinHostPort(registryMirrorConfig.Endpoint, registryMirrorConfig.Port)
-	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
+	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.Namespace, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
 	}

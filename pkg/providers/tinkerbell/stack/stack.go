@@ -11,9 +11,9 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -326,7 +326,7 @@ func (s *Installer) CleanupLocalBoots(ctx context.Context, remove bool) error {
 func (s *Installer) localRegistryURL(originalURL string) string {
 	if s.registryMirror != nil {
 		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
-		return urls.ReplaceHost(originalURL, localRegistry)
+		return docker.ReplaceHostWithNamespacedEndpoint(originalURL, localRegistry, s.registryMirror.Namespace)
 	}
 	return originalURL
 }

@@ -7,8 +7,8 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 const (
@@ -17,10 +17,11 @@ const (
 )
 
 type Helm struct {
-	executable     Executable
-	registryMirror string
-	env            map[string]string
-	insecure       bool
+	executable              Executable
+	registryMirror          string
+	registryMirrorNamespace string
+	env                     map[string]string
+	insecure                bool
 }
 
 type HelmOpt func(*Helm)
@@ -28,6 +29,12 @@ type HelmOpt func(*Helm)
 func WithRegistryMirror(mirror string) HelmOpt {
 	return func(h *Helm) {
 		h.registryMirror = mirror
+	}
+}
+
+func WithRegistryMirrorNamespace(namespace string) HelmOpt {
+	return func(h *Helm) {
+		h.registryMirrorNamespace = namespace
 	}
 }
 
@@ -68,7 +75,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 		return nil, fmt.Errorf("failed marshalling values for helm template: %v", err)
 	}
 
-	params := []string{"template", h.url(ociURI), "--version", version, "--namespace", namespace, "--kube-version", kubeVersion}
+	params := []string{"template", docker.ReplaceHostWithNamespacedEndpoint(ociURI, h.registryMirror, h.registryMirrorNamespace), "--version", version, "--namespace", namespace, "--kube-version", kubeVersion}
 	params = h.addInsecureFlagIfProvided(params)
 	params = append(params, "-f", "-")
 
@@ -81,7 +88,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 }
 
 func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
-	params := []string{"pull", h.url(ociURI), "--version", version}
+	params := []string{"pull", docker.ReplaceHostWithNamespacedEndpoint(ociURI, h.registryMirror, h.registryMirrorNamespace), "--version", version}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
 		WithEnvVars(h.env).Run()
@@ -107,7 +114,7 @@ func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password s
 }
 
 func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) error {
-	params := []string{"pull", h.url(ociURI), "--version", version, "--destination", folder}
+	params := []string{"pull", docker.ReplaceHostWithNamespacedEndpoint(ociURI, h.registryMirror, h.registryMirrorNamespace), "--version", version, "--destination", folder}
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).
 		WithEnvVars(h.env).Run()
@@ -160,10 +167,6 @@ func (h *Helm) addInsecureFlagIfProvided(params []string) []string {
 		return append(params, insecureSkipVerifyFlag)
 	}
 	return params
-}
-
-func (h *Helm) url(originalURL string) string {
-	return urls.ReplaceHost(originalURL, h.registryMirror)
 }
 
 func GetHelmValueArgs(values []string) []string {

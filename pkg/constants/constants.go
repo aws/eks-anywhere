@@ -25,6 +25,7 @@ const (
 	EtcdAdmBootstrapProviderName            = "bootstrap-etcdadm-bootstrap"
 	EtcdadmControllerProviderName           = "bootstrap-etcdadm-controller"
 	DefaultHttpsPort                        = "443"
+	DefaultRegistryMirrorNamespace          = "eks-anywhere"
 	DefaultWorkerNodeGroupName              = "md-0"
 
 	VSphereProviderName    = "vsphere"

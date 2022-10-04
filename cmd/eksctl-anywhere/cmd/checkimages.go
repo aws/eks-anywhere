@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -62,6 +62,7 @@ func checkImages(context context.Context, spec string) error {
 	}
 
 	myRegistry := constants.DefaultRegistry
+	namespace := ""
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
@@ -71,12 +72,13 @@ func checkImages(context context.Context, spec string) error {
 				port = constants.DefaultHttpsPort
 			}
 			myRegistry = net.JoinHostPort(host, port)
+			namespace = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Namespace
 		}
 	}
 
 	checkImageExistence := artifacts.CheckImageExistence{}
 	for _, image := range images {
-		myImageUri := strings.ReplaceAll(image.URI, constants.DefaultRegistry, myRegistry)
+		myImageUri := docker.ReplaceHostWithNamespacedEndpoint(image.URI, myRegistry, namespace)
 		checkImageExistence.ImageUri = myImageUri
 		if err = checkImageExistence.Run(context); err != nil {
 			fmt.Println(err.Error())

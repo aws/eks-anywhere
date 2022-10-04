@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -83,9 +84,8 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 	return version, nil
 }
 
-func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) TagImage(ctx context.Context, image string, endpoint string, namespace string) error {
+	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, namespace)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -93,9 +93,8 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 	return nil
 }
 
-func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	replacer := strings.NewReplacer(defaultRegistry, endpoint, packageProdDomain, endpoint, packageDevDomain, endpoint)
-	localImage := replacer.Replace(image)
+func (d *Docker) PushImage(ctx context.Context, image string, endpoint string, namespace string) error {
+	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, namespace)
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err

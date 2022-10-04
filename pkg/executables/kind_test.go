@@ -150,11 +150,11 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			registryMirrorTest: false,
 		},
 		{
-			name:           "With registry mirror option, no CA cert provided",
+			name:           "With registry mirror option, no registry namespace, no CA cert provided",
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirrorWithPort, "")
+					return k.WithRegistryMirror(registryMirrorWithPort, "", "")
 				},
 			},
 			env:                map[string]string{},
@@ -162,11 +162,11 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			registryMirrorTest: true,
 		},
 		{
-			name:           "With registry mirror option, with CA cert",
+			name:           "With registry mirror option, with default registry namespace, with CA cert",
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirrorWithPort, "ca.crt")
+					return k.WithRegistryMirror(registryMirrorWithPort, constants.DefaultRegistryMirrorNamespace, "ca.crt")
 				},
 			},
 			env:                map[string]string{},

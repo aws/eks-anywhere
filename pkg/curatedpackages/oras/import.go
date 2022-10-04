@@ -7,20 +7,22 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type FileRegistryImporter struct {
 	registry           string
+	namespace          string
 	username, password string
 	srcFolder          string
 }
 
-func NewFileRegistryImporter(registry, username, password, srcFolder string) *FileRegistryImporter {
+func NewFileRegistryImporter(registry, namespace, username, password, srcFolder string) *FileRegistryImporter {
 	return &FileRegistryImporter{
 		registry:  registry,
+		namespace: namespace,
 		username:  username,
 		password:  password,
 		srcFolder: srcFolder,
@@ -30,7 +32,7 @@ func NewFileRegistryImporter(registry, username, password, srcFolder string) *Fi
 func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		updatedChartURL := urls.ReplaceHost(a, fr.registry)
+		updatedChartURL := docker.ReplaceHostWithNamespacedEndpoint(a, fr.registry, fr.namespace)
 		fileName := ChartFileName(a)
 		chartFilepath := filepath.Join(fr.srcFolder, fileName)
 		data, err := os.ReadFile(chartFilepath)

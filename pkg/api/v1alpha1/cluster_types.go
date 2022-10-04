@@ -136,6 +136,9 @@ type RegistryMirrorConfiguration struct {
 	// Port defines the port exposed for registry mirror endpoint
 	Port string `json:"port,omitempty"`
 
+	// Namespace defines the namespace under which all images are placed
+	Namespace string `json:"namespace,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 
@@ -152,7 +155,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.Namespace == o.Namespace && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
 }
 
 type ControlPlaneConfiguration struct {

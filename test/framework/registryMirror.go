@@ -10,22 +10,24 @@ import (
 )
 
 const (
-	RegistryEndpointVar = "T_REGISTRY_MIRROR_ENDPOINT"
-	RegistryPortVar     = "T_REGISTRY_MIRROR_PORT"
-	RegistryUsernameVar = "T_REGISTRY_MIRROR_USERNAME"
-	RegistryPasswordVar = "T_REGISTRY_MIRROR_PASSWORD"
-	RegistryCACertVar   = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointVar  = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryPortVar      = "T_REGISTRY_MIRROR_PORT"
+	RegistryNamespaceVar = "T_REGISTRY_MIRROR_NAMESPACE"
+	RegistryUsernameVar  = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar  = "T_REGISTRY_MIRROR_PASSWORD"
+	RegistryCACertVar    = "T_REGISTRY_MIRROR_CA_CERT"
 )
 
-var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryPortVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
+var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryPortVar, RegistryNamespaceVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
 
 func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
-		endpoint := os.Getenv(RegistryEndpointVar)
-		hostPort := net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
-		username := os.Getenv(RegistryUsernameVar)
-		password := os.Getenv(RegistryPasswordVar)
+		endpoint  := os.Getenv(RegistryEndpointVar)
+		hostPort  := net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
+		namespace := os.Getenv(RegistryNamespaceVar)
+		username  := os.Getenv(RegistryUsernameVar)
+		password  := os.Getenv(RegistryPasswordVar)
 		err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
 		if err != nil {
 			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
@@ -33,7 +35,7 @@ func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 		certificate, err := base64.StdEncoding.DecodeString(os.Getenv(RegistryCACertVar))
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, string(certificate)),
+				api.WithRegistryMirror(endpoint, namespace, string(certificate)),
 			)
 		}
 		// Set env vars for helm login/push

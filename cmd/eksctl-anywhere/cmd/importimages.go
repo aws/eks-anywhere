@@ -13,10 +13,10 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
+	registry "github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -78,6 +78,7 @@ func importImages(ctx context.Context, spec string) error {
 	}
 	host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
+	namespace := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Namespace
 	if port == "" {
 		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
 		port = constants.DefaultHttpsPort
@@ -91,45 +92,45 @@ func importImages(ctx context.Context, spec string) error {
 		return err
 	}
 	for _, image := range images {
-		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port)); err != nil {
+		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port), namespace); err != nil {
 			return fmt.Errorf("importing image %s: %v", image.URI, err)
 		}
 	}
 
 	endpoint := clusterSpec.Cluster.RegistryMirror()
-	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
+	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, namespace, registryUsername, registryPassword)
 }
 
-func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
+func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string, namespace string) error {
 	if err := docker.PullImage(ctx, image); err != nil {
 		return err
 	}
 
-	if err := docker.TagImage(ctx, image, endpoint); err != nil {
+	if err := docker.TagImage(ctx, image, endpoint, namespace); err != nil {
 		return err
 	}
 
-	return docker.PushImage(ctx, image, endpoint)
+	return docker.PushImage(ctx, image, endpoint, namespace)
 }
 
-func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
+func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, namespace, username, password string) error {
 	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 		return err
 	}
 	for _, chart := range charts {
-		if err := importChart(ctx, helm, *chart, endpoint); err != nil {
+		if err := importChart(ctx, helm, *chart, endpoint, namespace); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint string) error {
+func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint, namespace string) error {
 	uri, chartVersion := getChartUriAndVersion(chart)
 	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
 		return err
 	}
-	return helm.PushChart(ctx, chart.ChartName(), pushChartURI(chart, endpoint))
+	return helm.PushChart(ctx, chart.ChartName(), pushChartURI(chart, endpoint, namespace))
 }
 
 func preRunImportImagesCmd(cmd *cobra.Command, args []string) error {
@@ -148,7 +149,7 @@ func getChartUriAndVersion(chart v1alpha1.Image) (uri, version string) {
 	return uri, version
 }
 
-func pushChartURI(chart v1alpha1.Image, registryEndpoint string) string {
+func pushChartURI(chart v1alpha1.Image, registryEndpoint, namespace string) string {
 	orgURL := fmt.Sprintf("%s%s", ociPrefix, filepath.Dir(chart.Image()))
-	return urls.ReplaceHost(orgURL, registryEndpoint)
+	return registry.ReplaceHostWithNamespacedEndpoint(orgURL, registryEndpoint, namespace)
 }

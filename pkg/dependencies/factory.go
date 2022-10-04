@@ -36,6 +36,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	registry "github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -104,6 +105,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithRegistryMirrorNamespace(clusterSpec.Cluster.RegistryMirrorNamespace()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -112,6 +114,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 type Factory struct {
 	executablesConfig        *executablesConfig
 	registryMirror           string
+	registryMirrorNamespace  string
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -162,6 +165,11 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 
 func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	f.registryMirror = mirror
+	return f
+}
+
+func (f *Factory) WithRegistryMirrorNamespace(namespace string) *Factory {
+	f.registryMirrorNamespace = namespace
 	return f
 }
 
@@ -246,7 +254,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		}
 
 		if f.executablesConfig.useDockerContainer {
-			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
+			image := registry.ReplaceHostWithNamespacedEndpoint(f.executablesConfig.image, f.registryMirror, f.registryMirrorNamespace)
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
 				image,
@@ -606,6 +614,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != "" {
 			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+			opts = append(opts, executables.WithRegistryMirrorNamespace(f.registryMirrorNamespace))
 		}
 
 		if f.proxyConfiguration != nil {

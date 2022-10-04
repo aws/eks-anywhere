@@ -294,6 +294,14 @@ func (c *Cluster) RegistryMirror() string {
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
+func (c *Cluster) RegistryMirrorNamespace() string {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return ""
+	}
+
+	return c.Spec.RegistryMirrorConfiguration.Namespace
+}
+
 func (c *Cluster) ProxyConfiguration() map[string]string {
 	if c.Spec.ProxyConfiguration == nil {
 		return nil

@@ -41,6 +41,7 @@ func init() {
 	if err := importImagesCmd.MarkFlagRequired("registry"); err != nil {
 		log.Fatalf("Cannot mark 'registry' as required: %s", err)
 	}
+	importImagesCmd.Flags().StringVarP(&importImagesCommand.Namespace, "namespace", "n", "", "Namespace where to import images and charts")
 	importImagesCmd.Flags().StringVarP(&importImagesCommand.BundlesFile, "bundles", "b", "", "Bundles file to read artifact dependencies from")
 	if err := importImagesCmd.MarkFlagRequired("bundles"); err != nil {
 		log.Fatalf("Cannot mark 'bundles' as required: %s", err)
@@ -54,6 +55,7 @@ var importImagesCommand = ImportImagesCommand{}
 type ImportImagesCommand struct {
 	InputFile        string
 	RegistryEndpoint string
+	Namespace        string
 	BundlesFile      string
 	includePackages  bool
 	insecure         bool
@@ -91,7 +93,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		UnPackager:         packagerForFile(c.InputFile),
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, toolsImageFile),
-			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
+			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint, c.Namespace),
 		),
 	}
 
@@ -112,6 +114,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 	deps, err = factory.
 		WithExecutableMountDirs(dirsToMount...).
 		WithRegistryMirror(c.RegistryEndpoint).
+		WithRegistryMirrorNamespace(c.Namespace).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
 		WithHelm(helmOpts...).
 		Build(ctx)
@@ -126,24 +129,25 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 		Bundles: bundle,
 		ImageMover: docker.NewImageMover(
 			docker.NewDiskSource(dockerClient, imagesFile),
-			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint),
+			docker.NewRegistryDestination(dockerClient, c.RegistryEndpoint, c.Namespace),
 		),
 		ChartImporter: helm.NewChartRegistryImporter(
 			deps.Helm, artifactsFolder,
 			c.RegistryEndpoint,
+			c.Namespace,
 			username,
 			password,
 		),
 		TmpArtifactsFolder: artifactsFolder,
-		FileImporter:       fetchFileRegistry(c.RegistryEndpoint, username, password, artifactsFolder, c.includePackages),
+		FileImporter:       fetchFileRegistry(c.RegistryEndpoint, c.Namespace, username, password, artifactsFolder, c.includePackages),
 	}
 
 	return importArtifacts.Run(ctx)
 }
 
-func fetchFileRegistry(registryEndpoint, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
+func fetchFileRegistry(registryEndpoint, namespace, username, password, artifactsFolder string, includePackages bool) artifacts.FileImporter {
 	if includePackages {
-		return oras.NewFileRegistryImporter(registryEndpoint, username, password, artifactsFolder)
+		return oras.NewFileRegistryImporter(registryEndpoint, namespace, username, password, artifactsFolder)
 	}
 	return &artifacts.Noop{}
 }
