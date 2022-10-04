@@ -94,15 +94,6 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
-	// TODO: move this to api Cluster validations
-	if len(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
-		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
-	}
-
-	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-		return errors.New("must specify machineGroupRef for control plane")
-	}
-
 	controlPlaneMachineConfig := vsphereClusterSpec.controlPlaneMachineConfig()
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
@@ -129,9 +120,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 
 	var workerNodeGroupMachineConfigs []*anywherev1.VSphereMachineConfig
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if workerNodeGroupConfiguration.MachineGroupRef == nil {
-			return errors.New("must specify machineGroupRef for worker nodes")
-		}
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
 		workerNodeGroupMachineConfigs = append(workerNodeGroupMachineConfigs, workerNodeGroupMachineConfig)
 		if workerNodeGroupMachineConfig == nil {
@@ -157,9 +145,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 	if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		if vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return errors.New("must specify machineGroupRef for etcd machines")
-		}
 		etcdMachineConfig = vsphereClusterSpec.etcdMachineConfig()
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for etcd machines", vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)

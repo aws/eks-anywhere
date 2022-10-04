@@ -1696,20 +1696,6 @@ func TestSetupAndValidateCreateClusterInsecure(t *testing.T) {
 	}
 }
 
-func TestSetupAndValidateCreateClusterNoControlPlaneEndpointIP(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty", err)
-}
-
 func TestSetupAndValidateCreateClusterNoDatacenter(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -2217,51 +2203,6 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for control plane", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for worker nodes", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for etcd machines", err)
 	}
 }
 
