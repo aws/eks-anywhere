@@ -13,10 +13,7 @@ import (
 // Temporary: Curated packages dev and prod accounts are currently hard coded
 // This is because there is no mechanism to extract these values as of now
 const (
-	dockerPath        = "docker"
-	defaultRegistry   = "public.ecr.aws"
-	packageProdDomain = "783794618700.dkr.ecr.us-west-2.amazonaws.com"
-	packageDevDomain  = "857151390494.dkr.ecr.us-west-2.amazonaws.com"
+	dockerPath = "docker"
 )
 
 type Docker struct {

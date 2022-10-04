@@ -85,11 +85,11 @@ func (s *ImageOriginalRegistrySource) Load(ctx context.Context, images ...string
 }
 
 func ReplaceHostWithNamespacedEndpoint(uri, mirrorRegistry, namespace string) string {
-	if (mirrorRegistry == "") {
-		return uri;
+	if mirrorRegistry == "" {
+		return uri
 	}
 	uri = urls.ReplaceHost(uri, mirrorRegistry)
-	if (namespace == "") {
+	if namespace == "" {
 		return uri
 	}
 	return strings.ReplaceAll(uri, mirrorRegistry, mirrorRegistry+"/"+namespace)
