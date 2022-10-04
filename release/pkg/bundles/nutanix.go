@@ -25,8 +25,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]str
 	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	artifactHashes := []string{}
-
+	artifactHashes := make([]string, 0)
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range nutanixBundleArtifacts[componentName] {
 			if artifact.Image != nil {
@@ -61,22 +60,6 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]str
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
-	}
-
-	nutanixCloudProviderArtifacts := r.BundleArtifactsTable["cloud-provider-nutanix"]
-	for _, artifact := range nutanixCloudProviderArtifacts {
-		imageArtifact := artifact.Image
-
-		bundleArtifact := anywherev1alpha1.Image{
-			Name:        imageArtifact.AssetName,
-			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-			OS:          imageArtifact.OS,
-			Arch:        imageArtifact.Arch,
-			URI:         imageArtifact.ReleaseImageURI,
-			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
-		}
-		bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
-		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 	}
 
 	if r.DryRun {
