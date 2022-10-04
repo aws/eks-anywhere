@@ -1769,6 +1769,20 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	}
 }
 
+func TestNeedsNewWorkloadTemplateK8sVersion(t *testing.T) {
+	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newK8sSpec := oldSpec.DeepCopy()
+	newK8sSpec.Cluster.Spec.KubernetesVersion = "1.25"
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, logger.Get()))
+}
+
+func TestNeedsNewWorkloadTemplateBundleNumber(t *testing.T) {
+	oldSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	newK8sSpec := oldSpec.DeepCopy()
+	newK8sSpec.Bundles.Spec.Number = 10000
+	assert.True(t, NeedsNewWorkloadTemplate(oldSpec, newK8sSpec, nil, nil, nil, nil, logger.Get()))
+}
+
 func TestProviderUpdateSecrets(t *testing.T) {
 	tests := []struct {
 		testName                string
