@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 )
 
-func TestValidateGitOpsConfigNil(t *testing.T) {
+func TestValidateGitOpsConfigFluxConfigBothNil(t *testing.T) {
 	tt := newPreflightValidationsTest(t)
 	tt.Expect(createvalidations.ValidateGitOps(tt.ctx, tt.k, tt.c.Opts.ManagementCluster, tt.c.Opts.Spec)).To(Succeed())
 }
@@ -89,6 +89,7 @@ func TestValidateGitOpsConfigNotEqual(t *testing.T) {
 
 func TestValidateGitOpsConfigSuccess(t *testing.T) {
 	tt := newPreflightValidationsTest(t)
+	tt.c.Opts.Spec.FluxConfig = &v1alpha1.FluxConfig{}
 	tt.c.Opts.Spec.GitOpsConfig = &v1alpha1.GitOpsConfig{}
 	tt.k.EXPECT().GetObject(tt.ctx, "gitopsconfigs.anywhere.eks.amazonaws.com", "", "", "kubeconfig", &v1alpha1.GitOpsConfig{}).Return(apierrors.NewNotFound(schema.GroupResource{Group: "", Resource: ""}, ""))
 	tt.k.EXPECT().
