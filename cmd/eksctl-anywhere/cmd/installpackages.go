@@ -14,6 +14,7 @@ import (
 type installPackageOptions struct {
 	source        curatedpackages.BundleSource
 	kubeVersion   string
+	clusterName   string
 	packageName   string
 	registry      string
 	customConfigs []string
@@ -39,12 +40,17 @@ func init() {
 		[]string{}, "Provide custom configurations for curated packages. Format key:value")
 	installPackageCommand.Flags().StringVar(&ipo.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	installPackageCommand.Flags().StringVar(&ipo.clusterName, "cluster", "",
+		"Target cluster for installation.")
 
 	if err := installPackageCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("marking source flag as required: %s", err)
 	}
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
 		log.Fatalf("marking package-name flag as required: %s", err)
+	}
+	if err := installPackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
 	}
 }
 
@@ -81,6 +87,7 @@ func installPackages(ctx context.Context, args []string) error {
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
+		ipo.clusterName,
 		ipo.source,
 		deps.Kubectl,
 		bm,
@@ -104,7 +111,7 @@ func installPackages(ctx context.Context, args []string) error {
 	}
 
 	curatedpackages.PrintLicense()
-	err = packages.InstallPackage(ctx, p, ipo.packageName, kubeConfig)
+	err = packages.InstallPackage(ctx, p, ipo.packageName, ipo.clusterName, kubeConfig)
 	if err != nil {
 		return err
 	}

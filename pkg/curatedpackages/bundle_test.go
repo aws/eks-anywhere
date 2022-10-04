@@ -22,6 +22,7 @@ type bundleTest struct {
 	ctx           context.Context
 	kubeConfig    string
 	kubeVersion   string
+	cluster       string
 	kubectl       *mocks.MockKubectlRunner
 	bundleManager *mocks.MockManager
 	Command       *curatedpackages.BundleReader
@@ -30,7 +31,6 @@ type bundleTest struct {
 	packageBundle *packagesv1.PackageBundle
 	registry      *mocks.MockBundleRegistry
 	cliVersion    version.Info
-	activeCluster string
 }
 
 func newBundleTest(t *testing.T) *bundleTest {
@@ -39,9 +39,9 @@ func newBundleTest(t *testing.T) *bundleTest {
 	bm := mocks.NewMockManager(ctrl)
 	kubeConfig := "test.kubeconfig"
 	kubeVersion := "1.21"
+	cluster := "billy"
 	registry := mocks.NewMockBundleRegistry(ctrl)
 	activeBundle := "v1.21-1000"
-	activeCluster := "test-cluster"
 	cliVersion := version.Info{GitVersion: "v1.0.0"}
 	bundleCtrl := packagesv1.PackageBundleController{
 		Spec: packagesv1.PackageBundleControllerSpec{
@@ -63,6 +63,7 @@ func newBundleTest(t *testing.T) *bundleTest {
 		ctx:           context.Background(),
 		kubeConfig:    kubeConfig,
 		kubeVersion:   kubeVersion,
+		cluster:       cluster,
 		kubectl:       k,
 		bundleManager: bm,
 		bundleCtrl:    &bundleCtrl,
@@ -70,18 +71,17 @@ func newBundleTest(t *testing.T) *bundleTest {
 		activeBundle:  activeBundle,
 		registry:      registry,
 		cliVersion:    cliVersion,
-		activeCluster: activeCluster,
 	}
 }
 
 func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 	tt := newBundleTest(t)
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.activeCluster), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundleCtrl), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.packageBundle), nil)
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
@@ -96,11 +96,11 @@ func TestGetLatestBundleFromClusterFailsNoBundleName(t *testing.T) {
 	tt := newBundleTest(t)
 	noActiveBundle := tt.bundleCtrl
 	noActiveBundle.Spec.ActiveBundle = ""
-	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.activeCluster), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(noActiveBundle), nil)
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
@@ -118,6 +118,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef, tt.kubeVersion).Return(tt.packageBundle, nil)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,
@@ -132,6 +133,7 @@ func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
 	tt := newBundleTest(t)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		"Unknown",
 		tt.kubectl,
 		tt.bundleManager,
@@ -147,6 +149,7 @@ func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error reading bundle"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
@@ -161,6 +164,7 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return("", errors.New("registry doesn't exist"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,
@@ -175,6 +179,7 @@ func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error fetching controller"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
@@ -199,6 +204,7 @@ func TestUpgradeBundleSucceeds(t *testing.T) {
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,
@@ -225,6 +231,7 @@ func TestUpgradeBundleFails(t *testing.T) {
 
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
+		tt.cluster,
 		curatedpackages.Cluster,
 		tt.kubectl,
 		tt.bundleManager,

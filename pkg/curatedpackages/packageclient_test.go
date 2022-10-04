@@ -66,7 +66,7 @@ func TestGeneratePackagesSucceed(t *testing.T) {
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	result, err := tt.command.GeneratePackages()
+	result, err := tt.command.GeneratePackages("billy")
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result[0].Name).To(Equal(curatedpackages.CustomName + packages[0]))
@@ -77,7 +77,7 @@ func TestGeneratePackagesFail(t *testing.T) {
 	packages := []string{"unknown-package"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	result, err := tt.command.GeneratePackages()
+	result, err := tt.command.GeneratePackages("billy")
 	tt.Expect(err).NotTo(BeNil())
 	tt.Expect(result).To(BeNil())
 }
@@ -111,7 +111,7 @@ func TestInstallPackagesSucceeds(t *testing.T) {
 	// Suppress output temporarily since it is not needed for testing
 	temp := os.Stdout
 	os.Stdout = nil // turn it off
-	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
+	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "billy", "")
 	os.Stdout = temp // restore it
 	tt.Expect(err).To(BeNil())
 }
@@ -122,7 +122,7 @@ func TestInstallPackagesFails(t *testing.T) {
 	packages := []string{"harbor-test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
+	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "billy", "")
 	tt.Expect(err).To(MatchError(ContainSubstring("error installing package. Package exists")))
 }
 
@@ -132,7 +132,7 @@ func TestInstallPackagesFailsWhenInvalidConfigs(t *testing.T) {
 	customConfigs := []string{"test"}
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages), curatedpackages.WithCustomConfigs(customConfigs))
 
-	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "")
+	err := tt.command.InstallPackage(tt.ctx, &tt.bundle.Spec.Packages[0], "my-harbor", "billy", "")
 	tt.Expect(err).NotTo(BeNil())
 }
 

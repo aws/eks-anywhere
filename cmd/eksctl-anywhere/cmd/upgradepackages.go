@@ -15,7 +15,8 @@ type upgradePackageOptions struct {
 	bundleVersion string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster
-	kubeConfig string
+	kubeConfig  string
+	clusterName string
 }
 
 var upo = &upgradePackageOptions{}
@@ -27,8 +28,14 @@ func init() {
 		"", "Bundle version to use")
 	upgradePackagesCommand.Flags().StringVar(&upo.kubeConfig, "kubeconfig",
 		"", "Path to an optional kubeconfig file to use.")
+	upgradePackagesCommand.Flags().StringVar(&upo.clusterName, "cluster",
+		"", "Cluster to upgrade.")
 
 	err := upgradePackagesCommand.MarkFlagRequired("bundle-version")
+	if err != nil {
+		log.Fatalf("Error marking flag as required: %v", err)
+	}
+	err = upgradePackagesCommand.MarkFlagRequired("cluster")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -60,6 +67,7 @@ func upgradePackages(ctx context.Context) error {
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
+		upo.clusterName,
 		ipo.source,
 		deps.Kubectl,
 		nil,
