@@ -122,6 +122,7 @@ type Networking interface {
 
 type AwsIamAuth interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byte, error)
 	GenerateCertKeyPairSecret() ([]byte, error)
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
@@ -482,6 +483,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster capi components to be ready: %v", err)
 	}
 
+	if newClusterSpec.AWSIamConfig != nil {
+		logger.V(3).Info("Run aws-iam-authenticator upgrade operations")
+		if err = c.generateAndApplyAwsIamAuthForUpgrade(ctx, workloadCluster, newClusterSpec); err != nil {
+			return fmt.Errorf("running aws-iam-authenticator upgrade operations")
+		}
+	}
+
 	return nil
 }
 
@@ -633,6 +641,19 @@ func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *
 	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
+	}
+	return nil
+}
+
+// generateAndApplyAwsIamAuthForUpgrade generates the aws-iam-authenticator manifest based on cluster spec and applies on the cluster.
+func (c *ClusterManager) generateAndApplyAwsIamAuthForUpgrade(ctx context.Context, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	awsIamAuthManifest, err := c.awsIamAuth.GenerateManifestForUpgrade(clusterSpec)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
+	}
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
+	if err != nil {
+		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
 	return nil
 }
