@@ -13,7 +13,7 @@ import (
 )
 
 // GetNutanixBundle returns the bundle for Nutanix
-func GetNutanixBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.NutanixBundle, error) {
+func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]string) (anywherev1alpha1.NutanixBundle, error) {
 	nutanixBundleArtifacts := map[string][]releasetypes.Artifact{
 		"cluster-api-provider-nutanix": r.BundleArtifactsTable["cluster-api-provider-nutanix"],
 		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
@@ -63,8 +63,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 		}
 	}
 
-	nutanixCloudProviderArtifacts := r.BundleArtifactsTable[fmt.Sprintf("cloud-provider-nutanix-%s", eksDReleaseChannel)]
-
+	nutanixCloudProviderArtifacts := r.BundleArtifactsTable["cloud-provider-nutanix"]
 	for _, artifact := range nutanixCloudProviderArtifacts {
 		imageArtifact := artifact.Image
 
@@ -85,7 +84,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 	} else {
 		componentChecksum = version.GenerateComponentHash(artifactHashes, r.DryRun)
 	}
-	version, err := version.BuildComponentVersion(
+	capxVersion, err := version.BuildComponentVersion(
 		version.NewVersionerWithGITTAG(r.BuildRepoSource, constants.CapxProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
@@ -94,7 +93,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, eksDReleaseChannel string, 
 	}
 
 	bundle := anywherev1alpha1.NutanixBundle{
-		Version:              version,
+		Version:              capxVersion,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-nutanix-controller"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
