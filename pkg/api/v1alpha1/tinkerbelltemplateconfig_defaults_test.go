@@ -13,7 +13,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
-	metadataString := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIP)
+	metadataString := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIP)
 
 	tests := []struct {
 		testName    string

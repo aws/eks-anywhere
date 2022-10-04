@@ -55,7 +55,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 	// The metadata string will have two URLs:
 	// - one that will be used initially for bootstrap and will point to hegel running on kind
 	// - the other will be used when the workload cluster is up and  will point to hegel running on the workload cluster
-	metadataUrls := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIp)
+	metadataUrls := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIp)
 
 	switch osFamily {
 	case Bottlerocket:
@@ -73,12 +73,8 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 			withDisableCloudInitNetworkCapabilities(b, diskPart),
 			withTinkCloudInitAction(b, diskPart, metadataUrls),
 			withDsCloudInitAction(b, diskPart),
+			withRebootAction(b),
 		)
-		if strings.Contains(disk, "nvme") {
-			defaultActions = append(defaultActions, withRebootAction(b))
-		} else {
-			defaultActions = append(defaultActions, withKexecAction(b, diskPart))
-		}
 	default:
 		diskPart = fmt.Sprintf("%s2", getDiskPart(disk))
 		defaultActions = append(defaultActions,
