@@ -56,7 +56,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 		return anywherev1alpha1.PackageBundle{}, fmt.Errorf("creating helm client: %w", err)
 	}
 
-	if !r.DevRelease {
+	if !r.DryRun {
 		helmdir, err = helm.GetHelmDest(driver, URI, "eks-anywhere-packages")
 		if err != nil {
 			return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error GetHelmDest")
@@ -70,7 +70,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 			bundleImageArtifact := anywherev1alpha1.Image{}
 			if strings.HasSuffix(imageArtifact.AssetName, "helm") {
 				assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
-				if !r.DevRelease {
+				if !r.DryRun {
 					err := helm.ModifyChartYaml(*imageArtifact, r, driver, helmdir)
 					if err != nil {
 						return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error modifying and pushing helm Chart.yaml")
@@ -87,7 +87,7 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 				var digest string
 				digest = imageDigests[imageArtifact.ReleaseImageURI]
 
-				if !r.DevRelease {
+				if !r.DryRun {
 					requires, err := helm.GetChartImageTags(driver, helmdir)
 					if err != nil {
 						return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "Error retrieving requires.yaml")
