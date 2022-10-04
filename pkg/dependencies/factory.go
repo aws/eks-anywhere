@@ -66,7 +66,7 @@ type Dependencies struct {
 	UnAuthKubeClient          *kubernetes.UnAuthClient
 	Networking                clustermanager.Networking
 	CiliumTemplater           *cilium.Templater
-	AwsIamAuth                *awsiamauth.AwsIamAuth
+	AwsIamAuth                *awsiamauth.Installer
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	GitOpsFlux                *flux.Flux
@@ -686,7 +686,7 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 		}
 		certgen := crypto.NewCertificateGenerator()
 		clusterId := uuid.New()
-		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
+		f.dependencies.AwsIamAuth = awsiamauth.NewInstaller(certgen, clusterId, f.dependencies.Kubectl, f.dependencies.Writer)
 		return nil
 	})
 

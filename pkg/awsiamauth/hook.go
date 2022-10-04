@@ -13,17 +13,17 @@ import (
 // HookRegistrar is responsible for binding AWS IAM Auth hooks to workflows so it can be
 // installed.
 type HookRegistrar struct {
-	*AwsIamAuth
+	*Installer
 
 	// Spec is the configuration for the cluster we're trying to create.
 	spec *cluster.Spec
 }
 
 // NewHookRegistrar creates a HookRegistrar instance.
-func NewHookRegistrar(awsIamAuth *AwsIamAuth, spec *cluster.Spec) HookRegistrar {
+func NewHookRegistrar(installer *Installer, spec *cluster.Spec) HookRegistrar {
 	return HookRegistrar{
-		AwsIamAuth: awsIamAuth,
-		spec:       spec,
+		Installer: installer,
+		spec:      spec,
 	}
 }
 
