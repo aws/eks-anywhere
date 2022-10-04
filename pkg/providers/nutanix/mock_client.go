@@ -12,31 +12,31 @@ import (
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 )
 
-// Mockclient is a mock of client interface.
-type Mockclient struct {
+// Mockv3Client is a mock of v3Client interface.
+type Mockv3Client struct {
 	ctrl     *gomock.Controller
-	recorder *MockclientMockRecorder
+	recorder *Mockv3ClientMockRecorder
 }
 
-// MockclientMockRecorder is the mock recorder for Mockclient.
-type MockclientMockRecorder struct {
-	mock *Mockclient
+// Mockv3ClientMockRecorder is the mock recorder for Mockv3Client.
+type Mockv3ClientMockRecorder struct {
+	mock *Mockv3Client
 }
 
-// NewMockclient creates a new mock instance.
-func NewMockclient(ctrl *gomock.Controller) *Mockclient {
-	mock := &Mockclient{ctrl: ctrl}
-	mock.recorder = &MockclientMockRecorder{mock}
+// NewMockv3Client creates a new mock instance.
+func NewMockv3Client(ctrl *gomock.Controller) *Mockv3Client {
+	mock := &Mockv3Client{ctrl: ctrl}
+	mock.recorder = &Mockv3ClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *Mockclient) EXPECT() *MockclientMockRecorder {
+func (m *Mockv3Client) EXPECT() *Mockv3ClientMockRecorder {
 	return m.recorder
 }
 
 // GetCluster mocks base method.
-func (m *Mockclient) GetCluster(ctx context.Context, uuid string) (*v3.ClusterIntentResponse, error) {
+func (m *Mockv3Client) GetCluster(ctx context.Context, uuid string) (*v3.ClusterIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCluster", ctx, uuid)
 	ret0, _ := ret[0].(*v3.ClusterIntentResponse)
@@ -45,13 +45,13 @@ func (m *Mockclient) GetCluster(ctx context.Context, uuid string) (*v3.ClusterIn
 }
 
 // GetCluster indicates an expected call of GetCluster.
-func (mr *MockclientMockRecorder) GetCluster(ctx, uuid interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) GetCluster(ctx, uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*Mockclient)(nil).GetCluster), ctx, uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*Mockv3Client)(nil).GetCluster), ctx, uuid)
 }
 
 // GetImage mocks base method.
-func (m *Mockclient) GetImage(ctx context.Context, uuid string) (*v3.ImageIntentResponse, error) {
+func (m *Mockv3Client) GetImage(ctx context.Context, uuid string) (*v3.ImageIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImage", ctx, uuid)
 	ret0, _ := ret[0].(*v3.ImageIntentResponse)
@@ -60,13 +60,13 @@ func (m *Mockclient) GetImage(ctx context.Context, uuid string) (*v3.ImageIntent
 }
 
 // GetImage indicates an expected call of GetImage.
-func (mr *MockclientMockRecorder) GetImage(ctx, uuid interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) GetImage(ctx, uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*Mockclient)(nil).GetImage), ctx, uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImage", reflect.TypeOf((*Mockv3Client)(nil).GetImage), ctx, uuid)
 }
 
 // GetSubnet mocks base method.
-func (m *Mockclient) GetSubnet(ctx context.Context, uuid string) (*v3.SubnetIntentResponse, error) {
+func (m *Mockv3Client) GetSubnet(ctx context.Context, uuid string) (*v3.SubnetIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSubnet", ctx, uuid)
 	ret0, _ := ret[0].(*v3.SubnetIntentResponse)
@@ -75,13 +75,13 @@ func (m *Mockclient) GetSubnet(ctx context.Context, uuid string) (*v3.SubnetInte
 }
 
 // GetSubnet indicates an expected call of GetSubnet.
-func (mr *MockclientMockRecorder) GetSubnet(ctx, uuid interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) GetSubnet(ctx, uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*Mockclient)(nil).GetSubnet), ctx, uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubnet", reflect.TypeOf((*Mockv3Client)(nil).GetSubnet), ctx, uuid)
 }
 
 // ListCluster mocks base method.
-func (m *Mockclient) ListCluster(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
+func (m *Mockv3Client) ListCluster(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ClusterListIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListCluster", ctx, getEntitiesRequest)
 	ret0, _ := ret[0].(*v3.ClusterListIntentResponse)
@@ -90,13 +90,13 @@ func (m *Mockclient) ListCluster(ctx context.Context, getEntitiesRequest *v3.DSM
 }
 
 // ListCluster indicates an expected call of ListCluster.
-func (mr *MockclientMockRecorder) ListCluster(ctx, getEntitiesRequest interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) ListCluster(ctx, getEntitiesRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCluster", reflect.TypeOf((*Mockclient)(nil).ListCluster), ctx, getEntitiesRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListCluster", reflect.TypeOf((*Mockv3Client)(nil).ListCluster), ctx, getEntitiesRequest)
 }
 
 // ListImage mocks base method.
-func (m *Mockclient) ListImage(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ImageListIntentResponse, error) {
+func (m *Mockv3Client) ListImage(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.ImageListIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListImage", ctx, getEntitiesRequest)
 	ret0, _ := ret[0].(*v3.ImageListIntentResponse)
@@ -105,13 +105,13 @@ func (m *Mockclient) ListImage(ctx context.Context, getEntitiesRequest *v3.DSMet
 }
 
 // ListImage indicates an expected call of ListImage.
-func (mr *MockclientMockRecorder) ListImage(ctx, getEntitiesRequest interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) ListImage(ctx, getEntitiesRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImage", reflect.TypeOf((*Mockclient)(nil).ListImage), ctx, getEntitiesRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListImage", reflect.TypeOf((*Mockv3Client)(nil).ListImage), ctx, getEntitiesRequest)
 }
 
 // ListSubnet mocks base method.
-func (m *Mockclient) ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
+func (m *Mockv3Client) ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.SubnetListIntentResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListSubnet", ctx, getEntitiesRequest)
 	ret0, _ := ret[0].(*v3.SubnetListIntentResponse)
@@ -120,7 +120,7 @@ func (m *Mockclient) ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMe
 }
 
 // ListSubnet indicates an expected call of ListSubnet.
-func (mr *MockclientMockRecorder) ListSubnet(ctx, getEntitiesRequest interface{}) *gomock.Call {
+func (mr *Mockv3ClientMockRecorder) ListSubnet(ctx, getEntitiesRequest interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubnet", reflect.TypeOf((*Mockclient)(nil).ListSubnet), ctx, getEntitiesRequest)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSubnet", reflect.TypeOf((*Mockv3Client)(nil).ListSubnet), ctx, getEntitiesRequest)
 }

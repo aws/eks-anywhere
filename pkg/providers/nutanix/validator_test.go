@@ -24,7 +24,7 @@ func TestNutanixValidator(t *testing.T) {
 	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
 	require.NoError(t, err)
 
-	mockClient := NewMockclient(ctrl)
+	mockClient := NewMockv3Client(ctrl)
 	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
