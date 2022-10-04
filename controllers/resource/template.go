@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -228,7 +227,7 @@ func (r *CloudStackTemplate) getControlPlaneTemplateName(ctx context.Context, ek
 	updateControlPlaneTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCpCsmc, &cpCsmc, r.log)
 	if updateControlPlaneTemplate {
 		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
-		r.log.Info(fmt.Sprintf("control plane machine template updated to new name %s", controlPlaneTemplateName))
+		r.log.Info("Control plane machine template updated", "new name", controlPlaneTemplateName)
 	} else {
 		cp, err := r.ControlPlane(ctx, eksaCluster)
 		if err != nil {
@@ -257,7 +256,7 @@ func (r *CloudStackTemplate) getEtcdTemplateName(ctx context.Context, eksaCluste
 				return "", err
 			}
 			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, r.now)
-			r.log.Info(fmt.Sprintf("etcd template updated to new name %s", etcdTemplateName))
+			r.log.Info("Etcd template updated", "new name", etcdTemplateName)
 		} else {
 			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
 		}
@@ -275,7 +274,7 @@ func (r *CloudStackTemplate) getKubeadmconfigTemplateNames(ctx context.Context, 
 		if cloudstack.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
 			kubeadmConfigTemplateName := common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmConfigTemplateName
-			r.log.Info(fmt.Sprintf("KubeadmConfigTemplate updated to new name %s for worker node group %s", kubeadmConfigTemplateName, workerNodeGroupConfiguration.Name))
+			r.log.Info("KubeadmConfigTemplate updated", "new name", kubeadmConfigTemplateName, "worker node group", workerNodeGroupConfiguration.Name)
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
@@ -300,7 +299,7 @@ func (r *CloudStackTemplate) getWorkloadTemplateNames(ctx context.Context, eksaC
 		if updateWorkloadTemplate {
 			workloadTemplateName := common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
-			r.log.Info(fmt.Sprintf("workoad machine template updated to new name %s for worker node group %s", workloadTemplateName, workerNodeGroupConfiguration.Name))
+			r.log.Info("Worker machine template updated", "new name", workloadTemplateName, "worker node group", workerNodeGroupConfiguration.Name)
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
