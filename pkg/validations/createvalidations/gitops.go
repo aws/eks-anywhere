@@ -68,6 +68,12 @@ func validateFluxConfig(ctx context.Context, k validations.KubectlClient, cluste
 		return nil
 	}
 
+	// when processing deprecated gitopsConfig, we parse and convert it to fluxConfig.
+	// for this case both fluxConfig and gitopsConfig can exist in spec. Skip fluxConfig validation.
+	if clusterSpec.GitOpsConfig != nil {
+		return nil
+	}
+
 	fluxConfig := &v1alpha1.FluxConfig{}
 	err := k.GetObject(ctx, fluxConfigResourceType, clusterSpec.FluxConfig.Name, clusterSpec.Cluster.Namespace, cluster.KubeconfigFile, fluxConfig)
 	if err == nil {
