@@ -1,4 +1,4 @@
-package contextutil
+package workflowcontext
 
 import (
 	"context"

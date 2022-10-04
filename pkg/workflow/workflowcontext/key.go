@@ -1,4 +1,4 @@
-package contextutil
+package workflowcontext
 
 // contextKey is used to create collisionless context keys.
 type contextKey string

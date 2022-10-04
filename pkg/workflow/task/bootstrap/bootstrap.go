@@ -7,7 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/workflow/contextutil"
+	"github.com/aws/eks-anywhere/pkg/workflow/workflowcontext"
 )
 
 // OptionsRetriever supplies bootstrap cluster options. This is typically satisfied
@@ -61,7 +61,7 @@ func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	return contextutil.WithBootstrapCluster(ctx, *cluster), nil
+	return workflowcontext.WithBootstrapCluster(ctx, *cluster), nil
 }
 
 // DeleteCluster deletes a bootstrap cluster. It expects the bootstrap cluster to be
@@ -73,7 +73,7 @@ type DeleteCluster struct {
 
 // RunTask satisfies workflow.Task.
 func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
-	cluster := contextutil.BootstrapCluster(ctx)
+	cluster := workflowcontext.BootstrapCluster(ctx)
 
 	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, &cluster, constants.Create, false); err != nil {
 		return ctx, err
