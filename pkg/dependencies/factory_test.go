@@ -254,6 +254,11 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Name: "test-cluster",
 				},
+				Spec: anywherev1.ClusterSpec{
+					ManagementCluster: anywherev1.ManagementCluster{
+						Name: "mgmt-1",
+					},
+				},
 			},
 		},
 		VersionsBundle: &cluster.VersionsBundle{

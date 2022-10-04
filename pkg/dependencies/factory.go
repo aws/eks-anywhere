@@ -872,6 +872,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
+			curatedpackages.WithManagementClusterName(getManagementClusterName(spec)),
 		)
 		return nil
 	})
@@ -1103,4 +1104,12 @@ func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy str
 		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
 	}
 	return "", "", nil
+}
+
+func getManagementClusterName(clusterSpec *cluster.Spec) string {
+	managementCluster := clusterSpec.ManagementCluster
+	if managementCluster == nil {
+		return clusterSpec.Cluster.Name
+	}
+	return managementCluster.Name
 }
