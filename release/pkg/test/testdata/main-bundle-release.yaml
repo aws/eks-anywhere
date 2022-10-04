@@ -421,7 +421,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
     nutanix:
-      clusterAPIController: {}
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
       components:
@@ -1176,7 +1184,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
     nutanix:
-      clusterAPIController: {}
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
       components:
@@ -1931,7 +1947,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
     nutanix:
-      clusterAPIController: {}
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
       components:
@@ -2686,7 +2710,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
     nutanix:
-      clusterAPIController: {}
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
       components:
@@ -3423,7 +3455,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.24"
     nutanix:
-      clusterAPIController: {}
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1
       clusterTemplate:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
       components:
