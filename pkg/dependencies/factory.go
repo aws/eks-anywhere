@@ -1107,9 +1107,8 @@ func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy str
 }
 
 func getManagementClusterName(clusterSpec *cluster.Spec) string {
-	managementCluster := clusterSpec.ManagementCluster
-	if managementCluster == nil {
-		return clusterSpec.Cluster.Name
+	if clusterSpec.ManagementCluster != nil {
+		return clusterSpec.ManagementCluster.Name
 	}
-	return managementCluster.Name
+	return clusterSpec.Cluster.Name
 }
