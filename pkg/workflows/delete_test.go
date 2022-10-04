@@ -2,6 +2,7 @@ package workflows_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -61,7 +62,7 @@ func (c *deleteTestSetup) expectSetup() {
 
 func (c *deleteTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
-		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
+		bootstrapper.WithExtraDockerMounts(),
 	}
 
 	gomock.InOrder(
@@ -77,7 +78,7 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 
 func (c *deleteTestSetup) expectNotToCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
-		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
+		bootstrapper.WithExtraDockerMounts(),
 	}
 
 	c.provider.EXPECT().BootstrapClusterOpts(c.clusterSpec).Return(opts, nil).Times(0)
@@ -86,6 +87,14 @@ func (c *deleteTestSetup) expectNotToCreateBootstrap() {
 	).Return(c.bootstrapCluster, nil).Times(0)
 
 	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+}
+
+func (c *deleteTestSetup) expectDeletePackageResources() {
+	c.clusterManager.EXPECT().DeletePackageResources(c.ctx, c.clusterSpec.ManagementCluster, gomock.Any()).Return(nil)
+}
+
+func (c *deleteTestSetup) expectNotToDeletePackageResources() {
+	c.clusterManager.EXPECT().DeletePackageResources(c.ctx, c.clusterSpec.ManagementCluster, gomock.Any()).Return(nil).Times(0)
 }
 
 func (c *deleteTestSetup) expectDeleteBootstrap() {
@@ -145,6 +154,7 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectDeleteWorkload(test.bootstrapCluster)
 	test.expectCleanupGitRepo()
 	test.expectMoveManagement()
+	test.expectNotToDeletePackageResources()
 	test.expectDeleteBootstrap()
 
 	err := test.run()
@@ -166,6 +176,29 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
 	test.expectCleanupGitRepo()
 	test.expectNotToMoveManagement()
+	test.expectDeletePackageResources()
+	test.expectNotToDeleteBootstrap()
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestDeleteWorkloadDeletePackageResourceError(t *testing.T) {
+	test := newDeleteTest(t)
+	test.expectSetup()
+	test.expectNotToCreateBootstrap()
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	test.clusterSpec.Cluster.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
+	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
+	test.expectCleanupGitRepo()
+	test.expectNotToMoveManagement()
+	test.clusterManager.EXPECT().DeletePackageResources(test.ctx, test.clusterSpec.ManagementCluster, gomock.Any()).Return(fmt.Errorf("boom"))
 	test.expectNotToDeleteBootstrap()
 
 	err := test.run()

@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -2496,4 +2497,78 @@ func TestKubectlListObjectsMarshalError(t *testing.T) {
 	).Return(*bytes.NewBufferString("//"), nil)
 
 	tt.Expect(tt.k.ListObjects(tt.ctx, "clusters", tt.namespace, tt.kubeconfig, &v1alpha1.ClusterList{})).To(MatchError(ContainSubstring("parsing get clusters response")))
+}
+
+func TestKubectlHasResource(t *testing.T) {
+	tt := newKubectlTest(t)
+	pbc := &packagesv1.PackageBundleController{
+		TypeMeta: metav1.TypeMeta{Kind: "packageBundleController"},
+		Spec: packagesv1.PackageBundleControllerSpec{
+			ActiveBundle: "some bundle",
+		},
+	}
+	b, err := json.Marshal(pbc)
+	tt.Expect(err).To(Succeed())
+	tt.e.EXPECT().Execute(tt.ctx,
+		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json",
+		"--kubeconfig", tt.kubeconfig, "packageBundleController", "testResourceName",
+	).Return(*bytes.NewBuffer(b), nil)
+
+	has, err := tt.k.HasResource(tt.ctx, "packageBundleController", "testResourceName", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(Succeed())
+	tt.Expect(has).To(BeTrue())
+}
+
+func TestKubectlHasResourceWithGetError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(tt.ctx,
+		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json",
+		"--kubeconfig", tt.kubeconfig, "packageBundleController", "testResourceName",
+	).Return(bytes.Buffer{}, fmt.Errorf("test error"))
+
+	has, err := tt.k.HasResource(tt.ctx, "packageBundleController", "testResourceName", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(MatchError(ContainSubstring("test error")))
+	tt.Expect(has).To(BeFalse())
+}
+
+func TestKubectlDeletePackageResources(t *testing.T) {
+	t.Parallel()
+
+	t.Run("golden path", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "namespace", "eksa-packages-clusterName", "--kubeconfig", tt.kubeconfig, "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(Succeed())
+	})
+
+	t.Run("pbc failure", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), fmt.Errorf("bam"))
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(MatchError(ContainSubstring("bam")))
+	})
+
+	t.Run("namespace failure", func(t *testing.T) {
+		tt := newKubectlTest(t)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "pbc", "clusterName", "--kubeconfig", tt.kubeconfig, "--namespace", "eksa-packages", "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), nil)
+		tt.e.EXPECT().Execute(
+			tt.ctx,
+			"delete", "namespace", "eksa-packages-clusterName", "--kubeconfig", tt.kubeconfig, "--ignore-not-found=true",
+		).Return(*bytes.NewBufferString("//"), fmt.Errorf("boom"))
+
+		tt.Expect(tt.k.DeletePackageResources(tt.ctx, tt.cluster, "clusterName")).To(MatchError(ContainSubstring("boom")))
+	})
 }

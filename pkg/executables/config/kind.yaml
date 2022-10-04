@@ -1,10 +1,5 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-{{- if .DisableDefaultCNI }}
-networking:
-  # the default CNI will not be installed
-  disableDefaultCNI: true
-{{- end }}
 kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration

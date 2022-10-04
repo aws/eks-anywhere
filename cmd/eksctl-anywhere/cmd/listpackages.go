@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -13,6 +14,7 @@ import (
 
 type listPackagesOption struct {
 	kubeVersion string
+	clusterName string
 	source      curatedpackages.BundleSource
 	registry    string
 	// kubeConfig is an optional kubeconfig file to use when querying an
@@ -33,9 +35,14 @@ func init() {
 		"Specifies an alternative registry for packages discovery.")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeConfig, "kubeconfig", "",
 		"Path to a kubeconfig file to use when source is a cluster.")
+	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
+		"Name of cluster for package list.")
 
 	if err := listPackagesCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("marking source flag required: %s", err)
+	}
+	if err := listPackagesCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("cluster flag required: %s", err)
 	}
 }
 
@@ -70,6 +77,7 @@ func listPackages(ctx context.Context) error {
 
 	b := curatedpackages.NewBundleReader(
 		kubeConfig,
+		lpo.clusterName,
 		lpo.source,
 		deps.Kubectl,
 		bm,
@@ -84,6 +92,5 @@ func listPackages(ctx context.Context) error {
 		deps.Kubectl,
 		curatedpackages.WithBundle(bundle),
 	)
-	packages.DisplayPackages()
-	return nil
+	return packages.DisplayPackages(os.Stdout)
 }

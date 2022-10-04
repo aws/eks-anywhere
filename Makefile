@@ -394,10 +394,27 @@ unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path 
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
 
+COVER_PROFILE ?= coverage.out
+
 .PHONY: coverage-unit-test
-coverage-unit-test: COVER_PROFILE?=coverage.html 
 coverage-unit-test:
 	$(MAKE) unit-test GO_TEST_FLAGS="-coverprofile=$(COVER_PROFILE) -covermode=atomic"
+
+# coverage is just an easier-to-remember alias for coverage-unit-test.
+.PHONY: coverage
+coverage: coverage-unit-test
+
+# coverage-html generates an HTML file with coverage info. Share it or view it
+# in your browser.
+.PHONY: coverage-html
+coverage-html: COVER_HTML?=coverage.html
+coverage-html: coverage-unit-test
+	$(GO) tool cover -html=$(COVER_PROFILE) -o $(COVER_HTML)
+
+# coverage-view generates an HTML file and opens it in your browser.
+.PHONY: coverage-view
+coverage-view: coverage-unit-test
+	$(GO) tool cover -html=$(COVER_PROFILE)
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally

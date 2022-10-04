@@ -7,32 +7,56 @@ import (
 	"os"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
-	RegistryEndpointVar  = "T_REGISTRY_MIRROR_ENDPOINT"
-	RegistryPortVar      = "T_REGISTRY_MIRROR_PORT"
-	RegistryNamespaceVar = "T_REGISTRY_MIRROR_NAMESPACE"
-	RegistryUsernameVar  = "T_REGISTRY_MIRROR_USERNAME"
-	RegistryPasswordVar  = "T_REGISTRY_MIRROR_PASSWORD"
-	RegistryCACertVar    = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointVar           = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryPortVar               = "T_REGISTRY_MIRROR_PORT"
+	RegistryNamespaceVar          = "T_REGISTRY_MIRROR_NAMESPACE"
+	RegistryUsernameVar           = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar           = "T_REGISTRY_MIRROR_PASSWORD"
+	RegistryCACertVar             = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointTinkerbellVar = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
+	RegistryPortTinkerbellVar     = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
+	RegistryUsernameTinkerbellVar = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
+	RegistryPasswordTinkerbellVar = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
+	RegistryCACertTinkerbellVar   = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
 )
 
-var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryPortVar, RegistryNamespaceVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
+var (
+	registryMirrorRequiredEnvVars           = []string{RegistryEndpointVar, RegistryPortVar, RegistryNamespaceVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
+	registryMirrorTinkerbellRequiredEnvVars = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
+)
 
-func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
+func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
-		endpoint  := os.Getenv(RegistryEndpointVar)
-		hostPort  := net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
-		namespace := os.Getenv(RegistryNamespaceVar)
-		username  := os.Getenv(RegistryUsernameVar)
-		password  := os.Getenv(RegistryPasswordVar)
+		var endpoint, hostPort, namespace, username, password, registryCert string
+
+		switch providerName {
+		case constants.TinkerbellProviderName:
+			checkRequiredEnvVars(e.T, registryMirrorTinkerbellRequiredEnvVars)
+			endpoint = os.Getenv(RegistryEndpointTinkerbellVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortTinkerbellVar))
+			namespace = os.Getenv(RegistryNamespaceVar)
+			username = os.Getenv(RegistryUsernameTinkerbellVar)
+			password = os.Getenv(RegistryPasswordTinkerbellVar)
+			registryCert = os.Getenv(RegistryCACertTinkerbellVar)
+		default:
+			checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
+			endpoint = os.Getenv(RegistryEndpointVar)
+			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
+			namespace = os.Getenv(RegistryNamespaceVar)
+			username = os.Getenv(RegistryUsernameVar)
+			password = os.Getenv(RegistryPasswordVar)
+			registryCert = os.Getenv(RegistryCACertVar)
+		}
+
 		err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
 		if err != nil {
 			e.T.Fatalf("error logging into docker registry %s: %v", hostPort, err)
 		}
-		certificate, err := base64.StdEncoding.DecodeString(os.Getenv(RegistryCACertVar))
+		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
 				api.WithRegistryMirror(endpoint, namespace, string(certificate)),
@@ -51,5 +75,5 @@ func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 }
 
 func RequiredRegistryMirrorEnvVars() []string {
-	return registryMirrorRequiredEnvVars
+	return append(registryMirrorRequiredEnvVars, registryMirrorTinkerbellRequiredEnvVars...)
 }

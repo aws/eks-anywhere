@@ -72,7 +72,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(nil)
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.kubectlRunner.EXPECT().HasResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
@@ -82,7 +82,7 @@ func TestPackageInstallerSuccess(t *testing.T) {
 func TestPackageInstallerFailWhenCertManagerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(false, nil)
+	tt.kubectlRunner.EXPECT().HasResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(false, nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
 	tt.Expect(err).NotTo(BeNil())
@@ -91,7 +91,7 @@ func TestPackageInstallerFailWhenCertManagerFails(t *testing.T) {
 func TestPackageInstallerFailWhenControllerFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.kubectlRunner.EXPECT().HasResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(errors.New("controller installation failed"))
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)
@@ -102,7 +102,7 @@ func TestPackageInstallerFailWhenPackageFails(t *testing.T) {
 	tt := newPackageInstallerTest(t)
 
 	tt.packageClient.EXPECT().CreatePackages(tt.ctx, tt.packagePath, tt.kubeConfigPath).Return(errors.New("path doesn't exist"))
-	tt.kubectlRunner.EXPECT().GetResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
+	tt.kubectlRunner.EXPECT().HasResource(tt.ctx, "crd", "certificates.cert-manager.io", tt.kubeConfigPath, "cert-manager").Return(true, nil)
 	tt.packageControllerClient.EXPECT().InstallController(tt.ctx).Return(nil)
 
 	err := tt.command.InstallCuratedPackages(tt.ctx)

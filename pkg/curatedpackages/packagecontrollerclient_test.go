@@ -9,10 +9,12 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages/mocks"
@@ -93,10 +95,33 @@ func TestInstallControllerSuccess(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
+	}
+}
+
+func getPBCSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
+		pbc := &packagesv1.PackageBundleController{
+			Spec: packagesv1.PackageBundleControllerSpec{
+				ActiveBundle: "test-bundle",
+			},
+		}
+		pbc.DeepCopyInto(obj)
+		return nil
+	}
+}
+
+func getPBCFail(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
+		return fmt.Errorf("test error")
 	}
 }
 
@@ -127,6 +152,11 @@ func TestInstallControllerWithProxy(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -158,6 +188,11 @@ func TestInstallControllerWithEmptyProxy(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -173,10 +208,41 @@ func TestInstallControllerFail(t *testing.T) {
 	values := []string{sourceRegistry, clusterName}
 
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(errors.New("login failed"))
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err := tt.command.InstallController(tt.ctx)
 	if err == nil {
 		t.Errorf("Install Controller Should fail when installation fails")
+	}
+}
+
+func TestInstallControllerFailNoActiveBundle(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCFail(t)).
+		AnyTimes()
+
+	err = tt.command.InstallController(tt.ctx)
+	if err == nil {
+		t.Errorf("expected error, got nil")
 	}
 }
 
@@ -194,6 +260,11 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -215,6 +286,11 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -222,25 +298,26 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	}
 }
 
-func TestGetActiveControllerSuccess(t *testing.T) {
+func TestIsInstalledTrue(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
+	tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(false, nil)
 
-	found, err := tt.command.IsInstalled(tt.ctx)
-	if err != nil || found {
-		t.Errorf("Get Active Controller should return false when controller doesn't exist")
+	found := tt.command.IsInstalled(tt.ctx)
+	if found {
+		t.Errorf("expected true, got %t", found)
 	}
 }
 
-func TestGetActiveControllerFail(t *testing.T) {
+func TestIsInstalledFalse(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
-	tt.kubectl.EXPECT().GetResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).Return(true, errors.New("controller doesn't exist"))
+	tt.kubectl.EXPECT().HasResource(tt.ctx, "packageBundleController", tt.clusterName, tt.kubeConfig, constants.EksaPackagesName).
+		Return(false, errors.New("controller doesn't exist"))
 
-	found, err := tt.command.IsInstalled(tt.ctx)
-	if !found || err == nil {
-		t.Errorf("Get Active Controller should return true when controller exists")
+	found := tt.command.IsInstalled(tt.ctx)
+	if found {
+		t.Errorf("expected false, got %t", found)
 	}
 }
 
@@ -258,6 +335,11 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
 	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
 
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -268,5 +350,120 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
+	}
+}
+
+func TestInstallControllerActiveBundleCustomTimeout(t *testing.T) {
+	tt := newPackageControllerTest(t)
+	tt.command = curatedpackages.NewPackageControllerClient(
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+		curatedpackages.WithEksaRegion(tt.eksaRegion),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithActiveBundleTimeout(time.Second),
+	)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCSuccess(t)).
+		AnyTimes()
+
+	err = tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("Install Controller Should succeed when installation passes")
+	}
+}
+
+func TestInstallControllerActiveBundleWaitLoops(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCLoops(t, 3)).
+		AnyTimes()
+
+	err = tt.command.InstallController(tt.ctx)
+	if err != nil {
+		t.Errorf("expected no error, got %v", err)
+	}
+}
+
+func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
+		loops = loops - 1
+		if loops > 0 {
+			return nil
+		}
+		pbc := &packagesv1.PackageBundleController{
+			Spec: packagesv1.PackageBundleControllerSpec{
+				ActiveBundle: "test-bundle",
+			},
+		}
+		pbc.DeepCopyInto(obj)
+		return nil
+	}
+}
+
+func TestInstallControllerActiveBundleTimesOut(t *testing.T) {
+	tt := newPackageControllerTest(t)
+	tt.command = curatedpackages.NewPackageControllerClient(
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+		curatedpackages.WithEksaRegion(tt.eksaRegion),
+		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
+		curatedpackages.WithActiveBundleTimeout(time.Millisecond),
+	)
+
+	registry := curatedpackages.GetRegistry(tt.ociUri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
+	clusterName := fmt.Sprintf("clusterName=%s", "billy")
+	values := []string{sourceRegistry, clusterName}
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	dat, err := os.ReadFile("testdata/awssecret_test.yaml")
+	tt.Expect(err).NotTo(HaveOccurred())
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
+	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, values).Return(nil)
+	any := gomock.Any()
+	tt.kubectl.EXPECT().
+		GetObject(any, any, any, any, any, any).
+		DoAndReturn(getPBCDelay(t, time.Second)).
+		AnyTimes()
+
+	err = tt.command.InstallController(tt.ctx)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected %v, got %v", context.DeadlineExceeded, err)
+	}
+}
+
+func getPBCDelay(t *testing.T, delay time.Duration) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
+	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
+		time.Sleep(delay)
+		return fmt.Errorf("test error")
 	}
 }
