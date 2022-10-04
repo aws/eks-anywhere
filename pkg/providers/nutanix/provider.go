@@ -90,6 +90,9 @@ func NewProvider(
 		Port:     fmt.Sprintf("%d", datacenterConfig.Spec.Port),
 	}
 	client, err := v3.NewV3Client(nutanixCreds)
+	if err != nil {
+		return nil, fmt.Errorf("error creating nutanix client: %v", err)
+	}
 
 	validator, err := NewValidator(client.V3)
 	if err != nil {
