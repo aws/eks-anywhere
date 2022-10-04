@@ -31,6 +31,7 @@ const (
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
 	CaptProjectPath                     = "projects/tinkerbell/cluster-api-provider-tinkerbell"
 	CapvProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-vsphere"
+	CapxProjectPath                     = "projects/nutanix-cloud-native/cluster-api-provider-nutanix"
 	CertManagerProjectPath              = "projects/cert-manager/cert-manager"
 	CiliumProjectPath                   = "projects/cilium/cilium"
 	EtcdadmBootstrapProviderProjectPath = "projects/aws/etcdadm-bootstrap-provider"

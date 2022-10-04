@@ -81,6 +81,7 @@ type VersionsBundle struct {
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
 	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 	Snow                   SnowBundle                  `json:"snow,omitempty"`
+	Nutanix                NutanixBundle               `json:"nutanix,omitempty"`
 	// This field has been deprecated
 	Aws *AwsBundle `json:"aws,omitempty"`
 }
@@ -328,4 +329,12 @@ type SnowBundle struct {
 	KubeVip    Image    `json:"kubeVip"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
+}
+
+type NutanixBundle struct {
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Version              string   `json:"version"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
+	ClusterTemplate      Manifest `json:"clusterTemplate"`
 }
