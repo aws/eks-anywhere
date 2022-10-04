@@ -6,12 +6,12 @@ date: 2022-09-30
 description: >  
 ---
 
-This tutorial demonstrates how to config ADOT package to scrap metrics from an EKS Anywhere (EKS-A) cluster, and send them to [Amazon Managed Service for Prometheus](https://aws.amazon.com/prometheus/) (AMP) and [Amazon Managed Grafana](https://aws.amazon.com/grafana/) (AMG).
+This tutorial demonstrates how to config the ADOT package to scrape metrics from an EKS Anywhere cluster, and send them to [Amazon Managed Service for Prometheus](https://aws.amazon.com/prometheus/) (AMP) and [Amazon Managed Grafana](https://aws.amazon.com/grafana/) (AMG).
 
 This tutorial walks through the following procedures:
 - [Create an AMP workspace](#create-an-amp-workspace);
-- [Create an EKS-A cluster with IAM Roles for Service Account (IRSA)](#create-an-eks-a-cluster-with-irsa);
-- [Install EKS-A ADOT package](#install-eks-a-adot-package);
+- [Create a cluster with IAM Roles for Service Account (IRSA)](#create-a-cluster-with-irsa);
+- [Install the ADOT package](#install-the-adot-package);
 - [Create an AMG workspace and connect to the AMP workspace](#create-an-amg-workspace-and-connect-to-the-amp-workspace).
 
 {{% alert title="Note" color="primary" %}}
@@ -31,7 +31,7 @@ An AMP workspace is created to receive metrics from the ADOT package, and respon
 
 1. Click on `Create` to create a workspace.
 
-1. Type an workspace alias (`adot-amp-test` as an example), and click on `Create workspace`.
+1. Type a workspace alias (`adot-amp-test` as an example), and click on `Create workspace`.
 
     ![ADOT AMP Create Workspace](/images/adot_amp_create_ws.png)
 
@@ -41,10 +41,10 @@ An AMP workspace is created to receive metrics from the ADOT package, and respon
 
 For additional options (i.e. through CLI) and configurations (i.e. add a tag) to create an AMP workspace, refer to [AWS AMP create a workspace guide.](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-create-workspace.html)
 
-## Create an EKS-A cluster with IRSA
-To enable ADOT pods that run in EKS-A clusters to authenticate with AWS services, a user needs to set up IRSA at cluster creation. [EKS-A cluster spec for Pod IAM](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/) gives step-by-step guidance on how to do so. There are a few things to keep in mind while working through the guide:
+## Create a cluster with IRSA
+To enable ADOT pods that run in EKS Anywhere clusters to authenticate with AWS services, a user needs to set up IRSA at cluster creation. [EKS Anywhere cluster spec for Pod IAM]({{< relref "../../../reference/clusterspec/optional/irsa/" >}}) gives step-by-step guidance on how to do so. There are a few things to keep in mind while working through the guide:
 
-1. While completing step [Create an OIDC provider](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible), a user should: 
+1. While completing step [Create an OIDC provider]({{< relref "../../../reference/clusterspec/optional/irsa/#create-an-oidc-provider-and-make-its-discovery-document-publicly-accessible" >}}), a user should: 
     - create the S3 bucket in the `us-west-2` region, and 
     - attach an IAM policy with proper AMP access to the IAM role. 
       
@@ -65,7 +65,7 @@ To enable ADOT pods that run in EKS-A clusters to authenticate with AWS services
       }
       ```
 
-1. While completing step [deploy pod identity webhook](https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/optional/irsa/#deploy-pod-identity-webhook), a user should:
+1. While completing step [deploy pod identity webhook]({{< relref "../../../reference/clusterspec/optional/irsa/#deploy-pod-identity-webhook" >}}), a user should:
     - make sure the service account is created in the same namespace as the ADOT package (which is controlled by the `package` definition file with field `spec.targetNamespace`);
     - take a note of the service account that gets created in this step as it will be used in ADOT package installation;
     - add an annotation `eks.amazonaws.com/role-arn: <role-arn>` to the created service account.
@@ -112,9 +112,9 @@ To ensure IRSA is set up properly in the cluster, a user can create an `awscli` 
     exit
     ```
 
-## Install EKS-A ADOT package
+## Install the ADOT package
 
-The EKS-A ADOT package will be created with three components:
+The ADOT package will be created with three components:
 
 1. the Prometheus Receiver, which is designed to be a drop-in replacement for a Prometheus Server and is capable of scraping metrics from microservices instrumented with the [Prometheus client library](https://prometheus.io/docs/instrumenting/clientlibs/);
 
@@ -124,7 +124,7 @@ The EKS-A ADOT package will be created with three components:
 
 Follow steps below to complete the ADOT package installation:
 
-1. Update the following config file. Review comments carefully and replace everything that is wrapped with a `<>` tag. Note this configuration aims to mimic the Prometheus community helm chart. A user can tailor the scrap targets further by modifying the receiver section below. Refer to [ADOT package spec]({{< relref "../../../reference/packagespec/adot" >}}) for additional explanations of each section.
+1. Update the following config file. Review comments carefully and replace everything that is wrapped with a `<>` tag. Note this configuration aims to mimic the Prometheus community helm chart. A user can tailor the scrape targets further by modifying the receiver section below. Refer to [ADOT package spec]({{< relref "../../../reference/packagespec/adot" >}}) for additional explanations of each section.
 
     <details>
       <summary>Click to expand ADOT package config</summary>
@@ -147,7 +147,7 @@ Follow steps below to complete the ADOT package installation:
             # Annotations to add to the service account
             annotations: {}
             # Specifies the serviceAccount annotated with eks.amazonaws.com/role-arn.
-            name: "pod-identity-webhook" # name of the service account created at step Create an EKS-A cluster with IRSA
+            name: "pod-identity-webhook" # name of the service account created at step Create a cluster with IRSA
 
           config:
             extensions:
@@ -452,7 +452,7 @@ Follow steps below to complete the ADOT package installation:
       ```
     </details>
 
-1. Bind additional roles to the service account `pod-identity-webhook` (created at step [Create an EKS-A cluster with IRSA](#create-an-eks-a-cluster-with-irsa)) by applying the following file in the cluster (using `kubectl apply -f <file-name>`). This is because `pod-identity-webhook` by design does not have sufficient permissions to scrap all Kubernetes targets listed in the ADOT config file above. If modifications are made to the Prometheus Receiver, make updates to the file below to add / remove additional permissions before applying the file.
+1. Bind additional roles to the service account `pod-identity-webhook` (created at step [Create a cluster with IRSA](#create-a-cluster-with-irsa)) by applying the following file in the cluster (using `kubectl apply -f <file-name>`). This is because `pod-identity-webhook` by design does not have sufficient permissions to scrape all Kubernetes targets listed in the ADOT config file above. If modifications are made to the Prometheus Receiver, make updates to the file below to add / remove additional permissions before applying the file.
 
     <details>
       <summary>Click to expand clusterrole and clusterrolebinding config</summary>
@@ -500,8 +500,8 @@ Follow steps below to complete the ADOT package installation:
         name: otel-prometheus-role
       subjects:
         - kind: ServiceAccount
-          name: pod-identity-webhook  # replace with name of the service account created at step Create an EKS-A cluster with IRSA
-          namespace: default  # replace with namespace where the service account was created at step Create an EKS-A cluster with IRSA
+          name: pod-identity-webhook  # replace with name of the service account created at step Create a cluster with IRSA
+          namespace: default  # replace with namespace where the service account was created at step Create a cluster with IRSA
       ```
 
     </details>
@@ -546,12 +546,10 @@ Check ADOT pod logs using `kubectl logs <adot-pod-name> -n <namespace>`. It shou
 2022-09-30T23:22:59.189Z	info	service/collector.go:128	Everything is ready. Begin running and processing data.
 ...
 ```
-#### Check AMP end point using awscurl
+#### Check AMP endpoint using awscurl
 Use awscurl commands below to check if AMP received the metrics data sent by ADOT. The awscurl tool is a curl like tool with AWS Signature Version 4 request signing. The command below should return a status code `success`.
 ```
 pip install awscurl
-```
-```
 awscurl -X POST --region us-west-2 --service aps "<amp-query-endpoint>?query=up"
 ```
 
@@ -607,6 +605,6 @@ Follow steps below to add the AMP workspace to AMG.
 
     ![ADOT AMG Import Dashboard](/images/adot_amg_import_dashboard.png)
 
-1. A Kubernetes cluster monitoring (via Prometheus) dashboard will be displayed.
+1. A `Kubernetes cluster monitoring (via Prometheus)` dashboard will be displayed.
 
     ![ADOT AMG View Dashboard](/images/adot_amg_view_dashboard.png)
