@@ -50,7 +50,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 	// Find the source of the Helm chart prior to the initial loop.
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range tinkerbellBundleArtifacts[componentName] {
-			if strings.HasSuffix(artifact.Image.AssetName, "chart") {
+			if artifact.Image != nil && strings.HasSuffix(artifact.Image.AssetName, "chart") {
 				URI = artifact.Image.SourceImageURI
 			}
 		}
