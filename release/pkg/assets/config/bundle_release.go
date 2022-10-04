@@ -18,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/assets/archives"
 	"github.com/aws/eks-anywhere/release/pkg/assets/tagger"
 	assettypes "github.com/aws/eks-anywhere/release/pkg/assets/types"
-	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
 var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
@@ -837,6 +836,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	},
 }
 
-func GetBundleReleaseAssetsConfigMap(rc *releasetypes.ReleaseConfig) []assettypes.AssetConfig {
+func GetBundleReleaseAssetsConfigMap() []assettypes.AssetConfig {
 	return bundleReleaseAssetsConfigMap
 }
