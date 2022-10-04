@@ -100,16 +100,6 @@ spec:
         key: node-role.kubernetes.io/master
       - key: CriticalAddonsOnly
         operator: Exists
-{{- if .controlPlaneTaints }}
-{{- range .controlPlaneTaints }}
-      - key: {{ .Key }}
-        value: {{ .Value }}
-        effect: {{ .Effect }}
-{{- if .TimeAdded }}
-        timeAdded: {{ .TimeAdded }}
-{{- end }}
-{{- end }}
-{{- end }}
 
       # `aws-iam-authenticator server` has four volumes
       # - config (mounted from the ConfigMap at /etc/aws-iam-authenticator/config.yaml)
@@ -117,14 +107,14 @@ spec:
       # - kubeconfig (kubeconfig to plug into your apiserver configuration, mounted from the host)
       containers:
       - name: aws-iam-authenticator
-        image: {{.image}}
+        image: public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11
         env:
         - name: AWS_REGION
-          value: {{.awsRegion}}
+          value: test-region
         args:
         - server
-        - --backend-mode={{.backendMode}}
-        - --partition={{.partition}}
+        - --backend-mode=mode1,mode2
+        - --partition=test
         - --config=/etc/aws-iam-authenticator/config.yaml
         - --state-dir=/var/aws-iam-authenticator
         - --generate-kubeconfig=/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
@@ -157,7 +147,7 @@ spec:
       # init container to set permissions for the mount paths
       initContainers:
       - name: chown
-        image: {{.initContainerImage}}
+        image: public.ecr.aws/eks-anywhere/diagnostic-collector:v0.9.1-eks-a-10
         command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: cert
@@ -180,19 +170,6 @@ spec:
       - name: key
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-{{- if (ne .clusterID "")}}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: kube-system
-  name: aws-iam-authenticator
-  labels:
-    k8s-app: aws-iam-authenticator
-data:
-  config.yaml: |
-    clusterID: {{.clusterID}}
-{{- end}}
 
 ---
 # EKS-Style ConfigMap: roles and users can be mapped in the same way as supported on EKS.
@@ -202,11 +179,15 @@ metadata:
   name: aws-auth
   namespace: kube-system
 data:
-{{- if (ne .mapRoles "")}}
   mapRoles: |
-{{ .mapRoles | indent 4 }}
-{{- end}}
-{{- if (ne .mapUsers "")}}
+    - rolearn: test-role-arn
+      username: test
+      groups:
+        - group1
+        - group2
   mapUsers: |
-{{ .mapUsers | indent 4 }}
-{{- end}}
+    - userarn: test-user-arn
+      username: test
+      groups:
+        - group1
+        - group2
