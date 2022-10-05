@@ -16,13 +16,11 @@ package bundles
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
-	"github.com/aws/eks-anywhere/release/pkg/helm"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
@@ -44,29 +42,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(tinkerbellBundleArtifacts)
 
-	var helmdir string
-	var URI string
-
-	// Find the source of the Helm chart prior to the initial loop.
-	for _, componentName := range sortedComponentNames {
-		for _, artifact := range tinkerbellBundleArtifacts[componentName] {
-			if artifact.Image != nil && strings.HasSuffix(artifact.Image.AssetName, "chart") {
-				URI = artifact.Image.SourceImageURI
-			}
-		}
-	}
-	driver, err := helm.NewHelm()
-	if err != nil {
-		return anywherev1alpha1.TinkerbellBundle{}, fmt.Errorf("creating helm client: %w", err)
-	}
-
-	if !r.DryRun {
-		helmdir, err = helm.GetHelmDest(driver, URI, "tinkerbell-chart")
-		if err != nil {
-			return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error GetHelmDest")
-		}
-	}
-
 	var sourceBranch string
 	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -78,25 +53,10 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		for _, artifact := range tinkerbellBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
-				bundleImageArtifact := anywherev1alpha1.Image{}
 				if componentName == "cluster-api-provider-tinkerbell" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-				if strings.HasSuffix(imageArtifact.AssetName, "chart") {
-					if !r.DryRun {
-						err := helm.ModifyChartYaml(*imageArtifact, r, driver, helmdir)
-						if err != nil {
-							return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error modifying and pushing helm Chart.yaml")
-						}
-					}
-					bundleImageArtifact = anywherev1alpha1.Image{
-						Name:        imageArtifact.AssetName,
-						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
-						URI:         imageArtifact.ReleaseImageURI,
-						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
-					}
-				}
-				bundleImageArtifact = anywherev1alpha1.Image{
+				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
 					OS:          imageArtifact.OS,
@@ -131,6 +91,7 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 					Description: "Tinkerbell operating system installation environment (osie) component",
 					URI:         archiveArtifact.ReleaseCdnURI,
 				}
+
 				bundleArchiveArtifacts[archiveArtifact.ReleaseName] = bundleArchiveArtifact
 			}
 		}

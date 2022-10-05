@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/eks-anywhere/release/pkg/helm"
 	"github.com/pkg/errors"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
@@ -27,6 +28,9 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
+
+// var helmdir string
+var URI string
 
 func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]releasetypes.Artifact) error {
 	fmt.Println("\n==========================================================")
@@ -39,6 +43,11 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
+
+	driver, err := helm.NewHelm()
+	if err != nil {
+		return fmt.Errorf("creating helm client: %w", err)
+	}
 
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
@@ -81,8 +90,18 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 			}
 
 			if artifact.Image != nil {
-				// If the artifact is a helm chart, skip the skopeo copy as it's handled separately.
+				// If the artifact is a helm chart, skip the skopeo and modify the Chart.yaml to match the release tag.
 				if !r.DryRun && (strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
+					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
+					trimmedAsset := strings.Trim(artifact.Image.AssetName, "-helm")
+					helmdir, err := helm.GetHelmDest(driver, artifact.Image.SourceImageURI, trimmedAsset)
+					if err != nil {
+						return errors.Wrap(err, "Error GetHelmDest")
+					}
+					err = helm.ModifyChartYaml(*artifact.Image, r, driver, helmdir)
+					if err != nil {
+						return errors.Wrap(err, "Error modifying and pushing helm Chart.yaml")
+					}
 					continue
 				}
 				sourceImageUri := artifact.Image.SourceImageURI
