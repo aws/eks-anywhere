@@ -110,9 +110,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	if len(controlPlaneMachineConfig.Spec.Datastore) <= 0 {
 		return errors.New("VSphereMachineConfig datastore for control plane is not set or is empty")
 	}
-	if len(controlPlaneMachineConfig.Spec.Folder) <= 0 {
-		logger.Info("VSphereMachineConfig folder for control plane is not set or is empty. Will default to root vSphere folder.")
-	}
 	if len(controlPlaneMachineConfig.Spec.ResourcePool) <= 0 {
 		return errors.New("VSphereMachineConfig VM resourcePool for control plane is not set or is empty")
 	}
@@ -140,9 +137,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		if len(workerNodeGroupMachineConfig.Spec.Datastore) <= 0 {
 			return errors.New("VSphereMachineConfig datastore for worker nodes is not set or is empty")
 		}
-		if len(workerNodeGroupMachineConfig.Spec.Folder) <= 0 {
-			logger.Info("VSphereMachineConfig folder for worker nodes is not set or is empty. Will default to root vSphere folder.")
-		}
 		if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
 			return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
 		}
@@ -166,9 +160,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 		if len(etcdMachineConfig.Spec.Datastore) <= 0 {
 			return errors.New("VSphereMachineConfig datastore for etcd machines is not set or is empty")
-		}
-		if len(etcdMachineConfig.Spec.Folder) <= 0 {
-			logger.Info("VSphereMachineConfig folder for etcd machines is not set or is empty. Will default to root vSphere folder.")
 		}
 		if len(etcdMachineConfig.Spec.ResourcePool) <= 0 {
 			return errors.New("VSphereMachineConfig VM resourcePool for etcd machines is not set or is empty")
