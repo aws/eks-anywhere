@@ -19,7 +19,6 @@ import (
 
 const (
 	testClusterConfigMainFilename            = "cluster_main.yaml"
-	testClusterConfigMainAutoscalingFilename = "cluster_main_autoscaling.yaml"
 	testClusterConfigMainWithAZsFilename     = "cluster_main_with_availability_zones.yaml"
 	testDataDir                              = "testdata"
 )

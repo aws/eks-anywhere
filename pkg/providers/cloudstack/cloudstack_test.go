@@ -255,10 +255,18 @@ func TestProviderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testin
 	cluster := &types.Cluster{
 		Name: "test",
 	}
-	clusterSpec := givenClusterSpec(t, testClusterConfigMainAutoscalingFilename)
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainAutoscalingFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainAutoscalingFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	fmt.Println(len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	wng := &clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	ca := &v1alpha1.AutoScalingConfiguration{
+		MaxCount: 5,
+		MinCount: 3,
+	}
+	wng.AutoScalingConfiguration = ca
 	cmk := givenWildcardCmk(mockCtrl)
 	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
 	if provider == nil {
