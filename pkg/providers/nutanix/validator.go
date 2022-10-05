@@ -87,7 +87,7 @@ func (v *Validator) validateImageConfig(ctx context.Context, identifier anywhere
 			}
 		}
 	default:
-		return fmt.Errorf("invalid cluster identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+		return fmt.Errorf("invalid image identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
 	}
 
 	return nil
@@ -114,7 +114,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 			}
 		}
 	default:
-		return fmt.Errorf("invalid cluster identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
+		return fmt.Errorf("invalid subnet identifier type: %s; valid types are: %q and %q", identifier.Type, anywherev1.NutanixIdentifierName, anywherev1.NutanixIdentifierUUID)
 	}
 
 	return nil
