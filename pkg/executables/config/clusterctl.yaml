@@ -39,6 +39,10 @@ providers:
     url: "{{.dir}}/bootstrap-etcdadm-controller/{{.EtcdadmControllerProviderVersion}}/bootstrap-components.yaml"
     type: "BootstrapProvider"
     version: "{{.EtcdadmControllerProviderVersion}}"
+  - name: "nutanix"
+    url: "{{.dir}}/infrastructure-nutanix/{{.NutanixProviderVersion}}/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "{{.NutanixProviderVersion}}"
 
 overridesFolder: {{.dir}}
 images:
@@ -81,6 +85,9 @@ images:
   infrastructure-docker/capd-manager:
     repository: {{.DockerManagerRepository}}
     tag: {{.DockerManagerTag}}
+  infrastructure-nutanix/manager:
+    repository: {{ .ClusterApiNutanixControllerRepository }}
+    tag: {{ .ClusterApiNutanixControllerTag }}
   infrastructure-docker/kube-rbac-proxy:
     repository: {{ .DockerKubeRbacProxyRepository }}
     tag: {{ .DockerKubeRbacProxyTag }} #org one is v0.4.0
