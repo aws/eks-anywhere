@@ -175,7 +175,7 @@ func TestNutanixValidatorEmptyResourceUUID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
-	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecEmptyName), machineConfig)
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecEmptyUUID), machineConfig)
 	require.NoError(t, err)
 
 	mockClient := NewMockv3Client(ctrl)
