@@ -31,7 +31,7 @@ func NewNutanixTemplateBuilder(
 	workerNodeGroupMachineSpecs map[string]v1alpha1.NutanixMachineConfigSpec,
 	creds basicAuthCreds,
 	now types.NowFunc,
-) providers.TemplateBuilder {
+) *TemplateBuilder {
 	return &TemplateBuilder{
 		datacenterSpec:              datacenterSpec,
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,

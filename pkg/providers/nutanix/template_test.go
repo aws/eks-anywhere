@@ -59,4 +59,8 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, nil, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
+
+	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, secretSpec)
 }

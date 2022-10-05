@@ -79,7 +79,7 @@ func NewProvider(
 
 	creds := getCredsFromEnv()
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
-	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now).(*TemplateBuilder)
+	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
 
 	url := fmt.Sprintf("%s:%d", datacenterConfig.Spec.Endpoint, datacenterConfig.Spec.Port)
 	nutanixCreds := prismgoclient.Credentials{
