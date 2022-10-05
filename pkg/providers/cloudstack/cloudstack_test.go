@@ -260,7 +260,6 @@ func TestProviderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testin
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	fmt.Println(len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	wng := &clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
 	ca := &v1alpha1.AutoScalingConfiguration{
 		MaxCount: 5,
