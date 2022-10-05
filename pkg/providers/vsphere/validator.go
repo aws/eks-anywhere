@@ -116,8 +116,8 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	if len(controlPlaneMachineConfig.Spec.ResourcePool) <= 0 {
 		return errors.New("VSphereMachineConfig VM resourcePool for control plane is not set or is empty")
 	}
-	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("control plane osFamily: %s is not supported, please use one of the following: %s, %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Redhat {
+		return fmt.Errorf("control plane osFamily: %s is not supported, please use one of the following: %s, %s, %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu, anywherev1.Redhat)
 	}
 
 	workerNodeGroupConfigs := vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
@@ -146,8 +146,8 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
 			return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
 		}
-		if workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-			return fmt.Errorf("worker node osFamily: %s is not supported, please use one of the following: %s, %s", workerNodeGroupMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+		if workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Ubuntu && workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Redhat {
+			return fmt.Errorf("worker node osFamily: %s is not supported, please use one of the following: %s, %s, %s", workerNodeGroupMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu, anywherev1.Redhat)
 		}
 		if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
 			return errors.New("control plane and worker nodes must have the same osFamily specified")
@@ -188,8 +188,8 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	if etcdMachineConfig != nil && etcdMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && etcdMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("etcd node osFamily: %s is not supported, please use one of the following: %s, %s", etcdMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+	if etcdMachineConfig != nil && etcdMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && etcdMachineConfig.Spec.OSFamily != anywherev1.Ubuntu && etcdMachineConfig.Spec.OSFamily != anywherev1.Redhat {
+		return fmt.Errorf("etcd node osFamily: %s is not supported, please use one of the following: %s, %s, %s", etcdMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu, anywherev1.Redhat)
 	}
 
 	if etcdMachineConfig != nil && controlPlaneMachineConfig.Spec.OSFamily != etcdMachineConfig.Spec.OSFamily {

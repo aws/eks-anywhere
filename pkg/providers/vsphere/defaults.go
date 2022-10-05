@@ -94,7 +94,7 @@ func setDefaultsForMachineConfig(machineConfig *anywherev1.VSphereMachineConfig)
 		if machineConfig.Spec.OSFamily == anywherev1.Bottlerocket {
 			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
 		} else {
-			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
+			machineConfig.Spec.Users[0].Name = capvDefaultUser
 		}
 		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
 	}

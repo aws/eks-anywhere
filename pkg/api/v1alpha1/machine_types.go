@@ -5,6 +5,7 @@ type OSFamily string
 const (
 	Ubuntu       OSFamily = "ubuntu"
 	Bottlerocket OSFamily = "bottlerocket"
+	Redhat       OSFamily = "redhat"
 )
 
 // UserConfiguration defines the configuration of the user to be added to the VM

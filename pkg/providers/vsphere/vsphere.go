@@ -50,7 +50,7 @@ const (
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
 	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
+	capvDefaultUser          = "capv"
 	maxRetries               = 30
 	backOffPeriod            = 5 * time.Second
 )

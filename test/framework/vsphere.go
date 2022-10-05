@@ -38,6 +38,7 @@ const (
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTemplateBR122Var     = "T_VSPHERE_TEMPLATE_BR_1_22"
 	vsphereTemplateBR123Var     = "T_VSPHERE_TEMPLATE_BR_1_23"
+	vsphereTemplateRedhat120Var = "T_VSPHERE_TEMPLATE_REDHAT_1_20"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
@@ -70,6 +71,7 @@ var requiredEnvVars = []string{
 	vsphereTemplateBR121Var,
 	vsphereTemplateBR122Var,
 	vsphereTemplateBR123Var,
+	vsphereTemplateRedhat120Var,
 	vsphereTlsInsecureVar,
 	vsphereTlsThumbprintVar,
 	vsphereUsernameVar,
@@ -246,6 +248,15 @@ func WithBottleRocket123() VSphereOpt {
 		v.fillers = append(v.fillers,
 			api.WithVSphereStringFromEnvVar(vsphereTemplateBR123Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
+func WithRedHat120() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithVSphereStringFromEnvVar(vsphereTemplateRedhat120Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Redhat),
 		)
 	}
 }

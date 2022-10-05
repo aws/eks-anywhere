@@ -185,6 +185,15 @@ func TestVSphereKubernetes123BottleRocketDifferentNamespaceSimpleFlow(t *testing
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes120RedHatSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithRedHat120()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestCloudStackKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
