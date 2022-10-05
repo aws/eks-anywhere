@@ -118,7 +118,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	if err != nil {
 		return fmt.Errorf("packaging the helm chart: %w", err)
 	}
-	err = d.PushHelmChart(packaged, r.ReleaseContainerRegistry)
+	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
 	}
