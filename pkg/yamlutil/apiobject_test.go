@@ -1,4 +1,4 @@
-package yamlutil
+package yamlutil_test
 
 import (
 	"testing"
@@ -6,11 +6,12 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/yamlutil"
 )
 
 func TestObjectLookupGetFromRef(t *testing.T) {
 	g := NewWithT(t)
-	o := ObjectLookup{}
 	want := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "eksa-system",
@@ -28,15 +29,14 @@ func TestObjectLookupGetFromRef(t *testing.T) {
 		Namespace:  want.Namespace,
 	}
 
-	o.add(want)
-
 	otherSecret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "eksa-system",
 			Name:      "my-other-secret",
 		},
 	}
-	o.add(otherSecret)
+
+	o := yamlutil.NewObjectLookupBuilder().Add(want, otherSecret).Build()
 
 	got := o.GetFromRef(objRef)
 	g.Expect(got).To(Equal(want))
