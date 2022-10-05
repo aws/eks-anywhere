@@ -86,7 +86,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 				// and then use Helm package and push commands to upload chart to ECR Public
 				if !r.DryRun && (strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
 					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
-					trimmedAsset := strings.Trim(artifact.Image.AssetName, "-helm")
+					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
 					helmDriver, err := helm.NewHelm()
 					if err != nil {
