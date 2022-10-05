@@ -1239,10 +1239,6 @@ func (p *cloudstackProvider) PostMoveManagementToBootstrap(_ context.Context, _ 
 	return nil
 }
 
-func (p *cloudstackProvider) GenerateStorageClass() []byte {
-	return nil
-}
-
 func (p *cloudstackProvider) setupSSHAuthKeysForUpgrade() error {
 	var err error
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]

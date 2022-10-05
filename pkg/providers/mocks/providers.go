@@ -157,20 +157,6 @@ func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForUpgrade), arg0, arg1, arg2, arg3, arg4)
 }
 
-// GenerateStorageClass mocks base method.
-func (m *MockProvider) GenerateStorageClass() []byte {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateStorageClass")
-	ret0, _ := ret[0].([]byte)
-	return ret0
-}
-
-// GenerateStorageClass indicates an expected call of GenerateStorageClass.
-func (mr *MockProviderMockRecorder) GenerateStorageClass() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateStorageClass", reflect.TypeOf((*MockProvider)(nil).GenerateStorageClass))
-}
-
 // GetDeployments mocks base method.
 func (m *MockProvider) GetDeployments() map[string][]string {
 	m.ctrl.T.Helper()
