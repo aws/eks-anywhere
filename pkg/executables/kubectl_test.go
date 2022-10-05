@@ -608,6 +608,9 @@ func TestKubectlGetMachines(t *testing.T) {
 			jsonResponseFile: "testdata/kubectl_machines_no_node_ref_no_labels.json",
 			wantMachines: []types.Machine{
 				{
+					Metadata: types.MachineMetadata{
+						Name: "eksa-test-capd-control-plane-5nfdg",
+					},
 					Status: types.MachineStatus{
 						Conditions: types.Conditions{
 							{
@@ -650,6 +653,9 @@ func TestKubectlGetMachines(t *testing.T) {
 					},
 				},
 				{
+					Metadata: types.MachineMetadata{
+						Name: "eksa-test-capd-md-0-bb7885f6f-gkb85",
+					},
 					Status: types.MachineStatus{
 						Conditions: types.Conditions{
 							{
@@ -683,6 +689,7 @@ func TestKubectlGetMachines(t *testing.T) {
 							"cluster.x-k8s.io/cluster-name":  "eksa-test-capd",
 							"cluster.x-k8s.io/control-plane": "",
 						},
+						Name: "eksa-test-capd-control-plane-5nfdg",
 					},
 					Status: types.MachineStatus{
 						NodeRef: &types.ResourceRef{
@@ -699,6 +706,7 @@ func TestKubectlGetMachines(t *testing.T) {
 							"cluster.x-k8s.io/deployment-name": "eksa-test-capd-md-0",
 							"machine-template-hash":            "663441929",
 						},
+						Name: "eksa-test-capd-md-0-bb7885f6f-gkb85",
 					},
 					Status: types.MachineStatus{
 						NodeRef: &types.ResourceRef{
@@ -720,6 +728,7 @@ func TestKubectlGetMachines(t *testing.T) {
 							"cluster.x-k8s.io/cluster-name":  "eksa-test-capd",
 							"cluster.x-k8s.io/control-plane": "",
 						},
+						Name: "eksa-test-capd-control-plane-5nfdg",
 					},
 					Status: types.MachineStatus{
 						NodeRef: &types.ResourceRef{
@@ -774,6 +783,7 @@ func TestKubectlGetMachines(t *testing.T) {
 							"cluster.x-k8s.io/deployment-name": "eksa-test-capd-md-0",
 							"machine-template-hash":            "663441929",
 						},
+						Name: "eksa-test-capd-md-0-bb7885f6f-gkb85",
 					},
 					Status: types.MachineStatus{
 						NodeRef: &types.ResourceRef{
@@ -813,6 +823,7 @@ func TestKubectlGetMachines(t *testing.T) {
 							"cluster.x-k8s.io/cluster-name": "eksa-test-capd",
 							"cluster.x-k8s.io/etcd-cluster": "",
 						},
+						Name: "eksa-test-capd-control-plane-5nfdg",
 					},
 					Status: types.MachineStatus{
 						Conditions: types.Conditions{
@@ -2421,6 +2432,19 @@ func TestKubectlWaitForManagedExternalEtcdNotReady(t *testing.T) {
 	).Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.k.WaitForManagedExternalEtcdNotReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
+}
+
+func TestKubectlWaitForMachineDeploymentReady(t *testing.T) {
+	tt := newKubectlTest(t)
+	timeout := "5m"
+	expectedTimeout := "300.00s"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"wait", "--timeout", expectedTimeout, "--for=condition=Ready=true", "machinedeployments.cluster.x-k8s.io/test", "--kubeconfig", tt.cluster.KubeconfigFile, "-n", "eksa-system",
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.WaitForMachineDeploymentReady(tt.ctx, tt.cluster, timeout, "test")).To(Succeed())
 }
 
 func TestKubectlWaitForClusterReady(t *testing.T) {
