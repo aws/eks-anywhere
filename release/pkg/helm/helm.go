@@ -96,7 +96,7 @@ func GetChartImageTags(d *helmDriver, helmDest string) (*Requires, error) {
 	return helmRequires, nil
 }
 
-func ModifyChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string) error {
+func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.ReleaseConfig, d *helmDriver, helmDest string) error {
 	helmChart := strings.Split(i.ReleaseImageURI, ":")
 	helmtag := helmChart[1]
 

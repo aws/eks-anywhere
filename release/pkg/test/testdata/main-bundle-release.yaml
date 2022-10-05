@@ -691,13 +691,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -1454,13 +1450,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -2217,13 +2209,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -2980,13 +2968,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -3725,13 +3709,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
