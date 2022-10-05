@@ -170,7 +170,6 @@ spec:
       - name: key
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-
 ---
 apiVersion: v1
 kind: ConfigMap
