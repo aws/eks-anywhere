@@ -244,6 +244,28 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
+	// Cluster-api-provider-nutanix artifacts
+	{
+		ProjectName: "cluster-api-provider-nutanix",
+		ProjectPath: "projects/nutanix-cloud-native/cluster-api-provider-nutanix",
+		Images: []*assettypes.Image{
+			{
+				RepoName: "cluster-api-provider-nutanix",
+			},
+		},
+		ImageRepoPrefix: "nutanix-cloud-native",
+		ImageTagOptions: []string{
+			"gitTag",
+			"projectPath",
+		},
+		Manifests: []*assettypes.ManifestComponent{
+			{
+				Name:          "infrastructure-nutanix",
+				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
+			},
+		},
+		OnlyForDevRelease: true,
+	},
 	// Cluster-api-provider-tinkerbell artifacts
 	{
 		ProjectName: "cluster-api-provider-tinkerbell",
@@ -811,28 +833,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			"gitTag",
 			"projectPath",
 		},
-	},
-	{
-		ProjectName: "cluster-api-provider-nutanix",
-		ProjectPath: "projects/nutanix-cloud-native/cluster-api-provider-nutanix",
-		Images: []*assettypes.Image{
-			{
-				RepoName:  "manager",
-				AssetName: "cluster-api-provider-nutanix",
-			},
-		},
-		ImageRepoPrefix: "nutanix-cloud-native/cluster-api-provider-nutanix/release",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-		Manifests: []*assettypes.ManifestComponent{
-			{
-				Name:          "infrastructure-nutanix",
-				ManifestFiles: []string{"infrastructure-components.yaml", "cluster-template.yaml", "metadata.yaml"},
-			},
-		},
-		OnlyForDevRelease: true,
 	},
 }
 
