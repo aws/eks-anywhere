@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"log"
+
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -10,7 +12,8 @@ type getPackageOptions struct {
 	output string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster
-	kubeConfig string
+	kubeConfig  string
+	clusterName string
 }
 
 var gpo = &getPackageOptions{}
@@ -22,6 +25,11 @@ func init() {
 		"Specifies the output format (valid option: json, yaml)")
 	getPackageCommand.Flags().StringVar(&gpo.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file.")
+	getPackageCommand.Flags().StringVar(&gpo.clusterName, "cluster", "",
+		"Cluster to get list of packages.")
+	if err := getPackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
+	}
 }
 
 var getPackageCommand = &cobra.Command{
@@ -36,6 +44,6 @@ var getPackageCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, gpo.clusterName, args)
 	},
 }

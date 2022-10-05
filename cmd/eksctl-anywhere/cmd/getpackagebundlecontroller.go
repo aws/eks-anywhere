@@ -36,6 +36,6 @@ var getPackageBundleControllerCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return getResources(cmd.Context(), "packagebundlecontrollers", gpbco.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packagebundlecontrollers", gpbco.output, kubeConfig, "", args)
 	},
 }
