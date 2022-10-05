@@ -66,6 +66,7 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
+			curatedpackages.WithManagementClusterName("mgmt"),
 		),
 		clusterName:   clusterName,
 		kubeConfig:    kubeConfig,

@@ -25,19 +25,20 @@ const (
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig          string
-	uri                 string
-	chartName           string
-	chartVersion        string
-	chartInstaller      ChartInstaller
-	clusterName         string
-	kubectl             KubectlRunner
-	eksaAccessKeyId     string
-	eksaSecretAccessKey string
-	eksaRegion          string
-	httpProxy           string
-	httpsProxy          string
-	noProxy             []string
+	kubeConfig            string
+	uri                   string
+	chartName             string
+	chartVersion          string
+	chartInstaller        ChartInstaller
+	clusterName           string
+	managementClusterName string
+	kubectl               KubectlRunner
+	eksaAccessKeyId       string
+	eksaSecretAccessKey   string
+	eksaRegion            string
+	httpProxy             string
+	httpsProxy            string
+	noProxy               []string
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 }
@@ -67,10 +68,10 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //
 // This includes all necessary steps for functionality. These include:
 //
-//    - helm chart installation
-//    - credentials secret creation
-//    - credentials refreshing cron job creation
-//    - activation of a curated packages bundle
+//   - helm chart installation
+//   - credentials secret creation
+//   - credentials refreshing cron job creation
+//   - activation of a curated packages bundle
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
@@ -248,5 +249,11 @@ func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
 		if noProxy != nil {
 			config.noProxy = noProxy
 		}
+	}
+}
+
+func WithManagementClusterName(managementClusterName string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.managementClusterName = managementClusterName
 	}
 }
