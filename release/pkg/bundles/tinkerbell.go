@@ -95,14 +95,31 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 						URI:         imageArtifact.ReleaseImageURI,
 						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 					}
-				}
-				bundleImageArtifact = anywherev1alpha1.Image{
-					Name:        imageArtifact.AssetName,
-					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-					OS:          imageArtifact.OS,
-					Arch:        imageArtifact.Arch,
-					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				} else {
+					// Set the default digest, in case we're doing a dev release it won't fail.
+					var digest string
+					digest = imageDigests[imageArtifact.ReleaseImageURI]
+
+					if !r.DryRun {
+						requires, err := helm.GetChartImageTags(driver, helmdir)
+						if err != nil {
+							return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error retrieving requires.yaml")
+						}
+						for _, images := range requires.Spec.Images {
+							if images.Repository == imageArtifact.AssetName {
+								digest = images.Digest
+							}
+						}
+					}
+
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        imageArtifact.AssetName,
+						Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+						OS:          imageArtifact.OS,
+						Arch:        imageArtifact.Arch,
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: digest,
+					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
