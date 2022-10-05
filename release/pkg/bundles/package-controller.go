@@ -24,7 +24,6 @@ import (
 	"github.com/aws/eks-anywhere/release/pkg/constants"
 	"github.com/aws/eks-anywhere/release/pkg/helm"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
-
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
 )
