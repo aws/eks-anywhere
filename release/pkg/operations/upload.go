@@ -102,6 +102,8 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					if err != nil {
 						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)
 					}
+
+					continue
 				}
 				sourceImageUri := artifact.Image.SourceImageURI
 				releaseImageUri := artifact.Image.ReleaseImageURI
