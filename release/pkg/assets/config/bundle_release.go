@@ -782,7 +782,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 				RepoName:             "tinkerbell-chart",
 				TrimVersionSignifier: true,
 				ImageTagConfiguration: assettypes.ImageTagConfiguration{
-					SourceLatestTagFromECR: true,
+					NonProdSourceImageTagFormat: "<gitTag>",
 				},
 			},
 		},

@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/action"
@@ -31,10 +30,9 @@ import (
 	"k8s.io/helm/pkg/chartutil"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/yaml"
-)
 
-const (
-	YamlSeparator = "\n---\n"
+	"github.com/aws/eks-anywhere/release/pkg/constants"
+	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
 var BundleLog = ctrl.Log.WithName("BundleGenerator")
@@ -187,7 +185,7 @@ func UnTarHelmChart(chartRef, chartPath, dest string) error {
 	_, err := os.Stat(dest)
 	if os.IsNotExist(err) {
 		if _, err := os.Stat(chartPath); err != nil {
-			if err := os.MkdirAll(chartPath, 0755); err != nil {
+			if err := os.MkdirAll(chartPath, 0o755); err != nil {
 				return errors.Wrap(err, "failed to untar (mkdir)")
 			}
 		} else {
@@ -266,7 +264,7 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+	for _, c := range strings.Split(string(content), constants.YamlSeparator) {
 		if err = yaml.Unmarshal([]byte(c), helmrequires); err != nil {
 			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, string(c), err)
 		}
@@ -276,12 +274,12 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %v", fileName, helmrequires)
+	return fmt.Errorf("Requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
 }
 
 // Chart yaml functions
 
-// HasChart checks for the existance of the requires.yaml within the helm directory
+// HasChart checks for the existance of the Chart.yaml within the helm directory
 func HasChart(helmdir string) (string, error) {
 	requires := filepath.Join(helmdir, "Chart.yaml")
 	info, err := os.Stat(requires)
@@ -304,13 +302,13 @@ func ValidateHelmChart(fileName string) (*chart.Metadata, error) {
 	return helmChart, err
 }
 
-// parseHelmChart will attempt to unpack the requires.yaml into the Go struct `Chart`
+// parseHelmChart will attempt to unpack the Chart.yaml into the Go struct `Chart`
 func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
-	for _, c := range strings.Split(string(content), YamlSeparator) {
+	for _, c := range strings.Split(string(content), constants.YamlSeparator) {
 		if err = yaml.Unmarshal([]byte(c), helmChart); err != nil {
 			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, string(c), err)
 		}
@@ -320,12 +318,16 @@ func parseHelmChart(fileName string, helmChart *chart.Metadata) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %v", fileName, helmChart)
+	return fmt.Errorf("Chart.yaml file [%s] is invalid or does not contain kind %v", fileName, helmChart)
 }
 
 func OverwriteChartYaml(filename string, helmChart *chart.Metadata) error {
 	yamlData, err := yaml.Marshal(&helmChart)
-	err = ioutil.WriteFile(filename, yamlData, 0644)
+	if err != nil {
+		return fmt.Errorf("unable to Marshal %v\nyamlData: %s\n %v", helmChart, yamlData, err)
+	}
+
+	err = ioutil.WriteFile(filename, yamlData, 0o644)
 	if err != nil {
 		return err
 	}
