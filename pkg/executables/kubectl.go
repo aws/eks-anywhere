@@ -240,6 +240,11 @@ func (k *Kubectl) ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Clu
 }
 
 func (k *Kubectl) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error {
+	if len(data) == 0 {
+		logger.V(6).Info("Skipping applying empty kube spec from bytes")
+		return nil
+	}
+
 	params := []string{"apply", "-f", "-", "--namespace", namespace}
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
