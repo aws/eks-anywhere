@@ -88,7 +88,9 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 	tt := newTest(t, nutanix)
 	os.Setenv("NUTANIX_USER", "test")
+	defer os.Unsetenv("NUTANIX_USER")
 	os.Setenv("NUTANIX_PASSWORD", "test")
+	defer os.Unsetenv("NUTANIX_PASSWORD")
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
