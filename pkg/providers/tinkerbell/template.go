@@ -146,6 +146,7 @@ func (tb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, wo
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+		values["autoscalingConfig"] = workerNodeGroupConfiguration.AutoScalingConfiguration
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
