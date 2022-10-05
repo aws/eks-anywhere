@@ -486,7 +486,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if newClusterSpec.AWSIamConfig != nil {
 		logger.V(3).Info("Run aws-iam-authenticator upgrade operations")
 		if err = c.generateAndApplyAwsIamAuthForUpgrade(ctx, workloadCluster, newClusterSpec); err != nil {
-			return fmt.Errorf("running aws-iam-authenticator upgrade operations")
+			return fmt.Errorf("running aws-iam-authenticator upgrade operations: %v", err)
 		}
 	}
 
