@@ -1,0 +1,4 @@
+{
+  "default_registry": "public.ecr.aws/j9l9l0k3",
+  "allowed_contexts": ["wanyufe-admin@wanyufe"]
+}
