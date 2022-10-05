@@ -139,6 +139,9 @@ type RegistryMirrorConfiguration struct {
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 
+	// Authenticate defines if registry requires authentication
+	Authenticate bool `json:"authenticate,omitempty"`
+
 	// InsecureSkipVerify skips the registry certificate verification.
 	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
 	// Currently only supported for snow provider
