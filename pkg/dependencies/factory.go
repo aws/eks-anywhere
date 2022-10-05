@@ -86,6 +86,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	NutanixValidator          *nutanix.Validator
 	SnowValidator             *snow.AwsClientValidator
 }
 
@@ -419,6 +420,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			if err != nil {
 				return fmt.Errorf("unable to create Nutanix provider: %v", err)
 			}
+			f.dependencies.NutanixValidator = provider.Validator()
 			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)

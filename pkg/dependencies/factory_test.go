@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -35,6 +36,7 @@ type provider string
 const (
 	vsphere    provider = "vsphere"
 	tinkerbell provider = "tinkerbell"
+	nutanix    provider = "nutanix"
 )
 
 func newTest(t *testing.T, p provider) *factoryTest {
@@ -44,6 +46,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		clusterConfigFile = "testdata/cluster_vsphere.yaml"
 	case tinkerbell:
 		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
+	case nutanix:
+		clusterConfigFile = "testdata/cluster_nutanix.yaml"
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
@@ -79,6 +83,20 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt.Expect(deps.Provider).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithProviderNutanix(t *testing.T) {
+	tt := newTest(t, nutanix)
+	os.Setenv("NUTANIX_USER", "test")
+	os.Setenv("NUTANIX_PASSWORD", "test")
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Provider).NotTo(BeNil())
+	tt.Expect(deps.NutanixValidator).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {

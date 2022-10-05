@@ -390,3 +390,8 @@ func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapC
 	// TODO(nutanix): figure out if we need something else here
 	return nil
 }
+
+func (p *Provider) Validator() *Validator {
+	// TODO(nutanix): figure out if we need something else here
+	return p.validator
+}
