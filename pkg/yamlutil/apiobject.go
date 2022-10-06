@@ -31,7 +31,7 @@ func NewObjectLookupBuilder() *ObjectLookupBuilder {
 	}
 }
 
-// ObjectLookupBuilder allows to construct a ObjectLookup and add APIObjects to it
+// ObjectLookupBuilder allows to construct an ObjectLookup and add APIObjects to it
 type ObjectLookupBuilder struct {
 	lookup ObjectLookup
 }
@@ -45,7 +45,7 @@ func (o *ObjectLookupBuilder) Add(objs ...APIObject) *ObjectLookupBuilder {
 }
 
 // Build constructs and returns an ObjectLookup
-// After this method is called, the builder is reset and looses track
+// After this method is called, the builder is reset and loses track
 // of all previously added objects
 func (o *ObjectLookupBuilder) Build() ObjectLookup {
 	l := o.lookup
