@@ -279,6 +279,32 @@ func TestCreateRunSuccess(t *testing.T) {
 	}
 }
 
+func TestCreateRunAWSIamConfigSuccess(t *testing.T) {
+	test := newCreateTest(t)
+
+	// Adding AWSIAMConfig to cluster spec.
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Name)
+	test.clusterManager.EXPECT().InstallAwsIamAuth(test.ctx, test.bootstrapCluster, test.workloadCluster, test.clusterSpec)
+	test.expectSetup()
+	test.expectCreateBootstrap()
+	test.expectCreateWorkload()
+	test.expectInstallResourcesOnManagementTask()
+	test.expectMoveManagement()
+	test.expectInstallEksaComponents()
+	test.expectInstallGitOpsManager()
+	test.expectWriteClusterConfig()
+	test.expectDeleteBootstrap()
+	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
+	test.expectCuratedPackagesInstallationFail()
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
 func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test := newCreateTest(t)
 	test.forceCleanup = true
@@ -316,6 +342,40 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 		ExistingManagement: true,
 	}
 
+	test.expectSetup()
+	test.expectCreateWorkloadSkipCAPI()
+	test.skipMoveManagement()
+	test.skipInstallEksaComponents()
+	test.expectInstallGitOpsManager()
+	test.expectWriteClusterConfig()
+	test.expectNotDeleteBootstrap()
+	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
+	test.skipCuratedPackagesInstallation()
+
+	if err := test.run(); err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateWorkloadClusterRunAWSIamConfigSuccess(t *testing.T) {
+	managementKubeconfig := "test.kubeconfig"
+	test := newCreateTest(t)
+
+	test.bootstrapCluster.ExistingManagement = true
+	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
+	test.bootstrapCluster.Name = "cluster-name"
+
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               test.bootstrapCluster.Name,
+		KubeconfigFile:     managementKubeconfig,
+		ExistingManagement: true,
+	}
+
+	// Adding AWSIAMConfig to cluster spec.
+	test.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	test.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(test.ctx, test.bootstrapCluster, test.clusterSpec.Cluster.Name)
+	test.clusterManager.EXPECT().InstallAwsIamAuth(test.ctx, test.bootstrapCluster, test.workloadCluster, test.clusterSpec)
 	test.expectSetup()
 	test.expectCreateWorkloadSkipCAPI()
 	test.skipMoveManagement()
