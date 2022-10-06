@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"bytes"
 	"context"
 	"os"
 	"testing"
@@ -20,11 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func TestNutanixProvider(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-	kubectl := executables.NewKubectl(executable)
-
+func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executables.Kubectl) *Provider {
 	clusterConf := &anywherev1.Cluster{}
 	err := yaml.Unmarshal([]byte(nutanixClusterConfigSpec), clusterConf)
 	require.NoError(t, err)
@@ -45,6 +42,19 @@ func TestNutanixProvider(t *testing.T) {
 	defer os.Unsetenv(nutanixUsernameKey)
 	os.Setenv(nutanixPasswordKey, "password")
 	defer os.Unsetenv(nutanixPasswordKey)
+
+	validator, err := NewValidator(nutanixClient)
+	require.NoError(t, err)
+
+	provider, err := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, validator, time.Now)
+	require.NoError(t, err)
+	return provider
+}
+
+func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
 
 	mockClient := NewMockClient(ctrl)
 	clusters := &v3.ClusterListIntentResponse{
@@ -86,21 +96,104 @@ func TestNutanixProvider(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
-	validator, err := NewValidator(mockClient)
-	require.NoError(t, err)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+	assert.NotNil(t, provider)
 
-	provider, err := NewProvider(dcConf, workerConfs, clusterConf, kubectl, mockClient, validator, time.Now)
-	require.NoError(t, err)
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	err := provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
+	assert.NoError(t, err)
+}
+
+func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
+
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
 	assert.NotNil(t, provider)
 
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 
-	err = provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
-	require.NoError(t, err)
-
 	cpSpec, workerSpec, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
 	assert.NotNil(t, cpSpec)
 	assert.NotNil(t, workerSpec)
+}
+
+func TestNutanixProviderUpdateSecrets(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	err := provider.UpdateSecrets(context.Background(), cluster, clusterSpec)
+	assert.NoError(t, err)
+}
+
+func TestNutanixProviderGenerateMHC(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	mhc, err := provider.GenerateMHC(clusterSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, mhc)
+}
+
+func TestNutanixProviderEnvMap(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	envMap, err := provider.EnvMap(clusterSpec)
+	assert.Error(t, err)
+	assert.Nil(t, envMap)
+
+	os.Setenv("NUTANIX_USER", "nutanix")
+	defer os.Unsetenv("NUTANIX_USER")
+	os.Setenv("NUTANIX_PASSWORD", "nutanix")
+	defer os.Unsetenv("NUTANIX_PASSWORD")
+	os.Setenv("NUTANIX_ENDPOINT", "prism.nutanix.com")
+	defer os.Unsetenv("NUTANIX_ENDPOINT")
+
+	envMap, err = provider.EnvMap(clusterSpec)
+	assert.NoError(t, err)
+	assert.NotNil(t, envMap)
+}
+
+func TestNutanixProviderGetInfrastructureBundle(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	bundle := provider.GetInfrastructureBundle(clusterSpec)
+	assert.NotNil(t, bundle)
+}
+
+func TestNutanixProviderMachineConfigs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	confs := provider.MachineConfigs(clusterSpec)
+	require.NotEmpty(t, confs)
+	assert.Len(t, confs, 1)
 }

@@ -224,7 +224,7 @@ func (p *Provider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *Provider) GenerateMHC(clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *Provider) GenerateMHC(_ *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"clusterName":         p.clusterConfig.Name,
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
@@ -253,7 +253,7 @@ func (p *Provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
 			envMap[key] = env
 		} else {
-			return envMap, fmt.Errorf("warning required env not set %s", key)
+			return nil, fmt.Errorf("required env not set %s", key)
 		}
 	}
 	return envMap, nil
