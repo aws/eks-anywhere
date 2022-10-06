@@ -51,14 +51,33 @@ func (vsuo *vSphereSetupUserOptions) setupUser(cmd *cobra.Command, _ []string) e
 		return fmt.Errorf("--password and --force are mutually exclusive. --force may only be run on an existing user.")
 	}
 
+	c, err := setupuser.GenerateConfig(ctx, vsuo.fileName)
+	if err != nil {
+		return err
+	}
+
+	// hacky
+	err = setupuser.SetupGOVCEnv(ctx, c)
 	deps, err := dependencies.NewFactory().WithGovc().Build(ctx)
 	if err != nil {
 		return err
 	}
 	defer close(ctx, deps)
 
-	c, err := setupuser.GenerateConfig(ctx, vsuo.fileName)
-	err = setupuser.SetupUser(ctx, c, deps)
+	// if force flag not used, we should create a user
+	if !vsuo.force {
+		err = deps.Govc.CreateUser(ctx, c.Spec.Username, vsuo.password)
+	}
+	if err != nil {
+		return err
+	}
+
+	task := setupuser.NewSetupVSphereUserTask(c, deps.Govc, vsuo.force)
+	err = task.Run(ctx)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

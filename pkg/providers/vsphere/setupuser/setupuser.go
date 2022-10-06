@@ -28,39 +28,55 @@ func CreateUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupU
 	return nil
 }
 
-func SetupUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupUserConfig) error {
-	// create group
-	var err error
+type SetupVSphereUserTask struct {
+	vsuc *VSphereSetupUserConfig
+	govc *executables.Govc
+	force bool
+}
+
+func NewSetupVSphereUserTask(vsuc *VSphereSetupUserConfig, govc *executables.Govc, force bool) *SetupVSphereUserTask{
+	return &SetupVSphereUserTask{
+		vsuc: vsuc,
+		govc: govc,
+		force: force,
+	}
+}
+	
+
+func (s *SetupVSphereUserTask) CreateGroup(ctx context.Context) error {
+
 	var exists bool
-	exists, err = govc.GroupExists(ctx, vsuc.Spec.GroupName)
+	var err error
+
+	exists, err = s.govc.GroupExists(ctx, s.vsuc.Spec.GroupName)
+	if err != nil {
+		return err
+	} else if exists && !s.force {
+		return fmt.Errorf("Group %s already exists", s.vsuc.Spec.GroupName)
+	}
+
+	err = s.govc.CreateGroup(ctx, s.vsuc.Spec.GroupName)
 	if err != nil {
 		return err
 	}
+	// else {
+	// 	fmt.Printf("Skipping creating %s because it already exists\n", vsuc.Spec.GroupName)
+	// }
 
-	if !exists {
-		err := govc.CreateGroup(ctx, vsuc.Spec.GroupName)
-		if err != nil {
-			return err
-		}
-	} else {
-		fmt.Printf("Skipping creating %s because it already exists\n", vsuc.Spec.GroupName)
-	}
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	// associate user to group
-	err = govc.AddUserToGroup(ctx, vsuc.Spec.GroupName, vsuc.Spec.Username)
-	fmt.Printf("Adding user %s to group %s\n", vsuc.Spec.Username, vsuc.Spec.GroupName)
-	if err != nil {
-		return err
-	}
-
+func (s *SetupVSphereUserTask) CreateRoles(ctx context.Context) error {
 	// create roles
-	for _, r := range getRoles(vsuc) {
-		exists, err = govc.RoleExists(ctx, r.name)
+	for _, r := range getRoles(s.vsuc) {
+		exists, err := s.govc.RoleExists(ctx, r.name)
+
+		if exists && !s.force {
+			return fmt.Errorf("Role %s exists", r.name)
+		}
+
 		if !exists {
-			err = govc.CreateRole(ctx, r.name, r.privs)
+			err = s.govc.CreateRole(ctx, r.name, r.privs)
 			if err != nil {
 				fmt.Printf("Failed to create %s role with %v\n", r.name, r.privs)
 				return err
@@ -71,6 +87,10 @@ func SetupUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupUs
 		}
 	}
 
+	return nil
+}
+
+func (s *SetupVSphereUserTask) AssociatePermissions(ctx context.Context) error {
 	// global on root
 	// admin to template and vm folders
 	// user on User on network, datastore, and resourcepool
@@ -104,8 +124,49 @@ func SetupUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupUs
 	// if err != nil {
 	// 	return err
 	// }
+	return nil
+}
+
+func (s *SetupVSphereUserTask) AddUserToGroup(ctx context.Context) error {
+
+	// associate user to group
+	err := s.govc.AddUserToGroup(ctx, s.vsuc.Spec.GroupName, s.vsuc.Spec.Username)
+	fmt.Printf("Adding user %s to group %s\n", s.vsuc.Spec.Username, s.vsuc.Spec.GroupName)
+	if err != nil {
+		return err
+	}
 
 	return nil
+}
+
+func (s *SetupVSphereUserTask) Run(ctx context.Context) error {
+
+
+	err := s.CreateGroup(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = s.AddUserToGroup(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = s.CreateRoles(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getPrivsFromFile(privsContent string) ([]string, error) {
+	var requiredPrivs []string
+	err := json.Unmarshal([]byte(privsContent), &requiredPrivs)
+	if err != nil {
+		return nil, err
+	}
+	return requiredPrivs, nil
 }
 
 type vsphereRole struct {
@@ -133,57 +194,49 @@ func getRoles(vsuc *VSphereSetupUserConfig) []vsphereRole {
 	}
 }
 
-func getRequiredAccesses(vsuc *config.VSphereSetupUserConfig) []RequiredAccess {
-	privObjs := []RequiredAccess{
-		// validate global root priv settings are correct
-		{
-			objectType:   vsphereTypeFolder,
-			privsContent: config.VSphereGlobalPrivsFile,
-			path:         vsphereRootPath,
-		},
+// func getRequiredAccesses(vsuc *config.VSphereSetupUserConfig) []RequiredAccess {
+// 	privObjs := []RequiredAccess{
+// 		// validate global root priv settings are correct
+// 		{
+// 			objectType:   vsphereTypeFolder,
+// 			privsContent: config.VSphereGlobalPrivsFile,
+// 			path:         vsphereRootPath,
+// 		},
 
-		// validate object-level priv settings are correct
-		{
-			objectType:   vsphereTypeDatastore,
-			privsContent: config.VSphereUserPrivsFile,
-			path:         vsuc.Datastore,
-		},
-		{
-			objectType:   vsphereTypeResourcePool,
-			privsContent: config.VSphereUserPrivsFile,
-			path:         vsuc.ResourcePool,
-		},
-		{
-			objectType:   vsphereTypeNetwork,
-			privsContent: config.VSphereUserPrivsFile,
-			path:         vsuc.Network,
-		},
-		// validate Administrator role (all privs) on VM folder and Template folder
-		{
-			objectType:   vsphereTypeFolder,
-			privsContent: config.VSphereAdminPrivsFile,
-			path:         vsuc.VirtualMachines,
-		},
-		// {
-		// 	objectType:   "VirtualMachine",
-		// 	privsContent: config.VSphereAdminPrivsFile,
-		// 	path:         vsuc.Templates,
-		// },
-		{
-			objectType:   vsphereTypeFolder,
-			privsContent: config.VSphereAdminPrivsFile,
-			path:         vsuc.Templates,
-		},
-	}
+// 		// validate object-level priv settings are correct
+// 		{
+// 			objectType:   vsphereTypeDatastore,
+// 			privsContent: config.VSphereUserPrivsFile,
+// 			path:         vsuc.Datastore,
+// 		},
+// 		{
+// 			objectType:   vsphereTypeResourcePool,
+// 			privsContent: config.VSphereUserPrivsFile,
+// 			path:         vsuc.ResourcePool,
+// 		},
+// 		{
+// 			objectType:   vsphereTypeNetwork,
+// 			privsContent: config.VSphereUserPrivsFile,
+// 			path:         vsuc.Network,
+// 		},
+// 		// validate Administrator role (all privs) on VM folder and Template folder
+// 		{
+// 			objectType:   vsphereTypeFolder,
+// 			privsContent: config.VSphereAdminPrivsFile,
+// 			path:         vsuc.VirtualMachines,
+// 		},
+// 		// {
+// 		// 	objectType:   "VirtualMachine",
+// 		// 	privsContent: config.VSphereAdminPrivsFile,
+// 		// 	path:         vsuc.Templates,
+// 		// },
+// 		{
+// 			objectType:   vsphereTypeFolder,
+// 			privsContent: config.VSphereAdminPrivsFile,
+// 			path:         vsuc.Templates,
+// 		},
+// 	}
 
-	return privObjs
-}
+// 	return privObjs
+// }
 
-func getPrivsFromFile(privsContent string) ([]string, error) {
-	var requiredPrivs []string
-	err := json.Unmarshal([]byte(privsContent), &requiredPrivs)
-	if err != nil {
-		return nil, err
-	}
-	return requiredPrivs, nil
-}
