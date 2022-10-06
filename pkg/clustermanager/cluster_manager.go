@@ -123,7 +123,7 @@ type Networking interface {
 type AwsIamAuth interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 	GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byte, error)
-	GenerateCertKeyPairSecret() ([]byte, error)
+	GenerateCertKeyPairSecret(bootstrapClusterName string) ([]byte, error)
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
@@ -633,12 +633,12 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error {
-	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret()
+func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error {
+	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret(workloadClusterName)
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
-	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, bootstrapCluster, awsIamAuthCaSecret)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
 	}
