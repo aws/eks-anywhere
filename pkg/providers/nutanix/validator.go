@@ -13,11 +13,11 @@ import (
 
 // Validator is a client to validate nutanix resources
 type Validator struct {
-	client v3Client
+	client Client
 }
 
 // NewValidator returns a new validator client
-func NewValidator(client v3Client) (*Validator, error) {
+func NewValidator(client Client) (*Validator, error) {
 	return &Validator{client: client}, nil
 }
 
@@ -121,7 +121,7 @@ func (v *Validator) validateSubnetConfig(ctx context.Context, identifier anywher
 }
 
 // findSubnetUUIDByName retrieves the subnet uuid by the given subnet name
-func findSubnetUUIDByName(ctx context.Context, v3Client v3Client, subnetName string) (*string, error) {
+func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName string) (*string, error) {
 	res, err := v3Client.ListSubnet(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", subnetName)),
 	})
@@ -137,7 +137,7 @@ func findSubnetUUIDByName(ctx context.Context, v3Client v3Client, subnetName str
 }
 
 // findClusterUuidByName retrieves the cluster uuid by the given cluster name
-func findClusterUUIDByName(ctx context.Context, v3Client v3Client, clusterName string) (*string, error) {
+func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName string) (*string, error) {
 	res, err := v3Client.ListCluster(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", clusterName)),
 	})
@@ -153,7 +153,7 @@ func findClusterUUIDByName(ctx context.Context, v3Client v3Client, clusterName s
 }
 
 // findImageByName retrieves the image uuid by the given image name
-func findImageUUIDByName(ctx context.Context, v3Client v3Client, imageName string) (*string, error) {
+func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string) (*string, error) {
 	res, err := v3Client.ListImage(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
 	})

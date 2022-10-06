@@ -7,9 +7,6 @@ import (
 	"fmt"
 	"os"
 
-	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
-	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -53,6 +50,7 @@ type Provider struct {
 	machineConfigs   map[string]*v1alpha1.NutanixMachineConfig
 	templateBuilder  *TemplateBuilder
 	kubectlClient    ProviderKubectlClient
+	nutanixClient    Client
 	validator        *Validator
 }
 
@@ -64,6 +62,8 @@ func NewProvider(
 	machineConfigs map[string]*v1alpha1.NutanixMachineConfig,
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
+	nutanixClient Client,
+	nutanixValidator *Validator,
 	now types.NowFunc,
 ) (*Provider, error) {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
@@ -81,31 +81,14 @@ func NewProvider(
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
 
-	url := fmt.Sprintf("%s:%d", datacenterConfig.Spec.Endpoint, datacenterConfig.Spec.Port)
-	nutanixCreds := prismgoclient.Credentials{
-		URL:      url,
-		Username: creds.username,
-		Password: creds.password,
-		Endpoint: datacenterConfig.Spec.Endpoint,
-		Port:     fmt.Sprintf("%d", datacenterConfig.Spec.Port),
-	}
-	client, err := v3.NewV3Client(nutanixCreds)
-	if err != nil {
-		return nil, fmt.Errorf("error creating nutanix client: %v", err)
-	}
-
-	validator, err := NewValidator(client.V3)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Provider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		templateBuilder:  templateBuilder,
 		kubectlClient:    providerKubectlClient,
-		validator:        validator,
+		nutanixClient:    nutanixClient,
+		validator:        nutanixValidator,
 	}, nil
 }
 

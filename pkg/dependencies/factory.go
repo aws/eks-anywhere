@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
@@ -416,11 +418,29 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			provider, err := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, time.Now)
+			url := fmt.Sprintf("%s:%d", datacenterConfig.Spec.Endpoint, datacenterConfig.Spec.Port)
+			nutanixCreds := prismgoclient.Credentials{
+				URL:      url,
+				Username: os.Getenv("NUTANIX_USER"),
+				Password: os.Getenv("NUTANIX_PASSWORD"),
+				Endpoint: datacenterConfig.Spec.Endpoint,
+				Port:     fmt.Sprintf("%d", datacenterConfig.Spec.Port),
+			}
+			client, err := v3.NewV3Client(nutanixCreds)
+			if err != nil {
+				return fmt.Errorf("error creating nutanix client: %v", err)
+			}
+
+			validator, err := nutanix.NewValidator(client.V3)
+			if err != nil {
+				return err
+			}
+			f.dependencies.NutanixValidator = validator
+
+			provider, err := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, client.V3, validator, time.Now)
 			if err != nil {
 				return fmt.Errorf("unable to create Nutanix provider: %v", err)
 			}
-			f.dependencies.NutanixValidator = provider.Validator()
 			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)

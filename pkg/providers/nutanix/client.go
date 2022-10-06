@@ -6,7 +6,7 @@ import (
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 )
 
-type v3Client interface {
+type Client interface {
 	GetSubnet(ctx context.Context, uuid string) (*v3.SubnetIntentResponse, error)
 	ListSubnet(ctx context.Context, getEntitiesRequest *v3.DSMetadata) (*v3.SubnetListIntentResponse, error)
 
