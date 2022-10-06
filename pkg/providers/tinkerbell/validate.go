@@ -59,6 +59,17 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 		)
 	}
 
+	if config.Spec.UpgradeRolloutStrategy.Type == "" {
+		return fmt.Errorf("TinkerbellMachineConfig: missing spec.upgradeRolloutStrategy.type: %v", config.Name)
+	}
+
+	if config.Spec.UpgradeRolloutStrategy.Type != "RollingUpdate" {
+		return fmt.Errorf(
+			"TinkerbellMachineConfig: unsupported spec.upgradeRolloutStrategy.type (%v); Please use RollingUpdate",
+			config.Spec.OSFamily,
+		)
+	}
+
 	return nil
 }
 

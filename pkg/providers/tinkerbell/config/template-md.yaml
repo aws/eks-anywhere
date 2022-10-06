@@ -33,6 +33,10 @@ spec:
         kind: TinkerbellMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
+  upgradeRolloutStrategy:
+    rollingUpdate:
+      maxSurge: {{.maxSurge}}
+      maxUnavailable: {{.maxUnavailable}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
