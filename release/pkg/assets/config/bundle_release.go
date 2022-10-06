@@ -351,7 +351,7 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 	// EKS-A cluster-controller artifacts
 	{
 		ProjectName:    "eks-anywhere-cluster-controller",
-		ProjectPath:    "projects/aws/eks-anywhere",
+		ProjectPath:    "projects/aws/eks-anywhere-cluster-controller",
 		GitTagAssigner: tagger.CliGitTagAssigner,
 		Images: []*assettypes.Image{
 			{

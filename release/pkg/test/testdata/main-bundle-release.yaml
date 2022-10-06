@@ -3298,9 +3298,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.4-eks-d-1-24-1-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.24.4
-      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-1.yaml
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.6-eks-d-1-24-1-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.24.6
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-1.yaml
       name: kubernetes-1-24-eks-1
       ova:
         bottlerocket: {}
