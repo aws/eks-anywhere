@@ -195,8 +195,7 @@ func TestNutanixProviderSetupAndValidateUpgradeCluster(t *testing.T) {
 	provider := testDefaultNutanixProvider(t)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	err := provider.SetupAndValidateUpgradeCluster(context.Background(), &types.Cluster{Name: "eksa-unit-test"}, clusterSpec, clusterSpec)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "upgrade for nutanix provider isn't currently supported")
+	assert.NoError(t, err)
 }
 
 func TestNutanixProviderUpdateSecrets(t *testing.T) {
