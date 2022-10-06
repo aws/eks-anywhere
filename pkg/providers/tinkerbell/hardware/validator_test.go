@@ -206,6 +206,12 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"InvalidWithJustDev": func(h *hardware.Machine) {
 			h.Disk = "/dev/"
 		},
+		"InvalidVLAN": func(h *hardware.Machine) {
+			h.VLANID = "0"
+		},
+		"NonIntVLAN": func(h *hardware.Machine) {
+			h.VLANID = "im not an int"
+		},
 	}
 
 	validate := hardware.StaticMachineAssertions()
@@ -339,5 +345,6 @@ func NewValidMachine() hardware.Machine {
 		BMCIPAddress: "10.10.10.11",
 		BMCUsername:  "username",
 		BMCPassword:  "password",
+		VLANID:       "200",
 	}
 }

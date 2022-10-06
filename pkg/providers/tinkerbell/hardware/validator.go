@@ -1,9 +1,11 @@
 package hardware
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -131,6 +133,17 @@ func StaticMachineAssertions() MachineAssertion {
 
 			if m.BMCPassword == "" {
 				return newEmptyFieldError("BMCPassword")
+			}
+		}
+
+		if m.VLANID != "" {
+			i, err := strconv.Atoi(m.VLANID)
+			if err != nil {
+				return errors.New("VLANID: must be an integer")
+			}
+
+			if i < 1 || i > 4094 {
+				return errors.New("VLANID: must be between 1 and 4094")
 			}
 		}
 
