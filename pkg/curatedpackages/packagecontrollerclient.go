@@ -20,6 +20,7 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
+	packagesNamespace = "eksa-packages"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
@@ -44,7 +45,7 @@ type PackageControllerClient struct {
 }
 
 type ChartInstaller interface {
-	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
 }
 
 func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
@@ -90,7 +91,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, packagesNamespace, values)
 	if err != nil {
 		return err
 	}
