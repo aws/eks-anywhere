@@ -1,16 +1,35 @@
 package clusterapi
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strconv"
 
+	"github.com/pkg/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 var nameRegex = regexp.MustCompile(`(.*?)(-)(\d+)$`)
+
+// Object represents a kubernetes API object
+type Object interface {
+	kubernetes.Object
+}
+
+// ObjectComparator returns true only if only both kubernetes Object's are identical
+// Most of the time, this only requires comparing the Spec field, but that can variate
+// from object to object
+type ObjectComparator[O Object] func(current, new O) bool
+
+// ObjectRetriever gets a kubernetes API object using the provided client
+// If the object doesn't exist, it returns a NotFound error
+type ObjectRetriever[O Object] func(ctx context.Context, client kubernetes.Client, name, namespace string) (O, error)
 
 // IncrementName takes an object name and increments the suffix number by one.
 // This method is used for updating objects (e.g. machinetemplate, kubeadmconfigtemplate) that are either immutable
@@ -84,4 +103,40 @@ func ControlPlaneMachineHealthCheckName(clusterSpec *cluster.Spec) string {
 
 func WorkerMachineHealthCheckName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {
 	return fmt.Sprintf("%s-worker-unhealthy", MachineDeploymentName(clusterSpec, workerNodeGroupConfig))
+}
+
+// EnsureNewNameIfChanged updates an object's name if such object is different from its current state in the cluster
+func EnsureNewNameIfChanged[M Object](ctx context.Context,
+	client kubernetes.Client,
+	retrieve ObjectRetriever[M],
+	equal ObjectComparator[M],
+	new M,
+) error {
+	current, err := retrieve(ctx, client, new.GetName(), new.GetNamespace())
+	if apierrors.IsNotFound(err) {
+		// if object doesn't exist with same name in same namespace, no need to compare, there won't be a conflict
+		return nil
+	}
+	if err != nil {
+		return errors.Wrapf(err, "reading %s %s/%s from API",
+			new.GetObjectKind().GroupVersionKind().Kind,
+			new.GetNamespace(),
+			new.GetName(),
+		)
+	}
+
+	if !equal(new, current) {
+		newName, err := IncrementName(new.GetName())
+		if err != nil {
+			return errors.Wrapf(err, "incrementing name for %s %s/%s",
+				new.GetObjectKind().GroupVersionKind().Kind,
+				new.GetNamespace(),
+				new.GetName(),
+			)
+		}
+
+		new.SetName(newName)
+	}
+
+	return nil
 }
