@@ -15,7 +15,7 @@ import (
 // It registers the basic shared mappings plus another two for the provider cluster and machine template
 // For ControlPlane that need to include more objects, wrap around the provider builder and implement BuildFromParsed
 // Any extra mappings will need to be registered manually in the Parser
-func NewControlPlaneParserAndBuilder[C, M clusterapi.Object](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineConfigMapping yamlutil.Mapping[M]) (*yamlutil.Parser, *ControlPlaneBuilder[C, M], error) {
+func NewControlPlaneParserAndBuilder[C, M clusterapi.Object](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineTemplateMapping yamlutil.Mapping[M]) (*yamlutil.Parser, *ControlPlaneBuilder[C, M], error) {
 	parser := yamlutil.NewParser(logger)
 	if err := RegisterControlPlaneMappings(parser); err != nil {
 		return nil, nil, errors.Wrap(err, "building capi control plane parser")
@@ -23,7 +23,7 @@ func NewControlPlaneParserAndBuilder[C, M clusterapi.Object](logger logr.Logger,
 
 	err := parser.RegisterMappings(
 		clusterMapping.ToAPIObjectMapping(),
-		machineConfigMapping.ToAPIObjectMapping(),
+		machineTemplateMapping.ToAPIObjectMapping(),
 	)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "registering provider control plane mappings")
