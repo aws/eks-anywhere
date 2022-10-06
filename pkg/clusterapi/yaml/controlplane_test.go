@@ -87,7 +87,7 @@ func TestNewControlPlaneParserAndBuilderErrorFromMappings(t *testing.T) {
 func TestRegisterControlPlaneMappingsError(t *testing.T) {
 	g := NewWithT(t)
 	parser := yamlutil.NewParser(test.NewNullLogger())
-	parser.RegisterMapping("Cluster", func() yamlutil.APIObject { return nil })
+	g.Expect(parser.RegisterMapping("Cluster", func() yamlutil.APIObject { return nil })).To(Succeed())
 	g.Expect(yaml.RegisterControlPlaneMappings(parser)).To(MatchError(ContainSubstring("registering base control plane mappings")))
 }
 
