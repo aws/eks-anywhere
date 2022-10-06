@@ -537,8 +537,10 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/kubectlrunner.go -package=mocks -source "pkg/curatedpackages/kubectlrunner.go" KubectlRunner
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packageinstaller.go -package=mocks -source "pkg/curatedpackages/packageinstaller.go" PackageController PackageHandler
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/reader.go -package=mocks -source "pkg/curatedpackages/bundle.go" Reader BundleRegistry
+	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/registryclient.go -package=mocks -source "github.com/aws/eks-anywhere-packages/pkg/bundle" RegistryClient
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/packagereader.go -package=mocks -source "pkg/curatedpackages/reader.go" ManifestReader
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/bundlemanager.go -package=mocks -source "pkg/curatedpackages/bundlemanager.go" Manager
+	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/bundleclient.go -package=mocks -source "pkg/curatedpackages/bundleclient.go" BundleClient
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubectl.go -package=mocks -source "pkg/clients/kubernetes/unauth.go"
 	${GOPATH}/bin/mockgen -destination=pkg/clients/kubernetes/mocks/kubeconfig.go -package=mocks -source "pkg/clients/kubernetes/kubeconfig.go"
 	${GOPATH}/bin/mockgen -destination=pkg/curatedpackages/mocks/installer.go -package=mocks -source "pkg/curatedpackages/packagecontrollerclient.go" ChartInstaller
