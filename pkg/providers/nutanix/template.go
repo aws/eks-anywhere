@@ -167,6 +167,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, controlPlaneMachineSpec, work
 		"imageName":                    workerNodeGroupMachineSpec.Image.Name,   // TODO(nutanix): pass name or uuid based on type of identifier
 		"nutanixPEClusterName":         workerNodeGroupMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
 		"subnetName":                   workerNodeGroupMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
+		"workerNodeGroupName":          fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 	}
 	return values
 }
