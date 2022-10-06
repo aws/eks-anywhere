@@ -32,32 +32,58 @@ For more information on Tinkerbell’s Hook Installation Environment, see the [T
 1. Make changes shown in the following `diff` in the `Makefile` located in the root of the repo using your favorite editor. 
 
     ```bash
-    diff —git a/Makefile b/Makefile
-    index 66b7f48..f9fc283 100644
+    diff --git a/Makefile b/Makefile
+    index e7fd844..8e87c78 100644
     --- a/Makefile
     +++ b/Makefile
-    @@ -1,4 +1,4 @@
-    -ORG ?= quay.io/tinkerbell (http://quay.io/tinkerbell)
-    +ORG ?= localhost:5000/tinkerbell
-     ARCH := $(shell uname -m)
-    
-     GIT_VERSION ?= $(shell git log -1 —format="%h")
-    @@ -53,13 +53,13 @@ dev-bootkitBuild:
-     cd bootkit; docker buildx build —load -t $(ORG)/hook-bootkit:0.0 .
-    
-     bootkitBuild:
-    -  cd bootkit; docker buildx build —platform linux/amd64,linux/arm64 —push -t $(ORG)/hook-bootkit:0.0 .
-    +  cd bootkit; docker buildx build —platform linux/amd64 —push -t $(ORG)/hook-bootkit:0.0 .
-    
-     dev-tink-dockerBuild:
-     cd tink-docker; docker buildx build —load -t $(ORG)/hook-docker:0.0 .
-    
-     tink-dockerBuild:
-    -  cd tink-docker; docker buildx build —platform linux/amd64,linux/arm64 —push -t $(ORG)/hook-docker:0.0 .
-    +  cd tink-docker; docker buildx build —platform linux/amd64 —push -t $(ORG)/hook-docker:0.0 .
+    @@ -2,7 +2,7 @@
+     ### !!NOTE!!
+     # If this is changed then a fresh output dir is required (`git clean -fxd` or just `rm -rf out`)
+     # Handling this better shows some of make's suckiness compared to newer build tools (redo, tup ...) where the command lines to tools invoked isn't tracked by make
+    -ORG := quay.io/tinkerbell
+    +ORG := localhost:5000/tinkerbell
+     # makes sure there's no trailing / so we can just add them in the recipes which looks nicer
+     ORG := $(shell echo "${ORG}" | sed 's|/*$$||')
+
+     ```
+
+    Changes above change the ORG variable to use a local registry (`localhost:5000`) 
+
+1. Make changes shown in the following `diff` in the `rules.mk` located in the root of the repo using your favorite editor.
+
+    ```bash
+    diff --git a/rules.mk b/rules.mk
+    index b2c5133..64e32b1 100644
+    --- a/rules.mk
+    +++ b/rules.mk
+    @@ -22,7 +22,7 @@ ifeq ($(ARCH),aarch64)
+     ARCH = arm64
+     endif
+ 
+    -arches := amd64 arm64
+    +arches := amd64
+     modes := rel dbg
+ 
+     hook-bootkit-deps := $(wildcard hook-bootkit/*)
+    @@ -87,13 +87,12 @@ push-hook-bootkit push-hook-docker:
+            docker buildx build --platform $$platforms --push -t $(ORG)/$(container):$T $(container)
+ 
+     .PHONY: dist
+    -dist: out/$T/rel/amd64/hook.tar out/$T/rel/arm64/hook.tar ## Build tarballs for distribution
+    +dist: out/$T/rel/amd64/hook.tar ## Build tarballs for distribution
+     dbg-dist: out/$T/dbg/$(ARCH)/hook.tar ## Build debug enabled tarball
+     dist dbg-dist:
+            for f in $^; do
+            case $$f in
+            *amd64*) arch=x86_64 ;;
+     -      *arm64*) arch=aarch64 ;;
+            *) echo unknown arch && exit 1;;
+            esac
+            d=$$(dirname $$(dirname $$f))
+
     ```
 
-    Changes above change the ORG variable to use a local registry (`localhost:5000`) and change the `docker build` command to only build for the immediately required platform to save time.
+    Above changes are for the `docker build` command to only build for the immediately required platform (amd64 in this case) to save time.
 
 
 1. Modify the `hook.yaml` file located in the root of the repo with the following changes:
