@@ -85,8 +85,6 @@ func TestNutanixProvider(t *testing.T) {
 			},
 		},
 	}
-	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(clusters, nil)
-	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(subnets, nil)
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
 	validator, err := NewValidator(mockClient)
 	require.NoError(t, err)
@@ -95,7 +93,7 @@ func TestNutanixProvider(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, provider)
 
-	cluster := &types.Cluster{Name: "test"}
+	cluster := &types.Cluster{Name: "eksa-unit-test"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 
 	err = provider.SetupAndValidateCreateCluster(context.Background(), clusterSpec)
