@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 
@@ -13,7 +14,8 @@ import (
 type deletePackageOptions struct {
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster
-	kubeConfig string
+	kubeConfig  string
+	clusterName string
 }
 
 var delPkgOpts = deletePackageOptions{}
@@ -23,6 +25,11 @@ func init() {
 
 	deletePackageCommand.Flags().StringVar(&delPkgOpts.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	deletePackageCommand.Flags().StringVar(&delPkgOpts.clusterName, "cluster", "",
+		"Cluster for package deletion.")
+	if err := deletePackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
+	}
 }
 
 var deletePackageCommand = &cobra.Command{
@@ -51,7 +58,7 @@ func deleteResources(ctx context.Context, args []string) error {
 		deps.Kubectl,
 	)
 
-	err = packages.DeletePackages(ctx, args, kubeConfig)
+	err = packages.DeletePackages(ctx, args, kubeConfig, delPkgOpts.clusterName)
 	if err != nil {
 		return err
 	}

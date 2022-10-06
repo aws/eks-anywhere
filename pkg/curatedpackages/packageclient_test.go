@@ -190,13 +190,13 @@ func TestDeletePackagesPass(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	args := []string{"harbor-test"}
-	params := []string{"delete", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	params := []string{"delete", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName + "-susie"}
 	params = append(params, args...)
 
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
 
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
-	err := tt.command.DeletePackages(tt.ctx, args, tt.kubeConfig)
+	err := tt.command.DeletePackages(tt.ctx, args, tt.kubeConfig, "susie")
 	fmt.Println()
 	tt.Expect(err).To(BeNil())
 }
@@ -205,12 +205,12 @@ func TestDeletePackagesFail(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	args := []string{"non-working-package"}
-	params := []string{"delete", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	params := []string{"delete", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName + "-susie"}
 	params = append(params, args...)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("package doesn't exist"))
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	err := tt.command.DeletePackages(tt.ctx, args, tt.kubeConfig)
+	err := tt.command.DeletePackages(tt.ctx, args, tt.kubeConfig, "susie")
 	tt.Expect(err).To(MatchError(ContainSubstring("package doesn't exist")))
 }
 
@@ -218,13 +218,13 @@ func TestDescribePackagesPass(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	args := []string{"harbor-test"}
-	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName + "-susie"}
 	params = append(params, args...)
 
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(convertJsonToBytes(tt.bundle.Spec.Packages[0]), nil)
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig)
+	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig, "susie")
 	fmt.Println()
 	tt.Expect(err).To(BeNil())
 }
@@ -233,13 +233,13 @@ func TestDescribePackagesFail(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	args := []string{"non-working-package"}
-	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName + "-susie"}
 	params = append(params, args...)
 
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("package doesn't exist"))
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig)
+	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig, "susie")
 	tt.Expect(err).To(MatchError(ContainSubstring("package doesn't exist")))
 }
 
@@ -247,13 +247,13 @@ func TestDescribePackagesWhenEmptyResources(t *testing.T) {
 	tt := newPackageTest(t)
 	packages := []string{"harbor-test"}
 	var args []string
-	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
+	params := []string{"describe", "packages", "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName + "-susie"}
 	params = append(params, args...)
 
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
 	tt.command = curatedpackages.NewPackageClient(tt.kubectl, curatedpackages.WithBundle(tt.bundle), curatedpackages.WithCustomPackages(packages))
 
-	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig)
+	err := tt.command.DescribePackages(tt.ctx, args, tt.kubeConfig, "susie")
 	tt.Expect(err).To(MatchError(ContainSubstring("no resources found")))
 }
 
