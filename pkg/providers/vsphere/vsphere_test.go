@@ -2316,11 +2316,11 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalid(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "rhel"
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "suse"
 	var tctx testContext
 	tctx.SaveContext()
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+	thenErrorExpected(t, "control plane osFamily: suse is not supported, please use one of the following: bottlerocket, ubuntu, redhat", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
@@ -2329,11 +2329,11 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "rhel"
+	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "suse"
 	var tctx testContext
 	tctx.SaveContext()
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+	thenErrorExpected(t, "worker node osFamily: suse is not supported, please use one of the following: bottlerocket, ubuntu, redhat", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
@@ -2342,11 +2342,11 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "rhel"
+	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "suse"
 	var tctx testContext
 	tctx.SaveContext()
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+	thenErrorExpected(t, "etcd node osFamily: suse is not supported, please use one of the following: bottlerocket, ubuntu, redhat", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
