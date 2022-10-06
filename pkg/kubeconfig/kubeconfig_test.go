@@ -2,16 +2,13 @@ package kubeconfig_test
 
 import (
 	"bytes"
-	"io"
 	"io/fs"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
 
@@ -95,32 +92,32 @@ func TestFromEnvironment(t *testing.T) {
 
 func TestValidateFilename(t *testing.T) {
 	t.Run("reports errors from validator", func(t *testing.T) {
-		badFile := withFakeFileContents(t, bytes.NewReader(kindTypo))
+		badFile := test.WithFakeFileContents(t, bytes.NewReader(kindTypo))
 
 		assert.Error(t, kubeconfig.ValidateFilename(badFile.Name()))
 	})
 
 	t.Run("reports errors for files that are empty", func(t *testing.T) {
-		emptyFile := withFakeFileContents(t, bytes.NewReader([]byte("")))
+		emptyFile := test.WithFakeFileContents(t, bytes.NewReader([]byte("")))
 
 		assert.Error(t, kubeconfig.ValidateFilename(emptyFile.Name()))
 	})
 
 	t.Run("reports errors for files that don't exist", func(t *testing.T) {
 		doesntExist := filepath.Join(t.TempDir(), "does-not-exist")
-		removeFileIfExists(t, doesntExist)
+		test.RemoveFileIfExists(t, doesntExist)
 
 		assert.ErrorIs(t, kubeconfig.ValidateFilename(doesntExist), fs.ErrNotExist)
 	})
 
 	t.Run("returns nil when valid", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+		goodFile := test.WithFakeFileContents(t, bytes.NewReader(goodKubeconfig))
 
 		assert.NoError(t, kubeconfig.ValidateFilename(goodFile.Name()))
 	})
 
 	t.Run("trims whitespace around a filename", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+		goodFile := test.WithFakeFileContents(t, bytes.NewReader(goodKubeconfig))
 
 		assert.NoError(t, kubeconfig.ValidateFilename("   "+goodFile.Name()+"\t\n"))
 	})
@@ -159,7 +156,7 @@ func TestResolveFilename(t *testing.T) {
 
 func TestResolveAndValidateFilename(t *testing.T) {
 	t.Run("returns flag value when valid", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewReader(goodKubeconfig))
+		goodFile := test.WithFakeFileContents(t, bytes.NewReader(goodKubeconfig))
 		filename, err := kubeconfig.ResolveAndValidateFilename(goodFile.Name(), "")
 
 		if assert.NoError(t, err) {
@@ -168,7 +165,7 @@ func TestResolveAndValidateFilename(t *testing.T) {
 	})
 
 	t.Run("returns error when invalid", func(t *testing.T) {
-		goodFile := withFakeFileContents(t, bytes.NewBufferString("lakjdf"))
+		goodFile := test.WithFakeFileContents(t, bytes.NewBufferString("lakjdf"))
 		_, err := kubeconfig.ResolveAndValidateFilename(goodFile.Name(), "")
 
 		assert.Error(t, err)
@@ -187,40 +184,4 @@ func TestResolveAndValidateFilename(t *testing.T) {
 
 		assert.Error(t, err)
 	})
-}
-
-// withFakeFile returns a throwaway file in a test-specific directory.
-//
-// The file is automatically closed and removed when the test ends.
-func withFakeFile(t *testing.T) (f *os.File) {
-	f, err := ioutil.TempFile(t.TempDir(), "fake-file")
-	if err != nil {
-		t.Fatalf("opening temp file: %s", err)
-	}
-
-	t.Cleanup(func() {
-		f.Close()
-	})
-
-	return f
-}
-
-// withFakeFileContents returns a file containing some data.
-//
-// The file is automatically closed and removed when the test ends.
-func withFakeFileContents(t *testing.T, r io.Reader) (f *os.File) {
-	f = withFakeFile(t)
-	_, err := io.Copy(f, r)
-	if err != nil {
-		t.Fatalf("copying contents into fake file %q: %s", f.Name(), err)
-	}
-
-	return f
-}
-
-// removeFileIfExists is a helper for ValidateFilename tests.
-func removeFileIfExists(t *testing.T, filename string) {
-	if err := os.Remove(filename); err != nil {
-		require.ErrorIs(t, err, fs.ErrNotExist)
-	}
 }
