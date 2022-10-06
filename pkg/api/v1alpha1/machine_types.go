@@ -13,3 +13,13 @@ type UserConfiguration struct {
 	Name              string   `json:"name"`
 	SshAuthorizedKeys []string `json:"sshAuthorizedKeys"`
 }
+
+type UpgradeRolloutStrategy struct {
+	Type			string		`json:"type,omitempty"`
+	RollingUpdateParams	*RollingUpdate	`json:"rollingUpdateParams,omitempty"`
+}
+
+type RollingUpdate struct {
+	MaxSurge	int	`json:"maxSurge,omitempty"`
+	MaxUnavailable	int	`json:"maxUnavailable,omitempty"`
+}

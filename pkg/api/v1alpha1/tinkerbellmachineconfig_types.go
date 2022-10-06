@@ -10,10 +10,11 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
-	HardwareSelector HardwareSelector    `json:"hardwareSelector"`
-	TemplateRef      Ref                 `json:"templateRef,omitempty"`
-	OSFamily         OSFamily            `json:"osFamily"`
-	Users            []UserConfiguration `json:"users,omitempty"`
+	HardwareSelector	HardwareSelector	`json:"hardwareSelector"`
+	TemplateRef		Ref			`json:"templateRef,omitempty"`
+	OSFamily		OSFamily		`json:"osFamily"`
+	Users			[]UserConfiguration	`json:"users,omitempty"`
+	UpgradeRolloutStrategy	UpgradeRolloutStrategy	`json:"upgradeRolloutStrategy,omitempty"`
 }
 
 // HardwareSelector models a simple key-value selector used in Tinkerbell provisioning.

@@ -4891,6 +4891,18 @@ spec:
                   name:
                     type: string
                 type: object
+              upgradeRolloutStrategy:
+                properties:
+                  rollingUpdateParams:
+                    properties:
+                      maxSurge:
+                        type: integer
+                      maxUnavailable:
+                        type: integer
+                    type: object
+                  type:
+                    type: string
+                type: object
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
