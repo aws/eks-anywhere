@@ -119,8 +119,16 @@ func TestNutanixProviderMachineResourceType(t *testing.T) {
 }
 
 func TestNutanixProviderDeleteResources(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().Execute(gomock.Any(), "delete", []string{"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "default", "--ignore-not-found=true"}, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	executable.EXPECT().Execute(gomock.Any(), "delete", []string{"nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "default", "--ignore-not-found=true"}, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	kubectl := executables.NewKubectl(executable)
+
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	clusterSpec.ManagementCluster = &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	err := provider.DeleteResources(context.Background(), clusterSpec)
 	assert.NoError(t, err)
 }
@@ -223,13 +231,26 @@ func TestNutanixProviderGenerateCAPISpecForCreate(t *testing.T) {
 }
 
 func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
-	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		"clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", "testdata/kubeconfig.yaml", "--field-selector=metadata.name=eksa-unit-test").Return(*bytes.NewBufferString(nutanixClusterConfigSpecJSON), nil)
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil).AnyTimes()
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		"machinedeployments.cluster.x-k8s.io", "eksa-unit-test-eksa-unit-test", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "eksa-system").Return(*bytes.NewBufferString(nutanixMachineDeploymentSpecJSON), nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
+	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	cpSpec, workerSpec, err := provider.GenerateCAPISpecForUpgrade(context.Background(), cluster, cluster, clusterSpec, clusterSpec)
 	assert.NoError(t, err)
-	assert.Nil(t, cpSpec)
-	assert.Nil(t, workerSpec)
+	assert.NotEmpty(t, cpSpec)
+	assert.NotEmpty(t, workerSpec)
 }
 
 func TestNutanixProviderGenerateStorageClass(t *testing.T) {
@@ -330,9 +351,20 @@ func TestNutanixProviderRunPostControlPlaneUpgrade(t *testing.T) {
 }
 
 func TestNutanixProviderUpgradeNeeded(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		[]string{"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
+	executable.EXPECT().Execute(gomock.Any(), "get",
+		[]string{"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
 	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	cluster := &types.Cluster{Name: "eksa-unit-test", KubeconfigFile: "testdata/kubeconfig.yaml"}
 	upgrade, err := provider.UpgradeNeeded(context.Background(), clusterSpec, clusterSpec, cluster)
 	assert.NoError(t, err)
 	assert.False(t, upgrade)
