@@ -30,7 +30,7 @@ var nutanixMachineConfigSpecEmptyUUID string
 
 func TestNutanixValidatorNoResourcesFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
@@ -51,7 +51,7 @@ func TestNutanixValidatorNoResourcesFound(t *testing.T) {
 
 func TestNutanixValidatorDuplicateResourcesFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	clusters := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
 			{
@@ -114,7 +114,7 @@ func TestNutanixValidatorDuplicateResourcesFound(t *testing.T) {
 
 func TestNutanixValidatorIdentifierTypeUUID(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().GetImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
@@ -140,7 +140,7 @@ func TestNutanixValidatorInvalidIdentifierType(t *testing.T) {
 	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecInvalidIdentifier), machineConfig)
 	require.NoError(t, err)
 
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	validator, err := NewValidator(mockClient)
 	assert.NoError(t, err)
 	require.NotNil(t, validator)
@@ -159,7 +159,7 @@ func TestNutanixValidatorEmptyResourceName(t *testing.T) {
 	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecEmptyName), machineConfig)
 	require.NoError(t, err)
 
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	validator, err := NewValidator(mockClient)
 	assert.NoError(t, err)
 	require.NotNil(t, validator)
@@ -178,7 +178,7 @@ func TestNutanixValidatorEmptyResourceUUID(t *testing.T) {
 	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecEmptyUUID), machineConfig)
 	require.NoError(t, err)
 
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	validator, err := NewValidator(mockClient)
 	assert.NoError(t, err)
 	require.NotNil(t, validator)

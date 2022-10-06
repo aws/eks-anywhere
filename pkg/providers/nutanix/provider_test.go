@@ -46,7 +46,7 @@ func TestNutanixProvider(t *testing.T) {
 	os.Setenv(nutanixPasswordKey, "password")
 	defer os.Unsetenv(nutanixPasswordKey)
 
-	mockClient := NewMockv3Client(ctrl)
+	mockClient := NewMockClient(ctrl)
 	clusters := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
 			{
