@@ -270,7 +270,6 @@ type EtcdadmControllerBundle struct {
 type TinkerbellStackBundle struct {
 	Actions        ActionsBundle `json:"actions"`
 	Boots          Image         `json:"boots"`
-	Cfssl          Image         `json:"cfssl"`
 	Hegel          Image         `json:"hegel"`
 	TinkebellChart Image         `json:"tinkerbellChart"`
 	Hook           HookBundle    `json:"hook"`

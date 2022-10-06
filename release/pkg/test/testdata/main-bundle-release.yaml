@@ -442,7 +442,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.8-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -451,7 +451,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.8-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -460,8 +460,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
-      version: v0.2.7+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.8-eks-a-v0.0.0-dev-build.1
+      version: v0.2.8+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
@@ -585,15 +585,6 @@ spec:
           name: boots
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-        cfssl:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for cfssl image
-          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: cfssl
-          os: linux
-          uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1201,7 +1192,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.8-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1210,7 +1201,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.8-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1219,8 +1210,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
-      version: v0.2.7+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.8-eks-a-v0.0.0-dev-build.1
+      version: v0.2.8+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
@@ -1344,15 +1335,6 @@ spec:
           name: boots
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-        cfssl:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for cfssl image
-          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: cfssl
-          os: linux
-          uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -1960,7 +1942,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.8-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -1969,7 +1951,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.8-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -1978,8 +1960,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
-      version: v0.2.7+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.8-eks-a-v0.0.0-dev-build.1
+      version: v0.2.8+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
@@ -2103,15 +2085,6 @@ spec:
           name: boots
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-        cfssl:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for cfssl image
-          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: cfssl
-          os: linux
-          uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -2719,7 +2692,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.8-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -2728,7 +2701,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.8-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -2737,8 +2710,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
-      version: v0.2.7+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.8-eks-a-v0.0.0-dev-build.1
+      version: v0.2.8+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
@@ -2862,15 +2835,6 @@ spec:
           name: boots
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-        cfssl:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for cfssl image
-          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: cfssl
-          os: linux
-          uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
@@ -3460,7 +3424,7 @@ spec:
         description: Helm chart for eks-anywhere-packages
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:0.2.8-eks-a-v0.0.0-dev-build.1
       packageController:
         arch:
         - amd64
@@ -3469,7 +3433,7 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: eks-anywhere-packages
         os: linux
-        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.7-eks-a-v0.0.0-dev-build.1
+        uri: public.ecr.aws/release-container-registry/eks-anywhere-packages:v0.2.8-eks-a-v0.0.0-dev-build.1
       tokenRefresher:
         arch:
         - amd64
@@ -3478,8 +3442,8 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: ecr-token-refresher
         os: linux
-        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.7-eks-a-v0.0.0-dev-build.1
-      version: v0.2.7+abcdef1
+        uri: public.ecr.aws/release-container-registry/ecr-token-refresher:v0.2.8-eks-a-v0.0.0-dev-build.1
+      version: v0.2.8+abcdef1
     snow:
       components:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-aws-snow/manifests/infrastructure-snow/v0.1.8/infrastructure-components.yaml
@@ -3603,15 +3567,6 @@ spec:
           name: boots
           os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/boots:94e4b4899b383e28b6002750b14e254cfbbdd81f-eks-a-v0.0.0-dev-build.1
-        cfssl:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for cfssl image
-          imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-          name: cfssl
-          os: linux
-          uri: public.ecr.aws/release-container-registry/cloudflare/cfssl:v1.6.1-eks-a-v0.0.0-dev-build.1
         hegel:
           arch:
           - amd64
