@@ -14,7 +14,6 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
 	metadataString := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIP)
-
 	cloudInit := `datasource:
   Ec2:
     metadata_urls: [%s]
@@ -23,13 +22,12 @@ manage_etc_hosts: localhost
 warnings:
   dsid_missing_source: off
 `
-
 	tests := []struct {
-		testName    string
-		diskType    string
-		osFamily    OSFamily
+		testName        string
+		diskType        string
+		osFamily        OSFamily
 		osImageOverride string
-		wantActions []tinkerbell.Action
+		wantActions     []tinkerbell.Action
 	}{
 		{
 			testName: "Bottlerocket-sda",
@@ -176,9 +174,9 @@ warnings:
 			},
 		},
 		{
-			testName: "RedHat-sda",
-			diskType: "/dev/sda",
-			osFamily: RedHat,
+			testName:        "RedHat-sda",
+			diskType:        "/dev/sda",
+			osFamily:        RedHat,
 			osImageOverride: "http://tinkerbell-example:8080/redhat-8.4-kube-v1.21.5.gz",
 			wantActions: []tinkerbell.Action{
 				{
@@ -196,13 +194,13 @@ warnings:
 					Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 					Timeout: 90,
 					Environment: map[string]string{
-						"DEST_DISK": "/dev/sda1",
-						"DEST_PATH": "/etc/netplan/config.yaml",
-						"DIRMODE":   "0755",
-						"FS_TYPE":   "ext4",
-						"GID":       "0",
-						"MODE":      "0644",
-						"UID":       "0",
+						"DEST_DISK":      "/dev/sda1",
+						"DEST_PATH":      "/etc/netplan/config.yaml",
+						"DIRMODE":        "0755",
+						"FS_TYPE":        "ext4",
+						"GID":            "0",
+						"MODE":           "0644",
+						"UID":            "0",
 						"STATIC_NETPLAN": "true",
 					},
 					Pid: "host",
