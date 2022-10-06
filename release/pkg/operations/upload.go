@@ -41,6 +41,12 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
 
+	fmt.Println("Creating helm driver")
+	helmDriver, err := helm.NewHelm()
+	if err != nil {
+		return fmt.Errorf("creating helm client: %v", err)
+	}
+
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Archive != nil {
@@ -88,11 +94,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
 					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
 
-					helmDriver, err := helm.NewHelm()
-					if err != nil {
-						return fmt.Errorf("creating helm client: %v", err)
-					}
-
+					fmt.Printf("Modifying helm chart for %s\n", trimmedAsset)
 					helmDest, err := helm.GetHelmDest(helmDriver, artifact.Image.SourceImageURI, trimmedAsset)
 					if err != nil {
 						return fmt.Errorf("getting Helm destination: %v", err)
