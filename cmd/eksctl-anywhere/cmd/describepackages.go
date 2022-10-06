@@ -13,7 +13,7 @@ import (
 
 type describePackagesOption struct {
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig  string
 	clusterName string
 }
