@@ -139,7 +139,6 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Actions.WriteFile,
 		vb.Tinkerbell.TinkerbellStack.Actions.Reboot,
 		vb.Tinkerbell.TinkerbellStack.Boots,
-		vb.Tinkerbell.TinkerbellStack.Cfssl,
 		vb.Tinkerbell.TinkerbellStack.Hegel,
 		vb.Tinkerbell.TinkerbellStack.Hook.Bootkit,
 		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
