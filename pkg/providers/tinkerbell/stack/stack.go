@@ -36,7 +36,6 @@ const (
 	grpcPort       = "42113"
 	kubevip        = "kubevip"
 	envoy          = "envoy"
-	loadBalancer   = "loadBalancer"
 )
 
 type Docker interface {
