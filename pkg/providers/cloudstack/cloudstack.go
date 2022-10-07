@@ -28,7 +28,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -233,7 +232,7 @@ type ProviderKubectlClient interface {
 	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, log logr.Logger) *cloudstackProvider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec, len(machineConfigs))
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -257,7 +256,7 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
-		log:       logger.Get(),
+		log:       log,
 		validator: NewValidator(providerCmkClient, &networkutils.DefaultNetClient{}, skipIpCheck),
 	}
 }
@@ -577,66 +576,66 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 // AnyImmutableFieldChanged Used by EKS-A controller and CLI upgrade workflow to compare generated CSDC/CSMC's from
 // CAPC resources in fetcher.go with those already on the cluster when deciding whether or not to generate and apply
 // new CloudStackMachineTemplates
-func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
-	if len(oldCsdc.Spec.AvailabilityZones) != len(newCsdc.Spec.AvailabilityZones) {
-		log.Info("Old and new CloudStackDatacenterConfigs do not match", "oldAvailabilityZones", oldCsdc.Spec.AvailabilityZones,
-			"newAvailabilityZones", newCsdc.Spec.AvailabilityZones)
+func AnyImmutableFieldChanged(generatedCsdc, actualCsdc *v1alpha1.CloudStackDatacenterConfig, generatedCsmc, actualCsmc *v1alpha1.CloudStackMachineConfig, log logr.Logger) bool {
+	if len(generatedCsdc.Spec.AvailabilityZones) != len(actualCsdc.Spec.AvailabilityZones) {
+		log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZones", generatedCsdc.Spec.AvailabilityZones,
+			"actualAvailabilityZones", actualCsdc.Spec.AvailabilityZones)
 		return true
 	}
-	oldAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
-	for _, oldAz := range oldCsdc.Spec.AvailabilityZones {
-		oldAzsMap[oldAz.Name] = oldAz
+	generatedAzsMap := map[string]v1alpha1.CloudStackAvailabilityZone{}
+	for _, generatedAz := range generatedCsdc.Spec.AvailabilityZones {
+		generatedAzsMap[generatedAz.Name] = generatedAz
 	}
-	for _, newAz := range newCsdc.Spec.AvailabilityZones {
-		oldAz, found := oldAzsMap[newAz.Name]
-		if !found || !(oldAz.Zone.Equal(&newAz.Zone) &&
-			oldAz.Name == newAz.Name &&
-			oldAz.CredentialsRef == newAz.CredentialsRef &&
-			oldAz.Account == newAz.Account &&
-			oldAz.Domain == newAz.Domain) {
+	for _, actualAz := range actualCsdc.Spec.AvailabilityZones {
+		generatedAz, found := generatedAzsMap[actualAz.Name]
+		if !found || !(generatedAz.Zone.Equal(&actualAz.Zone) &&
+			generatedAz.Name == actualAz.Name &&
+			generatedAz.CredentialsRef == actualAz.CredentialsRef &&
+			generatedAz.Account == actualAz.Account &&
+			generatedAz.Domain == actualAz.Domain) {
 
-			log.Info("Old and new CloudStackDatacenterConfigs do not match", "oldAvailabilityZone", oldAz,
-				"newAvailabilityZone", newAz)
+			log.V(4).Info("Generated and actual CloudStackDatacenterConfigs do not match", "generatedAvailabilityZone", generatedAz,
+				"actualAvailabilityZone", actualAz)
 			return true
 		}
 	}
 
-	if !oldCsmc.Spec.Template.Equal(&newCsmc.Spec.Template) {
-		log.Info("Old and new CloudStackMachineConfig Templates do not match", "machineConfig", oldCsmc.Name, "oldTemplate", oldCsmc.Spec.Template,
-			"newTemplate", newCsmc.Spec.Template)
+	if !generatedCsmc.Spec.Template.Equal(&actualCsmc.Spec.Template) {
+		log.V(4).Info("Old and new CloudStackMachineConfig Templates do not match", "machineConfig", generatedCsmc.Name, "oldTemplate", generatedCsmc.Spec.Template,
+			"newTemplate", actualCsmc.Spec.Template)
 		return true
 	}
-	if !oldCsmc.Spec.ComputeOffering.Equal(&newCsmc.Spec.ComputeOffering) {
-		log.Info("Old and new CloudStackMachineConfig Compute Offerings do not match", "machineConfig", oldCsmc.Name, "oldComputeOffering", oldCsmc.Spec.ComputeOffering,
-			"newComputeOffering", newCsmc.Spec.ComputeOffering)
+	if !generatedCsmc.Spec.ComputeOffering.Equal(&actualCsmc.Spec.ComputeOffering) {
+		log.V(4).Info("Old and new CloudStackMachineConfig Compute Offerings do not match", "machineConfig", generatedCsmc.Name, "oldComputeOffering", generatedCsmc.Spec.ComputeOffering,
+			"newComputeOffering", actualCsmc.Spec.ComputeOffering)
 		return true
 	}
-	if !oldCsmc.Spec.DiskOffering.Equal(newCsmc.Spec.DiskOffering) {
-		log.Info("Old and new CloudStackMachineConfig DiskOffering does not match", "machineConfig", oldCsmc.Name, "oldDiskOffering", oldCsmc.Spec.DiskOffering,
-			"newDiskOffering", newCsmc.Spec.DiskOffering)
+	if !generatedCsmc.Spec.DiskOffering.Equal(actualCsmc.Spec.DiskOffering) {
+		log.V(4).Info("Old and new CloudStackMachineConfig DiskOffering does not match", "machineConfig", generatedCsmc.Name, "oldDiskOffering", generatedCsmc.Spec.DiskOffering,
+			"newDiskOffering", actualCsmc.Spec.DiskOffering)
 		return true
 	}
-	if len(oldCsmc.Spec.UserCustomDetails) != len(newCsmc.Spec.UserCustomDetails) {
-		log.Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", oldCsmc.Name, "oldUserCustomDetails", oldCsmc.Spec.UserCustomDetails,
-			"newUserCustomDetails", newCsmc.Spec.UserCustomDetails)
+	if len(generatedCsmc.Spec.UserCustomDetails) != len(actualCsmc.Spec.UserCustomDetails) {
+		log.V(4).Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", generatedCsmc.Name, "oldUserCustomDetails", generatedCsmc.Spec.UserCustomDetails,
+			"newUserCustomDetails", actualCsmc.Spec.UserCustomDetails)
 		return true
 	}
-	for key, value := range oldCsmc.Spec.UserCustomDetails {
-		if value != newCsmc.Spec.UserCustomDetails[key] {
-			log.Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", oldCsmc.Name, "oldUserCustomDetails", oldCsmc.Spec.UserCustomDetails,
-				"newUserCustomDetails", newCsmc.Spec.UserCustomDetails)
+	for key, value := range generatedCsmc.Spec.UserCustomDetails {
+		if value != actualCsmc.Spec.UserCustomDetails[key] {
+			log.V(4).Info("Old and new CloudStackMachineConfig UserCustomDetails does not match", "machineConfig", generatedCsmc.Name, "oldUserCustomDetails", generatedCsmc.Spec.UserCustomDetails,
+				"newUserCustomDetails", actualCsmc.Spec.UserCustomDetails)
 			return true
 		}
 	}
-	if len(oldCsmc.Spec.Symlinks) != len(newCsmc.Spec.Symlinks) {
-		log.Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", oldCsmc.Name, "oldSymlinks", oldCsmc.Spec.Symlinks,
-			"newSymlinks", newCsmc.Spec.Symlinks)
+	if len(generatedCsmc.Spec.Symlinks) != len(actualCsmc.Spec.Symlinks) {
+		log.V(4).Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", generatedCsmc.Name, "oldSymlinks", generatedCsmc.Spec.Symlinks,
+			"newSymlinks", actualCsmc.Spec.Symlinks)
 		return true
 	}
-	for key, value := range oldCsmc.Spec.Symlinks {
-		if value != newCsmc.Spec.Symlinks[key] {
-			log.Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", oldCsmc.Name, "oldSymlinks", oldCsmc.Spec.Symlinks,
-				"newSymlinks", newCsmc.Spec.Symlinks)
+	for key, value := range generatedCsmc.Spec.Symlinks {
+		if value != actualCsmc.Spec.Symlinks[key] {
+			log.V(4).Info("Old and new CloudStackMachineConfig Symlinks does not match", "machineConfig", generatedCsmc.Name, "oldSymlinks", generatedCsmc.Spec.Symlinks,
+				"newSymlinks", actualCsmc.Spec.Symlinks)
 			return true
 		}
 	}
