@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
@@ -60,22 +61,22 @@ func upgradePackages(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
-	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		upo.clusterName,
-		ipo.source,
-		deps.Kubectl,
-		nil,
-		nil,
-	)
-	activeController, err := b.GetActiveController(ctx)
+	kubeClient, err := curatedpackages.NewKubeClientFromFilename(kubeConfig, nil)
 	if err != nil {
 		return err
 	}
-	return b.UpgradeBundle(ctx, activeController, upo.bundleVersion)
+
+	key := types.NamespacedName{
+		Name:      upo.clusterName,
+		Namespace: packagesv1.PackageNamespace,
+	}
+	pbc := &packagesv1.PackageBundleController{}
+	err = kubeClient.Get(ctx, key, pbc)
+	if err != nil {
+		return err
+	}
+
+	pbc.Spec.ActiveBundle = upo.bundleVersion
+
+	return kubeClient.Update(ctx, pbc)
 }
