@@ -60,6 +60,7 @@ type Installer struct {
 	bootsOnDocker   bool
 	hostPort        bool
 	loadBalancer    bool
+	envoy           bool
 }
 
 type InstallOption func(s *Installer)
@@ -98,10 +99,16 @@ func WithHostPortEnabled(enabled bool) InstallOption {
 	}
 }
 
-// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
-func WithLoadBalancer() InstallOption {
+func WithEnvoyEnabled(enabled bool) InstallOption {
 	return func(s *Installer) {
-		s.loadBalancer = true
+		s.envoy = enabled
+	}
+}
+
+// WithLoadBalancer is an InstallOption that allows you to setup a LoadBalancer to expose hegel and tink-server
+func WithLoadBalancerEnabled(enabled bool) InstallOption {
+	return func(s *Installer) {
+		s.loadBalancer = enabled
 	}
 }
 
@@ -184,15 +191,13 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: true,
 			image:  bundle.TinkerbellStack.Rufio.URI,
 		},
-		loadBalancer: map[string]interface{}{
-			"enabled": s.loadBalancer,
-			"ip":      tinkerbellIP,
-		},
 		kubevip: map[string]interface{}{
-			image: bundle.KubeVip.URI,
+			image:  bundle.KubeVip.URI,
+			deploy: s.loadBalancer,
 		},
 		envoy: map[string]interface{}{
-			image: bundle.Envoy.URI,
+			image:  bundle.Envoy.URI,
+			deploy: s.envoy,
 		},
 	}
 
@@ -209,8 +214,10 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
-		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
-		bundle.TinkerbellStack.TinkebellChart.Tag(),
+		"public.ecr.aws/h6q6q4n4/tinkerbell/tinkerbell-chart",
+		"0.1.6-c0657100f8c91e043aba20bf497ad92e54b7e74d",
+		// fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
+		// bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
 	)
