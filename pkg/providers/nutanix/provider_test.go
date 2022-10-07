@@ -3,6 +3,7 @@ package nutanix
 import (
 	"bytes"
 	"context"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"testing"
 	"time"
@@ -251,6 +252,162 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, cpSpec)
 	assert.NotEmpty(t, workerSpec)
+}
+
+func TestAnyImmutableFieldChanged(t *testing.T) {
+	tests := []struct {
+		name                string
+		newDataCenterConfig func(anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig
+		newMachineConfig    func(anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig
+		expectedResult      bool
+	}{
+		{
+			name: "datacenter endpoint changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				conf := dcConfig.DeepCopy()
+				conf.Spec.Endpoint = "https://new-endpoint"
+				return *conf
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				return spec
+			},
+			expectedResult: false,
+		},
+		{
+			name: "datacenter port changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				conf := dcConfig.DeepCopy()
+				conf.Spec.Port = 8080
+				return *conf
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				return spec
+			},
+			expectedResult: false,
+		},
+		{
+			name: "datacenter trust bundle changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				conf := dcConfig.DeepCopy()
+				conf.Spec.AdditionalTrustBundle = "new-trust-bundle"
+				return *conf
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				return spec
+			},
+			expectedResult: false,
+		},
+		{
+			name: "machine image changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.Image.Name = utils.StringPtr("new-image")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine memory size changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.MemorySize = resource.MustParse("4Gi")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine system disk size changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.SystemDiskSize = resource.MustParse("20Gi")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine VCPU sockets changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.VCPUSockets = 2
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine vcpus per socket changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.VCPUsPerSocket = 2
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine cluster changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.Cluster.Name = utils.StringPtr("new-cluster")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine subnet changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.Subnet.Name = utils.StringPtr("new-subnet")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
+			name: "machine OS Family changed",
+			newDataCenterConfig: func(dcConfig anywherev1.NutanixDatacenterConfig) anywherev1.NutanixDatacenterConfig {
+				return dcConfig
+			},
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.OSFamily = "new-os-family"
+				return *conf
+			},
+			expectedResult: true,
+		},
+	}
+
+	for _, tt := range tests {
+		oldDatacenterConf := &anywherev1.NutanixDatacenterConfig{}
+		err := yaml.Unmarshal([]byte(nutanixDatacenterConfigSpec), oldDatacenterConf)
+		require.NoError(t, err)
+		newDatacenterConf := tt.newDataCenterConfig(*oldDatacenterConf)
+
+		oldMachineConf := &anywherev1.NutanixMachineConfig{}
+		err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), oldMachineConf)
+		require.NoError(t, err)
+		newMachineConf := tt.newMachineConfig(*oldMachineConf)
+
+		assert.Equal(t, tt.expectedResult, AnyImmutableFieldChanged(oldDatacenterConf, &newDatacenterConf, oldMachineConf, &newMachineConf))
+	}
 }
 
 func TestNutanixProviderGenerateStorageClass(t *testing.T) {
