@@ -56,8 +56,8 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	validator, err := NewValidator(nutanixClient)
 	require.NoError(t, err)
 
-	provider, err := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, validator, time.Now)
-	require.NoError(t, err)
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, validator, time.Now)
+	require.NotNil(t, provider)
 	return provider
 }
 

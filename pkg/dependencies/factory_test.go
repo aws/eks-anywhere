@@ -86,19 +86,67 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 }
 
 func TestFactoryBuildWithProviderNutanix(t *testing.T) {
-	tt := newTest(t, nutanix)
+	tests := []struct {
+		name              string
+		clusterConfigFile string
+		expectError       bool
+	}{
+		{
+			name:              "nutanix provider valid config",
+			clusterConfigFile: "testdata/cluster_nutanix.yaml",
+		},
+		{
+			name:              "nutanix provider missing datacenter config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
+			expectError:       true,
+		},
+		{
+			name:              "nutanix provider missing machine config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_mc.yaml",
+			expectError:       true,
+		},
+	}
+
 	os.Setenv("NUTANIX_USER", "test")
 	defer os.Unsetenv("NUTANIX_USER")
 	os.Setenv("NUTANIX_PASSWORD", "test")
 	defer os.Unsetenv("NUTANIX_PASSWORD")
+	for _, tc := range tests {
+		tt := newTest(t, nutanix)
+		tt.clusterConfigFile = tc.clusterConfigFile
+
+		deps, err := dependencies.NewFactory().
+			WithLocalExecutables().
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+			Build(context.Background())
+
+		if tc.expectError {
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(deps).To(BeNil())
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(deps.Provider).NotTo(BeNil())
+			tt.Expect(deps.NutanixValidator).NotTo(BeNil())
+		}
+	}
+}
+
+func TestFactoryBuildWithInvalidProvider(t *testing.T) {
+	clusterConfigFile := "testdata/cluster_invalid_provider.yaml"
+	tt := &factoryTest{
+		WithT:             NewGomegaWithT(t),
+		clusterConfigFile: clusterConfigFile,
+		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
+		ctx:               context.Background(),
+	}
+
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
 		Build(context.Background())
 
-	tt.Expect(err).To(BeNil())
-	tt.Expect(deps.Provider).NotTo(BeNil())
-	tt.Expect(deps.NutanixValidator).NotTo(BeNil())
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(deps).To(BeNil())
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {

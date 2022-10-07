@@ -437,10 +437,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 			}
 			f.dependencies.NutanixValidator = validator
 
-			provider, err := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, client.V3, validator, time.Now)
-			if err != nil {
-				return fmt.Errorf("unable to create Nutanix provider: %v", err)
-			}
+			provider := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, client.V3, validator, time.Now)
 			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)

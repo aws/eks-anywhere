@@ -66,7 +66,7 @@ func NewProvider(
 	nutanixClient Client,
 	nutanixValidator *Validator,
 	now types.NowFunc,
-) (*Provider, error) {
+) *Provider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -90,7 +90,7 @@ func NewProvider(
 		kubectlClient:    providerKubectlClient,
 		nutanixClient:    nutanixClient,
 		validator:        nutanixValidator,
-	}, nil
+	}
 }
 
 func (p *Provider) BootstrapClusterOpts(_ *cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error) {
