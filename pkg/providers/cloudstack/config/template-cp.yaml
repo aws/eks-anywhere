@@ -41,8 +41,10 @@ spec:
   failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
   - name: {{ $az.Name }}
     zone:
+      id: {{ $az.Zone.Id }}
       name: {{ $az.Zone.Name }}
       network:
+        id: {{ $az.Zone.Network.Id }}
         name: {{ $az.Zone.Network.Name }}
     domain: {{ $az.Domain }}
     account: {{ $az.Account }}
