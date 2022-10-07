@@ -88,18 +88,17 @@ func installPackages(ctx context.Context, args []string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	bm := curatedpackages.CreateBundleManager()
-
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		ipo.clusterName,
-		ipo.source,
-		deps.Kubectl,
-		bm,
-		deps.BundleRegistry,
-	)
-
-	bundle, err := b.GetLatestBundle(ctx, ipo.kubeVersion)
+	opts := curatedpackages.BundleClientOptions{
+		ClusterName: ipo.clusterName,
+		KubeConfig:  kubeConfig,
+		KubeVersion: ipo.kubeVersion,
+		Registry:    ipo.registry,
+	}
+	bc, err := curatedpackages.NewBundleClient(ipo.source, opts)
+	if err != nil {
+		return err
+	}
+	bundle, err := bc.ActiveOrLatest(ctx)
 	if err != nil {
 		return err
 	}

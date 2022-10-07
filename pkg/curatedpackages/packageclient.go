@@ -29,6 +29,7 @@ type PackageClient struct {
 	customConfigs  []string
 }
 
+// TODO migrate the package client to use a native k8s client.
 func NewPackageClient(kubectl KubectlRunner, options ...PackageClientOpt) *PackageClient {
 	pc := &PackageClient{
 		kubectl: kubectl,

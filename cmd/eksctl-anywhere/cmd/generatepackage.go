@@ -68,17 +68,24 @@ func generatePackages(ctx context.Context, args []string) error {
 		return err
 	}
 
+	opts := curatedpackages.BundleClientOptions{
+		ClusterName: gpOptions.clusterName,
+		KubeConfig:  kubeConfig,
+		KubeVersion: gpOptions.kubeVersion,
+		Registry:    gpOptions.registry,
+	}
+	bc, err := curatedpackages.NewBundleClient(gpOptions.source, opts)
+	if err != nil {
+		return err
+	}
+	bundle, err := bc.ActiveOrLatest(ctx)
+	if err != nil {
+		return err
+	}
+
 	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-	bm := curatedpackages.CreateBundleManager()
-
-	b := curatedpackages.NewBundleReader(kubeConfig, gpOptions.clusterName, gpOptions.source, deps.Kubectl, bm, deps.BundleRegistry)
-
-	bundle, err := b.GetLatestBundle(ctx, gpOptions.kubeVersion)
-	if err != nil {
-		return err
 	}
 
 	packageClient := curatedpackages.NewPackageClient(
