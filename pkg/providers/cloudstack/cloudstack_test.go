@@ -482,7 +482,7 @@ func TestProviderGenerateCAPISpecForCreateWithZoneIdAndNetworkId(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	datacenterConfig.Spec.AvailabilityZones[0].Zone = v1alpha1.CloudStackZone{
-		Id:      "zoneId",
+		Id: "zoneId",
 		Network: v1alpha1.CloudStackResourceIdentifier{
 			Id: "networkId",
 		},
