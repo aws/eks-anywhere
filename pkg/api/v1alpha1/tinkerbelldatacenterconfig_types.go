@@ -15,9 +15,9 @@ type TinkerbellDatacenterConfigSpec struct {
 	OSImageURL string `json:"osImageURL,omitempty"`
 	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server.
 	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
-	// SkipLBDeployment when set to "true" can be used to skip deploying a load balancer.
+	// SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
 	// Users will need to deploy and configure a load balancer manually after the cluster is created.
-	SkipLBSetup bool `json:"skipLBSetup,omitempty"`
+	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig

@@ -4775,10 +4775,11 @@ spec:
                 description: OSImageURL can be used to override the default OS image
                   path to pull from a local server.
                 type: string
-              skipLBSetup:
-                description: SkipLBDeployment when set to "true" can be used to skip
-                  deploying a load balancer. Users will need to deploy and configure
-                  a load balancer manually after the cluster is created.
+              skipLoadBalancerDeployment:
+                description: SkipLoadBalancerDeployment when set to "true" can be
+                  used to skip deploying a load balancer to expose Tinkerbell stack.
+                  Users will need to deploy and configure a load balancer manually
+                  after the cluster is created.
                 type: boolean
               tinkerbellIP:
                 description: TinkerbellIP is used to configure a VIP for hosting the
