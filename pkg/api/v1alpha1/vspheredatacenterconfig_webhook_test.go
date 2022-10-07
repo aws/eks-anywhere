@@ -111,6 +111,16 @@ func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestVSphereDatacenterConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := vsphereDatacenterConfig()
+	sOld.Spec.Network = "network-1"
+	sOld.Default()
+
+	g.Expect(sOld.Spec.Network).To(Equal("/datacenter/network/network-1"))
+}
+
 func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 	return v1alpha1.VSphereDatacenterConfig{
 		TypeMeta:   metav1.TypeMeta{},
