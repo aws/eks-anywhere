@@ -16,6 +16,9 @@ type generatePackageOptions struct {
 	kubeVersion string
 	clusterName string
 	registry    string
+	// kubeConfig is an optional kubeconfig file to use when querying an
+	// existing cluster.
+	kubeConfig string
 }
 
 var gpOptions = &generatePackageOptions{}
@@ -32,6 +35,8 @@ func init() {
 	}
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
+	generatePackageCommand.Flags().StringVar(&gpOptions.kubeConfig, "kubeconfig", "",
+		"Path to an optional kubeconfig file to use.")
 }
 
 var generatePackageCommand = &cobra.Command{
@@ -53,7 +58,11 @@ func runGeneratePackages(cmd *cobra.Command, args []string) error {
 }
 
 func generatePackages(ctx context.Context, args []string) error {
-	kubeConfig := kubeconfig.FromEnvironment()
+	kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpOptions.kubeConfig, "")
+	if err != nil {
+		return err
+	}
+
 	deps, err := NewDependenciesForPackages(ctx, WithRegistryName(gpOptions.registry), WithKubeVersion(gpOptions.kubeVersion), WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

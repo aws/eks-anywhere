@@ -14,7 +14,7 @@ import (
 type upgradePackageOptions struct {
 	bundleVersion string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig  string
 	clusterName string
 }
