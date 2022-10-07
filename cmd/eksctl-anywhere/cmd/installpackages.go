@@ -28,8 +28,6 @@ var ipo = &installPackageOptions{}
 func init() {
 	installCmd.AddCommand(installPackageCommand)
 
-	installPackageCommand.Flags().Var(&ipo.source, "source",
-		"Location to find curated packages: (cluster, registry)")
 	installPackageCommand.Flags().StringVar(&ipo.kubeVersion, "kube-version", "",
 		"Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	installPackageCommand.Flags().StringVarP(&ipo.packageName, "package-name", "n",
@@ -43,9 +41,6 @@ func init() {
 	installPackageCommand.Flags().StringVar(&ipo.clusterName, "cluster", "",
 		"Target cluster for installation.")
 
-	if err := installPackageCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("marking source flag as required: %s", err)
-	}
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
 		log.Fatalf("marking package-name flag as required: %s", err)
 	}

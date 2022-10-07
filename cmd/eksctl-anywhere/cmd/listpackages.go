@@ -27,8 +27,6 @@ var lpo = &listPackagesOption{}
 func init() {
 	listCmd.AddCommand(listPackagesCommand)
 
-	listPackagesCommand.Flags().Var(&lpo.source, "source",
-		"Packages discovery source. Options: cluster, registry.")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kube-version", "",
 		"Kubernetes version <major>.<minor> of the packages to list, for example: \"1.23\".")
 	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "",
@@ -38,9 +36,6 @@ func init() {
 	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
 		"Name of cluster for package list.")
 
-	if err := listPackagesCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("marking source flag required: %s", err)
-	}
 	if err := listPackagesCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("cluster flag required: %s", err)
 	}
