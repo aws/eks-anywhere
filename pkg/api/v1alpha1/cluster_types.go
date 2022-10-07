@@ -169,6 +169,9 @@ type ControlPlaneConfiguration struct {
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
+	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+	// and related parameters/knobs
+	UpgradeRolloutStrategy *ControlPlaneUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
@@ -243,6 +246,9 @@ type WorkerNodeGroupConfiguration struct {
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
+	// UpgradeRolloutStrategy determines the rollout strategy to use for rolling upgrades
+	// and related parameters/knobs
+	UpgradeRolloutStrategy *WorkerNodesUpgradeRolloutStrategy `json:"upgradeRolloutStrategy,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
@@ -724,6 +730,29 @@ type AutoScalingConfiguration struct {
 	// MaxCount defines the maximum number of nodes for the associated resource group.
 	// +optional
 	MaxCount int `json:"maxCount,omitempty"`
+}
+
+// ControlPlaneUpgradeRolloutStrategy indicates rollout strategy for cluster.
+type ControlPlaneUpgradeRolloutStrategy struct {
+	Type          string                          `json:"type,omitempty"`
+	RollingUpdate ControlPlaneRollingUpdateParams `json:"rollingUpdate,omitempty"`
+}
+
+// ControlPlaneRollingUpdateParams is API for rolling update strategy knobs.
+type ControlPlaneRollingUpdateParams struct {
+	MaxSurge int `json:"maxSurge"`
+}
+
+// WorkerNodesUpgradeRolloutStrategy indicates rollout strategy for cluster.
+type WorkerNodesUpgradeRolloutStrategy struct {
+	Type          string                         `json:"type,omitempty"`
+	RollingUpdate WorkerNodesRollingUpdateParams `json:"rollingUpdate,omitempty"`
+}
+
+// WorkerNodesRollingUpdateParams is API for rolling update strategy knobs.
+type WorkerNodesRollingUpdateParams struct {
+	MaxSurge       int `json:"maxSurge"`
+	MaxUnavailable int `json:"maxUnavailable"`
 }
 
 // +kubebuilder:object:root=true

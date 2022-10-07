@@ -1,6 +1,6 @@
 package constants
 
-// Namespace constants
+// Namespace constants.
 const (
 	EksaSystemNamespace                     = "eksa-system"
 	EksaDiagnosticsNamespace                = "eksa-diagnostics"
@@ -43,7 +43,7 @@ const (
 	DefaultRegistry            = "public.ecr.aws"
 	CloudstackAnnotationSuffix = "cloudstack.anywhere.eks.amazonaws.com/v1alpha1"
 
-	// provider specific env vars
+	// Provider specific env vars.
 	VSphereUsernameKey = "VSPHERE_USERNAME"
 	VSpherePasswordKey = "VSPHERE_PASSWORD"
 	GovcUsernameKey    = "GOVC_USERNAME"
