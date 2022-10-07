@@ -91,8 +91,8 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnKubernetes(),
-		stack.WithHostPortEnabled(false), // disable host port on workload cluster
-		stack.WithEnvoyEnabled(true), // use envoy on workload cluster
+		stack.WithHostPortEnabled(false),                                    // disable host port on workload cluster
+		stack.WithEnvoyEnabled(true),                                        // use envoy on workload cluster
 		stack.WithLoadBalancerEnabled(!p.datacenterConfig.Spec.SkipLBSetup), // configure load balancer based on datacenterConfig.Spec.SkipLBSetup
 	)
 	if err != nil {

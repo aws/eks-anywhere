@@ -80,7 +80,9 @@ func assertYamlFilesEqual(t *testing.T, wantYamlPath, gotYamlPath string) {
 func unmarshalYamlToObject(t *testing.T, filepath string) map[string]interface{} {
 	unmarshaledObject := make(map[string]interface{})
 	bytes := test.ReadFileAsBytes(t, filepath)
-	yaml.Unmarshal(bytes, unmarshaledObject)
+	if err := yaml.Unmarshal(bytes, unmarshaledObject); err != nil {
+		t.Fatalf("failed to unmarshal %s: %v", filepath, err)
+	}
 
 	return unmarshaledObject
 }
