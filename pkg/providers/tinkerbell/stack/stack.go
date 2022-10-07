@@ -195,8 +195,9 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 			deploy: s.loadBalancer,
 		},
 		envoy: map[string]interface{}{
-			image:  bundle.Envoy.URI,
-			deploy: s.envoy,
+			image:        bundle.Envoy.URI,
+			deploy:       s.envoy,
+			"externalIp": tinkerbellIP,
 		},
 	}
 

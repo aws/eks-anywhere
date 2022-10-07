@@ -16,6 +16,7 @@ boots:
 createNamespace: false
 envoy:
   deploy: false
+  externalIp: 1.2.3.4
   image: public.ecr.aws/eks-anywhere/envoy:latest
 hegel:
   args:
