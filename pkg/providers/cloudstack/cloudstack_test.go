@@ -247,6 +247,44 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
+func TestProviderGenerateCAPISpecForCreateWithAutoscalingConfiguration(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	wng := &clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
+	ca := &v1alpha1.AutoScalingConfiguration{
+		MaxCount: 5,
+		MinCount: 3,
+	}
+	wng.AutoScalingConfiguration = ca
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_autoscaling_md.yaml")
+}
+
 func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) {
 	tt := NewWithT(t)
 	mockCtrl := gomock.NewController(t)

@@ -31,14 +31,18 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getResources(ctx context.Context, resourceType, output, kubeConfig string, args []string) error {
+func getResources(ctx context.Context, resourceType, output, kubeConfig, clusterName string, args []string) error {
 	deps, err := NewDependenciesForPackages(ctx, WithMountPaths(kubeConfig))
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
 
-	params := []string{"get", resourceType, "--kubeconfig", kubeConfig, "--namespace", constants.EksaPackagesName}
+	namespace := constants.EksaPackagesName
+	if len(clusterName) > 0 {
+		namespace = namespace + "-" + clusterName
+	}
+	params := []string{"get", resourceType, "--kubeconfig", kubeConfig, "--namespace", namespace}
 	params = append(params, args...)
 	if output != "" {
 		params = append(params, "-o", output)

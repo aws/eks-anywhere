@@ -420,6 +420,12 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      metadata: {}
+      version: ""
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1148,6 +1154,12 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      metadata: {}
+      version: ""
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1876,6 +1888,12 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      metadata: {}
+      version: ""
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2604,6 +2622,12 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-release-0.11-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
+    nutanix:
+      clusterAPIController: {}
+      clusterTemplate: {}
+      components: {}
+      metadata: {}
+      version: ""
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages

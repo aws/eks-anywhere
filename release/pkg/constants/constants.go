@@ -24,6 +24,7 @@ const (
 	FakeGitCommit            = "0123456789abcdef0123456789abcdef01234567"
 	ReleaseFolderName        = "release"
 	EksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
+	YamlSeparator            = "\n---\n"
 
 	// Project paths
 	CapasProjectPath                    = "projects/aws/cluster-api-provider-aws-snow"
@@ -31,6 +32,7 @@ const (
 	CapiProjectPath                     = "projects/kubernetes-sigs/cluster-api"
 	CaptProjectPath                     = "projects/tinkerbell/cluster-api-provider-tinkerbell"
 	CapvProjectPath                     = "projects/kubernetes-sigs/cluster-api-provider-vsphere"
+	CapxProjectPath                     = "projects/nutanix-cloud-native/cluster-api-provider-nutanix"
 	CertManagerProjectPath              = "projects/cert-manager/cert-manager"
 	CiliumProjectPath                   = "projects/cilium/cilium"
 	EtcdadmBootstrapProviderProjectPath = "projects/aws/etcdadm-bootstrap-provider"

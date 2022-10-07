@@ -420,6 +420,23 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
+    nutanix:
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v0.5.1-eks-a-v0.0.0-dev-build.1
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -674,13 +691,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -1166,6 +1179,23 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
+    nutanix:
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v0.5.1-eks-a-v0.0.0-dev-build.1
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -1420,13 +1450,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -1912,6 +1938,23 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
+    nutanix:
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v0.5.1-eks-a-v0.0.0-dev-build.1
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2166,13 +2209,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -2658,6 +2697,23 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
+    nutanix:
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v0.5.1-eks-a-v0.0.0-dev-build.1
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -2912,13 +2968,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:
@@ -3246,9 +3298,9 @@ spec:
         imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         name: kind-node
         os: linux
-        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.4-eks-d-1-24-1-eks-a-v0.0.0-dev-build.1
-      kubeVersion: v1.24.4
-      manifestUrl: https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-1.yaml
+        uri: public.ecr.aws/release-container-registry/kubernetes-sigs/kind/node:v1.24.6-eks-d-1-24-1-eks-a-v0.0.0-dev-build.1
+      kubeVersion: v1.24.6
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-24/kubernetes-1-24-eks-1.yaml
       name: kubernetes-1-24-eks-1
       ova:
         bottlerocket: {}
@@ -3386,6 +3438,23 @@ spec:
         uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/kind/manifests/kindnetd/v0.14.0/kindnetd.yaml
       version: v0.14.0+abcdef1
     kubeVersion: "1.24"
+    nutanix:
+      clusterAPIController:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for cluster-api-provider-nutanix image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: cluster-api-provider-nutanix
+        os: linux
+        uri: public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix:v0.5.1-eks-a-v0.0.0-dev-build.1
+      clusterTemplate:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/cluster-template.yaml
+      components:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/infrastructure-components.yaml
+      metadata:
+        uri: https://release-bucket/artifacts/v0.0.0-dev-build.0/cluster-api-provider-nutanix/manifests/infrastructure-nutanix/v0.5.1/metadata.yaml
+      version: v0.5.1+abcdef1
     packageController:
       helmChart:
         description: Helm chart for eks-anywhere-packages
@@ -3640,13 +3709,9 @@ spec:
             os: linux
             uri: public.ecr.aws/release-container-registry/tinkerbell/tink/tink-worker:19b68beab1a902846c10ee3422cafb4fd5c3307e-eks-a-v0.0.0-dev-build.1
         tinkerbellChart:
-          arch:
-          - amd64
-          - arm64
-          description: Container image for tinkerbell-chart image
+          description: Helm chart for tinkerbell-chart
           imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
           name: tinkerbell-chart
-          os: linux
           uri: public.ecr.aws/release-container-registry/tinkerbell/tinkerbell-chart:0.1.5-eks-a-v0.0.0-dev-build.1
       version: v0.1.0
     vSphere:

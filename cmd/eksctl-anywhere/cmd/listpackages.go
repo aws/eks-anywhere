@@ -18,7 +18,7 @@ type listPackagesOption struct {
 	source      curatedpackages.BundleSource
 	registry    string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig string
 }
 

@@ -117,6 +117,10 @@ func (c *VSphereMachineConfig) Marshallable() Marshallable {
 	return c.ConvertConfigToConfigGenerateStruct()
 }
 
+func (c *VSphereMachineConfig) SetDefaults() {
+	setVSphereMachineConfigDefaults(c)
+}
+
 func (c *VSphereMachineConfig) Validate() error {
 	return nil
 }

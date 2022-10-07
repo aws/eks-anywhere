@@ -151,7 +151,7 @@ func GetSourceImageURI(r *releasetypes.ReleaseConfig, name, repoName string, tag
 				latestTag,
 			)
 		}
-		if strings.HasSuffix(name, "-helm") {
+		if strings.HasSuffix(name, "-helm") || strings.HasSuffix(name, "-chart") {
 			sourceImageUri += "-helm"
 		}
 		if trimVersionSignifier {

@@ -42,7 +42,7 @@ spec:
                 additionalProperties:
                   type: string
                 description: HardwareSelector models a simple key-value selector used
-                  in Tinkerbell providioning.
+                  in Tinkerbell provisioning.
                 type: object
               osFamily:
                 type: string

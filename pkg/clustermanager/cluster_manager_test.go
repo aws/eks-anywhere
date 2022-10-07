@@ -673,6 +673,52 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	}
 }
 
+func TestClusterManagerUpgradeWorkloadClusterAWSIamConfigSuccess(t *testing.T) {
+	mgmtClusterName := "cluster-name"
+	workClusterName := "cluster-name-w"
+
+	mCluster := &types.Cluster{
+		Name:               mgmtClusterName,
+		ExistingManagement: true,
+	}
+	wCluster := &types.Cluster{
+		Name: workClusterName,
+	}
+	md := &clusterv1.MachineDeployment{}
+
+	tt := newSpecChangedTest(t)
+	// Adding AWSIamConfig to the cluster spec.
+	tt.clusterSpec.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.AWSIamConfigKind, Name: tt.clusterName}}
+	tt.clusterSpec.AWSIamConfig = &v1alpha1.AWSIamConfig{}
+	tt.oldClusterConfig = tt.clusterSpec.Cluster.DeepCopy()
+	oldIamConfig := tt.clusterSpec.AWSIamConfig.DeepCopy()
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, mCluster, mgmtClusterName).Return(tt.oldClusterConfig, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, mCluster.KubeconfigFile, mCluster.Name, "").Return(test.Bundles(t), nil)
+	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
+	tt.mocks.provider.EXPECT().GenerateCAPISpecForUpgrade(tt.ctx, mCluster, mCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy())
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
+	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
+	tt.mocks.client.EXPECT().WaitForControlPlaneReady(tt.ctx, mCluster, "1h0m0s", mgmtClusterName).MaxTimes(2)
+	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", mgmtClusterName)
+	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
+	tt.mocks.client.EXPECT().GetMachineDeployment(tt.ctx, "cluster-name-md-0", gomock.AssignableToTypeOf(executables.WithKubeconfig(mCluster.KubeconfigFile)), gomock.AssignableToTypeOf(executables.WithNamespace(constants.EksaSystemNamespace))).Return(md, nil)
+	tt.mocks.client.EXPECT().DeleteOldWorkerNodeGroup(tt.ctx, md, mCluster.KubeconfigFile)
+	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, mCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, mCluster.Name).Return(nil)
+	tt.mocks.client.EXPECT().CountMachineDeploymentReplicasReady(tt.ctx, mCluster.Name, mCluster.KubeconfigFile).Return(0, 0, nil)
+	tt.mocks.provider.EXPECT().GetDeployments()
+	tt.mocks.writer.EXPECT().Write(mgmtClusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
+	tt.mocks.client.EXPECT().GetEksaAWSIamConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(oldIamConfig, nil)
+	tt.mocks.networking.EXPECT().RunPostControlPlaneUpgradeSetup(tt.ctx, wCluster).Return(nil)
+	tt.mocks.awsIamAuth.EXPECT().GenerateManifestForUpgrade(tt.clusterSpec).Return(nil, nil)
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, wCluster, test.OfType("[]uint8")).Return(nil)
+
+	if err := tt.clusterManager.UpgradeCluster(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err != nil {
+		t.Errorf("ClusterManager.UpgradeCluster() error = %v, wantErr nil", err)
+	}
+}
+
 func TestClusterManagerUpgradeCloudStackWorkloadClusterSuccess(t *testing.T) {
 	mgmtClusterName := "cluster-name"
 	workClusterName := "cluster-name-w"

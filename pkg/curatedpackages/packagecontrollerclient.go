@@ -20,30 +20,32 @@ const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
 	jobName           = "eksa-auth-refresher"
+	packagesNamespace = "eksa-packages"
 )
 
 type PackageControllerClientOpt func(client *PackageControllerClient)
 
 type PackageControllerClient struct {
-	kubeConfig          string
-	uri                 string
-	chartName           string
-	chartVersion        string
-	chartInstaller      ChartInstaller
-	clusterName         string
-	kubectl             KubectlRunner
-	eksaAccessKeyId     string
-	eksaSecretAccessKey string
-	eksaRegion          string
-	httpProxy           string
-	httpsProxy          string
-	noProxy             []string
+	kubeConfig            string
+	uri                   string
+	chartName             string
+	chartVersion          string
+	chartInstaller        ChartInstaller
+	clusterName           string
+	managementClusterName string
+	kubectl               KubectlRunner
+	eksaAccessKeyId       string
+	eksaSecretAccessKey   string
+	eksaRegion            string
+	httpProxy             string
+	httpsProxy            string
+	noProxy               []string
 	// activeBundleTimeout is the timeout to activate a bundle on installation.
 	activeBundleTimeout time.Duration
 }
 
 type ChartInstaller interface {
-	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error
+	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
 }
 
 func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
@@ -67,10 +69,10 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //
 // This includes all necessary steps for functionality. These include:
 //
-//    - helm chart installation
-//    - credentials secret creation
-//    - credentials refreshing cron job creation
-//    - activation of a curated packages bundle
+//   - helm chart installation
+//   - credentials secret creation
+//   - credentials refreshing cron job creation
+//   - activation of a curated packages bundle
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
@@ -89,7 +91,7 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, packagesNamespace, values)
 	if err != nil {
 		return err
 	}
@@ -248,5 +250,11 @@ func WithNoProxy(noProxy []string) func(client *PackageControllerClient) {
 		if noProxy != nil {
 			config.noProxy = noProxy
 		}
+	}
+}
+
+func WithManagementClusterName(managementClusterName string) func(client *PackageControllerClient) {
+	return func(config *PackageControllerClient) {
+		config.managementClusterName = managementClusterName
 	}
 }

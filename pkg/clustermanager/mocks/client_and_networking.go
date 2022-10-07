@@ -832,3 +832,18 @@ func (mr *MockAwsIamAuthMockRecorder) GenerateManifest(arg0 interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifest), arg0)
 }
+
+// GenerateManifestForUpgrade mocks base method.
+func (m *MockAwsIamAuth) GenerateManifestForUpgrade(arg0 *cluster.Spec) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateManifestForUpgrade", arg0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateManifestForUpgrade indicates an expected call of GenerateManifestForUpgrade.
+func (mr *MockAwsIamAuthMockRecorder) GenerateManifestForUpgrade(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifestForUpgrade", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifestForUpgrade), arg0)
+}

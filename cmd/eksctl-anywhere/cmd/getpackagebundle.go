@@ -9,7 +9,7 @@ import (
 type getPackageBundleOptions struct {
 	output string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig string
 }
 
@@ -36,6 +36,6 @@ var getPackageBundleCommand = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		return getResources(cmd.Context(), "packagebundles", gpbo.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packagebundles", gpbo.output, kubeConfig, "", args)
 	},
 }

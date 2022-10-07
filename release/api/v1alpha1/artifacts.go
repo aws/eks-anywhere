@@ -54,6 +54,11 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Snow.Components.URI,
 			&vb.Snow.Metadata.URI,
 		},
+		"cluster-api-provider-nutanix": {
+			&vb.Nutanix.Components.URI,
+			&vb.Nutanix.ClusterTemplate.URI,
+			&vb.Nutanix.Metadata.URI,
+		},
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
@@ -146,6 +151,12 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 	}
 }
 
+func (vb *VersionsBundle) NutanixImages() []Image {
+	return []Image{
+		vb.Nutanix.ClusterAPIController,
+	}
+}
+
 func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
@@ -189,6 +200,7 @@ func (vb *VersionsBundle) Images() []Image {
 		vb.CloudStackImages(),
 		vb.SnowImages(),
 		vb.TinkerbellImages(),
+		vb.NutanixImages(),
 	}
 
 	size := 0
