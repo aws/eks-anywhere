@@ -3619,6 +3619,23 @@ spec:
                       - key
                       type: object
                     type: array
+                  upgradeRolloutStrategy:
+                    description: UpgradeRolloutStrategy determines the rollout strategy
+                      to use for rolling upgrades and related parameters/knobs
+                    properties:
+                      rollingUpdate:
+                        properties:
+                          maxSurge:
+                            type: integer
+                          maxUnavailable:
+                            type: integer
+                        required:
+                        - maxSurge
+                        - maxUnavailable
+                        type: object
+                      type:
+                        type: string
+                    type: object
                 type: object
               datacenterRef:
                 properties:
@@ -3777,6 +3794,23 @@ spec:
                         - key
                         type: object
                       type: array
+                    upgradeRolloutStrategy:
+                      description: UpgradeRolloutStrategy determines the rollout strategy
+                        to use for rolling upgrades and related parameters/knobs
+                      properties:
+                        rollingUpdate:
+                          properties:
+                            maxSurge:
+                              type: integer
+                            maxUnavailable:
+                              type: integer
+                          required:
+                          - maxSurge
+                          - maxUnavailable
+                          type: object
+                        type:
+                          type: string
+                      type: object
                   type: object
                 type: array
             type: object
@@ -4859,18 +4893,6 @@ spec:
                   kind:
                     type: string
                   name:
-                    type: string
-                type: object
-              upgradeRolloutStrategy:
-                properties:
-                  rollingUpdateParams:
-                    properties:
-                      maxSurge:
-                        type: integer
-                      maxUnavailable:
-                        type: integer
-                    type: object
-                  type:
                     type: string
                 type: object
               users:

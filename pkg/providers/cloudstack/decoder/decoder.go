@@ -18,7 +18,7 @@ const (
 	CloudStackGlobalAZ                    = "global"
 )
 
-// ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
+// ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url.
 func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	cloudStackB64EncodedSecret, ok := os.LookupEnv(EksacloudStackCloudConfigB64SecretKey)
 	if !ok {

@@ -194,6 +194,7 @@ func generateClusterConfig(clusterName string) error {
 			v1alpha1.WorkerNodeConfigCount(1),
 			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 		)
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithCPUpgradeRolloutStrategy(1, 0), v1alpha1.WithWorkerMachineUpgradeRolloutStrategy(1, 0))
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
 			return fmt.Errorf("generating cluster yaml: %v", err)

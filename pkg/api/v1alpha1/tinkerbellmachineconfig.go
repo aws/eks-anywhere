@@ -33,9 +33,6 @@ func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineCo
 					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 				},
 			},
-			UpgradeRolloutStrategy:	UpgradeRolloutStrategy{
-				Type:	"RollingUpdate",
-			},
 		},
 	}
 

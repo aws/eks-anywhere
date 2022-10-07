@@ -14,6 +14,11 @@ spec:
         - 10.96.0.0/12
   controlPlaneConfiguration:
     count: 1
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
     endpoint:
       host: 1.2.3.4
     machineGroupRef:
@@ -33,6 +38,11 @@ spec:
       machineGroupRef:
         name: test-md
         kind: TinkerbellMachineConfig
+      upgradeRolloutStrategy:
+        type: "RollingUpdate"
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 0
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

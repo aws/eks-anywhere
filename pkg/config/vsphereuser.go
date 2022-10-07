@@ -8,10 +8,11 @@ import (
 const (
 	EksavSphereUsernameKey = "EKSA_VSPHERE_USERNAME"
 	EksavSpherePasswordKey = "EKSA_VSPHERE_PASSWORD"
-	// Username and password for cloud provider
+	// EksavSphereCPUsernameKey holds Username for cloud provider.
 	EksavSphereCPUsernameKey = "EKSA_VSPHERE_CP_USERNAME"
+	// EksavSphereCPPasswordKey holds Password for cloud provider.
 	EksavSphereCPPasswordKey = "EKSA_VSPHERE_CP_PASSWORD"
-	// Username and password for the CSI driver
+	// EksavSphereCSIUsernameKey holds Username and password for the CSI driver.
 	EksavSphereCSIUsernameKey = "EKSA_VSPHERE_CSI_USERNAME"
 	EksavSphereCSIPasswordKey = "EKSA_VSPHERE_CSI_PASSWORD"
 )

@@ -19,6 +19,11 @@ spec:
     machineGroupRef:
       name: test-cp
       kind: TinkerbellMachineConfig
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
   datacenterRef:
     kind: TinkerbellDatacenterConfig
     name: test
@@ -27,6 +32,11 @@ spec:
     name: test
   workerNodeGroupConfigurations:
   - count: 1
+    upgradeRolloutStrategy:
+      type: "RollingUpdate"
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
     machineGroupRef:
       name: test-md
       kind: TinkerbellMachineConfig

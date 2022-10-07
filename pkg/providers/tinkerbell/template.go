@@ -412,6 +412,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"workerNodeGroupConfigurations": clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations,
 	}
 
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy != nil {
+		values["upgradeRolloutStrategy"] = true
+		values["maxSurge"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+	}
+
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values = populateRegistryMirrorValues(clusterSpec, values)
 		// Replace public.ecr.aws endpoint with the endpoint given in the cluster config file
@@ -464,6 +469,12 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"hardwareSelector":       workerNodeGroupMachineSpec.HardwareSelector,
 		"workerNodeGroupTaints":  workerNodeGroupConfiguration.Taints,
+	}
+
+	if clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy != nil {
+		values["upgradeRolloutStrategy"] = true
+		values["maxSurge"] = clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy.RollingUpdate.MaxSurge
+		values["maxUnavailable"] = clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].UpgradeRolloutStrategy.RollingUpdate.MaxUnavailable
 	}
 
 	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
