@@ -214,10 +214,8 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
-		"public.ecr.aws/h6q6q4n4/tinkerbell/tinkerbell-chart",
-		"0.1.6-c0657100f8c91e043aba20bf497ad92e54b7e74d",
-		// fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
-		// bundle.TinkerbellStack.TinkebellChart.Tag(),
+		fmt.Sprintf("oci://%s", s.localRegistryURL(bundle.TinkerbellStack.TinkebellChart.Image())),
+		bundle.TinkerbellStack.TinkebellChart.Tag(),
 		kubeconfig,
 		valuesPath,
 	)
