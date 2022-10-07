@@ -5781,7 +5781,7 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
-      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatatacenterconfig
+      path: /mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig
   failurePolicy: Fail
   name: mutation.vspheredatacenterconfig.anywhere.amazonaws.com
   rules:
