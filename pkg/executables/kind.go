@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"io/ioutil"
 	"net"
 	"os"
@@ -48,6 +49,9 @@ type kindExecConfig struct {
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
 	RegistryCACertPath     string
+	RegistryAuth           bool
+	RegistryUsername       string
+	RegistryPassword       string
 	ExtraPortMappings      []int
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
@@ -211,6 +215,15 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+		}
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			k.execConfig.RegistryAuth = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			k.execConfig.RegistryUsername = username
+			k.execConfig.RegistryPassword = password
 		}
 	}
 	return nil

@@ -85,8 +85,8 @@ spec:
             {{- end }}
             {{- if .registryAuth }}
             [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".auth]
-              username = {{.registryUsername}}
-              password = {{.registryPassword}}
+              username = "{{.registryUsername}}"
+              password = "{{.registryPassword}}"
             {{- end }}
         owner: root:root
         path: "/etc/containerd/config_append.toml"

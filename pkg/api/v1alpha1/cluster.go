@@ -674,6 +674,10 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
+
+	//if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
+	//	if
+	//}
 	return nil
 }
 
