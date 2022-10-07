@@ -206,8 +206,11 @@ func TestStaticMachineAssertions_InvalidMachines(t *testing.T) {
 		"InvalidWithJustDev": func(h *hardware.Machine) {
 			h.Disk = "/dev/"
 		},
-		"InvalidVLAN": func(h *hardware.Machine) {
+		"InvalidVLANUnder": func(h *hardware.Machine) {
 			h.VLANID = "0"
+		},
+		"InvalidVLANOver": func(h *hardware.Machine) {
+			h.VLANID = "4095"
 		},
 		"NonIntVLAN": func(h *hardware.Machine) {
 			h.VLANID = "im not an int"
