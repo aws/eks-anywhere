@@ -896,12 +896,7 @@ func (f *Factory) WithPackageClient() *Factory {
 }
 
 func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, version version.Info) *Factory {
-	if registryName != "" {
-		f.WithHelm(executables.WithInsecure())
-	} else {
-		f.WithManifestReader()
-	}
-
+	f.WithManifestReader()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.BundleRegistry != nil {
 			return nil
@@ -909,7 +904,6 @@ func (f *Factory) WithCuratedPackagesRegistry(registryName, kubeVersion string, 
 
 		if registryName != "" {
 			f.dependencies.BundleRegistry = curatedpackages.NewCustomRegistry(
-				f.dependencies.Helm,
 				registryName,
 			)
 		} else {

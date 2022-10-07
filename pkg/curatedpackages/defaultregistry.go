@@ -8,11 +8,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
+// DefaultRegistry aids in requesting bundles from OCI registries.
 type DefaultRegistry struct {
 	releaseManifestReader Reader
 	kubeVersion           string
 	cliVersion            version.Info
 }
+
+var _ BundleRegistry = (*DefaultRegistry)(nil)
 
 func NewDefaultRegistry(rmr Reader, kv string, cv version.Info) *DefaultRegistry {
 	return &DefaultRegistry{
@@ -22,6 +25,7 @@ func NewDefaultRegistry(rmr Reader, kv string, cv version.Info) *DefaultRegistry
 	}
 }
 
+// GetRegistryBaseRef implements BundleRegistry
 func (dr *DefaultRegistry) GetRegistryBaseRef(ctx context.Context) (string, error) {
 	release, err := dr.releaseManifestReader.ReadBundlesForVersion(dr.cliVersion.GitVersion)
 	if err != nil {
