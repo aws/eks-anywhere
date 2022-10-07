@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/gomega"
 	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
@@ -118,7 +117,7 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	tt.bundleManager.EXPECT().LatestBundle(tt.ctx, baseRef, tt.kubeVersion).Return(tt.packageBundle, nil)
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.cluster,
+		"",
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,
@@ -127,20 +126,6 @@ func TestGetLatestBundleFromRegistrySucceeds(t *testing.T) {
 	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
-}
-
-func TestGetLatestBundleFromUnknownSourceFails(t *testing.T) {
-	tt := newBundleTest(t)
-	tt.Command = curatedpackages.NewBundleReader(
-		tt.kubeConfig,
-		tt.cluster,
-		"Unknown",
-		tt.kubectl,
-		tt.bundleManager,
-		tt.registry,
-	)
-	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
-	tt.Expect(err).To(MatchError(ContainSubstring("unknown source")))
 }
 
 func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
@@ -164,7 +149,7 @@ func TestGetLatestBundleFromRegistryWhenError(t *testing.T) {
 	tt.registry.EXPECT().GetRegistryBaseRef(tt.ctx).Return("", errors.New("registry doesn't exist"))
 	tt.Command = curatedpackages.NewBundleReader(
 		tt.kubeConfig,
-		tt.cluster,
+		"",
 		curatedpackages.Registry,
 		tt.kubectl,
 		tt.bundleManager,

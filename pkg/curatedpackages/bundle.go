@@ -29,7 +29,6 @@ type BundleRegistry interface {
 type BundleReader struct {
 	kubeConfig    string
 	clusterName   string
-	source        BundleSource
 	kubectl       KubectlRunner
 	bundleManager Manager
 	registry      BundleRegistry
@@ -39,7 +38,6 @@ func NewBundleReader(kubeConfig string, clusterName string, source BundleSource,
 	return &BundleReader{
 		kubeConfig:    kubeConfig,
 		clusterName:   clusterName,
-		source:        source,
 		kubectl:       k,
 		bundleManager: bm,
 		registry:      reg,
@@ -47,14 +45,10 @@ func NewBundleReader(kubeConfig string, clusterName string, source BundleSource,
 }
 
 func (b *BundleReader) GetLatestBundle(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {
-	switch b.source {
-	case Cluster:
+	if len(b.clusterName) > 0 {
 		return b.getActiveBundleFromCluster(ctx)
-	case Registry:
-		return b.getLatestBundleFromRegistry(ctx, kubeVersion)
-	default:
-		return nil, fmt.Errorf("unknown source: %q", b.source)
 	}
+	return b.getLatestBundleFromRegistry(ctx, kubeVersion)
 }
 
 func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*packagesv1.PackageBundle, error) {

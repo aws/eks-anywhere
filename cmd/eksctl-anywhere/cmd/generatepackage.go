@@ -25,10 +25,6 @@ var gpOptions = &generatePackageOptions{}
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
-	generatePackageCommand.Flags().Var(&gpOptions.source, "source", "Location to find curated packages: (cluster, registry)")
-	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
 	generatePackageCommand.Flags().StringVar(&gpOptions.clusterName, "cluster", "", "Name of cluster for package generation")
 	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
