@@ -70,7 +70,7 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
-	err = p.providerKubectlClient.WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	err = p.providerKubectlClient.WaitForBMCMachines(ctx, cluster, "5m", "Contactable", constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}

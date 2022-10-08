@@ -35,7 +35,7 @@ func TestTinkerbellManifestYAMLWrites(t *testing.T) {
 	err = yaml.Unmarshal(raw, &hardware)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	var bmc rufiov1alpha1.BaseboardManagement
+	var bmc rufiov1alpha1.Machine
 	raw, err = reader.Read()
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	err = yaml.Unmarshal(raw, &bmc)
@@ -67,7 +67,7 @@ func AssertTinkerbellHardwareRepresentsMachine(g *gomega.WithT, h tinkv1alpha1.H
 	g.Expect(h.ObjectMeta.Name).To(gomega.Equal(m.Hostname))
 }
 
-func AssertTinkerbellBMCRepresentsMachine(g *gomega.WithT, b rufiov1alpha1.BaseboardManagement, m hardware.Machine) {
+func AssertTinkerbellBMCRepresentsMachine(g *gomega.WithT, b rufiov1alpha1.Machine, m hardware.Machine) {
 	g.Expect(b.Spec.Connection.Host).To(gomega.Equal(m.BMCIPAddress))
 }
 

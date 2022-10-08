@@ -263,7 +263,7 @@ For example, at the start of a new provisioning event, you would see something l
 kubectl logs -n capt-system capt-controller-manager-9f8b95b-frbq | less
 ```
 ```
-..."Created BMCJob to get hardware ready for provisioning"...
+..."Created Job to get hardware ready for provisioning"...
 ```
 
 You can follow this output to see the machine as it goes through the provisioning process.

@@ -28,8 +28,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.10.0
 	github.com/stretchr/testify v1.8.0
-	github.com/tinkerbell/rufio v0.0.0-20220606134123-599b7401b5cc
-	github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac
+	github.com/tinkerbell/rufio v0.1.0
+	github.com/tinkerbell/tink v0.8.0
 	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.0.0-20220525230936-793ad666bf5e
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8

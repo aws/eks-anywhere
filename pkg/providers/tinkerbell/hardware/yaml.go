@@ -67,18 +67,18 @@ func (yw *TinkerbellManifestYAML) write(data []byte) error {
 }
 
 // TODO(chrisdoherty4) Patch these types so we can generate yamls again with the new Hardware
-// and BaseboardManagement types.
+// and Machine(BMC) types.
 
 func marshalTinkerbellHardwareYAML(m Machine) ([]byte, error) {
 	return yaml.Marshal(hardwareFromMachine(m))
 }
 
 func marshalTinkerbellBMCYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(baseboardManagementComputerFromMachine(m))
+	return yaml.Marshal(bmcMachineComputerFromMachine(m))
 }
 
 func marshalSecretYAML(m Machine) ([]byte, error) {
-	return yaml.Marshal(baseboardManagementSecretFromMachine(m))
+	return yaml.Marshal(bmcMachineSecretFromMachine(m))
 }
 
 // CreateOrStdout will create path and return an *os.File if path is not empty. If path is empty

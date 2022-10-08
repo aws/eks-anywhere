@@ -62,7 +62,7 @@ func WithSecretNameIndex() CatalogueOption {
 	}
 }
 
-// SecretCatalogueWriter converts Machine instances to Tinkerbell BaseboardManagement and inserts them
+// SecretCatalogueWriter converts Machine instances to Tinkerbell Machine(BMC) and inserts them
 // in a catalogue.
 type SecretCatalogueWriter struct {
 	catalogue *Catalogue
@@ -75,15 +75,15 @@ func NewSecretCatalogueWriter(catalogue *Catalogue) *SecretCatalogueWriter {
 	return &SecretCatalogueWriter{catalogue: catalogue}
 }
 
-// Write converts m to a Tinkerbell BaseboardManagement and inserts it into w's Catalogue.
+// Write converts m to a Tinkerbell Machine(BMC) and inserts it into w's Catalogue.
 func (w *SecretCatalogueWriter) Write(m Machine) error {
 	if m.HasBMC() {
-		return w.catalogue.InsertSecret(baseboardManagementSecretFromMachine(m))
+		return w.catalogue.InsertSecret(bmcMachineSecretFromMachine(m))
 	}
 	return nil
 }
 
-func baseboardManagementSecretFromMachine(m Machine) *corev1.Secret {
+func bmcMachineSecretFromMachine(m Machine) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: newSecretTypeMeta(),
 		ObjectMeta: v1.ObjectMeta{

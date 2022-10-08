@@ -15,7 +15,7 @@ func TestCatalogue_BMC_Insert(t *testing.T) {
 
 	catalogue := hardware.NewCatalogue()
 
-	err := catalogue.InsertBMC(&v1alpha1.BaseboardManagement{})
+	err := catalogue.InsertBMC(&v1alpha1.Machine{})
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	g.Expect(catalogue.TotalBMCs()).To(gomega.Equal(1))
 }
@@ -35,7 +35,7 @@ func TestCatalogue_BMC_Indexed(t *testing.T) {
 	catalogue := hardware.NewCatalogue(hardware.WithBMCNameIndex())
 
 	const name = "hello"
-	expect := &v1alpha1.BaseboardManagement{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	expect := &v1alpha1.Machine{ObjectMeta: metav1.ObjectMeta{Name: name}}
 	err := catalogue.InsertBMC(expect)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
@@ -51,13 +51,13 @@ func TestCatalogue_BMC_AllBMCsReceivesCopy(t *testing.T) {
 	catalogue := hardware.NewCatalogue(hardware.WithHardwareIDIndex())
 
 	const totalHardware = 1
-	err := catalogue.InsertBMC(&v1alpha1.BaseboardManagement{ObjectMeta: metav1.ObjectMeta{Name: "foo"}})
+	err := catalogue.InsertBMC(&v1alpha1.Machine{ObjectMeta: metav1.ObjectMeta{Name: "foo"}})
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	changedHardware := catalogue.AllBMCs()
 	g.Expect(changedHardware).To(gomega.HaveLen(totalHardware))
 
-	changedHardware[0] = &v1alpha1.BaseboardManagement{ObjectMeta: metav1.ObjectMeta{Name: "qux"}}
+	changedHardware[0] = &v1alpha1.Machine{ObjectMeta: metav1.ObjectMeta{Name: "qux"}}
 
 	unchangedHardware := catalogue.AllBMCs()
 	g.Expect(unchangedHardware).ToNot(gomega.Equal(changedHardware))

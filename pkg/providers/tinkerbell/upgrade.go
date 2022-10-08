@@ -185,8 +185,8 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
-	// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-	if err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace); err != nil {
+	// Waiting to ensure all the new and exisiting BMC Machine connections are valid.
+	if err := p.providerKubectlClient.WaitForBMCMachines(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace); err != nil {
 		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}
 

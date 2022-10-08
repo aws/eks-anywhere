@@ -38,7 +38,7 @@ type Catalogue struct {
 	hardware      []*tinkv1alpha1.Hardware
 	hardwareIndex Indexer
 
-	bmcs     []*rufiov1alpha1.BaseboardManagement
+	bmcs     []*rufiov1alpha1.Machine
 	bmcIndex Indexer
 
 	secrets     []*corev1.Secret
@@ -52,7 +52,7 @@ type CatalogueOption func(*Catalogue)
 func NewCatalogue(opts ...CatalogueOption) *Catalogue {
 	catalogue := &Catalogue{
 		hardwareIndex: NewFieldIndexer(&tinkv1alpha1.Hardware{}),
-		bmcIndex:      NewFieldIndexer(&rufiov1alpha1.BaseboardManagement{}),
+		bmcIndex:      NewFieldIndexer(&rufiov1alpha1.Machine{}),
 		secretIndex:   NewFieldIndexer(&corev1.Secret{}),
 	}
 
@@ -90,13 +90,13 @@ func ParseYAMLCatalogue(catalogue *Catalogue, r io.Reader) error {
 		if err = yaml.Unmarshal(manifest, &resource); err != nil {
 			return err
 		}
-
+		fmt.Println(resource.GetKind())
 		switch resource.GetKind() {
 		case "Hardware":
 			if err := catalogueSerializedHardware(catalogue, manifest); err != nil {
 				return err
 			}
-		case "BaseboardManagement":
+		case "Machine":
 			if err := catalogueSerializedBMC(catalogue, manifest); err != nil {
 				return err
 			}
@@ -120,7 +120,7 @@ func catalogueSerializedHardware(catalogue *Catalogue, manifest []byte) error {
 }
 
 func catalogueSerializedBMC(catalogue *Catalogue, manifest []byte) error {
-	var bmc rufiov1alpha1.BaseboardManagement
+	var bmc rufiov1alpha1.Machine
 	if err := yaml.UnmarshalStrict(manifest, &bmc); err != nil {
 		return fmt.Errorf("unable to parse bmc manifest: %v", err)
 	}
@@ -165,7 +165,7 @@ func MarshalCatalogue(c *Catalogue) ([]byte, error) {
 }
 
 // NewMachineCatalogueWriter creates a MachineWriter instance that writes Machine instances to
-// catalogue including its BaseboardManagement and Secret data.
+// catalogue including its Machine(bmc) and Secret data.
 func NewMachineCatalogueWriter(catalogue *Catalogue) MachineWriter {
 	return MultiMachineWriter(
 		NewHardwareCatalogueWriter(catalogue),
