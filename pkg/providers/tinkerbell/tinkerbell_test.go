@@ -409,10 +409,41 @@ func TestPostBootstrapSetupSuccess(t *testing.T) {
 	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
 
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	if err := provider.readCSVToCatalogue(); err != nil {
+		t.Fatalf("failed to read hardware csv: %v", err)
+	}
 
 	err := provider.PostBootstrapSetup(ctx, provider.clusterConfig, cluster)
 	if err != nil {
 		t.Fatalf("failed PostBootstrapSetup: %v", err)
+	}
+}
+
+func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	docker := stackmocks.NewMockDocker(mockCtrl)
+	helm := stackmocks.NewMockHelm(mockCtrl)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	writer := filewritermocks.NewMockFileWriter(mockCtrl)
+	cluster := &types.Cluster{Name: "test", KubeconfigFile: "test.kubeconfig"}
+	ctx := context.Background()
+	forceCleanup := false
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
+
+	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+	if err := provider.readCSVToCatalogue(); err != nil {
+		t.Fatalf("failed to read hardware csv: %v", err)
+	}
+
+	err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+	if err != nil {
+		t.Fatalf("failed PostMoveManagementToBootstrap: %v", err)
 	}
 }
 
