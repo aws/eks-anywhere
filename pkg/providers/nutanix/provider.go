@@ -219,7 +219,7 @@ func (p *Provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -232,7 +232,7 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldNdc, newNdc
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldNdc, newNdc, oldNmc, newNmc)
+	return AnyImmutableFieldChanged(oldNmc, newNmc)
 }
 
 func nutanixIdentifierChanged(old, new v1alpha1.NutanixResourceIdentifier) bool {
@@ -245,7 +245,7 @@ func nutanixIdentifierChanged(old, new v1alpha1.NutanixResourceIdentifier) bool 
 	return false
 }
 
-func AnyImmutableFieldChanged(oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
+func AnyImmutableFieldChanged(oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
 	if oldNmc.Spec.MemorySize != newNmc.Spec.MemorySize {
 		return true
 	}
@@ -288,7 +288,7 @@ func (p *Provider) getWorkerNodeMachineConfigs(ctx context.Context, workloadClus
 
 func (p *Provider) needsNewMachineTemplate(currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, ndc *v1alpha1.NutanixDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration, oldWorkerMachineConfig *v1alpha1.NutanixMachineConfig, newWorkerMachineConfig *v1alpha1.NutanixMachineConfig) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, ndc, p.datacenterConfig, oldWorkerMachineConfig, newWorkerMachineConfig)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, oldWorkerMachineConfig, newWorkerMachineConfig)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -302,7 +302,7 @@ func (p *Provider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1
 	return true, nil
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
@@ -313,7 +313,7 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldNdc, newNdc *v1
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldNdc, newNdc, oldNmc, newNmc)
+	return AnyImmutableFieldChanged(oldNmc, newNmc)
 }
 
 func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeNmc *v1alpha1.NutanixMachineConfig, newWorkerNodeNmc *v1alpha1.NutanixMachineConfig) bool {
@@ -346,12 +346,7 @@ func (p *Provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	if err != nil {
 		return nil, nil, err
 	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec,
-		newClusterSpec,
-		ndc,
-		p.datacenterConfig,
-		controlPlaneNutanixMachineConfig,
-		controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, controlPlaneNutanixMachineConfig, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.kubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, eksaCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
