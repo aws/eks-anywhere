@@ -2620,6 +2620,17 @@ func TestKubectlSearchNutanixMachineConfig(t *testing.T) {
 	tt.Expect(items).To(HaveLen(1))
 }
 
+func TestKubectlSearchNutanixMachineConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "-o", "json", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--field-selector=metadata.name=eksa-unit-test",
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	items, err := tt.k.SearchNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(items).To(BeNil())
+}
+
 func TestKubectlSearchNutanixDatacenterConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(
@@ -2629,6 +2640,17 @@ func TestKubectlSearchNutanixDatacenterConfig(t *testing.T) {
 	items, err := tt.k.SearchNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
 	tt.Expect(err).ToNot(HaveOccurred())
 	tt.Expect(items).To(HaveLen(1))
+}
+
+func TestKubectlSearchNutanixDatacenterConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "-o", "json", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--field-selector=metadata.name=eksa-unit-test",
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	items, err := tt.k.SearchNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(items).To(BeNil())
 }
 
 func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
@@ -2642,6 +2664,17 @@ func TestKubectlGetEksaNutanixMachineConfig(t *testing.T) {
 	tt.Expect(item).ToNot(BeNil())
 }
 
+func TestKubectlGetEksaNutanixMachineConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(gomock.Any(), "get",
+		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	item, err := tt.k.GetEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(item).To(BeNil())
+}
+
 func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "get",
@@ -2653,6 +2686,17 @@ func TestKubectlGetEksaNutanixDatacenterConfig(t *testing.T) {
 	tt.Expect(item).ToNot(BeNil())
 }
 
+func TestKubectlGetEksaNutanixDatacenterConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(gomock.Any(), "get",
+		[]string{"--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	item, err := tt.k.GetEksaNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)
+	tt.Expect(err).To(HaveOccurred())
+	tt.Expect(item).To(BeNil())
+}
+
 func TestKubectlDeleteEksaNutanixDatacenterConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
@@ -2662,6 +2706,15 @@ func TestKubectlDeleteEksaNutanixDatacenterConfig(t *testing.T) {
 	tt.Expect(tt.k.DeleteEksaNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).To(Succeed())
 }
 
+func TestKubectlDeleteEksaNutanixDatacenterConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(gomock.Any(), "delete",
+		[]string{"nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	tt.Expect(tt.k.DeleteEksaNutanixDatacenterConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).NotTo(Succeed())
+}
+
 func TestKubectlDeleteEksaNutanixMachineConfig(t *testing.T) {
 	tt := newKubectlTest(t)
 	tt.e.EXPECT().Execute(gomock.Any(), "delete",
@@ -2669,4 +2722,13 @@ func TestKubectlDeleteEksaNutanixMachineConfig(t *testing.T) {
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 	).Return(bytes.Buffer{}, nil)
 	tt.Expect(tt.k.DeleteEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).To(Succeed())
+}
+
+func TestKubectlDeleteEksaNutanixMachineConfigError(t *testing.T) {
+	tt := newKubectlTest(t)
+	tt.e.EXPECT().Execute(gomock.Any(), "delete",
+		[]string{"nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test", "--kubeconfig", tt.kubeconfig, "--namespace", tt.namespace, "--ignore-not-found=true"},
+		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
+	).Return(bytes.Buffer{}, fmt.Errorf("error"))
+	tt.Expect(tt.k.DeleteEksaNutanixMachineConfig(tt.ctx, "eksa-unit-test", tt.kubeconfig, tt.namespace)).NotTo(Succeed())
 }
