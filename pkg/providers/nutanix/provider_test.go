@@ -3,7 +3,6 @@ package nutanix
 import (
 	"bytes"
 	"context"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"os"
 	"testing"
 	"time"
@@ -13,6 +12,7 @@ import (
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/test"

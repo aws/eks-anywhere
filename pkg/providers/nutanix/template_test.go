@@ -68,7 +68,13 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cpSpec)
 
-	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, nil, nil)
+	workloadTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	kubeadmconfigTemplateNames := map[string]string{
+		"eksa-unit-test": "eksa-unit-test",
+	}
+	workerSpec, err := builder.GenerateCAPISpecWorkers(buildSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	assert.NoError(t, err)
 	assert.NotNil(t, workerSpec)
 

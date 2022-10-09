@@ -45,12 +45,12 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   replicas: {{.controlPlaneReplicas}}
-  version: "{{.kubernetesVersion }}"
+  version: "{{.kubernetesVersion}}"
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: NutanixMachineTemplate
-      name: "{{.clusterName}}-mt-0"
+      name: "{{.controlPlaneTemplateName}}"
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: "{{.kubernetesRepository}}"
@@ -150,3 +150,26 @@ spec:
     postKubeadmCommands:
       - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
     useExperimentalRetryJoin: true
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.controlPlaneTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.vcpusPerSocket}}
+      vcpuSockets: {{.vcpuSockets}}
+      memorySize: {{.memorySize}}
+      systemDiskSize: {{.systemDiskSize}}
+      image:
+        type: name
+        name: "{{.imageName}}"
+      cluster:
+        type: name
+        name: "{{.nutanixPEClusterName}}"
+      subnet:
+        - type: name
+          name: "{{.subnetName}}"

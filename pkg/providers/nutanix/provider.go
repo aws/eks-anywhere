@@ -235,10 +235,17 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldNdc, newNdc
 	return AnyImmutableFieldChanged(oldNdc, newNdc, oldNmc, newNmc)
 }
 
-func AnyImmutableFieldChanged(oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
-	if oldNmc.Spec.Image != newNmc.Spec.Image {
+func nutanixIdentifierChanged(old, new v1alpha1.NutanixResourceIdentifier) bool {
+	if old.Type == v1alpha1.NutanixIdentifierName && old.Name != nil && new.Name != nil && *old.Name != *new.Name {
 		return true
 	}
+	if old.Type == v1alpha1.NutanixIdentifierUUID && old.UUID != nil && new.UUID != nil && *old.UUID != *new.UUID {
+		return true
+	}
+	return false
+}
+
+func AnyImmutableFieldChanged(oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, oldNmc, newNmc *v1alpha1.NutanixMachineConfig) bool {
 	if oldNmc.Spec.MemorySize != newNmc.Spec.MemorySize {
 		return true
 	}
@@ -251,13 +258,16 @@ func AnyImmutableFieldChanged(oldNdc, newNdc *v1alpha1.NutanixDatacenterConfig, 
 	if oldNmc.Spec.VCPUsPerSocket != newNmc.Spec.VCPUsPerSocket {
 		return true
 	}
-	if oldNmc.Spec.Cluster != newNmc.Spec.Cluster {
-		return true
-	}
-	if oldNmc.Spec.Subnet != newNmc.Spec.Subnet {
-		return true
-	}
 	if oldNmc.Spec.OSFamily != newNmc.Spec.OSFamily {
+		return true
+	}
+	if nutanixIdentifierChanged(oldNmc.Spec.Image, newNmc.Spec.Image) {
+		return true
+	}
+	if nutanixIdentifierChanged(oldNmc.Spec.Cluster, newNmc.Spec.Cluster) {
+		return true
+	}
+	if nutanixIdentifierChanged(oldNmc.Spec.Subnet, newNmc.Spec.Subnet) {
 		return true
 	}
 
