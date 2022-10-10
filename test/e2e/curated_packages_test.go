@@ -14,6 +14,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/test/framework"
@@ -456,8 +457,8 @@ func TestCPackagesNutanixKubernetes120SimpleFlow(t *testing.T) {
 		framework.NewNutanix(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube120),
-			eksaPackageControllerHelmChartName, eksaPackageControllerHelmURI,
-			eksaPackageControllerHelmVersion, eksaPackageControllerHelmValues),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
@@ -468,8 +469,8 @@ func TestCPackagesNutanixKubernetes121SimpleFlow(t *testing.T) {
 		framework.NewNutanix(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
-			eksaPackageControllerHelmChartName, eksaPackageControllerHelmURI,
-			eksaPackageControllerHelmVersion, eksaPackageControllerHelmValues),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
@@ -480,8 +481,8 @@ func TestCPackagesNutanixKubernetes122SimpleFlow(t *testing.T) {
 		framework.NewNutanix(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube122),
-			eksaPackageControllerHelmChartName, eksaPackageControllerHelmURI,
-			eksaPackageControllerHelmVersion, eksaPackageControllerHelmValues),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
@@ -492,8 +493,8 @@ func TestCPackagesNutanixKubernetes123SimpleFlow(t *testing.T) {
 		framework.NewNutanix(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube123),
-			eksaPackageControllerHelmChartName, eksaPackageControllerHelmURI,
-			eksaPackageControllerHelmVersion, eksaPackageControllerHelmValues),
+			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
+			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
 		framework.WithEnvVar(features.NutanixProviderEnvVar, "true"),
 	)
 	runCuratedPackageInstallSimpleFlow(test)
