@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestParseConfig(t *testing.T) {
@@ -52,7 +53,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "VSphereMachineConfig",
 								Name: "eksa-unit-test",
@@ -154,7 +155,7 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "CloudStackMachineConfig",
 								Name: "eksa-unit-test",
@@ -249,7 +250,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "SnowMachineConfig",
 								Name: "eksa-unit-test",
@@ -334,7 +335,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{
@@ -485,7 +486,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{

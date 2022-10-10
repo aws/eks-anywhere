@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestClusterDefault(t *testing.T) {
@@ -966,7 +967,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -981,7 +982,7 @@ func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) 
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -1096,11 +1097,11 @@ func TestClusterValidateUpdateInvalidType(t *testing.T) {
 }
 
 func TestClusterValidateUpdateSuccess(t *testing.T) {
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
 	cOld := createCluster()
 	cOld.Spec.WorkerNodeGroupConfigurations = workerConfiguration
 	c := cOld.DeepCopy()
-	c.Spec.WorkerNodeGroupConfigurations[0].Count = 10
+	c.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(10)
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
@@ -1109,7 +1110,7 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 func TestClusterCreateManagementCluster(t *testing.T) {
 	features.ClearCache()
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5)})
 	cluster := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: workerConfiguration,
@@ -1131,8 +1132,8 @@ func TestClusterCreateCloudStackMultipleWorkerNodeGroupsValidation(t *testing.T)
 	t.Setenv(features.FullLifecycleAPIEnvVar, "true")
 	cluster := createCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
-		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}},
-		v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test2", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
+		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}},
+		v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(5), Name: "test2", MachineGroupRef: &v1alpha1.Ref{Name: "ref-name"}})
 
 	cluster.Spec.ManagementCluster.Name = "management-cluster"
 
@@ -1146,7 +1147,7 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 	cluster := createCluster()
 	cluster.Spec.WorkerNodeGroupConfigurations = append([]v1alpha1.WorkerNodeGroupConfiguration{},
 		v1alpha1.WorkerNodeGroupConfiguration{
-			Count: 5,
+			Count: ptr.Int(5),
 			Name:  "md-0",
 			MachineGroupRef: &v1alpha1.Ref{
 				Name: "test",
@@ -1177,7 +1178,7 @@ func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
 		Labels: map[string]string{
 			"test": "val1",
 		},
-		Count: 1,
+		Count: ptr.Int(1),
 		MachineGroupRef: &v1alpha1.Ref{
 			Name: "test",
 		},
@@ -1195,7 +1196,7 @@ func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 				Taints: []v1.Taint{{
 					Key:    "test",
@@ -1216,7 +1217,7 @@ func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 			}},
 		},
@@ -1232,7 +1233,7 @@ func TestClusterUpdateWorkerNodeNewMachineGroupRefNilError(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count:           1,
+				Count:           ptr.Int(1),
 				Name:            "test",
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			}},
@@ -1250,7 +1251,7 @@ func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				Name:  "test",
 				Labels: map[string]string{
 					"test": "val1",
@@ -1625,7 +1626,7 @@ func TestClusterValidateUpdateValidManagementCluster(t *testing.T) {
 
 			tt.oldCluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 4,
+				Count: ptr.Int(4),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
@@ -1690,7 +1691,7 @@ func TestClusterValidateUpdateValidWorkloadCluster(t *testing.T) {
 			clusterOld.SetManagedBy("my-management-cluster")
 			tt.clusterNew.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 4,
+				Count: ptr.Int(4),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",
@@ -1756,7 +1757,7 @@ func createCluster(opts ...clusterOpt) *v1alpha1.Cluster {
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 1,
+				Count: ptr.Int(1),
 				MachineGroupRef: &v1alpha1.Ref{
 					Kind: v1alpha1.VSphereMachineConfigKind,
 					Name: "eksa-unit-test",

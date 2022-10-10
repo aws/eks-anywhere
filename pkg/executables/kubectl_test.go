@@ -30,6 +30,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 const (
@@ -1244,7 +1245,7 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 			expectedSpec: v1alpha1.ClusterSpec{
 				KubernetesVersion:             "1.19",
 				ControlPlaneConfiguration:     v1alpha1.ControlPlaneConfiguration{Count: 3},
-				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3}},
+				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3)}},
 				DatacenterRef: v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
 					Name: "test-cluster",

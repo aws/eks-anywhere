@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 //go:embed testdata/vsphereKubeadmcontrolplane.yaml
@@ -313,7 +314,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
@@ -441,7 +442,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Taints: []corev1.Taint{
 						{
@@ -561,7 +562,7 @@ func TestClusterReconcilerReconcileVSphere(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Labels: map[string]string{
 						"Key1": "Val1",
@@ -780,7 +781,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
@@ -882,7 +883,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Taints: []corev1.Taint{
 						{
@@ -986,7 +987,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 					Labels: map[string]string{
 						"Key1": "Val1",
@@ -1077,7 +1078,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 
 				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
 					Name:            "md-0",
-					Count:           3,
+					Count:           ptr.Int(3),
 					MachineGroupRef: nil,
 				}
 

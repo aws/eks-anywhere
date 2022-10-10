@@ -6,6 +6,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type ValidClusterSpecBuilder struct {
@@ -56,7 +57,7 @@ func (b ValidClusterSpecBuilder) Build() *tinkerbell.ClusterSpec {
 						WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 							{
 								Name:  "worker-node-group-0",
-								Count: 1,
+								Count: ptr.Int(1),
 								MachineGroupRef: &v1alpha1.Ref{
 									Kind: v1alpha1.TinkerbellMachineConfigKind,
 									Name: b.WorkerNodeGroupMachineName,

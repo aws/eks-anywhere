@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/gitops/flux"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createcluster"
 	createmocks "github.com/aws/eks-anywhere/pkg/validations/createcluster/mocks"
@@ -78,7 +79,7 @@ func (c *createClusterValidationTest) expectValidDockerClusterSpec() {
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
 				Name:  "md-0",
-				Count: 1,
+				Count: ptr.Int(1),
 			}},
 		},
 	}
