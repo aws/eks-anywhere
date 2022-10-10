@@ -345,3 +345,47 @@ func TestSnowKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 	)
 	runConformanceFlow(test)
 }
+
+func TestNutanixKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar("NUTANIX_PROVIDER", "true"),
+	)
+	runConformanceFlow(test)
+}
+
+func TestNutanixKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar("NUTANIX_PROVIDER", "true"),
+	)
+	runConformanceFlow(test)
+}
+
+func TestNutanixKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar("NUTANIX_PROVIDER", "true"),
+	)
+	runConformanceFlow(test)
+}
+
+func TestNutanixKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewNutanix(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar("NUTANIX_PROVIDER", "true"),
+	)
+	runConformanceFlow(test)
+}
