@@ -132,7 +132,7 @@ func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc
 		return err
 	}
 	if exists && !force {
-		return fmt.Errorf("group %s already exists, please use --force to ignore", c.Spec.GroupName)
+		return fmt.Errorf("group %s already exists, please use force=true to ignore", c.Spec.GroupName)
 	}
 
 	roles := []string{c.Spec.GlobalRole, c.Spec.UserRole, c.Spec.AdminRole}
@@ -142,7 +142,7 @@ func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc
 			return err
 		}
 		if exists && !force {
-			return fmt.Errorf("role %s already exists, please use --force to ignore", r)
+			return fmt.Errorf("role %s already exists, please use force=true to ignore", r)
 		}
 	}
 

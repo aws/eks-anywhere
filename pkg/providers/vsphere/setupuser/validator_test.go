@@ -4,8 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser"
 )
 
@@ -123,6 +125,54 @@ func TestGenerateConfigSetDefaults(t *testing.T) {
 			g.Expect(c.Spec.GlobalRole).To(Equal(setupuser.DefaultGlobalRole))
 			g.Expect(c.Spec.UserRole).To(Equal(setupuser.DefaultUserRole))
 			g.Expect(c.Spec.AdminRole).To(Equal(setupuser.DefaultAdminRole))
+		},
+		)
+	}
+}
+
+func TestValidateVSphereForceFalseObjects(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name     string
+		filepath string
+		wantErr  string
+		prepare  func(context.Context, *setupuser.VSphereSetupUserConfig, *mocks.MockProviderGovcClient)
+	}{
+		{
+			name:     "test validate happy path",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(false, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+
+			c, err := setupuser.GenerateConfig(ctx, tt.filepath)
+			if err != nil {
+				t.Fatalf("failed to generate config from %s with %s", tt.filepath, err)
+			}
+			ctrl := gomock.NewController(t)
+			gc := mocks.NewMockProviderGovcClient(ctrl)
+			tt.prepare(ctx, c, gc)
+
+			force := false
+			err = setupuser.ValidateVSphereObjects(ctx, c, gc, force)
+
+			if tt.wantErr == "" {
+				g.Expect(err).To(Succeed())
+				g.Expect(c).ToNot(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
 		},
 		)
 	}

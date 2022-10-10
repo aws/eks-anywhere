@@ -24,22 +24,22 @@ func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
 }
 
 func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
-	err := CreateGroup(ctx, vsuc, govc)
+	err := createGroup(ctx, vsuc, govc)
 	if err != nil {
 		return err
 	}
 
-	err = AddUserToGroup(ctx, vsuc, govc)
+	err = addUserToGroup(ctx, vsuc, govc)
 	if err != nil {
 		return err
 	}
 
-	err = CreateRoles(ctx, vsuc, govc)
+	err = createRoles(ctx, vsuc, govc)
 	if err != nil {
 		return err
 	}
 
-	err = AssociateRolesToObjects(ctx, vsuc, govc)
+	err = associateRolesToObjects(ctx, vsuc, govc)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func CreateUser(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.
 	return nil
 }
 
-func CreateGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	exists, err := govc.GroupExists(ctx, vsuc.Spec.GroupName)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func CreateGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere
 	return nil
 }
 
-func CreateRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// create roles
 	for _, r := range getRoles(vsuc) {
 		exists, err := govc.RoleExists(ctx, r.name)
@@ -97,7 +97,7 @@ func CreateRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere
 	return nil
 }
 
-func AssociateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// global on root
 	// admin to template and vm folders
 	// user on network, datastore, and resourcepool
@@ -122,7 +122,7 @@ func AssociateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, 
 	return nil
 }
 
-func AddUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+func addUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// associate user to group
 	err := govc.AddUserToGroup(ctx, vsuc.Spec.GroupName, vsuc.Spec.Username)
 	logger.V(0).Info(fmt.Sprintf("Adding user %s to group %s\n", vsuc.Spec.Username, vsuc.Spec.GroupName))
