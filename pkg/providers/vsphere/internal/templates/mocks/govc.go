@@ -49,6 +49,20 @@ func (mr *MockGovcClientMockRecorder) AddTag(ctx, path, tag interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockGovcClient)(nil).AddTag), ctx, path, tag)
 }
 
+// AddUserToGroup mocks base method.
+func (m *MockGovcClient) AddUserToGroup(ctx context.Context, name, username string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddUserToGroup", ctx, name, username)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddUserToGroup indicates an expected call of AddUserToGroup.
+func (mr *MockGovcClientMockRecorder) AddUserToGroup(ctx, name, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToGroup", reflect.TypeOf((*MockGovcClient)(nil).AddUserToGroup), ctx, name, username)
+}
+
 // CreateCategoryForVM mocks base method.
 func (m *MockGovcClient) CreateCategoryForVM(ctx context.Context, name string) error {
 	m.ctrl.T.Helper()
@@ -61,6 +75,20 @@ func (m *MockGovcClient) CreateCategoryForVM(ctx context.Context, name string) e
 func (mr *MockGovcClientMockRecorder) CreateCategoryForVM(ctx, name interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateCategoryForVM", reflect.TypeOf((*MockGovcClient)(nil).CreateCategoryForVM), ctx, name)
+}
+
+// CreateGroup mocks base method.
+func (m *MockGovcClient) CreateGroup(ctx context.Context, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGroup", ctx, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateGroup indicates an expected call of CreateGroup.
+func (mr *MockGovcClientMockRecorder) CreateGroup(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockGovcClient)(nil).CreateGroup), ctx, name)
 }
 
 // CreateLibrary mocks base method.
@@ -77,6 +105,20 @@ func (mr *MockGovcClientMockRecorder) CreateLibrary(ctx, datastore, library inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLibrary", reflect.TypeOf((*MockGovcClient)(nil).CreateLibrary), ctx, datastore, library)
 }
 
+// CreateRole mocks base method.
+func (m *MockGovcClient) CreateRole(ctx context.Context, name string, privileges []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRole", ctx, name, privileges)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateRole indicates an expected call of CreateRole.
+func (mr *MockGovcClientMockRecorder) CreateRole(ctx, name, privileges interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRole", reflect.TypeOf((*MockGovcClient)(nil).CreateRole), ctx, name, privileges)
+}
+
 // CreateTag mocks base method.
 func (m *MockGovcClient) CreateTag(ctx context.Context, tag, category string) error {
 	m.ctrl.T.Helper()
@@ -89,6 +131,20 @@ func (m *MockGovcClient) CreateTag(ctx context.Context, tag, category string) er
 func (mr *MockGovcClientMockRecorder) CreateTag(ctx, tag, category interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockGovcClient)(nil).CreateTag), ctx, tag, category)
+}
+
+// CreateUser mocks base method.
+func (m *MockGovcClient) CreateUser(ctx context.Context, username, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", ctx, username, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockGovcClientMockRecorder) CreateUser(ctx, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockGovcClient)(nil).CreateUser), ctx, username, password)
 }
 
 // DeleteLibraryElement mocks base method.
@@ -132,6 +188,21 @@ func (m *MockGovcClient) GetLibraryElementContentVersion(ctx context.Context, el
 func (mr *MockGovcClientMockRecorder) GetLibraryElementContentVersion(ctx, element interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLibraryElementContentVersion", reflect.TypeOf((*MockGovcClient)(nil).GetLibraryElementContentVersion), ctx, element)
+}
+
+// GroupExists mocks base method.
+func (m *MockGovcClient) GroupExists(ctx context.Context, name string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GroupExists", ctx, name)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GroupExists indicates an expected call of GroupExists.
+func (mr *MockGovcClientMockRecorder) GroupExists(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GroupExists", reflect.TypeOf((*MockGovcClient)(nil).GroupExists), ctx, name)
 }
 
 // ImportTemplate mocks base method.
@@ -193,6 +264,21 @@ func (mr *MockGovcClientMockRecorder) ListTags(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockGovcClient)(nil).ListTags), ctx)
 }
 
+// RoleExists mocks base method.
+func (m *MockGovcClient) RoleExists(ctx context.Context, name string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RoleExists", ctx, name)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RoleExists indicates an expected call of RoleExists.
+func (mr *MockGovcClientMockRecorder) RoleExists(ctx, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RoleExists", reflect.TypeOf((*MockGovcClient)(nil).RoleExists), ctx, name)
+}
+
 // SearchTemplate mocks base method.
 func (m *MockGovcClient) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
 	m.ctrl.T.Helper()
@@ -206,4 +292,33 @@ func (m *MockGovcClient) SearchTemplate(ctx context.Context, datacenter string, 
 func (mr *MockGovcClientMockRecorder) SearchTemplate(ctx, datacenter, machineConfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchTemplate", reflect.TypeOf((*MockGovcClient)(nil).SearchTemplate), ctx, datacenter, machineConfig)
+}
+
+// SetGroupRoleOnObject mocks base method.
+func (m *MockGovcClient) SetGroupRoleOnObject(ctx context.Context, principal, role, object, domain string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetGroupRoleOnObject", ctx, principal, role, object, domain)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetGroupRoleOnObject indicates an expected call of SetGroupRoleOnObject.
+func (mr *MockGovcClientMockRecorder) SetGroupRoleOnObject(ctx, principal, role, object, domain interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGroupRoleOnObject", reflect.TypeOf((*MockGovcClient)(nil).SetGroupRoleOnObject), ctx, principal, role, object, domain)
+}
+
+// UserExists mocks base method.
+func (m *MockGovcClient) UserExists(ctx context.Context, username string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserExists", ctx, username)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserExists indicates an expected call of UserExists.
+func (mr *MockGovcClientMockRecorder) UserExists(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExists", reflect.TypeOf((*MockGovcClient)(nil).UserExists), ctx, username)
 }

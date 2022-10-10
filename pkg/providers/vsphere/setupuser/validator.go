@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 const (
@@ -122,4 +124,27 @@ func setDefaults(c *VSphereSetupUserConfig) {
 	if c.Spec.Username == "" {
 		c.Spec.Username = DefaultUsername
 	}
+}
+
+func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient, force bool) error {
+	exists, err := govc.GroupExists(ctx, c.Spec.GroupName)
+	if err != nil {
+		return err
+	}
+	if exists && !force {
+		return fmt.Errorf("group %s already exists, please use --force to ignore", c.Spec.GroupName)
+	}
+
+	roles := []string{c.Spec.GlobalRole, c.Spec.UserRole, c.Spec.AdminRole}
+	for _, r := range roles {
+		exists, err := govc.RoleExists(ctx, r)
+		if err != nil {
+			return err
+		}
+		if exists && !force {
+			return fmt.Errorf("role %s already exists, please use --force to ignore", r)
+		}
+	}
+
+	return nil
 }

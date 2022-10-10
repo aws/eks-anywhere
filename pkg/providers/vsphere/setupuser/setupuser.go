@@ -8,7 +8,12 @@ import (
 	"strconv"
 
 	"github.com/aws/eks-anywhere/pkg/config"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+)
+
+const (
+	vSphereRootPath = "/"
 )
 
 func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
@@ -18,7 +23,31 @@ func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
 	return nil
 }
 
-func CreateUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupUserConfig, password string) error {
+func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+	err := CreateGroup(ctx, vsuc, govc)
+	if err != nil {
+		return err
+	}
+
+	err = AddUserToGroup(ctx, vsuc, govc)
+	if err != nil {
+		return err
+	}
+
+	err = CreateRoles(ctx, vsuc, govc)
+	if err != nil {
+		return err
+	}
+
+	err = AssociateRolesToObjects(ctx, vsuc, govc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateUser(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient, password string) error {
 	// create user
 	err := govc.CreateUser(ctx, vsuc.Spec.Username, password)
 	if err != nil {
@@ -28,110 +57,75 @@ func CreateUser(ctx context.Context, govc *executables.Govc, vsuc *VSphereSetupU
 	return nil
 }
 
-type SetupVSphereUserTask struct {
-	vsuc *VSphereSetupUserConfig
-	govc *executables.Govc
-	force bool
-}
-
-func NewSetupVSphereUserTask(vsuc *VSphereSetupUserConfig, govc *executables.Govc, force bool) *SetupVSphereUserTask{
-	return &SetupVSphereUserTask{
-		vsuc: vsuc,
-		govc: govc,
-		force: force,
-	}
-}
-	
-
-func (s *SetupVSphereUserTask) CreateGroup(ctx context.Context) error {
-
-	var exists bool
-	var err error
-
-	exists, err = s.govc.GroupExists(ctx, s.vsuc.Spec.GroupName)
-	if err != nil {
-		return err
-	} else if exists && !s.force {
-		return fmt.Errorf("Group %s already exists", s.vsuc.Spec.GroupName)
-	}
-
-	err = s.govc.CreateGroup(ctx, s.vsuc.Spec.GroupName)
+func CreateGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+	exists, err := govc.GroupExists(ctx, vsuc.Spec.GroupName)
 	if err != nil {
 		return err
 	}
-	// else {
-	// 	fmt.Printf("Skipping creating %s because it already exists\n", vsuc.Spec.GroupName)
-	// }
+	if !exists {
+		err = govc.CreateGroup(ctx, vsuc.Spec.GroupName)
+	} else {
+		logger.V(0).Info(fmt.Sprintf("Skipping creating %s because it already exists\n", vsuc.Spec.GroupName))
+	}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func (s *SetupVSphereUserTask) CreateRoles(ctx context.Context) error {
+func CreateRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// create roles
-	for _, r := range getRoles(s.vsuc) {
-		exists, err := s.govc.RoleExists(ctx, r.name)
-
-		if exists && !s.force {
-			return fmt.Errorf("Role %s exists", r.name)
+	for _, r := range getRoles(vsuc) {
+		exists, err := govc.RoleExists(ctx, r.name)
+		if err != nil {
+			return err
 		}
 
 		if !exists {
-			err = s.govc.CreateRole(ctx, r.name, r.privs)
+			err = govc.CreateRole(ctx, r.name, r.privs)
 			if err != nil {
-				fmt.Printf("Failed to create %s role with %v\n", r.name, r.privs)
+				logger.V(0).Info(fmt.Sprintf("Failed to create %s role with %v\n", r.name, r.privs))
 				return err
 			}
-			fmt.Printf("Created %s role\n", r.name)
+			logger.V(0).Info(fmt.Sprintf("Created %s role\n", r.name))
 		} else {
-			fmt.Printf("Skipping creating %s role because it already exists\n", r.name)
+			logger.V(0).Info(fmt.Sprintf("Skipping creating %s role because it already exists\n", r.name))
 		}
 	}
 
 	return nil
 }
 
-func (s *SetupVSphereUserTask) AssociatePermissions(ctx context.Context) error {
+func AssociateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// global on root
 	// admin to template and vm folders
-	// user on User on network, datastore, and resourcepool
+	// user on network, datastore, and resourcepool
 
-	// associate roles to objects and group
-	// for _, ra := range getRequiredAccesses(vsuc) {
+	err := setGroupRoleOnObjects(ctx, vsuc, govc, vsuc.Spec.GlobalRole, []string{vSphereRootPath})
+	if err != nil {
+		return err
+	}
 
-	// 	switch ra.privsContent {
-	// 	case config.VSphereGlobalPrivsFile:
-	// 		err = govc.SetPermission(ctx, vsuc.GroupName, vsuc.GlobalRole, ra.path, vsuc.Domain)
-	// 		fmt.Printf("Set role %s on %s for group %s\n", vsuc.GlobalRole, ra.path, vsuc.GroupName)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 	case config.VSphereUserPrivsFile:
-	// 		err = govc.SetPermission(ctx, vsuc.GroupName, vsuc.UserRole, ra.path, vsuc.Domain)
-	// 		if err != nil {
-	// 			return err
-	// 		}
-	// 		fmt.Printf("Set role %s on %s for group %s\n", vsuc.GlobalRole, ra.path, vsuc.GroupName)
-	// 	}
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
-	// err = govc.SetPermission(ctx, vsuc.GroupName, vsuc.CloudAdmin, vsuc.Templates, vsuc.Domain)
-	// if err != nil {
-	// 	return err
-	// }
-	// err = govc.SetPermission(ctx, vsuc.GroupName, vsuc.CloudAdmin, vsuc.VirtualMachines, vsuc.Domain)
-	// if err != nil {
-	// 	return err
-	// }
+	adminRoleObjects := append(vsuc.Spec.Objects.Folders, vsuc.Spec.Objects.Templates...)
+	err = setGroupRoleOnObjects(ctx, vsuc, govc, vsuc.Spec.AdminRole, adminRoleObjects)
+	if err != nil {
+		return err
+	}
+
+	userRoleObjects := getUserRoleObjects(vsuc)
+	err = setGroupRoleOnObjects(ctx, vsuc, govc, vsuc.Spec.UserRole, userRoleObjects)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (s *SetupVSphereUserTask) AddUserToGroup(ctx context.Context) error {
-
+func AddUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// associate user to group
-	err := s.govc.AddUserToGroup(ctx, s.vsuc.Spec.GroupName, s.vsuc.Spec.Username)
-	fmt.Printf("Adding user %s to group %s\n", s.vsuc.Spec.Username, s.vsuc.Spec.GroupName)
+	err := govc.AddUserToGroup(ctx, vsuc.Spec.GroupName, vsuc.Spec.Username)
+	logger.V(0).Info(fmt.Sprintf("Adding user %s to group %s\n", vsuc.Spec.Username, vsuc.Spec.GroupName))
 	if err != nil {
 		return err
 	}
@@ -139,22 +133,14 @@ func (s *SetupVSphereUserTask) AddUserToGroup(ctx context.Context) error {
 	return nil
 }
 
-func (s *SetupVSphereUserTask) Run(ctx context.Context) error {
+func setGroupRoleOnObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient, role string, objects []string) error {
+	for _, obj := range objects {
 
-
-	err := s.CreateGroup(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = s.AddUserToGroup(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = s.CreateRoles(ctx)
-	if err != nil {
-		return err
+		err := govc.SetGroupRoleOnObject(ctx, vsuc.Spec.GroupName, role, obj, vsuc.Spec.VSphereDomain)
+		if err != nil {
+			return err
+		}
+		logger.V(0).Info(fmt.Sprintf("Set role %s on %s for group %s\n", role, obj, vsuc.Spec.GroupName))
 	}
 
 	return nil
@@ -194,49 +180,8 @@ func getRoles(vsuc *VSphereSetupUserConfig) []vsphereRole {
 	}
 }
 
-// func getRequiredAccesses(vsuc *config.VSphereSetupUserConfig) []RequiredAccess {
-// 	privObjs := []RequiredAccess{
-// 		// validate global root priv settings are correct
-// 		{
-// 			objectType:   vsphereTypeFolder,
-// 			privsContent: config.VSphereGlobalPrivsFile,
-// 			path:         vsphereRootPath,
-// 		},
-
-// 		// validate object-level priv settings are correct
-// 		{
-// 			objectType:   vsphereTypeDatastore,
-// 			privsContent: config.VSphereUserPrivsFile,
-// 			path:         vsuc.Datastore,
-// 		},
-// 		{
-// 			objectType:   vsphereTypeResourcePool,
-// 			privsContent: config.VSphereUserPrivsFile,
-// 			path:         vsuc.ResourcePool,
-// 		},
-// 		{
-// 			objectType:   vsphereTypeNetwork,
-// 			privsContent: config.VSphereUserPrivsFile,
-// 			path:         vsuc.Network,
-// 		},
-// 		// validate Administrator role (all privs) on VM folder and Template folder
-// 		{
-// 			objectType:   vsphereTypeFolder,
-// 			privsContent: config.VSphereAdminPrivsFile,
-// 			path:         vsuc.VirtualMachines,
-// 		},
-// 		// {
-// 		// 	objectType:   "VirtualMachine",
-// 		// 	privsContent: config.VSphereAdminPrivsFile,
-// 		// 	path:         vsuc.Templates,
-// 		// },
-// 		{
-// 			objectType:   vsphereTypeFolder,
-// 			privsContent: config.VSphereAdminPrivsFile,
-// 			path:         vsuc.Templates,
-// 		},
-// 	}
-
-// 	return privObjs
-// }
-
+func getUserRoleObjects(vsuc *VSphereSetupUserConfig) []string {
+	objects := append(vsuc.Spec.Objects.Networks, vsuc.Spec.Objects.Datastores...)
+	objects = append(objects, vsuc.Spec.Objects.ResourcePools...)
+	return objects
+}
