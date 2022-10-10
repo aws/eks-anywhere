@@ -25,6 +25,9 @@ const (
 	jobName     = "eksa-auth-refresher"
 )
 
+//go:embed testdata/packagebundlectrl_test.yaml
+var packageBundleControllerTest string
+
 type packageControllerTest struct {
 	*WithT
 	ctx            context.Context
@@ -66,7 +69,7 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
-			curatedpackages.WithManagementClusterName("mgmt"),
+			curatedpackages.WithManagementClusterName(clusterName),
 		),
 		clusterName:   clusterName,
 		kubeConfig:    kubeConfig,
@@ -108,6 +111,20 @@ func TestInstallControllerSuccess(t *testing.T) {
 	}
 }
 
+func TestInstallControllerSucceedInWorkloadCluster(t *testing.T) {
+	tt := newPackageControllerTest(t)
+	tt.command = curatedpackages.NewPackageControllerClient(
+		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		curatedpackages.WithManagementClusterName("mgmt"),
+	)
+
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+
+	err := tt.command.InstallController(tt.ctx)
+	tt.Expect(err).To(BeNil())
+}
+
 func getPBCSuccess(t *testing.T) func(context.Context, string, string, string, string, *packagesv1.PackageBundleController) error {
 	return func(_ context.Context, _, _, _, _ string, obj *packagesv1.PackageBundleController) error {
 		pbc := &packagesv1.PackageBundleController{
@@ -136,6 +153,7 @@ func TestInstallControllerWithProxy(t *testing.T) {
 		curatedpackages.WithHTTPProxy(tt.httpProxy),
 		curatedpackages.WithHTTPSProxy(tt.httpsProxy),
 		curatedpackages.WithNoProxy(tt.noProxy),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -175,6 +193,7 @@ func TestInstallControllerWithEmptyProxy(t *testing.T) {
 		curatedpackages.WithHTTPProxy(""),
 		curatedpackages.WithHTTPSProxy(""),
 		curatedpackages.WithNoProxy(nil),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -273,6 +292,26 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 	}
 }
 
+func TestPbcCreationSuccess(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
+
+	err := tt.command.InstallPBCResources(tt.ctx)
+	tt.Expect(err).To(BeNil())
+}
+
+func TestPbcCreationFail(t *testing.T) {
+	tt := newPackageControllerTest(t)
+
+	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
+	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, errors.New("creating pbc"))
+
+	err := tt.command.InstallPBCResources(tt.ctx)
+	tt.Expect(err).NotTo(BeNil())
+}
+
 func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
@@ -347,6 +386,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		curatedpackages.WithEksaRegion(""),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 	err = tt.command.InstallController(tt.ctx)
 	if err != nil {
@@ -362,6 +402,7 @@ func TestInstallControllerActiveBundleCustomTimeout(t *testing.T) {
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithActiveBundleTimeout(time.Second),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -437,6 +478,7 @@ func TestInstallControllerActiveBundleTimesOut(t *testing.T) {
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithActiveBundleTimeout(time.Millisecond),
+		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)

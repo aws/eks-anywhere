@@ -16,6 +16,9 @@ import (
 //go:embed config/awssecret.yaml
 var awsSecretYaml string
 
+//go:embed config/packagebundlecontroller.yaml
+var packageBundleContrllerYaml string
+
 const (
 	eksaDefaultRegion = "us-west-2"
 	cronJobName       = "cronjob/cron-ecr-renew"
@@ -74,6 +77,12 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //   - credentials refreshing cron job creation
 //   - activation of a curated packages bundle
 func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
+	// When the management cluster name and current cluster name are different,
+	// it indicates that we are trying to install the controller on a workload cluster.
+	// Instead of installing the controller, install packagebundlecontroller resource.
+	if pc.managementClusterName != pc.clusterName {
+		return pc.InstallPBCResources(ctx)
+	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
 	registry := GetRegistry(pc.uri)
 
@@ -108,6 +117,30 @@ func (pc *PackageControllerClient) InstallController(ctx context.Context) error 
 		return err
 	}
 
+	return nil
+}
+
+// InstallPBCResources installs Curated Packages Bundle Controller Custom Resource
+// This method is used only for Workload clusters
+// Please refer to this documentation: https://github.com/aws/eks-anywhere-packages/blob/main/docs/design/remote-management.md
+func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context) error {
+	templateValues := map[string]string{
+		"clusterName": pc.clusterName,
+		"namespace":   constants.EksaPackagesName,
+	}
+
+	result, err := templater.Execute(packageBundleContrllerYaml, templateValues)
+	if err != nil {
+		return fmt.Errorf("replacing template values %v", err)
+	}
+
+	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
+	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
+	if err != nil {
+		return fmt.Errorf("creating package bundle controller %v", err)
+	}
+
+	fmt.Print(&stdOut)
 	return nil
 }
 
