@@ -37,7 +37,7 @@ func WithLabel(key, value string) WorkerNodeGroupFiller {
 
 func WithCount(count int) WorkerNodeGroupFiller {
 	return func(w *anywherev1.WorkerNodeGroupConfiguration) {
-		w.Count = count
+		w.Count = &count
 	}
 }
 

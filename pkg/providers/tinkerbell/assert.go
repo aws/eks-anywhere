@@ -195,7 +195,7 @@ func MinimumHardwareAvailableAssertionForCreate(catalogue *hardware.Catalogue) C
 		for _, nodeGroup := range spec.WorkerNodeGroupConfigurations() {
 			err := requirements.Add(
 				spec.WorkerNodeGroupMachineConfig(nodeGroup).Spec.HardwareSelector,
-				nodeGroup.Count,
+				*nodeGroup.Count,
 			)
 			if err != nil {
 				return err
@@ -254,10 +254,10 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 					if rollingUpgrade {
 						return fmt.Errorf("cannot perform scale up or down during rolling upgrades")
 					}
-					if nodeGroupNewSpec.Count > workerNodeGrpOldSpec.Count {
+					if *nodeGroupNewSpec.Count > *workerNodeGrpOldSpec.Count {
 						err := requirements.Add(
 							spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-							nodeGroupNewSpec.Count-workerNodeGrpOldSpec.Count,
+							*nodeGroupNewSpec.Count-*workerNodeGrpOldSpec.Count,
 						)
 						if err != nil {
 							return fmt.Errorf("error during scale up: %v", err)
@@ -270,7 +270,7 @@ func AssertionsForScaleUpDown(catalogue *hardware.Catalogue, currentSpec *cluste
 				}
 				err := requirements.Add(
 					spec.WorkerNodeGroupMachineConfig(nodeGroupNewSpec).Spec.HardwareSelector,
-					nodeGroupNewSpec.Count,
+					*nodeGroupNewSpec.Count,
 				)
 				if err != nil {
 					return fmt.Errorf("error during scale up: %v", err)

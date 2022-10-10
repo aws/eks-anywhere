@@ -250,7 +250,10 @@ func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
 	if c.AutoScalingConfiguration != nil {
 		key += "autoscaling" + strconv.Itoa(c.AutoScalingConfiguration.MaxCount) + strconv.Itoa(c.AutoScalingConfiguration.MinCount)
 	}
-	return strconv.Itoa(c.Count) + key
+	if c.Count == nil {
+		return "nil" + key
+	}
+	return strconv.Itoa(*c.Count) + key
 }
 
 func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {

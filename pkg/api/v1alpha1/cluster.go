@@ -78,7 +78,7 @@ func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
 
 func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: &count}}
 	}
 }
 
@@ -420,7 +420,7 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
-		if workerNodeGroupConfig.AutoScalingConfiguration == nil && workerNodeGroupConfig.Count <= 0 {
+		if workerNodeGroupConfig.AutoScalingConfiguration == nil && *workerNodeGroupConfig.Count <= 0 {
 			return errors.New("worker node count must be positive if autoscaling is not enabled")
 		}
 

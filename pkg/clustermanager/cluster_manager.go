@@ -761,7 +761,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 
 	var machineDeploymentReplicasCount int
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
+		machineDeploymentReplicasCount += *workerNodeGroupConfiguration.Count
 	}
 
 	areMdReplicasReady := func() error {
