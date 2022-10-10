@@ -85,12 +85,12 @@ images:
   infrastructure-docker/capd-manager:
     repository: {{.DockerManagerRepository}}
     tag: {{.DockerManagerTag}}
-  infrastructure-nutanix/manager:
-    repository: {{ .ClusterApiNutanixControllerRepository }}
-    tag: {{ .ClusterApiNutanixControllerTag }}
   infrastructure-docker/kube-rbac-proxy:
     repository: {{ .DockerKubeRbacProxyRepository }}
     tag: {{ .DockerKubeRbacProxyTag }} #org one is v0.4.0
+  infrastructure-nutanix/manager:
+    repository: {{ .ClusterApiNutanixControllerRepository }}
+    tag: {{ .ClusterApiNutanixControllerTag }}
   bootstrap-etcdadm-bootstrap/etcdadm-bootstrap-provider:
     repository: {{ .EtcdadmBootstrapProviderRepository }}
     tag: {{ .EtcdadmBootstrapProviderTag }}

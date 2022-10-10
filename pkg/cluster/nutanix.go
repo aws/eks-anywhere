@@ -40,7 +40,9 @@ func nutanixEntry() *ConfigManagerEntry {
 func processNutanixDatacenter(c *Config, objects ObjectLookup) {
 	if c.Cluster.Spec.DatacenterRef.Kind == anywherev1.NutanixDatacenterKind {
 		datacenter := objects.GetFromRef(c.Cluster.APIVersion, c.Cluster.Spec.DatacenterRef)
-		c.NutanixDatacenter = datacenter.(*anywherev1.NutanixDatacenterConfig)
+		if datacenter != nil {
+			c.NutanixDatacenter = datacenter.(*anywherev1.NutanixDatacenterConfig)
+		}
 	}
 }
 

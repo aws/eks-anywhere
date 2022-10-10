@@ -64,7 +64,6 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	providerKubectlClient ProviderKubectlClient,
 	nutanixClient Client,
-	nutanixValidator *Validator,
 	now types.NowFunc,
 ) *Provider {
 	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
@@ -81,6 +80,7 @@ func NewProvider(
 	creds := getCredsFromEnv()
 	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
 	templateBuilder := NewNutanixTemplateBuilder(&datacenterConfig.Spec, controlPlaneMachineSpec, etcdMachineSpec, workerNodeGroupMachineSpecs, creds, now)
+	nutanixValidator := NewValidator(nutanixClient)
 
 	return &Provider{
 		clusterConfig:    clusterConfig,

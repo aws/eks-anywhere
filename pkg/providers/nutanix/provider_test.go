@@ -55,10 +55,7 @@ func testNutanixProvider(t *testing.T, nutanixClient Client, kubectl *executable
 	os.Setenv(nutanixPasswordKey, "password")
 	defer os.Unsetenv(nutanixPasswordKey)
 
-	validator, err := NewValidator(nutanixClient)
-	require.NoError(t, err)
-
-	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, validator, time.Now)
+	provider := NewProvider(dcConf, workerConfs, clusterConf, kubectl, nutanixClient, time.Now)
 	require.NotNil(t, provider)
 	return provider
 }

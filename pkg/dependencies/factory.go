@@ -88,7 +88,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
-	NutanixValidator          *nutanix.Validator
+	NutanixPrismClient        *v3.Client
 	SnowValidator             *snow.AwsClientValidator
 }
 
@@ -293,6 +293,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
+	case v1alpha1.NutanixDatacenterKind:
+		f.WithKubectl().WithPrismClient(clusterConfigFile)
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -418,26 +420,14 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			url := fmt.Sprintf("%s:%d", datacenterConfig.Spec.Endpoint, datacenterConfig.Spec.Port)
-			nutanixCreds := prismgoclient.Credentials{
-				URL:      url,
-				Username: os.Getenv("NUTANIX_USER"),
-				Password: os.Getenv("NUTANIX_PASSWORD"),
-				Endpoint: datacenterConfig.Spec.Endpoint,
-				Port:     fmt.Sprintf("%d", datacenterConfig.Spec.Port),
-			}
-			client, err := v3.NewV3Client(nutanixCreds)
-			if err != nil {
-				return fmt.Errorf("error creating nutanix client: %v", err)
-			}
-
-			validator, err := nutanix.NewValidator(client.V3)
-			if err != nil {
-				return err
-			}
-			f.dependencies.NutanixValidator = validator
-
-			provider := nutanix.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, client.V3, validator, time.Now)
+			provider := nutanix.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Kubectl,
+				f.dependencies.NutanixPrismClient.V3,
+				time.Now,
+			)
 			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
@@ -1128,6 +1118,44 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 
 		f.dependencies.VSphereDefaulter = vsphere.NewDefaulter(f.dependencies.Govc)
 
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
+	if f.dependencies.NutanixPrismClient != nil {
+		return f
+	}
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+		}
+		endpoint := datacenterConfig.Spec.Endpoint
+		port := datacenterConfig.Spec.Port
+		url := fmt.Sprintf("%s:%d", endpoint, port)
+		nutanixUser, found := os.LookupEnv("NUTANIX_USER")
+		if !found {
+			return fmt.Errorf("NUTANIX_USER environment variable not set")
+		}
+		nutanixPassword, found := os.LookupEnv("NUTANIX_PASSWORD")
+		if !found {
+			return fmt.Errorf("NUTANIX_PASSWORD environment variable not set")
+		}
+		nutanixCreds := prismgoclient.Credentials{
+			URL:      url,
+			Username: nutanixUser,
+			Password: nutanixPassword,
+			Endpoint: endpoint,
+			Port:     fmt.Sprintf("%d", port),
+		}
+		client, err := v3.NewV3Client(nutanixCreds)
+		if err != nil {
+			return fmt.Errorf("error creating nutanix client: %v", err)
+		}
+		f.dependencies.NutanixPrismClient = client
 		return nil
 	})
 

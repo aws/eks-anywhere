@@ -34,12 +34,11 @@ func TestNutanixValidatorNoResourcesFound(t *testing.T) {
 	mockClient.EXPECT().ListCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().ListSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
 	require.NoError(t, err)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -97,12 +96,11 @@ func TestNutanixValidatorDuplicateResourcesFound(t *testing.T) {
 		},
 	}
 	mockClient.EXPECT().ListImage(gomock.Any(), gomock.Any()).Return(images, nil)
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpec), machineConfig)
 	require.NoError(t, err)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -118,12 +116,11 @@ func TestNutanixValidatorIdentifierTypeUUID(t *testing.T) {
 	mockClient.EXPECT().GetCluster(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no clusters found"))
 	mockClient.EXPECT().GetSubnet(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no subnets found"))
 	mockClient.EXPECT().GetImage(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("no images found"))
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	machineConfig := &anywherev1.NutanixMachineConfig{}
-	err = yaml.Unmarshal([]byte(nutanixMachineConfigSpecUUID), machineConfig)
+	err := yaml.Unmarshal([]byte(nutanixMachineConfigSpecUUID), machineConfig)
 	require.NoError(t, err)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -141,8 +138,7 @@ func TestNutanixValidatorInvalidIdentifierType(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -160,8 +156,7 @@ func TestNutanixValidatorEmptyResourceName(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)
@@ -179,8 +174,7 @@ func TestNutanixValidatorEmptyResourceUUID(t *testing.T) {
 	require.NoError(t, err)
 
 	mockClient := NewMockClient(ctrl)
-	validator, err := NewValidator(mockClient)
-	assert.NoError(t, err)
+	validator := NewValidator(mockClient)
 	require.NotNil(t, validator)
 
 	err = validator.ValidateMachineConfig(context.Background(), machineConfig)

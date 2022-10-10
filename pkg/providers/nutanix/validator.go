@@ -17,8 +17,8 @@ type Validator struct {
 }
 
 // NewValidator returns a new validator client
-func NewValidator(client Client) (*Validator, error) {
-	return &Validator{client: client}, nil
+func NewValidator(client Client) *Validator {
+	return &Validator{client: client}
 }
 
 // ValidateMachineConfig validates the Prism Element cluster, subnet, and image for the machine

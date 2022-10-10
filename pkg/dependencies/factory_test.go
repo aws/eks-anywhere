@@ -126,7 +126,7 @@ func TestFactoryBuildWithProviderNutanix(t *testing.T) {
 		} else {
 			tt.Expect(err).To(BeNil())
 			tt.Expect(deps.Provider).NotTo(BeNil())
-			tt.Expect(deps.NutanixValidator).NotTo(BeNil())
+			tt.Expect(deps.NutanixPrismClient).NotTo(BeNil())
 		}
 	}
 }
