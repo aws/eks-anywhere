@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"os"
 	"path"
 	"testing"
@@ -1561,7 +1560,7 @@ func TestClusterNeedsNewWorkloadTemplateFalse(t *testing.T) {
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfig := givenMachineConfigs(t, testClusterConfigMainFilename)[cc.MachineConfigRefs()[0].Name]
 
-	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, logger.Get()),"expected no spec change to be detected")
+	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, test.NewNullLogger()), "expected no spec change to be detected")
 }
 
 func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
@@ -1683,11 +1682,11 @@ func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
 		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
 			Name: "newDiskOffering",
 		},
-		CustomSize:                   0,
-		MountPath:                    "",
-		Device:                       "",
-		Filesystem:                   "",
-		Label:                        "",
+		CustomSize: 0,
+		MountPath:  "",
+		Device:     "",
+		Filesystem: "",
+		Label:      "",
 	}
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
