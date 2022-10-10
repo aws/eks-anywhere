@@ -34,7 +34,7 @@ type BundleReader struct {
 	registry      BundleRegistry
 }
 
-func NewBundleReader(kubeConfig string, clusterName string, source BundleSource, k KubectlRunner, bm Manager, reg BundleRegistry) *BundleReader {
+func NewBundleReader(kubeConfig string, clusterName string, k KubectlRunner, bm Manager, reg BundleRegistry) *BundleReader {
 	return &BundleReader{
 		kubeConfig:    kubeConfig,
 		clusterName:   clusterName,
