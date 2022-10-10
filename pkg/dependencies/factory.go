@@ -331,16 +331,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			f.dependencies.Provider = cloudstack.NewProvider(
-				datacenterConfig,
-				machineConfigs,
-				clusterConfig,
-				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
-				f.dependencies.Writer,
-				time.Now,
-				skipIpCheck,
-			)
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, f.dependencies.Cmk, f.dependencies.Writer, time.Now, skipIpCheck, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
