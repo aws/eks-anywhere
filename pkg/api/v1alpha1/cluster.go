@@ -420,6 +420,12 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
+		if workerNodeGroupConfig.Count == nil {
+			// This block should never fire. If it does, it means we have a bug in how we set our defaults.
+			// When Count == nil it should be set to 1 by SetDefaults method prior to reaching validation.
+			return errors.New("worker node count must be >= 0")
+		}
+
 		if workerNodeGroupConfig.AutoScalingConfiguration == nil && *workerNodeGroupConfig.Count <= 0 {
 			return errors.New("worker node count must be positive if autoscaling is not enabled")
 		}
