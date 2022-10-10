@@ -25,7 +25,7 @@ ref="$(awsRemote)/main"
     | xargs -r -n1 dirname \
     | sort \
     | uniq \
-    | sed -e 's,^,./,'
+    | sed -e 's,^,./,' \
     | tr '\n' ' '
 
 echo
