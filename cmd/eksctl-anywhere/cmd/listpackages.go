@@ -15,7 +15,6 @@ import (
 type listPackagesOption struct {
 	kubeVersion string
 	clusterName string
-	source      curatedpackages.BundleSource
 	registry    string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
@@ -47,7 +46,7 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := curatedpackages.ValidateKubeVersion(lpo.kubeVersion, lpo.source); err != nil {
+		if err := curatedpackages.ValidateKubeVersion(lpo.kubeVersion, lpo.clusterName); err != nil {
 			return err
 		}
 
@@ -70,14 +69,7 @@ func listPackages(ctx context.Context) error {
 
 	bm := curatedpackages.CreateBundleManager()
 
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		lpo.clusterName,
-		lpo.source,
-		deps.Kubectl,
-		bm,
-		deps.BundleRegistry,
-	)
+	b := curatedpackages.NewBundleReader(kubeConfig, lpo.clusterName, deps.Kubectl, bm, deps.BundleRegistry)
 
 	bundle, err := b.GetLatestBundle(ctx, lpo.kubeVersion)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 )
 
 type installPackageOptions struct {
-	source        curatedpackages.BundleSource
 	kubeVersion   string
 	clusterName   string
 	packageName   string
@@ -66,7 +65,7 @@ var installPackageCommand = &cobra.Command{
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {
-	if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
+	if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.clusterName); err != nil {
 		return err
 	}
 
@@ -85,14 +84,7 @@ func installPackages(ctx context.Context, args []string) error {
 
 	bm := curatedpackages.CreateBundleManager()
 
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		ipo.clusterName,
-		ipo.source,
-		deps.Kubectl,
-		bm,
-		deps.BundleRegistry,
-	)
+	b := curatedpackages.NewBundleReader(kubeConfig, ipo.clusterName, deps.Kubectl, bm, deps.BundleRegistry)
 
 	bundle, err := b.GetLatestBundle(ctx, ipo.kubeVersion)
 	if err != nil {
