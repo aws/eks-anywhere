@@ -231,7 +231,7 @@ type WorkerNodeGroupConfiguration struct {
 	// Name refers to the name of the worker node group
 	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
-	Count int `json:"count,omitempty"`
+	Count *int `json:"count,omitempty"`
 	// AutoScalingConfiguration defines the auto scaling configuration
 	AutoScalingConfiguration *AutoScalingConfiguration `json:"autoscalingConfiguration,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
