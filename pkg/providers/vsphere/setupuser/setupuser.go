@@ -65,7 +65,7 @@ func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere
 	if !exists {
 		err = govc.CreateGroup(ctx, vsuc.Spec.GroupName)
 	} else {
-		logger.V(0).Info(fmt.Sprintf("Skipping creating %s because it already exists\n", vsuc.Spec.GroupName))
+		logger.V(0).Info(fmt.Sprintf("Skipping creating %s because it already exists", vsuc.Spec.GroupName))
 	}
 	if err != nil {
 		return err
@@ -85,12 +85,12 @@ func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere
 		if !exists {
 			err = govc.CreateRole(ctx, r.name, r.privs)
 			if err != nil {
-				logger.V(0).Info(fmt.Sprintf("Failed to create %s role with %v\n", r.name, r.privs))
+				logger.V(0).Info(fmt.Sprintf("Failed to create %s role with %v", r.name, r.privs))
 				return err
 			}
-			logger.V(0).Info(fmt.Sprintf("Created %s role\n", r.name))
+			logger.V(0).Info(fmt.Sprintf("Created %s role", r.name))
 		} else {
-			logger.V(0).Info(fmt.Sprintf("Skipping creating %s role because it already exists\n", r.name))
+			logger.V(0).Info(fmt.Sprintf("Skipping creating %s role because it already exists", r.name))
 		}
 	}
 
@@ -125,7 +125,7 @@ func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, 
 func addUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	// associate user to group
 	err := govc.AddUserToGroup(ctx, vsuc.Spec.GroupName, vsuc.Spec.Username)
-	logger.V(0).Info(fmt.Sprintf("Adding user %s to group %s\n", vsuc.Spec.Username, vsuc.Spec.GroupName))
+	logger.V(0).Info(fmt.Sprintf("Adding user %s to group %s", vsuc.Spec.Username, vsuc.Spec.GroupName))
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func setGroupRoleOnObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, go
 		if err != nil {
 			return err
 		}
-		logger.V(0).Info(fmt.Sprintf("Set role %s on %s for group %s\n", role, obj, vsuc.Spec.GroupName))
+		logger.V(0).Info(fmt.Sprintf("Set role %s on %s for group %s", role, obj, vsuc.Spec.GroupName))
 	}
 
 	return nil
