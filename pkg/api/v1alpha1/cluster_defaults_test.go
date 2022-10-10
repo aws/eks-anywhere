@@ -156,6 +156,46 @@ func TestSetClusterDefaults(t *testing.T) {
 			},
 			wantErr: "",
 		},
+		{
+			name: "worker node group - no count specified",
+			in: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name: "worker-0",
+					}},
+				},
+			},
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{
+							Cilium: nil,
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "worker-0",
+						Count: ptr.Int(1),
+					}},
+				},
+			},
+			wantErr: "",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
