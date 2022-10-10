@@ -43,7 +43,7 @@ func (vsuo *vSphereSetupUserOptions) setupUser(cmd *cobra.Command, _ []string) e
 	ctx := cmd.Context()
 
 	if vsuo.force && vsuo.password != "" {
-		return fmt.Errorf("--password and --force are mutually exclusive. --force may only be run on an existing user.")
+		return fmt.Errorf("--password and --force are mutually exclusive. --force may only be run on an existing user")
 	}
 
 	c, err := setupuser.GenerateConfig(ctx, vsuo.fileName)
