@@ -1,10 +1,17 @@
 package clusterapi_test
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 )
 
@@ -237,4 +244,87 @@ func TestWorkerMachineHealthCheckName(t *testing.T) {
 			g.Expect(clusterapi.WorkerMachineHealthCheckName(g.clusterSpec, *g.workerNodeGroupConfig)).To(Equal(tt.want))
 		})
 	}
+}
+
+func TestEnsureNewNameIfChangedObjectDoesNotExist(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	originalName := "my-machine-template-1"
+	mt := dockerMachineTemplate()
+	mt.Name = originalName
+	client := test.NewFakeKubeClient()
+
+	g.Expect(clusterapi.EnsureNewNameIfChanged(ctx, client, notFoundRetriever, withChangesCompare, mt)).To(Succeed())
+	g.Expect(mt.Name).To(Equal(originalName))
+}
+
+func TestEnsureNewNameIfChangedErrorReadingObject(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	mt := dockerMachineTemplate()
+	mt.Name = "my-machine-template"
+	client := test.NewFakeKubeClient()
+
+	g.Expect(
+		clusterapi.EnsureNewNameIfChanged(ctx, client, errorRetriever, withChangesCompare, mt),
+	).To(
+		MatchError(ContainSubstring("reading DockerMachineTemplate eksa-system/my-machine-template from API")),
+	)
+}
+
+func TestEnsureNewNameIfChangedErrorIncrementingName(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	mt := dockerMachineTemplate()
+	mt.Name = "my-machine-template"
+	client := test.NewFakeKubeClient()
+
+	g.Expect(
+		clusterapi.EnsureNewNameIfChanged(ctx, client, dummyRetriever, withChangesCompare, mt),
+	).To(
+		MatchError(ContainSubstring("incrementing name for DockerMachineTemplate eksa-system/my-machine-template")),
+	)
+}
+
+func TestEnsureNewNameIfChangedObjectNeedsNewName(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	mt := dockerMachineTemplate()
+	mt.Name = "my-machine-template-1"
+	client := test.NewFakeKubeClient()
+
+	g.Expect(clusterapi.EnsureNewNameIfChanged(ctx, client, dummyRetriever, withChangesCompare, mt)).To(Succeed())
+	g.Expect(mt.Name).To(Equal("my-machine-template-2"))
+}
+
+func TestEnsureNewNameIfChangedObjectHasNotChanged(t *testing.T) {
+	g := NewWithT(t)
+	ctx := context.Background()
+	originalName := "my-machine-template-1"
+	mt := dockerMachineTemplate()
+	mt.Name = originalName
+	client := test.NewFakeKubeClient()
+
+	g.Expect(clusterapi.EnsureNewNameIfChanged(ctx, client, dummyRetriever, noChangesCompare, mt)).To(Succeed())
+	g.Expect(mt.Name).To(Equal(originalName))
+}
+
+func dummyRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+	return dockerMachineTemplate(), nil
+}
+
+func errorRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+	return nil, errors.New("reading object")
+}
+
+func notFoundRetriever(_ context.Context, _ kubernetes.Client, _, _ string) (*dockerv1.DockerMachineTemplate, error) {
+	return nil, apierrors.NewNotFound(schema.GroupResource{}, "")
+}
+
+func noChangesCompare(_, _ *dockerv1.DockerMachineTemplate) bool {
+	return true
+}
+
+func withChangesCompare(_, _ *dockerv1.DockerMachineTemplate) bool {
+	return false
 }
