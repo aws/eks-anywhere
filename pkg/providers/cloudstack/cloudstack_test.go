@@ -435,6 +435,39 @@ func TestProviderGenerateCAPISpecForCreateWithAffinity(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_affinity_md.yaml")
 }
 
+func TestProviderGenerateCAPISpecForCreateWithZoneIdAndNetworkId(t *testing.T) {
+	clusterSpecManifest := "cluster_main.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	datacenterConfig.Spec.AvailabilityZones[0].Zone = v1alpha1.CloudStackZone{
+		Id: "zoneId",
+		Network: v1alpha1.CloudStackResourceIdentifier{
+			Id: "networkId",
+		},
+	}
+	clusterSpec.CloudStackDatacenter = datacenterConfig
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_resourceids_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
 func TestProviderGenerateCAPISpecForCreateWithMirrorConfig(t *testing.T) {
 	clusterSpecManifest := "cluster_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)

@@ -39,11 +39,11 @@ spec:
   failureDomains:
   - name: default-az-0
     zone:
-      id: 
-      name: zone1
+      id: zoneId
+      name: 
       network:
-        id: 
-        name: net1
+        id: networkId
+        name: 
     domain: domain1
     account: admin
     acsEndpoint:
@@ -60,6 +60,7 @@ metadata:
     device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/kubernetes:/data-small/var/log/kubernetes
 spec:
   template:
     spec:
@@ -349,7 +350,6 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
         taints: []
@@ -360,7 +360,6 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
         taints: []
@@ -371,6 +370,13 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - >-
+      if [ ! -L /var/log/kubernetes ] ;
+        then
+          mv /var/log/kubernetes /var/log/kubernetes-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p /data-small/var/log/kubernetes && ln -s /data-small/var/log/kubernetes /var/log/kubernetes ;
+        else echo "/var/log/kubernetes already symlnk";
+      fi
     diskSetup:
       filesystems:
         - device: /dev/vdb1
@@ -429,6 +435,14 @@ spec:
       mkdir -p /data-small &&
       echo /dev/vdb1 /data-small ext4 defaults 0 2 >> /etc/fstab &&
       mount /data-small
+    - >-
+      if [ ! -L /var/lib/ ] ;
+        then
+          mv /var/lib/ /var/lib/-$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 10) ;
+          mkdir -p /data-small/var/lib && ln -s /data-small/var/lib /var/lib/ ;
+        else
+          echo "/var/lib/ already symlnk" ;
+      fi
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
@@ -450,6 +464,7 @@ metadata:
     device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/lib/:/data-small/var/lib
 spec:
   template:
     spec:
