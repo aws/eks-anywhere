@@ -55,14 +55,19 @@ func init() {
 }
 
 var installPackageCommand = &cobra.Command{
-	Use:          "package [package] [flags]",
+	Use:          "package [flags] package",
 	Aliases:      []string{"package"},
 	Short:        "Install package",
 	Long:         "This command is used to Install a curated package. Use list to discover curated packages",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runInstallPackages,
-	Args:         cobra.ExactArgs(1),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.ExactArgs(1)(cmd, args); err == nil {
+			return nil
+		}
+		return fmt.Errorf("The name of the package to install must be specified as an argument")
+	},
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {
