@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestAssertMachineConfigsValid_ValidSucceds(t *testing.T) {
@@ -332,7 +333,7 @@ func TestMinimumHardwareAvailableAssertionForCreate_NoControlPlaneSelectorMatche
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = eksav1alpha1.HardwareSelector{}
-	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = 0
+	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(0)
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
 	catalogue := hardware.NewCatalogue()
@@ -349,7 +350,7 @@ func TestMinimumHardwareAvailableAssertionForCreate_NoExternalEtcdSelectorMatche
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.ControlPlaneConfiguration().Count = 0
-	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = 0
+	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(0)
 	clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector = eksav1alpha1.HardwareSelector{}
 
 	catalogue := hardware.NewCatalogue()

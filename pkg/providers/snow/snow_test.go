@@ -25,6 +25,7 @@ import (
 	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -104,7 +105,7 @@ func givenClusterSpec() *cluster.Spec {
 				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 					{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &v1alpha1.Ref{
 							Kind: "SnowMachineConfig",
 							Name: "test-wn",

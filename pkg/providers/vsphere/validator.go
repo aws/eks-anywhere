@@ -295,7 +295,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSp
 		if err != nil {
 			return fmt.Errorf("getting datastore details: %v", err)
 		}
-		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * workerNodeGroupConfiguration.Count
+		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * *workerNodeGroupConfiguration.Count
 		_, ok := usage[workerMachineConfig.Spec.Datastore]
 		if ok {
 			usage[workerMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB

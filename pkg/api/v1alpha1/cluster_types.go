@@ -231,7 +231,7 @@ type WorkerNodeGroupConfiguration struct {
 	// Name refers to the name of the worker node group
 	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
-	Count int `json:"count,omitempty"`
+	Count *int `json:"count,omitempty"`
 	// AutoScalingConfiguration defines the auto scaling configuration
 	AutoScalingConfiguration *AutoScalingConfiguration `json:"autoscalingConfiguration,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
@@ -250,7 +250,10 @@ func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
 	if c.AutoScalingConfiguration != nil {
 		key += "autoscaling" + strconv.Itoa(c.AutoScalingConfiguration.MaxCount) + strconv.Itoa(c.AutoScalingConfiguration.MinCount)
 	}
-	return strconv.Itoa(c.Count) + key
+	if c.Count == nil {
+		return "nil" + key
+	}
+	return strconv.Itoa(*c.Count) + key
 }
 
 func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {

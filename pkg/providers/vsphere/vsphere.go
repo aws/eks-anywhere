@@ -876,7 +876,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
 		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
 		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
-		"workerReplicas":                 workerNodeGroupConfiguration.Count,
+		"workerReplicas":                 *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":              workerNodeGroupConfiguration.AutoScalingConfiguration,
