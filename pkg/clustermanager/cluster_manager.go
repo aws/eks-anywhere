@@ -123,7 +123,7 @@ type Networking interface {
 type AwsIamAuth interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 	GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byte, error)
-	GenerateCertKeyPairSecret(bootstrapClusterName string) ([]byte, error)
+	GenerateCertKeyPairSecret(managementClusterName string) ([]byte, error)
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
