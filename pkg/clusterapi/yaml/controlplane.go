@@ -73,12 +73,12 @@ func NewControlPlaneBuilder[C, M clusterapi.Object]() *ControlPlaneBuilder[C, M]
 
 // BuildFromParsed reads parsed objects in ObjectLookup and sets them in the ControlPlane
 func (cp *ControlPlaneBuilder[C, M]) BuildFromParsed(lookup yamlutil.ObjectLookup) error {
-	ProcessObjects(cp.ControlPlane, lookup)
+	ProcessControlPlaneObjects(cp.ControlPlane, lookup)
 	return nil
 }
 
-// ProcessObjects finds all necessary objects in the parsed objects and sets them in the ControlPlane
-func ProcessObjects[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+// ProcessControlPlaneObjects finds all necessary objects in the parsed objects and sets them in the ControlPlane
+func ProcessControlPlaneObjects[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	ProcessCluster(cp, lookup)
 	if cp.Cluster == nil {
 		return
