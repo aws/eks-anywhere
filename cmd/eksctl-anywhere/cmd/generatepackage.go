@@ -40,14 +40,19 @@ func init() {
 }
 
 var generatePackageCommand = &cobra.Command{
-	Use:          "packages [flags]",
+	Use:          "packages [flags] package",
 	Aliases:      []string{"package", "packages"},
 	Short:        "Generate package(s) configuration",
 	Long:         "Generates Kubernetes configuration files for curated packages",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE:         runGeneratePackages,
-	Args:         cobra.MinimumNArgs(1),
+	Args: func(cmd *cobra.Command, args []string) error {
+		if err := cobra.ExactArgs(1)(cmd, args); err == nil {
+			return nil
+		}
+		return fmt.Errorf("The name of the package to install must be specified as an argument")
+	},
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {

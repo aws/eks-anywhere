@@ -41,7 +41,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
@@ -104,8 +103,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
-		WithRegistryMirrorNamespace(clusterSpec.Cluster.RegistryMirrorNamespace()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryMirrorOCINamespace(), clusterSpec.Cluster.RegistryMirrorPackageOCINamespace()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -114,7 +112,8 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 type Factory struct {
 	executablesConfig        *executablesConfig
 	registryMirror           string
-	registryMirrorNamespace  string
+	ociNamespace             string
+	packageOCINamespace      string
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -163,13 +162,10 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithRegistryMirror(mirror string) *Factory {
+func (f *Factory) WithRegistryMirror(mirror, ociNamespace, packageOCINamespace string) *Factory {
 	f.registryMirror = mirror
-	return f
-}
-
-func (f *Factory) WithRegistryMirrorNamespace(namespace string) *Factory {
-	f.registryMirrorNamespace = namespace
+	f.ociNamespace = ociNamespace
+	f.packageOCINamespace = packageOCINamespace
 	return f
 }
 
@@ -254,7 +250,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		}
 
 		if f.executablesConfig.useDockerContainer {
-			image := registry.ReplaceHostWithNamespacedEndpoint(f.executablesConfig.image, f.registryMirror, f.registryMirrorNamespace)
+			image := registry.ReplaceHostWithNamespacedEndpoint(f.executablesConfig.image, f.registryMirror, f.ociNamespace)
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
 				image,
@@ -339,16 +335,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			f.dependencies.Provider = cloudstack.NewProvider(
-				datacenterConfig,
-				machineConfigs,
-				clusterConfig,
-				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
-				f.dependencies.Writer,
-				time.Now,
-				skipIpCheck,
-			)
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, f.dependencies.Cmk, f.dependencies.Writer, time.Now, skipIpCheck, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
@@ -613,8 +600,7 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
-			opts = append(opts, executables.WithRegistryMirrorNamespace(f.registryMirrorNamespace))
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror, f.ociNamespace, f.packageOCINamespace))
 		}
 
 		if f.proxyConfiguration != nil {
@@ -863,7 +849,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
-		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
+		imageUrl := registry.ReplaceHostWithNamespacedEndpoint(chart.Image(), spec.Cluster.RegistryMirror(), spec.Cluster.RegistryMirrorPackageOCINamespace())
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)

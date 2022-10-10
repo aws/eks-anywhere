@@ -255,9 +255,13 @@ spec:
                       in a tightly controlled, air-gapped environment. Currently only
                       supported for snow provider
                     type: boolean
-                  namespace:
-                    description: Namespace defines the namespace under which all images
-                      are placed
+                  ociNamespace:
+                    description: OCINamespace defines the namespace under which all
+                      images are placed
+                    type: string
+                  packageOCINamespace:
+                    description: PackageOCINamespace defines the namespace under which
+                      all curated package images are placed
                     type: string
                   port:
                     description: Port defines the port exposed for registry mirror

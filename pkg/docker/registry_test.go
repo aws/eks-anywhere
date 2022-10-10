@@ -20,13 +20,13 @@ func TestNewRegistryDestination(t *testing.T) {
 	client := mocks.NewMockImageTaggerPusher(ctrl)
 
 	registry := "https://registry"
-	namespace := constants.DefaultRegistryMirrorNamespace
+	ociNamespace := constants.DefaultRegistryMirrorOCINamespace
 	images := []string{"image1:1", "image2:2"}
 	ctx := context.Background()
-	dstLoader := docker.NewRegistryDestination(client, registry, namespace)
+	dstLoader := docker.NewRegistryDestination(client, registry, ociNamespace)
 	for _, i := range images {
-		client.EXPECT().TagImage(test.AContext(), i, registry, namespace)
-		client.EXPECT().PushImage(test.AContext(), i, registry, namespace)
+		client.EXPECT().TagImage(test.AContext(), i, registry, ociNamespace)
+		client.EXPECT().PushImage(test.AContext(), i, registry, ociNamespace)
 	}
 
 	g.Expect(dstLoader.Write(ctx, images...)).To(Succeed())
@@ -38,45 +38,45 @@ func TestNewRegistryDestinationWhenDigestSpecified(t *testing.T) {
 	client := mocks.NewMockImageTaggerPusher(ctrl)
 
 	registry := "https://registry"
-	namespace := "custom"
+	ociNamespace := "custom"
 	image := "image1@sha256:v1"
 	expectedImage := "image1:v1"
 	ctx := context.Background()
-	dstLoader := docker.NewRegistryDestination(client, registry, namespace)
-	client.EXPECT().TagImage(test.AContext(), expectedImage, registry, namespace)
-	client.EXPECT().PushImage(test.AContext(), expectedImage, registry, namespace)
+	dstLoader := docker.NewRegistryDestination(client, registry, ociNamespace)
+	client.EXPECT().TagImage(test.AContext(), expectedImage, registry, ociNamespace)
+	client.EXPECT().PushImage(test.AContext(), expectedImage, registry, ociNamespace)
 
 	g.Expect(dstLoader.Write(ctx, image)).To(Succeed())
 }
 
-func TestNewRegistryDestinationWhenNamespaceNonempty(t *testing.T) {
+func TestNewRegistryDestinationWhenociNamespaceNonempty(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockImageTaggerPusher(ctrl)
 
 	registry := "https://registry"
-	namespace := "custom"
+	ociNamespace := "custom"
 	image := "857151390494.dkr.ecr.us-west-2.amazonaws.com:v1"
 	ctx := context.Background()
-	dstLoader := docker.NewRegistryDestination(client, registry, namespace)
-	client.EXPECT().TagImage(test.AContext(), image, registry, namespace)
-	client.EXPECT().PushImage(test.AContext(), image, registry, namespace)
+	dstLoader := docker.NewRegistryDestination(client, registry, ociNamespace)
+	client.EXPECT().TagImage(test.AContext(), image, registry, ociNamespace)
+	client.EXPECT().PushImage(test.AContext(), image, registry, ociNamespace)
 
 	g.Expect(dstLoader.Write(ctx, image)).To(Succeed())
 }
 
-func TestNewRegistryDestinationWhenNamespaceEmpty(t *testing.T) {
+func TestNewRegistryDestinationWhenociNamespaceEmpty(t *testing.T) {
 	g := NewWithT(t)
 	ctrl := gomock.NewController(t)
 	client := mocks.NewMockImageTaggerPusher(ctrl)
 
 	registry := "https://registry"
-	namespace := ""
+	ociNamespace := ""
 	image := "783794618700.dkr.ecr.us-west-2.amazonaws.com:v1"
 	ctx := context.Background()
-	dstLoader := docker.NewRegistryDestination(client, registry, namespace)
-	client.EXPECT().TagImage(test.AContext(), image, registry, namespace)
-	client.EXPECT().PushImage(test.AContext(), image, registry, namespace)
+	dstLoader := docker.NewRegistryDestination(client, registry, ociNamespace)
+	client.EXPECT().TagImage(test.AContext(), image, registry, ociNamespace)
+	client.EXPECT().PushImage(test.AContext(), image, registry, ociNamespace)
 
 	g.Expect(dstLoader.Write(ctx, image)).To(Succeed())
 }

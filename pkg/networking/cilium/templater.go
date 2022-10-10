@@ -213,6 +213,10 @@ func templateValues(spec *cluster.Spec) values {
 		},
 	}
 
+	if len(spec.Cluster.Spec.WorkerNodeGroupConfigurations) == 0 && spec.Cluster.Spec.ControlPlaneConfiguration.Count == 1 {
+		val["operator"].(values)["replicas"] = 1
+	}
+
 	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
 		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
 	}

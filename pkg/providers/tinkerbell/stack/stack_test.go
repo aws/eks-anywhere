@@ -4,11 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"path/filepath"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
+	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
@@ -33,16 +39,21 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 	return releasev1alpha1.TinkerbellBundle{
 		TinkerbellStack: releasev1alpha1.TinkerbellStackBundle{
 			Tink: releasev1alpha1.TinkBundle{
-				TinkWorker: releasev1alpha1.Image{URI: "tink-worker:latest"},
+				TinkController: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-controller:latest"},
+				TinkServer:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-server:latest"},
+				TinkWorker:     releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/tink-worker:latest"},
 			},
-			Boots: releasev1alpha1.Image{URI: "boots:latest"},
-			Hegel: releasev1alpha1.Image{URI: "hegel:latest"},
+			Boots: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/boots:latest"},
+			Hegel: releasev1alpha1.Image{URI: "public.ecr.aws/eks-anywhere/hegel:latest"},
 			Hook: releasev1alpha1.HookBundle{
 				Initramfs: releasev1alpha1.HookArch{
 					Amd: releasev1alpha1.Archive{
 						URI: "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook/initramfs-x86-64",
 					},
 				},
+			},
+			Rufio: releasev1alpha1.Image{
+				URI: "public.ecr.aws/eks-anywhere/rufio:latest",
 			},
 			TinkebellChart: releasev1alpha1.Image{
 				Name: helmChartName,
@@ -52,92 +63,172 @@ func getTinkBundle() releasev1alpha1.TinkerbellBundle {
 		KubeVip: releasev1alpha1.Image{
 			URI: "public.ecr.aws/eks-anywhere/kube-vip:latest",
 		},
+		Envoy: releasev1alpha1.Image{
+			URI: "public.ecr.aws/eks-anywhere/envoy:latest",
+		},
 	}
 }
 
-func TestTinkerbellStackInstallWithAllOptionsSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
-	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	ctx := context.Background()
+func assertYamlFilesEqual(t *testing.T, wantYamlPath, gotYamlPath string) {
+	processUpdate(t, wantYamlPath, gotYamlPath)
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
-
-	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
-
-	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
-
-	if err := s.Install(ctx,
-		getTinkBundle(),
-		testIP,
-		cluster.KubeconfigFile,
-		"",
-		stack.WithNamespaceCreate(true),
-		stack.WithBootsOnKubernetes(),
-		stack.WithHostPortEnabled(true),
-		stack.WithLoadBalancer(),
-	); err != nil {
-		t.Fatalf("failed to install Tinkerbell stack: %v", err)
+	if diff := cmp.Diff(unmarshalYamlToObject(t, wantYamlPath), unmarshalYamlToObject(t, gotYamlPath)); diff != "" {
+		t.Errorf("Expected file mismatch (-want +got):\n%s", diff)
 	}
 }
 
-func TestTinkerbellStackInstallHookOverrideSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
-	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	ctx := context.Background()
+func unmarshalYamlToObject(t *testing.T, filepath string) map[string]interface{} {
+	unmarshaledObject := make(map[string]interface{})
+	bytes := test.ReadFileAsBytes(t, filepath)
+	if err := yaml.Unmarshal(bytes, unmarshaledObject); err != nil {
+		t.Fatalf("failed to unmarshal %s: %v", filepath, err)
+	}
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	return unmarshaledObject
+}
 
-	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
-
-	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
-
-	if err := s.Install(ctx,
-		getTinkBundle(),
-		testIP,
-		cluster.KubeconfigFile,
-		"https://hook-override-path",
-		stack.WithNamespaceCreate(true),
-		stack.WithBootsOnKubernetes(),
-		stack.WithHostPortEnabled(true),
-	); err != nil {
-		t.Fatalf("failed to install Tinkerbell stack: %v", err)
+func processUpdate(t *testing.T, goldenFilePath, generatedFilePath string) {
+	if *test.UpdateGoldenFiles {
+		if err := ioutil.WriteFile(goldenFilePath, test.ReadFileAsBytes(t, generatedFilePath), 0o644); err != nil {
+			t.Fatalf("failed to update golden file %s: %v", goldenFilePath, err)
+		}
+		log.Printf("Golden file updated: %s", goldenFilePath)
 	}
 }
 
-func TestTinkerbellStackInstallWithBootsOnDockerSuccess(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	docker := mocks.NewMockDocker(mockCtrl)
-	helm := mocks.NewMockHelm(mockCtrl)
-	writer := filewritermocks.NewMockFileWriter(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	ctx := context.Background()
+// Note: This test contains generated files
+// To automatically update the generated files, run the following
+// go test -timeout 30s -run ^TestTinkerbellStackInstallWithDifferentOptions$ github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack -update -count=1 -v
+func TestTinkerbellStackInstallWithDifferentOptions(t *testing.T) {
+	stackTests := []struct {
+		name              string
+		hookImageOverride string
+		expectedFile      string
+		installOnDocker   bool
+		opts              []stack.InstallOption
+	}{
+		{
+			name:         "with_namespace_create_true",
+			expectedFile: "testdata/expected_with_namespace_create_true.yaml",
+			opts:         []stack.InstallOption{stack.WithNamespaceCreate(true)},
+		},
+		{
+			name:         "with_namespace_create_false",
+			expectedFile: "testdata/expected_with_namespace_create_false.yaml",
+			opts:         []stack.InstallOption{stack.WithNamespaceCreate(false)},
+		},
+		{
+			name:            "with_boots_on_docker",
+			expectedFile:    "testdata/expected_with_boots_on_docker.yaml",
+			installOnDocker: true,
+			opts:            []stack.InstallOption{stack.WithBootsOnDocker()},
+		},
+		{
+			name:         "with_boots_on_kubernetes",
+			expectedFile: "testdata/expected_with_boots_on_kubernetes.yaml",
+			opts:         []stack.InstallOption{stack.WithBootsOnKubernetes()},
+		},
+		{
+			name:         "with_host_port_enabled_true",
+			expectedFile: "testdata/expected_with_host_port_enabled_true.yaml",
+			opts:         []stack.InstallOption{stack.WithHostPortEnabled(true)},
+		},
+		{
+			name:         "with_host_port_enabled_false",
+			expectedFile: "testdata/expected_with_host_port_enabled_false.yaml",
+			opts:         []stack.InstallOption{stack.WithHostPortEnabled(false)},
+		},
+		{
+			name:         "with_envoy_enabled_true",
+			expectedFile: "testdata/expected_with_envoy_enabled_true.yaml",
+			opts:         []stack.InstallOption{stack.WithEnvoyEnabled(true)},
+		},
+		{
+			name:         "with_envoy_enabled_false",
+			expectedFile: "testdata/expected_with_envoy_enabled_false.yaml",
+			opts:         []stack.InstallOption{stack.WithEnvoyEnabled(false)},
+		},
+		{
+			name:         "with_load_balancer_enabled_true",
+			expectedFile: "testdata/expected_with_load_balancer_enabled_true.yaml",
+			opts:         []stack.InstallOption{stack.WithLoadBalancerEnabled(true)},
+		},
+		{
+			name:         "with_load_balancer_enabled_false",
+			expectedFile: "testdata/expected_with_load_balancer_enabled_false.yaml",
+			opts:         []stack.InstallOption{stack.WithLoadBalancerEnabled(false)},
+		},
+		{
+			name:         "with_kubernetes_options",
+			expectedFile: "testdata/expected_with_kubernetes_options.yaml",
+			opts: []stack.InstallOption{
+				stack.WithNamespaceCreate(true),
+				stack.WithBootsOnKubernetes(),
+				stack.WithEnvoyEnabled(true),
+				stack.WithLoadBalancerEnabled(true),
+			},
+		},
+		{
+			name:            "with_docker_options",
+			expectedFile:    "testdata/expected_with_docker_options.yaml",
+			installOnDocker: true,
+			opts: []stack.InstallOption{
+				stack.WithNamespaceCreate(false),
+				stack.WithBootsOnDocker(),
+				stack.WithHostPortEnabled(true),
+				stack.WithEnvoyEnabled(false),
+				stack.WithLoadBalancerEnabled(false),
+			},
+		},
+		{
+			name:              "with_hook_override",
+			hookImageOverride: "https://my-local-web-server/hook",
+			expectedFile:      "testdata/expected_with_hook_override.yaml",
+			opts:              []stack.InstallOption{},
+		},
+	}
 
-	s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
+	for _, stackTest := range stackTests {
+		t.Run(stackTest.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			docker := mocks.NewMockDocker(mockCtrl)
+			helm := mocks.NewMockHelm(mockCtrl)
+			folder, writer := test.NewWriter(t)
+			cluster := &types.Cluster{Name: "test"}
+			ctx := context.Background()
+			s := stack.NewInstaller(docker, writer, helm, constants.EksaSystemNamespace, "192.168.0.0/16", nil)
 
-	writer.EXPECT().Write(overridesFileName, gomock.Any()).Return(overridesFileName, nil)
-	helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, overridesFileName)
-	docker.EXPECT().Run(ctx, "boots:latest",
-		boots,
-		[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-path-override", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook"},
-		"-v", gomock.Any(),
-		"--network", "host",
-		"-e", gomock.Any(),
-		"-e", gomock.Any(),
-		"-e", gomock.Any(),
-		"-e", gomock.Any(),
-		"-e", gomock.Any(),
-		"-e", gomock.Any(),
-	)
+			generatedOverridesPath := filepath.Join(folder, "generated", overridesFileName)
+			helm.EXPECT().InstallChartWithValuesFile(ctx, helmChartName, fmt.Sprintf("oci://%s", helmChartPath), helmChartVersion, cluster.KubeconfigFile, generatedOverridesPath)
 
-	err := s.Install(ctx, getTinkBundle(), testIP, cluster.KubeconfigFile, "", stack.WithBootsOnDocker())
-	if err != nil {
-		t.Fatalf("failed to install Tinkerbell stack: %v", err)
+			if stackTest.installOnDocker {
+				docker.EXPECT().Run(ctx, "public.ecr.aws/eks-anywhere/boots:latest",
+					boots,
+					[]string{"-kubeconfig", "/kubeconfig", "-dhcp-addr", "0.0.0.0:67", "-osie-path-override", "https://anywhere-assests.eks.amazonaws.com/tinkerbell/hook"},
+					"-v", gomock.Any(),
+					"--network", "host",
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+					"-e", gomock.Any(),
+				)
+			}
+
+			if err := s.Install(
+				ctx,
+				getTinkBundle(),
+				testIP,
+				cluster.KubeconfigFile,
+				stackTest.hookImageOverride,
+				stackTest.opts...,
+			); err != nil {
+				t.Fatalf("failed to install Tinkerbell stack: %v", err)
+			}
+
+			assertYamlFilesEqual(t, stackTest.expectedFile, generatedOverridesPath)
+		})
 	}
 }
 

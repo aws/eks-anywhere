@@ -184,7 +184,7 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithRegistryMirror("1.2.3.4:443").
+		WithRegistryMirror("1.2.3.4:443", "", "").
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 

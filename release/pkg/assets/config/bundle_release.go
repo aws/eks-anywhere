@@ -90,21 +90,6 @@ var bundleReleaseAssetsConfigMap = []assettypes.AssetConfig{
 			},
 		},
 	},
-	// Cfssl artifacts
-	{
-		ProjectName: "cfssl",
-		ProjectPath: "projects/cloudflare/cfssl",
-		Images: []*assettypes.Image{
-			{
-				RepoName: "cfssl",
-			},
-		},
-		ImageRepoPrefix: "cloudflare",
-		ImageTagOptions: []string{
-			"gitTag",
-			"projectPath",
-		},
-	},
 	// Cilium artifacts
 	{
 		ProjectName: "cilium",

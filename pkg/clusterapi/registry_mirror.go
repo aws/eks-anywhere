@@ -17,12 +17,13 @@ var containerdConfig string
 
 type values map[string]interface{}
 
-func registryMirrorConfigContent(registryAddress, registryNamespace, registryCert string, insecureSkip bool) (string, error) {
+func registryMirrorConfigContent(registryAddress, registryOCINamespace, registryPackageOCINamespace, registryCert string, insecureSkip bool) (string, error) {
 	val := values{
-		"registryMirrorAddress": registryAddress,
-		"registryNamespace":     registryNamespace,
-		"registryCACert":        registryCert,
-		"insecureSkip":          insecureSkip,
+		"registryMirrorAddress":        registryAddress,
+		"registryOCINamespace":         registryOCINamespace,
+		"registryPackageOCINamespace":  registryPackageOCINamespace,
+		"registryCACert":               registryCert,
+		"insecureSkip":                 insecureSkip,
 	}
 
 	config, err := templater.Execute(containerdConfig, val)
@@ -34,7 +35,7 @@ func registryMirrorConfigContent(registryAddress, registryNamespace, registryCer
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, err error) {
 	registryAddress := net.JoinHostPort(registryMirrorConfig.Endpoint, registryMirrorConfig.Port)
-	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.Namespace, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
+	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.OCINamespace, registryMirrorConfig.PackageOCINamespace, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
 	}

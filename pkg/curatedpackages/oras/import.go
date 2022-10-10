@@ -14,25 +14,25 @@ import (
 
 type FileRegistryImporter struct {
 	registry           string
-	namespace          string
+	ociNamespace       string
 	username, password string
 	srcFolder          string
 }
 
-func NewFileRegistryImporter(registry, namespace, username, password, srcFolder string) *FileRegistryImporter {
+func NewFileRegistryImporter(registry, ociNamespace, username, password, srcFolder string) *FileRegistryImporter {
 	return &FileRegistryImporter{
-		registry:  registry,
-		namespace: namespace,
-		username:  username,
-		password:  password,
-		srcFolder: srcFolder,
+		registry:     registry,
+		ociNamespace: ociNamespace,
+		username:     username,
+		password:     password,
+		srcFolder:    srcFolder,
 	}
 }
 
 func (fr *FileRegistryImporter) Push(ctx context.Context, bundles *releasev1.Bundles) {
 	artifacts := ReadFilesFromBundles(bundles)
 	for _, a := range UniqueCharts(artifacts) {
-		updatedChartURL := docker.ReplaceHostWithNamespacedEndpoint(a, fr.registry, fr.namespace)
+		updatedChartURL := docker.ReplaceHostWithNamespacedEndpoint(a, fr.registry, fr.ociNamespace)
 		fileName := ChartFileName(a)
 		chartFilepath := filepath.Join(fr.srcFolder, fileName)
 		data, err := os.ReadFile(chartFilepath)

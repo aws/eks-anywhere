@@ -2421,6 +2421,80 @@ func TestClusterProxyConfiguration(t *testing.T) {
 	}
 }
 
+func TestValidateControlPlaneEndpoint(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "docker provider - control plane endpoint is not nil",
+			wantErr: "specifying endpoint host configuration in Cluster is not supported",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "docker provider - control plane endpoint is not set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					DatacenterRef: Ref{
+						Kind: DockerDatacenterKind,
+					},
+					ControlPlaneConfiguration: ControlPlaneConfiguration{},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is not set",
+			wantErr: "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "control plane ip is set",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateControlPlaneEndpoint(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		})
+	}
+}
+
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))

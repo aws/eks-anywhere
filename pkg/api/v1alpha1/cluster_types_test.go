@@ -1104,12 +1104,12 @@ func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 			testName: "both exist, diff in namespace",
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
-				Namespace:     "eks-anywhere",
+				OCINamespace:     "eks-anywhere",
 				CACertContent: "ca",
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
 				Endpoint:      "1.2.3.4",
-				Namespace:     "",
+				OCINamespace:     "",
 				CACertContent: "ca",
 			},
 			want: false,
@@ -1486,10 +1486,10 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 		{
 			testName: "both exist, namespace diff",
 			cluster1Regi: &v1alpha1.RegistryMirrorConfiguration{
-				Namespace: "eks-anywhere",
+				OCINamespace: "eks-anywhere",
 			},
 			cluster2Regi: &v1alpha1.RegistryMirrorConfiguration{
-				Namespace: "custom",
+				OCINamespace: "custom",
 			},
 			want: false,
 		},

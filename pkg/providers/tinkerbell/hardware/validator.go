@@ -1,9 +1,11 @@
 package hardware
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 
 	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
@@ -131,6 +133,22 @@ func StaticMachineAssertions() MachineAssertion {
 
 			if m.BMCPassword == "" {
 				return newEmptyFieldError("BMCPassword")
+			}
+		}
+
+		if m.VLANID != "" {
+			i, err := strconv.Atoi(m.VLANID)
+			if err != nil {
+				return errors.New("VLANID: must be a string integer")
+			}
+
+			// valid VLAN IDs are between 1 and 4094 - https://en.m.wikipedia.org/wiki/VLAN#IEEE_802.1Q
+			const (
+				maxVLANID = 4094
+				minVLANID = 1
+			)
+			if i < minVLANID || i > maxVLANID {
+				return errors.New("VLANID: must be between 1 and 4094")
 			}
 		}
 

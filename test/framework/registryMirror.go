@@ -11,34 +11,36 @@ import (
 )
 
 const (
-	RegistryEndpointVar           = "T_REGISTRY_MIRROR_ENDPOINT"
-	RegistryPortVar               = "T_REGISTRY_MIRROR_PORT"
-	RegistryNamespaceVar          = "T_REGISTRY_MIRROR_NAMESPACE"
-	RegistryUsernameVar           = "T_REGISTRY_MIRROR_USERNAME"
-	RegistryPasswordVar           = "T_REGISTRY_MIRROR_PASSWORD"
-	RegistryCACertVar             = "T_REGISTRY_MIRROR_CA_CERT"
-	RegistryEndpointTinkerbellVar = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
-	RegistryPortTinkerbellVar     = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
-	RegistryUsernameTinkerbellVar = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
-	RegistryPasswordTinkerbellVar = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
-	RegistryCACertTinkerbellVar   = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
+	RegistryEndpointVar             = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryPortVar                 = "T_REGISTRY_MIRROR_PORT"
+	RegistryOCINamespaceVar         = "T_REGISTRY_MIRROR_OCI_NAMESPACE"
+	RegistryPackageOCINamespaceVar  = "T_REGISTRY_MIRROR_PACKAGE_OCI_NAMESPACE"
+	RegistryUsernameVar             = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar             = "T_REGISTRY_MIRROR_PASSWORD"
+	RegistryCACertVar               = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointTinkerbellVar   = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
+	RegistryPortTinkerbellVar       = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
+	RegistryUsernameTinkerbellVar   = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
+	RegistryPasswordTinkerbellVar   = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
+	RegistryCACertTinkerbellVar     = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
 )
 
 var (
-	registryMirrorRequiredEnvVars           = []string{RegistryEndpointVar, RegistryPortVar, RegistryNamespaceVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
+	registryMirrorRequiredEnvVars           = []string{RegistryEndpointVar, RegistryPortVar, RegistryOCINamespaceVar, RegistryPackageOCINamespaceVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
 	registryMirrorTinkerbellRequiredEnvVars = []string{RegistryEndpointTinkerbellVar, RegistryPortTinkerbellVar, RegistryUsernameTinkerbellVar, RegistryPasswordTinkerbellVar, RegistryCACertTinkerbellVar}
 )
 
 func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		var endpoint, hostPort, namespace, username, password, registryCert string
+		var endpoint, hostPort, ociNamespace, packageOCINamespace, username, password, registryCert string
 
 		switch providerName {
 		case constants.TinkerbellProviderName:
 			checkRequiredEnvVars(e.T, registryMirrorTinkerbellRequiredEnvVars)
 			endpoint = os.Getenv(RegistryEndpointTinkerbellVar)
 			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortTinkerbellVar))
-			namespace = os.Getenv(RegistryNamespaceVar)
+			ociNamespace = os.Getenv(RegistryOCINamespaceVar)
+			packageOCINamespace = os.Getenv(RegistryPackageOCINamespaceVar)
 			username = os.Getenv(RegistryUsernameTinkerbellVar)
 			password = os.Getenv(RegistryPasswordTinkerbellVar)
 			registryCert = os.Getenv(RegistryCACertTinkerbellVar)
@@ -46,7 +48,8 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 			checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
 			endpoint = os.Getenv(RegistryEndpointVar)
 			hostPort = net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
-			namespace = os.Getenv(RegistryNamespaceVar)
+			ociNamespace = os.Getenv(RegistryOCINamespaceVar)
+			packageOCINamespace = os.Getenv(RegistryPackageOCINamespaceVar)
 			username = os.Getenv(RegistryUsernameVar)
 			password = os.Getenv(RegistryPasswordVar)
 			registryCert = os.Getenv(RegistryCACertVar)
@@ -59,7 +62,7 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, namespace, string(certificate)),
+				api.WithRegistryMirror(endpoint, ociNamespace, packageOCINamespace, string(certificate)),
 			)
 		}
 		// Set env vars for helm login/push

@@ -193,7 +193,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            docker.ReplaceHostWithNamespacedEndpoint(bundle.EksD.KindNode.VersionedImage(), clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryMirrorNamespace()),
+		KindImage:            docker.ReplaceHostWithNamespacedEndpoint(bundle.EksD.KindNode.VersionedImage(), clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryMirrorOCINamespace()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
@@ -204,7 +204,7 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	}
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
-		k.execConfig.RegistryMirrorNamespace = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Namespace
+		k.execConfig.RegistryMirrorNamespace = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.OCINamespace
 		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent != "" {
 			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", k.execConfig.RegistryMirrorEndpoint)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {

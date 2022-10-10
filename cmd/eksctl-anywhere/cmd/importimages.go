@@ -78,7 +78,7 @@ func importImages(ctx context.Context, spec string) error {
 	}
 	host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
-	namespace := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Namespace
+	ociNamespace := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.OCINamespace
 	if port == "" {
 		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
 		port = constants.DefaultHttpsPort
@@ -92,45 +92,45 @@ func importImages(ctx context.Context, spec string) error {
 		return err
 	}
 	for _, image := range images {
-		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port), namespace); err != nil {
+		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port), ociNamespace); err != nil {
 			return fmt.Errorf("importing image %s: %v", image.URI, err)
 		}
 	}
 
 	endpoint := clusterSpec.Cluster.RegistryMirror()
-	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, namespace, registryUsername, registryPassword)
+	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, ociNamespace, registryUsername, registryPassword)
 }
 
-func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string, namespace string) error {
+func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string, ociNamespace string) error {
 	if err := docker.PullImage(ctx, image); err != nil {
 		return err
 	}
 
-	if err := docker.TagImage(ctx, image, endpoint, namespace); err != nil {
+	if err := docker.TagImage(ctx, image, endpoint, ociNamespace); err != nil {
 		return err
 	}
 
-	return docker.PushImage(ctx, image, endpoint, namespace)
+	return docker.PushImage(ctx, image, endpoint, ociNamespace)
 }
 
-func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, namespace, username, password string) error {
+func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, ociNamespace, username, password string) error {
 	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
 		return err
 	}
 	for _, chart := range charts {
-		if err := importChart(ctx, helm, *chart, endpoint, namespace); err != nil {
+		if err := importChart(ctx, helm, *chart, endpoint, ociNamespace); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint, namespace string) error {
+func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint, ociNamespace string) error {
 	uri, chartVersion := getChartUriAndVersion(chart)
 	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
 		return err
 	}
-	return helm.PushChart(ctx, chart.ChartName(), pushChartURI(chart, endpoint, namespace))
+	return helm.PushChart(ctx, chart.ChartName(), pushChartURI(chart, endpoint, ociNamespace))
 }
 
 func preRunImportImagesCmd(cmd *cobra.Command, args []string) error {
@@ -149,7 +149,7 @@ func getChartUriAndVersion(chart v1alpha1.Image) (uri, version string) {
 	return uri, version
 }
 
-func pushChartURI(chart v1alpha1.Image, registryEndpoint, namespace string) string {
+func pushChartURI(chart v1alpha1.Image, registryEndpoint, ociNamespace string) string {
 	orgURL := fmt.Sprintf("%s%s", ociPrefix, filepath.Dir(chart.Image()))
-	return registry.ReplaceHostWithNamespacedEndpoint(orgURL, registryEndpoint, namespace)
+	return registry.ReplaceHostWithNamespacedEndpoint(orgURL, registryEndpoint, ociNamespace)
 }

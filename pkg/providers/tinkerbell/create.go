@@ -52,7 +52,7 @@ func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnDocker(),
-		stack.WithHostPortEnabled(true),
+		stack.WithHostPortEnabled(true), // enable host port on bootstrap cluster
 	)
 	if err != nil {
 		return fmt.Errorf("install Tinkerbell stack on bootstrap cluster: %v", err)
@@ -80,6 +80,10 @@ func (p *Provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alph
 func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	logger.V(4).Info("Installing Tinkerbell stack on workload cluster")
 
+	if p.datacenterConfig.Spec.SkipLoadBalancerDeployment {
+		logger.Info("Warning: Skipping load balancer deployment. Please install and configure a load balancer once the cluster is created.")
+	}
+
 	err := p.stackInstaller.Install(
 		ctx,
 		clusterSpec.VersionsBundle.Tinkerbell,
@@ -87,8 +91,9 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		cluster.KubeconfigFile,
 		p.datacenterConfig.Spec.HookImagesURLPath,
 		stack.WithBootsOnKubernetes(),
-		stack.WithHostPortEnabled(false),
-		stack.WithLoadBalancer(),
+		stack.WithHostPortEnabled(false), // disable host port on workload cluster
+		stack.WithEnvoyEnabled(true),     // use envoy on workload cluster
+		stack.WithLoadBalancerEnabled(!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)

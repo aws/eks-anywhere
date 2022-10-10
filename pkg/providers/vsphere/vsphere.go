@@ -24,6 +24,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	registry "github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/govmomi"
@@ -789,7 +790,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		values["registryMirrorConfiguration"] = registry.GetRegistryWithNamespace(net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port), clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.OCINamespace)
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}

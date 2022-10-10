@@ -39,6 +39,15 @@ func NewPackageReader(mr ManifestReader) *PackageReader {
 func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
 	images, err := r.ManifestReader.ReadImagesFromBundles(ctx, b)
 
+	packageImages, err := r.ReadPackageImagesFromBundles(ctx, b)
+	images = append(images, packageImages...)
+	return images, err
+}
+
+func (r *PackageReader) ReadPackageImagesFromBundles(ctx context.Context, b *releasev1.Bundles) ([]releasev1.Image, error) {
+	images := []releasev1.Image{}
+
+	var err error
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {
@@ -58,6 +67,13 @@ func (r *PackageReader) ReadImagesFromBundles(ctx context.Context, b *releasev1.
 
 func (r *PackageReader) ReadChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
 	images := r.ManifestReader.ReadChartsFromBundles(ctx, b)
+	packageHelmChart := r.ReadPackageChartsFromBundles(ctx, b)
+	images = append(images, packageHelmChart...)
+	return images
+}
+
+func (r *PackageReader) ReadPackageChartsFromBundles(ctx context.Context, b *releasev1.Bundles) []releasev1.Image {
+	images := []releasev1.Image{}
 	for _, vb := range b.Spec.VersionsBundles {
 		artifact, err := GetPackageBundleRef(vb)
 		if err != nil {

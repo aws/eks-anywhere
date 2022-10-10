@@ -13,18 +13,18 @@ import (
 // ImageRegistryDestination implements the ImageDestination interface, writing images and tags from
 // from the local docker cache to an external registry
 type ImageRegistryDestination struct {
-	client    ImageTaggerPusher
-	endpoint  string
-	namespace string
-	processor *ConcurrentImageProcessor
+	client       ImageTaggerPusher
+	endpoint     string
+	ociNamespace string
+	processor    *ConcurrentImageProcessor
 }
 
-func NewRegistryDestination(client ImageTaggerPusher, registryEndpoint, namespace string) *ImageRegistryDestination {
+func NewRegistryDestination(client ImageTaggerPusher, registryEndpoint, ociNamespace string) *ImageRegistryDestination {
 	return &ImageRegistryDestination{
-		client:    client,
-		endpoint:  registryEndpoint,
-		namespace: namespace,
-		processor: NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
+		client:       client,
+		endpoint:     registryEndpoint,
+		ociNamespace: ociNamespace,
+		processor:    NewConcurrentImageProcessor(runtime.GOMAXPROCS(0)),
 	}
 }
 
@@ -34,11 +34,11 @@ func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) 
 	logger.V(3).Info("Starting registry write", "numberOfImages", len(images))
 	err := d.processor.Process(ctx, images, func(ctx context.Context, image string) error {
 		image = removeDigestReference(image)
-		if err := d.client.TagImage(ctx, image, d.endpoint, d.namespace); err != nil {
+		if err := d.client.TagImage(ctx, image, d.endpoint, d.ociNamespace); err != nil {
 			return err
 		}
 
-		if err := d.client.PushImage(ctx, image, d.endpoint, d.namespace); err != nil {
+		if err := d.client.PushImage(ctx, image, d.endpoint, d.ociNamespace); err != nil {
 			return err
 		}
 
@@ -84,15 +84,22 @@ func (s *ImageOriginalRegistrySource) Load(ctx context.Context, images ...string
 	return nil
 }
 
-func ReplaceHostWithNamespacedEndpoint(uri, mirrorRegistry, namespace string) string {
+func ReplaceHostWithNamespacedEndpoint(uri, mirrorRegistry, ociNamespace string) string {
 	if mirrorRegistry == "" {
 		return uri
 	}
 	uri = urls.ReplaceHost(uri, mirrorRegistry)
-	if namespace == "" {
+	if ociNamespace == "" {
 		return uri
 	}
-	return strings.ReplaceAll(uri, mirrorRegistry, mirrorRegistry+"/"+namespace)
+	return strings.ReplaceAll(uri, mirrorRegistry, mirrorRegistry+"/"+ociNamespace)
+}
+
+func GetRegistryWithNamespace(mirrorRegistry, namespace string) string {
+	if namespace == "" {
+		return mirrorRegistry
+	}
+	return mirrorRegistry + "/" + namespace
 }
 
 // Curated packages are currently referenced by digest

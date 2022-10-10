@@ -81,8 +81,8 @@ func (d *Docker) CgroupVersion(ctx context.Context) (int, error) {
 	return version, nil
 }
 
-func (d *Docker) TagImage(ctx context.Context, image string, endpoint string, namespace string) error {
-	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, namespace)
+func (d *Docker) TagImage(ctx context.Context, image string, endpoint string, ociNamespace string) error {
+	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, ociNamespace)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
 	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
@@ -90,8 +90,8 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string, na
 	return nil
 }
 
-func (d *Docker) PushImage(ctx context.Context, image string, endpoint string, namespace string) error {
-	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, namespace)
+func (d *Docker) PushImage(ctx context.Context, image string, endpoint string, ociNamespace string) error {
+	localImage := docker.ReplaceHostWithNamespacedEndpoint(image, endpoint, ociNamespace)
 	logger.Info("Pushing", "image", localImage)
 	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err

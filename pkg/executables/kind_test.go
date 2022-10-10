@@ -133,7 +133,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirrorWithPort, constants.DefaultRegistryMirrorNamespace, "ca.crt")
+					return k.WithRegistryMirror(registryMirrorWithPort, constants.DefaultRegistryMirrorOCINamespace, "ca.crt")
 				},
 			},
 			env:                map[string]string{},

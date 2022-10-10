@@ -13,13 +13,14 @@ import (
 )
 
 type listPackagesOption struct {
-	kubeVersion string
-	clusterName string
-	source      curatedpackages.BundleSource
-	registry    string
+	kubeVersion  string
+	clusterName  string
+	source       curatedpackages.BundleSource
+	registry     string
+	ociNamespace string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig string
+	kubeConfig   string
 }
 
 var lpo = &listPackagesOption{}
@@ -33,6 +34,8 @@ func init() {
 		"Kubernetes version <major>.<minor> of the packages to list, for example: \"1.23\".")
 	listPackagesCommand.Flags().StringVar(&lpo.registry, "registry", "",
 		"Specifies an alternative registry for packages discovery.")
+	listPackagesCommand.Flags().StringVar(&lpo.ociNamespace, "oci-namespace", "",
+		"Specifies an alternative registry namespace for packages discovery.")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeConfig, "kubeconfig", "",
 		"Path to a kubeconfig file to use when source is a cluster.")
 	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
