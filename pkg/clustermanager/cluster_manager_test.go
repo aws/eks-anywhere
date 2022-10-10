@@ -1985,3 +1985,13 @@ func TestClusterManagerDeletePackageResources(t *testing.T) {
 	err := tt.clusterManager.DeletePackageResources(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).To(BeNil())
 }
+
+func TestCreateAwsIamAuthCaSecretSuccess(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.awsIamAuth.EXPECT().GenerateCertKeyPairSecret(tt.clusterName)
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, test.OfType("[]uint8"))
+
+	err := tt.clusterManager.CreateAwsIamAuthCaSecret(tt.ctx, tt.cluster, tt.clusterName)
+	tt.Expect(err).To(BeNil())
+}
