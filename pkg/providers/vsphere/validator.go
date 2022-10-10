@@ -610,12 +610,10 @@ func (v *Validator) getMissingPrivs(ctx context.Context, vsc govmomi.VSphereClie
 }
 
 func (v *Validator) sameOSFamily(configs map[string]*anywherev1.VSphereMachineConfig) bool {
-	var osFamily anywherev1.OSFamily
+	c := getRandomMachineConfig(configs)
+	osFamily := c.Spec.OSFamily
+
 	for _, machineConfig := range configs {
-		if osFamily == "" {
-			osFamily = machineConfig.Spec.OSFamily
-			continue
-		}
 		if machineConfig.Spec.OSFamily != osFamily {
 			return false
 		}
@@ -624,15 +622,22 @@ func (v *Validator) sameOSFamily(configs map[string]*anywherev1.VSphereMachineCo
 }
 
 func (v *Validator) sameTemplate(configs map[string]*anywherev1.VSphereMachineConfig) bool {
-	var template string
+	c := getRandomMachineConfig(configs)
+	template := c.Spec.Template
+
 	for _, machineConfig := range configs {
-		if template == "" {
-			template = machineConfig.Spec.Template
-			continue
-		}
 		if machineConfig.Spec.Template != template {
 			return false
 		}
 	}
 	return true
+}
+
+func getRandomMachineConfig(configs map[string]*anywherev1.VSphereMachineConfig) *anywherev1.VSphereMachineConfig {
+	var machineConfig *anywherev1.VSphereMachineConfig
+	for _, c := range configs {
+		machineConfig = c
+		break
+	}
+	return machineConfig
 }
