@@ -62,10 +62,10 @@ func TestVSphereDatacenterValidateUpdateTlsThumbprintImmutable(t *testing.T) {
 
 func TestVSphereDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
-	vOld.Spec.Network = "oldNetwork"
+	vOld.Spec.Network = "/datacenter/oldNetwork"
 	c := vOld.DeepCopy()
 
-	c.Spec.Network = "newNetwork"
+	c.Spec.Network = "/datacenter/network/newNetwork"
 
 	vOld.PauseReconcile()
 
@@ -139,12 +139,23 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
 	os.Setenv("FULL_LIFECYCLE_API", "true")
 	dataCenterConfig := vsphereDatacenterConfig()
-	dataCenterConfig.Spec.Network = "Network"
-	c := dataCenterConfig.DeepCopy()
-
-	c.Spec.Network = "Network"
 
 	g := NewWithT(t)
-	g.Expect(c.ValidateCreate()).To(Succeed())
+	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
 	os.Unsetenv("FULL_LIFECYCLE_API")
+}
+
+func TestVSphereDatacenterValidateCreate(t *testing.T) {
+	dataCenterConfig := vsphereDatacenterConfig()
+
+	g := NewWithT(t)
+	g.Expect(dataCenterConfig.ValidateCreate()).To(Succeed())
+}
+
+func TestVSphereDatacenterValidateCreateFail(t *testing.T) {
+	dataCenterConfig := vsphereDatacenterConfig()
+	dataCenterConfig.Spec.Datacenter = ""
+
+	g := NewWithT(t)
+	g.Expect(dataCenterConfig.ValidateCreate()).NotTo(Succeed())
 }
