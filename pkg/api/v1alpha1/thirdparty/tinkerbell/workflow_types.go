@@ -1,5 +1,5 @@
 // Package represents https://pkg.go.dev/github.com/tinkerbell/tink@v0.6.0/workflow#pkg-types with json tags.
-//+kubebuilder:object:generate=true
+// +kubebuilder:object:generate=true
 package tinkerbell
 
 // Workflow represents a workflow to be executed.

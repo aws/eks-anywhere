@@ -43,10 +43,10 @@ func FromEnvironment() string {
 //
 // The priority is:
 //
-//   1. CLI flag (flagValue)
-//   2. A file created at cluster creation, found by a combining the cluster
-//      name with present working directory.
-//   3. The first filename found in the KUBECONFIG environment variable.
+//  1. CLI flag (flagValue)
+//  2. A file created at cluster creation, found by a combining the cluster
+//     name with present working directory.
+//  3. The first filename found in the KUBECONFIG environment variable.
 //
 // NO VALIDATION IS PERFORMED. See ValidateFile for validation.
 //
