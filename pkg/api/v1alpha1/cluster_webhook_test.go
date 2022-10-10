@@ -1444,7 +1444,7 @@ func TestClusterValidateUpdateInvalidManagementCluster(t *testing.T) {
 
 			g := NewWithT(t)
 			err := tt.clusterNew.ValidateUpdate(clusterOld)
-			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be positive")))
+			g.Expect(err).To(MatchError(ContainSubstring("worker node count must be >= 0")))
 		})
 	}
 }
