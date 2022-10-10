@@ -2501,3 +2501,35 @@ func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
 }
+
+func TestClusterWorkerNodeConfigCount(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with worker node config count",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Name:                     "",
+					Count:                    ptr.Int(5),
+					AutoScalingConfiguration: nil,
+					MachineGroupRef:          nil,
+					Taints:                   nil,
+					Labels:                   nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
+}
