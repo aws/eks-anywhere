@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"os"
 	"path"
 	"testing"
@@ -1553,6 +1554,16 @@ func TestClusterUpgradeNeededNoChanges(t *testing.T) {
 	}
 }
 
+func TestClusterNeedsNewWorkloadTemplateFalse(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfig := givenMachineConfigs(t, testClusterConfigMainFilename)[cc.MachineConfigRefs()[0].Name]
+
+	assert.False(t, NeedsNewWorkloadTemplate(clusterSpec, clusterSpec, dcConfig, dcConfig, machineConfig, machineConfig, logger.Get()),"expected no spec change to be detected")
+}
+
 func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
@@ -1668,7 +1679,16 @@ func TestAnyImmutableFieldChangedDiskOfferingNameChange(t *testing.T) {
 	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	newMachineConfigsMap["test"].Spec.DiskOffering.Name = "newDiskOffering"
+	newMachineConfigsMap["test"].Spec.DiskOffering = &v1alpha1.CloudStackResourceDiskOffering{
+		CloudStackResourceIdentifier: v1alpha1.CloudStackResourceIdentifier{
+			Name: "newDiskOffering",
+		},
+		CustomSize:                   0,
+		MountPath:                    "",
+		Device:                       "",
+		Filesystem:                   "",
+		Label:                        "",
+	}
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
@@ -1683,6 +1703,20 @@ func TestAnyImmutableFieldChangedSymlinksAdded(t *testing.T) {
 	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	newMachineConfigsMap["test"].Spec.Symlinks["/new/folder"] = "/data/new/folder"
+	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
+}
+
+func TestAnyImmutableFieldChangedComputeOffering(t *testing.T) {
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newDcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	newMachineConfigsMap["test"].Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{Name: "new-offering"}
 	assert.True(t, AnyImmutableFieldChanged(dcConfig, newDcConfig, machineConfigsMap["test"], newMachineConfigsMap["test"], test.NewNullLogger()), "Should not have any immutable fields changes")
 }
 
