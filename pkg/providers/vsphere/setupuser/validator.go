@@ -126,12 +126,12 @@ func setDefaults(c *VSphereSetupUserConfig) {
 	}
 }
 
-func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient, force bool) error {
+func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	exists, err := govc.GroupExists(ctx, c.Spec.GroupName)
 	if err != nil {
 		return err
 	}
-	if exists && !force {
+	if exists {
 		return fmt.Errorf("group %s already exists, please use force=true to ignore", c.Spec.GroupName)
 	}
 
@@ -141,7 +141,7 @@ func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc
 		if err != nil {
 			return err
 		}
-		if exists && !force {
+		if exists {
 			return fmt.Errorf("role %s already exists, please use force=true to ignore", r)
 		}
 	}

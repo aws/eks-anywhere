@@ -70,9 +70,11 @@ func (vsuo *vSphereSetupUserOptions) setupUser(cmd *cobra.Command, _ []string) e
 		return err
 	}
 
-	err = setupuser.ValidateVSphereObjects(ctx, c, deps.Govc, vsuo.force)
-	if err != nil {
-		return err
+	if !vsuo.force {
+		err = setupuser.ValidateVSphereObjects(ctx, c, deps.Govc)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = setupuser.Run(ctx, c, deps.Govc)

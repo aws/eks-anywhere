@@ -130,7 +130,7 @@ func TestGenerateConfigSetDefaults(t *testing.T) {
 	}
 }
 
-func TestValidateVSphereForceFalseObjects(t *testing.T) {
+func TestValidateVSphereObjects(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
@@ -164,8 +164,7 @@ func TestValidateVSphereForceFalseObjects(t *testing.T) {
 			gc := mocks.NewMockProviderGovcClient(ctrl)
 			tt.prepare(ctx, c, gc)
 
-			force := false
-			err = setupuser.ValidateVSphereObjects(ctx, c, gc, force)
+			err = setupuser.ValidateVSphereObjects(ctx, c, gc)
 
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
