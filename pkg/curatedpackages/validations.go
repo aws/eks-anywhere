@@ -20,5 +20,5 @@ func ValidateKubeVersion(kubeVersion string, clusterName string) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("please specify kube-version or cluster name>")
+	return fmt.Errorf("please specify kube-version or cluster name")
 }
