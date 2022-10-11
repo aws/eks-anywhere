@@ -113,7 +113,7 @@ func (s *Nutanix) CustomizeProviderConfig(file string) []byte {
 }
 
 func (s *Nutanix) ClusterConfigFillers() []api.ClusterFiller {
-	//TODO generate unique IP everytime.
+	// TODO generate unique IP everytime.
 	if s.controlPlaneEndpointIP != "" {
 		s.clusterFillers = append(s.clusterFillers, api.WithControlPlaneEndpointIP(s.controlPlaneEndpointIP))
 	}

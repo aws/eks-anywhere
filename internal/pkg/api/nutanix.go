@@ -78,6 +78,7 @@ func WithNutanixEndpoint(value string) NutanixFiller {
 		config.datacenterConfig.Spec.Endpoint = value
 	}
 }
+
 func WithNutanixPort(value int) NutanixFiller {
 	return func(config NutanixConfig) {
 		config.datacenterConfig.Spec.Port = value
