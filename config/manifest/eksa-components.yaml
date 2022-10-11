@@ -5073,6 +5073,8 @@ spec:
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
@@ -5272,6 +5274,8 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs

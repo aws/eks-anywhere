@@ -19,6 +19,7 @@ import (
 	tinkv1alpha1 "github.com/tinkerbell/tink/pkg/apis/core/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -1648,7 +1649,7 @@ func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig stri
 // HasResource implements KubectlRunner.
 func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
 	throwaway := &unstructured.Unstructured{}
-	err := k.get(ctx, resourceType, namespace, kubeconfig, throwaway, withGetResourceName(name))
+	err := k.get(ctx, resourceType, kubeconfig, throwaway, withGetResourceName(name), withGetNamespace(namespace))
 	if err != nil {
 		return false, err
 	}
@@ -1656,20 +1657,26 @@ func (k *Kubectl) HasResource(ctx context.Context, resourceType string, name str
 }
 
 // GetObject performs a GET call to the kube API server authenticating with a kubeconfig file
-// and unmarshalls the response into the provdied Object
+// and unmarshalls the response into the provided Object
 // If the object is not found, it returns an error implementing apimachinery errors.APIStatus
 func (k *Kubectl) GetObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj runtime.Object) error {
-	return k.get(ctx, resourceType, namespace, kubeconfig, obj, withGetResourceName(name))
+	return k.get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name), withGetNamespace(namespace))
+}
+
+// GetClusterObject performs a GET class like above except without namespace required.
+func (k *Kubectl) GetClusterObject(ctx context.Context, resourceType, name, kubeconfig string, obj runtime.Object) error {
+	return k.get(ctx, resourceType, kubeconfig, obj, withGetResourceName(name))
 }
 
 func (k *Kubectl) ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error {
-	return k.get(ctx, resourceType, namespace, kubeconfig, list)
+	return k.get(ctx, resourceType, kubeconfig, list, withGetNamespace(namespace))
 }
 
 type (
 	getOption  func(*getOptions)
 	getOptions struct {
-		name string
+		name      string
+		namespace string
 	}
 )
 
@@ -1679,13 +1686,22 @@ func withGetResourceName(name string) getOption {
 	}
 }
 
-func (k *Kubectl) get(ctx context.Context, resourceType, namespace, kubeconfig string, obj runtime.Object, opts ...getOption) error {
+func withGetNamespace(namespace string) getOption {
+	return func(o *getOptions) {
+		o.namespace = namespace
+	}
+}
+
+func (k *Kubectl) get(ctx context.Context, resourceType, kubeconfig string, obj runtime.Object, opts ...getOption) error {
 	o := &getOptions{}
 	for _, opt := range opts {
 		opt(o)
 	}
 
-	params := []string{"get", "--ignore-not-found", "--namespace", namespace, "-o", "json", "--kubeconfig", kubeconfig, resourceType}
+	params := []string{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", kubeconfig, resourceType}
+	if o.namespace != "" {
+		params = append(params, "--namespace", o.namespace)
+	}
 	if o.name != "" {
 		params = append(params, o.name)
 	}
@@ -1749,6 +1765,15 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
+// GetStorageClass returns the cluster-scoped storageclass on the cluster.
+func (k *Kubectl) GetStorageClass(ctx context.Context, name, kubeconfig string) (*storagev1.StorageClass, error) {
+	obj := &storagev1.StorageClass{}
+	if err := k.GetClusterObject(ctx, "storageclass", name, kubeconfig, obj); err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
 func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buffer, error) {
 	return k.Execute(ctx, opts...)
 }
@@ -1757,6 +1782,14 @@ func (k *Kubectl) ExecuteCommand(ctx context.Context, opts ...string) (bytes.Buf
 func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kubeconfig string) error {
 	if _, err := k.Execute(ctx, "delete", resourceType, name, "--namespace", namespace, "--kubeconfig", kubeconfig); err != nil {
 		return fmt.Errorf("deleting %s %s in namespace %s: %v", name, resourceType, namespace, err)
+	}
+	return nil
+}
+
+// DeleteClusterObject performs a DELETE call like above except without namespace required.
+func (k *Kubectl) DeleteClusterObject(ctx context.Context, resourceType, name, kubeconfig string) error {
+	if _, err := k.Execute(ctx, "delete", resourceType, name, "--kubeconfig", kubeconfig); err != nil {
+		return fmt.Errorf("deleting %s %s: %v", name, resourceType, err)
 	}
 	return nil
 }

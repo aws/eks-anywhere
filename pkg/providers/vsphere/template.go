@@ -181,6 +181,7 @@ func buildTemplateMapCP(
 		"eksaCloudProviderPassword":            vuc.EksaVsphereCPPassword,
 		"eksaCSIUsername":                      vuc.EksaVsphereCSIUsername,
 		"eksaCSIPassword":                      vuc.EksaVsphereCSIPassword,
+		"disableCSI":                           datacenterSpec.DisableCSI,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {

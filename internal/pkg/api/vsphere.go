@@ -176,6 +176,13 @@ func WithDatacenter(value string) VSphereFiller {
 	}
 }
 
+// WithDisableCSI sets the value for DisableCSI in VSphereDatacenterConfig.
+func WithDisableCSI(value bool) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.datacenterConfig.Spec.DisableCSI = value
+	}
+}
+
 func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }
