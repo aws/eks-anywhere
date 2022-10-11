@@ -54,13 +54,33 @@ func TestNutanixValidatorDuplicateResourcesFound(t *testing.T) {
 	clusters := &v3.ClusterListIntentResponse{
 		Entities: []*v3.ClusterIntentResponse{
 			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cda"),
+				},
 				Spec: &v3.Cluster{
 					Name: utils.StringPtr("prism-cluster"),
 				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
 			},
 			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("a15f6966-bfc7-4d1e-8575-224096fc1cdb"),
+				},
 				Spec: &v3.Cluster{
 					Name: utils.StringPtr("prism-cluster"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
 				},
 			},
 		},

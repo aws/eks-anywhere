@@ -3,6 +3,7 @@ package nutanix
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	"github.com/nutanix-cloud-native/prism-go-client/v3"
@@ -136,23 +137,42 @@ func findSubnetUUIDByName(ctx context.Context, v3Client Client, subnetName strin
 	return res.Entities[0].Metadata.UUID, nil
 }
 
-// findClusterUuidByName retrieves the cluster uuid by the given cluster name
+// findClusterUUIDByName retrieves the cluster uuid by the given cluster name
 func findClusterUUIDByName(ctx context.Context, v3Client Client, clusterName string) (*string, error) {
 	res, err := v3Client.ListCluster(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", clusterName)),
 	})
-	if err != nil || len(res.Entities) == 0 {
+	if err != nil {
+		return nil, fmt.Errorf("failed to find clluster by name %q: %v", clusterName, err)
+	}
+	entities := make([]*v3.ClusterIntentResponse, 0)
+	for _, entity := range res.Entities {
+		if entity.Status != nil && entity.Status.Resources != nil && entity.Status.Resources.Config != nil {
+			serviceList := entity.Status.Resources.Config.ServiceList
+			isPrismCentral := false
+			for _, svc := range serviceList {
+				// Prism Central is also internally a cluster, but we filter that out here as we only care about prism element clusters
+				if svc != nil && strings.ToUpper(*svc) == "PRISM_CENTRAL" {
+					isPrismCentral = true
+				}
+			}
+			if !isPrismCentral {
+				entities = append(entities, entity)
+			}
+		}
+	}
+	if len(entities) == 0 {
 		return nil, fmt.Errorf("failed to find cluster by name %q: %v", clusterName, err)
 	}
 
-	if len(res.Entities) > 1 {
-		return nil, fmt.Errorf("found more than one (%v) cluster with name %q", len(res.Entities), clusterName)
+	if len(entities) > 1 {
+		return nil, fmt.Errorf("found more than one (%v) cluster with name %q", len(entities), clusterName)
 	}
 
-	return res.Entities[0].Metadata.UUID, nil
+	return entities[0].Metadata.UUID, nil
 }
 
-// findImageByName retrieves the image uuid by the given image name
+// findImageUUIDByName retrieves the image uuid by the given image name
 func findImageUUIDByName(ctx context.Context, v3Client Client, imageName string) (*string, error) {
 	res, err := v3Client.ListImage(ctx, &v3.DSMetadata{
 		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),

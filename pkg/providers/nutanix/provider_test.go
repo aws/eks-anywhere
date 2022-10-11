@@ -153,6 +153,28 @@ func TestNutanixProviderSetupAndValidateCreate(t *testing.T) {
 				Spec: &v3.Cluster{
 					Name: utils.StringPtr("prism-cluster"),
 				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("AOS")},
+						},
+					},
+				},
+			},
+			{
+				Metadata: &v3.Metadata{
+					UUID: utils.StringPtr("4692a614-85e7-4abc-9bf3-8fb0f9d790bc"),
+				},
+				Spec: &v3.Cluster{
+					Name: utils.StringPtr("prism-central"),
+				},
+				Status: &v3.ClusterDefStatus{
+					Resources: &v3.ClusterObj{
+						Config: &v3.ClusterConfig{
+							ServiceList: []*string{utils.StringPtr("PRISM_CENTRAL")},
+						},
+					},
+				},
 			},
 		},
 	}
