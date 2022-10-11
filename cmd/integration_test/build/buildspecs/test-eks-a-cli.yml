@@ -116,7 +116,27 @@ env:
     TEST_RUNNER_GOVC_RESOURCE_POOL: "tinkerbell_ci:govc_resource_pool"
     TEST_RUNNER_GOVC_NETWORK: "tinkerbell_ci:govc_network"
     TEST_RUNNER_GOVC_FOLDER: "tinkerbell_ci:govc_folder"
-
+    NUTANIX_USER: "nutanix_ci:nutanix_user"
+    NUTANIX_PASSWORD: "nutanix_ci:nutanix_password"
+    T_NUTANIX_ENDPOINT: "nutanix_ci:nutanix_pc_endpoint"
+    T_NUTANIX_PORT: "nutanix_ci:nutanix_port"
+    T_NUTANIX_MACHINE_BOOT_TYPE: "nutanix_ci:nutanix_machine_boot_type"
+    T_NUTANIX_MACHINE_MEMORY_SIZE: "nutanix_ci:nutanix_machine_memory_size"
+    T_NUTANIX_SYSTEMDISK_SIZE: "nutanix_ci:nutanix_systemdisk_size"
+    T_NUTANIX_MACHINE_VCPU_PER_SOCKET: "nutanix_ci:nutanix_vcpu_per_socket"
+    T_NUTANIX_MACHINE_VCPU_SOCKET: "nutanix_ci:nutanix_vcpu_socket"
+    T_NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME: "nutanix_ci:nutanix_machine_template_image_name"
+    T_NUTANIX_PRISM_ELEMENT_CLUSTER_NAME: "nutanix_ci:nutanix_prism_element_cluster_name"
+    T_NUTANIX_SSH_AUTHORIZED_KEY: "nutanix_ci:nutanix_ssh_authorized_key"
+    T_NUTANIX_SUBNET_NAME: "nutanix_ci:nutanix_subnet_name"
+    T_NUTANIX_CONTROL_PLANE_ENDPOINT_IP: "nutanix_ci:nutanix_control_plane_endpoint_ip"
+    T_NUTANIX_POD_CIDR: "nutanix_ci:nutanix_pod_cidr"
+    T_NUTANIX_SERVICE_CIDR: "nutanix_ci:nutanix_service_cidr"
+    T_NUTANIX_ADDITIONAL_TRUST_BUNDLE: "nutanix_ci:nutanix_additional_trust_bundle"
+    T_NUTANIX_TEMPLATE_UBUNTU_1_20: "nutanix_ci:nutanix_template_ubuntu_1_20"
+    T_NUTANIX_TEMPLATE_UBUNTU_1_21: "nutanix_ci:nutanix_template_ubuntu_1_21"
+    T_NUTANIX_TEMPLATE_UBUNTU_1_22: "nutanix_ci:nutanix_template_ubuntu_1_22"
+    T_NUTANIX_TEMPLATE_UBUNTU_1_23: "nutanix_ci:nutanix_template_ubuntu_1_23"
 phases:
   pre_build:
     commands:
