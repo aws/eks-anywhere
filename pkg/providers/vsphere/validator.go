@@ -99,10 +99,8 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
-	var workerNodeGroupMachineConfigs []*anywherev1.VSphereMachineConfig
 	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
-		workerNodeGroupMachineConfigs = append(workerNodeGroupMachineConfigs, workerNodeGroupMachineConfig)
 		if workerNodeGroupMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
 		}
