@@ -442,10 +442,11 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	tt := []struct {
 		name     string
 		gotError error
-	}{{
-		name:     "wait returns no error",
-		gotError: nil,
-	},
+	}{
+		{
+			name:     "wait returns no error",
+			gotError: nil,
+		},
 		{
 			name:     "wait returns no resources error",
 			gotError: errKubectlWaitNoResources,
