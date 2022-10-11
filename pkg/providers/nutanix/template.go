@@ -140,7 +140,7 @@ func buildTemplateMapCP(
 	}
 
 	if datacenterSpec.AdditionalTrustBundle != "" {
-		values["nutanixInsecure"] = "true"
+		values["nutanixInsecure"] = true
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
