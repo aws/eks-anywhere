@@ -173,12 +173,13 @@ func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFill
 	}
 }
 
-func WithRegistryMirror(endpoint, caCert string) ClusterFiller {
+func WithRegistryMirror(endpoint, port string, caCert string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.RegistryMirrorConfiguration == nil {
 			c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{}
 		}
 		c.Spec.RegistryMirrorConfiguration.Endpoint = endpoint
+		c.Spec.RegistryMirrorConfiguration.Port = port
 		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
 	}
 }
