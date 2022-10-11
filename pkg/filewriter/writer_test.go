@@ -91,12 +91,12 @@ func TestWriterWithDir(t *testing.T) {
 		t.Fatalf("failed creating writer error = %v", err)
 	}
 
-	tr, err = tr.WithDir(subFolder)
+	fw, err := tr.WithDir(subFolder)
 	if err != nil {
 		t.Fatalf("failed creating writer with subdir error = %v", err)
 	}
 
-	gotPath, err := tr.Write("file.txt", []byte("file content"))
+	gotPath, err := fw.Write("file.txt", []byte("file content"))
 	if err != nil {
 		t.Fatalf("writer.Write() error = %v", err)
 	}

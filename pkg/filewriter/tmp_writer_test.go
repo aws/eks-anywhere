@@ -96,12 +96,12 @@ func TestTmpWriterWithDir(t *testing.T) {
 		t.Fatalf("failed creating tmpWriter error = %v", err)
 	}
 
-	tr, err = tr.WithDir(subFolder)
+	fw, err := tr.WithDir(subFolder)
 	if err != nil {
 		t.Fatalf("failed creating tmpWriter with subdir error = %v", err)
 	}
 
-	gotPath, err := tr.Write("file.txt", []byte("file content"))
+	gotPath, err := fw.Write("file.txt", []byte("file content"))
 	if err != nil {
 		t.Fatalf("tmpWriter.Write() error = %v", err)
 	}

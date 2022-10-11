@@ -57,7 +57,7 @@ type Dependencies struct {
 	Cmk                       *executables.Cmk
 	SnowAwsClientRegistry     *snow.AwsClientRegistry
 	SnowConfigManager         *snow.ConfigManager
-	Writer                    filewriter.FileWriter
+	Writer                    *filewriter.Writer
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
@@ -200,7 +200,7 @@ func (f *Factory) UseExecutableImage(image string) *Factory {
 // from the Bundle and using the first VersionsBundle
 // This is just the default for when there is not an specific kubernetes version available
 // For commands that receive a cluster config file or a kubernetes version directly as input,
-// use UseExecutableImage to specify the image directly
+// use UseExecutableImage to specify the image directly.
 func (f *Factory) WithExecutableImage() *Factory {
 	f.WithManifestReader()
 
@@ -233,7 +233,7 @@ func (f *Factory) WithLocalExecutables() *Factory {
 
 // UseExecutablesDockerClient forces a specific DockerClient to build
 // Executables as opposed to follow the normal building flow
-// This is only for testing
+// This is only for testing.
 func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *Factory {
 	f.executablesConfig.dockerClient = client
 	return f

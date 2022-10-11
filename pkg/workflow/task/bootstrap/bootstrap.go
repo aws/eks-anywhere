@@ -3,63 +3,65 @@ package bootstrap
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io"
+	"os"
 
-	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/workflow/workflowcontext"
 )
 
-// OptionsRetriever supplies bootstrap cluster options. This is typically satisfied
-// by a provider.
-type OptionsRetriever interface {
-	BootstrapClusterOpts(*cluster.Spec) ([]bootstrapper.BootstrapClusterOption, error)
+// Cluster is an instance of a bootstrap cluster.
+type Cluster interface {
+	// CreateCluster creates the bootstrap cluster instance.
+	Create(context.Context) error
+
+	// DeleteCluster deletes the bootstrap cluster instance.
+	Delete(context.Context) error
+
+	// WriteKubeconfig writes the kubeconfig for the bootstrap cluster to the provided io.Writer.
+	WriteKubeconfig(io.Writer) error
 }
 
-// Bootstrapper creates and destroys bootstrap clusters. It is satisfied by the bootstrap package
-// and exists predominently for testability.
-type Bootstrapper interface {
-	// CreateCluster creates a new local cluster. It does not contain any EKS-A components.
-	CreateBootstrapCluster(
-		context.Context,
-		*cluster.Spec,
-		...bootstrapper.BootstrapClusterOption,
-	) (*types.Cluster, error)
-
-	// DeleteBootstrapCluster deletes a local cluster created with CreateCluster.
-	DeleteBootstrapCluster(
-		ctx context.Context,
-		cluster *types.Cluster,
-		operationType constants.Operation,
-		isForceCleanup bool,
-	) error
+// FS is a filesystem abstraction.
+type FS interface {
+	// Create creates a new file called name at the instances configured root directory.
+	Create(name string) (w io.WriteCloser, absPath string, err error)
 }
 
-// CreateClusters creates a functional Kubernetes cluster that can be used to faciliate
+// CreateCluster creates a functional Kubernetes cluster that can be used to faciliate
 // EKS-A operations. The bootstrap cluster is populated in the context using
 // workflow.WithBootstrapCluster for subsequent tasks.
 type CreateCluster struct {
 	// Spec is the spec to be used for bootstrapping the cluster.
 	Spec *cluster.Spec
 
-	// Options supplies bootstrap cluster creation options.
-	Options OptionsRetriever
-
 	// Bootstrapper is used to create the cluster.
-	Bootstrapper Bootstrapper
+	Cluster Cluster
+
+	// FS is a filesystem abstraction with context of a root directory.
+	FS FS
 }
 
 // RunTask satisfies workflow.Task.
 func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
-	opts, err := t.Options.BootstrapClusterOpts(t.Spec)
+	if err := t.Cluster.Create(ctx); err != nil {
+		return ctx, err
+	}
+
+	fh, fp, err := t.FS.Create(toKubeconfigFilename(t.Spec.Cluster.Name))
 	if err != nil {
 		return ctx, err
 	}
 
-	cluster, err := t.Bootstrapper.CreateBootstrapCluster(ctx, t.Spec, opts...)
-	if err != nil {
+	if err := t.Cluster.WriteKubeconfig(fh); err != nil {
 		return ctx, err
+	}
+
+	cluster := &types.Cluster{
+		Name:           t.Spec.Cluster.Name,
+		KubeconfigFile: fp,
 	}
 
 	return workflowcontext.WithBootstrapCluster(ctx, cluster), nil
@@ -69,19 +71,27 @@ func (t CreateCluster) RunTask(ctx context.Context) (context.Context, error) {
 // populated in the context using workflow.WithBootstrapCluster.
 type DeleteCluster struct {
 	// Bootstrapper is used to delete the cluster.
-	Bootstrapper Bootstrapper
+	Cluster Cluster
 }
 
 // RunTask satisfies workflow.Task.
 func (t DeleteCluster) RunTask(ctx context.Context) (context.Context, error) {
+	if err := t.Cluster.Delete(ctx); err != nil {
+		return ctx, err
+	}
+
 	cluster := workflowcontext.BootstrapCluster(ctx)
 	if cluster == nil {
 		return ctx, errors.New("bootstrap cluster not found in context")
 	}
 
-	if err := t.Bootstrapper.DeleteBootstrapCluster(ctx, cluster, constants.Create, false); err != nil {
-		return ctx, err
+	if err := os.Remove(cluster.KubeconfigFile); err != nil {
+		return ctx, fmt.Errorf("removing bootstrap kubeconfig file: %v", err)
 	}
 
 	return ctx, nil
+}
+
+func toKubeconfigFilename(clusterName string) string {
+	return fmt.Sprintf("%s-kind.kubeconfig", clusterName)
 }

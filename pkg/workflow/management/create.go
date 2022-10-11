@@ -30,11 +30,11 @@ type CreateCluster struct {
 	// The spec used to construcft all other dependencies.
 	Spec *cluster.Spec
 
-	// CreateBootstrapOptions supplies bootstrap cluster options for creating bootstrap clusters.
-	CreateBootstrapClusterOptions bootstrap.OptionsRetriever
+	// BootstrapCluster is a bootstrap cluster instance that doesn't exist yet.
+	BootstrapCluster bootstrap.Cluster
 
-	// Bootstrapper creates and destroys bootstrap clusters.
-	Bootstrapper bootstrap.Bootstrapper
+	// FS is a filesystem abstraction with context of a root directory.
+	FS bootstrap.FS
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
@@ -65,16 +65,15 @@ func (c CreateCluster) build() (*workflow.Workflow, error) {
 	}
 
 	err := wflw.AppendTask(CreateBootstrapCluster, bootstrap.CreateCluster{
-		Spec:         c.Spec,
-		Options:      c.CreateBootstrapClusterOptions,
-		Bootstrapper: c.Bootstrapper,
+		Spec:    c.Spec,
+		Cluster: c.BootstrapCluster,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	err = wflw.AppendTask(DeleteBootstrapCluster, bootstrap.DeleteCluster{
-		Bootstrapper: c.Bootstrapper,
+		Cluster: c.BootstrapCluster,
 	})
 	if err != nil {
 		return nil, err
