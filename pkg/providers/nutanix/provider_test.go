@@ -408,6 +408,16 @@ func TestAnyImmutableFieldChanged(t *testing.T) {
 			expectedResult: true,
 		},
 		{
+			name: "machine image identifier type changed",
+			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
+				conf := spec.DeepCopy()
+				conf.Spec.Image.Type = anywherev1.NutanixIdentifierUUID
+				conf.Spec.Image.Name = utils.StringPtr("49ab2c64-72a1-4637-9673-e2f13b1463cb")
+				return *conf
+			},
+			expectedResult: true,
+		},
+		{
 			name: "machine memory size changed",
 			newMachineConfig: func(spec anywherev1.NutanixMachineConfig) anywherev1.NutanixMachineConfig {
 				conf := spec.DeepCopy()

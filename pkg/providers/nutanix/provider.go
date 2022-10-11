@@ -236,6 +236,9 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldNmc, newNmc
 }
 
 func nutanixIdentifierChanged(old, new v1alpha1.NutanixResourceIdentifier) bool {
+	if old.Type != new.Type {
+		return true
+	}
 	if old.Type == v1alpha1.NutanixIdentifierName && old.Name != nil && new.Name != nil && *old.Name != *new.Name {
 		return true
 	}
