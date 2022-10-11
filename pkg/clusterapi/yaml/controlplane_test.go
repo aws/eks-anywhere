@@ -48,12 +48,12 @@ metadata:
   namespace: eksa-system
 spec:
   controlPlaneRef:
-    apiVersion: controlplane.clusterapi.k8s
+    apiVersion: controlplane.clusterapi.k8s/v1beta1
     kind: KubeadmControlPlane
     name: cp
     namespace: eksa-system
   infrastructureRef:
-    apiVersion: infra.clusterapi.k8s
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerCluster
     name: cluster
     namespace: eksa-system
@@ -97,16 +97,16 @@ func TestRegisterControlPlaneSuccess(t *testing.T) {
 	g.Expect(yaml.RegisterControlPlaneMappings(parser)).To(Succeed())
 }
 
-func TestProcessObjectsNoCluster(t *testing.T) {
+func TestProcessControlPlaneObjectsNoCluster(t *testing.T) {
 	g := NewWithT(t)
 	cp := &dockerControlPlane{}
 	lookup := yamlutil.NewObjectLookupBuilder().Add(dockerCluster()).Build()
 
-	yaml.ProcessObjects(cp, lookup)
+	yaml.ProcessControlPlaneObjects(cp, lookup)
 	g.Expect(cp.Cluster).To(BeNil())
 }
 
-func TestProcessObjects(t *testing.T) {
+func TestProcessControlPlaneObjects(t *testing.T) {
 	g := NewWithT(t)
 	cp := &dockerControlPlane{}
 	cluster := capiCluster()
@@ -126,7 +126,7 @@ func TestProcessObjects(t *testing.T) {
 		etcdMachineTemplate,
 	).Build()
 
-	yaml.ProcessObjects(cp, lookup)
+	yaml.ProcessControlPlaneObjects(cp, lookup)
 	g.Expect(cp.Cluster).To(Equal(cluster))
 	g.Expect(cp.ProviderCluster).To(Equal(providerCluster))
 	g.Expect(cp.KubeadmControlPlane).To(Equal(kubeadmCP))
@@ -290,13 +290,13 @@ func capiCluster() *clusterv1.Cluster {
 				Name:       "cluster",
 				Namespace:  constants.EksaSystemNamespace,
 				Kind:       "DockerCluster",
-				APIVersion: "infra.clusterapi.k8s",
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 			},
 			ControlPlaneRef: &corev1.ObjectReference{
 				Name:       "cp",
 				Namespace:  constants.EksaSystemNamespace,
 				Kind:       "KubeadmControlPlane",
-				APIVersion: "controlplane.clusterapi.k8s",
+				APIVersion: "controlplane.clusterapi.k8s/v1beta1",
 			},
 		},
 	}
@@ -306,7 +306,7 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "KubeadmControlPlane",
-			APIVersion: "controlplane.clusterapi.k8s",
+			APIVersion: "controlplane.clusterapi.k8s/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cp",
@@ -318,7 +318,7 @@ func kubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 					Name:       "cp-mt",
 					Namespace:  constants.EksaSystemNamespace,
 					Kind:       "DockerMachineTemplate",
-					APIVersion: "infra.clusterapi.k8s",
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 				},
 			},
 		},
@@ -329,7 +329,7 @@ func dockerCluster() *dockerv1.DockerCluster {
 	return &dockerv1.DockerCluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerCluster",
-			APIVersion: "infra.clusterapi.k8s",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "cluster",
@@ -342,7 +342,7 @@ func dockerMachineTemplate(name string) *dockerv1.DockerMachineTemplate {
 	return &dockerv1.DockerMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "DockerMachineTemplate",
-			APIVersion: "infra.clusterapi.k8s",
+			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -367,7 +367,7 @@ func etcdCluster() *etcdv1.EtcdadmCluster {
 func objectReference(obj client.Object) *corev1.ObjectReference {
 	return &corev1.ObjectReference{
 		Kind:       obj.GetObjectKind().GroupVersionKind().Kind,
-		APIVersion: obj.GetObjectKind().GroupVersionKind().Version,
+		APIVersion: obj.GetObjectKind().GroupVersionKind().GroupVersion().String(),
 		Name:       obj.GetName(),
 		Namespace:  obj.GetNamespace(),
 	}
