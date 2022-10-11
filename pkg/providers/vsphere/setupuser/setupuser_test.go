@@ -90,17 +90,6 @@ func TestSetupUserRun(t *testing.T) {
 			},
 		},
 		{
-			name:     "test RoleExists GlobalRole error",
-			filepath: "./testdata/configs/valid.yaml",
-			wantErr:  "govc error",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
-				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
-				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
-				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
-				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(defaults.GlobalRoleExists, fmt.Errorf("govc error"))
-			},
-		},
-		{
 			name:     "test RoleExists GlobalRole true",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "",
@@ -179,6 +168,94 @@ func TestSetupUserRun(t *testing.T) {
 				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.UserRole, c.Spec.Objects.Networks[0], c.Spec.VSphereDomain)
 				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.UserRole, c.Spec.Objects.Datastores[0], c.Spec.VSphereDomain)
 				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.UserRole, c.Spec.Objects.ResourcePools[0], c.Spec.VSphereDomain)
+			},
+		},
+		{
+			name:     "test RoleExists GlobalRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(defaults.GlobalRoleExists, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test RoleExists UserRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test RoleExists AdminRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(false, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test SetGroupRoleOnObject GlobalRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(true, nil)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.GlobalRole, "/", c.Spec.VSphereDomain).Return(fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test SetGroupRoleOnObject AdminRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(true, nil)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.GlobalRole, "/", c.Spec.VSphereDomain).Return(nil)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.AdminRole, c.Spec.Objects.Folders[0], c.Spec.VSphereDomain).Return(fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test SetGroupRoleOnObject UserRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient, defaults testConfig) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(defaults.GroupExists, nil)
+				gc.EXPECT().CreateGroup(ctx, c.Spec.GroupName).Return(nil)
+				gc.EXPECT().AddUserToGroup(ctx, c.Spec.GroupName, c.Spec.Username).Return(nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(true, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(true, nil)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.GlobalRole, "/", c.Spec.VSphereDomain).Return(nil)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.AdminRole, c.Spec.Objects.Folders[0], c.Spec.VSphereDomain).Return(nil)
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.AdminRole, c.Spec.Objects.Templates[0], c.Spec.VSphereDomain)
+
+				gc.EXPECT().SetGroupRoleOnObject(ctx, c.Spec.GroupName, c.Spec.UserRole, c.Spec.Objects.Networks[0], c.Spec.VSphereDomain).Return(fmt.Errorf("govc error"))
 			},
 		},
 	}
