@@ -37,7 +37,6 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
-	
 	err := pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
