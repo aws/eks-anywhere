@@ -150,20 +150,6 @@ func (t *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces
 		}
 	}
 
-	/* k8s versions 1.21 and higher label each namespace with key `kubernetes.io/metadata.name:` and value is the namespace's name.
-	This can be used to create a networkPolicy that allows traffic only between pods within kube-system ns, which is ideal for workload clusters. (not needed
-	for mgmt clusters).
-	So we will create networkPolicy using this default label as namespaceSelector for all versions 1.21 and higher
-	For 1.20 we will create a networkPolicy that allows allow traffic to/from kube-system pods, and document this. Users can still modify it and add new policies
-	as needed*/
-	k8sVersion, err := getKubeVersion(spec)
-	if err != nil {
-		return nil, err
-	}
-	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
-		values["kubeSystemNSHasLabel"] = true
-	}
-
 	return templater.Execute(networkPolicyAllowAll, values)
 }
 
