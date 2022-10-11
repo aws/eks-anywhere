@@ -13,7 +13,8 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 	vBundle := givenVersionBundle()
 	tinkerbellLocalIp := "127.0.0.1"
 	tinkerbellLBIP := "1.2.3.4"
-	metadataString := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIP)
+	metadataString := fmt.Sprintf("http://%s:50061,http://%s:50061", tinkerbellLocalIp, tinkerbellLBIP)
+	rhelMetadataString := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIP)
 	cloudInit := `datasource:
   Ec2:
     metadata_urls: [%s]
@@ -228,7 +229,7 @@ warnings:
 						"DEST_DISK": "/dev/sda1",
 						"FS_TYPE":   "ext4",
 						"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
-						"CONTENTS":  fmt.Sprintf(cloudInit, metadataString),
+						"CONTENTS":  fmt.Sprintf(cloudInit, rhelMetadataString),
 						"UID":       "0",
 						"GID":       "0",
 						"MODE":      "0600",

@@ -55,7 +55,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 	// The metadata string will have two URLs:
 	// - one that will be used initially for bootstrap and will point to hegel running on kind
 	// - the other will be used when the workload cluster is up and  will point to hegel running on the workload cluster
-	metadataUrls := fmt.Sprintf("'http://%s:50061','http://%s:50061'", tinkerbellLocalIp, tinkerbellLBIp)
+	metadataUrls := []string{fmt.Sprintf("http://%s:50061", tinkerbellLocalIp), fmt.Sprintf("http://%s:50061", tinkerbellLBIp)}
 
 	switch osFamily {
 	case Bottlerocket:
@@ -63,15 +63,19 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withBottlerocketBootconfigAction(b, diskPart),
-			withBottlerocketUserDataAction(b, diskPart, metadataUrls),
+			withBottlerocketUserDataAction(b, diskPart, strings.Join(metadataUrls, ",")),
 			withRebootAction(b),
 		)
 	case RedHat:
 		diskPart = fmt.Sprintf("%s1", getDiskPart(disk))
+		rhelMetadataUrls := []string{}
+		for _, metadataUrl := range metadataUrls {
+			rhelMetadataUrls = append(rhelMetadataUrls, fmt.Sprintf("'%s'", metadataUrl))
+		}
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withDisableCloudInitNetworkCapabilities(b, diskPart),
-			withTinkCloudInitAction(b, diskPart, metadataUrls),
+			withTinkCloudInitAction(b, diskPart, strings.Join(rhelMetadataUrls, ",")),
 			withDsCloudInitAction(b, diskPart),
 			withRebootAction(b),
 		)
@@ -80,7 +84,7 @@ func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle, disk, osImageOverrid
 		defaultActions = append(defaultActions,
 			withNetplanAction(b, diskPart, osFamily),
 			withDisableCloudInitNetworkCapabilities(b, diskPart),
-			withTinkCloudInitAction(b, diskPart, metadataUrls),
+			withTinkCloudInitAction(b, diskPart, strings.Join(metadataUrls, ",")),
 			withDsCloudInitAction(b, diskPart),
 		)
 		if strings.Contains(disk, "nvme") {
