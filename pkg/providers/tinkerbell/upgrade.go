@@ -2,6 +2,7 @@ package tinkerbell
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -63,7 +64,7 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfi
 
 func (p *Provider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, currentClusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		return ErrExternalEtcdUnsupported
+		return errExternalEtcdUnsupported
 	}
 
 	if err := p.configureSshKeys(); err != nil {
@@ -185,11 +186,13 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
-	if len(p.catalogue.AllBMCs()) > 0 {
-		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-		if err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace); err != nil {
-			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
-		}
+	// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
+	err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+	if errors.Is(err, errKubectlWaitNoResources) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
 	}
 
 	return nil

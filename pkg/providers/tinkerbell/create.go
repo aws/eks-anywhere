@@ -110,7 +110,7 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 
 func (p *Provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		return ErrExternalEtcdUnsupported
+		return errExternalEtcdUnsupported
 	}
 
 	if err := p.stackInstaller.CleanupLocalBoots(ctx, p.forceCleanup); err != nil {

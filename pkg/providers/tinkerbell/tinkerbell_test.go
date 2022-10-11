@@ -434,16 +434,32 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).MaxTimes(2)
-
 	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
 	if err := provider.readCSVToCatalogue(); err != nil {
 		t.Fatalf("failed to read hardware csv: %v", err)
 	}
 
-	err := provider.PostMoveManagementToBootstrap(ctx, cluster)
-	if err != nil {
-		t.Fatalf("failed PostMoveManagementToBootstrap: %v", err)
+	tt := []struct {
+		name     string
+		gotError error
+	}{{
+		name:     "wait returns no error",
+		gotError: nil,
+	},
+		{
+			name:     "wait returns no resources error",
+			gotError: errKubectlWaitNoResources,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(test.gotError)
+			err := provider.PostMoveManagementToBootstrap(ctx, cluster)
+			if err != nil {
+				t.Fatalf("failed PostMoveManagementToBootstrap: %v", err)
+			}
+		})
 	}
 }
 
