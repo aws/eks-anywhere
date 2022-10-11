@@ -6,6 +6,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/workflow"
 	"github.com/aws/eks-anywhere/pkg/workflow/task/bootstrap"
+	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
 )
 
 // Define tasks names for each task run as part of the create cluster workflow. To aid readability
@@ -35,6 +36,9 @@ type CreateCluster struct {
 
 	// Bootstrapper creates and destroys bootstrap clusters.
 	Bootstrapper bootstrap.Bootstrapper
+
+	// CNIInstaller installs a CNI in a Kubernetes cluster
+	CNIInstaller workload.CNIInstaller
 
 	// hookRegistrars are data structures that wish to bind runtime hooks to the workflow.
 	// They should be added via the WithHookRegistrar method.
@@ -68,6 +72,13 @@ func (c CreateCluster) build() (*workflow.Workflow, error) {
 		Spec:         c.Spec,
 		Options:      c.CreateBootstrapClusterOptions,
 		Bootstrapper: c.Bootstrapper,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = wflw.AppendTask(CreateWorkloadCluster, workload.Create{
+		CNI: c.CNIInstaller,
 	})
 	if err != nil {
 		return nil, err

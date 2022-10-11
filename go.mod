@@ -34,6 +34,7 @@ require (
 	github.com/tinkerbell/tink v0.7.1-0.20221004171112-6deeea887dac
 	go.uber.org/zap v1.22.0
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
+	golang.org/x/exp v0.0.0-20221011201855-a3968a42eed6
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6
 	golang.org/x/text v0.3.7

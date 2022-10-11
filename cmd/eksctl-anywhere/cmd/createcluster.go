@@ -118,7 +118,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return fmt.Errorf("failed to build cluster manager opts: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
+	factory := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(dirs...).
 		WithBootstrapper().
 		WithCliConfig(cliConfig).
 		WithClusterManager(clusterSpec.Cluster, clusterManagerOpts...).
@@ -126,8 +126,9 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		WithGitOpsFlux(clusterSpec.Cluster, clusterSpec.FluxConfig, cliConfig).
 		WithWriter().
 		WithEksdInstaller().
-		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig).
-		Build(ctx)
+		WithPackageInstaller(clusterSpec, cc.installPackages, cc.managementKubeconfig)
+
+	deps, err := factory.Build(ctx)
 	if err != nil {
 		return err
 	}
@@ -165,10 +166,18 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	createValidations := createvalidations.New(validationOpts)
 
 	if features.UseNewWorkflows().IsActive() {
+		deps, err = factory.
+			WithCNIInstaller(clusterSpec, deps.Provider).
+			Build(ctx)
+		if err != nil {
+			return err
+		}
+
 		wflw := &management.CreateCluster{
 			Spec:                          clusterSpec,
 			Bootstrapper:                  deps.Bootstrapper,
 			CreateBootstrapClusterOptions: deps.Provider,
+			CNIInstaller:                  deps.CNIInstaller,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
 

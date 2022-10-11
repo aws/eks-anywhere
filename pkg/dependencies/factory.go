@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
+	"golang.org/x/exp/maps"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
@@ -48,6 +49,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/pkg/workflow/task/workload"
 	"github.com/aws/eks-anywhere/pkg/workflows/interfaces"
 )
 
@@ -68,6 +70,7 @@ type Dependencies struct {
 	Helm                        *executables.Helm
 	UnAuthKubeClient            *kubernetes.UnAuthClient
 	Networking                  clustermanager.Networking
+	CNIInstaller                workload.CNIInstaller
 	CiliumTemplater             *cilium.Templater
 	AwsIamAuth                  *awsiamauth.Installer
 	ClusterManager              *clustermanager.ClusterManager
@@ -678,9 +681,12 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
 		}
 	} else {
-		f.WithKubectl().WithHelm(executables.WithInsecure())
+		f.WithKubectl().WithCiliumTemplater()
 		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+			return cilium.NewCilium(
+				cilium.NewRetrier(f.dependencies.Kubectl),
+				f.dependencies.CiliumTemplater,
+			)
 		}
 	}
 
@@ -696,8 +702,40 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	return f
 }
 
+// WithCNIInstaller builds a CNI installer for the given cluster.
+func (f *Factory) WithCNIInstaller(spec *cluster.Spec, provider providers.Provider) *Factory {
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
+		f.WithKubectl()
+	} else {
+		f.WithKubectl().WithCiliumTemplater()
+	}
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.CNIInstaller != nil {
+			return nil
+		}
+
+		if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
+			f.dependencies.CNIInstaller = kindnetd.NewInstallerForSpec(f.dependencies.Kubectl, spec)
+		} else {
+			f.dependencies.CNIInstaller = cilium.NewInstallerForSpec(
+				cilium.NewRetrier(f.dependencies.Kubectl),
+				f.dependencies.CiliumTemplater,
+				cilium.Config{
+					Spec:              spec,
+					AllowedNamespaces: maps.Keys(provider.GetDeployments()),
+				},
+			)
+		}
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithCiliumTemplater() *Factory {
-	f.WithHelm()
+	f.WithHelm(executables.WithInsecure())
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CiliumTemplater != nil {

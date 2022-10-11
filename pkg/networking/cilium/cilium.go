@@ -1,24 +1,27 @@
 package cilium
 
 import (
-	"context"
-
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const namespace = constants.KubeSystemNamespace
 
+// InstallUpgradeTemplater is the composition of InstallTemplater and UpgradeTemplater.
+type InstallUpgradeTemplater interface {
+	InstallTemplater
+	UpgradeTemplater
+}
+
+// Cilium allows to install and upgrade the Cilium CNI in clusters.
 type Cilium struct {
 	*Upgrader
+	*Installer
 }
 
-func NewCilium(client Client, helm Helm) *Cilium {
+// NewCilium constructs a new Cilium.
+func NewCilium(client KubernetesClient, templater InstallUpgradeTemplater) *Cilium {
 	return &Cilium{
-		Upgrader: NewUpgrader(client, helm),
+		Installer: NewInstaller(client, templater),
+		Upgrader:  NewUpgrader(client, templater),
 	}
-}
-
-func (c *Cilium) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, providerNamespaces []string) ([]byte, error) {
-	return c.templater.GenerateManifest(ctx, clusterSpec, WithPolicyAllowedNamespaces(providerNamespaces))
 }

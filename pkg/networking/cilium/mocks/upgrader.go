@@ -8,35 +8,37 @@ import (
 	context "context"
 	reflect "reflect"
 
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
+	cilium "github.com/aws/eks-anywhere/pkg/networking/cilium"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockupgraderClient is a mock of upgraderClient interface.
-type MockupgraderClient struct {
+// MockKubernetesClient is a mock of KubernetesClient interface.
+type MockKubernetesClient struct {
 	ctrl     *gomock.Controller
-	recorder *MockupgraderClientMockRecorder
+	recorder *MockKubernetesClientMockRecorder
 }
 
-// MockupgraderClientMockRecorder is the mock recorder for MockupgraderClient.
-type MockupgraderClientMockRecorder struct {
-	mock *MockupgraderClient
+// MockKubernetesClientMockRecorder is the mock recorder for MockKubernetesClient.
+type MockKubernetesClientMockRecorder struct {
+	mock *MockKubernetesClient
 }
 
-// NewMockupgraderClient creates a new mock instance.
-func NewMockupgraderClient(ctrl *gomock.Controller) *MockupgraderClient {
-	mock := &MockupgraderClient{ctrl: ctrl}
-	mock.recorder = &MockupgraderClientMockRecorder{mock}
+// NewMockKubernetesClient creates a new mock instance.
+func NewMockKubernetesClient(ctrl *gomock.Controller) *MockKubernetesClient {
+	mock := &MockKubernetesClient{ctrl: ctrl}
+	mock.recorder = &MockKubernetesClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockupgraderClient) EXPECT() *MockupgraderClientMockRecorder {
+func (m *MockKubernetesClient) EXPECT() *MockKubernetesClientMockRecorder {
 	return m.recorder
 }
 
 // Apply mocks base method.
-func (m *MockupgraderClient) Apply(ctx context.Context, cluster *types.Cluster, data []byte) error {
+func (m *MockKubernetesClient) Apply(ctx context.Context, cluster *types.Cluster, data []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Apply", ctx, cluster, data)
 	ret0, _ := ret[0].(error)
@@ -44,13 +46,13 @@ func (m *MockupgraderClient) Apply(ctx context.Context, cluster *types.Cluster, 
 }
 
 // Apply indicates an expected call of Apply.
-func (mr *MockupgraderClientMockRecorder) Apply(ctx, cluster, data interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) Apply(ctx, cluster, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockupgraderClient)(nil).Apply), ctx, cluster, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockKubernetesClient)(nil).Apply), ctx, cluster, data)
 }
 
 // Delete mocks base method.
-func (m *MockupgraderClient) Delete(ctx context.Context, cluster *types.Cluster, data []byte) error {
+func (m *MockKubernetesClient) Delete(ctx context.Context, cluster *types.Cluster, data []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", ctx, cluster, data)
 	ret0, _ := ret[0].(error)
@@ -58,13 +60,13 @@ func (m *MockupgraderClient) Delete(ctx context.Context, cluster *types.Cluster,
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockupgraderClientMockRecorder) Delete(ctx, cluster, data interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) Delete(ctx, cluster, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockupgraderClient)(nil).Delete), ctx, cluster, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockKubernetesClient)(nil).Delete), ctx, cluster, data)
 }
 
 // RolloutRestartCiliumDaemonSet mocks base method.
-func (m *MockupgraderClient) RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
+func (m *MockKubernetesClient) RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RolloutRestartCiliumDaemonSet", ctx, cluster)
 	ret0, _ := ret[0].(error)
@@ -72,13 +74,13 @@ func (m *MockupgraderClient) RolloutRestartCiliumDaemonSet(ctx context.Context, 
 }
 
 // RolloutRestartCiliumDaemonSet indicates an expected call of RolloutRestartCiliumDaemonSet.
-func (mr *MockupgraderClientMockRecorder) RolloutRestartCiliumDaemonSet(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) RolloutRestartCiliumDaemonSet(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RolloutRestartCiliumDaemonSet", reflect.TypeOf((*MockupgraderClient)(nil).RolloutRestartCiliumDaemonSet), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RolloutRestartCiliumDaemonSet", reflect.TypeOf((*MockKubernetesClient)(nil).RolloutRestartCiliumDaemonSet), ctx, cluster)
 }
 
 // WaitForCiliumDaemonSet mocks base method.
-func (m *MockupgraderClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
+func (m *MockKubernetesClient) WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaitForCiliumDaemonSet", ctx, cluster)
 	ret0, _ := ret[0].(error)
@@ -86,13 +88,13 @@ func (m *MockupgraderClient) WaitForCiliumDaemonSet(ctx context.Context, cluster
 }
 
 // WaitForCiliumDaemonSet indicates an expected call of WaitForCiliumDaemonSet.
-func (mr *MockupgraderClientMockRecorder) WaitForCiliumDaemonSet(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) WaitForCiliumDaemonSet(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForCiliumDaemonSet", reflect.TypeOf((*MockupgraderClient)(nil).WaitForCiliumDaemonSet), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForCiliumDaemonSet", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForCiliumDaemonSet), ctx, cluster)
 }
 
 // WaitForCiliumDeployment mocks base method.
-func (m *MockupgraderClient) WaitForCiliumDeployment(ctx context.Context, cluster *types.Cluster) error {
+func (m *MockKubernetesClient) WaitForCiliumDeployment(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaitForCiliumDeployment", ctx, cluster)
 	ret0, _ := ret[0].(error)
@@ -100,13 +102,13 @@ func (m *MockupgraderClient) WaitForCiliumDeployment(ctx context.Context, cluste
 }
 
 // WaitForCiliumDeployment indicates an expected call of WaitForCiliumDeployment.
-func (mr *MockupgraderClientMockRecorder) WaitForCiliumDeployment(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) WaitForCiliumDeployment(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForCiliumDeployment", reflect.TypeOf((*MockupgraderClient)(nil).WaitForCiliumDeployment), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForCiliumDeployment", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForCiliumDeployment), ctx, cluster)
 }
 
 // WaitForPreflightDaemonSet mocks base method.
-func (m *MockupgraderClient) WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error {
+func (m *MockKubernetesClient) WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaitForPreflightDaemonSet", ctx, cluster)
 	ret0, _ := ret[0].(error)
@@ -114,13 +116,13 @@ func (m *MockupgraderClient) WaitForPreflightDaemonSet(ctx context.Context, clus
 }
 
 // WaitForPreflightDaemonSet indicates an expected call of WaitForPreflightDaemonSet.
-func (mr *MockupgraderClientMockRecorder) WaitForPreflightDaemonSet(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) WaitForPreflightDaemonSet(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForPreflightDaemonSet", reflect.TypeOf((*MockupgraderClient)(nil).WaitForPreflightDaemonSet), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForPreflightDaemonSet", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForPreflightDaemonSet), ctx, cluster)
 }
 
 // WaitForPreflightDeployment mocks base method.
-func (m *MockupgraderClient) WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error {
+func (m *MockKubernetesClient) WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "WaitForPreflightDeployment", ctx, cluster)
 	ret0, _ := ret[0].(error)
@@ -128,7 +130,65 @@ func (m *MockupgraderClient) WaitForPreflightDeployment(ctx context.Context, clu
 }
 
 // WaitForPreflightDeployment indicates an expected call of WaitForPreflightDeployment.
-func (mr *MockupgraderClientMockRecorder) WaitForPreflightDeployment(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockKubernetesClientMockRecorder) WaitForPreflightDeployment(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForPreflightDeployment", reflect.TypeOf((*MockupgraderClient)(nil).WaitForPreflightDeployment), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForPreflightDeployment", reflect.TypeOf((*MockKubernetesClient)(nil).WaitForPreflightDeployment), ctx, cluster)
+}
+
+// MockUpgradeTemplater is a mock of UpgradeTemplater interface.
+type MockUpgradeTemplater struct {
+	ctrl     *gomock.Controller
+	recorder *MockUpgradeTemplaterMockRecorder
+}
+
+// MockUpgradeTemplaterMockRecorder is the mock recorder for MockUpgradeTemplater.
+type MockUpgradeTemplaterMockRecorder struct {
+	mock *MockUpgradeTemplater
+}
+
+// NewMockUpgradeTemplater creates a new mock instance.
+func NewMockUpgradeTemplater(ctrl *gomock.Controller) *MockUpgradeTemplater {
+	mock := &MockUpgradeTemplater{ctrl: ctrl}
+	mock.recorder = &MockUpgradeTemplaterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockUpgradeTemplater) EXPECT() *MockUpgradeTemplaterMockRecorder {
+	return m.recorder
+}
+
+// GenerateManifest mocks base method.
+func (m *MockUpgradeTemplater) GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...cilium.ManifestOpt) ([]byte, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, spec}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GenerateManifest", varargs...)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateManifest indicates an expected call of GenerateManifest.
+func (mr *MockUpgradeTemplaterMockRecorder) GenerateManifest(ctx, spec interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, spec}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockUpgradeTemplater)(nil).GenerateManifest), varargs...)
+}
+
+// GenerateUpgradePreflightManifest mocks base method.
+func (m *MockUpgradeTemplater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateUpgradePreflightManifest", ctx, spec)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateUpgradePreflightManifest indicates an expected call of GenerateUpgradePreflightManifest.
+func (mr *MockUpgradeTemplaterMockRecorder) GenerateUpgradePreflightManifest(ctx, spec interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateUpgradePreflightManifest", reflect.TypeOf((*MockUpgradeTemplater)(nil).GenerateUpgradePreflightManifest), ctx, spec)
 }

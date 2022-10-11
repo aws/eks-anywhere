@@ -42,13 +42,11 @@ func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
 	ctx := context.Background()
 	cluster := &types.Cluster{}
 
-	networkingManifest := []byte("cilium")
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GetDeployments()
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest)
+	m.networking.EXPECT().Install(ctx, cluster, clusterSpec, []string{})
 
 	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = %v, wantErr nil", err)
@@ -62,26 +60,8 @@ func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
 
 	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(1, 0)))
 	m.provider.EXPECT().GetDeployments()
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(nil, errors.New("error in networking"))
+	m.networking.EXPECT().Install(ctx, cluster, clusterSpec, []string{}).Return(errors.New("error in networking"))
 
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
-		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
-	}
-}
-
-func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
-	ctx := context.Background()
-	cluster := &types.Cluster{}
-	networkingManifest := []byte("cilium")
-	clusterSpec := test.NewClusterSpec()
-	retries := 2
-
-	c, m := newClusterManager(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(retries, 0)))
-	m.provider.EXPECT().GetDeployments()
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
-
-	c.Retrier = retrier.NewWithMaxRetries(retries, 1*time.Microsecond)
 	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
 	}

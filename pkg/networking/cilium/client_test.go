@@ -1,4 +1,4 @@
-package cilium
+package cilium_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	v1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -18,7 +19,7 @@ import (
 type retrierTest struct {
 	*WithT
 	ctx     context.Context
-	r       *retrierClient
+	r       *cilium.RetrierClient
 	c       *mocks.MockClient
 	cluster *types.Cluster
 }
@@ -29,7 +30,7 @@ func newRetrierTest(t *testing.T) *retrierTest {
 	return &retrierTest{
 		WithT: NewWithT(t),
 		ctx:   context.Background(),
-		r:     newRetrier(c),
+		r:     cilium.NewRetrier(c),
 		c:     c,
 		cluster: &types.Cluster{
 			KubeconfigFile: "kubeconfig",

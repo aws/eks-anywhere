@@ -721,19 +721,18 @@ func (m *MockNetworking) EXPECT() *MockNetworkingMockRecorder {
 	return m.recorder
 }
 
-// GenerateManifest mocks base method.
-func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Spec, arg2 []string) ([]byte, error) {
+// Install mocks base method.
+func (m *MockNetworking) Install(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 []string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateManifest", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "Install", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// GenerateManifest indicates an expected call of GenerateManifest.
-func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interface{}) *gomock.Call {
+// Install indicates an expected call of Install.
+func (mr *MockNetworkingMockRecorder) Install(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Install", reflect.TypeOf((*MockNetworking)(nil).Install), arg0, arg1, arg2, arg3)
 }
 
 // RunPostControlPlaneUpgradeSetup mocks base method.

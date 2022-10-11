@@ -11,7 +11,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type upgraderClient interface {
+// KubernetesClient is a client to interact with the Kubernetes API.
+type KubernetesClient interface {
 	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
 	Delete(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error
@@ -21,18 +22,27 @@ type upgraderClient interface {
 	RolloutRestartCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
 }
 
-type Upgrader struct {
-	templater *Templater
-	client    upgraderClient
+// UpgradeTemplater generates a Cilium manifests for upgrade.
+type UpgradeTemplater interface {
+	GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error)
+	GenerateManifest(ctx context.Context, spec *cluster.Spec, opts ...ManifestOpt) ([]byte, error)
 }
 
-func NewUpgrader(client Client, helm Helm) *Upgrader {
+// Upgrader allows to upgrade a Cilium installation in a EKS-A cluster.
+type Upgrader struct {
+	templater UpgradeTemplater
+	client    KubernetesClient
+}
+
+// NewUpgrader constructs a new Upgrader.
+func NewUpgrader(client KubernetesClient, templater UpgradeTemplater) *Upgrader {
 	return &Upgrader{
-		templater: NewTemplater(helm),
-		client:    newRetrier(client),
+		templater: templater,
+		client:    client,
 	}
 }
 
+// Upgrade configures a Cilium installation to match the desired state in the cluster Spec.
 func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error) {
 	diff := ciliumChangeDiff(currentSpec, newSpec)
 	chartValuesChanged := ciliumHelmChartValuesChanged(currentSpec, newSpec)
