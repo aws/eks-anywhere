@@ -49,7 +49,6 @@ const (
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
 	maxRetries               = 30
 	backOffPeriod            = 5 * time.Second
 )

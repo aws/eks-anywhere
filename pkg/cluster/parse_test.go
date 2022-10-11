@@ -101,10 +101,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test-cp",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -120,10 +122,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},

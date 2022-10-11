@@ -42,7 +42,7 @@ var _ webhook.Validator = &VSphereMachineConfig{}
 func (r *VSphereMachineConfig) ValidateCreate() error {
 	vspheremachineconfiglog.Info("validate create", "name", r.Name)
 
-	return nil
+	return r.Validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -58,11 +58,19 @@ func (r *VSphereMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsVSphereMachineConfig(r, oldVSphereMachineConfig)...)
 
-	if len(allErrs) == 0 {
-		return nil
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+	if err := r.Validate(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(VSphereMachineConfigKind).GroupKind(), r.Name, allErrs)
+	}
+
+	return nil
 }
 
 func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig) field.ErrorList {

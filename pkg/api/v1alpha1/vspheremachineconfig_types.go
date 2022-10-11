@@ -1,8 +1,6 @@
 package v1alpha1
 
-import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-)
+import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -122,7 +120,7 @@ func (c *VSphereMachineConfig) SetDefaults() {
 }
 
 func (c *VSphereMachineConfig) Validate() error {
-	return nil
+	return validateVSphereMachineConfig(c)
 }
 
 // +kubebuilder:object:generate=false

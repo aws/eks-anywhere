@@ -123,3 +123,20 @@ func setVSphereMachineConfigDefaults(machineConfig *VSphereMachineConfig) {
 		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
 	}
 }
+
+func validateVSphereMachineConfig(config *VSphereMachineConfig) error {
+	if len(config.Spec.Datastore) <= 0 {
+		return fmt.Errorf("VSphereMachineConfig %s datastore is not set or is empty", config.Name)
+	}
+	if len(config.Spec.ResourcePool) <= 0 {
+		return fmt.Errorf("VSphereMachineConfig %s VM resourcePool is not set or is empty", config.Name)
+	}
+	if config.Spec.OSFamily != Bottlerocket && config.Spec.OSFamily != Ubuntu && config.Spec.OSFamily != RedHat {
+		return fmt.Errorf("VSphereMachineConfig %s osFamily: %s is not supported, please use one of the following: %s, %s, %s", config.Name, config.Spec.OSFamily, Bottlerocket, Ubuntu, RedHat)
+	}
+	if config.Spec.OSFamily == Bottlerocket && config.Spec.Users[0].Name != bottlerocketDefaultUser {
+		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", config.Spec.Users[0].Name)
+	}
+
+	return nil
+}
