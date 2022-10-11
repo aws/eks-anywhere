@@ -1,0 +1,73 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+  name: "{{.workerNodeGroupName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  clusterName: "{{.clusterName}}"
+  replicas: {{.workerReplicas}}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{.workloadkubeadmconfigTemplateName}}"
+      clusterName: "{{.clusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "{{.workloadTemplateName}}"
+      version: "{{.kubernetesVersion}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.workloadTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: {{.vcpusPerSocket}}
+      vcpuSockets: {{.vcpuSockets}}
+      memorySize: {{.memorySize}}
+      systemDiskSize: {{.systemDiskSize}}
+      image:
+        type: name
+        name: "{{.imageName}}"
+      cluster:
+        type: name
+        name: "{{.nutanixPEClusterName}}"
+      subnet:
+        - type: name
+          name: "{{.subnetName}}"
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "{{.workloadkubeadmconfigTemplateName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            #cgroup-driver: cgroupfs
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+      users:
+        - name: "{{.workerSshUsername}}"
+          lockPassword: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          sshAuthorizedKeys:
+            - "{{.workerSshAuthorizedKey}}"

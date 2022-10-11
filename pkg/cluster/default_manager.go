@@ -27,6 +27,7 @@ func NewDefaultConfigManager() (*ConfigManager, error) {
 		dockerEntry(),
 		snowEntry(),
 		tinkerbellEntry(),
+		nutanixEntry(),
 	)
 	if err != nil {
 		return nil, err

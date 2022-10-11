@@ -17,6 +17,7 @@ func TestConfigChildObjects(t *testing.T) {
 		SnowDatacenter:       &anywherev1.SnowDatacenterConfig{},
 		CloudStackDatacenter: &anywherev1.CloudStackDatacenterConfig{},
 		VSphereDatacenter:    &anywherev1.VSphereDatacenterConfig{},
+		NutanixDatacenter:    &anywherev1.NutanixDatacenterConfig{},
 		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
@@ -24,6 +25,9 @@ func TestConfigChildObjects(t *testing.T) {
 			"machine1": {}, "machine2": {},
 		},
 		CloudStackMachineConfigs: map[string]*anywherev1.CloudStackMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		NutanixMachineConfigs: map[string]*anywherev1.NutanixMachineConfig{
 			"machine1": {}, "machine2": {},
 		},
 		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
@@ -36,8 +40,43 @@ func TestConfigChildObjects(t *testing.T) {
 	}
 
 	objs := config.ChildObjects()
-	g.Expect(objs).To(HaveLen(12))
+	g.Expect(objs).To(HaveLen(15))
 	for _, o := range objs {
 		g.Expect(reflect.ValueOf(o).IsNil()).To(BeFalse())
 	}
+}
+
+func TestConfigDeepCopy(t *testing.T) {
+	g := NewWithT(t)
+	config := &cluster.Config{
+		Cluster:              &anywherev1.Cluster{},
+		CloudStackDatacenter: &anywherev1.CloudStackDatacenterConfig{},
+		VSphereDatacenter:    &anywherev1.VSphereDatacenterConfig{},
+		DockerDatacenter:     &anywherev1.DockerDatacenterConfig{},
+		SnowDatacenter:       &anywherev1.SnowDatacenterConfig{},
+		NutanixDatacenter:    &anywherev1.NutanixDatacenterConfig{},
+		GitOpsConfig:         &anywherev1.GitOpsConfig{},
+		SnowMachineConfigs: map[string]*anywherev1.SnowMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		VSphereMachineConfigs: map[string]*anywherev1.VSphereMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		CloudStackMachineConfigs: map[string]*anywherev1.CloudStackMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		NutanixMachineConfigs: map[string]*anywherev1.NutanixMachineConfig{
+			"machine1": {}, "machine2": {},
+		},
+		OIDCConfigs: map[string]*anywherev1.OIDCConfig{
+			"machine1": {},
+		},
+		AWSIAMConfigs: map[string]*anywherev1.AWSIamConfig{
+			"config1": {},
+		},
+		FluxConfig: &anywherev1.FluxConfig{},
+	}
+
+	copyConf := config.DeepCopy()
+	g.Expect(copyConf).To(BeEquivalentTo(config))
 }

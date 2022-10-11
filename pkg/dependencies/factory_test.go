@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -35,6 +36,7 @@ type provider string
 const (
 	vsphere    provider = "vsphere"
 	tinkerbell provider = "tinkerbell"
+	nutanix    provider = "nutanix"
 )
 
 func newTest(t *testing.T, p provider) *factoryTest {
@@ -44,6 +46,8 @@ func newTest(t *testing.T, p provider) *factoryTest {
 		clusterConfigFile = "testdata/cluster_vsphere.yaml"
 	case tinkerbell:
 		clusterConfigFile = "testdata/cluster_tinkerbell.yaml"
+	case nutanix:
+		clusterConfigFile = "testdata/cluster_nutanix.yaml"
 	default:
 		t.Fatalf("Not a valid provider: %v", p)
 	}
@@ -79,6 +83,70 @@ func TestFactoryBuildWithProviderTinkerbell(t *testing.T) {
 	tt.Expect(deps.Provider).NotTo(BeNil())
 	tt.Expect(deps.Helm).NotTo(BeNil())
 	tt.Expect(deps.DockerClient).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithProviderNutanix(t *testing.T) {
+	tests := []struct {
+		name              string
+		clusterConfigFile string
+		expectError       bool
+	}{
+		{
+			name:              "nutanix provider valid config",
+			clusterConfigFile: "testdata/cluster_nutanix.yaml",
+		},
+		{
+			name:              "nutanix provider missing datacenter config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_dc.yaml",
+			expectError:       true,
+		},
+		{
+			name:              "nutanix provider missing machine config",
+			clusterConfigFile: "testdata/cluster_nutanix_without_mc.yaml",
+			expectError:       true,
+		},
+	}
+
+	os.Setenv("NUTANIX_USER", "test")
+	defer os.Unsetenv("NUTANIX_USER")
+	os.Setenv("NUTANIX_PASSWORD", "test")
+	defer os.Unsetenv("NUTANIX_PASSWORD")
+	for _, tc := range tests {
+		tt := newTest(t, nutanix)
+		tt.clusterConfigFile = tc.clusterConfigFile
+
+		deps, err := dependencies.NewFactory().
+			WithLocalExecutables().
+			WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+			Build(context.Background())
+
+		if tc.expectError {
+			tt.Expect(err).NotTo(BeNil())
+			tt.Expect(deps).To(BeNil())
+		} else {
+			tt.Expect(err).To(BeNil())
+			tt.Expect(deps.Provider).NotTo(BeNil())
+			tt.Expect(deps.NutanixPrismClient).NotTo(BeNil())
+		}
+	}
+}
+
+func TestFactoryBuildWithInvalidProvider(t *testing.T) {
+	clusterConfigFile := "testdata/cluster_invalid_provider.yaml"
+	tt := &factoryTest{
+		WithT:             NewGomegaWithT(t),
+		clusterConfigFile: clusterConfigFile,
+		clusterSpec:       test.NewFullClusterSpec(t, clusterConfigFile),
+		ctx:               context.Background(),
+	}
+
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, tt.tinkerbellBootstrapIP).
+		Build(context.Background())
+
+	tt.Expect(err).NotTo(BeNil())
+	tt.Expect(deps).To(BeNil())
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {
