@@ -405,7 +405,8 @@ func (a *analyzerFactory) vcenterSessionValidatePermissionAnalyzer() *Analyze {
 }
 
 // vmsAccessAnalyzer will analyze if vms have access to the API server of vSphere cluster
-func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze {
+// not used yet but it will once the workflows are updated to support this usecase.
+func (a *analyzerFactory) vmsAccessAnalyzer() *Analyze { //nolint:unused
 	runBashPod := "check-cloud-controller"
 	runBashPodLog := fmt.Sprintf("%s.log", runBashPod)
 	vSphereCloudControllerPodLogPath := path.Join(runBashPod, runBashPodLog)

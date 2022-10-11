@@ -70,8 +70,8 @@ func TestGetVSphereCredValuesMissingPassword(t *testing.T) {
 			delete(s.Data, tt.secretField)
 			g := NewWithT(t)
 			values, _ := internal.GetVSphereCredValues(s)
-			target, _ := s.Data[tt.defaultField]
-			res, _ := values[tt.templateField]
+			target := s.Data[tt.defaultField]
+			res := values[tt.templateField]
 			g.Expect(res).To(BeEquivalentTo(target))
 		})
 	}
