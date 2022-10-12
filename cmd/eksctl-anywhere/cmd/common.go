@@ -39,7 +39,7 @@ func NewDependenciesForPackages(ctx context.Context, opts ...PackageOpt) (*depen
 		WithKubectl().
 		WithHelm(executables.WithInsecure()).
 		WithCuratedPackagesRegistry(config.registryName, config.kubeVersion, version.Get()).
-		WithPackageControllerClient(config.spec).
+		WithPackageControllerClient(config.spec, config.kubeConfig).
 		Build(ctx)
 }
 
@@ -48,6 +48,7 @@ type PackageOpt func(*PackageConfig)
 type PackageConfig struct {
 	registryName string
 	kubeVersion  string
+	kubeConfig   string
 	mountPaths   []string
 	spec         *cluster.Spec
 }
@@ -81,5 +82,11 @@ func WithMountPaths(mountPaths ...string) func(*PackageConfig) {
 func WithClusterSpec(spec *cluster.Spec) func(config *PackageConfig) {
 	return func(config *PackageConfig) {
 		config.spec = spec
+	}
+}
+
+func WithKubeConfig(kubeConfig string) func(*PackageConfig) {
+	return func(config *PackageConfig) {
+		config.kubeConfig = kubeConfig
 	}
 }

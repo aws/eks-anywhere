@@ -842,8 +842,8 @@ func (f *Factory) WithGitOpsFlux(clusterConfig *v1alpha1.Cluster, fluxConfig *v1
 	return f
 }
 
-func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation string) *Factory {
-	f.WithKubectl().WithPackageControllerClient(spec).WithPackageClient()
+func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kubeConfig string) *Factory {
+	f.WithKubectl().WithPackageControllerClient(spec, kubeConfig).WithPackageClient()
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageInstaller != nil {
 			return nil
@@ -861,14 +861,15 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation stri
 	return f
 }
 
-func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
+func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig string) *Factory {
 	f.WithHelm(executables.WithInsecure()).WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.PackageControllerClient != nil || spec == nil {
 			return nil
 		}
-		kubeConfig := kubeconfig.FromClusterName(spec.Cluster.Name)
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
 		imageUrl := urls.ReplaceHost(chart.Image(), spec.Cluster.RegistryMirror())
@@ -879,7 +880,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			f.dependencies.Helm,
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
-			kubeConfig,
+			mgmtKubeConfig,
 			imageUrl,
 			chart.Name,
 			chart.Tag(),
@@ -889,7 +890,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
-			curatedpackages.WithManagementClusterName(getManagementClusterName(spec)),
+			curatedpackages.WithManagementClusterName(managementClusterName),
 		)
 		return nil
 	})
