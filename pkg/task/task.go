@@ -247,7 +247,9 @@ func readCheckpointFile(file string) (*CheckpointInfo, error) {
 	return checkpointInfo, nil
 }
 
-/* UnmarshalTaskCheckpoint marshals the received task checkpoint (type interface{}) then unmarshalls it into the desired type
+/*
+	UnmarshalTaskCheckpoint marshals the received task checkpoint (type interface{}) then unmarshalls it into the desired type
+
 specified in the Restore() method.
 When reading from a yaml file, there isn't a direct way in Go to do a type conversion from interface{} to the desired type.
 We use interface{} because the TaskCheckpoint type will vary depending on what's needed for a specific task. The known workaround

@@ -182,7 +182,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(managementCluster *types.
 
 func (c *upgradeTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
-		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
+		bootstrapper.WithExtraDockerMounts(),
 	}
 
 	gomock.InOrder(
@@ -218,12 +218,12 @@ func (c *upgradeTestSetup) expectDeleteBootstrap() {
 	gomock.InOrder(
 		c.bootstrapper.EXPECT().DeleteBootstrapCluster(
 			c.ctx, c.bootstrapCluster,
-			gomock.Any()).Return(nil),
+			gomock.Any(), gomock.Any()).Return(nil),
 	)
 }
 
 func (c *upgradeTestSetup) expectNotToDeleteBootstrap() {
-	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Times(0)
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any(), gomock.Any()).Times(0)
 }
 
 func (c *upgradeTestSetup) expectUpgradeWorkload(managementCluster *types.Cluster, workloadCluster *types.Cluster) {

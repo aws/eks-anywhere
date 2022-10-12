@@ -1,0 +1,24 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: NutanixMachineConfig
+metadata:
+  name: eksa-unit-test
+  namespace: default
+spec:
+  vcpusPerSocket: 1
+  vcpuSockets: 4
+  memorySize: 8Gi
+  image:
+    type: "uuid"
+    uuid: "a15f6966-bfc7-4d1e-8575-224096fc1cda"
+  cluster:
+    type: "uuid"
+    uuid: "a15f6966-bfc7-4d1e-8575-224096fc1cdb"
+  subnet:
+    type: "uuid"
+    uuid: "a15f6966-bfc7-4d1e-8575-224096fc1cdc"
+  systemDiskSize: 40Gi
+  osFamily: "ubuntu"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"

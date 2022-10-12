@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -12,7 +13,7 @@ import (
 
 type Bootstrapper interface {
 	CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterOption) (*types.Cluster, error)
-	DeleteBootstrapCluster(context.Context, *types.Cluster, bool) error
+	DeleteBootstrapCluster(context.Context, *types.Cluster, constants.Operation, bool) error
 }
 
 type ClusterManager interface {
@@ -38,7 +39,8 @@ type ClusterManager interface {
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
-	CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error
+	CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error
+	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 }
 
 type GitOpsManager interface {

@@ -49,11 +49,12 @@ func validateMachineConfig(config *v1alpha1.TinkerbellMachineConfig) error {
 		return fmt.Errorf("TinkerbellMachineConfig: missing spec.osFamily: %v", config.Name)
 	}
 
-	if config.Spec.OSFamily != v1alpha1.Ubuntu && config.Spec.OSFamily != v1alpha1.Bottlerocket {
+	if config.Spec.OSFamily != v1alpha1.Ubuntu && config.Spec.OSFamily != v1alpha1.Bottlerocket && config.Spec.OSFamily != v1alpha1.RedHat {
 		return fmt.Errorf(
-			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s",
+			"TinkerbellMachineConfig: unsupported spec.osFamily (%v); Please use one of the following: %s, %s, %s",
 			config.Spec.OSFamily,
 			v1alpha1.Ubuntu,
+			v1alpha1.RedHat,
 			v1alpha1.Bottlerocket,
 		)
 	}
@@ -123,6 +124,26 @@ func validateIPUnused(client networkutils.NetClient, ip string) error {
 		return fmt.Errorf("ip in use: %v", ip)
 	}
 	return nil
+}
+
+func validatePortsAvailable(client networkutils.NetClient, host string) error {
+	unavailablePorts := getPortsUnavailable(client, host)
+
+	if len(unavailablePorts) != 0 {
+		return fmt.Errorf("localhost ports [%v] are already in use, please ensure these ports are available", strings.Join(unavailablePorts, ", "))
+	}
+	return nil
+}
+
+func getPortsUnavailable(client networkutils.NetClient, host string) []string {
+	ports := []string{"80", "42113", "50061"}
+	var unavailablePorts []string
+	for _, port := range ports {
+		if networkutils.IsPortInUse(client, host, port) {
+			unavailablePorts = append(unavailablePorts, port)
+		}
+	}
+	return unavailablePorts
 }
 
 // minimumHardwareRequirement defines the minimum requirement for a hardware selector.

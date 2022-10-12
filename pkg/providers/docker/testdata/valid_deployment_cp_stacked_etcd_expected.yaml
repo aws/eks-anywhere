@@ -102,7 +102,7 @@ spec:
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
-        apiVersion: audit.k8s.io/v1beta1
+        apiVersion: audit.k8s.io/v1
         kind: Policy
         rules:
         # Log aws-auth configmap changes
@@ -266,7 +266,6 @@ spec:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -274,6 +273,5 @@ spec:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        taints: []
   replicas: 1
   version: v1.19.6-eks-1-19-2

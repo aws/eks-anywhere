@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -37,7 +38,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: workloadCluster.Name,
-		}, false); err != nil {
+		}, constants.Delete, forceCleanup); err != nil {
 			return err
 		}
 	}
@@ -69,6 +70,8 @@ type moveClusterManagement struct{}
 type deleteWorkloadCluster struct{}
 
 type cleanupGitRepo struct{}
+
+type deletePackageResources struct{}
 
 type deleteManagementCluster struct{}
 
@@ -209,7 +212,7 @@ func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandCo
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &deleteManagementCluster{}
+	return &deletePackageResources{}
 }
 
 func (s *cleanupGitRepo) Name() string {
@@ -224,13 +227,44 @@ func (s *cleanupGitRepo) Checkpoint() *task.CompletedTask {
 	return nil
 }
 
+func (s *deletePackageResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		return &deleteManagementCluster{}
+	}
+
+	logger.Info("Delete package resources", "clusterName", commandContext.WorkloadCluster.Name)
+	cluster := commandContext.ManagementCluster
+	if cluster == nil {
+		cluster = commandContext.BootstrapCluster
+	}
+	err := commandContext.ClusterManager.DeletePackageResources(ctx, cluster, commandContext.WorkloadCluster.Name)
+	if err != nil {
+		logger.Info("Problem delete package resources: %v", err)
+	}
+
+	// A bit odd to traverse to this state here, but it is the terminal state
+	return &deleteManagementCluster{}
+}
+
+func (s *deletePackageResources) Name() string {
+	return "package-resource-delete"
+}
+
+func (s *deletePackageResources) Restore(ctx context.Context, commandContext *task.CommandContext, completedTask *task.CompletedTask) (task.Task, error) {
+	return nil, nil
+}
+
+func (s *deletePackageResources) Checkpoint() *task.CompletedTask {
+	return nil
+}
+
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.OriginalError != nil {
 		collector := &CollectMgmtClusterDiagnosticsTask{}
 		collector.Run(ctx, commandContext)
 	}
 	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
-		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
+		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, constants.Delete, false); err != nil {
 			commandContext.SetError(err)
 		}
 		return nil

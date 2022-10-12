@@ -16,6 +16,7 @@ package bundles
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -33,7 +34,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		"envoy":                           r.BundleArtifactsTable["envoy"],
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
-		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
@@ -53,16 +53,26 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		for _, artifact := range tinkerbellBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				bundleImageArtifact := anywherev1alpha1.Image{}
 				if componentName == "cluster-api-provider-tinkerbell" {
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
-				bundleImageArtifact := anywherev1alpha1.Image{
-					Name:        imageArtifact.AssetName,
-					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-					OS:          imageArtifact.OS,
-					Arch:        imageArtifact.Arch,
-					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				if strings.HasSuffix(imageArtifact.AssetName, "chart") {
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        imageArtifact.AssetName,
+						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					}
+				} else {
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        imageArtifact.AssetName,
+						Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+						OS:          imageArtifact.OS,
+						Arch:        imageArtifact.Arch,
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
@@ -91,7 +101,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 					Description: "Tinkerbell operating system installation environment (osie) component",
 					URI:         archiveArtifact.ReleaseCdnURI,
 				}
-
 				bundleArchiveArtifacts[archiveArtifact.ReleaseName] = bundleArchiveArtifact
 			}
 		}
@@ -132,7 +141,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
 			Boots: bundleImageArtifacts["boots"],
-			Cfssl: bundleImageArtifacts["cfssl"],
 			Hegel: bundleImageArtifacts["hegel"],
 			Hook: anywherev1alpha1.HookBundle{
 				Bootkit: bundleImageArtifacts["hook-bootkit"],

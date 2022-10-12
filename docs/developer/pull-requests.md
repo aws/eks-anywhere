@@ -8,7 +8,7 @@ This document outlines best practices to follow when creating and reviewing PRs.
 1. Verify all checks are passing
 1. Get someone to review it
 1. Iterate your changes based on the feedback you receive. Don't rewrite the history (rebase or squash) with your new changes, keep them as individual commits. This facilitates the reviewers job.
-1. Once you haver al least one `lgtm` and are ready to merge, squash your commits into one.
+1. Once you have at least one `lgtm` and are ready to merge, squash your commits into one.
     * Even if you leave multiple commits, they will all be squashed by GitHub before merging. Prefer to do it manually to control the format.
     * Avoid any message derived from the review process itself: "Fix typo", "Address comment", "Implement feedback", etc. This provides absolutely no context and clutters the commit history.
     * Treat this commit as if you were writing the PR for the first time but make sure you include any new relevant information derived from the conversations you had during the review.

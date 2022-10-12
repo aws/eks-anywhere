@@ -162,14 +162,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root
@@ -193,8 +193,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
       nodeRegistration:
@@ -214,8 +212,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
   replicas: {{.control_plane_replicas}}
   version: {{.kubernetesVersion}}

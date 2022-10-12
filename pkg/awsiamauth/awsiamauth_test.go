@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	wantManifestContent   = "testdata/want-aws-iam-authenticator.yaml"
-	wantSecretContent     = "testdata/want-aws-iam-authenticator-ca-secret.yaml"
-	wantKubeconfigContent = "testdata/want-aws-iam-authenticator-kubeconfig.yaml"
+	wantManifestContent        = "testdata/want-aws-iam-authenticator.yaml"
+	wantManifestContentUpgrade = "testdata/want-aws-iam-authenticator-upgrade.yaml"
+	wantSecretContent          = "testdata/want-aws-iam-authenticator-ca-secret.yaml"
+	wantKubeconfigContent      = "testdata/want-aws-iam-authenticator-kubeconfig.yaml"
 )
 
 func TestGenerateManifestSuccess(t *testing.T) {
@@ -34,12 +35,27 @@ func TestGenerateManifestSuccess(t *testing.T) {
 	test.AssertContentToFile(t, string(gotFileContent), wantManifestContent)
 }
 
+func TestGenerateManifestForUpgradeSuccess(t *testing.T) {
+	s := givenClusterSpec()
+
+	mockCtrl := gomock.NewController(t)
+	mockCertgen := mocks.NewMockCertificateGenerator(mockCtrl)
+	mockClusterId := uuid.Nil
+	awsIamAuth := awsiamauth.NewAwsIamAuth(mockCertgen, mockClusterId)
+
+	gotFileContent, err := awsIamAuth.GenerateManifestForUpgrade(s)
+	if err != nil {
+		t.Fatalf("awsiamauth.GenerateManifestForUpgrade()\n error = %v\n wantErr = nil", err)
+	}
+	test.AssertContentToFile(t, string(gotFileContent), wantManifestContentUpgrade)
+}
+
 func TestGenerateCertKeyPairSecretSuccess(t *testing.T) {
 	awsIamAuth, mockCertgen := newAwsIamAuth(t)
 
 	mockCertgen.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte{}, []byte{}, nil)
 
-	gotFileContent, err := awsIamAuth.GenerateCertKeyPairSecret()
+	gotFileContent, err := awsIamAuth.GenerateCertKeyPairSecret("test-cluster")
 	if err != nil {
 		t.Fatalf("awsiamauth.GenerateCertKeyPairSecret()\n error = %v\n wantErr = nil", err)
 	}
@@ -53,7 +69,7 @@ func TestGenerateCertKeyPairSecretFail(t *testing.T) {
 
 	mockCertgen.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return(nil, nil, certGenErr)
 
-	_, err := awsIamAuth.GenerateCertKeyPairSecret()
+	_, err := awsIamAuth.GenerateCertKeyPairSecret("test-cluster")
 	if !reflect.DeepEqual(err, wantErr) {
 		t.Fatalf("error = %v\n wantErr = %v", err, wantErr)
 	}

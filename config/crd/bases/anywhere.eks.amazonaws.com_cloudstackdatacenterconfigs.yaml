@@ -184,6 +184,20 @@ spec:
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
               of CloudStackDatacenterConfig
+            properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              specValid:
+                description: SpecValid is set to true if cloudstackdatacenterconfig
+                  is validated.
+                type: boolean
             type: object
         type: object
     served: true

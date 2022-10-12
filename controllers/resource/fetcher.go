@@ -392,6 +392,15 @@ func (r *CapiResourceFetcher) oidcConfig(ctx context.Context, name, namespace st
 	return clusterOIDC, nil
 }
 
+func (r *CapiResourceFetcher) awsIamConfig(ctx context.Context, name, namespace string) (*anywherev1.AWSIamConfig, error) {
+	awsIamConfig := &anywherev1.AWSIamConfig{}
+	err := r.FetchObjectByName(ctx, name, namespace, awsIamConfig)
+	if err != nil {
+		return nil, err
+	}
+	return awsIamConfig, nil
+}
+
 func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
 	capiCluster := &clusterv1.Cluster{}
@@ -437,7 +446,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, nil, r.oidcConfig)
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, nil, r.oidcConfig, r.awsIamConfig)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {

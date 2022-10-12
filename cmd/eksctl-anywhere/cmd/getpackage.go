@@ -1,19 +1,19 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type getPackageOptions struct {
 	output string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
-	kubeConfig string
+	// existing cluster.
+	kubeConfig  string
+	clusterName string
 }
 
 var gpo = &getPackageOptions{}
@@ -25,6 +25,11 @@ func init() {
 		"Specifies the output format (valid option: json, yaml)")
 	getPackageCommand.Flags().StringVar(&gpo.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file.")
+	getPackageCommand.Flags().StringVar(&gpo.clusterName, "cluster", "",
+		"Cluster to get list of packages.")
+	if err := getPackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
+	}
 }
 
 var getPackageCommand = &cobra.Command{
@@ -35,12 +40,10 @@ var getPackageCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig := gpo.kubeConfig
-		if kubeConfig == "" {
-			kubeConfig = kubeconfig.FromEnvironment()
-		} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-			return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+		kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpo.kubeConfig, "")
+		if err != nil {
+			return err
 		}
-		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packages", gpo.output, kubeConfig, gpo.clusterName, args)
 	},
 }

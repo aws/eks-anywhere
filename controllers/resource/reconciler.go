@@ -47,6 +47,7 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 			ResourceFetcher: resourceFetcher,
 			ResourceUpdater: resourceUpdater,
 			now:             now,
+			log:             log,
 		},
 		dockerTemplate: DockerTemplate{
 			ResourceFetcher: resourceFetcher,
@@ -193,11 +194,14 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:
-			r, err := cor.awsIamConfigTemplate.TemplateResources(ctx, spec)
-			if err != nil {
-				return err
+			// Block controller from updating the self-managed cluster IAM Configmap when reconciling for workload cluster spec.
+			if cs.IsSelfManaged() {
+				r, err := cor.awsIamConfigTemplate.TemplateResources(ctx, spec)
+				if err != nil {
+					return err
+				}
+				resources = append(resources, r...)
 			}
-			resources = append(resources, r...)
 		}
 	}
 	return cor.applyTemplates(ctx, cs, resources, dryRun)

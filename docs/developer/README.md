@@ -11,3 +11,5 @@
 [Go Version](go-version.md)
 
 [Local Quickstart](local-quickstart.md)
+
+[Releases](releases.md)

@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	kubernetes "github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
@@ -199,6 +200,20 @@ func (mr *MockClusterClientMockRecorder) DeleteOldWorkerNodeGroup(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOldWorkerNodeGroup", reflect.TypeOf((*MockClusterClient)(nil).DeleteOldWorkerNodeGroup), arg0, arg1, arg2)
 }
 
+// DeletePackageResources mocks base method.
+func (m *MockClusterClient) DeletePackageResources(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePackageResources", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePackageResources indicates an expected call of DeletePackageResources.
+func (mr *MockClusterClientMockRecorder) DeletePackageResources(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePackageResources", reflect.TypeOf((*MockClusterClient)(nil).DeletePackageResources), arg0, arg1, arg2)
+}
+
 // GetApiServerUrl mocks base method.
 func (m *MockClusterClient) GetApiServerUrl(arg0 context.Context, arg1 *types.Cluster) (string, error) {
 	m.ctrl.T.Helper()
@@ -257,6 +272,21 @@ func (m *MockClusterClient) GetClusters(arg0 context.Context, arg1 *types.Cluste
 func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
+}
+
+// GetEksaAWSIamConfig mocks base method.
+func (m *MockClusterClient) GetEksaAWSIamConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.AWSIamConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaAWSIamConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.AWSIamConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaAWSIamConfig indicates an expected call of GetEksaAWSIamConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaAWSIamConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSIamConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaAWSIamConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaCloudStackMachineConfig mocks base method.
@@ -456,6 +486,20 @@ func (m *MockClusterClient) KubeconfigSecretAvailable(arg0 context.Context, arg1
 func (mr *MockClusterClientMockRecorder) KubeconfigSecretAvailable(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeconfigSecretAvailable", reflect.TypeOf((*MockClusterClient)(nil).KubeconfigSecretAvailable), arg0, arg1, arg2, arg3)
+}
+
+// ListObjects mocks base method.
+func (m *MockClusterClient) ListObjects(arg0 context.Context, arg1, arg2, arg3 string, arg4 kubernetes.ObjectList) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListObjects", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ListObjects indicates an expected call of ListObjects.
+func (mr *MockClusterClientMockRecorder) ListObjects(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListObjects", reflect.TypeOf((*MockClusterClient)(nil).ListObjects), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MoveManagement mocks base method.
@@ -760,18 +804,18 @@ func (mr *MockAwsIamAuthMockRecorder) GenerateAwsIamAuthKubeconfig(arg0, arg1, a
 }
 
 // GenerateCertKeyPairSecret mocks base method.
-func (m *MockAwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
+func (m *MockAwsIamAuth) GenerateCertKeyPairSecret(arg0 string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateCertKeyPairSecret")
+	ret := m.ctrl.Call(m, "GenerateCertKeyPairSecret", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateCertKeyPairSecret indicates an expected call of GenerateCertKeyPairSecret.
-func (mr *MockAwsIamAuthMockRecorder) GenerateCertKeyPairSecret() *gomock.Call {
+func (mr *MockAwsIamAuthMockRecorder) GenerateCertKeyPairSecret(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCertKeyPairSecret", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateCertKeyPairSecret))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCertKeyPairSecret", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateCertKeyPairSecret), arg0)
 }
 
 // GenerateManifest mocks base method.
@@ -787,4 +831,19 @@ func (m *MockAwsIamAuth) GenerateManifest(arg0 *cluster.Spec) ([]byte, error) {
 func (mr *MockAwsIamAuthMockRecorder) GenerateManifest(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifest), arg0)
+}
+
+// GenerateManifestForUpgrade mocks base method.
+func (m *MockAwsIamAuth) GenerateManifestForUpgrade(arg0 *cluster.Spec) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateManifestForUpgrade", arg0)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateManifestForUpgrade indicates an expected call of GenerateManifestForUpgrade.
+func (mr *MockAwsIamAuthMockRecorder) GenerateManifestForUpgrade(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifestForUpgrade", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateManifestForUpgrade), arg0)
 }

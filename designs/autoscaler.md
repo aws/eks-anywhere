@@ -77,10 +77,12 @@ type AutoScalingConfiguration struct {
 
 We consider the following semantics when setting initial Count that is passed down to MachineDeployment:
 
-* If `Count` is specified, regardless the existence of `AutoScalingconfiguration`, `Count` is used as the initial count.
+* If `Count` is specified, regardless the existence of `AutoScalingconfiguration`, `Count` is used as the initial count provided it passes validations outlined below.
 * If `AutoScalingconfiguration` is specified, then `Count` is optional. When `Count` is not specified: `MinCount` is used as the initial count.
 
 If `AutoScalingConfiguration` is not specified, we won’t add any annotation to the underlying MachineDeployment for the worker node group. Instead, we rely on the worker node group count to provision fixed number of nodes.
+
+#### Validations
 
 When `AutoScalingConfiguration` is specified, we validate
 

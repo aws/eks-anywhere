@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -289,6 +290,13 @@ func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name + "-wn",
 			Namespace: namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       name,
+				},
+			},
 		},
 		Spec: anywherev1.VSphereMachineConfigSpec{
 			DiskGiB:           40,
@@ -333,6 +341,13 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name + "-cp",
 			Namespace: namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       name,
+				},
+			},
 		},
 		Spec: anywherev1.VSphereMachineConfigSpec{
 			DiskGiB:           40,
@@ -453,6 +468,13 @@ func createDataCenter(cluster *anywherev1.Cluster) *anywherev1.VSphereDatacenter
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "datacenter",
 			Namespace: cluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: anywherev1.GroupVersion.String(),
+					Kind:       anywherev1.ClusterKind,
+					Name:       cluster.Name,
+				},
+			},
 		},
 		Spec: anywherev1.VSphereDatacenterConfigSpec{
 			Thumbprint: "aaa",
@@ -490,7 +512,7 @@ func createCluster() *anywherev1.Cluster {
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &anywherev1.Ref{
 						Kind: "VSphereMachineConfig",
 						Name: name + "-wn",

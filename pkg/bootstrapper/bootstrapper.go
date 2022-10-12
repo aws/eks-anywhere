@@ -28,7 +28,6 @@ type ClusterClient interface {
 	WithExtraDockerMounts() BootstrapClusterClientOption
 	WithExtraPortMappings([]int) BootstrapClusterClientOption
 	WithEnv(env map[string]string) BootstrapClusterClientOption
-	WithDefaultCNIDisabled() BootstrapClusterClientOption
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetKubeconfig(ctx context.Context, clusterName string) (string, error)
@@ -82,7 +81,7 @@ func WithRetrier(retrier *retrier.Retrier) BootstrapperOpt {
 	}
 }
 
-func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, isUpgrade bool) error {
+func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster, operationType constants.Operation, isForceCleanup bool) error {
 	clusterExists, err := b.clusterClient.ClusterExists(ctx, cluster.Name)
 	if err != nil {
 		return fmt.Errorf("deleting bootstrap cluster: %v", err)
@@ -97,7 +96,7 @@ func (b *Bootstrapper) DeleteBootstrapCluster(ctx context.Context, cluster *type
 	}
 
 	if mgmtCluster != nil {
-		if isUpgrade || mgmtCluster.Status.Phase == "Provisioned" {
+		if !isForceCleanup && (operationType == constants.Upgrade || mgmtCluster.Status.Phase == "Provisioned") {
 			return errors.New("error deleting bootstrap cluster: management cluster in bootstrap cluster")
 		}
 	}
@@ -151,11 +150,5 @@ func WithExtraPortMappings(ports []int) BootstrapClusterOption {
 func WithEnv(env map[string]string) BootstrapClusterOption {
 	return func(b *Bootstrapper) BootstrapClusterClientOption {
 		return b.clusterClient.WithEnv(env)
-	}
-}
-
-func WithDefaultCNIDisabled() BootstrapClusterOption {
-	return func(b *Bootstrapper) BootstrapClusterClientOption {
-		return b.clusterClient.WithDefaultCNIDisabled()
 	}
 }

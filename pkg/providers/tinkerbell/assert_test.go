@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/onsi/gomega"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestAssertMachineConfigsValid_ValidSucceds(t *testing.T) {
@@ -229,6 +231,41 @@ func TestAssertTinkerbellIPAndControlPlaneIPNotSame_SameFails(t *testing.T) {
 	g.Expect(tinkerbell.AssertTinkerbellIPAndControlPlaneIPNotSame(clusterSpec)).ToNot(gomega.Succeed())
 }
 
+func TestAssertPortsNotInUse_Succeeds(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout("tcp", gomock.Any(), 500*time.Millisecond).
+		Times(3).
+		Return(nil, errors.New("failed to connect"))
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertPortsNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).To(gomega.Succeed())
+}
+
+func TestAssertPortsNotInUse_Fails(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	server, client := net.Pipe()
+	defer server.Close()
+
+	netClient := mocks.NewMockNetClient(ctrl)
+	netClient.EXPECT().
+		DialTimeout("tcp", gomock.Any(), 500*time.Millisecond).
+		Times(3).
+		Return(client, nil)
+
+	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
+
+	assertion := tinkerbell.AssertPortsNotInUse(netClient)
+	g.Expect(assertion(clusterSpec)).ToNot(gomega.Succeed())
+}
+
 func TestMinimumHardwareAvailableAssertionForCreate_SufficientSucceeds(t *testing.T) {
 	g := gomega.NewWithT(t)
 
@@ -296,7 +333,7 @@ func TestMinimumHardwareAvailableAssertionForCreate_NoControlPlaneSelectorMatche
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.ControlPlaneMachineConfig().Spec.HardwareSelector = eksav1alpha1.HardwareSelector{}
-	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = 0
+	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(0)
 	clusterSpec.Spec.Cluster.Spec.ExternalEtcdConfiguration = nil
 
 	catalogue := hardware.NewCatalogue()
@@ -313,7 +350,7 @@ func TestMinimumHardwareAvailableAssertionForCreate_NoExternalEtcdSelectorMatche
 
 	clusterSpec := NewDefaultValidClusterSpecBuilder().Build()
 	clusterSpec.ControlPlaneConfiguration().Count = 0
-	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = 0
+	clusterSpec.WorkerNodeGroupConfigurations()[0].Count = ptr.Int(0)
 	clusterSpec.ExternalEtcdMachineConfig().Spec.HardwareSelector = eksav1alpha1.HardwareSelector{}
 
 	catalogue := hardware.NewCatalogue()

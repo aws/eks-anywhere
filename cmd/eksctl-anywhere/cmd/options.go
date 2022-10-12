@@ -13,8 +13,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/config"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -123,6 +125,20 @@ func buildCliConfig(clusterSpec *cluster.Spec) *config.CliConfig {
 	}
 
 	return cliConfig
+}
+
+func getManagementCluster(clusterSpec *cluster.Spec) *types.Cluster {
+	if clusterSpec.ManagementCluster == nil {
+		return &types.Cluster{
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+		}
+	} else {
+		return &types.Cluster{
+			Name:           clusterSpec.ManagementCluster.Name,
+			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+		}
+	}
 }
 
 func (c *clusterOptions) directoriesToMount(clusterSpec *cluster.Spec, cliConfig *config.CliConfig, addDirs ...string) ([]string, error) {

@@ -12,6 +12,8 @@ type Client interface {
 
 type Object client.Object
 
+type ObjectList client.ObjectList
+
 // KubeconfigClient is an authenticated kubernetes API client
 // it authenticates using the credentials of a kubeconfig file
 type KubeconfigClient struct {

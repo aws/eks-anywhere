@@ -285,11 +285,6 @@ func (p *Provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	return providers.ConfigsMapToSlice(configs)
 }
 
-func (p *Provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
-	// TODO: Figure out if something is needed here
-	return nil
-}
-
 func (p *Provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	// TODO: implement
 	return nil

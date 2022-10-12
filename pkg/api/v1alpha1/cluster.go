@@ -78,7 +78,7 @@ func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
 
 func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: &count}}
 	}
 }
 
@@ -166,10 +166,8 @@ func NewCluster(clusterName string) *Cluster {
 
 var clusterConfigValidations = []func(*Cluster) error{
 	validateClusterConfigName,
-	// TODO(chrisdoherty) Uncomment and fix unit tests. This broke _lots_ of unit tests so will
-	// return shortly.
-	// validateControlPlaneEndpoint,
-	// validateControlPlaneMachineRef,
+	validateControlPlaneEndpoint,
+	validateMachineGroupRefs,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
@@ -344,24 +342,23 @@ func validateClusterConfigName(clusterConfig *Cluster) error {
 	return nil
 }
 
-// func validateControlPlaneEndpoint(cluster *Cluster) error {
-// 	if cluster.Spec.ControlPlaneConfiguration.Endpoint.Host == "" {
-// 		return errors.New("control plane endpoint host cannot be empty")
-// 	}
+func validateMachineGroupRefs(cluster *Cluster) error {
+	if cluster.Spec.DatacenterRef.Kind != DockerDatacenterKind {
+		if cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
+			return errors.New("must specify machineGroupRef control plane machines")
+		}
+		for _, workerNodeGroupConfiguration := range cluster.Spec.WorkerNodeGroupConfigurations {
+			if workerNodeGroupConfiguration.MachineGroupRef == nil {
+				return errors.New("must specify machineGroupRef for worker nodes")
+			}
+		}
+		if cluster.Spec.ExternalEtcdConfiguration != nil && cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+			return errors.New("must specify machineGroupRef for etcd machines")
+		}
+	}
 
-// 	if err := networkutils.ValidateIP(cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
-// 		return fmt.Errorf("invalid control plane endpoint host: %v", err)
-// 	}
-
-// 	return nil
-// }
-
-// func validateControlPlaneMachineRef(cluster *Cluster) error {
-// 	if cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-// 		return errors.New("control plane machine group ref cannot be nil")
-// 	}
-// 	return nil
-// }
+	return nil
+}
 
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count <= 0 {
@@ -389,6 +386,27 @@ func validateControlPlaneLabels(clusterConfig *Cluster) error {
 	return nil
 }
 
+func validateControlPlaneEndpoint(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.DatacenterRef.Kind == DockerDatacenterKind {
+		if clusterConfig.Spec.ControlPlaneConfiguration.Endpoint != nil {
+			return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
+		}
+		return nil
+	}
+
+	if clusterConfig.Spec.ControlPlaneConfiguration.Endpoint == nil || len(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
+		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
+	}
+
+	// TODO: validate IP
+	//if err := networkutils.ValidateIP(clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+	//
+	//	return fmt.Errorf("invalid control plane endpoint host: %v", err)
+	//}
+
+	return nil
+}
+
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
@@ -402,7 +420,13 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
-		if workerNodeGroupConfig.AutoScalingConfiguration == nil && workerNodeGroupConfig.Count <= 0 {
+		if workerNodeGroupConfig.Count == nil {
+			// This block should never fire. If it does, it means we have a bug in how we set our defaults.
+			// When Count == nil it should be set to 1 by SetDefaults method prior to reaching validation.
+			return errors.New("worker node count must be >= 0")
+		}
+
+		if workerNodeGroupConfig.AutoScalingConfiguration == nil && *workerNodeGroupConfig.Count <= 0 {
 			return errors.New("worker node count must be positive if autoscaling is not enabled")
 		}
 
@@ -426,11 +450,6 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
 			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
 		}
-
-		// TODO(chrisdoherty4) uncomment and fix
-		// if workerNodeGroupConfig.MachineGroupRef == nil {
-		// 	return fmt.Errorf("worker node group missing machineg roup ref: name=%v", workerNodeGroupConfig.Name)
-		// }
 
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}

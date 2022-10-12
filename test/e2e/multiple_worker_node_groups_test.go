@@ -112,6 +112,7 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			api.RemoveAllWorkerNodeGroups(),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 
 	runSimpleUpgradeFlow(
@@ -129,5 +130,6 @@ func TestSnowKubernetes123UbuntuRemoveWorkerNodeGroups(t *testing.T) {
 			),
 		),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 }

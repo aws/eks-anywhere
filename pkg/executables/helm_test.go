@@ -3,6 +3,7 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -144,10 +145,10 @@ func TestHelmInstallChartSuccess(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig,
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, values)).To(Succeed())
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", values)).To(Succeed())
 }
 
 func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
@@ -158,10 +159,10 @@ func TestHelmInstallChartSuccessWithInsecure(t *testing.T) {
 	kubeconfig := "/root/.kube/config"
 	values := []string{"key1=value1"}
 	expectCommand(
-		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--insecure-skip-tls-verify",
+		tt.e, tt.ctx, "install", chart, url, "--version", version, "--set", "key1=value1", "--kubeconfig", kubeconfig, "--create-namespace", "--namespace", "eksa-packages", "--insecure-skip-tls-verify",
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
-	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, values)).To(Succeed())
+	tt.Expect(tt.h.InstallChart(tt.ctx, chart, url, version, kubeconfig, "eksa-packages", values)).To(Succeed())
 }
 
 func TestHelmGetValueArgs(t *testing.T) {
@@ -216,4 +217,30 @@ func TestHelmInstallChartWithValuesFileSuccessWithInsecure(t *testing.T) {
 	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
 
 	tt.Expect(tt.h.InstallChartWithValuesFile(tt.ctx, chart, url, version, kubeconfig, valuesFileName)).To(Succeed())
+}
+
+func TestHelmListCharts(t *testing.T) {
+	tt := newHelmTest(t, executables.WithInsecure())
+	kubeconfig := "/root/.kube/config"
+	t.Run("Normal functionality", func(t *testing.T) {
+		output := []byte("eks-anywhere-packages\n")
+		expected := []string{"eks-anywhere-packages"}
+		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(output), nil)
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig)).To(Equal(expected))
+	})
+
+	t.Run("Empty output", func(t *testing.T) {
+		expected := []string{}
+		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+		tt.Expect(tt.h.ListCharts(tt.ctx, kubeconfig)).To(Equal(expected))
+	})
+
+	t.Run("Errored out", func(t *testing.T) {
+		output := errors.New("Error")
+		var expected []string
+		expectCommand(tt.e, tt.ctx, "list", "-q", "--kubeconfig", kubeconfig).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, output)
+		result, err := tt.h.ListCharts(tt.ctx, kubeconfig)
+		tt.Expect(err).To(HaveOccurred())
+		tt.Expect(result).To(Equal(expected))
+	})
 }

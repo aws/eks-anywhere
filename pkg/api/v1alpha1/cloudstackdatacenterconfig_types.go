@@ -105,6 +105,15 @@ type CloudStackAvailabilityZone struct {
 
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// SpecValid is set to true if cloudstackdatacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	FailureMessage *string `json:"failureMessage,omitempty"`
 	// Important: Run "make" to regenerate code after modifying this file
 }
 

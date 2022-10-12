@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestClusterMachineConfigRefs(t *testing.T) {
@@ -26,21 +27,21 @@ func TestClusterMachineConfigRefs(t *testing.T) {
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 3,
+					Count: ptr.Int(3),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test-1",
 					},
 				},
 				{
-					Count: 3,
+					Count: ptr.Int(3),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test-2",
 					},
 				},
 				{
-					Count: 5,
+					Count: ptr.Int(5),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: v1alpha1.VSphereMachineConfigKind,
 						Name: "eksa-unit-test", // This tests duplicates
@@ -319,7 +320,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "one empty, one exists",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 				},
 			},
 			want: false,
@@ -328,7 +329,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, same",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k",
 						Name: "n",
@@ -337,7 +338,7 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k",
 						Name: "n",
@@ -350,14 +351,14 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, order diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
 						Name: "n1",
 					},
 				},
 				{
-					Count: 2,
+					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
 						Name: "n2",
@@ -366,14 +367,14 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 2,
+					Count: ptr.Int(2),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k2",
 						Name: "n2",
 					},
 				},
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &v1alpha1.Ref{
 						Kind: "k1",
 						Name: "n1",
@@ -386,12 +387,12 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 			testName: "both exist, count diff",
 			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 				},
 			},
 			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
 				{
-					Count: 2,
+					Count: ptr.Int(2),
 				},
 			},
 			want: false,

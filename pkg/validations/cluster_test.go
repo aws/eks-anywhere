@@ -2,6 +2,7 @@ package validations_test
 
 import (
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
@@ -92,4 +94,19 @@ func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
 
 	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
+}
+
+func TestValidateK8s124Support(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube124
+	tt.Expect(validations.ValidateK8s124Support(tt.clusterSpec)).To(
+		MatchError(ContainSubstring("kubernetes version 1.24 is not enabled. Please set the env variable K8S_1_24_SUPPORT")))
+}
+
+func TestValidateK8s124SupportActive(t *testing.T) {
+	tt := newTlsTest(t)
+	tt.clusterSpec.Cluster.Spec.KubernetesVersion = anywherev1.Kube124
+	features.ClearCache()
+	os.Setenv(features.K8s124SupportEnvVar, "true")
+	tt.Expect(validations.ValidateK8s124Support(tt.clusterSpec)).To(Succeed())
 }

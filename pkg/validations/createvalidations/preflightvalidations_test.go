@@ -8,6 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -28,7 +29,11 @@ func newPreflightValidationsTest(t *testing.T) *preflightValidationsTest {
 	c := &types.Cluster{
 		KubeconfigFile: "kubeconfig",
 	}
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {})
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
+			Name: "gitops",
+		}
+	})
 	opts := &validations.Opts{
 		Kubectl:           k,
 		Spec:              clusterSpec,

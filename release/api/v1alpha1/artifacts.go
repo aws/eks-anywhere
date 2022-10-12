@@ -54,6 +54,11 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.Snow.Components.URI,
 			&vb.Snow.Metadata.URI,
 		},
+		"cluster-api-provider-nutanix": {
+			&vb.Nutanix.Components.URI,
+			&vb.Nutanix.ClusterTemplate.URI,
+			&vb.Nutanix.Metadata.URI,
+		},
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
@@ -134,7 +139,6 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Actions.WriteFile,
 		vb.Tinkerbell.TinkerbellStack.Actions.Reboot,
 		vb.Tinkerbell.TinkerbellStack.Boots,
-		vb.Tinkerbell.TinkerbellStack.Cfssl,
 		vb.Tinkerbell.TinkerbellStack.Hegel,
 		vb.Tinkerbell.TinkerbellStack.Hook.Bootkit,
 		vb.Tinkerbell.TinkerbellStack.Hook.Docker,
@@ -143,6 +147,12 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkController,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkServer,
 		vb.Tinkerbell.TinkerbellStack.Tink.TinkWorker,
+	}
+}
+
+func (vb *VersionsBundle) NutanixImages() []Image {
+	return []Image{
+		vb.Nutanix.ClusterAPIController,
 	}
 }
 
@@ -155,6 +165,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.CertManager.Acmesolver,
 		vb.CertManager.Cainjector,
 		vb.CertManager.Controller,
+		vb.CertManager.Ctl,
 		vb.CertManager.Webhook,
 		vb.Cilium.Cilium,
 		vb.Cilium.Operator,
@@ -188,6 +199,7 @@ func (vb *VersionsBundle) Images() []Image {
 		vb.CloudStackImages(),
 		vb.SnowImages(),
 		vb.TinkerbellImages(),
+		vb.NutanixImages(),
 	}
 
 	size := 0
