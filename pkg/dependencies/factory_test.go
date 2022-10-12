@@ -217,7 +217,7 @@ func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageInstaller(spec, "/test/packages.yaml").
+		WithPackageInstaller(spec, "/test/packages.yaml", "kubeconfig.kubeconfig").
 		Build(context.Background())
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.PackageInstaller).NotTo(BeNil())
@@ -278,7 +278,7 @@ func TestFactoryBuildWithPackageControllerClientNoProxy(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageControllerClient(spec).
+		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -318,7 +318,7 @@ func TestFactoryBuildWithPackageControllerClientProxy(t *testing.T) {
 		WithLocalExecutables().
 		WithHelm(executables.WithInsecure()).
 		WithKubectl().
-		WithPackageControllerClient(spec).
+		WithPackageControllerClient(spec, "kubeconfig.kubeconfig").
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())

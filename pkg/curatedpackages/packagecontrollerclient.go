@@ -68,15 +68,16 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 	return pcc
 }
 
-// InstallController installs the curated packages controller.
+// EnableCuratedPackages enables curated packages in a cluster
+// In case the cluster is management cluster, it performs the following actions:
+//   - Installation of Package Controller through helm chart installation
+//   - Creation of secret credentials
+//   - Creation of a single run of a cron job refresher
+//   - Activation of a curated packages bundle
 //
-// This includes all necessary steps for functionality. These include:
-//
-//   - helm chart installation
-//   - credentials secret creation
-//   - credentials refreshing cron job creation
-//   - activation of a curated packages bundle
-func (pc *PackageControllerClient) InstallController(ctx context.Context) error {
+// In case the cluster is a workload cluster, it performs the following actions:
+//   - Creation of package bundle controller in management cluster
+func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
 	// When the management cluster name and current cluster name are different,
 	// it indicates that we are trying to install the controller on a workload cluster.
 	// Instead of installing the controller, install packagebundlecontroller resource.

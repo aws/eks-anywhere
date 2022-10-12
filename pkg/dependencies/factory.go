@@ -873,7 +873,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
-			curatedpackages.WithManagementClusterName(getManagementClusterName(spec)),
+			curatedpackages.WithManagementClusterName(managementClusterName),
 		)
 		return nil
 	})

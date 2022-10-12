@@ -85,7 +85,7 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 	}
 }
 
-func TestInstallControllerSuccess(t *testing.T) {
+func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -105,13 +105,13 @@ func TestInstallControllerSuccess(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
 }
 
-func TestInstallControllerSucceedInWorkloadCluster(t *testing.T) {
+func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -121,7 +121,7 @@ func TestInstallControllerSucceedInWorkloadCluster(t *testing.T) {
 	params := []string{"create", "-f", "-", "--kubeconfig", tt.kubeConfig}
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, []byte(packageBundleControllerTest), params).Return(bytes.Buffer{}, nil)
 
-	err := tt.command.InstallController(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	tt.Expect(err).To(BeNil())
 }
 
@@ -143,7 +143,7 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 	}
 }
 
-func TestInstallControllerWithProxy(t *testing.T) {
+func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -177,13 +177,13 @@ func TestInstallControllerWithProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
 }
 
-func TestInstallControllerWithEmptyProxy(t *testing.T) {
+func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -214,13 +214,13 @@ func TestInstallControllerWithEmptyProxy(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
 }
 
-func TestInstallControllerFail(t *testing.T) {
+func TestEnableCuratedPackagesFail(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	registry := curatedpackages.GetRegistry(tt.ociUri)
 	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
@@ -234,13 +234,13 @@ func TestInstallControllerFail(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err := tt.command.InstallController(tt.ctx)
+	err := tt.command.EnableCuratedPackages(tt.ctx)
 	if err == nil {
 		t.Errorf("Install Controller Should fail when installation fails")
 	}
 }
 
-func TestInstallControllerFailNoActiveBundle(t *testing.T) {
+func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -260,13 +260,13 @@ func TestInstallControllerFailNoActiveBundle(t *testing.T) {
 		DoAndReturn(getPBCFail(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err == nil {
 		t.Errorf("expected error, got nil")
 	}
 }
 
-func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
+func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -286,7 +286,7 @@ func TestInstallControllerSuccessWhenApplySecretFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when secret creation fails")
 	}
@@ -312,7 +312,7 @@ func TestPbcCreationFail(t *testing.T) {
 	tt.Expect(err).NotTo(BeNil())
 }
 
-func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
+func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -332,7 +332,7 @@ func TestInstallControllerSuccessWhenCronJobFails(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
@@ -388,13 +388,13 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithManagementClusterName(tt.clusterName),
 	)
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when cron job fails")
 	}
 }
 
-func TestInstallControllerActiveBundleCustomTimeout(t *testing.T) {
+func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -422,13 +422,13 @@ func TestInstallControllerActiveBundleCustomTimeout(t *testing.T) {
 		DoAndReturn(getPBCSuccess(t)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("Install Controller Should succeed when installation passes")
 	}
 }
 
-func TestInstallControllerActiveBundleWaitLoops(t *testing.T) {
+func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	tt := newPackageControllerTest(t)
 
 	registry := curatedpackages.GetRegistry(tt.ociUri)
@@ -448,7 +448,7 @@ func TestInstallControllerActiveBundleWaitLoops(t *testing.T) {
 		DoAndReturn(getPBCLoops(t, 3)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if err != nil {
 		t.Errorf("expected no error, got %v", err)
 	}
@@ -470,7 +470,7 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 	}
 }
 
-func TestInstallControllerActiveBundleTimesOut(t *testing.T) {
+func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
 		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
@@ -498,7 +498,7 @@ func TestInstallControllerActiveBundleTimesOut(t *testing.T) {
 		DoAndReturn(getPBCDelay(t, time.Second)).
 		AnyTimes()
 
-	err = tt.command.InstallController(tt.ctx)
+	err = tt.command.EnableCuratedPackages(tt.ctx)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("expected %v, got %v", context.DeadlineExceeded, err)
 	}
