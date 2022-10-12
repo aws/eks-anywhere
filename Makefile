@@ -258,7 +258,7 @@ $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run golangci-lint
-	$(GOLANGCI_LINT) run
+	$(GOLANGCI_LINT) run --new-from-rev main
 
 $(GOLANGCI_LINT): $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_CONFIG)
 	$(eval GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -))
