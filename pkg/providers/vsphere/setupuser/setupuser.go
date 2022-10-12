@@ -23,6 +23,7 @@ func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
 	return nil
 }
 
+// Run sets up a vSphere user with appropriate group, role, and permissions to create EKS-A kubernetes clusters.
 func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	err := createGroup(ctx, vsuc, govc)
 	if err != nil {
