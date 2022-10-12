@@ -130,7 +130,7 @@ func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context) erro
 		"namespace":   constants.EksaPackagesName,
 	}
 
-	result, err := templater.Execute(packageBundleContrllerYaml, templateValues)
+	result, err := templater.Execute(packageBundleControllerYaml, templateValues)
 	if err != nil {
 		return fmt.Errorf("replacing template values %v", err)
 	}
