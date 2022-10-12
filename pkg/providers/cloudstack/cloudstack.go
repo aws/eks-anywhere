@@ -41,7 +41,7 @@ const (
 	eksaLicense                = "EKSA_LICENSE"
 	controlEndpointDefaultPort = "6443"
 	nodeFailuredomainLabel     = "cluster.x-k8s.io/failure-domain"
-	nodeFailuredomainLabelValue = "'{{ds.meta_data.availability_zone}}'"
+	nodeFailuredomainLabelValue = "{{ds.meta_data.failuredomain}}"
 )
 
 //go:embed config/template-cp.yaml
