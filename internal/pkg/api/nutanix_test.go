@@ -1,6 +1,7 @@
 package api
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -12,8 +13,8 @@ import (
 
 func TestNutanixDatacenterConfigFillers(t *testing.T) {
 	g := NewWithT(t)
-	configFile := "testdata/nutanix-config.yaml"
-	conf, err := NewNutanixConfig(configFile)
+	configFile := "testdata/nutanix/cluster-config.yaml"
+	conf, err := newNutanixConfig(configFile)
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 
@@ -29,8 +30,8 @@ func TestNutanixDatacenterConfigFillers(t *testing.T) {
 
 func TestNutanixMachineConfigFillers(t *testing.T) {
 	g := NewWithT(t)
-	configFile := "testdata/nutanix-config.yaml"
-	conf, err := NewNutanixConfig(configFile)
+	configFile := "testdata/nutanix/cluster-config.yaml"
+	conf, err := newNutanixConfig(configFile)
 	assert.NoError(t, err)
 	assert.NotNil(t, conf)
 
@@ -68,4 +69,19 @@ func TestNutanixMachineConfigFillers(t *testing.T) {
 		g.Expect(machineConfig.Spec.Image.Type).To(Equal(anywherev1.NutanixIdentifierUUID))
 		g.Expect(*machineConfig.Spec.Image.UUID).To(Equal("90ad37a4-6dc0-4ae7-bcb3-a121dfb3fffc"))
 	}
+}
+
+func TestAutoFillNutanixProvider(t *testing.T) {
+	g := NewWithT(t)
+	configFile := "testdata/nutanix/cluster-config.yaml"
+	resources, err := AutoFillNutanixProvider(
+		configFile,
+		WithNutanixEndpoint("prism-test.nutanix.com"),
+		WithNutanixSubnetName("testSubnet"),
+	)
+	g.Expect(err).To(BeNil())
+	g.Expect(resources).To(Not(BeNil()))
+	expectedResources, err := os.ReadFile("testdata/nutanix/templated-resources.yaml")
+	g.Expect(err).To(BeNil())
+	g.Expect(resources).To(MatchYAML(expectedResources))
 }

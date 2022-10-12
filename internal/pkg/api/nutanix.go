@@ -20,7 +20,7 @@ type NutanixConfig struct {
 
 type NutanixFiller func(config *NutanixConfig)
 
-func NewNutanixConfig(filename string) (*NutanixConfig, error) {
+func newNutanixConfig(filename string) (*NutanixConfig, error) {
 	config, err := cluster.ParseConfigFromFile(filename)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NewNutanixConfig(filename string) (*NutanixConfig, error) {
 }
 
 func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
-	nutanixConfig, err := NewNutanixConfig(filename)
+	nutanixConfig, err := newNutanixConfig(filename)
 	if err != nil {
 		return nil, err
 	}
