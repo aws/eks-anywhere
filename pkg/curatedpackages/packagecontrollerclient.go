@@ -17,7 +17,7 @@ import (
 var awsSecretYaml string
 
 //go:embed config/packagebundlecontroller.yaml
-var packageBundleContrllerYaml string
+var packageBundleControllerYaml string
 
 const (
 	eksaDefaultRegion = "us-west-2"
@@ -76,7 +76,7 @@ func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRu
 //   - Activation of a curated packages bundle
 //
 // In case the cluster is a workload cluster, it performs the following actions:
-//   - Creation of package bundle controller in management cluster
+//   - Creation of package bundle controller (PBC) custom resource in management cluster
 func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) error {
 	// When the management cluster name and current cluster name are different,
 	// it indicates that we are trying to install the controller on a workload cluster.
@@ -138,7 +138,7 @@ func (pc *PackageControllerClient) InstallPBCResources(ctx context.Context) erro
 	params := []string{"create", "-f", "-", "--kubeconfig", pc.kubeConfig}
 	stdOut, err := pc.kubectl.ExecuteFromYaml(ctx, result, params...)
 	if err != nil {
-		return fmt.Errorf("creating package bundle controller %v", err)
+		return fmt.Errorf("creating package bundle controller custom resource%v", err)
 	}
 
 	fmt.Print(&stdOut)
