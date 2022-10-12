@@ -434,28 +434,30 @@ func TestPostMoveManagementToBootstrapSuccess(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 
-	provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
-	if err := provider.readCSVToCatalogue(); err != nil {
-		t.Fatalf("failed to read hardware csv: %v", err)
-	}
+	kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(nil).MaxTimes(2)
 
 	tt := []struct {
-		name     string
-		gotError error
+		name            string
+		hardwareCSVFile string
 	}{
 		{
-			name:     "wait returns no error",
-			gotError: nil,
+			name:            "bmc in hardware csv",
+			hardwareCSVFile: "./testdata/hardware.csv",
 		},
 		{
-			name:     "wait returns no resources error",
-			gotError: errKubectlWaitNoResources,
+			name:            "no bmc in hardware csv",
+			hardwareCSVFile: "./testdata/hardware_nobmc.csv",
 		},
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			kubectl.EXPECT().WaitForBaseboardManagements(ctx, cluster, "5m", "Contactable", gomock.Any()).Return(test.gotError)
+			provider := newProvider(datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, docker, helm, kubectl, forceCleanup)
+			provider.hardwareCSVFile = test.hardwareCSVFile
+			if err := provider.readCSVToCatalogue(); err != nil {
+				t.Fatalf("failed to read hardware csv: %v", err)
+			}
+
 			err := provider.PostMoveManagementToBootstrap(ctx, cluster)
 			if err != nil {
 				t.Fatalf("failed PostMoveManagementToBootstrap: %v", err)

@@ -41,8 +41,6 @@ var (
 	// errExternalEtcdUnsupported is returned from create or update when the user attempts to create
 	// or upgrade a cluster with an external etcd configuration.
 	errExternalEtcdUnsupported = errors.New("external etcd configuration is unsupported")
-	// errKubectlWaitNoResources is returned from kubectl wait when the resource is not found on the cluster.
-	errKubectlWaitNoResources = errors.New("executing wait: error: no matching resources found\n")
 )
 
 type Provider struct {

@@ -2,7 +2,6 @@ package tinkerbell
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -186,13 +185,14 @@ func (p *Provider) PostBootstrapSetupUpgrade(ctx context.Context, clusterConfig 
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
-	// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
-	err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
-	if errors.Is(err, errKubectlWaitNoResources) {
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+	// Check if the hardware in the catalogue have a BMCRef. Since we only allow either all hardware with bmc
+	// or no hardware with bmc, its sufficient to check the first hardware.
+	if p.catalogue.TotalHardware() > 0 && p.catalogue.AllHardware()[0].Spec.BMCRef != nil {
+		// Waiting to ensure all the new and exisiting baseboardmanagement connections are valid.
+		err := p.providerKubectlClient.WaitForBaseboardManagements(ctx, bootstrapCluster, "5m", "Contactable", constants.EksaSystemNamespace)
+		if err != nil {
+			return fmt.Errorf("waiting for baseboard management to be contactable: %v", err)
+		}
 	}
 
 	return nil
