@@ -12,7 +12,6 @@ import (
 )
 
 type installPackageOptions struct {
-	source        curatedpackages.BundleSource
 	kubeVersion   string
 	clusterName   string
 	packageName   string
@@ -28,8 +27,6 @@ var ipo = &installPackageOptions{}
 func init() {
 	installCmd.AddCommand(installPackageCommand)
 
-	installPackageCommand.Flags().Var(&ipo.source, "source",
-		"Location to find curated packages: (cluster, registry)")
 	installPackageCommand.Flags().StringVar(&ipo.kubeVersion, "kube-version", "",
 		"Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	installPackageCommand.Flags().StringVarP(&ipo.packageName, "package-name", "n",
@@ -43,9 +40,6 @@ func init() {
 	installPackageCommand.Flags().StringVar(&ipo.clusterName, "cluster", "",
 		"Target cluster for installation.")
 
-	if err := installPackageCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("marking source flag as required: %s", err)
-	}
 	if err := installPackageCommand.MarkFlagRequired("package-name"); err != nil {
 		log.Fatalf("marking package-name flag as required: %s", err)
 	}
@@ -71,7 +65,7 @@ var installPackageCommand = &cobra.Command{
 }
 
 func runInstallPackages(cmd *cobra.Command, args []string) error {
-	if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.source); err != nil {
+	if err := curatedpackages.ValidateKubeVersion(ipo.kubeVersion, ipo.clusterName); err != nil {
 		return err
 	}
 
@@ -90,14 +84,7 @@ func installPackages(ctx context.Context, args []string) error {
 
 	bm := curatedpackages.CreateBundleManager()
 
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		ipo.clusterName,
-		ipo.source,
-		deps.Kubectl,
-		bm,
-		deps.BundleRegistry,
-	)
+	b := curatedpackages.NewBundleReader(kubeConfig, ipo.clusterName, deps.Kubectl, bm, deps.BundleRegistry)
 
 	bundle, err := b.GetLatestBundle(ctx, ipo.kubeVersion)
 	if err != nil {

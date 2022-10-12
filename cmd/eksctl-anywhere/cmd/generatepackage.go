@@ -12,7 +12,6 @@ import (
 )
 
 type generatePackageOptions struct {
-	source      curatedpackages.BundleSource
 	kubeVersion string
 	clusterName string
 	registry    string
@@ -25,10 +24,6 @@ var gpOptions = &generatePackageOptions{}
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
-	generatePackageCommand.Flags().Var(&gpOptions.source, "source", "Location to find curated packages: (cluster, registry)")
-	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
 	generatePackageCommand.Flags().StringVar(&gpOptions.clusterName, "cluster", "", "Name of cluster for package generation")
 	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -56,7 +51,7 @@ var generatePackageCommand = &cobra.Command{
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
-	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, gpOptions.source); err != nil {
+	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, gpOptions.clusterName); err != nil {
 		return err
 	}
 	return generatePackages(cmd.Context(), args)
@@ -74,7 +69,7 @@ func generatePackages(ctx context.Context, args []string) error {
 	}
 	bm := curatedpackages.CreateBundleManager()
 
-	b := curatedpackages.NewBundleReader(kubeConfig, gpOptions.clusterName, gpOptions.source, deps.Kubectl, bm, deps.BundleRegistry)
+	b := curatedpackages.NewBundleReader(kubeConfig, gpOptions.clusterName, deps.Kubectl, bm, deps.BundleRegistry)
 
 	bundle, err := b.GetLatestBundle(ctx, gpOptions.kubeVersion)
 	if err != nil {
