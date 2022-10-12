@@ -141,7 +141,7 @@ func buildTemplateMapCP(
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:v0.5.0",
+		"kubeVipImage":                 bundle.Nutanix.KubeVip.VersionedImage(),
 		"kubeVipSvcEnable":             false,
 		"kubeVipLBEnable":              false,
 		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,

@@ -421,6 +421,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.20"
     nutanix:
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -1171,6 +1180,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.21"
     nutanix:
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -1921,6 +1939,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.22"
     nutanix:
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -2671,6 +2698,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.23"
     nutanix:
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
@@ -3403,6 +3439,15 @@ spec:
       version: v0.14.0+abcdef1
     kubeVersion: "1.24"
     nutanix:
+      kubeVip:
+        arch:
+        - amd64
+        - arm64
+        description: Container image for kube-vip image
+        imageDigest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/release-container-registry/kube-vip/kube-vip:v0.5.0-eks-a-v0.0.0-dev-build.1
       clusterAPIController:
         arch:
         - amd64
