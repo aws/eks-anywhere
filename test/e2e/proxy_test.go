@@ -68,6 +68,7 @@ func TestSnowKubernetes121UbuntuProxyConfig(t *testing.T) {
 		// TODO: provide separate Proxy Env Vars for Snow provider. Leaving VSphere for backwards compatibility
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
 		framework.WithEnvVar("SNOW_PROVIDER", "true"),
+		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
 	)
 	runProxyConfigFlow(test)
 }

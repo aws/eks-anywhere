@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	v3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
@@ -36,6 +38,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/nutanix"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -85,6 +88,7 @@ type Dependencies struct {
 	PackageClient             curatedpackages.PackageHandler
 	VSphereValidator          *vsphere.Validator
 	VSphereDefaulter          *vsphere.Defaulter
+	NutanixPrismClient        *v3.Client
 	SnowValidator             *snow.AwsClientValidator
 	CloudStackValidator       *cloudstack.Validator
 	CloudStackDefaulter       *cloudstack.Defaulter
@@ -291,6 +295,8 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 	case v1alpha1.SnowDatacenterKind:
 		f.WithUnAuthKubeClient().WithSnowConfigManager()
+	case v1alpha1.NutanixDatacenterKind:
+		f.WithKubectl().WithPrismClient(clusterConfigFile)
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -333,16 +339,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
 			}
 
-			f.dependencies.Provider = cloudstack.NewProvider(
-				datacenterConfig,
-				machineConfigs,
-				clusterConfig,
-				f.dependencies.Kubectl,
-				f.dependencies.Cmk,
-				f.dependencies.Writer,
-				time.Now,
-				skipIpCheck,
-			)
+			f.dependencies.Provider = cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, f.dependencies.Kubectl, f.dependencies.Cmk, f.dependencies.Writer, time.Now, skipIpCheck, logger.Get())
 
 		case v1alpha1.SnowDatacenterKind:
 			f.dependencies.Provider = snow.NewProvider(
@@ -405,6 +402,26 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 				f.dependencies.Kubectl,
 				time.Now,
 			)
+		case v1alpha1.NutanixDatacenterKind:
+			datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+			}
+
+			machineConfigs, err := v1alpha1.GetNutanixMachineConfigs(clusterConfigFile)
+			if err != nil {
+				return fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFile, err)
+			}
+
+			provider := nutanix.NewProvider(
+				datacenterConfig,
+				machineConfigs,
+				clusterConfig,
+				f.dependencies.Kubectl,
+				f.dependencies.NutanixPrismClient.V3,
+				time.Now,
+			)
+			f.dependencies.Provider = provider
 		default:
 			return fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 		}
@@ -882,6 +899,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec) *Factory {
 			curatedpackages.WithHTTPProxy(httpProxy),
 			curatedpackages.WithHTTPSProxy(httpsProxy),
 			curatedpackages.WithNoProxy(noProxy),
+			curatedpackages.WithManagementClusterName(getManagementClusterName(spec)),
 		)
 		return nil
 	})
@@ -1107,10 +1125,55 @@ func (f *Factory) WithVSphereDefaulter() *Factory {
 	return f
 }
 
+func (f *Factory) WithPrismClient(clusterConfigFile string) *Factory {
+	if f.dependencies.NutanixPrismClient != nil {
+		return f
+	}
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		datacenterConfig, err := v1alpha1.GetNutanixDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFile, err)
+		}
+		endpoint := datacenterConfig.Spec.Endpoint
+		port := datacenterConfig.Spec.Port
+		url := fmt.Sprintf("%s:%d", endpoint, port)
+		nutanixUser, found := os.LookupEnv("NUTANIX_USER")
+		if !found {
+			return fmt.Errorf("NUTANIX_USER environment variable not set")
+		}
+		nutanixPassword, found := os.LookupEnv("NUTANIX_PASSWORD")
+		if !found {
+			return fmt.Errorf("NUTANIX_PASSWORD environment variable not set")
+		}
+		nutanixCreds := prismgoclient.Credentials{
+			URL:      url,
+			Username: nutanixUser,
+			Password: nutanixPassword,
+			Endpoint: endpoint,
+			Port:     fmt.Sprintf("%d", port),
+		}
+		client, err := v3.NewV3Client(nutanixCreds)
+		if err != nil {
+			return fmt.Errorf("error creating nutanix client: %v", err)
+		}
+		f.dependencies.NutanixPrismClient = client
+		return nil
+	})
+
+	return f
+}
+
 func getProxyConfiguration(clusterSpec *cluster.Spec) (httpProxy, httpsProxy string, noProxy []string) {
 	proxyConfiguration := clusterSpec.Cluster.Spec.ProxyConfiguration
 	if proxyConfiguration != nil {
 		return proxyConfiguration.HttpProxy, proxyConfiguration.HttpsProxy, proxyConfiguration.NoProxy
 	}
 	return "", "", nil
+}
+
+func getManagementClusterName(clusterSpec *cluster.Spec) string {
+	if clusterSpec.Cluster.Spec.ManagementCluster.Name != "" {
+		return clusterSpec.Cluster.Spec.ManagementCluster.Name
+	}
+	return clusterSpec.Cluster.Name
 }

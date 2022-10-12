@@ -249,7 +249,7 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig anyw
 
 func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig anywherev1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
 	clusterName := clusterSpec.Cluster.GetName()
-	replicas := int32(workerNodeGroupConfig.Count)
+	replicas := int32(*workerNodeGroupConfig.Count)
 	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
 
 	md := &clusterv1.MachineDeployment{

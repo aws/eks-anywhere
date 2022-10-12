@@ -36,6 +36,7 @@ import (
 	govmomi_mocks "github.com/aws/eks-anywhere/pkg/govmomi/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -533,6 +534,12 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 			wantCPFile:        "testdata/expected_results_minimal_cp.yaml",
 			wantMDFile:        "testdata/expected_results_minimal_md.yaml",
 		},
+		{
+			testName:          "minimal_autoscaler",
+			clusterconfigFile: "cluster_minimal_autoscaling.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_cp.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_autoscaling_md.yaml",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -706,7 +713,7 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 				},
 			}
 			newClusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
+			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: ptr.Int(1), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
 			newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newConfig)
 
 			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
@@ -1582,13 +1589,17 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"clusterName":       clusterConfig.Name,
-		"vspherePassword":   expectedVSphereUsername,
-		"vsphereUsername":   expectedVSpherePassword,
-		"vsphereServer":     datacenterConfig.Spec.Server,
-		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    datacenterConfig.Spec.Network,
-		"eksaLicense":       "",
+		"clusterName":               clusterConfig.Name,
+		"vspherePassword":           expectedVSphereUsername,
+		"vsphereUsername":           expectedVSpherePassword,
+		"eksaCSIUsername":           expectedVSphereUsername,
+		"eksaCSIPassword":           expectedVSpherePassword,
+		"eksaCloudProviderUsername": expectedVSphereUsername,
+		"eksaCloudProviderPassword": expectedVSpherePassword,
+		"vsphereServer":             datacenterConfig.Spec.Server,
+		"vsphereDatacenter":         datacenterConfig.Spec.Datacenter,
+		"vsphereNetwork":            datacenterConfig.Spec.Network,
+		"eksaLicense":               "",
 	}
 
 	var tctx testContext
@@ -1623,10 +1634,15 @@ func TestProviderUpdateSecretSuccess(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"vspherePassword":     expectedVSphereUsername,
-		"vsphereUsername":     expectedVSpherePassword,
-		"eksaLicense":         "",
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"clusterName":               clusterConfig.Name,
+		"vspherePassword":           expectedVSphereUsername,
+		"vsphereUsername":           expectedVSpherePassword,
+		"eksaCSIUsername":           expectedVSphereUsername,
+		"eksaCSIPassword":           expectedVSpherePassword,
+		"eksaCloudProviderUsername": expectedVSphereUsername,
+		"eksaCloudProviderPassword": expectedVSpherePassword,
+		"eksaLicense":               "",
+		"eksaSystemNamespace":       constants.EksaSystemNamespace,
 	}
 
 	var tctx testContext
@@ -1681,20 +1697,6 @@ func TestSetupAndValidateCreateClusterInsecure(t *testing.T) {
 	}
 }
 
-func TestSetupAndValidateCreateClusterNoControlPlaneEndpointIP(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty", err)
-}
-
 func TestSetupAndValidateCreateClusterNoDatacenter(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -1707,96 +1709,6 @@ func TestSetupAndValidateCreateClusterNoDatacenter(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
 	thenErrorExpected(t, "VSphereDatacenterConfig datacenter is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoDatastoreControlPlane(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Datastore = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig datastore for control plane is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoDatastoreWorker(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerMachineConfigName].Spec.Datastore = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig datastore for worker nodes is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoDatastoreEtcd(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Datastore = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig datastore for etcd machines is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoResourcePoolControlPlane(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.ResourcePool = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig VM resourcePool for control plane is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoResourcePoolWorker(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerMachineConfigName].Spec.ResourcePool = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoResourcePoolEtcd(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.ResourcePool = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "VSphereMachineConfig VM resourcePool for etcd machines is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterNoNetwork(t *testing.T) {
@@ -2205,51 +2117,6 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	}
 }
 
-func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for control plane", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for worker nodes", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for etcd machines", err)
-	}
-}
-
 func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -2295,45 +2162,6 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	}
 }
 
-func TestSetupAndValidateCreateClusterOsFamilyInvalid(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "rhel"
-	var tctx testContext
-	tctx.SaveContext()
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-}
-
-func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	workerMachineConfigName := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "rhel"
-	var tctx testContext
-	tctx.SaveContext()
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-}
-
-func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "rhel"
-	var tctx testContext
-	tctx.SaveContext()
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-}
-
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -2341,12 +2169,13 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = "ec2-user"
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
-		thenErrorExpected(t, "control plane and worker nodes must have the same osFamily specified", err)
+		thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
 	}
 }
 
@@ -2357,12 +2186,13 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferentForEtcd(t *testing.T) {
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "bottlerocket"
+	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].Name = "ec2-user"
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
-		thenErrorExpected(t, "control plane and etcd machines must have the same osFamily specified", err)
+		thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
 	}
 }
 
@@ -2416,7 +2246,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
-		thenErrorExpected(t, "control plane and worker nodes must have the same template specified", err)
+		thenErrorExpected(t, "all VSphereMachineConfigs must have the same template specified", err)
 	}
 }
 
@@ -2801,6 +2631,60 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "StoragePolicyName should be immutable")
+}
+
+func TestValidateNewSpecOSFamilyImmutableControlPlane(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	controlPlaneMachineConfigName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	newMachineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
+	})
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[controlPlaneMachineConfigName], nil)
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	assert.Error(t, err, "OSFamily should be immutable")
+}
+
+func TestValidateNewSpecOSFamilyImmutableWorker(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	workerMachineConfigName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	newMachineConfigs[workerMachineConfigName].Spec.OSFamily = "bottlerocket"
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
+	})
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs[workerMachineConfigName], nil)
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	assert.Error(t, err, "OSFamily should be immutable")
 }
 
 func TestChangeDiffNoChange(t *testing.T) {

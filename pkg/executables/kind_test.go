@@ -102,21 +102,6 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			registryMirrorTest: false,
 		},
 		{
-			name:           "With docker option and disable CNI option",
-			wantKubeconfig: kubeConfigFile,
-			options: []testKindOption{
-				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithExtraDockerMounts()
-				},
-				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithDefaultCNIDisabled()
-				},
-			},
-			env:                map[string]string{},
-			wantKindConfig:     "testdata/kind_config_docker_mount.yaml",
-			registryMirrorTest: false,
-		},
-		{
 			name:           "With docker option and env option",
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
@@ -129,24 +114,6 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			},
 			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantKindConfig:     "testdata/kind_config_docker_mount_networking.yaml",
-			registryMirrorTest: false,
-		},
-		{
-			name:           "With docker option, env option and disable CNI option",
-			wantKubeconfig: kubeConfigFile,
-			options: []testKindOption{
-				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithEnv(map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"})
-				},
-				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithExtraDockerMounts()
-				},
-				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithDefaultCNIDisabled()
-				},
-			},
-			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantKindConfig:     "testdata/kind_config_docker_mount.yaml",
 			registryMirrorTest: false,
 		},
 		{

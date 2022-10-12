@@ -69,7 +69,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	}
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
-	if err := kubeconfig.ValidateFile(kubeconfigPath); err != nil {
+	if err := kubeconfig.ValidateFilename(kubeconfigPath); err != nil {
 		return err
 	}
 
@@ -116,13 +116,15 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+			Name:               clusterSpec.Cluster.Name,
+			KubeconfigFile:     kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
+			ExistingManagement: false,
 		}
 	} else {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+			Name:               clusterSpec.Cluster.Name,
+			KubeconfigFile:     clusterSpec.ManagementCluster.KubeconfigFile,
+			ExistingManagement: true,
 		}
 	}
 

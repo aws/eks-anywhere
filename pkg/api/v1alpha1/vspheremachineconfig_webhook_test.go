@@ -675,11 +675,43 @@ func TestVSphereMachineValidateUpdateStoragePolicyImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestVSphereMachineConfigValidateCreateSuccess(t *testing.T) {
+	config := vsphereMachineConfig()
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(Succeed())
+}
+
+func TestVSphereMachineConfigValidateCreateResourcePoolNotSet(t *testing.T) {
+	config := vsphereMachineConfig()
+	config.Spec.ResourcePool = ""
+
+	g := NewWithT(t)
+	g.Expect(config.ValidateCreate()).To(MatchError(ContainSubstring("resourcePool is not set or is empty")))
+}
+
+func TestVSphereMachineConfigSetDefaults(t *testing.T) {
+	g := NewWithT(t)
+
+	sOld := vsphereMachineConfig()
+	sOld.Spec.OSFamily = ""
+	sOld.Default()
+
+	g.Expect(sOld.Spec.MemoryMiB).To(Equal(8192))
+	g.Expect(sOld.Spec.NumCPUs).To(Equal(2))
+	g.Expect(sOld.Spec.OSFamily).To(Equal(v1alpha1.Bottlerocket))
+	g.Expect(sOld.Spec.Users).To(Equal([]v1alpha1.UserConfiguration{{Name: "ec2-user", SshAuthorizedKeys: []string{""}}}))
+}
+
 func vsphereMachineConfig() v1alpha1.VSphereMachineConfig {
 	return v1alpha1.VSphereMachineConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 2)},
-		Spec:       v1alpha1.VSphereMachineConfigSpec{},
-		Status:     v1alpha1.VSphereMachineConfigStatus{},
+		Spec: v1alpha1.VSphereMachineConfigSpec{
+			ResourcePool: "my-resourcePool",
+			Datastore:    "my-datastore",
+			OSFamily:     "ubuntu",
+		},
+		Status: v1alpha1.VSphereMachineConfigStatus{},
 	}
 }

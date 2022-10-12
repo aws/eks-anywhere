@@ -1,18 +1,15 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type getPackageBundleControllerOptions struct {
 	output string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig string
 }
 
@@ -29,18 +26,16 @@ func init() {
 
 var getPackageBundleControllerCommand = &cobra.Command{
 	Use:          "packagebundlecontroller(s) [flags]",
-	Aliases:      []string{"packagebundlecontroller", "packagebundlcontrolleres", "pbc"},
+	Aliases:      []string{"packagebundlecontroller", "packagebundlecontrollers", "pbc"},
 	Short:        "Get packagebundlecontroller(s)",
 	Long:         "This command is used to display the current packagebundlecontrollers",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig := gpbco.kubeConfig
-		if kubeConfig == "" {
-			kubeConfig = kubeconfig.FromEnvironment()
-		} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-			return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+		kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpbco.kubeConfig, "")
+		if err != nil {
+			return err
 		}
-		return getResources(cmd.Context(), "packagebundlecontrollers", gpbco.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packagebundlecontrollers", gpbco.output, kubeConfig, "", args)
 	},
 }

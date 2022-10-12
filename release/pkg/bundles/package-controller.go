@@ -41,29 +41,31 @@ func GetPackagesBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]st
 
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range artifacts[componentName] {
-			imageArtifact := artifact.Image
-			sourceBranch = imageArtifact.SourcedFromBranch
-			bundleImageArtifact := anywherev1alpha1.Image{}
-			if strings.HasSuffix(imageArtifact.AssetName, "helm") {
-				assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
-				bundleImageArtifact = anywherev1alpha1.Image{
-					Name:        assetName,
-					Description: fmt.Sprintf("Helm chart for %s", assetName),
-					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+			if artifact.Image != nil {
+				imageArtifact := artifact.Image
+				sourceBranch = imageArtifact.SourcedFromBranch
+				bundleImageArtifact := anywherev1alpha1.Image{}
+				if strings.HasSuffix(imageArtifact.AssetName, "helm") {
+					assetName := strings.TrimSuffix(imageArtifact.AssetName, "-helm")
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        assetName,
+						Description: fmt.Sprintf("Helm chart for %s", assetName),
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					}
+				} else {
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        imageArtifact.AssetName,
+						Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+						OS:          imageArtifact.OS,
+						Arch:        imageArtifact.Arch,
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					}
 				}
-			} else {
-				bundleImageArtifact = anywherev1alpha1.Image{
-					Name:        imageArtifact.AssetName,
-					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-					OS:          imageArtifact.OS,
-					Arch:        imageArtifact.Arch,
-					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
-				}
+				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
-			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-			artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 		}
 	}
 

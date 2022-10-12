@@ -26,6 +26,7 @@ type Machine struct {
 	BMCIPAddress string `csv:"bmc_ip, omitempty"`
 	BMCUsername  string `csv:"bmc_username, omitempty"`
 	BMCPassword  string `csv:"bmc_password, omitempty"`
+	VLANID       string `csv:"vlan_id, omitempty"`
 }
 
 // HasBMC determines if m has a BMC configuration. A BMC configuration is present if any of the BMC fields

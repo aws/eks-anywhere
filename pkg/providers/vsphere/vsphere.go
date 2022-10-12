@@ -49,8 +49,6 @@ const (
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
 	maxRetries               = 30
 	backOffPeriod            = 5 * time.Second
 )
@@ -877,9 +875,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
 		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
 		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
-		"workerReplicas":                 workerNodeGroupConfiguration.Count,
+		"workerReplicas":                 *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
+		"autoscalingConfig":              workerNodeGroupConfiguration.AutoScalingConfiguration,
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -1097,14 +1096,19 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}
+	vuc := config.NewVsphereUserConfig()
 
 	values := map[string]string{
-		"vspherePassword":        os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":        os.Getenv(vSphereUsernameKey),
-		"eksaLicense":            os.Getenv(eksaLicense),
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"vsphereCredentialsName": constants.VSphereCredentialsName,
-		"eksaLicenseName":        constants.EksaLicenseName,
+		"vspherePassword":           os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":           os.Getenv(vSphereUsernameKey),
+		"eksaCloudProviderUsername": vuc.EksaVsphereCPUsername,
+		"eksaCloudProviderPassword": vuc.EksaVsphereCPPassword,
+		"eksaCSIUsername":           vuc.EksaVsphereCSIUsername,
+		"eksaCSIPassword":           vuc.EksaVsphereCSIPassword,
+		"eksaLicense":               os.Getenv(eksaLicense),
+		"eksaSystemNamespace":       constants.EksaSystemNamespace,
+		"vsphereCredentialsName":    constants.VSphereCredentialsName,
+		"eksaLicenseName":           constants.EksaLicenseName,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
@@ -1292,6 +1296,10 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 
 	if newConfig.Spec.StoragePolicyName != prevMachineConfig.Spec.StoragePolicyName {
 		return fmt.Errorf("spec.storagePolicyName is immutable. Previous value %s, new value %s", prevMachineConfig.Spec.StoragePolicyName, newConfig.Spec.StoragePolicyName)
+	}
+
+	if newConfig.Spec.OSFamily != prevMachineConfig.Spec.OSFamily {
+		return fmt.Errorf("spec.osFamily os immutable. Previous value %v, new value %v", prevMachineConfig.Spec.OSFamily, newConfig.Spec.OSFamily)
 	}
 
 	return nil

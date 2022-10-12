@@ -50,7 +50,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.controlPlaneVsphereDatastore}}
       diskGiB: {{.controlPlaneDiskGiB}}
       folder: '{{.controlPlaneVsphereFolder}}'
@@ -309,14 +309,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root
@@ -343,8 +343,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     joinConfiguration:
 {{- if (eq .format "bottlerocket") }}
@@ -390,8 +388,6 @@ spec:
             timeAdded: {{ .TimeAdded }}
 {{- end }}
         {{- end }}
-{{- else}}
-        taints: []
 {{- end }}
     preKubeadmCommands:
 {{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
@@ -514,7 +510,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: {{.vsphereDatacenter}}
+      datacenter: '{{.vsphereDatacenter}}'
       datastore: {{.etcdVsphereDatastore}}
       diskGiB: {{.etcdDiskGiB}}
       folder: '{{.etcdVsphereFolder}}'

@@ -1,18 +1,15 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 type getPackageBundleOptions struct {
 	output string
 	// kubeConfig is an optional kubeconfig file to use when querying an
-	// existing cluster
+	// existing cluster.
 	kubeConfig string
 }
 
@@ -35,12 +32,10 @@ var getPackageBundleCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		kubeConfig := gpbo.kubeConfig
-		if kubeConfig == "" {
-			kubeConfig = kubeconfig.FromEnvironment()
-		} else if !validations.FileExistsAndIsNotEmpty(kubeConfig) {
-			return fmt.Errorf("kubeconfig file %q is empty or does not exist", kubeConfig)
+		kubeConfig, err := kubeconfig.ResolveAndValidateFilename(gpbo.kubeConfig, "")
+		if err != nil {
+			return err
 		}
-		return getResources(cmd.Context(), "packagebundles", gpbo.output, kubeConfig, args)
+		return getResources(cmd.Context(), "packagebundles", gpbo.output, kubeConfig, "", args)
 	},
 }

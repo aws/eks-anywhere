@@ -14,6 +14,7 @@ const (
 	CaptSystemNamespace                     = "capt-system"
 	CapaSystemNamespace                     = "capa-system"
 	CapasSystemNamespace                    = "capas-system"
+	CapxSystemNamespace                     = "capx-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"
 	EtcdAdmBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"
@@ -49,4 +50,12 @@ const (
 	GovcPasswordKey    = "GOVC_PASSWORD"
 	SnowCredentialsKey = "AWS_B64ENCODED_CREDENTIALS"
 	SnowCertsKey       = "AWS_B64ENCODED_CA_BUNDLES"
+)
+
+type Operation int
+
+const (
+	Create  Operation = 0
+	Upgrade Operation = 1
+	Delete  Operation = 2
 )

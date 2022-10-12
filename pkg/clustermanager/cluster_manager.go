@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
@@ -47,6 +49,8 @@ const (
 	DefaultEtcdWait           = 60 * time.Minute
 )
 
+var eksaClusterResourceType = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+
 type ClusterManager struct {
 	*Upgrader
 	clusterClient           *retrierClient
@@ -76,11 +80,13 @@ type ClusterClient interface {
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
 	GetEksaFluxConfig(ctx context.Context, fluxConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.FluxConfig, error)
 	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
+	GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSIamConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
 	DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error
 	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
+	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
@@ -105,6 +111,7 @@ type ClusterClient interface {
 	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
+	ListObjects(ctx context.Context, resourceType, namespace, kubeconfig string, list kubernetes.ObjectList) error
 }
 
 type Networking interface {
@@ -115,7 +122,8 @@ type Networking interface {
 
 type AwsIamAuth interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
-	GenerateCertKeyPairSecret() ([]byte, error)
+	GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateCertKeyPairSecret(managementClusterName string) ([]byte, error)
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
@@ -475,6 +483,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("waiting for workload cluster capi components to be ready: %v", err)
 	}
 
+	if newClusterSpec.AWSIamConfig != nil {
+		logger.V(3).Info("Run aws-iam-authenticator upgrade operations")
+		if err = c.generateAndApplyAwsIamAuthForUpgrade(ctx, workloadCluster, newClusterSpec); err != nil {
+			return fmt.Errorf("running aws-iam-authenticator upgrade operations: %v", err)
+		}
+	}
+
 	return nil
 }
 
@@ -502,6 +517,14 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
 		if !newClusterSpec.OIDCConfig.Spec.Equal(&currentClusterSpec.OIDCConfig.Spec) {
 			logger.V(3).Info("OIDC config changes detected")
+			return true, nil
+		}
+	}
+
+	if newClusterSpec.AWSIamConfig != nil && currentClusterSpec.AWSIamConfig != nil {
+		if !reflect.DeepEqual(newClusterSpec.AWSIamConfig.Spec.MapRoles, currentClusterSpec.AWSIamConfig.Spec.MapRoles) ||
+			!reflect.DeepEqual(newClusterSpec.AWSIamConfig.Spec.MapUsers, currentClusterSpec.AWSIamConfig.Spec.MapUsers) {
+			logger.V(3).Info("AWSIamConfig changes detected")
 			return true, nil
 		}
 	}
@@ -610,14 +633,27 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error {
-	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret()
+func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error {
+	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret(workloadClusterName)
 	if err != nil {
 		return fmt.Errorf("generating aws-iam-authenticator ca secret: %v", err)
 	}
-	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, bootstrapCluster, awsIamAuthCaSecret)
 	if err != nil {
 		return fmt.Errorf("applying aws-iam-authenticator ca secret: %v", err)
+	}
+	return nil
+}
+
+// generateAndApplyAwsIamAuthForUpgrade generates the aws-iam-authenticator manifest based on cluster spec and applies on the cluster.
+func (c *ClusterManager) generateAndApplyAwsIamAuthForUpgrade(ctx context.Context, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	awsIamAuthManifest, err := c.awsIamAuth.GenerateManifestForUpgrade(clusterSpec)
+	if err != nil {
+		return fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
+	}
+	err = c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
+	if err != nil {
+		return fmt.Errorf("applying aws-iam-authenticator manifest: %v", err)
 	}
 	return nil
 }
@@ -725,7 +761,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 
 	var machineDeploymentReplicasCount int
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
+		machineDeploymentReplicasCount += *workerNodeGroupConfiguration.Count
 	}
 
 	areMdReplicasReady := func() error {
@@ -896,6 +932,9 @@ func (c *ClusterManager) CreateEKSANamespace(ctx context.Context, cluster *types
 	return c.clusterClient.CreateNamespaceIfNotPresent(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 }
 
+// CreateEKSAResources applies the eks-a cluster specs (cluster, datacenterconfig, machine configs, etc.), as well as the
+// release bundle to the cluster. Before applying the spec, we pause eksa controller cluster and datacenter webhook validation
+// so that the cluster spec can be created or updated in the cluster without webhook validation error.
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
 ) error {
@@ -904,6 +943,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 			return err
 		}
 	}
+
+	clusterSpec.Cluster.PauseReconcile()
+	datacenterConfig.PauseReconcile()
+
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		return err
@@ -930,49 +973,107 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 }
 
 func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	pausedAnnotation := map[string]string{clusterSpec.Cluster.PausedAnnotation(): "true"}
-	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	if clusterSpec.Cluster.IsSelfManaged() {
+		return c.pauseEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
+	}
+
+	return c.pauseReconcileForCluster(ctx, cluster, clusterSpec.Cluster, provider)
+}
+
+func (c *ClusterManager) pauseEksaReconcileForManagementAndWorkloadClusters(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	clusters := &v1alpha1.ClusterList{}
+	err := c.clusterClient.ListObjects(ctx, eksaClusterResourceType, clusterSpec.Cluster.Namespace, managementCluster.KubeconfigFile, clusters)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters.Items {
+		if w.ManagedBy() != clusterSpec.Cluster.Name {
+			continue
+		}
+
+		if err := c.pauseReconcileForCluster(ctx, managementCluster, &w, provider); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) pauseReconcileForCluster(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster, provider providers.Provider) error {
+	pausedAnnotation := map[string]string{cluster.PausedAnnotation(): "true"}
+	err := c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+		for _, machineConfigRef := range cluster.MachineConfigRefs() {
+			err = c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	err = c.clusterClient.UpdateAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when pausing cluster reconciliation: %v", err)
 	}
 	return nil
 }
 
+func (c *ClusterManager) resumeEksaReconcileForManagementAndWorkloadClusters(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	clusters := &v1alpha1.ClusterList{}
+	err := c.clusterClient.ListObjects(ctx, eksaClusterResourceType, clusterSpec.Cluster.Namespace, managementCluster.KubeconfigFile, clusters)
+	if err != nil {
+		return err
+	}
+
+	for _, w := range clusters.Items {
+		if w.ManagedBy() != clusterSpec.Cluster.Name {
+			continue
+		}
+
+		if err := c.resumeReconcileForCluster(ctx, managementCluster, &w, provider); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	pausedAnnotation := clusterSpec.Cluster.PausedAnnotation()
-	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Cluster.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	// clear pause annotation
+	clusterSpec.Cluster.ClearPauseAnnotation()
+	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
+
+	if clusterSpec.Cluster.IsSelfManaged() {
+		return c.resumeEksaReconcileForManagementAndWorkloadClusters(ctx, cluster, clusterSpec, provider)
+	}
+
+	return c.resumeReconcileForCluster(ctx, cluster, clusterSpec.Cluster, provider)
+}
+
+func (c *ClusterManager) resumeReconcileForCluster(ctx context.Context, clusterCreds *types.Cluster, cluster *v1alpha1.Cluster, provider providers.Provider) error {
+	pausedAnnotation := cluster.PausedAnnotation()
+	err := c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), cluster.Spec.DatacenterRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		for _, machineConfigRef := range clusterSpec.Cluster.MachineConfigRefs() {
-			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+		for _, machineConfigRef := range cluster.MachineConfigRefs() {
+			err = c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 			if err != nil {
 				return fmt.Errorf("updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}
 
-	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.Cluster.ResourceType(), clusterSpec.Cluster.Name, pausedAnnotation, cluster, clusterSpec.Cluster.Namespace)
+	err = c.clusterClient.RemoveAnnotationInNamespace(ctx, cluster.ResourceType(), cluster.Name, pausedAnnotation, clusterCreds, cluster.Namespace)
 	if err != nil {
 		return fmt.Errorf("updating annotation when unpausing cluster reconciliation: %v", err)
 	}
-	// clear pause annotation
-	clusterSpec.Cluster.ClearPauseAnnotation()
-	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
+
 	return nil
 }
 
@@ -994,7 +1095,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.fluxConfigFetcher(clus), c.oidcFetcher(clus), c.awsIamConfigFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -1027,6 +1128,12 @@ func (c *ClusterManager) oidcFetcher(cluster *types.Cluster) cluster.OIDCFetch {
 	}
 }
 
+func (c *ClusterManager) awsIamConfigFetcher(cluster *types.Cluster) cluster.AWSIamConfigFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.AWSIamConfig, error) {
+		return c.clusterClient.GetEksaAWSIamConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
 func (c *ClusterManager) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteGitOpsConfig(ctx, managementCluster, name, namespace)
 }
@@ -1041,4 +1148,8 @@ func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementClust
 
 func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error {
+	return c.clusterClient.DeletePackageResources(ctx, managementCluster, clusterName)
 }

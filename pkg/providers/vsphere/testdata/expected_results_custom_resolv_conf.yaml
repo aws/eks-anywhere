@@ -48,7 +48,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
@@ -173,7 +173,7 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        apiVersion: audit.k8s.io/v1beta1
+        apiVersion: audit.k8s.io/v1
         kind: Policy
         rules:
         # Log aws-auth configmap changes
@@ -340,7 +340,6 @@ spec:
           resolv-conf: /etc/my-custom-resolv.conf
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -351,7 +350,6 @@ spec:
           resolv-conf: /etc/my-custom-resolv.conf
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
@@ -440,7 +438,7 @@ spec:
   template:
     spec:
       cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
+      datacenter: 'SDDC-Datacenter'
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'

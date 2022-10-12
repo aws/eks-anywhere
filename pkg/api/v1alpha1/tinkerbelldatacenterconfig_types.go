@@ -5,17 +5,19 @@ import (
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+// Important: Run "make generate" to regenerate code after modifying this file
 
 // TinkerbellDatacenterConfigSpec defines the desired state of TinkerbellDatacenterConfig
-//
-// Important: Run "make generate" to regenerate code after modifying this file
 type TinkerbellDatacenterConfigSpec struct {
-	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell servies.
+	// TinkerbellIP is used to configure a VIP for hosting the Tinkerbell services.
 	TinkerbellIP string `json:"tinkerbellIP"`
-	// OSImageURL can be used to override the default OS image path to pull from a local server
+	// OSImageURL can be used to override the default OS image path to pull from a local server.
 	OSImageURL string `json:"osImageURL,omitempty"`
-	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server
+	// HookImagesURLPath can be used to override the default Hook images path to pull from a local server.
 	HookImagesURLPath string `json:"hookImagesURLPath,omitempty"`
+	// SkipLoadBalancerDeployment when set to "true" can be used to skip deploying a load balancer to expose Tinkerbell stack.
+	// Users will need to deploy and configure a load balancer manually after the cluster is created.
+	SkipLoadBalancerDeployment bool `json:"skipLoadBalancerDeployment,omitempty"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig

@@ -46,11 +46,19 @@ func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
 }
 
 func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterId uuid.UUID) ([]byte, error) {
+	var clusterIdValue string
+	// If clusterId is Nil; set value as empty string.
+	if clusterId == uuid.Nil {
+		clusterIdValue = ""
+	} else {
+		clusterIdValue = clusterId.String()
+	}
+
 	data := map[string]interface{}{
 		"image":              clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthImage.VersionedImage(),
 		"initContainerImage": clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage(),
 		"awsRegion":          clusterSpec.AWSIamConfig.Spec.AWSRegion,
-		"clusterID":          clusterId.String(),
+		"clusterID":          clusterIdValue,
 		"backendMode":        strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
 		"partition":          clusterSpec.AWSIamConfig.Spec.Partition,
 	}
@@ -80,12 +88,17 @@ func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 	return a.templateBuilder.GenerateManifest(clusterSpec, a.clusterId)
 }
 
-func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
+func (a *AwsIamAuth) GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]byte, error) {
+	return a.templateBuilder.GenerateManifest(clusterSpec, uuid.Nil)
+}
+
+func (a *AwsIamAuth) GenerateCertKeyPairSecret(managementClusterName string) ([]byte, error) {
 	certPemBytes, keyPemBytes, err := a.certgen.GenerateIamAuthSelfSignCertKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	data := map[string]string{
+		"clusterName":  managementClusterName,
 		"namespace":    constants.EksaSystemNamespace,
 		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
 		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),

@@ -1,0 +1,16 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Release
+metadata:
+  creationTimestamp: null
+spec:
+  latestVersion: ""
+  releases:
+    - bundleManifestUrl: "testdata/simple_bundle.yaml"
+      date: ""
+      eksABinary: {}
+      gitCommit: ""
+      gitTag: ""
+      number: 0
+      version: v0.0.1
+      extraField: "fake field to test non strict unmarshalling"
+status: {}

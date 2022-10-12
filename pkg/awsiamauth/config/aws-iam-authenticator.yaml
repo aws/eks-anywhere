@@ -180,7 +180,7 @@ spec:
       - name: key
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-
+{{- if (ne .clusterID "") }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -192,6 +192,7 @@ metadata:
 data:
   config.yaml: |
     clusterID: {{.clusterID}}
+{{- end }}
 
 ---
 # EKS-Style ConfigMap: roles and users can be mapped in the same way as supported on EKS.
@@ -201,11 +202,11 @@ metadata:
   name: aws-auth
   namespace: kube-system
 data:
-{{- if (ne .mapRoles "")}}
+{{- if (ne .mapRoles "") }}
   mapRoles: |
 {{ .mapRoles | indent 4 }}
-{{- end}}
-{{- if (ne .mapUsers "")}}
+{{- end }}
+{{- if (ne .mapUsers "") }}
   mapUsers: |
 {{ .mapUsers | indent 4 }}
-{{- end}}
+{{- end }}

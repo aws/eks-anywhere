@@ -10,6 +10,7 @@ import (
 
 	bootstrapper "github.com/aws/eks-anywhere/pkg/bootstrapper"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
+	constants "github.com/aws/eks-anywhere/pkg/constants"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	validations "github.com/aws/eks-anywhere/pkg/validations"
@@ -60,17 +61,17 @@ func (mr *MockBootstrapperMockRecorder) CreateBootstrapCluster(arg0, arg1 interf
 }
 
 // DeleteBootstrapCluster mocks base method.
-func (m *MockBootstrapper) DeleteBootstrapCluster(arg0 context.Context, arg1 *types.Cluster, arg2 bool) error {
+func (m *MockBootstrapper) DeleteBootstrapCluster(arg0 context.Context, arg1 *types.Cluster, arg2 constants.Operation, arg3 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteBootstrapCluster", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "DeleteBootstrapCluster", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteBootstrapCluster indicates an expected call of DeleteBootstrapCluster.
-func (mr *MockBootstrapperMockRecorder) DeleteBootstrapCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockBootstrapperMockRecorder) DeleteBootstrapCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBootstrapCluster", reflect.TypeOf((*MockBootstrapper)(nil).DeleteBootstrapCluster), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBootstrapCluster", reflect.TypeOf((*MockBootstrapper)(nil).DeleteBootstrapCluster), arg0, arg1, arg2, arg3)
 }
 
 // MockClusterManager is a mock of ClusterManager interface.
@@ -111,17 +112,17 @@ func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interfac
 }
 
 // CreateAwsIamAuthCaSecret mocks base method.
-func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster) error {
+func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAwsIamAuthCaSecret", arg0, arg1)
+	ret := m.ctrl.Call(m, "CreateAwsIamAuthCaSecret", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateAwsIamAuthCaSecret indicates an expected call of CreateAwsIamAuthCaSecret.
-func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1, arg2)
 }
 
 // CreateEKSANamespace mocks base method.
@@ -179,6 +180,20 @@ func (m *MockClusterManager) DeleteCluster(arg0 context.Context, arg1, arg2 *typ
 func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterManager)(nil).DeleteCluster), arg0, arg1, arg2, arg3, arg4)
+}
+
+// DeletePackageResources mocks base method.
+func (m *MockClusterManager) DeletePackageResources(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePackageResources", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeletePackageResources indicates an expected call of DeletePackageResources.
+func (mr *MockClusterManagerMockRecorder) DeletePackageResources(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePackageResources", reflect.TypeOf((*MockClusterManager)(nil).DeletePackageResources), arg0, arg1, arg2)
 }
 
 // EKSAClusterSpecChanged mocks base method.

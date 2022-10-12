@@ -20,7 +20,7 @@ k8s-conformance:
 	mkdir -p $(TARGET_DIR)
 	rm -f $(TARGET_DIR)/*
 
-sonobuoy: SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_$(SONOBUOY_OSARCH).tar.gz
+sonobuoy: SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.56.10/sonobuoy_0.56.10_$(SONOBUOY_OSARCH).tar.gz
 sonobuoy:
 	wget -qO- ${SONOBUOY} |tar -xz sonobuoy
 	chmod 755 sonobuoy

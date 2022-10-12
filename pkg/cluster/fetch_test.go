@@ -128,6 +128,65 @@ func TestGetFluxConfigForCluster(t *testing.T) {
 	g.Expect(gotFlux).To(Equal(wantFlux))
 }
 
+func TestGetAWSIamConfigForCluster(t *testing.T) {
+	g := NewWithT(t)
+	c := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-cluster",
+			Namespace: "eksa",
+		},
+		Spec: anywherev1.ClusterSpec{
+			IdentityProviderRefs: []anywherev1.Ref{
+				{
+					Kind: anywherev1.AWSIamConfigKind,
+					Name: "eksa-cluster",
+				},
+			},
+		},
+	}
+	wantIamConfig := &anywherev1.AWSIamConfig{
+		TypeMeta:   metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{},
+		Spec:       anywherev1.AWSIamConfigSpec{},
+		Status:     anywherev1.AWSIamConfigStatus{},
+	}
+
+	mockFetch := func(ctx context.Context, name, namespace string) (*anywherev1.AWSIamConfig, error) {
+		g.Expect(name).To(Equal(c.Name))
+		g.Expect(namespace).To(Equal(c.Namespace))
+
+		return wantIamConfig, nil
+	}
+
+	gotIamConfig, err := cluster.GetAWSIamConfigForCluster(context.Background(), c, mockFetch)
+	g.Expect(err).To(BeNil())
+	g.Expect(gotIamConfig).To(Equal(wantIamConfig))
+}
+
+func TestGetAWSIamConfigForClusterIsNil(t *testing.T) {
+	g := NewWithT(t)
+	c := &anywherev1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "eksa-cluster",
+			Namespace: "eksa",
+		},
+		Spec: anywherev1.ClusterSpec{
+			IdentityProviderRefs: nil,
+		},
+	}
+	var wantIamConfig *anywherev1.AWSIamConfig
+	mockFetch := func(ctx context.Context, name, namespace string) (*anywherev1.AWSIamConfig, error) {
+		g.Expect(name).To(Equal(c.Name))
+		g.Expect(namespace).To(Equal(c.Namespace))
+
+		return wantIamConfig, nil
+	}
+
+	gotIamConfig, err := cluster.GetAWSIamConfigForCluster(context.Background(), c, mockFetch)
+	g.Expect(err).To(BeNil())
+	g.Expect(gotIamConfig).To(Equal(wantIamConfig))
+}
+
 type buildSpecTest struct {
 	*WithT
 	ctx         context.Context

@@ -5,16 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 type Validator struct {
-	cmk ProviderCmkClient
+	cmk         ProviderCmkClient
+	netClient   networkutils.NetClient
+	skipIpCheck bool
 }
 
 // Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java
@@ -29,9 +31,11 @@ var restrictedUserCustomDetails = [...]string{
 	"keypairnames", "controlNodeLoginUser",
 }
 
-func NewValidator(cmk ProviderCmkClient) *Validator {
+func NewValidator(cmk ProviderCmkClient, netClient networkutils.NetClient, skipIpCheck bool) *Validator {
 	return &Validator{
-		cmk: cmk,
+		cmk:         cmk,
+		netClient:   netClient,
+		skipIpCheck: skipIpCheck,
 	}
 }
 
@@ -186,12 +190,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 	}
 
-	isPortSpecified, err := v.validateControlPlaneHost(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	err := v.setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec)
 	if err != nil {
-		return fmt.Errorf("failed to validate controlPlaneConfiguration.Endpoint.Host: %v", err)
-	}
-	if !isPortSpecified {
-		v.setDefaultControlPlanePort(cloudStackClusterSpec)
+		return fmt.Errorf("validating controlPlaneConfiguration.Endpoint.Host: %v", err)
 	}
 
 	for _, machineConfig := range cloudStackClusterSpec.machineConfigsLookup {
@@ -228,6 +229,21 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 
 	logger.MarkPass("Validated cluster Machine Configs")
 
+	return nil
+}
+
+func (v *Validator) ValidateControlPlaneEndpointUniqueness(endpoint string) error {
+	if v.skipIpCheck {
+		logger.Info("Skipping control plane endpoint uniqueness check")
+		return nil
+	}
+	host, port, err := net.SplitHostPort(endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid endpoint - not in host:port format: %v", err)
+	}
+	if networkutils.IsPortInUse(v.netClient, host, port) {
+		return fmt.Errorf("endpoint <%s> is already in use", endpoint)
+	}
 	return nil
 }
 
@@ -282,26 +298,23 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	return nil
 }
 
-// validateControlPlaneHost checks the input host to see if it is a valid hostname. If it's valid, it checks the port
-// or returns a boolean indicating that there was no port specified, in which case the default port should be used
-func (v *Validator) validateControlPlaneHost(pHost string) (bool, error) {
+// setDefaultAndValidateControlPlaneHostPort checks the input host to see if it is a valid hostname. If it's valid, it checks the port
+// to see if the default port should be used and sets it.
+func (v *Validator) setDefaultAndValidateControlPlaneHostPort(cloudStackClusterSpec *Spec) error {
+	pHost := cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	_, port, err := net.SplitHostPort(pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
-			return false, nil
+			port = controlEndpointDefaultPort
+			cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
+				cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+				controlEndpointDefaultPort)
 		} else {
-			return false, fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
+			return fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
 		}
 	}
-	_, err = strconv.Atoi(port)
-	if err != nil {
-		return false, fmt.Errorf("host %s has an invalid port: %v", pHost, err.Error())
+	if !networkutils.IsPortValid(port) {
+		return fmt.Errorf("host %s has an invalid port", pHost)
 	}
-	return true, nil
-}
-
-func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *Spec) {
-	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
-		cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		controlEndpointDefaultPort)
+	return nil
 }

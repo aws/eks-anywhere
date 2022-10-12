@@ -37,6 +37,7 @@ resources:
   kind: VSphereDatacenterConfig
   version: v1alpha1
   webhooks:
+    defaulting: true
     validation: true
     webhookVersion: v1
 - api:
@@ -47,6 +48,7 @@ resources:
   kind: VSphereMachineConfig
   version: v1alpha1
   webhooks:
+    defaulting: true
     validation: true
     webhookVersion: v1
 - api:
@@ -89,6 +91,17 @@ resources:
   version: v1alpha1
   webhooks:
     defaulting: true
+    validation: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: eks.amazonaws.com
+  group: anywhere
+  kind: SnowDatacenterConfig
+  path: github.com/aws/eks-anywhere/api/v1alpha1
+  version: v1alpha1
+  webhooks:
     validation: true
     webhookVersion: v1
 - api:

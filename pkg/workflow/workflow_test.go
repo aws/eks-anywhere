@@ -16,13 +16,11 @@ func TestWorkflowExecute(t *testing.T) {
 	g := gomega.NewWithT(t)
 
 	task1 := NewMockTask(ctrl)
-	task1.EXPECT().GetName().Return(workflow.TaskName("task1")).Times(4)
 	runTask1 := task1.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), nil)
 
 	task2 := NewMockTask(ctrl)
-	task2.EXPECT().GetName().Return(workflow.TaskName("task2")).Times(4)
 	runTask2 := task2.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), nil)
@@ -32,10 +30,10 @@ func TestWorkflowExecute(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task1)
+	err := wflw.AppendTask("task1", task1)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	err = wflw.AppendTask(task2)
+	err = wflw.AppendTask("task2", task2)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	err = wflw.Execute(context.Background())
@@ -59,7 +57,6 @@ func TestWorkflowHooks(t *testing.T) {
 		Return(context.Background(), nil)
 
 	task := NewMockTask(ctrl)
-	task.EXPECT().GetName().Return(taskName).Times(4)
 	runTask := task.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), nil)
@@ -85,7 +82,7 @@ func TestWorkflowHooks(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task)
+	err := wflw.AppendTask(taskName, task)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -116,7 +113,6 @@ func TestErroneousTask(t *testing.T) {
 		Return(context.Background(), nil)
 
 	task1 := NewMockTask(ctrl)
-	task1.EXPECT().GetName().Return(taskName).Times(3)
 	runTask1 := task1.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), expect)
@@ -125,7 +121,6 @@ func TestErroneousTask(t *testing.T) {
 
 	// Subsequent tasks after error shouldn't run.
 	task2 := NewMockTask(ctrl)
-	task2.EXPECT().GetName().Return(workflow.TaskName("MockTask2")).Times(2)
 
 	// These shouldn't run
 	postWorkflowHook := NewMockTask(ctrl)
@@ -135,10 +130,10 @@ func TestErroneousTask(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task1)
+	err := wflw.AppendTask(taskName, task1)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	err = wflw.AppendTask(task2)
+	err = wflw.AppendTask("task2", task2)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -166,7 +161,6 @@ func TestErroneousPreWorkflowHook(t *testing.T) {
 	preTaskHook := NewMockTask(ctrl)
 
 	task := NewMockTask(ctrl)
-	task.EXPECT().GetName().Return(taskName).Times(2)
 
 	postTaskHook := NewMockTask(ctrl)
 
@@ -175,7 +169,7 @@ func TestErroneousPreWorkflowHook(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task)
+	err := wflw.AppendTask(taskName, task)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -206,7 +200,6 @@ func TestErroneousPostWorkflowHook(t *testing.T) {
 		Return(context.Background(), nil)
 
 	task := NewMockTask(ctrl)
-	task.EXPECT().GetName().Return(taskName).Times(4)
 	runTask := task.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), nil)
@@ -232,7 +225,7 @@ func TestErroneousPostWorkflowHook(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task)
+	err := wflw.AppendTask(taskName, task)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -257,7 +250,6 @@ func TestErroneousPreTaskHook(t *testing.T) {
 	postWorkflowHook := NewMockTask(ctrl)
 
 	task := NewMockTask(ctrl)
-	task.EXPECT().GetName().Return(taskName).Times(3)
 
 	preTaskHook := NewMockTask(ctrl)
 	runPreTaskHook := preTaskHook.EXPECT().
@@ -274,7 +266,7 @@ func TestErroneousPreTaskHook(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task)
+	err := wflw.AppendTask(taskName, task)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -305,7 +297,6 @@ func TestErroneousPostTaskHook(t *testing.T) {
 		Return(context.Background(), nil)
 
 	task := NewMockTask(ctrl)
-	task.EXPECT().GetName().Return(taskName).Times(4)
 	runTask := task.EXPECT().
 		RunTask(gomock.Any()).
 		Return(context.Background(), nil)
@@ -327,7 +318,7 @@ func TestErroneousPostTaskHook(t *testing.T) {
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task)
+	err := wflw.AppendTask(taskName, task)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	wflw.BindPreWorkflowHook(preWorkflowHook)
@@ -346,17 +337,14 @@ func TestDuplicateTaskNames(t *testing.T) {
 	const taskName workflow.TaskName = "MockTask"
 
 	task1 := NewMockTask(ctrl)
-	task1.EXPECT().GetName().Return(taskName).Times(2)
-
 	task2 := NewMockTask(ctrl)
-	task2.EXPECT().GetName().Return(taskName).Times(2)
 
 	wflw := workflow.New(workflow.Config{})
 	g.Expect(wflw).ToNot(gomega.BeNil())
 
-	err := wflw.AppendTask(task1)
+	err := wflw.AppendTask(taskName, task1)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	err = wflw.AppendTask(task2)
+	err = wflw.AppendTask(taskName, task2)
 	g.Expect(err).To(gomega.HaveOccurred())
 }

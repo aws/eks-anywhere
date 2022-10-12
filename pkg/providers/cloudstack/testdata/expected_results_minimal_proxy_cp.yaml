@@ -35,27 +35,16 @@ spec:
   failureDomains:
   - name: default-az-0
     zone:
+      id: 
       name: zone1
       network:
+        id: 
         name: net1
     domain: domain1
     account: admin
     acsEndpoint:
       name: global
       namespace: eksa-system
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-kind: CloudStackMachineTemplate
-metadata:
-  name: test-control-plane-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -166,7 +155,7 @@ spec:
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
-        apiVersion: audit.k8s.io/v1beta1
+        apiVersion: audit.k8s.io/v1
         kind: Policy
         rules:
         # Log aws-auth configmap changes
@@ -339,7 +328,6 @@ spec:
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -349,7 +337,6 @@ spec:
           anonymous-auth: "false"
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
-        taints: []
     preKubeadmCommands:
     - swapoff -a
     - sudo systemctl daemon-reload
@@ -368,3 +355,28 @@ spec:
     format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: CloudStackMachineTemplate
+metadata:
+  creationTimestamp: null
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+    spec:
+      diskOffering:
+        customSizeInGB: 0
+        device: ""
+        filesystem: ""
+        label: ""
+        mountPath: ""
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---

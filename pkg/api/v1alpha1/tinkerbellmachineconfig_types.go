@@ -16,7 +16,7 @@ type TinkerbellMachineConfigSpec struct {
 	Users            []UserConfiguration `json:"users,omitempty"`
 }
 
-// HardwareSelector models a simple key-value selector used in Tinkerbell providioning.
+// HardwareSelector models a simple key-value selector used in Tinkerbell provisioning.
 type HardwareSelector map[string]string
 
 // IsEmpty returns true if s has no key-value pairs.

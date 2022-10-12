@@ -28,6 +28,8 @@ type Indexer interface {
 	Insert(v interface{}) error
 	// IndexField associated index with fn such that Lookup may be used to retrieve objects.
 	IndexField(index string, fn KeyExtractorFunc)
+	// Remove deletes v from the index.
+	Remove(v interface{}) error
 }
 
 // Catalogue represents a catalogue of Tinkerbell hardware manifests to be used with Tinkerbells

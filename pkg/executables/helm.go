@@ -3,6 +3,7 @@ package executables
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"sigs.k8s.io/yaml"
 
@@ -121,11 +122,14 @@ func (h *Helm) InstallChartFromName(ctx context.Context, ociURI, kubeConfig, nam
 	return err
 }
 
-func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath string, values []string) error {
+func (h *Helm) InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error {
 	valueArgs := GetHelmValueArgs(values)
 	params := []string{"install", chart, ociURI, "--version", version}
 	params = append(params, valueArgs...)
 	params = append(params, "--kubeconfig", kubeconfigFilePath)
+	if len(namespace) > 0 {
+		params = append(params, "--create-namespace", "--namespace", namespace)
+	}
 	params = h.addInsecureFlagIfProvided(params)
 
 	logger.Info("Installing helm chart on cluster", "chart", chart, "version", version)
@@ -140,6 +144,18 @@ func (h *Helm) InstallChartWithValuesFile(ctx context.Context, chart, ociURI, ve
 	params = h.addInsecureFlagIfProvided(params)
 	_, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
 	return err
+}
+
+func (h *Helm) ListCharts(ctx context.Context, kubeconfigFilePath string) ([]string, error) {
+	params := []string{"list", "-q", "--kubeconfig", kubeconfigFilePath}
+	out, err := h.executable.Command(ctx, params...).WithEnvVars(h.env).Run()
+	if err != nil {
+		return nil, err
+	}
+	charts := strings.FieldsFunc(out.String(), func(c rune) bool {
+		return c == '\n'
+	})
+	return charts, nil
 }
 
 func (h *Helm) addInsecureFlagIfProvided(params []string) []string {

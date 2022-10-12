@@ -37,9 +37,6 @@ func TestCloudStackDatacenterValidateCreateLifecycleApiEnabled(t *testing.T) {
 
 	c := cloudstackDatacenterConfig()
 	g := NewWithT(t)
-	err := c.ValidateCreate()
-	if err != nil {
-	}
 
 	g.Expect(c.ValidateCreate()).To(Succeed())
 }

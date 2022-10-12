@@ -5,8 +5,10 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
@@ -291,6 +293,35 @@ func TestClusterctlMoveManagement(t *testing.T) {
 	}
 }
 
+func TestClusterctlMoveManagementWithRetry(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	writer := mockswriter.NewMockFileWriter(mockCtrl)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+	from := &types.Cluster{
+		KubeconfigFile: "from.kubeconfig",
+	}
+
+	to := &types.Cluster{
+		KubeconfigFile: "to.kubeconfig",
+	}
+
+	wantMoveArgs := []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"}
+
+	firstTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, errors.New("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": EOF"))
+	secondTry := executable.EXPECT().Execute(ctx, wantMoveArgs...).Return(bytes.Buffer{}, nil)
+	gomock.InOrder(
+		firstTry,
+		secondTry,
+	)
+
+	c := executables.NewClusterctl(executable, writer)
+	if err := c.MoveManagement(ctx, from, to); err != nil {
+		t.Fatalf("Clusterctl.MoveManagement() error = %v, want nil", err)
+	}
+}
+
 func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	tt := newClusterctlTest(t)
 
@@ -382,6 +413,37 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	).Return(bytes.Buffer{}, errors.New("error in exec"))
 
 	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
+}
+
+func TestClusterctlWaitRetryPolicy(t *testing.T) {
+	connectionRefusedError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:53733/api?timeout=30s\": dial tcp 127.0.0.1:53733: connect: connection refused\n")
+	ioTimeoutError := fmt.Errorf("Error: failed to connect to the management cluster: action failed after 9 attempts: Get \"https://127.0.0.1:61994/api?timeout=30s\": net/http: TLS handshake timeout\n")
+	miscellaneousError := fmt.Errorf("Some other random miscellaneous error")
+
+	_, wait := executables.ClusterctlMoveRetryPolicy(1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for connection refused")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(-1, connectionRefusedError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for total retries < 0")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(2, connectionRefusedError)
+	if wait != 15*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly protect for second retry wait")
+	}
+
+	_, wait = executables.ClusterctlMoveRetryPolicy(1, ioTimeoutError)
+	if wait != 10*time.Second {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't correctly calculate first retry wait for ioTimeout")
+	}
+
+	retry, _ := executables.ClusterctlMoveRetryPolicy(1, miscellaneousError)
+	if retry != false {
+		t.Errorf("ClusterctlMoveRetryPolicy didn't not-retry on non-network error")
+	}
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {
@@ -476,6 +538,12 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
 			KubeProxy: kubeProxyVersion08,
+		},
+		Nutanix: v1alpha1.NutanixBundle{
+			Version: "v0.5.1",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/release-container-registry/nutanix-cloud-native/cluster-api-provider-nutanix/release/manager:v0.5.1-eks-a-v0.0.0-dev-build.1",
+			},
 		},
 		Tinkerbell: v1alpha1.TinkerbellBundle{
 			Version: "v0.1.0",

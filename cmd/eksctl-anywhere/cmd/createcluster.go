@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
+	"github.com/aws/eks-anywhere/pkg/workflow/management"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
@@ -149,19 +150,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		deps.PackageInstaller,
 	)
 
-	var cluster *types.Cluster
-	if clusterSpec.ManagementCluster == nil {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.Cluster.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
-		}
-	} else {
-		cluster = &types.Cluster{
-			Name:           clusterSpec.ManagementCluster.Name,
-			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
-		}
-	}
-
 	validationOpts := &validations.Opts{
 		Kubectl: deps.Kubectl,
 		Spec:    clusterSpec,
@@ -169,13 +157,21 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
-		ManagementCluster: cluster,
+		ManagementCluster: getManagementCluster(clusterSpec),
 		Provider:          deps.Provider,
 		CliConfig:         cliConfig,
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	if features.UseNewWorkflows().IsActive() {
+		err = (management.CreateCluster{
+			Spec:                          clusterSpec,
+			Bootstrapper:                  deps.Bootstrapper,
+			CreateBootstrapClusterOptions: deps.Provider,
+		}).Run(ctx)
+	} else {
+		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
+	}
 
 	cleanup(deps, &err)
 	return err
