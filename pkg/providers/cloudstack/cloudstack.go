@@ -726,9 +726,9 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		}
 		workerSpecs = append(workerSpecs, bytes)
 
-		workerMachineTemplateName, _ := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		workerMachineTemplateName := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		workerMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", workerMachineTemplateName), &machineConfig)
+		workerMachineTemplate := CloudStackMachineTemplate(workerMachineTemplateName, &machineConfig)
 		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling worker machine template to byte array: %v", err)

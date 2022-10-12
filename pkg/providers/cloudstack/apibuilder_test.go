@@ -3,7 +3,6 @@ package cloudstack_test
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -140,9 +139,10 @@ func TestFullCloudStackMachineTemplate(t *testing.T) {
 
 func TestBasicCloudStackMachineDeployment(t *testing.T) {
 	tt := newApiBuilderTest(t)
+	count := 1
 	workerNodeGroupConfig := v1alpha1.WorkerNodeGroupConfiguration{
 		Name:  "test-worker-node-group",
-		Count: 1,
+		Count: &count,
 	}
 	kubeadmConfigTemplates := map[string]*bootstrapv1.KubeadmConfigTemplate{
 		workerNodeGroupConfig.Name: {
