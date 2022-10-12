@@ -607,7 +607,7 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	logger.V(0).Info("Installing secrets on bootstrap cluster")
+	logger.Info("Installing secrets on bootstrap cluster")
 	return p.UpdateSecrets(ctx, cluster, clusterSpec)
 }
 
