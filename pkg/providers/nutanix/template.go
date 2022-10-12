@@ -138,10 +138,7 @@ func buildTemplateMapCP(
 		"nutanixPEClusterName":         controlPlaneMachineSpec.Cluster.Name, // TODO(nutanix): pass name or uuid based on type of identifier
 		"subnetName":                   controlPlaneMachineSpec.Subnet.Name,  // TODO(nutanix): pass name or uuid based on type of identifier
 	}
-
-	if datacenterSpec.AdditionalTrustBundle != "" {
-		values["nutanixInsecure"] = true
-	}
+	values["nutanixInsecure"] = datacenterSpec.AdditionalTrustBundle != ""
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
