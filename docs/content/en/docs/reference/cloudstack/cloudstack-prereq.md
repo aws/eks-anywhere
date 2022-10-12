@@ -1,7 +1,7 @@
 ---
-title: "Requirements for EKS Anywhere on ClusterStack"
+title: "Requirements for EKS Anywhere on CloudStack"
 linkTitle: "Requirements"
 weight: 15
 description: >
-  ClusterStack provider requirements for EKS Anywhere
+  CloudStack provider requirements for EKS Anywhere
 ---

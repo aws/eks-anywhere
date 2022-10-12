@@ -1,7 +1,7 @@
 ---
-title: "ClusterStack"
-linkTitle: "ClusterStack"
+title: "CloudStack"
+linkTitle: "CloudStack"
 weight: 15
 description: >
-  Preparing a ClusterStack provider for EKS Anywhere
+  Preparing a CloudStack provider for EKS Anywhere
 ---
