@@ -67,6 +67,9 @@ KUSTOMIZE_OUTPUT_BIN_DIR="${OUTPUT_DIR}/kustomize-bin/"
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
 
+GOLANGCI_LINT_CONFIG ?= .github/workflows/golangci-lint.yml
+GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+
 BUILD_LIB := build/lib
 BUILDKIT := $(BUILD_LIB)/buildkit.sh
 
@@ -254,13 +257,12 @@ $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
 
 .PHONY: lint
-lint: bin/golangci-lint ## Run golangci-lint
-	bin/golangci-lint run
+lint: $(GOLANGCI_LINT) ## Run golangci-lint
+	$(GOLANGCI_LINT) run
 
-bin/golangci-lint: ## Download golangci-lint
-bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -)
-bin/golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
+$(GOLANGCI_LINT): $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_CONFIG)
+	$(eval GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -))
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(TOOLS_BIN_DIR) $(GOLANGCI_LINT_VERSION)
 
 .PHONY: vulncheck
 vulncheck: govulncheck
