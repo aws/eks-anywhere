@@ -607,8 +607,8 @@ func (p *Provider) InstallCustomProviderComponents(ctx context.Context, kubeconf
 }
 
 func (p *Provider) PreCAPIInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	// TODO(nutanix): figure out if we need something else here
-	return nil
+	logger.Info("Installing secrets on bootstrap cluster")
+	return p.UpdateSecrets(ctx, cluster, clusterSpec)
 }
 
 func (p *Provider) PostMoveManagementToBootstrap(ctx context.Context, bootstrapCluster *types.Cluster) error {
