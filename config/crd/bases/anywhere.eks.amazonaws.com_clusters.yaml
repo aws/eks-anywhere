@@ -241,6 +241,9 @@ spec:
                 description: RegistryMirrorConfiguration defines the settings for
                   image registry mirror
                 properties:
+                  authenticate:
+                    description: Authenticate defines if registry requires authentication
+                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate

@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"strings"
 	"time"
 
@@ -24,6 +25,7 @@ const (
 
 type Helm interface {
 	Template(ctx context.Context, ociURI, version, namespace string, values interface{}, kubeVersion string) ([]byte, error)
+	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
 type Templater struct {

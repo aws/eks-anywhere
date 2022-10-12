@@ -169,7 +169,7 @@ func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClien
 	}
 }
 
-func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
+func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string, env map[string]string) bootstrapper.BootstrapClusterClientOption {
 	return func() error {
 		if k.execConfig == nil {
 			return errors.New("kind exec config is not ready")
@@ -178,6 +178,11 @@ func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapp
 		k.execConfig.RegistryMirrorEndpoint = endpoint
 		k.execConfig.RegistryCACertPath = caCertFile
 
+		if env != nil {
+			k.execConfig.RegistryAuth = true
+			k.execConfig.RegistryUsername = env["REGISTRY_USERNAME"]
+			k.execConfig.RegistryPassword = env["REGISTRY_PASSWORD"]
+		}
 		return nil
 	}
 }

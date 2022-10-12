@@ -121,7 +121,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirrorWithPort, "")
+					return k.WithRegistryMirror(registryMirrorWithPort, "", nil)
 				},
 			},
 			env:                map[string]string{},
@@ -133,11 +133,23 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirrorWithPort, "ca.crt")
+					return k.WithRegistryMirror(registryMirrorWithPort, "ca.crt", nil)
 				},
 			},
 			env:                map[string]string{},
 			wantKindConfig:     "testdata/kind_config_registry_mirror_with_ca.yaml",
+			registryMirrorTest: true,
+		},
+		{
+			name:           "With registry mirror option, with auth",
+			wantKubeconfig: kubeConfigFile,
+			options: []testKindOption{
+				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
+					return k.WithRegistryMirror(registryMirrorWithPort, "", map[string]string{"REGISTRY_USERNAME": "username", "REGISTRY_PASSWORD": "password"})
+				},
+			},
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_registry_mirror_with_auth.yaml",
 			registryMirrorTest: true,
 		},
 	}

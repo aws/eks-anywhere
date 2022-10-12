@@ -2292,6 +2292,19 @@ func TestValidateMirrorConfig(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:    "authenticate but username or password not provided",
+			wantErr: "username or password not set, Provide REGISTRY_USERNAME and REGISTRY_PASSWORD to use authenticated registry mirror",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

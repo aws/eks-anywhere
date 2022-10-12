@@ -428,3 +428,7 @@ func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
 func (b dummyDockerClient) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	return bytes.Buffer{}, nil
 }
+
+func (b dummyDockerClient) Login(ctx context.Context, endpoint, username, password string) error {
+	return nil
+}

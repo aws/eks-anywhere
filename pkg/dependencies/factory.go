@@ -108,6 +108,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
+		WithRegistryAuth(clusterSpec.Cluster.RegistryAuth()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -116,6 +117,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 type Factory struct {
 	executablesConfig        *executablesConfig
 	registryMirror           string
+	registryAuth             bool
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -166,6 +168,11 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 
 func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	f.registryMirror = mirror
+	return f
+}
+
+func (f *Factory) WithRegistryAuth(mirror bool) *Factory {
+	f.registryAuth = mirror
 	return f
 }
 
@@ -249,7 +256,15 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
+		//need to pass in auth toggle, username, and password
 		if f.executablesConfig.useDockerContainer {
+
+			if f.registryAuth {
+				username := os.Getenv("REGISTRY_USERNAME")
+				password := os.Getenv("REGISTRY_PASSWORD")
+				f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror, username, password)
+			}
+
 			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
@@ -1169,4 +1184,18 @@ func getManagementClusterName(clusterSpec *cluster.Spec) string {
 		return clusterSpec.Cluster.Spec.ManagementCluster.Name
 	}
 	return clusterSpec.Cluster.Name
+}
+
+func getRegistryAuth(clusterSpec *cluster.Spec) (registryAuth bool, username, password string) {
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil {
+		return false, "", ""
+	}
+
+	registryAuth = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+	if registryAuth {
+		username = os.Getenv("REGISTRY_USERNAME")
+		password = os.Getenv("REGISTRY_PASSWORD")
+		return registryAuth, username, password
+	}
+	return false, "", ""
 }

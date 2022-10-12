@@ -297,6 +297,16 @@ func buildTemplateMapMD(
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
+
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate == true {
+			values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return nil
+			}
+			values["registryUsername"] = username
+			values["registryPassword"] = password
+		}
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {

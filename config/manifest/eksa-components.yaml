@@ -3689,7 +3689,7 @@ spec:
                   image registry mirror
                 properties:
                   authenticate:
-                    description: authenticate defines whether or not registry mirror requires authentication for pulling images
+                    description: Authenticate defines if registry requires authentication
                     type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
@@ -5275,6 +5275,8 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
@@ -5652,7 +5654,7 @@ spec:
       containers:
       - args:
         - --leader-elect
-        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.11.4-eks-a-v0.0.0-dev-build.4353
+        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

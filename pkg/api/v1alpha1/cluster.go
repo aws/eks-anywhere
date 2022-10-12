@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -290,6 +291,13 @@ func (c *Cluster) RegistryMirror() string {
 	}
 
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+}
+
+func (c *Cluster) RegistryAuth() bool {
+	if c.Spec.RegistryMirrorConfiguration.Authenticate {
+		return true
+	}
+	return false
 }
 
 func (c *Cluster) ProxyConfiguration() map[string]string {
@@ -675,9 +683,13 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
 
-	//if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
-	//	if
-	//}
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
+		username := os.Getenv("REGISTRY_USERNAME")
+		password := os.Getenv("REGISTRY_PASSWORD")
+		if username == "" || password == "" {
+			return fmt.Errorf("username or password not set, Provide REGISTRY_USERNAME and REGISTRY_PASSWORD to use authenticated registry mirror")
+		}
+	}
 	return nil
 }
 
