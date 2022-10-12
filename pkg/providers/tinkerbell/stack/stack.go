@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"net"
 	"path/filepath"
 	"strings"
@@ -46,6 +47,7 @@ type Docker interface {
 
 type Helm interface {
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
+	RegistryLogin(ctx context.Context, registry, username, password string) error
 }
 
 type Installer struct {
@@ -209,6 +211,19 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 	valuesPath, err := s.filewriter.Write(overridesFileName, values)
 	if err != nil {
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
+	}
+
+	if s.registryMirror != nil {
+		if s.registryMirror.Authenticate {
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			endpoint := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+			if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+				return err
+			}
+		}
 	}
 
 	err = s.helm.InstallChartWithValuesFile(

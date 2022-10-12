@@ -118,6 +118,20 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 
 	uri, version := getChartUriAndVersion(spec)
 	var manifest []byte
+
+	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			username, password, temp := config.ReadCredentials()
+			if temp != nil {
+				return nil, temp
+			}
+			endpoint := spec.Cluster.RegistryMirror()
+			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	err = c.retrier.Retry(func() error {
 		manifest, err = t.helm.Template(ctx, uri, version, namespace, c.values, c.kubeVersion)
 		return err
