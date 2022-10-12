@@ -18,26 +18,32 @@ type NutanixConfig struct {
 	machineConfigs   map[string]*anywherev1.NutanixMachineConfig
 }
 
-type NutanixFiller func(config NutanixConfig)
+type NutanixFiller func(config *NutanixConfig)
 
-func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
+func NewNutanixConfig(filename string) (*NutanixConfig, error) {
 	config, err := cluster.ParseConfigFromFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	nutanixConfig := NutanixConfig{
+	nutanixConfig := &NutanixConfig{
 		datacenterConfig: config.NutanixDatacenter,
 		machineConfigs:   config.NutanixMachineConfigs,
+	}
+	return nutanixConfig, nil
+}
+
+func AutoFillNutanixProvider(filename string, fillers ...NutanixFiller) ([]byte, error) {
+	nutanixConfig, err := NewNutanixConfig(filename)
+	if err != nil {
+		return nil, err
 	}
 
 	for _, f := range fillers {
 		f(nutanixConfig)
 	}
 
-	resources := make([]interface{}, 0, len(nutanixConfig.machineConfigs)+1)
-	resources = append(resources, nutanixConfig.datacenterConfig)
-
+	resources := []interface{}{nutanixConfig.datacenterConfig}
 	for _, m := range nutanixConfig.machineConfigs {
 		resources = append(resources, m)
 	}
@@ -74,25 +80,25 @@ func WithNutanixBoolFromEnvVar(envVar string, opt func(bool) NutanixFiller) Nuta
 }
 
 func WithNutanixEndpoint(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		config.datacenterConfig.Spec.Endpoint = value
 	}
 }
 
 func WithNutanixPort(value int) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		config.datacenterConfig.Spec.Port = value
 	}
 }
 
 func WithNutanixAdditionalTrustBundle(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		config.datacenterConfig.Spec.AdditionalTrustBundle = value
 	}
 }
 
 func WithNutanixMachineMemorySize(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.MemorySize = resource.MustParse(value)
 		}
@@ -100,7 +106,7 @@ func WithNutanixMachineMemorySize(value string) NutanixFiller {
 }
 
 func WithNutanixMachineSystemDiskSize(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.SystemDiskSize = resource.MustParse(value)
 		}
@@ -108,7 +114,7 @@ func WithNutanixMachineSystemDiskSize(value string) NutanixFiller {
 }
 
 func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.VCPUsPerSocket = value
 		}
@@ -116,7 +122,7 @@ func WithNutanixMachineVCPUsPerSocket(value int32) NutanixFiller {
 }
 
 func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.VCPUSockets = value
 		}
@@ -124,8 +130,7 @@ func WithNutanixMachineVCPUSocket(value int32) NutanixFiller {
 }
 
 func WithNutanixMachineTemplateImageName(value string) NutanixFiller {
-	// TODO Handle Type uuid as well
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Image = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
 		}
@@ -133,8 +138,7 @@ func WithNutanixMachineTemplateImageName(value string) NutanixFiller {
 }
 
 func WithNutanixSubnetName(value string) NutanixFiller {
-	// TODO Handle Type uuid as well
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Subnet = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
 		}
@@ -142,7 +146,7 @@ func WithNutanixSubnetName(value string) NutanixFiller {
 }
 
 func WithNutanixPrismElementClusterName(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Cluster = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierName, Name: &value}
 		}
@@ -150,7 +154,7 @@ func WithNutanixPrismElementClusterName(value string) NutanixFiller {
 }
 
 func WithNutanixMachineTemplateImageUUID(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Image = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierUUID, UUID: &value}
 		}
@@ -158,7 +162,7 @@ func WithNutanixMachineTemplateImageUUID(value string) NutanixFiller {
 }
 
 func WithNutanixSubnetUUID(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Subnet = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierUUID, UUID: &value}
 		}
@@ -166,7 +170,7 @@ func WithNutanixSubnetUUID(value string) NutanixFiller {
 }
 
 func WithNutanixPrismElementClusterUUID(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Cluster = anywherev1.NutanixResourceIdentifier{Type: anywherev1.NutanixIdentifierUUID, UUID: &value}
 		}
@@ -174,7 +178,7 @@ func WithNutanixPrismElementClusterUUID(value string) NutanixFiller {
 }
 
 func WithNutanixSSHAuthorizedKey(value string) NutanixFiller {
-	return func(config NutanixConfig) {
+	return func(config *NutanixConfig) {
 		for _, m := range config.machineConfigs {
 			m.Spec.Users = []anywherev1.UserConfiguration{
 				{
