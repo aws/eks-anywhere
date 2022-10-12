@@ -385,7 +385,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.ValidateFields(); err != nil {
+	if err := vSphereClusterSpec.datacenterConfig.Validate(); err != nil {
 		return err
 	}
 
@@ -481,7 +481,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
-	if err := vSphereClusterSpec.datacenterConfig.ValidateFields(); err != nil {
+	if err := vSphereClusterSpec.datacenterConfig.Validate(); err != nil {
 		return err
 	}
 
