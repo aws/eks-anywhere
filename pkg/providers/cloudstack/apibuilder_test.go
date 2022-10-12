@@ -178,8 +178,8 @@ func TestBasicCloudStackMachineDeployment(t *testing.T) {
 		},
 	}
 	got := cloudstack.MachineDeployments(spec, kubeadmConfigTemplates, matchineTemplates)
-	tt.Expect(len(got)).To(Equal(workerNodeGroupConfig.Count))
-	tt.Expect(int(*got[workerNodeGroupConfig.Name].Spec.Replicas)).To(Equal(workerNodeGroupConfig.Count))
+	tt.Expect(len(got)).To(Equal(*workerNodeGroupConfig.Count))
+	tt.Expect(int(*got[workerNodeGroupConfig.Name].Spec.Replicas)).To(Equal(*workerNodeGroupConfig.Count))
 	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Name).To(Equal(fullMatchineTemplate.Name))
 	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.Kind).To(Equal(cloudstack.CloudStackMachineTemplateKind))
 	tt.Expect(got[workerNodeGroupConfig.Name].Spec.Template.Spec.InfrastructureRef.APIVersion).To(Equal(cloudstackv1.GroupVersion.String()))

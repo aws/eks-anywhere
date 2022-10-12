@@ -92,34 +92,42 @@ spec:
         kind: CloudStackMachineTemplate
         name: test-md-0-1234567890000
       version: v1.21.2-eks-1-21-4
+
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: CloudStackMachineTemplate
 metadata:
-  name: test-md-0-1234567890000
-  namespace: eksa-system
   annotations:
-    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
     device.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /dev/vdb
     filesystem.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: ext4
     label.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: data_disk
+    mountpath.diskoffering.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /data-small
     symlinks.cloudstack.anywhere.eks.amazonaws.com/v1alpha1: /var/log/containers:/data-small/var/log/containers,/var/log/pods:/data-small/var/log/pods
+  creationTimestamp: null
+  name: test-md-0-1234567890000
+  namespace: eksa-system
 spec:
   template:
+    metadata:
+      creationTimestamp: null
     spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
+      affinityGroupIDs:
+      - worker-affinity
+      details:
+        foo: bar
       diskOffering:
-        name: Small
-        mountPath: /data-small
+        customSizeInGB: 0
         device: /dev/vdb
         filesystem: ext4
         label: data_disk
-      details:
-        foo: bar
-      affinityGroupIDs:
-      - worker-affinity
+        mountPath: /data-small
+        name: Small
+      offering:
+        name: m4-large
+      sshKey: ""
+      template:
+        name: centos7-k8s-118
+
+---
 
 ---

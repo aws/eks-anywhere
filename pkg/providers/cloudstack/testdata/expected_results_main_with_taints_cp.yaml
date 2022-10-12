@@ -416,7 +416,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: "2009-02-13T23:31:30Z"
+      creationTimestamp: null
     spec:
       affinityGroupIDs:
       - control-plane-anti-affinity
@@ -442,7 +442,7 @@ metadata:
 spec:
   template:
     metadata:
-      creationTimestamp: "2009-02-13T23:31:30Z"
+      creationTimestamp: null
     spec:
       affinityGroupIDs:
       - etcd-affinity
