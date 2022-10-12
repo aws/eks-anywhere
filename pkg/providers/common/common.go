@@ -16,19 +16,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-//go:embed config/audit-policy.yaml
-var auditPolicy string
-
 // TODO: Split out common into separate packages to avoid becoming a dumping ground
 
 const (
 	privateKeyFileName = "eks-a-id_rsa"
 	publicKeyFileName  = "eks-a-id_rsa.pub"
 )
-
-func GetAuditPolicy() string {
-	return auditPolicy
-}
 
 func BootstrapClusterOpts(clusterConfig *v1alpha1.Cluster, serverEndpoints ...string) ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}

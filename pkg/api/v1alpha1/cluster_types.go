@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"fmt"
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
@@ -552,6 +553,20 @@ func (n *ResolvConf) Equal(o *ResolvConf) bool {
 		return false
 	}
 	return n.Path == o.Path
+}
+
+func GreaterOrEqual(kube1, kube2 KubernetesVersion) (bool, error) {
+	kube1Float, err := strconv.ParseFloat(string(kube1), 32)
+	if err != nil {
+		return false, fmt.Errorf("could not convert kube version to float %v", err)
+	}
+
+	kube2Float, err := strconv.ParseFloat(string(kube2), 32)
+	if err != nil {
+		return false, fmt.Errorf("could not convert kube version to float %v", err)
+	}
+
+	return kube1Float >= kube2Float, nil
 }
 
 type KubernetesVersion string

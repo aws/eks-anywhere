@@ -770,7 +770,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"externalEtcdVersion":                        bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                                  bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
-		"auditPolicy":                                common.GetAuditPolicy(),
 	}
 
 	fillDiskOffering(values, controlPlaneMachineSpec.DiskOffering, "ControlPlane")
@@ -802,6 +801,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
+	}
+
+	auditPolicy, err := common.GetAuditPolicyYaml(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err == nil {
+		values["auditPolicy"] = string(auditPolicy)
 	}
 
 	return values

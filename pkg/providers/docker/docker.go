@@ -213,7 +213,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
-		"auditPolicy":                common.GetAuditPolicy(),
 		"podCidrs":                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"haproxyImageRepository":     getHAProxyImageRepo(bundle.Haproxy.Image),
@@ -230,6 +229,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 	values["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
 
+	auditPolicy, err := common.GetAuditPolicyYaml(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err == nil {
+		values["auditPolicy"] = string(auditPolicy)
+	}
 	return values
 }
 

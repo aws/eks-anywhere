@@ -777,7 +777,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
-		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
 		"eksaVsphereUsername":                  vuc.EksaVsphereUsername,
 		"eksaVspherePassword":                  vuc.EksaVspherePassword,
@@ -843,6 +842,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
+	}
+
+	auditPolicy, err := common.GetAuditPolicyYaml(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err == nil {
+		values["auditPolicy"] = string(auditPolicy)
 	}
 
 	return values
