@@ -796,7 +796,6 @@ func (in *TinkerbellStackBundle) DeepCopyInto(out *TinkerbellStackBundle) {
 	*out = *in
 	in.Actions.DeepCopyInto(&out.Actions)
 	in.Boots.DeepCopyInto(&out.Boots)
-	in.Cfssl.DeepCopyInto(&out.Cfssl)
 	in.Hegel.DeepCopyInto(&out.Hegel)
 	in.TinkebellChart.DeepCopyInto(&out.TinkebellChart)
 	in.Hook.DeepCopyInto(&out.Hook)

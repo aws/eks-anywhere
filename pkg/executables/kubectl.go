@@ -58,6 +58,8 @@ var (
 	rufioBaseboardManagementResourceType = fmt.Sprintf("baseboardmanagements.%s", rufiov1alpha1.GroupVersion.Group)
 	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaNutanixDatacenterResourceType    = fmt.Sprintf("nutanixdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaNutanixMachineResourceType       = fmt.Sprintf("nutanixmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaGitOpsResourceType               = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaFluxConfigResourceType           = fmt.Sprintf("fluxconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -240,6 +242,11 @@ func (k *Kubectl) ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Clu
 }
 
 func (k *Kubectl) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error {
+	if len(data) == 0 {
+		logger.V(6).Info("Skipping applying empty kube spec from bytes")
+		return nil
+	}
+
 	params := []string{"apply", "-f", "-", "--namespace", namespace}
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
@@ -293,6 +300,10 @@ func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *
 
 func (k *Kubectl) WaitForManagedExternalEtcdNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady=false", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForMachineDeploymentReady(ctx context.Context, cluster *types.Cluster, timeout string, machineDeploymentName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "Ready=true", fmt.Sprintf("machinedeployments.%s/%s", clusterv1.GroupVersion.Group, machineDeploymentName), constants.EksaSystemNamespace)
 }
 
 // WaitForService blocks until an IP address is assigned.
@@ -811,6 +822,10 @@ type CloudStackDatacenterConfigResponse struct {
 	Items []*v1alpha1.CloudStackDatacenterConfig `json:"items,omitempty"`
 }
 
+type NutanixDatacenterConfigResponse struct {
+	Items []*v1alpha1.NutanixDatacenterConfig `json:"items,omitempty"`
+}
+
 type IdentityProviderConfigResponse struct {
 	Items []*v1alpha1.Ref `json:"items,omitempty"`
 }
@@ -821,6 +836,10 @@ type VSphereMachineConfigResponse struct {
 
 type CloudStackMachineConfigResponse struct {
 	Items []*v1alpha1.CloudStackMachineConfig `json:"items,omitempty"`
+}
+
+type NutanixMachineConfigResponse struct {
+	Items []*v1alpha1.NutanixMachineConfig `json:"items,omitempty"`
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
@@ -1744,4 +1763,80 @@ func (k *Kubectl) Delete(ctx context.Context, resourceType, name, namespace, kub
 
 func (k *Kubectl) ExecuteFromYaml(ctx context.Context, yaml []byte, opts ...string) (bytes.Buffer, error) {
 	return k.ExecuteWithStdin(ctx, yaml, opts...)
+}
+
+func (k *Kubectl) SearchNutanixMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.NutanixMachineConfig, error) {
+	params := []string{
+		"get", eksaNutanixMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa NutanixMachineConfigResponse: %v", err)
+	}
+
+	response := &NutanixMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing NutanixMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchNutanixDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.NutanixDatacenterConfig, error) {
+	params := []string{
+		"get", eksaNutanixDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa NutanixDatacenterConfigResponse: %v", err)
+	}
+
+	response := &NutanixDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing NutanixDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) GetEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.NutanixDatacenterConfig, error) {
+	response := &v1alpha1.NutanixDatacenterConfig{}
+	err := k.GetObject(ctx, eksaNutanixDatacenterResourceType, nutanixDatacenterConfigName, namespace, kubeconfigFile, response)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa nutanix datacenterconfig: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.NutanixMachineConfig, error) {
+	response := &v1alpha1.NutanixMachineConfig{}
+	err := k.GetObject(ctx, eksaNutanixMachineResourceType, nutanixMachineConfigName, namespace, kubeconfigFile, response)
+	if err != nil {
+		return nil, fmt.Errorf("getting eksa nutanix machineconfig: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) DeleteEksaNutanixDatacenterConfig(ctx context.Context, nutanixDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaNutanixDatacenterResourceType, nutanixDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("deleting nutanixdatacenterconfig cluster %s apply: %v", nutanixDatacenterConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteEksaNutanixMachineConfig(ctx context.Context, nutanixMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaNutanixMachineResourceType, nutanixMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("deleting nutanixmachineconfig cluster %s apply: %v", nutanixMachineConfigName, err)
+	}
+	return nil
 }

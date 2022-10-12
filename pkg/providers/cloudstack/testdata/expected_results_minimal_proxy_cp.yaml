@@ -35,8 +35,10 @@ spec:
   failureDomains:
   - name: default-az-0
     zone:
+      id: 
       name: zone1
       network:
+        id: 
         name: net1
     domain: domain1
     account: admin

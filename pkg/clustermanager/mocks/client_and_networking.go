@@ -804,18 +804,18 @@ func (mr *MockAwsIamAuthMockRecorder) GenerateAwsIamAuthKubeconfig(arg0, arg1, a
 }
 
 // GenerateCertKeyPairSecret mocks base method.
-func (m *MockAwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
+func (m *MockAwsIamAuth) GenerateCertKeyPairSecret(arg0 string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateCertKeyPairSecret")
+	ret := m.ctrl.Call(m, "GenerateCertKeyPairSecret", arg0)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateCertKeyPairSecret indicates an expected call of GenerateCertKeyPairSecret.
-func (mr *MockAwsIamAuthMockRecorder) GenerateCertKeyPairSecret() *gomock.Call {
+func (mr *MockAwsIamAuthMockRecorder) GenerateCertKeyPairSecret(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCertKeyPairSecret", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateCertKeyPairSecret))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCertKeyPairSecret", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateCertKeyPairSecret), arg0)
 }
 
 // GenerateManifest mocks base method.

@@ -333,14 +333,6 @@ func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
 			wantNetworkPolicyFile:   "testdata/network_policy_mgmt_capt_flux.yaml",
 		},
 		{
-			name:                    "workload cluster 1.21",
-			k8sVersion:              "v1.21.9-eks-1-21-10",
-			selfManaged:             false,
-			gitopsEnabled:           false,
-			infraProviderNamespaces: []string{},
-			wantNetworkPolicyFile:   "testdata/network_policy_workload_121.yaml",
-		},
-		{
 			name:                    "workload cluster 1.20",
 			k8sVersion:              "v1.20.9-eks-1-20-10",
 			selfManaged:             false,
@@ -377,11 +369,17 @@ func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
 	}
 }
 
-func TestGenerateNetworkPolicyManifestInvalidKubeVersion(t *testing.T) {
+func TestTemplaterGenerateManifestForSingleNodeCluster(t *testing.T) {
 	tt := newtemplaterTest(t)
-	tt.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = "v1-invalid"
+	tt.spec.Cluster.Spec.WorkerNodeGroupConfigurations = nil
+	tt.spec.Cluster.Spec.ControlPlaneConfiguration.Count = 1
 
-	_, err := tt.t.GenerateNetworkPolicyManifest(tt.spec, []string{})
-	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
-	tt.Expect(err).To(MatchError(ContainSubstring("invalid major version in semver")))
+	tt.h.EXPECT().
+		Template(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		DoAndReturn(func(_ interface{}, _ interface{}, _ interface{}, _ interface{}, values map[string]interface{}, _ interface{}) ([]byte, error) {
+			tt.Expect(reflect.ValueOf(values["operator"]).MapIndex(reflect.ValueOf("replicas")).Interface().(int)).To(Equal(1))
+			return tt.manifest, nil
+		})
+
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }

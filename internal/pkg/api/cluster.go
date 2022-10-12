@@ -10,6 +10,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 type ClusterFiller func(c *anywherev1.Cluster)
@@ -104,9 +105,9 @@ func WithServiceCidr(svcCidr string) ClusterFiller {
 func WithWorkerNodeCount(r int) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if len(c.Spec.WorkerNodeGroupConfigurations) == 0 {
-			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: 0}}
+			c.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: ptr.Int(0)}}
 		}
-		c.Spec.WorkerNodeGroupConfigurations[0].Count = r
+		c.Spec.WorkerNodeGroupConfigurations[0].Count = &r
 	}
 }
 
@@ -172,12 +173,13 @@ func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFill
 	}
 }
 
-func WithRegistryMirror(endpoint, caCert string) ClusterFiller {
+func WithRegistryMirror(endpoint, port string, caCert string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		if c.Spec.RegistryMirrorConfiguration == nil {
 			c.Spec.RegistryMirrorConfiguration = &anywherev1.RegistryMirrorConfiguration{}
 		}
 		c.Spec.RegistryMirrorConfiguration.Endpoint = endpoint
+		c.Spec.RegistryMirrorConfiguration.Port = port
 		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
 	}
 }

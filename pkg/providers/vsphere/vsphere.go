@@ -49,8 +49,6 @@ const (
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
 	maxRetries               = 30
 	backOffPeriod            = 5 * time.Second
 )
@@ -877,7 +875,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
 		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
 		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
-		"workerReplicas":                 workerNodeGroupConfiguration.Count,
+		"workerReplicas":                 *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
 		"autoscalingConfig":              workerNodeGroupConfiguration.AutoScalingConfiguration,

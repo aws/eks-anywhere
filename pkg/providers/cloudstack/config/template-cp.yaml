@@ -41,8 +41,10 @@ spec:
   failureDomains:{{ range $az := .cloudstackAvailabilityZones }}
   - name: {{ $az.Name }}
     zone:
+      id: {{ $az.Zone.Id }}
       name: {{ $az.Zone.Name }}
       network:
+        id: {{ $az.Zone.Network.Id }}
         name: {{ $az.Zone.Network.Name }}
     domain: {{ $az.Domain }}
     account: {{ $az.Account }}
@@ -308,14 +310,14 @@ spec:
       path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: cert.pem
       permissions: "0640"
       owner: root:root
       path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
-          name: aws-iam-authenticator-ca
+          name: {{.clusterName}}-aws-iam-authenticator-ca
           key: key.pem
       permissions: "0640"
       owner: root:root

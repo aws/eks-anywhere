@@ -22,7 +22,6 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
-	"github.com/aws/eks-anywhere/release/pkg/helm"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 	bundleutils "github.com/aws/eks-anywhere/release/pkg/util/bundles"
 	"github.com/aws/eks-anywhere/release/pkg/version"
@@ -35,7 +34,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		"envoy":                           r.BundleArtifactsTable["envoy"],
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
-		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
 		"hook":                            r.BundleArtifactsTable["hook"],
@@ -43,29 +41,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 		"tinkerbell-chart":                r.BundleArtifactsTable["tinkerbell-chart"],
 	}
 	sortedComponentNames := bundleutils.SortArtifactsMap(tinkerbellBundleArtifacts)
-
-	var helmdir string
-	var URI string
-
-	// Find the source of the Helm chart prior to the initial loop.
-	for _, componentName := range sortedComponentNames {
-		for _, artifact := range tinkerbellBundleArtifacts[componentName] {
-			if artifact.Image != nil && strings.HasSuffix(artifact.Image.AssetName, "chart") {
-				URI = artifact.Image.SourceImageURI
-			}
-		}
-	}
-	driver, err := helm.NewHelm()
-	if err != nil {
-		return anywherev1alpha1.TinkerbellBundle{}, fmt.Errorf("creating helm client: %w", err)
-	}
-
-	if !r.DryRun {
-		helmdir, err = helm.GetHelmDest(driver, URI, "tinkerbell-chart")
-		if err != nil {
-			return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error GetHelmDest")
-		}
-	}
 
 	var sourceBranch string
 	var componentChecksum string
@@ -83,26 +58,21 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 				if strings.HasSuffix(imageArtifact.AssetName, "chart") {
-					if !r.DryRun {
-						err := helm.ModifyChartYaml(*imageArtifact, r, driver, helmdir)
-						if err != nil {
-							return anywherev1alpha1.TinkerbellBundle{}, errors.Wrap(err, "Error modifying and pushing helm Chart.yaml")
-						}
-					}
 					bundleImageArtifact = anywherev1alpha1.Image{
 						Name:        imageArtifact.AssetName,
 						Description: fmt.Sprintf("Helm chart for %s", imageArtifact.AssetName),
 						URI:         imageArtifact.ReleaseImageURI,
 						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 					}
-				}
-				bundleImageArtifact = anywherev1alpha1.Image{
-					Name:        imageArtifact.AssetName,
-					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-					OS:          imageArtifact.OS,
-					Arch:        imageArtifact.Arch,
-					URI:         imageArtifact.ReleaseImageURI,
-					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				} else {
+					bundleImageArtifact = anywherev1alpha1.Image{
+						Name:        imageArtifact.AssetName,
+						Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+						OS:          imageArtifact.OS,
+						Arch:        imageArtifact.Arch,
+						URI:         imageArtifact.ReleaseImageURI,
+						ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+					}
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
@@ -171,7 +141,6 @@ func GetTinkerbellBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]
 				WriteFile:   bundleImageArtifacts["writefile"],
 			},
 			Boots: bundleImageArtifacts["boots"],
-			Cfssl: bundleImageArtifacts["cfssl"],
 			Hegel: bundleImageArtifacts["hegel"],
 			Hook: anywherev1alpha1.HookBundle{
 				Bootkit: bundleImageArtifacts["hook-bootkit"],

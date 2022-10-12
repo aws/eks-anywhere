@@ -27,6 +27,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	vspherereconciler "github.com/aws/eks-anywhere/pkg/providers/vsphere/reconciler"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -511,7 +512,7 @@ func createCluster() *anywherev1.Cluster {
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 				{
-					Count: 1,
+					Count: ptr.Int(1),
 					MachineGroupRef: &anywherev1.Ref{
 						Kind: "VSphereMachineConfig",
 						Name: name + "-wn",

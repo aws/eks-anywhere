@@ -1,4 +1,3 @@
-{{- if .managementCluster }}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13,6 +12,7 @@ spec:
   policyTypes:
   - Ingress
   - Egress
+{{- if .managementCluster }}
 ---
 apiVersion: v1
 kind: Namespace
@@ -199,43 +199,5 @@ spec:
   - Ingress
   - Egress
 ---
-{{- end }}
-{{- else}}
-{{- if .kubeSystemNSHasLabel }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-all-kube-system
-  namespace: kube-system
-spec:
-  podSelector: {}
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          kubernetes.io/metadata.name: kube-system
-  policyTypes:
-  - Ingress
-  - Egress
-{{- else }}
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-all-kube-system
-  namespace: kube-system
-spec:
-  podSelector: {}
-  ingress:
-  - {}
-  egress:
-  - {}
-  policyTypes:
-  - Ingress
-  - Egress
 {{- end }}
 {{- end }}

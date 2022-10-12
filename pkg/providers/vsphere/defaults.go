@@ -25,7 +25,7 @@ func NewDefaulter(govc ProviderGovcClient) *Defaulter {
 func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec) error {
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
-		setDefaultsForMachineConfig(m)
+		m.SetDefaults()
 		if err := d.setDefaultTemplateIfMissing(ctx, spec, m); err != nil {
 			return err
 		}
@@ -58,45 +58,6 @@ func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineCon
 	if machineConfig != nil && machineConfig.Spec.MemoryMiB < 8192 {
 		logger.Info("Warning: VSphereMachineConfig MemoryMiB for etcd machines should not be less than 8192. Defaulting to 8192")
 		machineConfig.Spec.MemoryMiB = 8192
-	}
-}
-
-func setDefaultsForMachineConfig(machineConfig *anywherev1.VSphereMachineConfig) {
-	if machineConfig.Spec.MemoryMiB <= 0 {
-		logger.V(1).Info("VSphereMachineConfig MemoryMiB is not set or is empty. Defaulting to 8192.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.MemoryMiB = 8192
-	}
-
-	if machineConfig.Spec.MemoryMiB < 2048 {
-		logger.Info("Warning: VSphereMachineConfig MemoryMiB should not be less than 2048. Defaulting to 2048. Recommended memory is 8192.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.MemoryMiB = 2048
-	}
-
-	if machineConfig.Spec.NumCPUs <= 0 {
-		logger.V(1).Info("VSphereMachineConfig NumCPUs is not set or is empty. Defaulting to 2.", "machineConfig", machineConfig.Name)
-		machineConfig.Spec.NumCPUs = 2
-	}
-
-	if len(machineConfig.Spec.Users) <= 0 {
-		machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
-	}
-
-	if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-
-	if machineConfig.Spec.OSFamily == "" {
-		logger.Info("Warning: OS family not specified in machine config specification. Defaulting to Bottlerocket.")
-		machineConfig.Spec.OSFamily = anywherev1.Bottlerocket
-	}
-
-	if len(machineConfig.Spec.Users) == 0 || machineConfig.Spec.Users[0].Name == "" {
-		if machineConfig.Spec.OSFamily == anywherev1.Bottlerocket {
-			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
-		} else {
-			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
-		}
-		logger.V(1).Info("SSHUsername is not set or is empty for VSphereMachineConfig, using default", "machineConfig", machineConfig.Name, "user", machineConfig.Spec.Users[0].Name)
 	}
 }
 

@@ -366,6 +366,7 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
 	rm -rf ./pkg/providers/vsphere/test/
+	rm -rf ./pkg/providers/tinkerbell/stack/TestTinkerbellStackInstall*
 ifeq ($(UNAME), Darwin)
 	  find -E . -depth -type d -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 else
@@ -390,9 +391,25 @@ test: unit-test capd-test  ## Run unit and capd tests
 .PHONY: unit-test
 unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
-unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch amd64 $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$($(GO) list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
+
+
+# unit-test-patch is a convenience target that restricts test runs to modified
+# packages' tests. This is not a replacement for running the unit-test target,
+# but can be useful for red-green development or targeted refactoring.
+# BE WARNED: a passing unit-test-patch does not imply that unit-test will
+# pass. Unmodified packages that depend on changed behaviors will not have
+# their tests run by this target.
+.PHONY: unit-test-patch
+unit-test-patch: ## Run unit tests for packages modified locally
+unit-test-patch: $(SETUP_ENVTEST)
+unit-test-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)")
+unit-test-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test-patch:
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $(GO_PKGS) -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
+	@echo Reminder: $@ is not a substitute for make unit-test
 
 COVER_PROFILE ?= coverage.out
 
@@ -415,6 +432,21 @@ coverage-html: coverage-unit-test
 .PHONY: coverage-view
 coverage-view: coverage-unit-test
 	$(GO) tool cover -html=$(COVER_PROFILE)
+
+# coverage-view-patch opens a Go HTML coverage report limited to modified
+# packages. It builds on the unit-test-patch target. Because it covers only
+# modified packages, the list of files in the report is more manageable.
+# BE WARNED: a passing coverage-view-patch does not imply that unit-test will
+# pass. Unmodified packages that depend on changed behaviors will not have
+# their tests run by this target.
+.PHONY: coverage-view-patch
+coverage-view-patch: GO_PKGS ?= $(shell ./scripts/go-packages-in-patch.sh)
+coverage-view-patch: $(SETUP_ENVTEST)
+coverage-view-patch: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path --arch $(GO_ARCH) $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+coverage-view-patch:
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) -coverprofile=$(COVER_PROFILE) -covermode=atomic $(GO_PKGS)
+	$(GO) tool cover -html=$(COVER_PROFILE)
+	@echo Reminder: $@ is not a substitute for make unit-test
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
@@ -497,6 +529,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/snowballdevice.go -package=mocks -source "pkg/aws/snowballdevice.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/nutanix/mock_client_test.go -package=nutanix -source "pkg/providers/nutanix/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/client.go -package=mocks -source "pkg/providers/snow/snow.go"

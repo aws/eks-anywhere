@@ -92,12 +92,13 @@ func (a *AwsIamAuth) GenerateManifestForUpgrade(clusterSpec *cluster.Spec) ([]by
 	return a.templateBuilder.GenerateManifest(clusterSpec, uuid.Nil)
 }
 
-func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
+func (a *AwsIamAuth) GenerateCertKeyPairSecret(managementClusterName string) ([]byte, error) {
 	certPemBytes, keyPemBytes, err := a.certgen.GenerateIamAuthSelfSignCertKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	data := map[string]string{
+		"clusterName":  managementClusterName,
 		"namespace":    constants.EksaSystemNamespace,
 		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
 		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),

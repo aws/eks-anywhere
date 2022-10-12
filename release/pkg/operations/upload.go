@@ -24,6 +24,7 @@ import (
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
 	"github.com/aws/eks-anywhere/release/pkg/constants"
+	"github.com/aws/eks-anywhere/release/pkg/helm"
 	"github.com/aws/eks-anywhere/release/pkg/images"
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
@@ -81,8 +82,27 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 			}
 
 			if artifact.Image != nil {
-				// If the artifact is a helm chart, skip the skopeo copy as it's handled separately.
+				// If the artifact is a helm chart, skip the skopeo copy. Instead, modify the Chart.yaml to match the release tag
+				// and then use Helm package and push commands to upload chart to ECR Public
 				if !r.DryRun && (strings.HasSuffix(artifact.Image.AssetName, "helm") || strings.HasSuffix(artifact.Image.AssetName, "chart")) {
+					// Trim -helm on the packages helm chart, but don't need to trim tinkerbell chart since the AssetName is the same as the repoName
+					trimmedAsset := strings.TrimSuffix(artifact.Image.AssetName, "-helm")
+
+					helmDriver, err := helm.NewHelm()
+					if err != nil {
+						return fmt.Errorf("creating helm client: %v", err)
+					}
+
+					helmDest, err := helm.GetHelmDest(helmDriver, artifact.Image.SourceImageURI, trimmedAsset)
+					if err != nil {
+						return fmt.Errorf("getting Helm destination: %v", err)
+					}
+
+					err = helm.ModifyAndPushChartYaml(*artifact.Image, r, helmDriver, helmDest)
+					if err != nil {
+						return fmt.Errorf("modifying Chart.yaml and pushing Helm chart to destination: %v", err)
+					}
+
 					continue
 				}
 				sourceImageUri := artifact.Image.SourceImageURI

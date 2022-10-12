@@ -38,6 +38,16 @@ func (r *VSphereDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
+//+kubebuilder:webhook:path=/mutate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=true,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=mutation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+
+var _ webhook.Defaulter = &VSphereDatacenterConfig{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (r *VSphereDatacenterConfig) Default() {
+	vspheredatacenterconfiglog.Info("Setting up VSphere Datacenter Config defaults for", "name", r.Name)
+	r.SetDefaults()
+}
+
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-vspheredatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=vspheredatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.vspheredatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 

@@ -18,6 +18,8 @@ rules:
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   verbs:
   - create
   - delete
