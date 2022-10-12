@@ -63,10 +63,6 @@ func NewNutanix(t *testing.T, opts ...NutanixOpt) *Nutanix {
 		nutanixControlPlaneEndpointIP,
 		nutanixPodCidrVar,
 		nutanixServiceCidrVar,
-		// nutanixTemplateUbuntu120Var,
-		// nutanixTemplateUbuntu121Var,
-		// nutanixTemplateUbuntu122Var,
-		// nutanixTemplateUbuntu123Var,
 	}
 	checkRequiredEnvVars(t, requiredNutanixEnvVars)
 
