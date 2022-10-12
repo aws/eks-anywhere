@@ -679,11 +679,11 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 		buildOption(values)
 	}
 
-	cpCsMtName, ok := values[cpTemplateNameKey]
+	cpTemplateName, ok := values[cpTemplateNameKey]
 	if !ok {
 		return nil, fmt.Errorf("unable to determine control plane template name")
 	}
-	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", cpCsMtName), cs.controlPlaneMachineSpec, cs.now)
+	cpMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", cpTemplateName), cs.controlPlaneMachineSpec)
 	cpMachineTemplateBytes, err := templater.ObjectsToYaml(cpMachineTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("marshalling control plane machine template to byte array: %v", err)
@@ -696,11 +696,11 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	bytes = append(bytes, cpMachineTemplateBytes...)
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdCsMtTemplateName, ok := values[etcdTemplateNameKey]
+		etcdMachineTemplateName, ok := values[etcdTemplateNameKey]
 		if !ok {
 			return nil, fmt.Errorf("unable to determine etcd template name")
 		}
-		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", etcdCsMtTemplateName), &etcdMachineSpec, cs.now)
+		etcdMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", etcdMachineTemplateName), &etcdMachineSpec)
 		etcdMachineTemplateBytes, err := templater.ObjectsToYaml(etcdMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling etcd machine template to byte array: %v", err)
@@ -726,9 +726,9 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		}
 		workerSpecs = append(workerSpecs, bytes)
 
-		workerCsMtTemplateName, _ := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		workerMachineTemplateName, _ := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		machineConfig := cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		workerMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%v", workerCsMtTemplateName), &machineConfig, cs.now)
+		workerMachineTemplate := CloudStackMachineTemplate(fmt.Sprintf("%s", workerMachineTemplateName), &machineConfig)
 		workerMachineTemplateBytes, err := templater.ObjectsToYaml(workerMachineTemplate)
 		if err != nil {
 			return nil, fmt.Errorf("marshalling worker machine template to byte array: %v", err)

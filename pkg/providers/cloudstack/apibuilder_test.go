@@ -132,7 +132,7 @@ func fullCloudStackMachineTemplate() *cloudstackv1.CloudStackMachineTemplate {
 
 func TestFullCloudStackMachineTemplate(t *testing.T) {
 	tt := newApiBuilderTest(t)
-	got := cloudstack.CloudStackMachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig, time.Now)
+	got := cloudstack.CloudStackMachineTemplate("cloudstack-test-control-plane-1", tt.machineConfig)
 	want := fullCloudStackMachineTemplate()
 	tt.Expect(got.Spec.Spec.Spec).To(Equal(want.Spec.Spec.Spec))
 	tt.Expect(got.Annotations).To(Equal(want.Annotations))

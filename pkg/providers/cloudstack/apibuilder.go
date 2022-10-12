@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
@@ -78,7 +77,7 @@ func setDiskOffering(machineConfig *v1alpha1.CloudStackMachineConfigSpec, templa
 	}
 }
 
-func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec, now anywhereTypes.NowFunc) *cloudstackv1.CloudStackMachineTemplate {
+func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMachineConfigSpec) *cloudstackv1.CloudStackMachineTemplate {
 	template := &cloudstackv1.CloudStackMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: cloudstackv1.GroupVersion.String(),
@@ -91,11 +90,6 @@ func CloudStackMachineTemplate(name string, machineConfig *v1alpha1.CloudStackMa
 		},
 		Spec: cloudstackv1.CloudStackMachineTemplateSpec{
 			Spec: cloudstackv1.CloudStackMachineTemplateResource{
-				ObjectMeta: metav1.ObjectMeta{
-					CreationTimestamp: metav1.Time{
-						Time: now(),
-					},
-				},
 				Spec: cloudstackv1.CloudStackMachineSpec{
 					Details: machineConfig.UserCustomDetails,
 					Offering: cloudstackv1.CloudStackResourceIdentifier{
