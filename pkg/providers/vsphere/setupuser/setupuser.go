@@ -48,16 +48,6 @@ func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.Provide
 	return nil
 }
 
-func CreateUser(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient, password string) error {
-	// create user
-	err := govc.CreateUser(ctx, vsuc.Spec.Username, password)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	exists, err := govc.GroupExists(ctx, vsuc.Spec.GroupName)
 	if err != nil {
@@ -99,9 +89,6 @@ func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere
 }
 
 func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
-	// global on root
-	// admin to template and vm folders
-	// user on network, datastore, and resourcepool
 
 	err := setGroupRoleOnObjects(ctx, vsuc, govc, vsuc.Spec.GlobalRole, []string{vSphereRootPath})
 	if err != nil {
