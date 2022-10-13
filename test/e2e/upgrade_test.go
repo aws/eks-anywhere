@@ -1311,7 +1311,7 @@ func TestNutanixKubernetes121UbuntuWorkerNodeScaleDown3To1(t *testing.T) {
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.TestDockerKubernetes121ThreeWorkersConformanceFlow,
+		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(1)),
 	)
 }
