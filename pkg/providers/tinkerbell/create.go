@@ -185,7 +185,12 @@ func (p *Provider) readCSVToCatalogue() error {
 		return err
 	}
 
-	return hardware.TranslateAll(machines, writer, machineValidator)
+	csvErr := hardware.TranslateAll(machines, writer, machineValidator)
+	if csvErr != nil {
+		return fmt.Errorf("hardware.csv is not correct: %v", csvErr)
+	}
+
+	return csvErr
 }
 
 // selectorsFromMachineConfigs extracts all selectors from TinkerbellMachineConfigs returning them
