@@ -95,7 +95,9 @@ func (p *Provider) PostWorkloadInit(ctx context.Context, cluster *types.Cluster,
 		stack.WithBootsOnKubernetes(),
 		stack.WithHostPortEnabled(false), // disable host port on workload cluster
 		stack.WithEnvoyEnabled(true),     // use envoy on workload cluster
-		stack.WithLoadBalancerEnabled(!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
+		stack.WithLoadBalancerEnabled(
+			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) != 0 && // load balancer is handled by kube-vip in control plane nodes
+				!p.datacenterConfig.Spec.SkipLoadBalancerDeployment), // configure load balancer based on datacenterConfig.Spec.SkipLoadBalancerDeployment
 	)
 	if err != nil {
 		return fmt.Errorf("installing stack on workload cluster: %v", err)
