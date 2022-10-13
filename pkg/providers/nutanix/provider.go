@@ -39,11 +39,6 @@ var (
 	requiredEnvs                      = []string{nutanixEndpointKey, nutanixUsernameKey, nutanixPasswordKey}
 )
 
-type basicAuthCreds struct {
-	username string
-	password string
-}
-
 // Provider implements the Nutanix Provider
 type Provider struct {
 	clusterConfig    *v1alpha1.Cluster

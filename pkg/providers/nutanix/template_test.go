@@ -52,11 +52,9 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 		"eksa-unit-test": machineConf.Spec,
 	}
 
-	creds := basicAuthCreds{
-		username: "admin",
-		password: "password",
-	}
-
+	t.Setenv(nutanixUsernameKey, "admin")
+	t.Setenv(nutanixPasswordKey, "password")
+	creds := getCredsFromEnv()
 	builder := NewNutanixTemplateBuilder(&dcConf.Spec, &machineConf.Spec, &machineConf.Spec, workerConfs, creds, time.Now)
 	assert.NotNil(t, builder)
 
