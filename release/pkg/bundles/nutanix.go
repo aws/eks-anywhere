@@ -78,6 +78,7 @@ func GetNutanixBundle(r *releasetypes.ReleaseConfig, imageDigests map[string]str
 	bundle := anywherev1alpha1.NutanixBundle{
 		Version:              capxVersion,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-nutanix"],
+		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
