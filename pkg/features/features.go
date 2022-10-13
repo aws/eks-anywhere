@@ -1,7 +1,6 @@
 package features
 
 const (
-	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
 	SnowProviderEnvVar              = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
@@ -41,13 +40,6 @@ func FullLifecycleAPI() Feature {
 	return Feature{
 		Name:     "Full lifecycle API support through the EKS-A controller",
 		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
-	}
-}
-
-func CloudStackProvider() Feature {
-	return Feature{
-		Name:     "CloudStack provider support",
-		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
 	}
 }
 
