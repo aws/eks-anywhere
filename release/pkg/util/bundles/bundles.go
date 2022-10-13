@@ -58,7 +58,7 @@ func GetKubeRbacProxyImageTagOverride(r *releasetypes.ReleaseConfig) (releasetyp
 		return releasetypes.ImageTagOverride{}, errors.Cause(err)
 	}
 
-	releaseImageUri, err := images.GetReleaseImageURI(r, name, repoName, tagOptions, assettypes.ImageTagConfiguration{}, false)
+	releaseImageUri, err := images.GetReleaseImageURI(r, name, repoName, tagOptions, assettypes.ImageTagConfiguration{}, false, false)
 	if err != nil {
 		return releasetypes.ImageTagOverride{}, errors.Cause(err)
 	}
