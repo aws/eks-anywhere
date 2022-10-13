@@ -665,6 +665,9 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 		return nil, nil, err
 	}
 
+	// TODO(g-gaston): update this to use the new method CAPIWorkersSpecWithInitialNames.
+	// That implies moving to monotonically increasing names instead of based on timestamp.
+	// Upgrades should also be moved to that naming scheme for consistency. That requires bigger changes.
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {

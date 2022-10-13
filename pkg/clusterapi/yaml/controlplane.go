@@ -15,7 +15,7 @@ import (
 // It registers the basic shared mappings plus another two for the provider cluster and machine template
 // For ControlPlane that need to include more objects, wrap around the provider builder and implement BuildFromParsed
 // Any extra mappings will need to be registered manually in the Parser.
-func NewControlPlaneParserAndBuilder[C, M clusterapi.Object](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineTemplateMapping yamlutil.Mapping[M]) (*yamlutil.Parser, *ControlPlaneBuilder[C, M], error) {
+func NewControlPlaneParserAndBuilder[C clusterapi.Object[C], M clusterapi.Object[M]](logger logr.Logger, clusterMapping yamlutil.Mapping[C], machineTemplateMapping yamlutil.Mapping[M]) (*yamlutil.Parser, *ControlPlaneBuilder[C, M], error) {
 	parser := yamlutil.NewParser(logger)
 	if err := RegisterControlPlaneMappings(parser); err != nil {
 		return nil, nil, errors.Wrap(err, "building capi control plane parser")
@@ -61,11 +61,12 @@ func RegisterControlPlaneMappings(parser *yamlutil.Parser) error {
 
 // ControlPlaneBuilder implements yamlutil.Builder
 // It's a wrapper around ControlPlane to provide yaml parsing functionality.
-type ControlPlaneBuilder[C, M clusterapi.Object] struct {
+type ControlPlaneBuilder[C clusterapi.Object[C], M clusterapi.Object[M]] struct {
 	ControlPlane *clusterapi.ControlPlane[C, M]
 }
 
-func NewControlPlaneBuilder[C, M clusterapi.Object]() *ControlPlaneBuilder[C, M] {
+// NewControlPlaneBuilder builds a ControlPlaneBuilder.
+func NewControlPlaneBuilder[C clusterapi.Object[C], M clusterapi.Object[M]]() *ControlPlaneBuilder[C, M] {
 	return &ControlPlaneBuilder[C, M]{
 		ControlPlane: new(clusterapi.ControlPlane[C, M]),
 	}
@@ -78,7 +79,7 @@ func (cp *ControlPlaneBuilder[C, M]) BuildFromParsed(lookup yamlutil.ObjectLooku
 }
 
 // ProcessControlPlaneObjects finds all necessary objects in the parsed objects and sets them in the ControlPlane.
-func ProcessControlPlaneObjects[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+func ProcessControlPlaneObjects[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	ProcessCluster(cp, lookup)
 	if cp.Cluster == nil {
 		return
@@ -90,7 +91,7 @@ func ProcessControlPlaneObjects[C, M clusterapi.Object](cp *clusterapi.ControlPl
 }
 
 // ProcessCluster finds the CAPI cluster in the parsed objects and sets it in ControlPlane.
-func ProcessCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+func ProcessCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	for _, obj := range lookup {
 		if obj.GetObjectKind().GroupVersionKind().Kind == "Cluster" {
 			cp.Cluster = obj.(*clusterv1.Cluster)
@@ -99,8 +100,8 @@ func ProcessCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], l
 	}
 }
 
-// ProcessCluster finds the provider cluster in the parsed objects and sets it in ControlPlane.
-func ProcessProviderCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+// ProcessProviderCluster finds the provider cluster in the parsed objects and sets it in ControlPlane.
+func ProcessProviderCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	providerCluster := lookup.GetFromRef(*cp.Cluster.Spec.InfrastructureRef)
 	if providerCluster == nil {
 		return
@@ -111,7 +112,7 @@ func ProcessProviderCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[
 
 // ProcessKubeadmControlPlane finds the CAPI kubeadm control plane and the kubeadm control plane machine template
 // in the parsed objects and sets it in ControlPlane.
-func ProcessKubeadmControlPlane[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+func ProcessKubeadmControlPlane[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	kcp := lookup.GetFromRef(*cp.Cluster.Spec.ControlPlaneRef)
 	if kcp == nil {
 		return
@@ -128,7 +129,7 @@ func ProcessKubeadmControlPlane[C, M clusterapi.Object](cp *clusterapi.ControlPl
 }
 
 // ProcessEtcdCluster finds the CAPI etcdadm cluster (for unstacked clusters) in the parsed objects and sets it in ControlPlane.
-func ProcessEtcdCluster[C, M clusterapi.Object](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
+func ProcessEtcdCluster[C clusterapi.Object[C], M clusterapi.Object[M]](cp *clusterapi.ControlPlane[C, M], lookup yamlutil.ObjectLookup) {
 	if cp.Cluster.Spec.ManagedExternalEtcdRef == nil {
 		return
 	}

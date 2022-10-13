@@ -74,6 +74,14 @@ func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spe
 	return false, nil
 }
 
+// CAPIWorkersSpecWithInitialNames generates a yaml spec with the CAPI objects representing the worker
+// nodes for a particular eks-a cluster. It uses default initial names (ended in '-1') for the vsphere
+// machine templates and kubeadm config templates.
+func (vs *VsphereTemplateBuilder) CAPIWorkersSpecWithInitialNames(spec *cluster.Spec) (content []byte, err error) {
+	machineTemplateNames, kubeadmConfigTemplateNames := initialNamesForWorkers(spec)
+	return vs.GenerateCAPISpecWorkers(spec, machineTemplateNames, kubeadmConfigTemplateNames)
+}
+
 func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 	clusterSpec *cluster.Spec,
 	workloadTemplateNames,
@@ -366,4 +374,16 @@ func buildTemplateMapMD(
 	}
 
 	return values, nil
+}
+
+func initialNamesForWorkers(spec *cluster.Spec) (machineTemplateNames, kubeadmConfigTemplateNames map[string]string) {
+	workerGroupsLen := len(spec.Cluster.Spec.WorkerNodeGroupConfigurations)
+	machineTemplateNames = make(map[string]string, workerGroupsLen)
+	kubeadmConfigTemplateNames = make(map[string]string, workerGroupsLen)
+	for _, workerNodeGroupConfiguration := range spec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		machineTemplateNames[workerNodeGroupConfiguration.Name] = clusterapi.WorkerMachineTemplateName(spec, workerNodeGroupConfiguration)
+		kubeadmConfigTemplateNames[workerNodeGroupConfiguration.Name] = clusterapi.DefaultKubeadmConfigTemplateName(spec, workerNodeGroupConfiguration)
+	}
+
+	return machineTemplateNames, kubeadmConfigTemplateNames
 }

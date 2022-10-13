@@ -13,7 +13,7 @@ import (
 )
 
 // ControlPlane represents the provider-specific spec for a CAPI control plane using the kubeadm CP provider.
-type ControlPlane[C, M Object] struct {
+type ControlPlane[C Object[C], M Object[M]] struct {
 	Cluster *clusterv1.Cluster
 
 	// ProviderCluster is the provider-specific resource that holds the details

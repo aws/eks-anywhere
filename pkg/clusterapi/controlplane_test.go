@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/clients/kubernetes"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/controller/clientutil"
@@ -25,7 +26,7 @@ func TestControlPlaneObjects(t *testing.T) {
 	tests := []struct {
 		name         string
 		controlPlane *dockerControlPlane
-		want         []clusterapi.Object
+		want         []kubernetes.Object
 	}{
 		{
 			name: "stacked etcd",
@@ -35,7 +36,7 @@ func TestControlPlaneObjects(t *testing.T) {
 				KubeadmControlPlane:         kubeadmControlPlane(),
 				ControlPlaneMachineTemplate: dockerMachineTemplate(),
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				dockerCluster(),
 				kubeadmControlPlane(),
@@ -52,7 +53,7 @@ func TestControlPlaneObjects(t *testing.T) {
 				EtcdCluster:                 etcdCluster(),
 				EtcdMachineTemplate:         dockerMachineTemplate(),
 			},
-			want: []clusterapi.Object{
+			want: []kubernetes.Object{
 				capiCluster(),
 				dockerCluster(),
 				kubeadmControlPlane(),
