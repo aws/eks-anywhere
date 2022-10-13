@@ -33,6 +33,12 @@ func WithFolder(value string) VSphereMachineConfigFiller {
 	}
 }
 
+func WithTags(value []string) VSphereMachineConfigFiller {
+	return func(m *anywherev1.VSphereMachineConfig) {
+		m.Spec.TagIDs = value
+	}
+}
+
 func WithResourcePool(value string) VSphereMachineConfigFiller {
 	return func(m *anywherev1.VSphereMachineConfig) {
 		m.Spec.ResourcePool = value

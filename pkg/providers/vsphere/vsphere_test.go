@@ -146,7 +146,7 @@ func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (ta
 	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
 }
 
-func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]string, error) {
+func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]executables.Tag, error) {
 	return nil, nil
 }
 

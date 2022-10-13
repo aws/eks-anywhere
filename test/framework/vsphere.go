@@ -324,6 +324,14 @@ func WithPrivateNetwork() VSphereOpt {
 	}
 }
 
+func WithVSphereTags(tags []string) VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithTagsForAllMachines(tags),
+		)
+	}
+}
+
 func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers, vSphereMachineConfig(name, fillers...))

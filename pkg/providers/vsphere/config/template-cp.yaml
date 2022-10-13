@@ -537,6 +537,9 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
+{{- if .etcdTagIDs }}
+      tagIDs: {{.etcdTagIDs}}
+{{- end }}
 ---
 {{- end }}
 apiVersion: v1

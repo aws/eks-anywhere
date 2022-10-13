@@ -854,13 +854,13 @@ func (g *Govc) GetTags(ctx context.Context, path string) ([]string, error) {
 	return tags, nil
 }
 
-type tag struct {
+type Tag struct {
 	Id         string
 	Name       string
 	CategoryId string `json:"category_id,omitempty"`
 }
 
-func (g *Govc) ListTags(ctx context.Context) ([]string, error) {
+func (g *Govc) ListTags(ctx context.Context) ([]Tag, error) {
 	tagsResponse, err := g.exec(ctx, "tags.ls", "-json")
 	if err != nil {
 		return nil, fmt.Errorf("govc returned error when listing tags: %v", err)
@@ -871,17 +871,12 @@ func (g *Govc) ListTags(ctx context.Context) ([]string, error) {
 		return nil, nil
 	}
 
-	tags := make([]tag, 0)
+	tags := make([]Tag, 0)
 	if err = json.Unmarshal([]byte(tagsJson), &tags); err != nil {
 		return nil, fmt.Errorf("failed unmarshalling govc response from list tags: %v", err)
 	}
 
-	tagNames := make([]string, 0, len(tags))
-	for _, t := range tags {
-		tagNames = append(tagNames, t.Name)
-	}
-
-	return tagNames, nil
+	return tags, nil
 }
 
 func (g *Govc) AddTag(ctx context.Context, path, tag string) error {

@@ -639,7 +639,11 @@ func TestListTagsSuccessHasTags(t *testing.T) {
 			"category_id": "kubernetesChannel"
 		}
 	]`
-	wantTags := []string{"eksd:1.19-4", "kubernetesChannel:1.19"}
+
+	wantTags := []executables.Tag{
+		executables.Tag{Name: "eksd:1.19-4", Id: "urn:vmomi:InventoryServiceTag:5555:GLOBAL", CategoryId: "eksd"},
+		executables.Tag{Name: "kubernetesChannel:1.19", Id: "urn:vmomi:InventoryServiceTag:5555:GLOBAL", CategoryId: "kubernetesChannel"},
+	}
 
 	_, g, executable, env := setup(t)
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "tags.ls", "-json").Return(*bytes.NewBufferString(tagsReponse), nil)

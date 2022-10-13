@@ -181,6 +181,7 @@ func buildTemplateMapCP(
 		"controlPlaneVMsNumCPUs":               controlPlaneMachineSpec.NumCPUs,
 		"controlPlaneDiskGiB":                  controlPlaneMachineSpec.DiskGiB,
 		"controlPlaneTagIDs":                   controlPlaneMachineSpec.TagIDs,
+		"etcdTagIDs":                           etcdMachineSpec.TagIDs,
 		"controlPlaneSshUsername":              firstControlPlaneMachinesUser.Name,
 		"vsphereControlPlaneSshAuthorizedKey":  controlPlaneSSHKey,
 		"podCidrs":                             clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
