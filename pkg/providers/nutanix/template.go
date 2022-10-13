@@ -93,7 +93,7 @@ func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, bu
 			Data: encodedCreds,
 		}},
 	}
-	credsJSON, err := json.Marshal(nutanixCreds)
+	credsJSON, err := json.Marshal(nutanixCreds.Credentials)
 	if err != nil {
 		return nil, err
 	}

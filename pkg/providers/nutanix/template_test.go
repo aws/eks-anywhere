@@ -2,6 +2,7 @@ package nutanix
 
 import (
 	_ "embed"
+	"os"
 	"testing"
 	"time"
 
@@ -79,4 +80,7 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
 	assert.NoError(t, err)
 	assert.NotNil(t, secretSpec)
+	expectedSecret, err := os.ReadFile("testdata/templated_secret.yaml")
+	require.NoError(t, err)
+	assert.Equal(t, expectedSecret, secretSpec)
 }
