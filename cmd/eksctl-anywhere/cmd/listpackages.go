@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -34,10 +33,6 @@ func init() {
 		"Path to a kubeconfig file to use when source is a cluster.")
 	listPackagesCommand.Flags().StringVar(&lpo.clusterName, "cluster", "",
 		"Name of cluster for package list.")
-
-	if err := listPackagesCommand.MarkFlagRequired("cluster"); err != nil {
-		log.Fatalf("cluster flag required: %s", err)
-	}
 }
 
 var listPackagesCommand = &cobra.Command{
