@@ -35,7 +35,7 @@ metadata:
   name: eksa-unit-test
 spec:
   datacenter: "myDatacenter"
-  network: "myNetwork"
+  network: "/myDatacenter/network-1"
   server: "myServer"
   insecure: false
   thumbprint: "myTlsThumbprint"
@@ -45,10 +45,12 @@ kind: VSphereMachineConfig
 metadata:
   name: eksa-unit-test-cp
 spec:
+  datastore: "myDatastore"
   diskGiB: 25
   memoryMiB: 8192
   numCPUs: 2
   osFamily: ubuntu
+  resourcePool: "myResourcePool"
   users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -59,10 +61,12 @@ kind: VSphereMachineConfig
 metadata:
   name: eksa-unit-test
 spec:
+  datastore: "myDatastore"
   diskGiB: 25
   memoryMiB: 8192
   numCPUs: 2
   osFamily: ubuntu
+  resourcePool: "myResourcePool"
   users:
     - name: mySshUsername
       sshAuthorizedKeys:

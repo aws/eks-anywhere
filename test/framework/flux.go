@@ -414,7 +414,8 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		if err != nil {
 			return err
 		}
-		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count += 1
+		count := *clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count + 1
+		clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = &count
 
 		providerConfig := providerConfig{
 			datacenterConfig: vsphereClusterConfig,
@@ -521,7 +522,7 @@ func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context, opts ...
 	if err != nil {
 		return err
 	}
-	if err := e.waitForWorkerScaling(clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Name, clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count); err != nil {
+	if err := e.waitForWorkerScaling(clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Name, *clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count); err != nil {
 		return err
 	}
 
@@ -602,7 +603,7 @@ func (e *ClusterE2ETest) updateWorkerNodeCountValue(ctx context.Context, newValu
 	if err != nil {
 		return "", err
 	}
-	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = newValue
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = &newValue
 
 	p, err := e.updateEKSASpecInGit(ctx, clusterSpec, *providerConfig)
 	if err != nil {

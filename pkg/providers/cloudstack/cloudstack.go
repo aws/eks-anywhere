@@ -867,7 +867,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"cloudstackSymlinks":               workerNodeGroupMachineSpec.Symlinks,
 		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
-		"workerReplicas":                   workerNodeGroupConfiguration.Count,
+		"workerReplicas":                   *workerNodeGroupConfiguration.Count,
 		"workerSshUsername":                workerNodeGroupMachineSpec.Users[0].Name,
 		"cloudstackWorkerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"format":                           format,

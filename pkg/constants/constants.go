@@ -14,6 +14,7 @@ const (
 	CaptSystemNamespace                      = "capt-system"
 	CapaSystemNamespace                      = "capa-system"
 	CapasSystemNamespace                     = "capas-system"
+	CapxSystemNamespace                      = "capx-system"
 	CertManagerNamespace                     = "cert-manager"
 	DefaultNamespace                         = "default"
 	EtcdAdmBootstrapProviderSystemNamespace  = "etcdadm-bootstrap-provider-system"
@@ -24,9 +25,9 @@ const (
 	LocalPathStorageNamespace                = "local-path-storage"
 	EtcdAdmBootstrapProviderName             = "bootstrap-etcdadm-bootstrap"
 	EtcdadmControllerProviderName            = "bootstrap-etcdadm-controller"
-	DefaultHttpsPort                         = "443"
 	DefaultRegistryMirrorOCINamespace        = "eks-anywhere"
 	DefaultRegistryMirrorPackageOCINamespace = "curated-packages"
+	DefaultHttpsPort                         = "443"
 	DefaultWorkerNodeGroupName               = "md-0"
 
 	VSphereProviderName    = "vsphere"

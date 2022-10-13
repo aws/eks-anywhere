@@ -28,6 +28,7 @@ import (
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 var (
@@ -190,7 +191,7 @@ func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	bootstrapCluster := &types.Cluster{
@@ -227,7 +228,7 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -256,7 +257,7 @@ func TestClusterManagerCreateWorkloadClusterTimeoutOverrideSuccess(t *testing.T)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -285,7 +286,7 @@ func TestClusterManagerRunPostCreateWorkloadClusterSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -311,7 +312,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 2
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -342,7 +343,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdTimeoutOverrideSucce
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 2
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -372,7 +373,7 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesTimeout(t *tes
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -403,7 +404,7 @@ func TestClusterManagerRunPostCreateWorkloadClusterWaitForMachinesSuccessAfterRe
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = clusterName
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 
 	mgmtCluster := &types.Cluster{
@@ -1025,7 +1026,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
 	})
 	capiClusterName := "capi-cluster"
 	clustersNotReady := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}, Status: types.ClusterStatus{
@@ -1068,7 +1069,7 @@ func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 	ctx := context.Background()
 
@@ -1092,7 +1093,7 @@ func TestClusterManagerMoveCAPIErrorGetClustersBeforeMove(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 	ctx := context.Background()
 
@@ -1115,7 +1116,7 @@ func TestClusterManagerMoveCAPIErrorWaitForClusterReady(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 	ctx := context.Background()
 
@@ -1141,7 +1142,7 @@ func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 	ctx := context.Background()
 
@@ -1166,7 +1167,7 @@ func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count = ptr.Int(3)
 	})
 	ctx := context.Background()
 
@@ -1194,7 +1195,7 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = to.Name
 		s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
-		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
+		s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
 	})
 	ctx := context.Background()
 
@@ -1759,7 +1760,7 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
-				Count: 1,
+				Count: ptr.Int(1),
 				MachineGroupRef: &v1alpha1.Ref{
 					Name: clusterName + "-worker",
 				},
@@ -1983,5 +1984,15 @@ func TestClusterManagerDeletePackageResources(t *testing.T) {
 	tt.mocks.client.EXPECT().DeletePackageResources(tt.ctx, tt.cluster, tt.clusterName).Return(nil)
 
 	err := tt.clusterManager.DeletePackageResources(tt.ctx, tt.cluster, tt.clusterName)
+	tt.Expect(err).To(BeNil())
+}
+
+func TestCreateAwsIamAuthCaSecretSuccess(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.awsIamAuth.EXPECT().GenerateCertKeyPairSecret(tt.clusterName)
+	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, test.OfType("[]uint8"))
+
+	err := tt.clusterManager.CreateAwsIamAuthCaSecret(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).To(BeNil())
 }

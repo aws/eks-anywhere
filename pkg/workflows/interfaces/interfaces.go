@@ -39,7 +39,7 @@ type ClusterManager interface {
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
-	CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error
+	CreateAwsIamAuthCaSecret(ctx context.Context, bootstrapCluster *types.Cluster, workloadClusterName string) error
 	DeletePackageResources(ctx context.Context, managementCluster *types.Cluster, clusterName string) error
 }
 

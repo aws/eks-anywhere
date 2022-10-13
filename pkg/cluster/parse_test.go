@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestParseConfig(t *testing.T) {
@@ -52,7 +53,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "VSphereMachineConfig",
 								Name: "eksa-unit-test",
@@ -84,7 +85,7 @@ func TestParseConfig(t *testing.T) {
 				},
 				Spec: anywherev1.VSphereDatacenterConfigSpec{
 					Datacenter: "myDatacenter",
-					Network:    "myNetwork",
+					Network:    "/myDatacenter/network-1",
 					Server:     "myServer",
 					Thumbprint: "myTlsThumbprint",
 					Insecure:   false,
@@ -100,10 +101,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test-cp",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -119,10 +122,12 @@ func TestParseConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: anywherev1.VSphereMachineConfigSpec{
-						DiskGiB:   25,
-						MemoryMiB: 8192,
-						NumCPUs:   2,
-						OSFamily:  anywherev1.Ubuntu,
+						Datastore:    "myDatastore",
+						DiskGiB:      25,
+						MemoryMiB:    8192,
+						NumCPUs:      2,
+						OSFamily:     anywherev1.Ubuntu,
+						ResourcePool: "myResourcePool",
 						Users: []anywherev1.UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -154,7 +159,7 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "CloudStackMachineConfig",
 								Name: "eksa-unit-test",
@@ -249,7 +254,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "SnowMachineConfig",
 								Name: "eksa-unit-test",
@@ -334,7 +339,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{
@@ -485,7 +490,7 @@ func TestParseConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
 							Name:  "workers-1",
-							Count: 1,
+							Count: ptr.Int(1),
 						},
 					},
 					DatacenterRef: anywherev1.Ref{

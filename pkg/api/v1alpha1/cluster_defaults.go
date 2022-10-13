@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 var clusterDefaults = []func(*Cluster) error{
@@ -50,6 +51,16 @@ func setWorkerNodeGroupDefaults(cluster *Cluster) error {
 		logger.V(1).Info("First worker node group name not specified. Defaulting name to md-0.")
 		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
+
+	for i := range cluster.Spec.WorkerNodeGroupConfigurations {
+		w := &cluster.Spec.WorkerNodeGroupConfigurations[i]
+		if w.Count == nil && w.AutoScalingConfiguration != nil {
+			w.Count = &w.AutoScalingConfiguration.MinCount
+		} else if w.Count == nil {
+			w.Count = ptr.Int(1)
+		}
+	}
+
 	return nil
 }
 

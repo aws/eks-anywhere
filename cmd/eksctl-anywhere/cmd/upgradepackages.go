@@ -65,14 +65,7 @@ func upgradePackages(ctx context.Context) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 
-	b := curatedpackages.NewBundleReader(
-		kubeConfig,
-		upo.clusterName,
-		ipo.source,
-		deps.Kubectl,
-		nil,
-		nil,
-	)
+	b := curatedpackages.NewBundleReader(kubeConfig, upo.clusterName, deps.Kubectl, nil, nil)
 	activeController, err := b.GetActiveController(ctx)
 	if err != nil {
 		return err

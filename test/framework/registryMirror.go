@@ -33,6 +33,7 @@ var (
 func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		var endpoint, hostPort, ociNamespace, packageOCINamespace, username, password, registryCert string
+		port := "443"
 
 		switch providerName {
 		case constants.TinkerbellProviderName:
@@ -44,6 +45,9 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 			username = os.Getenv(RegistryUsernameTinkerbellVar)
 			password = os.Getenv(RegistryPasswordTinkerbellVar)
 			registryCert = os.Getenv(RegistryCACertTinkerbellVar)
+			if os.Getenv(RegistryPortTinkerbellVar) != "" {
+				port = os.Getenv(RegistryPortTinkerbellVar)
+			}
 		default:
 			checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
 			endpoint = os.Getenv(RegistryEndpointVar)
@@ -53,6 +57,9 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 			username = os.Getenv(RegistryUsernameVar)
 			password = os.Getenv(RegistryPasswordVar)
 			registryCert = os.Getenv(RegistryCACertVar)
+			if os.Getenv(RegistryPortVar) != "" {
+				port = os.Getenv(RegistryPortVar)
+			}
 		}
 
 		err := buildDocker(e.T).Login(context.Background(), hostPort, username, password)
@@ -62,7 +69,7 @@ func WithRegistryMirrorEndpointAndCert(providerName string) ClusterE2ETestOpt {
 		certificate, err := base64.StdEncoding.DecodeString(registryCert)
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(endpoint, ociNamespace, packageOCINamespace, string(certificate)),
+				api.WithRegistryMirror(endpoint, port, ociNamespace, packageOCINamespace, string(certificate)),
 			)
 		}
 		// Set env vars for helm login/push

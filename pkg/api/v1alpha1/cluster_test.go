@@ -10,6 +10,8 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -135,7 +137,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -183,7 +185,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -231,7 +233,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -279,7 +281,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -337,7 +339,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -385,7 +387,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test-2",
@@ -433,7 +435,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -485,7 +487,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -537,7 +539,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -590,7 +592,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -644,7 +646,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{
 						{
 							Name:  "md-0",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -659,7 +661,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 						{
 							Name:  "md-1",
-							Count: 3,
+							Count: ptr.Int(3),
 							MachineGroupRef: &Ref{
 								Kind: VSphereMachineConfigKind,
 								Name: "eksa-unit-test-2",
@@ -924,7 +926,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -972,7 +974,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1020,7 +1022,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1068,7 +1070,7 @@ func TestGetClusterConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
 						Name:  "md-0",
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1145,7 +1147,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -1240,7 +1242,7 @@ func TestParseClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
-						Count: 3,
+						Count: ptr.Int(3),
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
 							Name: "eksa-unit-test",
@@ -2306,43 +2308,88 @@ func TestValidateMirrorConfig(t *testing.T) {
 
 func TestValidateAutoscalingConfig(t *testing.T) {
 	tests := []struct {
-		name              string
-		wantErr           string
-		autoscalingConfig *AutoScalingConfiguration
+		name                         string
+		wantErr                      string
+		workerNodeGroupConfiguration *WorkerNodeGroupConfiguration
 	}{
 		{
-			name:              "autoscaling config nil",
-			wantErr:           "",
-			autoscalingConfig: nil,
+			name:                         "autoscaling config nil",
+			wantErr:                      "",
+			workerNodeGroupConfiguration: nil,
 		},
 		{
 			name:    "autoscaling config valid",
 			wantErr: "",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 1,
-				MaxCount: 2,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(2),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 1,
+					MaxCount: 2,
+				},
 			},
 		},
 		{
 			name:    "negative min count",
 			wantErr: "min count must be non negative",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: -1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: -1,
+				},
 			},
 		},
 		{
 			name:    "min count > max count",
 			wantErr: "min count must be no greater than max count",
-			autoscalingConfig: &AutoScalingConfiguration{
-				MinCount: 2,
-				MaxCount: 1,
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 1,
+				},
+			},
+		},
+		{
+			name:    "count < min count",
+			wantErr: "min count must be less than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count > max count",
+			wantErr: "max count must be greater than or equal to count",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(4),
+				AutoScalingConfiguration: &AutoScalingConfiguration{
+					MinCount: 2,
+					MaxCount: 3,
+				},
+			},
+		},
+		{
+			name:    "count < 0 with nil autoscaling",
+			wantErr: "worker node count must be zero or greater if autoscaling is not enabled",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(-1),
+			},
+		},
+		{
+			name:    "nil autoscaling",
+			wantErr: "",
+			workerNodeGroupConfiguration: &WorkerNodeGroupConfiguration{
+				Count: ptr.Int(1),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			err := validateAutoscalingConfig(tt.autoscalingConfig)
+			err := validateAutoscalingConfig(tt.workerNodeGroupConfiguration)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())
 			} else {
@@ -2498,4 +2545,36 @@ func TestValidateControlPlaneEndpoint(t *testing.T) {
 func TestGetClusterDefaultKubernetesVersion(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(GetClusterDefaultKubernetesVersion()).To(Equal(Kube123))
+}
+
+func TestClusterWorkerNodeConfigCount(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    []WorkerNodeGroupConfiguration
+	}{
+		{
+			name: "with worker node config count",
+			cluster: &Cluster{
+				Spec: ClusterSpec{},
+			},
+			want: []WorkerNodeGroupConfiguration{
+				{
+					Name:                     "",
+					Count:                    ptr.Int(5),
+					AutoScalingConfiguration: nil,
+					MachineGroupRef:          nil,
+					Taints:                   nil,
+					Labels:                   nil,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cg := NewClusterGenerate("test-cluster", WorkerNodeConfigCount(5))
+			g := NewWithT(t)
+			g.Expect(cg.Spec.WorkerNodeGroupConfigurations).To(Equal(tt.want))
+		})
+	}
 }

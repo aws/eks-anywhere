@@ -78,7 +78,7 @@ func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
 
 func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
-		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: &count}}
 	}
 }
 
@@ -436,11 +436,13 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 			return errors.New("must specify name for worker nodes")
 		}
 
-		if workerNodeGroupConfig.AutoScalingConfiguration == nil && workerNodeGroupConfig.Count <= 0 {
-			return errors.New("worker node count must be positive if autoscaling is not enabled")
+		if workerNodeGroupConfig.Count == nil {
+			// This block should never fire. If it does, it means we have a bug in how we set our defaults.
+			// When Count == nil it should be set to 1 by SetDefaults method prior to reaching validation.
+			return errors.New("worker node count must be >= 0")
 		}
 
-		if err := validateAutoscalingConfig(workerNodeGroupConfig.AutoScalingConfiguration); err != nil {
+		if err := validateAutoscalingConfig(&workerNodeGroupConfig); err != nil {
 			return fmt.Errorf("validating autoscaling configuration: %v", err)
 		}
 
@@ -475,15 +477,27 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	return nil
 }
 
-func validateAutoscalingConfig(autoscalingConfig *AutoScalingConfiguration) error {
-	if autoscalingConfig == nil {
+func validateAutoscalingConfig(w *WorkerNodeGroupConfiguration) error {
+	if w == nil {
 		return nil
 	}
-	if autoscalingConfig.MinCount < 0 {
+	if w.AutoScalingConfiguration == nil && *w.Count < 0 {
+		return errors.New("worker node count must be zero or greater if autoscaling is not enabled")
+	}
+	if w.AutoScalingConfiguration == nil {
+		return nil
+	}
+	if w.AutoScalingConfiguration.MinCount < 0 {
 		return errors.New("min count must be non negative")
 	}
-	if autoscalingConfig.MinCount > autoscalingConfig.MaxCount {
+	if w.AutoScalingConfiguration.MinCount > w.AutoScalingConfiguration.MaxCount {
 		return errors.New("min count must be no greater than max count")
+	}
+	if w.AutoScalingConfiguration.MinCount > *w.Count {
+		return errors.New("min count must be less than or equal to count")
+	}
+	if w.AutoScalingConfiguration.MaxCount < *w.Count {
+		return errors.New("max count must be greater than or equal to count")
 	}
 
 	return nil

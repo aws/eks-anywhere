@@ -55,7 +55,7 @@ func TestGenerateCertKeyPairSecretSuccess(t *testing.T) {
 
 	mockCertgen.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte{}, []byte{}, nil)
 
-	gotFileContent, err := awsIamAuth.GenerateCertKeyPairSecret()
+	gotFileContent, err := awsIamAuth.GenerateCertKeyPairSecret("test-cluster")
 	if err != nil {
 		t.Fatalf("awsiamauth.GenerateCertKeyPairSecret()\n error = %v\n wantErr = nil", err)
 	}
@@ -69,7 +69,7 @@ func TestGenerateCertKeyPairSecretFail(t *testing.T) {
 
 	mockCertgen.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return(nil, nil, certGenErr)
 
-	_, err := awsIamAuth.GenerateCertKeyPairSecret()
+	_, err := awsIamAuth.GenerateCertKeyPairSecret("test-cluster")
 	if !reflect.DeepEqual(err, wantErr) {
 		t.Fatalf("error = %v\n wantErr = %v", err, wantErr)
 	}
