@@ -1857,7 +1857,6 @@ func TestInstallCustomProviderComponentsKubeVipEnabled(t *testing.T) {
 	oldCloudstackKubeVipDisabledVal := os.Getenv(features.CloudStackKubeVipDisabledEnvVar)
 	os.Unsetenv(features.CloudStackKubeVipDisabledEnvVar)
 	defer os.Setenv(features.CloudStackKubeVipDisabledEnvVar, oldCloudstackKubeVipDisabledVal)
-	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeConfigFile).Return(nil)
 	kubectl.EXPECT().SetEksaControllerEnvVar(ctx, features.CloudStackKubeVipDisabledEnvVar, "false", kubeConfigFile).Return(nil)
 	if err := provider.InstallCustomProviderComponents(ctx, kubeConfigFile); err != nil {
 		t.Fatalf("unexpected failure %v", err)
