@@ -9,7 +9,7 @@ import (
 )
 
 type PackageController interface {
-	InstallController(ctx context.Context) error
+	EnableCuratedPackages(ctx context.Context) error
 	IsInstalled(ctx context.Context) bool
 }
 
@@ -37,15 +37,7 @@ func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController
 
 func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 	PrintLicense()
-
-	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
-
-	err := VerifyCertManagerExists(ctx, pi.kubectl, kubeConfig)
-	if err != nil {
-		return err
-	}
-
-	err = pi.installPackagesController(ctx)
+	err := pi.installPackagesController(ctx)
 	if err != nil {
 		logger.MarkFail("Error when installing curated packages on workload cluster; please install through eksctl anywhere install packagecontroller command", "error", err)
 		return err
@@ -62,7 +54,7 @@ func (pi *Installer) InstallCuratedPackages(ctx context.Context) error {
 
 func (pi *Installer) installPackagesController(ctx context.Context) error {
 	logger.Info("Installing curated packages controller on management cluster")
-	err := pi.packageController.InstallController(ctx)
+	err := pi.packageController.EnableCuratedPackages(ctx)
 	if err != nil {
 		return err
 	}

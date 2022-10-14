@@ -627,9 +627,15 @@ func TestNutanixProviderMachineDeploymentsToDelete(t *testing.T) {
 }
 
 func TestNutanixProviderPreCAPIInstallOnBootstrap(t *testing.T) {
-	provider := testDefaultNutanixProvider(t)
-	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+	executable.EXPECT().ExecuteWithStdin(gomock.Any(), gomock.Any(), gomock.Any()).Return(bytes.Buffer{}, nil)
+	kubectl := executables.NewKubectl(executable)
+	mockClient := NewMockClient(ctrl)
+	provider := testNutanixProvider(t, mockClient, kubectl)
+
 	cluster := &types.Cluster{Name: "eksa-unit-test"}
+	clusterSpec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
 	err := provider.PreCAPIInstallOnBootstrap(context.Background(), cluster, clusterSpec)
 	assert.NoError(t, err)
 }

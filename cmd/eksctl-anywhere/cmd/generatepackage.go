@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
-
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -25,9 +23,6 @@ var gpOptions = &generatePackageOptions{}
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
 	generatePackageCommand.Flags().StringVar(&gpOptions.clusterName, "cluster", "", "Name of cluster for package generation")
-	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeVersion, "kube-version", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeConfig, "kubeconfig", "",
