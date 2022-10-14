@@ -536,28 +536,6 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	}
 }
 
-func (e *ClusterE2ETest) WaitForMachineDeploymentReady(machineDeploymentName string) {
-	ctx := context.Background()
-	e.T.Logf("Waiting for machine deployment %s to be ready for cluster %s", machineDeploymentName, e.ClusterName)
-	err := e.KubectlClient.WaitForMachineDeploymentReady(ctx, e.cluster(), "5m", machineDeploymentName)
-	if err != nil {
-		e.T.Fatal(err)
-	}
-}
-
-func (e *ClusterE2ETest) GetCapiMachinesForCluster(clusterName string) map[string]types.Machine {
-	ctx := context.Background()
-	capiMachines, err := e.KubectlClient.GetMachines(ctx, e.cluster(), clusterName)
-	if err != nil {
-		e.T.Fatal(err)
-	}
-	machinesMap := make(map[string]types.Machine, 0)
-	for _, machine := range capiMachines {
-		machinesMap[machine.Metadata.Name] = machine
-	}
-	return machinesMap
-}
-
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.ClusterConfigLocation, fillers...)
