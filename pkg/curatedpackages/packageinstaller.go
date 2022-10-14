@@ -25,7 +25,7 @@ type Installer struct {
 	mgmtKubeconfig    string
 }
 
-// NewInstaller installs packageController and packages during cluster creation
+// NewInstaller installs packageController and packages during cluster creation.
 func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController, spec *cluster.Spec, packagesLocation, mgmtKubeconfig string) *Installer {
 	return &Installer{
 		spec:              spec,
