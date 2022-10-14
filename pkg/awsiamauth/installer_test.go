@@ -91,7 +91,7 @@ func TestInstallAWSIAMAuth(t *testing.T) {
 		},
 	}
 
-	installer := awsiamauth.NewAwsIamAuth(certs, clusterID, k8s, writer)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
 
 	err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
 	if err != nil {
@@ -194,7 +194,7 @@ func TestInstallAWSIAMAuthErrors(t *testing.T) {
 				},
 			}
 
-			installer := awsiamauth.NewAwsIamAuth(certs, clusterID, k8s, writer)
+			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
 
 			err := installer.InstallAWSIAMAuth(context.Background(), &types.Cluster{}, &types.Cluster{}, spec)
 			if err == nil {
@@ -226,7 +226,7 @@ func TestCreateAndInstallAWSIAMAuthCASecret(t *testing.T) {
 	certs := cryptomocks.NewMockCertificateGenerator(ctrl)
 	certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil)
 
-	installer := awsiamauth.NewAwsIamAuth(certs, clusterID, k8s, writer)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
 
 	err := installer.CreateAndInstallAWSIAMAuthCASecret(context.Background(), &types.Cluster{}, "test-cluster")
 	if err != nil {
@@ -269,7 +269,7 @@ func TestCreateAndInstallAWSIAMAuthCASecretErrors(t *testing.T) {
 			certs := cryptomocks.NewMockCertificateGenerator(ctrl)
 			certs.EXPECT().GenerateIamAuthSelfSignCertKeyPair().Return([]byte("ca-cert"), []byte("ca-key"), nil)
 
-			installer := awsiamauth.NewAwsIamAuth(certs, clusterID, k8s, writer)
+			installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
 
 			err := installer.CreateAndInstallAWSIAMAuthCASecret(context.Background(), &types.Cluster{}, "test-cluster")
 
@@ -301,7 +301,7 @@ func TestUpgradeAWSIAMAuth(t *testing.T) {
 		},
 	)
 
-	installer := awsiamauth.NewAwsIamAuth(certs, clusterID, k8s, writer)
+	installer := awsiamauth.NewInstaller(certs, clusterID, k8s, writer)
 
 	spec := &cluster.Spec{
 		Config: &cluster.Config{
