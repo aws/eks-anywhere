@@ -129,10 +129,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	}
 	defer close(ctx, deps)
 
-	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("provider cloudstack is not supported in this release")
-	}
-
 	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
 		return fmt.Errorf("provider snow is not supported in this release")
 	}

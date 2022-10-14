@@ -3,7 +3,6 @@ package eksd_test
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -15,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/eksd"
 	"github.com/aws/eks-anywhere/pkg/eksd/mocks"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -56,13 +54,6 @@ func newInstallerTest(t *testing.T) *installerTest {
 }
 
 func TestInstallEksdCRDsSuccess(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Unsetenv(features.CloudStackProviderEnvVar)
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-	if err != nil {
-		return
-	}
-
 	tt := newInstallerTest(t)
 	tt.clusterSpec.Bundles = bundle()
 
@@ -74,13 +65,6 @@ func TestInstallEksdCRDsSuccess(t *testing.T) {
 }
 
 func TestInstallEksdManifestSuccess(t *testing.T) {
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	err := os.Unsetenv(features.CloudStackProviderEnvVar)
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-	if err != nil {
-		return
-	}
-
 	tt := newInstallerTest(t)
 	tt.clusterSpec.Bundles = bundle()
 

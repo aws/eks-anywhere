@@ -41,8 +41,8 @@ func TestValidateSupportedProvider(t *testing.T) {
 		provider string
 	}{
 		{
-			name:     "FailureUnsupportedCloudstackProvider",
-			wantErr:  errors.New("provider cloudstack is not supported in this release"),
+			name:     "SuccessSupportedCloudstackProvider",
+			wantErr:  nil,
 			provider: constants.CloudStackProviderName,
 		},
 		{

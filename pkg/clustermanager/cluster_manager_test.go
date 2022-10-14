@@ -1214,7 +1214,6 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
@@ -1237,7 +1236,6 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 
 func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
@@ -1672,7 +1670,7 @@ func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testi
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
-	t.Setenv(features.CloudStackProviderEnvVar, "")
+	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
