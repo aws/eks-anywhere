@@ -3,6 +3,7 @@ package filewriter
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -49,7 +50,7 @@ func (w *Writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 
 // Create creates a file called fileName in the directory configured in w. If the file already
 // exists it is truncated.
-func (w *Writer) Create(fileName string) (fh *os.File, absPath string, err error) {
+func (w *Writer) Create(fileName string) (fh io.WriteCloser, absPath string, err error) {
 	absPath = filepath.Join(w.dir, fileName)
 	fh, err = os.Create(absPath)
 	if err != nil {

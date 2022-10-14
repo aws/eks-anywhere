@@ -163,6 +163,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	if features.UseNewWorkflows().IsActive() {
 		wflw := &management.CreateCluster{
 			Spec: clusterSpec,
+			FS:   deps.Writer,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
 		err = wflw.Run(ctx)

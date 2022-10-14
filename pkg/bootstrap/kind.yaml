@@ -1,0 +1,51 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+kubeadmConfigPatches:
+  - |
+    kind: ClusterConfiguration
+    dns:
+      type: CoreDNS
+      imageRepository: {{.CorednsRepository}}
+      imageTag: {{.CorednsVersion}}
+    etcd:
+      local:
+        imageRepository: {{.EtcdRepository}}
+        imageTag: {{.EtcdVersion}}
+    imageRepository: {{.KubernetesRepository}}
+    kubernetesVersion: {{.KubernetesVersion}}
+{{- if (ne .RegistryMirrorEndpoint "") }}
+containerdConfigPatches:
+  - |
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+        endpoint = ["https://{{.RegistryMirrorEndpoint}}"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.RegistryMirrorEndpoint}}".tls]
+{{- if (eq .RegistryCACertPath "") }}
+        insecure_skip_verify = true
+{{- else }}
+        ca_file = "/etc/containerd/certs.d/{{.RegistryMirrorEndpoint}}/ca.crt"
+{{- end }}
+{{- end }}
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) (ne (len .ExtraPortMappings) 0)}}
+nodes:
+- role: control-plane
+{{- if or (ne .RegistryCACertPath "") (.DockerExtraMounts) }}
+  extraMounts:
+{{- if (ne .RegistryCACertPath "") }}
+    - containerPath: /etc/containerd/certs.d
+      hostPath: {{.RegistryCACertPath}}
+      readOnly: true
+{{- end }}
+{{- if .DockerExtraMounts }}
+    - hostPath: /var/run/docker.sock
+      containerPath: /var/run/docker.sock
+{{- end }}
+{{- end }}
+{{- if ne (len .ExtraPortMappings) 0 }}
+  extraPortMappings:
+{{- range .ExtraPortMappings }}
+  - containerPort: {{ . }}
+    hostPort: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}
