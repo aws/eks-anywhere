@@ -46,23 +46,23 @@ Create credentials for this user and set and export the following environment va
 ```bash
 export EKSA_AWS_ACCESS_KEY_ID="your*access*id"
 export EKSA_AWS_SECRET_ACCESS_KEY="your*secret*key"
-export AWS_ACCESS_KEY_ID="your*access*id"
-export AWS_SECRET_ACCESS_KEY="your*secret*key"
 ```
 Make sure you are authenticated with the AWS CLI
 
-```
+```bash
+export AWS_ACCESS_KEY_ID="your*access*id"
+export AWS_SECRET_ACCESS_KEY="your*secret*key"
 aws sts get-caller-identity
 ```
 
 Login to docker
 
-```
+```bash
 aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 Verify you can pull an image
-```
+```bash
 docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
 ```
 If the image downloads successfully, it worked!
@@ -76,7 +76,7 @@ eksctl anywhere list packages --source registry --kube-version 1.23
 ```
 
 Example command output:
-```                 
+```              
 Package                 Version(s)                                       
 -------                 ----------                                       
 hello-eks-anywhere      0.1.1-a217465b3b2d165634f9c24a863fa67349c7268a   
@@ -89,7 +89,7 @@ emissary                3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467
 
 The example shows how to install the `harbor` package from the [curated package list]({{< relref "../../reference/packagespec" >}}).
 ```bash
-eksctl anywhere generate package harbor --source registry --kube-version 1.23 > packages.yaml
+eksctl anywhere generate package harbor --kube-version 1.23 > packages.yaml
 ```
 
 Available curated packages are listed below.

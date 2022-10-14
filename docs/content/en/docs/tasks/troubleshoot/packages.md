@@ -39,14 +39,20 @@ kubectl get packages,packagebundles,packagebundlecontrollers -A
 
 You should see an active packagebundlecontroller and an available bundle. The packagebundlecontroller should indicate the active bundle. It may take a few minutes to download and active the latest bundle. Thest state of the package in this example is installing and there is an error downloading the chart.
 ```bash
-NAMESPACE       NAME                                         PACKAGE   AGE     STATE        CURRENTVERSION   TARGETVERSION                                                   DETAIL
-eksa-packages   package.packages.eks.amazonaws.com/my-test   Test      2m33s   installing                    v0.1.1-8b3810e1514b7432e032794842425accc837757a-helm (latest)   loading helm chart my-test: locating helm chart oci://public.ecr.aws/eks-anywhere/hello-eks-anywhere tag sha256:64ea03b119d2421f9206252ff4af4bf7cdc2823c343420763e0e6fc20bf03b68: failed to download "oci://public.ecr.aws/eks-anywhere/hello-eks-anywhere" at version "v0.1.1-8b3810e1514b7432e032794842425accc837757a-helm"
+NAMESPACE              NAME                                          PACKAGE              AGE   STATE       CURRENTVERSION                                   TARGETVERSION                                             DETAIL
+eksa-packages-sammy    package.packages.eks.amazonaws.com/my-hello   hello-eks-anywhere   42h   installed   0.1.1-bc7dc6bb874632972cd92a2bca429a846f7aa785   0.1.1-bc7dc6bb874632972cd92a2bca429a846f7aa785 (latest)   
+eksa-packages-tlhowe   package.packages.eks.amazonaws.com/my-hello   hello-eks-anywhere   44h   installed   0.1.1-083e68edbbc62ca0228a5669e89e4d3da99ff73b   0.1.1-083e68edbbc62ca0228a5669e89e4d3da99ff73b (latest)   
 
-NAMESPACE       NAME                                                   STATE
-eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-68    available
+NAMESPACE       NAME                                                 STATE
+eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-21-83    available
+eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-70    available
+eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-81    available
+eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-82    available
+eksa-packages   packagebundle.packages.eks.amazonaws.com/v1-23-83    available
 
-NAMESPACE       NAME                                                      ACTIVEBUNDLE   STATE    DETAIL
-eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/prod   v1-23-68       active   
+NAMESPACE       NAME                                                        ACTIVEBUNDLE   STATE               DETAIL
+eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/sammy    v1-23-70       upgrade available   v1-23-83 available
+eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/tlhowe   v1-21-83       active       active   
 ```
 
 ### Error: this command is currently not supported
@@ -103,40 +109,41 @@ ctr image pull public.ecr.aws/eks-anywhere/eks-anywhere-packages@sha256:whatever
 ### Package pod cannot pull images
 If a package pod cannot pull images, you may not have your AWS credentials set up properly. Verify that your credentials are working properly.
 
-Make sure you are authenticated with the AWS CLI
+Make sure you are authenticated with the AWS CLI. Use the credentials you set up for packages. These credentials should have [limited capabilities]({{< relref "../packages/#setup-authentication-to-use-curated-packages" >}}):
 
-```
+```bash
+export AWS_ACCESS_KEY_ID="your*access*id"
+export AWS_SECRET_ACCESS_KEY="your*secret*key"
 aws sts get-caller-identity
 ```
 
 Login to docker
-```
+```bash
 aws ecr get-login-password |docker login --username AWS --password-stdin 783794618700.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 Verify you can pull an image
-```
+```bash
 docker pull 783794618700.dkr.ecr.us-west-2.amazonaws.com/emissary-ingress/emissary:v3.0.0-9ded128b4606165b41aca52271abe7fa44fa7109
 ```
 If the image downloads successfully, it worked!
 
 You may need to create or update your credentials which you can do with a command like this. Set the environment variables to the proper values before running the command.
-```
+```bash
 kubectl delete secret -n eksa-packages aws-secret
 kubectl create secret -n eksa-packages generic aws-secret --from-literal=ID=${EKSA_AWS_ACCESS_KEY_ID} --from-literal=SECRET=${EKSA_AWS_SECRET_ACCESS_KEY}
+```
+
+If you recreate secrets, you can manually run the job to update the image pull secrets:
+```bash
+kubectl create job -n eksa-packages --from=cronjob/cron-ecr-renew run-it-now
 ```
 
 ### Error: cert-manager is not present in the cluster
 ```
 Error: curated packages cannot be installed as cert-manager is not present in the cluster
 ```
-This is most likely caused by an action to install curated packages at a workload cluster. Note curated packages installation at workload cluster creation is currently not supported. In order to use packages on workload clusters, you can do a post-creation curated packages installation:
-- Install cert-manager, refer to cert-manager [installation guide](https://cert-manager.io/docs/installation/) for more details.
-- Install package controller using following command:
-  ```bash
-  eksctl anywhere install packagecontroller -f $CLUSTER_NAME.yaml
-  ```
-- Install packages, refer to [package management]({{< relref "../../tasks/packages" >}}) for more details.
+This is most likely caused by an action to install curated packages at a workload cluster. Curated packages installation at workload cluster creation is currently not supported. The package manager will remotely manage packages on the workload cluster from the management cluster.
 
 ### Warning: not able to trigger cron job
 ```
@@ -144,3 +151,36 @@ secret/aws-secret created
 Warning: not able to trigger cron job, please be aware this will prevent the package controller from installing curated packages.
 ```
 This is most likely caused by an action to install curated packages in a cluster that is running `Kubernetes` at version `v1.20` or below. Note curated packages only support `Kubernetes` `v1.21` and above.
+
+### Package manager is not managing packages on workload cluster
+
+If the package manager is not managing packages on a workload cluster, make sure the management cluster has various resources for the workload cluster:
+```bash
+kubectl get packages,packagebundles,packagebundlecontrollers -A
+```
+You should see a PackageBundleController for the workload cluster named with the name of the workload cluster and the status should be set. There should be a namespace for the workload cluster as well:
+```bash
+kubectl get ns | grep eksa-packagess
+```
+Create a PackageBundlecController for the workload cluster if it does not exist (where billy here is the cluster name):
+```bash
+ cat <<! | k apply -f -
+apiVersion: packages.eks.amazonaws.com/v1alpha1
+kind: PackageBundleController
+metadata:
+  name: billy
+  namespace: eksa-packages
+!
+```
+### Workload cluster is disconnedted
+
+Cluster is disconnected:
+```bash
+NAMESPACE       NAME                                                        ACTIVEBUNDLE   STATE               DETAIL
+eksa-packages   packagebundlecontroller.packages.eks.amazonaws.com/billy                   disconnected        initializing target client: getting kubeconfig for cluster "billy": Secret "billy-kubeconfig" not found
+
+```
+
+In the example above, the secret does not exist which may be that the management cluster is not managing the cluster, the PackageBundleController name is wrong or the secret was deleted.
+
+This also may happen if the management cluster cannot communicate with the workload cluster or the workload cluster was deleted, although the detail would be different.
