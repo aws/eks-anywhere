@@ -339,9 +339,8 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: cluster.x-k8s.io/failure-domain={{ds.meta_data.failuredomain}}
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -349,9 +348,8 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
-          node-labels: cluster.x-k8s.io/failure-domain={{ds.meta_data.failuredomain}}
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        name: '{{ ds.meta_data.hostname }}'
+        name: "{{ ds.meta_data.hostname }}"
     preKubeadmCommands:
     - swapoff -a
     - sudo systemctl daemon-reload

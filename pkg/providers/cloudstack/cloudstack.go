@@ -40,8 +40,6 @@ import (
 const (
 	eksaLicense                = "EKSA_LICENSE"
 	controlEndpointDefaultPort = "6443"
-	nodeFailuredomainLabel     = "cluster.x-k8s.io/failure-domain"
-	nodeFailuredomainLabelValue = "{{ds.meta_data.failuredomain}}"
 )
 
 //go:embed config/template-cp.yaml
@@ -715,8 +713,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
-	// add failure domain label
-	kubeletExtraArgs = addKeyValueToExtraArgs(kubeletExtraArgs, "node-labels", fmt.Sprintf("%s=%s", nodeFailuredomainLabel, nodeFailuredomainLabelValue))
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
@@ -859,8 +855,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
 
-	// add failure domain label to node
-	kubeletExtraArgs = addKeyValueToExtraArgs(kubeletExtraArgs, "node-labels", fmt.Sprintf("%s=%s", nodeFailuredomainLabel, nodeFailuredomainLabelValue))
 	values := map[string]interface{}{
 		"clusterName":                      clusterSpec.Cluster.Name,
 		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
@@ -1319,15 +1313,4 @@ func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
-}
-
-func addKeyValueToExtraArgs(args clusterapi.ExtraArgs, key, value string) clusterapi.ExtraArgs {
-	// add failure domain label
-	oldValue, found := args[key]
-	if found {
-		args[key] = fmt.Sprintf("%s,%s", oldValue, value)
-	} else {
-		args[key] = value
-	}
-	return args
 }

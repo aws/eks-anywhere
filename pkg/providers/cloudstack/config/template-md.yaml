@@ -28,7 +28,7 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-          name: '{{`{{ ds.meta_data.hostname }}`}}'
+          name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if or .proxyConfig .registryMirrorConfiguration }}
       files:
 {{- end }}
