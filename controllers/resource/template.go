@@ -69,7 +69,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerVmcs[wnConfig.MachineGroupRef.Name].Spec
 	}
 	// control plane and etcd updates are prohibited in controller so those specs should not change
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdc.Spec, &cpVmc.Spec, &etcdVmc.Spec, workerNodeGroupMachineSpecs, r.now, true)
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(r.now, true)
 	clusterName := clusterSpec.Cluster.Name
 
 	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])
@@ -105,7 +105,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn, oldVmc, &vmc) {
+		if needsVSphereNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn, oldVmc, &vmc) {
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)

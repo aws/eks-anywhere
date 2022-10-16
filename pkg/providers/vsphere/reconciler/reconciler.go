@@ -121,7 +121,6 @@ func (r *Reconciler) ValidateDatacenterConfig(ctx context.Context, log logr.Logg
 // ValidateMachineConfigs performs additional, context-aware validations on the machine configs.
 func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
 	log = log.WithValues("phase", "validateMachineConfigs")
-	machineConfigs := clusterSpec.VSphereMachineConfigs
 	datacenterConfig := clusterSpec.VSphereDatacenter
 
 	// Set up env vars for executing Govc cmd
@@ -130,7 +129,7 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		return controller.Result{}, err
 	}
 
-	vsphereClusterSpec := vsphere.NewSpec(clusterSpec, machineConfigs, datacenterConfig)
+	vsphereClusterSpec := vsphere.NewSpec(clusterSpec)
 
 	if err := r.validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
 		log.Error(err, "Invalid VSphereMachineConfig")

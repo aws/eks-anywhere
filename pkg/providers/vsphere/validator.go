@@ -110,10 +110,10 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find VSphereMachineConfig %v for etcd machines", vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
-		if !v.sameOSFamily(vsphereClusterSpec.machineConfigsLookup) {
+		if !v.sameOSFamily(vsphereClusterSpec.VSphereMachineConfigs) {
 			return errors.New("all VSphereMachineConfigs must have the same osFamily specified")
 		}
-		if !v.sameTemplate(vsphereClusterSpec.machineConfigsLookup) {
+		if !v.sameTemplate(vsphereClusterSpec.VSphereMachineConfigs) {
 			return errors.New("all VSphereMachineConfigs must have the same template specified")
 		}
 	}
@@ -123,9 +123,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		return err
 	}
 
-	for _, config := range vsphereClusterSpec.machineConfigsLookup {
-		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
-		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
+	for _, config := range vsphereClusterSpec.VSphereMachineConfigs {
+		var b bool                                                                                             // Temporary until we remove the need to pass a bool pointer
+		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.VSphereDatacenter, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
@@ -150,7 +150,7 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 }
 
 func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	if err := v.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
+	if err := v.validateTemplatePresence(ctx, spec.VSphereDatacenter.Spec.Datacenter, machineConfig); err != nil {
 		return err
 	}
 
@@ -346,7 +346,7 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 		{
 			objectType:   govmomi.VSphereTypeNetwork,
 			privsContent: config.VSphereUserPrivsFile,
-			path:         spec.datacenterConfig.Spec.Network,
+			path:         spec.VSphereDatacenter.Spec.Network,
 		},
 	}
 
@@ -405,15 +405,15 @@ func (v *Validator) validateUserPrivs(ctx context.Context, spec *Spec, vuc *conf
 		}
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereUsername,
 		vuc.EksaVspherePassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
@@ -471,15 +471,15 @@ func (v *Validator) validateCSIUserPrivs(ctx context.Context, spec *Spec, vuc *c
 		requiredPrivAssociations = append(requiredPrivAssociations, pas...)
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereCSIUsername,
 		vuc.EksaVsphereCSIPassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
@@ -499,15 +499,15 @@ func (v *Validator) validateCPUserPrivs(ctx context.Context, spec *Spec, vuc *co
 		},
 	}
 
-	host := spec.datacenterConfig.Spec.Server
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+	host := spec.VSphereDatacenter.Spec.Server
+	datacenter := spec.VSphereDatacenter.Spec.Datacenter
 
 	vsc, err := v.vSphereClientBuilder.Build(
 		ctx,
 		host,
 		vuc.EksaVsphereCPUsername,
 		vuc.EksaVsphereCPPassword,
-		spec.datacenterConfig.Spec.Insecure,
+		spec.VSphereDatacenter.Spec.Insecure,
 		datacenter,
 	)
 	if err != nil {
