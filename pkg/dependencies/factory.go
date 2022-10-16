@@ -850,6 +850,8 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 		if f.dependencies.PackageInstaller != nil {
 			return nil
 		}
+		managementClusterName := getManagementClusterName(spec)
+		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		f.dependencies.PackageInstaller = curatedpackages.NewInstaller(
 			f.dependencies.Kubectl,
@@ -857,6 +859,7 @@ func (f *Factory) WithPackageInstaller(spec *cluster.Spec, packagesLocation, kub
 			f.dependencies.PackageControllerClient,
 			spec,
 			packagesLocation,
+			mgmtKubeConfig,
 		)
 		return nil
 	})
