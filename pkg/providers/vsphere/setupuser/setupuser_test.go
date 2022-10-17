@@ -373,27 +373,73 @@ func TestSetupUserRun(t *testing.T) {
 	}
 }
 
-func TestNewVsphereUserConfig(t *testing.T) {
-	filepath := "./testdata/configs/valid.yaml"
+func TestSetupGOVCEnv(t *testing.T) {
 	ctx := context.Background()
-	c, err := setupuser.GenerateConfig(ctx, filepath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wantEnv := map[string]string{
-		"GOVC_URL":        c.Spec.Connection.Server,
-		"GOVC_INSECURE":   "false",
-		"GOVC_DATACENTER": c.Spec.Datacenter,
+
+	tests := []struct {
+		name     string
+		filepath string
+		wantErr  string
+		prepare  func(context.Context, *setupuser.VSphereSetupUserConfig) map[string]string
+	}{
+		{
+			name: "test SetupGOVCEnv happy path",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr: "",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig) map[string]string {
+				wantEnv := map[string]string{
+					"GOVC_URL":        c.Spec.Connection.Server,
+					"GOVC_INSECURE":   "false",
+					"GOVC_DATACENTER": c.Spec.Datacenter,
+				}
+				return wantEnv
+			},
+		},
+		{
+			name: "test SetupGOVCEnv happy path insecure=true",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr: "",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig) map[string]string {
+				c.Spec.Connection.Insecure = true
+
+				wantEnv := map[string]string{
+					"GOVC_URL":        c.Spec.Connection.Server,
+					"GOVC_INSECURE":   "true",
+					"GOVC_DATACENTER": c.Spec.Datacenter,
+				}
+				return wantEnv
+			},
+		},
 	}
 
-	err = setupuser.SetupGOVCEnv(ctx, c)
-	if err != nil {
-		t.Fatal(err)
-	}
-	g := NewWithT(t)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+	
+			g := NewWithT(t)
+			c, err := setupuser.GenerateConfig(ctx, tt.filepath)
+			if err != nil {
+				t.Fatalf("failed to generate config from %s with %s", tt.filepath, err)
+			}
+			wantEnv := tt.prepare(ctx, c)
+	
+			err = setupuser.SetupGOVCEnv(ctx, c)
+			if len(tt.wantErr) > 0 {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
 
-	for k, want := range wantEnv {
-		v := os.Getenv(k)
-		g.Expect(v).To(BeIdenticalTo(want))
+			for k, want := range wantEnv {
+				v := os.Getenv(k)
+				g.Expect(v).To(BeIdenticalTo(want))
+			}
+	
+			if tt.wantErr == "" {
+				g.Expect(err).To(Succeed())
+				g.Expect(c).ToNot(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
+			}
+		},
+		)
 	}
 }
+
