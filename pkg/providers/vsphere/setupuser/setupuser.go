@@ -68,7 +68,7 @@ func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcCli
 	if !exists {
 		err = govc.CreateGroup(ctx, vsuc.Spec.GroupName)
 	} else {
-		logger.V(0).Info(fmt.Sprintf("Skipping creating %s because it already exists", vsuc.Spec.GroupName))
+		logger.V(0).Info(fmt.Sprintf("Skipping creating group %s because it already exists", vsuc.Spec.GroupName))
 	}
 	if err != nil {
 		return err
