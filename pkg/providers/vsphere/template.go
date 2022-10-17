@@ -2,8 +2,6 @@ package vsphere
 
 import (
 	"fmt"
-	"net"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
@@ -15,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"net"
 )
 
 func NewVsphereTemplateBuilder(
@@ -189,12 +188,9 @@ func buildTemplateMapCP(
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
 
-		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate == true {
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
 			values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
-			username, password, err := config.ReadCredentials()
-			if err != nil {
-				return nil
-			}
+			username, password, _ := config.ReadCredentials()
 			values["registryUsername"] = username
 			values["registryPassword"] = password
 		}
@@ -298,12 +294,9 @@ func buildTemplateMapMD(
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
 
-		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate == true {
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
 			values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
-			username, password, err := config.ReadCredentials()
-			if err != nil {
-				return nil
-			}
+			username, password, _ := config.ReadCredentials()
 			values["registryUsername"] = username
 			values["registryPassword"] = password
 		}

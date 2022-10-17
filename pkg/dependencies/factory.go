@@ -171,6 +171,7 @@ func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	return f
 }
 
+// WithRegistryAuth returns whether registry authentication is necessary or not
 func (f *Factory) WithRegistryAuth(mirror bool) *Factory {
 	f.registryAuth = mirror
 	return f
@@ -256,13 +257,14 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
-		//need to pass in auth toggle, username, and password
 		if f.executablesConfig.useDockerContainer {
 
 			if f.registryAuth {
-				username := os.Getenv("REGISTRY_USERNAME")
-				password := os.Getenv("REGISTRY_PASSWORD")
-				f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror, username, password)
+				username, password, _ := config.ReadCredentials()
+				err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror, username, password)
+				if err != nil {
+					return err
+				}
 			}
 
 			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
@@ -1184,18 +1186,4 @@ func getManagementClusterName(clusterSpec *cluster.Spec) string {
 		return clusterSpec.Cluster.Spec.ManagementCluster.Name
 	}
 	return clusterSpec.Cluster.Name
-}
-
-func getRegistryAuth(clusterSpec *cluster.Spec) (registryAuth bool, username, password string) {
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil {
-		return false, "", ""
-	}
-
-	registryAuth = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
-	if registryAuth {
-		username = os.Getenv("REGISTRY_USERNAME")
-		password = os.Getenv("REGISTRY_PASSWORD")
-		return registryAuth, username, password
-	}
-	return false, "", ""
 }

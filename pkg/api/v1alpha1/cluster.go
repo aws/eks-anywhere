@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"io/ioutil"
 	"net"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -293,11 +293,12 @@ func (c *Cluster) RegistryMirror() string {
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
+// RegistryAuth returns whether or not
 func (c *Cluster) RegistryAuth() bool {
-	if c.Spec.RegistryMirrorConfiguration.Authenticate {
-		return true
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return false
 	}
-	return false
+	return c.Spec.RegistryMirrorConfiguration.Authenticate
 }
 
 func (c *Cluster) ProxyConfiguration() map[string]string {
@@ -684,10 +685,9 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
-		username := os.Getenv("REGISTRY_USERNAME")
-		password := os.Getenv("REGISTRY_PASSWORD")
-		if username == "" || password == "" {
-			return fmt.Errorf("username or password not set, Provide REGISTRY_USERNAME and REGISTRY_PASSWORD to use authenticated registry mirror")
+		_, _, err := config.ReadCredentials()
+		if err != nil {
+			return err
 		}
 	}
 	return nil

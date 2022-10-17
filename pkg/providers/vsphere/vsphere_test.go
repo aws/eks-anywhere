@@ -1164,8 +1164,12 @@ func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
 	clusterSpecManifest := "cluster_mirror_with_auth_config.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
-	os.Setenv("REGISTRY_USERNAME", "username")
-	os.Setenv("REGISTRY_PASSWORD", "password")
+	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
+		t.Fatalf(err.Error())
+	}
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
@@ -1185,7 +1189,6 @@ func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	//fmt.Printf(string(cp))
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_auth_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_auth_config_md.yaml")
 }
