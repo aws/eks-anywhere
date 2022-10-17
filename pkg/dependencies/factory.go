@@ -107,8 +107,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
 		UseExecutableImage(eksaToolsImage.VersionedImage()).
-		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
-		WithRegistryAuth(clusterSpec.Cluster.RegistryAuth()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror(), clusterSpec.Cluster.RegistryAuth()).
 		UseProxyConfiguration(clusterSpec.Cluster.ProxyConfiguration()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -116,8 +115,7 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 
 type Factory struct {
 	executablesConfig        *executablesConfig
-	registryMirror           string
-	registryAuth             bool
+	registryMirror           *registryMirror
 	proxyConfiguration       map[string]string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -131,6 +129,11 @@ type executablesConfig struct {
 	useDockerContainer bool
 	dockerClient       executables.DockerClient
 	mountDirs          []string
+}
+
+type registryMirror struct {
+	endpoint string
+	auth     bool
 }
 
 type buildStep func(ctx context.Context) error
@@ -166,14 +169,9 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithRegistryMirror(mirror string) *Factory {
-	f.registryMirror = mirror
-	return f
-}
+func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
+	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
 
-// WithRegistryAuth returns whether registry authentication is necessary or not
-func (f *Factory) WithRegistryAuth(mirror bool) *Factory {
-	f.registryAuth = mirror
 	return f
 }
 
@@ -247,9 +245,26 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 	return f
 }
 
+func (f *Factory) WithDockerLogin() *Factory {
+	f.WithDocker()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		username, password, _ := config.ReadCredentials()
+		err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror.endpoint, username, password)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return f
+}
+
 func (f *Factory) WithExecutableBuilder() *Factory {
 	if f.executablesConfig.useDockerContainer {
 		f.WithExecutableImage().WithDocker()
+		if f.registryMirror != nil && f.registryMirror.auth {
+			f.WithDockerLogin()
+		}
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -258,16 +273,10 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 		}
 
 		if f.executablesConfig.useDockerContainer {
-
-			if f.registryAuth {
-				username, password, _ := config.ReadCredentials()
-				err := f.executablesConfig.dockerClient.Login(context.Background(), f.registryMirror, username, password)
-				if err != nil {
-					return err
-				}
+			image := f.executablesConfig.image
+			if f.registryMirror != nil {
+				image = urls.ReplaceHost(f.executablesConfig.image, f.registryMirror.endpoint)
 			}
-
-			image := urls.ReplaceHost(f.executablesConfig.image, f.registryMirror)
 			b, err := executables.NewInDockerExecutablesBuilder(
 				f.executablesConfig.dockerClient,
 				image,
@@ -577,6 +586,10 @@ func (f *Factory) WithWriter() *Factory {
 func (f *Factory) WithKind() *Factory {
 	f.WithExecutableBuilder().WithWriter()
 
+	if f.registryMirror != nil && f.registryMirror.auth {
+		f.WithDockerLogin()
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Kind != nil {
 			return nil
@@ -638,8 +651,8 @@ func (f *Factory) WithHelm(opts ...executables.HelmOpt) *Factory {
 	f.WithExecutableBuilder().WithProxyConfiguration()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.registryMirror != "" {
-			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		if f.registryMirror != nil {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror.endpoint))
 		}
 
 		if f.proxyConfiguration != nil {

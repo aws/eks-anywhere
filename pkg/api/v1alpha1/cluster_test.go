@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -2309,6 +2310,16 @@ func TestValidateMirrorConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
+			if tt.cluster.Spec.RegistryMirrorConfiguration != nil {
+				if tt.cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+					if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+						t.Fatalf(err.Error())
+					}
+					if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+						t.Fatalf(err.Error())
+					}
+				}
+			}
 			err := validateMirrorConfig(tt.cluster)
 			if tt.wantErr == "" {
 				g.Expect(err).To(BeNil())

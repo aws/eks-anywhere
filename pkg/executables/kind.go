@@ -169,24 +169,6 @@ func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClien
 	}
 }
 
-func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string, env map[string]string) bootstrapper.BootstrapClusterClientOption {
-	return func() error {
-		if k.execConfig == nil {
-			return errors.New("kind exec config is not ready")
-		}
-
-		k.execConfig.RegistryMirrorEndpoint = endpoint
-		k.execConfig.RegistryCACertPath = caCertFile
-
-		if env != nil {
-			k.execConfig.RegistryAuth = true
-			k.execConfig.RegistryUsername = env["REGISTRY_USERNAME"]
-			k.execConfig.RegistryPassword = env["REGISTRY_PASSWORD"]
-		}
-		return nil
-	}
-}
-
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
