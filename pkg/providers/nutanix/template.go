@@ -83,20 +83,14 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 }
 
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	encodedCreds, err := json.Marshal(ntb.creds)
-	if err != nil {
-		return nil, err
-	}
+	encodedCreds, _ := json.Marshal(ntb.creds)
 	nutanixCreds := credentials.NutanixCredentials{
 		Credentials: []credentials.Credential{{
 			Type: credentials.BasicAuthCredentialType,
 			Data: encodedCreds,
 		}},
 	}
-	credsJSON, err := json.Marshal(nutanixCreds.Credentials)
-	if err != nil {
-		return nil, err
-	}
+	credsJSON, _ := json.Marshal(nutanixCreds.Credentials)
 	values := buildTemplateMapSecret(clusterSpec, credsJSON)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
