@@ -78,7 +78,6 @@ func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcCli
 }
 
 func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
-	// create roles
 	for _, r := range getRoles(vsuc) {
 		exists, err := govc.RoleExists(ctx, r.name)
 		if err != nil {
