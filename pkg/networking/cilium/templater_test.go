@@ -395,7 +395,6 @@ func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
 
 	os.Unsetenv("REGISTRY_USERNAME")
 	os.Unsetenv("REGISTRY_PASSWORD")
-	
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
 

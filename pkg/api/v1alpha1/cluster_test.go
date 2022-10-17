@@ -2303,6 +2303,25 @@ func TestValidateMirrorConfig(t *testing.T) {
 						Port:         "443",
 						Authenticate: true,
 					},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+					},
+				},
+			},
+		},
+		{
+			name:    "authenticate but not vsphere",
+			wantErr: "authenticated local registry is only supported for vsphere provider currently",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+					DatacenterRef: Ref{
+						Kind: TinkerbellDatacenterKind,
+					},
 				},
 			},
 		},

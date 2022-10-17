@@ -293,7 +293,7 @@ func (c *Cluster) RegistryMirror() string {
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
-// RegistryAuth returns whether or not
+// RegistryAuth returns whether registry requires authentication or not.
 func (c *Cluster) RegistryAuth() bool {
 	if c.Spec.RegistryMirrorConfiguration == nil {
 		return false
@@ -682,6 +682,10 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate && clusterConfig.Spec.DatacenterRef.Kind != VSphereDatacenterKind {
+		return errors.New("authenticated local registry is only supported for vsphere provider currently")
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {

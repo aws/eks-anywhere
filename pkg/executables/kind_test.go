@@ -275,6 +275,41 @@ func TestKindCreateBootstrapClusterExecutableError(t *testing.T) {
 	}
 }
 
+func TestKindCreateBootstrapClusterExecutableWithRegistryMirrorError(t *testing.T) {
+	registryMirror := "registry-mirror.test"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster.Name = "clusterName"
+		s.VersionsBundle = versionBundle
+		s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:     registryMirror,
+			Port:         constants.DefaultHttpsPort,
+			Authenticate: true,
+		}
+	})
+
+	if err := os.Unsetenv("REGISTRY_USERNAME"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Unsetenv("REGISTRY_PASSWORD"); err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	ctx := context.Background()
+	_, writer := test.NewWriter(t)
+
+	mockCtrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	k := executables.NewKind(executable, writer)
+	gotKubeconfig, err := k.CreateBootstrapCluster(ctx, clusterSpec)
+	if err == nil {
+		t.Fatal("Kind.CreateBootstrapCluster() error = nil")
+	}
+
+	if gotKubeconfig != "" {
+		t.Errorf("CreateBootstrapCluster() gotKubeconfig = %v, want empty string", gotKubeconfig)
+	}
+}
+
 func testOptionsToBootstrapOptions(k *executables.Kind, testOpts []testKindOption) []bootstrapper.BootstrapClusterClientOption {
 	opts := make([]bootstrapper.BootstrapClusterClientOption, 0, len(testOpts))
 	for _, opt := range testOpts {

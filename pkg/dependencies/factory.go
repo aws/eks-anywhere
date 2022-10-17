@@ -169,6 +169,7 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
+// WithRegistryMirror returns the registy mirror configurations.
 func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
 	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
 
@@ -245,6 +246,7 @@ func (f *Factory) UseExecutablesDockerClient(client executables.DockerClient) *F
 	return f
 }
 
+// WithDockerLogin performs a docker login with the ENV VARS.
 func (f *Factory) WithDockerLogin() *Factory {
 	f.WithDocker()
 
