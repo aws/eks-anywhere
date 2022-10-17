@@ -64,7 +64,7 @@ func newPackageInstallerTest(t *testing.T) *packageInstallerTest {
 		packageClient:           pc,
 		packageControllerClient: pcc,
 		kubeConfigPath:          kubeConfigPath,
-		command:                 curatedpackages.NewInstaller(k, pc, pcc, spec, packagesPath),
+		command:                 curatedpackages.NewInstaller(k, pc, pcc, spec, packagesPath, kubeConfigPath),
 	}
 }
 
