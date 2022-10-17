@@ -2,6 +2,7 @@ package setupuser_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -148,6 +149,44 @@ func TestValidateVSphereObjects(t *testing.T) {
 				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(false, nil)
+			},
+		},
+		{
+			name:     "test GroupExists error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test RoleExists GlobalRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test validate RoleExists UserRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, fmt.Errorf("govc error"))
+			},
+		},
+		{
+			name:     "test validate RoleExists AdminRole error",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "govc error",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(false, fmt.Errorf("govc error"))
 			},
 		},
 	}
