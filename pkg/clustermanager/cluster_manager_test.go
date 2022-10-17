@@ -712,8 +712,7 @@ func TestClusterManagerUpgradeWorkloadClusterAWSIamConfigSuccess(t *testing.T) {
 	tt.mocks.writer.EXPECT().Write(mgmtClusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	tt.mocks.client.EXPECT().GetEksaAWSIamConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(oldIamConfig, nil)
 	tt.mocks.networking.EXPECT().RunPostControlPlaneUpgradeSetup(tt.ctx, wCluster).Return(nil)
-	tt.mocks.awsIamAuth.EXPECT().GenerateManifestForUpgrade(tt.clusterSpec).Return(nil, nil)
-	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, wCluster, test.OfType("[]uint8")).Return(nil)
+	tt.mocks.awsIamAuth.EXPECT().UpgradeAWSIAMAuth(tt.ctx, wCluster, tt.clusterSpec).Return(nil)
 
 	if err := tt.clusterManager.UpgradeCluster(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err != nil {
 		t.Errorf("ClusterManager.UpgradeCluster() error = %v, wantErr nil", err)
@@ -1215,7 +1214,6 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
@@ -1238,7 +1236,6 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 
 func TestClusterManagerCreateEKSAResourcesFailure(t *testing.T) {
 	features.ClearCache()
-	t.Setenv(features.CloudStackProviderEnvVar, "")
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
@@ -1673,7 +1670,7 @@ func TestResumeEKSAControllerReconcileManagementClusterListObjectsError(t *testi
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
-	t.Setenv(features.CloudStackProviderEnvVar, "")
+	features.ClearCache()
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
@@ -1990,8 +1987,7 @@ func TestClusterManagerDeletePackageResources(t *testing.T) {
 func TestCreateAwsIamAuthCaSecretSuccess(t *testing.T) {
 	tt := newTest(t)
 
-	tt.mocks.awsIamAuth.EXPECT().GenerateCertKeyPairSecret(tt.clusterName)
-	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, test.OfType("[]uint8"))
+	tt.mocks.awsIamAuth.EXPECT().CreateAndInstallAWSIAMAuthCASecret(tt.ctx, tt.cluster, tt.clusterName).Return(nil)
 
 	err := tt.clusterManager.CreateAwsIamAuthCaSecret(tt.ctx, tt.cluster, tt.clusterName)
 	tt.Expect(err).To(BeNil())

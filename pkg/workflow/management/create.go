@@ -12,6 +12,7 @@ import (
 // the order of task names should be representative of the order of execution.
 const (
 	CreateBootstrapCluster workflow.TaskName = "CreateBootstrapCluster"
+	CreateWorkloadCluster  workflow.TaskName = "CreateWorkloadCluster"
 	DeleteBootstrapCluster workflow.TaskName = "DeleteBootstrapCluster"
 )
 

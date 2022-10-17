@@ -103,7 +103,6 @@ T_CLOUDSTACK_SERVICE_CIDR
 T_CLOUDSTACK_CLUSTER_IP_POOL # Comma separated list of control plane IP's
 
 EKSA_CLOUDSTACK_B64ENCODED_SECRET
-CLOUDSTACK_PROVIDER=true (while cloudstack provider is under development)
 ```
 
 ## Snow tests requisites
