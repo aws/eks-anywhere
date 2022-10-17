@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -21,17 +20,20 @@ type Installer struct {
 	packageController PackageController
 	spec              *cluster.Spec
 	packageClient     PackageHandler
-	packagesLocation  string
 	kubectl           KubectlRunner
+	packagesLocation  string
+	mgmtKubeconfig    string
 }
 
-func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController, spec *cluster.Spec, packagesLocation string) *Installer {
+// NewInstaller installs packageController and packages during cluster creation.
+func NewInstaller(runner KubectlRunner, pc PackageHandler, pcc PackageController, spec *cluster.Spec, packagesLocation, mgmtKubeconfig string) *Installer {
 	return &Installer{
 		spec:              spec,
 		packagesLocation:  packagesLocation,
 		packageController: pcc,
 		packageClient:     pc,
 		kubectl:           runner,
+		mgmtKubeconfig:    mgmtKubeconfig,
 	}
 }
 
@@ -65,8 +67,7 @@ func (pi *Installer) installPackages(ctx context.Context) error {
 	if pi.packagesLocation == "" {
 		return nil
 	}
-	kubeConfig := kubeconfig.FromClusterName(pi.spec.Cluster.Name)
-	err := pi.packageClient.CreatePackages(ctx, pi.packagesLocation, kubeConfig)
+	err := pi.packageClient.CreatePackages(ctx, pi.packagesLocation, pi.mgmtKubeconfig)
 	if err != nil {
 		return err
 	}

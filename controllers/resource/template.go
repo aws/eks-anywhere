@@ -472,7 +472,7 @@ func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
 
 func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
 	var resources []*unstructured.Unstructured
-	templateBuilder := awsiamauth.NewAwsIamAuthTemplateBuilder()
+	templateBuilder := awsiamauth.TemplateBuilder{}
 	content, err := templateBuilder.GenerateManifest(clusterSpec, uuid.Nil)
 	if err != nil {
 		return nil, err

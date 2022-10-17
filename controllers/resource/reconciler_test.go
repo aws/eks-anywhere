@@ -894,9 +894,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-				os.Unsetenv(features.CloudStackProviderEnvVar)
-				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
@@ -1103,9 +1100,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-				os.Unsetenv(features.CloudStackProviderEnvVar)
-				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingCSDatacenterConfig, nil)
@@ -1159,9 +1153,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			},
 		},
 	}
-	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
-	os.Setenv(features.CloudStackProviderEnvVar, "true")
-	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
