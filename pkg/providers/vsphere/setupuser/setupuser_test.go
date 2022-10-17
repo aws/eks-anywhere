@@ -383,9 +383,9 @@ func TestSetupGOVCEnv(t *testing.T) {
 		prepare  func(context.Context, *setupuser.VSphereSetupUserConfig) map[string]string
 	}{
 		{
-			name: "test SetupGOVCEnv happy path",
+			name:     "test SetupGOVCEnv happy path",
 			filepath: "./testdata/configs/valid.yaml",
-			wantErr: "",
+			wantErr:  "",
 			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig) map[string]string {
 				wantEnv := map[string]string{
 					"GOVC_URL":        c.Spec.Connection.Server,
@@ -396,9 +396,9 @@ func TestSetupGOVCEnv(t *testing.T) {
 			},
 		},
 		{
-			name: "test SetupGOVCEnv happy path insecure=true",
+			name:     "test SetupGOVCEnv happy path insecure=true",
 			filepath: "./testdata/configs/valid.yaml",
-			wantErr: "",
+			wantErr:  "",
 			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig) map[string]string {
 				c.Spec.Connection.Insecure = true
 
@@ -414,14 +414,13 @@ func TestSetupGOVCEnv(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-	
 			g := NewWithT(t)
 			c, err := setupuser.GenerateConfig(ctx, tt.filepath)
 			if err != nil {
 				t.Fatalf("failed to generate config from %s with %s", tt.filepath, err)
 			}
 			wantEnv := tt.prepare(ctx, c)
-	
+
 			err = setupuser.SetupGOVCEnv(ctx, c)
 			if len(tt.wantErr) > 0 {
 				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
@@ -431,7 +430,7 @@ func TestSetupGOVCEnv(t *testing.T) {
 				v := os.Getenv(k)
 				g.Expect(v).To(BeIdenticalTo(want))
 			}
-	
+
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
 				g.Expect(c).ToNot(BeNil())
@@ -442,4 +441,3 @@ func TestSetupGOVCEnv(t *testing.T) {
 		)
 	}
 }
-
