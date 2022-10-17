@@ -65,7 +65,7 @@ func newPackageControllerTest(t *testing.T) *packageControllerTest {
 		kubectl:        k,
 		chartInstaller: ci,
 		command: curatedpackages.NewPackageControllerClient(
-			ci, k, clusterName, kubeConfig, uri, chartName, chartVersion,
+			ci, k, clusterName, kubeConfig, uri, "", "", "", chartName, chartVersion,
 			curatedpackages.WithEksaSecretAccessKey(eksaAccessKey),
 			curatedpackages.WithEksaRegion(eksaRegion),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessId),
@@ -114,7 +114,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 func TestEnableCuratedPackagesSucceedInWorkloadCluster(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, tt.clusterName, tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithManagementClusterName("mgmt"),
 	)
 
@@ -146,7 +146,7 @@ func getPBCFail(t *testing.T) func(context.Context, string, string, string, stri
 func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
@@ -186,7 +186,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
@@ -382,7 +382,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 		AnyTimes()
 
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaRegion(""),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
@@ -397,7 +397,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),
@@ -473,7 +473,7 @@ func getPBCLoops(t *testing.T, loops int) func(context.Context, string, string, 
 func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	tt := newPackageControllerTest(t)
 	tt.command = curatedpackages.NewPackageControllerClient(
-		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, tt.chartName, tt.chartVersion,
+		tt.chartInstaller, tt.kubectl, "billy", tt.kubeConfig, tt.ociUri, "", "", "", tt.chartName, tt.chartVersion,
 		curatedpackages.WithEksaSecretAccessKey(tt.eksaAccessKey),
 		curatedpackages.WithEksaRegion(tt.eksaRegion),
 		curatedpackages.WithEksaAccessKeyId(tt.eksaAccessId),

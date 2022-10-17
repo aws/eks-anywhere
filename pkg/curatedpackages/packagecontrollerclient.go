@@ -9,6 +9,7 @@ import (
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
@@ -31,6 +32,9 @@ type PackageControllerClientOpt func(client *PackageControllerClient)
 type PackageControllerClient struct {
 	kubeConfig            string
 	uri                   string
+	registryMirror        string
+	ociNamespace          string
+	packageOCINamespace   string
 	chartName             string
 	chartVersion          string
 	chartInstaller        ChartInstaller
@@ -51,15 +55,18 @@ type ChartInstaller interface {
 	InstallChart(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, namespace string, values []string) error
 }
 
-func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
+func NewPackageControllerClient(chartInstaller ChartInstaller, kubectl KubectlRunner, clusterName, kubeConfig, uri, registryMirror, ociNamespace, packageOCINamespace, chartName, chartVersion string, options ...PackageControllerClientOpt) *PackageControllerClient {
 	pcc := &PackageControllerClient{
-		kubeConfig:     kubeConfig,
-		clusterName:    clusterName,
-		uri:            uri,
-		chartName:      chartName,
-		chartVersion:   chartVersion,
-		chartInstaller: chartInstaller,
-		kubectl:        kubectl,
+		kubeConfig:          kubeConfig,
+		clusterName:         clusterName,
+		uri:                 uri,
+		registryMirror:      registryMirror,
+		ociNamespace:        ociNamespace,
+		packageOCINamespace: packageOCINamespace,
+		chartName:           chartName,
+		chartVersion:        chartVersion,
+		chartInstaller:      chartInstaller,
+		kubectl:             kubectl,
 	}
 
 	for _, o := range options {
@@ -85,11 +92,14 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return pc.InstallPBCResources(ctx)
 	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
-	registry := GetRegistry(pc.uri)
-
-	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", registry)
-	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-	values := []string{sourceRegistry, clusterName}
+	values := []string{}
+	if pc.registryMirror != "" {
+		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.ociNamespace))
+		defaultRegistry := fmt.Sprintf("defaultRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.ociNamespace))
+		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.packageOCINamespace))
+		clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
+		values = append(values, sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName)
+	}
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {

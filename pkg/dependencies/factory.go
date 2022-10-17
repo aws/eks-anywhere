@@ -876,7 +876,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
-		imageUrl := registry.ReplaceHostWithNamespacedEndpoint(chart.Image(), spec.Cluster.RegistryMirror(), spec.Cluster.RegistryMirrorPackageOCINamespace())
+		imageUrl := registry.ReplaceHostWithNamespacedEndpoint(chart.Image(), spec.Cluster.RegistryMirror(), spec.Cluster.RegistryMirrorOCINamespace())
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
@@ -886,6 +886,9 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			spec.Cluster.Name,
 			mgmtKubeConfig,
 			imageUrl,
+			spec.Cluster.RegistryMirror(),
+			spec.Cluster.RegistryMirrorOCINamespace(),
+			spec.Cluster.RegistryMirrorPackageOCINamespace(),
 			chart.Name,
 			chart.Tag(),
 			curatedpackages.WithEksaAccessKeyId(eksaAccessKeyId),
