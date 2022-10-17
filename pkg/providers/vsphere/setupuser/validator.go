@@ -7,8 +7,6 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v2"
-
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 const (
@@ -127,7 +125,7 @@ func setDefaults(c *VSphereSetupUserConfig) {
 }
 
 // ValidateVSphereObjects validates objects do not exist before configuring user.
-func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
+func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc GovcClient) error {
 	exists, err := govc.GroupExists(ctx, c.Spec.GroupName)
 	if err != nil {
 		return err

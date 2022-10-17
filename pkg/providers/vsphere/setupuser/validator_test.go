@@ -8,8 +8,8 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere/setupuser/mocks"
 )
 
 func TestGenerateConfigReadFile(t *testing.T) {
@@ -138,13 +138,13 @@ func TestValidateVSphereObjects(t *testing.T) {
 		name     string
 		filepath string
 		wantErr  string
-		prepare  func(context.Context, *setupuser.VSphereSetupUserConfig, *mocks.MockProviderGovcClient)
+		prepare  func(context.Context, *setupuser.VSphereSetupUserConfig, *mocks.MockGovcClient)
 	}{
 		{
 			name:     "test validate happy path",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
 				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
@@ -155,7 +155,7 @@ func TestValidateVSphereObjects(t *testing.T) {
 			name:     "test GroupExists error",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "govc error",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
 				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, fmt.Errorf("govc error"))
 			},
 		},
@@ -163,7 +163,7 @@ func TestValidateVSphereObjects(t *testing.T) {
 			name:     "test RoleExists GlobalRole error",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "govc error",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
 				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, fmt.Errorf("govc error"))
 			},
@@ -172,7 +172,7 @@ func TestValidateVSphereObjects(t *testing.T) {
 			name:     "test validate RoleExists UserRole error",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "govc error",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
 				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, fmt.Errorf("govc error"))
@@ -182,7 +182,7 @@ func TestValidateVSphereObjects(t *testing.T) {
 			name:     "test validate RoleExists AdminRole error",
 			filepath: "./testdata/configs/valid.yaml",
 			wantErr:  "govc error",
-			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockProviderGovcClient) {
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
 				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
 				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
@@ -200,7 +200,7 @@ func TestValidateVSphereObjects(t *testing.T) {
 				t.Fatalf("failed to generate config from %s with %s", tt.filepath, err)
 			}
 			ctrl := gomock.NewController(t)
-			gc := mocks.NewMockProviderGovcClient(ctrl)
+			gc := mocks.NewMockGovcClient(ctrl)
 			tt.prepare(ctx, c, gc)
 
 			err = setupuser.ValidateVSphereObjects(ctx, c, gc)
