@@ -294,10 +294,10 @@ func (c *Cluster) RegistryMirror() string {
 }
 
 func (c *Cluster) RegistryAuth() bool {
-	if c.Spec.RegistryMirrorConfiguration.Authenticate {
-		return true
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return false
 	}
-	return false
+	return c.Spec.RegistryMirrorConfiguration.Authenticate
 }
 
 func (c *Cluster) ProxyConfiguration() map[string]string {

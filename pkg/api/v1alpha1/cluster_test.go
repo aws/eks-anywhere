@@ -2444,6 +2444,51 @@ func TestClusterRegistryMirror(t *testing.T) {
 	}
 }
 
+func TestClusterRegistryAuth(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    bool
+	}{
+		{
+			name: "with registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:     "1.2.3.4",
+						Port:         "443",
+						Authenticate: true,
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "without registry mirror auth",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryAuth()).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterProxyConfiguration(t *testing.T) {
 	tests := []struct {
 		name    string

@@ -1185,7 +1185,6 @@ func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	//fmt.Printf(string(cp))
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_auth_config_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_auth_config_md.yaml")
 }

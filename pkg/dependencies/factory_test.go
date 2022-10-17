@@ -260,6 +260,19 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt.Expect(deps.Helm).NotTo(BeNil())
 }
 
+func TestFactoryBuildWithRegistryAuth(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithRegistryMirror("1.2.3.4:443").
+		WithRegistryAuth(true).
+		WithHelm(executables.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
 func TestFactoryBuildWithPackageInstaller(t *testing.T) {
 	spec := &cluster.Spec{
 		Config: &cluster.Config{

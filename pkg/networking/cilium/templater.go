@@ -123,9 +123,9 @@ func (t *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec, op
 
 	if spec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		if spec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
-			username, password, temp := config.ReadCredentials()
-			if temp != nil {
-				return nil, temp
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return nil, err
 			}
 			endpoint := spec.Cluster.RegistryMirror()
 			if err := t.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
