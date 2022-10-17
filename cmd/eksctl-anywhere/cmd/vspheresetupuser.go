@@ -32,7 +32,7 @@ func init() {
 
 	setupUserCmd.Flags().StringVarP(&setupUserOptions.fileName, "filename", "f", "", "Filename containing vsphere setup configuration")
 	setupUserCmd.Flags().StringVarP(&setupUserOptions.password, "password", "p", "", "Password for creating new user")
-	setupUserCmd.Flags().BoolVarP(&setupUserOptions.force, "force", "", false, "Force flag. When set, setup user will proceed even if the user, group and role objects already exist. Mutually exclusive with --password flag, as the command does not support resetting a user's password. default: false")
+	setupUserCmd.Flags().BoolVarP(&setupUserOptions.force, "force", "", false, "Force flag. When set, setup user will proceed even if the group and role objects already exist. Mutually exclusive with --password flag, as it expects the user to already exist. default: false")
 
 	if err := setupUserCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("error marking flag as required: %v", err)
