@@ -151,7 +151,7 @@ func (d *helmDriver) PushHelmChart(packaged, URI string) error {
 	}
 	_, err := p.Run(packaged, URI)
 	if err != nil {
-		return fmt.Errorf("empty input for PushHelmChart, check flags")
+		return fmt.Errorf("running Helm push command on URI %s: %w", URI, err)
 	}
 	return nil
 }
@@ -208,7 +208,7 @@ func HasRequires(helmdir string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("Found Dir, not requires.yaml file")
+		return "", fmt.Errorf("found Dir, not requires.yaml file")
 	}
 	return requires, nil
 }
@@ -253,7 +253,7 @@ func validateHelmRequiresName(helmrequires *Requires) error {
 func (helmrequires *Requires) validateHelmRequiresNotEmpty() error {
 	// Check if Projects are listed
 	if len(helmrequires.Spec.Images) < 1 {
-		return fmt.Errorf("Should use non-empty list of images for requires")
+		return fmt.Errorf("should use non-empty list of images for requires")
 	}
 	return nil
 }
@@ -274,7 +274,7 @@ func parseHelmRequires(fileName string, helmrequires *Requires) error {
 		}
 		return nil
 	}
-	return fmt.Errorf("Requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
+	return fmt.Errorf("requires.yaml file [%s] is invalid or does not contain kind %v", fileName, helmrequires)
 }
 
 // Chart yaml functions
@@ -287,7 +287,7 @@ func HasChart(helmdir string) (string, error) {
 		return "", err
 	}
 	if info.IsDir() {
-		return "", fmt.Errorf("Found Dir, not Chart.yaml file")
+		return "", fmt.Errorf("found Dir, not Chart.yaml file")
 	}
 	return requires, nil
 }
