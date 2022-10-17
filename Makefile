@@ -51,6 +51,10 @@ endif
 CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
+AWS_ACCOUNT_NAME?=$(shell aws sts get-caller-identity --query UserId --output text)
+EXPORT_ACCOUNT_NAME=$(shell echo $EKSA_AWS_ACCESS_KEY_ID)
+GET_USER_SECRET_KEY=$(shell aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --query "SecretString" --output text)
+EXPORT_SECRET_KEY=$(shell echo $EKSA_AWS_SECRET_ACCESS_KEY)
 AWS_REGION=us-west-2
 
 BIN_DIR := bin
