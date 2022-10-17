@@ -88,7 +88,7 @@ spec:
           spec:
             containers:
               - name: kube-vip
-                image: {{.kubeVipImage}}
+                image: ghcr.io/kube-vip/kube-vip:v0.5.5
                 imagePullPolicy: IfNotPresent
                 args:
                   - manager
@@ -130,6 +130,10 @@ spec:
                     name: kubeconfig
                 resources: {}
             hostNetwork: true
+            hostAliases:
+              - hostnames:
+                  - kubernetes
+                ip: 127.0.0.1
             volumes:
               - name: kubeconfig
                 hostPath:
