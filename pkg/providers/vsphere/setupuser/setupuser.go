@@ -29,9 +29,18 @@ type GovcClient interface {
 
 // SetupGOVCEnv creates appropriate govc environment variables to build govc client.
 func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
-	os.Setenv("GOVC_URL", vsuc.Spec.Connection.Server)
-	os.Setenv("GOVC_INSECURE", strconv.FormatBool(vsuc.Spec.Connection.Insecure))
-	os.Setenv("GOVC_DATACENTER", vsuc.Spec.Datacenter)
+	err := os.Setenv("GOVC_URL", vsuc.Spec.Connection.Server)
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("GOVC_INSECURE", strconv.FormatBool(vsuc.Spec.Connection.Insecure))
+	if err != nil {
+		return err
+	}
+	err = os.Setenv("GOVC_DATACENTER", vsuc.Spec.Datacenter)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
