@@ -87,7 +87,12 @@ func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcCli
 }
 
 func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
-	for _, r := range getRoles(vsuc) {
+	roles, err := getRoles(vsuc)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range roles {
 		exists, err := govc.RoleExists(ctx, r.name)
 		if err != nil {
 			return err
@@ -167,10 +172,19 @@ type vsphereRole struct {
 	privs []string
 }
 
-func getRoles(vsuc *VSphereSetupUserConfig) []vsphereRole {
-	globalPrivs, _ := getPrivsFromFile(config.VSphereGlobalPrivsFile)
-	userPrivs, _ := getPrivsFromFile(config.VSphereUserPrivsFile)
-	cloudAdminPrivs, _ := getPrivsFromFile(config.VSphereAdminPrivsFile)
+func getRoles(vsuc *VSphereSetupUserConfig) ([]vsphereRole, error) {
+	globalPrivs, err := getPrivsFromFile(config.VSphereGlobalPrivsFile)
+	if err != nil {
+		return []vsphereRole{}, err
+	}
+	userPrivs, err := getPrivsFromFile(config.VSphereUserPrivsFile)
+	if err != nil {
+		return []vsphereRole{}, err
+	}
+	cloudAdminPrivs, err := getPrivsFromFile(config.VSphereAdminPrivsFile)
+	if err != nil {
+		return []vsphereRole{}, err
+	}
 	return []vsphereRole{
 		{
 			name:  vsuc.Spec.GlobalRole,
@@ -184,7 +198,7 @@ func getRoles(vsuc *VSphereSetupUserConfig) []vsphereRole {
 			name:  vsuc.Spec.AdminRole,
 			privs: cloudAdminPrivs,
 		},
-	}
+	}, nil
 }
 
 func getUserRoleObjects(vsuc *VSphereSetupUserConfig) []string {
