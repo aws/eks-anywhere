@@ -80,7 +80,7 @@ func TestGetLatestBundleFromClusterSucceeds(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.packageBundle), nil)
 
 	tt.Command = curatedpackages.NewBundleReader(tt.kubeConfig, tt.cluster, tt.kubectl, tt.bundleManager, tt.registry)
-	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, "")
 	tt.Expect(err).To(BeNil())
 	tt.Expect(result.Spec.Packages[0].Name).To(BeEquivalentTo(tt.packageBundle.Spec.Packages[0].Name))
 }
@@ -92,7 +92,7 @@ func TestGetLatestBundleFromClusterFailsNoBundleName(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(noActiveBundle), nil)
 
 	tt.Command = curatedpackages.NewBundleReader(tt.kubeConfig, tt.cluster, tt.kubectl, tt.bundleManager, tt.registry)
-	result, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	result, err := tt.Command.GetLatestBundle(tt.ctx, "")
 	tt.Expect(err).To(MatchError(ContainSubstring("no bundle name specified")))
 	tt.Expect(result).To(BeNil())
 }
@@ -113,7 +113,7 @@ func TestLatestBundleFromClusterUnknownBundle(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(convertJsonToBytes(tt.bundleCtrl), nil)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error reading bundle"))
 	tt.Command = curatedpackages.NewBundleReader(tt.kubeConfig, tt.cluster, tt.kubectl, tt.bundleManager, tt.registry)
-	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, "")
 	tt.Expect(err).To(MatchError(ContainSubstring("error reading bundle")))
 }
 
@@ -129,7 +129,7 @@ func TestLatestBundleFromClusterUnknownCtrl(t *testing.T) {
 	tt := newBundleTest(t)
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, gomock.Any()).Return(bytes.Buffer{}, errors.New("error fetching controller"))
 	tt.Command = curatedpackages.NewBundleReader(tt.kubeConfig, tt.cluster, tt.kubectl, tt.bundleManager, tt.registry)
-	_, err := tt.Command.GetLatestBundle(tt.ctx, tt.kubeVersion)
+	_, err := tt.Command.GetLatestBundle(tt.ctx, "")
 	tt.Expect(err).To(MatchError(ContainSubstring("error fetching controller")))
 }
 
