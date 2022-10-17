@@ -69,7 +69,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			eksDReleaseChannel:  "1-21",
 			eksDReleaseNumber:   "8",
 			kubeVersion:         "1.21.9",
-			assetConfig: &assettypes.AssetConfig{},
+			assetConfig:         &assettypes.AssetConfig{},
 			image: &assettypes.Image{
 				RepoName: "bar",
 			},
@@ -95,7 +95,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			eksDReleaseChannel:  "1-22",
 			eksDReleaseNumber:   "5",
 			kubeVersion:         "1.22.4",
-			assetConfig: &assettypes.AssetConfig{},
+			assetConfig:         &assettypes.AssetConfig{},
 			image: &assettypes.Image{
 				RepoName: "bar",
 			},
@@ -120,7 +120,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			eksDReleaseChannel:  "1-21",
 			eksDReleaseNumber:   "8",
 			kubeVersion:         "1.21.9",
-			assetConfig: &assettypes.AssetConfig{},
+			assetConfig:         &assettypes.AssetConfig{},
 			image: &assettypes.Image{
 				RepoName:  "bar",
 				AssetName: "lorem-ipsum",
@@ -147,7 +147,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			eksDReleaseChannel:  "1-21",
 			eksDReleaseNumber:   "8",
 			kubeVersion:         "1.21.9",
-			assetConfig: &assettypes.AssetConfig{},
+			assetConfig:         &assettypes.AssetConfig{},
 			image: &assettypes.Image{
 				RepoName:  "bar",
 				AssetName: "custom-bar",
@@ -178,7 +178,7 @@ func TestGenerateImageAssets(t *testing.T) {
 			eksDReleaseChannel:  "1-21",
 			eksDReleaseNumber:   "8",
 			kubeVersion:         "1.21.9",
-			assetConfig: &assettypes.AssetConfig{},
+			assetConfig:         &assettypes.AssetConfig{},
 			image: &assettypes.Image{
 				RepoName: "bar",
 			},
