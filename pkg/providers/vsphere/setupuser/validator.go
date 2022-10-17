@@ -126,6 +126,7 @@ func setDefaults(c *VSphereSetupUserConfig) {
 	}
 }
 
+// ValidateVSphereObjects validates objects do not exist before configuring user.
 func ValidateVSphereObjects(ctx context.Context, c *VSphereSetupUserConfig, govc vsphere.ProviderGovcClient) error {
 	exists, err := govc.GroupExists(ctx, c.Spec.GroupName)
 	if err != nil {

@@ -15,7 +15,8 @@ const (
 	vSphereRootPath = "/"
 )
 
-type SetupUserGovcClient interface {
+// GovcClient specifies govc functions required to configure a vsphere user.
+type GovcClient interface {
 	CreateUser(ctx context.Context, username string, password string) error
 	UserExists(ctx context.Context, username string) (bool, error)
 	CreateGroup(ctx context.Context, name string) error
@@ -26,6 +27,7 @@ type SetupUserGovcClient interface {
 	SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error
 }
 
+// SetupGOVCEnv creates appropriate govc environment variables to build govc client.
 func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
 	os.Setenv("GOVC_URL", vsuc.Spec.Connection.Server)
 	os.Setenv("GOVC_INSECURE", strconv.FormatBool(vsuc.Spec.Connection.Insecure))
@@ -34,7 +36,7 @@ func SetupGOVCEnv(ctx context.Context, vsuc *VSphereSetupUserConfig) error {
 }
 
 // Run sets up a vSphere user with appropriate group, role, and permissions to create EKS-A kubernetes clusters.
-func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient) error {
+func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
 	err := createGroup(ctx, vsuc, govc)
 	if err != nil {
 		return err
@@ -58,7 +60,7 @@ func Run(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcCl
 	return nil
 }
 
-func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient) error {
+func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
 	exists, err := govc.GroupExists(ctx, vsuc.Spec.GroupName)
 	if err != nil {
 		return err
@@ -75,7 +77,7 @@ func createGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUs
 	return nil
 }
 
-func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient) error {
+func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
 	// create roles
 	for _, r := range getRoles(vsuc) {
 		exists, err := govc.RoleExists(ctx, r.name)
@@ -98,7 +100,7 @@ func createRoles(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUs
 	return nil
 }
 
-func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient) error {
+func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
 	err := setGroupRoleOnObjects(ctx, vsuc, govc, vsuc.Spec.GlobalRole, []string{vSphereRootPath})
 	if err != nil {
 		return err
@@ -119,7 +121,7 @@ func associateRolesToObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, 
 	return nil
 }
 
-func addUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient) error {
+func addUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient) error {
 	// associate user to group
 	err := govc.AddUserToGroup(ctx, vsuc.Spec.GroupName, vsuc.Spec.Username)
 	logger.V(0).Info(fmt.Sprintf("Adding user %s to group %s", vsuc.Spec.Username, vsuc.Spec.GroupName))
@@ -130,7 +132,7 @@ func addUserToGroup(ctx context.Context, vsuc *VSphereSetupUserConfig, govc Setu
 	return nil
 }
 
-func setGroupRoleOnObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc SetupUserGovcClient, role string, objects []string) error {
+func setGroupRoleOnObjects(ctx context.Context, vsuc *VSphereSetupUserConfig, govc GovcClient, role string, objects []string) error {
 	for _, obj := range objects {
 
 		err := govc.SetGroupRoleOnObject(ctx, vsuc.Spec.GroupName, role, obj, vsuc.Spec.VSphereDomain)

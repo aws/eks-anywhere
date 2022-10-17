@@ -64,12 +64,9 @@ func (setupUserOptions *vSphereSetupUserOptions) setupUser(cmd *cobra.Command, _
 	// when using the force flag we assume the user already exists
 	if !setupUserOptions.force {
 		err = deps.Govc.CreateUser(ctx, cfg.Spec.Username, setupUserOptions.password)
-	}
-	if err != nil {
-		return err
-	}
-
-	if !setupUserOptions.force {
+		if err != nil {
+			return err
+		}
 		err = setupuser.ValidateVSphereObjects(ctx, cfg, deps.Govc)
 		if err != nil {
 			return err
