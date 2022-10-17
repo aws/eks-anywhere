@@ -33,7 +33,7 @@ spec:
       cidrBlocks:
       - 10.96.0.0/12
   controlPlaneConfiguration:
-    count: 2
+    count: 3
     endpoint:
       host: ""
     machineGroupRef:
@@ -82,31 +82,60 @@ spec:
     managementApiEndpoint: ""
     name: az-1
     zone:
-      network: {}
+      name: zone1
+      network:
+        name: "net1"
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
 metadata:
   name: my-cluster-name-cp
 spec:
-  computeOffering: {}
-  template: {}
+  computeOffering:
+    name: "m4-large"
   users:
   - name: capc
     sshAuthorizedKeys:
     - ssh-rsa AAAA...
+  template:
+    name: "rhel8-k8s-118"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem" "ext4"
+    label: "data_disk"
+  symlinks:
+    /var/log/kubernetes: /data-small/var/log/kubernetes
+  affinityGroupIds:
+  - control-plane-anti-affinity
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
 metadata:
   name: my-cluster-name
 spec:
-  computeOffering: {}
-  template: {}
+  computeOffering:
+    name: "m4-large"
   users:
   - name: capc
     sshAuthorizedKeys:
     - ssh-rsa AAAA...
+  template:
+    name: "rhel8-k8s-118"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem: "ext4"
+    label: "data_disk"
+  symlinks:
+    /var/log/pods: /data-small/var/log/pods
+    /var/log/containers: /data-small/var/log/containers
+  affinityGroupIds:
+  - worker-affinity
+  userCustomDetails:
+    foo: bar
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
@@ -114,11 +143,23 @@ metadata:
   name: my-cluster-name-etcd
 spec:
   computeOffering: {}
-  template: {}
+    name: "m4-large"
   users:
-  - name: capc
-    sshAuthorizedKeys:
-    - ssh-rsa AAAA...
+  - name: "capc"
+    sshAuthorizedKeys: 
+    - "ssh-rsa AAAAB3N...
+  template:
+    name: "rhel8-k8s-118"
+  diskOffering:
+    name: "Small"
+    mountPath: "/data-small"
+    device: "/dev/vdb"
+    filesystem: "ext4"
+    label: "data_disk"
+  symlinks:
+    /var/lib/: /data-small/var/lib
+  affinityGroupIds:
+  - etcd-affinity
 ---
 ```
 ## Cluster Fields
@@ -190,7 +231,9 @@ Refers to the Kubernetes object with CloudStack specific configuration for your 
 ### kubernetesVersion (required)
 The Kubernetes version you want to use for your cluster. Supported values: `1.23`, `1.22`, `1.21`, `1.20`
 
-### managementCluster
+### managementCluster (required)
+Identifies the name of the management cluster.
+If this is a standalone cluster or if it were serving as the management cluster for other workload clusters, this will be the same as the cluster name.
 
 ### workerNodeGroupConfigurations (required)
 This takes in a list of node groups that you can define for your workers.
@@ -239,7 +282,7 @@ Name of the CloudStack zone on which to deploy the cluster.
 CloudStack network name to use with the cluster.
 
 ## CloudStackMachineConfig
-In the example above, there are separate `CloudStackMachineConfig` sections for the control plane (`my-cluster-name-cp`), worker (`my-cluster-name`) and etcd (`my-cluster-name-etcd`)  nodes.
+In the example above, there are separate `CloudStackMachineConfig` sections for the control plane (`my-cluster-name-cp`), worker (`my-cluster-name`) and etcd (`my-cluster-name-etcd`) nodes.
 
 ### computeOfferings
 Name of the CloudStack compute instance.
@@ -264,3 +307,24 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.4 is required.
+
+### diskOffering (optional)
+Name representing a disk you want to mount into nodes for this CloudStackMachineConfig
+
+### mountPath (optional)
+Mount point on which to mount the disk.
+
+### device (optional)
+Device name of the disk partition to mount.
+
+### filesystem (optional)
+File system type used to format the filesystem on the disk.
+
+### label (optional)
+Label to apply to the disk partition.
+
+### symlinks (optional)
+Symbolic link of a directory or file you want to mount from the host filesystem to the mounted filesystem.
+
+### affinityGroupIDs (optional)
+Group ID to attach to the set of host systems to indicate how affinity is done for services on those systems.
