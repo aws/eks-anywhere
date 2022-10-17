@@ -93,7 +93,7 @@ func UploadArtifacts(r *releasetypes.ReleaseConfig, eksArtifacts map[string][]re
 						return fmt.Errorf("creating helm client: %v", err)
 					}
 
-					helmDest, err := helm.GetHelmDest(helmDriver, artifact.Image.SourceImageURI, trimmedAsset)
+					helmDest, err := helm.GetHelmDest(helmDriver, r, artifact.Image.SourceImageURI, trimmedAsset)
 					if err != nil {
 						return fmt.Errorf("getting Helm destination: %v", err)
 					}
