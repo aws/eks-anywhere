@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"os"
 	"testing"
 )
 
@@ -22,6 +23,20 @@ func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
 				HelmClient:   buildHelm(t),
 			},
 			bundleURI: bundleURI,
+		}
+	}
+}
+
+func CheckCuratedPackagesCredentials(t *testing.T) {
+	requiredEnvVars := []string{
+		"EKSA_AWS_REGION",
+		"EKSA_AWS_SECRET_ACCESS_KEY",
+		"EKSA_AWS_ACCESS_KEY_ID",
+	}
+	for _, env := range requiredEnvVars {
+		_, ok := os.LookupEnv(env)
+		if !ok {
+			t.Fatalf("Error Unset Packages environment variable: %v is required", env)
 		}
 	}
 }
