@@ -15,6 +15,7 @@ type VSphereDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
 
 	Datacenter string `json:"datacenter"`
+	DisableCSI bool   `json:"disableCSI,omitempty"`
 	Network    string `json:"network"`
 	Server     string `json:"server"`
 	Thumbprint string `json:"thumbprint"`

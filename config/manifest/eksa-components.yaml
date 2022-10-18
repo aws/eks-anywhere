@@ -5084,6 +5084,8 @@ spec:
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
