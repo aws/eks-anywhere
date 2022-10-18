@@ -169,7 +169,7 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-// WithRegistryMirror returns the registy mirror configurations.
+// WithRegistryMirror configures the factory to use registry mirror wherever applicable.
 func (f *Factory) WithRegistryMirror(endpoint string, auth bool) *Factory {
 	f.registryMirror = &registryMirror{endpoint: endpoint, auth: auth}
 

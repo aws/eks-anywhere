@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"strings"
 	"time"
 

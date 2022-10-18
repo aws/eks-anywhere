@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"io/ioutil"
 	"net"
 	"net/url"
@@ -685,7 +684,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate && clusterConfig.Spec.DatacenterRef.Kind != VSphereDatacenterKind {
-		return errors.New("authenticated local registry is only supported for vsphere provider currently")
+		return errors.New("authenticated registry mirror is only supported for vSphere provider currently")
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {

@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/config"
 	"io/ioutil"
 	"net"
 	"os"
