@@ -20,10 +20,7 @@ To prepare a CloudStack environment to run EKS Anywhere, you need the following:
 * One network in CloudStack to use for the cluster. EKS Anywhere clusters need access to CloudStack through the network to enable self-managing and storage capabilities.
 * A Red Hat Enterprise Linux ISO image built into a qcow2 image as described in [artifacts]({{< relref "../artifacts/" >}}).
 * User credentials to create VMs and attach networks in CloudStack.
-* One IP address routable from the cluster but excluded from DHCP offering. This IP address is to be used as the Control Plane Endpoint IP.
-
-Below are some suggestions to ensure that this IP address is never handed out by your DHCP server.
-You may need to contact your network engineer.
+* One IP address routable from the cluster but excluded from DHCP offering. This IP address is to be used as the Control Plane Endpoint IP. Below are some suggestions to ensure that this IP address is never handed out by your DHCP server. You may need to contact your network engineer.
 
     * Pick an IP address reachable from the cluster subnet which is excluded from DHCP range OR
     * Alter DHCP ranges to leave out an IP address(s) at the top and/or the bottom of the range OR
