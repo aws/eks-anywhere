@@ -1160,6 +1160,39 @@ func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_cert_md.yaml")
 }
 
+func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
+	clusterSpecManifest := "cluster_mirror_with_auth_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	govc := NewDummyProviderGovcClient()
+	govc.osTag = ubuntuOSTag
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_auth_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_auth_config_md.yaml")
+}
+
 func TestUpdateKubeConfig(t *testing.T) {
 	provider := givenProvider(t)
 	content := []byte{}
