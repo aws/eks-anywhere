@@ -2,8 +2,10 @@ package docker_test
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -418,6 +420,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	client := dockerMocks.NewMockProviderClient(mockCtrl)
 	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
 	clusterSpec := test.NewClusterSpec()
+	clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.Kube122
 	clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
 	clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(0), MachineGroupRef: &v1alpha1.Ref{Name: "fluxTestCluster"}, Name: "md-0"}}
@@ -652,4 +655,54 @@ func TestProviderGenerateCAPISpecForCreateWithStackedEtcd(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/valid_deployment_cp_stacked_etcd_expected.yaml")
+}
+
+func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
+	type args struct {
+		clusterSpec  *cluster.Spec
+		buildOptions []providers.BuildMapOption
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantContent []byte
+		wantErr     error
+	}{
+		{
+			name: "kube 122 test",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+					s.Cluster.Spec.KubernetesVersion = "1.22"
+				}),
+				buildOptions: nil,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "kube version not specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+				}),
+				buildOptions: nil,
+			},
+			wantErr: fmt.Errorf("error building template map from CP "),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			builder := docker.NewDockerTemplateBuilder(time.Now)
+
+			gotContent, err := builder.GenerateCAPISpecControlPlane(tt.args.clusterSpec, tt.args.buildOptions...)
+			if err != tt.wantErr && !assert.Contains(t, err.Error(), tt.wantErr.Error()) {
+				t.Errorf("Got DockerTemplateBuilder.GenerateCAPISpecControlPlane() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil {
+				g.Expect(gotContent).NotTo(BeEmpty())
+			}
+		})
+	}
 }

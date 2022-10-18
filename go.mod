@@ -43,6 +43,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.24.2
 	k8s.io/apimachinery v0.24.3
+	k8s.io/apiserver v0.24.2
 	k8s.io/client-go v0.24.2
 	oras.land/oras-go v1.2.0
 	sigs.k8s.io/cluster-api v1.1.3

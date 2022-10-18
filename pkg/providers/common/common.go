@@ -26,10 +26,6 @@ const (
 	publicKeyFileName  = "eks-a-id_rsa.pub"
 )
 
-func GetAuditPolicy() string {
-	return auditPolicy
-}
-
 func BootstrapClusterOpts(clusterConfig *v1alpha1.Cluster, serverEndpoints ...string) ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
 	if clusterConfig.Spec.ProxyConfiguration != nil {
