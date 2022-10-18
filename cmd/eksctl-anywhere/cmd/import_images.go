@@ -17,7 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/manifests/bundles"
 )
 
-// imagesCmd represents the images command
+// imagesCmd represents the images command.
 var importImagesCmd = &cobra.Command{
 	Use:   "images",
 	Short: "Import images and charts to a registry from a tarball",

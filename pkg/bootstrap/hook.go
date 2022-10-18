@@ -18,22 +18,23 @@ type KubernetesClient interface {
 	Apply(ctx context.Context, cluster *types.Cluster, r io.Reader) error
 }
 
-// CustomComponentInstaller installs a component manifest at a configurable path to a bootstrap
-// cluster. It's entrypoint is via a workflow hook.
+// CustomComponentInstaller installs a set of component manifests to a bootstrap cluster. It
+// is intended for use with management cluster workflows where it binds as a post bootstrap
+// cluster creation hook.
 type CustomComponentInstaller struct {
-	fs           fs.FS
-	manifestPath string
-	k8s          KubernetesClient
+	fs  fs.FS
+	dir string
+	k8s KubernetesClient
 }
 
 // NewCustomComponentInstaller returns a new CustomComponentInstaller. ManifestPath is a path
 // to a Kubernetes manifest that can be applied to a Kubernetes cluster.
-func NewCustomComponentInstaller(filesystem fs.FS, manifestPath string) (*CustomComponentInstaller, error) {
-	if !fs.ValidPath(manifestPath) {
-		return nil, fmt.Errorf("invalid dir: %v", manifestPath)
+func NewCustomComponentInstaller(filesystem fs.FS, dir string) (*CustomComponentInstaller, error) {
+	if !fs.ValidPath(dir) {
+		return nil, fmt.Errorf("invalid dir: %v", dir)
 	}
 
-	return &CustomComponentInstaller{fs: filesystem, manifestPath: manifestPath}, nil
+	return &CustomComponentInstaller{fs: filesystem, dir: dir}, nil
 }
 
 // RegisterCreateManagementClusterHooks satisfies management.CreateClusterHookRegistrar.
@@ -51,12 +52,27 @@ func (installer *CustomComponentInstaller) RegisterCreateManagementClusterHooks(
 	)
 }
 
-// install opens installer's configured manifest path and applies it to the bootstrap cluster.
+// install reads all files found at installers configured dir and.
 func (installer *CustomComponentInstaller) install(ctx context.Context, cluster *types.Cluster) error {
-	fh, err := installer.fs.Open(installer.manifestPath)
+	entries, err := fs.ReadDir(installer.fs, ".")
 	if err != nil {
 		return err
 	}
 
-	return installer.k8s.Apply(ctx, cluster, fh)
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
+		fh, err := installer.fs.Open(entry.Name())
+		if err != nil {
+			return err
+		}
+
+		if err := installer.k8s.Apply(ctx, cluster, fh); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

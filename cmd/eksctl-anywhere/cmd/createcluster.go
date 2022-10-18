@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -167,6 +168,9 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 			CreateBootstrapClusterOptions: deps.Provider,
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
+
+		os.LookupEnv("EKSA_BOOTSTRAP_CLUSTER_CUSTOM_COMPONENTS_DIR")
+
 		err = wflw.Run(ctx)
 	} else {
 		err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
