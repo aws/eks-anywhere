@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -1382,7 +1383,7 @@ func TestGovcRoleExistsFalse(t *testing.T) {
 	_, g, executable, env := setup(t)
 	role := "EKSACloudAdmin"
 
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "role.ls", role).Return(*bytes.NewBufferString(""), fmt.Errorf("role \"%s\" not found", role))
 
 	exists, err := g.RoleExists(ctx, role)
 	gt := NewWithT(t)

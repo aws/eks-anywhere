@@ -165,6 +165,38 @@ func (pc *DummyProviderGovcClient) CreateCategoryForVM(ctx context.Context, name
 	return nil
 }
 
+func (pc *DummyProviderGovcClient) AddUserToGroup(ctx context.Context, name string, username string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateGroup(ctx context.Context, name string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateRole(ctx context.Context, name string, privileges []string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateUser(ctx context.Context, username string, password string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) UserExists(ctx context.Context, username string) (bool, error) {
+	return true, nil
+}
+
+func (pc *DummyProviderGovcClient) GroupExists(ctx context.Context, name string) (bool, error) {
+	return true, nil
+}
+
+func (pc *DummyProviderGovcClient) RoleExists(ctx context.Context, name string) (bool, error) {
+	return false, nil
+}
+
+func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+	return nil
+}
+
 type DummyNetClient struct{}
 
 func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
