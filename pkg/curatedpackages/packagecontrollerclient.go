@@ -92,14 +92,17 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		return pc.InstallPBCResources(ctx)
 	}
 	ociUri := fmt.Sprintf("%s%s", "oci://", pc.uri)
+	sourceRegistry := fmt.Sprintf("sourceRegistry=%s", GetRegistry(pc.uri))
+	clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
 	values := []string{}
 	if pc.registryMirror != "" {
-		sourceRegistry := fmt.Sprintf("sourceRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.ociNamespace))
+		sourceRegistry = fmt.Sprintf("sourceRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.ociNamespace))
 		defaultRegistry := fmt.Sprintf("defaultRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.ociNamespace))
 		defaultImageRegistry := fmt.Sprintf("defaultImageRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.packageOCINamespace))
-		clusterName := fmt.Sprintf("clusterName=%s", pc.clusterName)
-		values = append(values, sourceRegistry, defaultRegistry, defaultImageRegistry, clusterName)
+		privateRegistry := fmt.Sprintf("privateRegistry=%s", docker.GetRegistryWithNamespace(pc.registryMirror, pc.packageOCINamespace))
+		values = append(values, defaultRegistry, defaultImageRegistry, privateRegistry)
 	}
+	values = append(values, sourceRegistry, clusterName)
 
 	// Provide proxy details for curated packages helm chart when proxy details provided
 	if pc.httpProxy != "" {
