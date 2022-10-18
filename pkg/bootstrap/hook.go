@@ -72,6 +72,10 @@ func (installer *CustomComponentInstaller) install(ctx context.Context, cluster 
 		if err := installer.k8s.Apply(ctx, cluster, fh); err != nil {
 			return err
 		}
+
+		if err := fh.Close(); err != nil {
+			// Log error
+		}
 	}
 
 	return nil
