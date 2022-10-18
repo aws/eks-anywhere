@@ -189,6 +189,25 @@ func TestValidateVSphereObjects(t *testing.T) {
 				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(false, fmt.Errorf("govc error"))
 			},
 		},
+		{
+			name:     "test validate RoleExists AdminRole true",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "role MyExistingEKSAAdminRole already exists, please use force=true to ignore",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.GlobalRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.UserRole).Return(false, nil)
+				gc.EXPECT().RoleExists(ctx, c.Spec.AdminRole).Return(true, nil)
+			},
+		},
+		{
+			name:     "test validate GroupExists true",
+			filepath: "./testdata/configs/valid.yaml",
+			wantErr:  "group MyExistingGroup already exists, please use force=true to ignore",
+			prepare: func(ctx context.Context, c *setupuser.VSphereSetupUserConfig, gc *mocks.MockGovcClient) {
+				gc.EXPECT().GroupExists(ctx, c.Spec.GroupName).Return(true, nil)
+			},
+		},
 	}
 
 	for _, tt := range tests {
