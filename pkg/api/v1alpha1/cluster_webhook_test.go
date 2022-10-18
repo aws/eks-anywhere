@@ -23,7 +23,7 @@ func TestClusterDefault(t *testing.T) {
 	cOld.Default()
 	g := NewWithT(t)
 	g.Expect(cOld.Spec.ClusterNetwork.CNIConfig).To(Equal(&v1alpha1.CNIConfig{}))
-	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHttpsPort))
+	g.Expect(cOld.Spec.RegistryMirrorConfiguration.Port).To(Equal(constants.DefaultHTTPSPort))
 }
 
 func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {

@@ -97,8 +97,8 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithExtraDockerMounts()
 				},
 			},
-			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantKindConfig:     "testdata/kind_config_docker_mount_networking.yaml",
+			env:            map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
+			wantKindConfig: "testdata/kind_config_docker_mount_networking.yaml",
 		},
 	}
 	for _, tt := range tests {
@@ -146,7 +146,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 	eksClusterName := "test_cluster-eks-a-cluster"
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
 	registryMirror := "registry-mirror.test"
-	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHttpsPort)
+	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHTTPSPort)
 	kindImage := fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
 
 	// Initialize gomock
@@ -168,7 +168,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint: registryMirror,
-					Port:     constants.DefaultHttpsPort,
+					Port:     constants.DefaultHTTPSPort,
 				}
 			}),
 			env:            map[string]string{},
@@ -182,7 +182,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint:      registryMirror,
-					Port:          constants.DefaultHttpsPort,
+					Port:          constants.DefaultHTTPSPort,
 					CACertContent: "test",
 				}
 			}),
@@ -197,7 +197,7 @@ func TestKindCreateBootstrapClusterSuccessWithRegistryMirror(t *testing.T) {
 				s.VersionsBundle = versionBundle
 				s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 					Endpoint:     registryMirror,
-					Port:         constants.DefaultHttpsPort,
+					Port:         constants.DefaultHTTPSPort,
 					Authenticate: true,
 				}
 			}),
@@ -282,7 +282,7 @@ func TestKindCreateBootstrapClusterExecutableWithRegistryMirrorError(t *testing.
 		s.VersionsBundle = versionBundle
 		s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 			Endpoint:     registryMirror,
-			Port:         constants.DefaultHttpsPort,
+			Port:         constants.DefaultHTTPSPort,
 			Authenticate: true,
 		}
 	})

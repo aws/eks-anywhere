@@ -173,10 +173,10 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 
 func (f *Factory) WithRegistryMirror(endpoint, ociNamespace, packageOCINamespace string, auth bool) *Factory {
 	f.registryMirror = &registryMirror{
-		endpoint: endpoint,
-		ociNamespace: ociNamespace,
+		endpoint:            endpoint,
+		ociNamespace:        ociNamespace,
 		packageOCINamespace: packageOCINamespace,
-		auth: auth,
+		auth:                auth,
 	}
 	return f
 }
@@ -914,7 +914,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 		mgmtKubeConfig := kubeconfig.ResolveFilename(kubeConfig, managementClusterName)
 
 		chart := spec.VersionsBundle.PackageController.HelmChart
-		imageUrl := registry.ReplaceHostWithNamespacedEndpoint(chart.Image(), spec.Cluster.RegistryMirror(), spec.Cluster.RegistryMirrorOCINamespace())
+		imageURL := registry.ReplaceHostWithNamespacedEndpoint(chart.Image(), spec.Cluster.RegistryMirror(), spec.Cluster.RegistryMirrorOCINamespace())
 
 		httpProxy, httpsProxy, noProxy := getProxyConfiguration(spec)
 		eksaAccessKeyId, eksaSecretKey, eksaRegion := os.Getenv(config.EksaAccessKeyIdEnv), os.Getenv(config.EksaSecretAccessKeyEnv), os.Getenv(config.EksaRegionEnv)
@@ -923,7 +923,7 @@ func (f *Factory) WithPackageControllerClient(spec *cluster.Spec, kubeConfig str
 			f.dependencies.Kubectl,
 			spec.Cluster.Name,
 			mgmtKubeConfig,
-			imageUrl,
+			imageURL,
 			spec.Cluster.RegistryMirror(),
 			spec.Cluster.RegistryMirrorOCINamespace(),
 			spec.Cluster.RegistryMirrorPackageOCINamespace(),

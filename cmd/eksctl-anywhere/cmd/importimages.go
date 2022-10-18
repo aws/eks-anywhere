@@ -80,8 +80,8 @@ func importImages(ctx context.Context, spec string) error {
 	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
 	ociNamespace := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.OCINamespace
 	if port == "" {
-		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
-		port = constants.DefaultHttpsPort
+		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHTTPSPort)
+		port = constants.DefaultHTTPSPort
 	}
 	if !networkutils.IsPortValid(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)

@@ -76,7 +76,7 @@ func checkImages(context context.Context, options *checkImagesOptions) error {
 		if len(host) > 0 {
 			port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
 			if port == "" {
-				port = constants.DefaultHttpsPort
+				port = constants.DefaultHTTPSPort
 			}
 			myRegistry = net.JoinHostPort(host, port)
 			ociNamespace = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.OCINamespace
@@ -113,16 +113,16 @@ func checkImages(context context.Context, options *checkImagesOptions) error {
 
 	checkImageExistence := artifacts.CheckImageExistence{}
 	for _, image := range images {
-		myImageUri := docker.ReplaceHostWithNamespacedEndpoint(image.URI, myRegistry, ociNamespace)
+		myImageURI := docker.ReplaceHostWithNamespacedEndpoint(image.URI, myRegistry, ociNamespace)
 		if _, ok := packageImageSet[image.URI]; ok {
-			myImageUri = docker.ReplaceHostWithNamespacedEndpoint(image.URI, myRegistry, packageOCINamespace)
+			myImageURI = docker.ReplaceHostWithNamespacedEndpoint(image.URI, myRegistry, packageOCINamespace)
 		}
-		checkImageExistence.ImageUri = myImageUri
+		checkImageExistence.ImageUri = myImageURI
 		if err = checkImageExistence.Run(context); err != nil {
 			fmt.Println(err.Error())
-			logger.MarkFail(myImageUri)
+			logger.MarkFail(myImageURI)
 		} else {
-			logger.MarkPass(myImageUri)
+			logger.MarkPass(myImageURI)
 		}
 	}
 

@@ -11,18 +11,18 @@ import (
 )
 
 const (
-	RegistryEndpointVar             = "T_REGISTRY_MIRROR_ENDPOINT"
-	RegistryPortVar                 = "T_REGISTRY_MIRROR_PORT"
-	RegistryOCINamespaceVar         = "T_REGISTRY_MIRROR_OCI_NAMESPACE"
-	RegistryPackageOCINamespaceVar  = "T_REGISTRY_MIRROR_PACKAGE_OCI_NAMESPACE"
-	RegistryUsernameVar             = "T_REGISTRY_MIRROR_USERNAME"
-	RegistryPasswordVar             = "T_REGISTRY_MIRROR_PASSWORD"
-	RegistryCACertVar               = "T_REGISTRY_MIRROR_CA_CERT"
-	RegistryEndpointTinkerbellVar   = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
-	RegistryPortTinkerbellVar       = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
-	RegistryUsernameTinkerbellVar   = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
-	RegistryPasswordTinkerbellVar   = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
-	RegistryCACertTinkerbellVar     = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
+	RegistryEndpointVar            = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryPortVar                = "T_REGISTRY_MIRROR_PORT"
+	RegistryOCINamespaceVar        = "T_REGISTRY_MIRROR_OCI_NAMESPACE"
+	RegistryPackageOCINamespaceVar = "T_REGISTRY_MIRROR_PACKAGE_OCI_NAMESPACE"
+	RegistryUsernameVar            = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar            = "T_REGISTRY_MIRROR_PASSWORD"
+	RegistryCACertVar              = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointTinkerbellVar  = "T_REGISTRY_MIRROR_ENDPOINT_TINKERBELL"
+	RegistryPortTinkerbellVar      = "T_REGISTRY_MIRROR_PORT_TINKERBELL"
+	RegistryUsernameTinkerbellVar  = "T_REGISTRY_MIRROR_USERNAME_TINKERBELL"
+	RegistryPasswordTinkerbellVar  = "T_REGISTRY_MIRROR_PASSWORD_TINKERBELL"
+	RegistryCACertTinkerbellVar    = "T_REGISTRY_MIRROR_CA_CERT_TINKERBELL"
 )
 
 var (

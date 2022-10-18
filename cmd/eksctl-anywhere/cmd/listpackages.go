@@ -18,7 +18,7 @@ type listPackagesOption struct {
 	ociNamespace string
 	// kubeConfig is an optional kubeconfig file to use when querying an
 	// existing cluster.
-	kubeConfig   string
+	kubeConfig string
 }
 
 var lpo = &listPackagesOption{}

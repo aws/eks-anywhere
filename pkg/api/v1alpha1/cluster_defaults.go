@@ -30,8 +30,8 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
-		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
-		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
+		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHTTPSPort)
+		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHTTPSPort
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {

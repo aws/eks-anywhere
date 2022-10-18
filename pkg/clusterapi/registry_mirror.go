@@ -19,11 +19,11 @@ type values map[string]interface{}
 
 func registryMirrorConfigContent(registryAddress, registryOCINamespace, registryPackageOCINamespace, registryCert string, insecureSkip bool) (string, error) {
 	val := values{
-		"registryMirrorAddress":        registryAddress,
-		"registryOCINamespace":         registryOCINamespace,
-		"registryPackageOCINamespace":  registryPackageOCINamespace,
-		"registryCACert":               registryCert,
-		"insecureSkip":                 insecureSkip,
+		"registryMirrorAddress":       registryAddress,
+		"registryOCINamespace":        registryOCINamespace,
+		"registryPackageOCINamespace": registryPackageOCINamespace,
+		"registryCACert":              registryCert,
+		"insecureSkip":                insecureSkip,
 	}
 
 	config, err := templater.Execute(containerdConfig, val)
