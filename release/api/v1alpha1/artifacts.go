@@ -151,9 +151,12 @@ func (vb *VersionsBundle) TinkerbellImages() []Image {
 }
 
 func (vb *VersionsBundle) NutanixImages() []Image {
-	return []Image{
-		vb.Nutanix.ClusterAPIController,
+	i := make([]Image, 0, 1)
+	if vb.Nutanix.ClusterAPIController.URI != "" {
+		i = append(i, vb.Nutanix.ClusterAPIController)
 	}
+
+	return i
 }
 
 func (vb *VersionsBundle) SharedImages() []Image {

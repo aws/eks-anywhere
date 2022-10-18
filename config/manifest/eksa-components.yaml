@@ -3688,6 +3688,9 @@ spec:
                 description: RegistryMirrorConfiguration defines the settings for
                   image registry mirror
                 properties:
+                  authenticate:
+                    description: Authenticate defines if registry requires authentication
+                    type: boolean
                   caCertContent:
                     description: CACertContent defines the contents registry mirror
                       CA certificate
@@ -5073,6 +5076,8 @@ spec:
             properties:
               datacenter:
                 type: string
+              disableCSI:
+                type: boolean
               insecure:
                 type: boolean
               network:
@@ -5272,6 +5277,8 @@ rules:
   - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
+  - nutanixdatacenterconfigs
+  - nutanixmachineconfigs
   - snowmachineconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs

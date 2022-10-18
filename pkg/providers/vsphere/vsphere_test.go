@@ -165,6 +165,38 @@ func (pc *DummyProviderGovcClient) CreateCategoryForVM(ctx context.Context, name
 	return nil
 }
 
+func (pc *DummyProviderGovcClient) AddUserToGroup(ctx context.Context, name string, username string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateGroup(ctx context.Context, name string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateRole(ctx context.Context, name string, privileges []string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) CreateUser(ctx context.Context, username string, password string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) UserExists(ctx context.Context, username string) (bool, error) {
+	return true, nil
+}
+
+func (pc *DummyProviderGovcClient) GroupExists(ctx context.Context, name string) (bool, error) {
+	return true, nil
+}
+
+func (pc *DummyProviderGovcClient) RoleExists(ctx context.Context, name string) (bool, error) {
+	return false, nil
+}
+
+func (pc *DummyProviderGovcClient) SetGroupRoleOnObject(ctx context.Context, principal string, role string, object string, domain string) error {
+	return nil
+}
+
 type DummyNetClient struct{}
 
 func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
@@ -599,7 +631,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeCP(t *testing.T) {
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -614,6 +646,11 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 			testName:          "with full oidc",
 			clusterconfigFile: "cluster_full_oidc.yaml",
 			wantCPFile:        "testdata/expected_results_full_oidc_cp.yaml",
+		},
+		{
+			testName:          "minimal_disable_csi",
+			clusterconfigFile: "cluster_minimal_disable_csi.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_disable_csi_cp.yaml",
 		},
 	}
 	for _, tt := range tests {
@@ -991,6 +1028,16 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 	}
 }
 
+func TestProviderGenerateStorageClassDisableCSI(t *testing.T) {
+	provider := givenProvider(t)
+	provider.datacenterConfig.Spec.DisableCSI = true
+
+	storageClassManifest := provider.GenerateStorageClass()
+	if storageClassManifest != nil {
+		t.Fatalf("Expected nil")
+	}
+}
+
 func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
 	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -1158,6 +1205,39 @@ func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_with_cert_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_cert_md.yaml")
+}
+
+func TestProviderGenerateDeploymentFileWithMirrorAuth(t *testing.T) {
+	clusterSpecManifest := "cluster_mirror_with_auth_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	if err := os.Setenv("REGISTRY_USERNAME", "username"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	if err := os.Setenv("REGISTRY_PASSWORD", "password"); err != nil {
+		t.Fatalf(err.Error())
+	}
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	govc := NewDummyProviderGovcClient()
+	govc.osTag = ubuntuOSTag
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_with_auth_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_with_auth_config_md.yaml")
 }
 
 func TestUpdateKubeConfig(t *testing.T) {

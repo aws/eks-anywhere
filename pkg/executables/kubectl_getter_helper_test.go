@@ -15,10 +15,10 @@ type (
 	getter            func(*kubectlGetterTest) (client.Object, error)
 	kubectlGetterTest struct {
 		*kubectlTest
-		resourceType, name string
-		json               string
-		getter             getter
-		want               client.Object
+		resourceType, name, namespace string
+		json                          string
+		getter                        getter
+		want                          client.Object
 	}
 )
 
@@ -31,6 +31,11 @@ func newKubectlGetterTest(t *testing.T) *kubectlGetterTest {
 
 func (tt *kubectlGetterTest) withResourceType(r string) *kubectlGetterTest {
 	tt.resourceType = r
+	return tt
+}
+
+func (tt *kubectlGetterTest) withoutNamespace() *kubectlGetterTest {
+	tt.namespace = ""
 	return tt
 }
 
@@ -56,9 +61,14 @@ func (tt *kubectlGetterTest) andWant(o client.Object) *kubectlGetterTest {
 func (tt *kubectlGetterTest) testSuccess() {
 	tt.WithT.THelper()
 
+	argsWithoutName := []interface{}{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, tt.resourceType}
+	if tt.namespace != "" {
+		argsWithoutName = append(argsWithoutName, "--namespace", tt.namespace)
+	}
+	args := append(argsWithoutName, tt.name)
+
 	tt.e.EXPECT().Execute(
-		tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, tt.resourceType, tt.name,
+		tt.ctx, args...,
 	).Return(*bytes.NewBufferString(tt.json), nil)
 
 	got, err := tt.getter(tt)
@@ -69,9 +79,14 @@ func (tt *kubectlGetterTest) testSuccess() {
 func (tt *kubectlGetterTest) testError() {
 	tt.WithT.THelper()
 
+	argsWithoutName := []interface{}{"get", "--ignore-not-found", "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, tt.resourceType}
+	if tt.namespace != "" {
+		argsWithoutName = append(argsWithoutName, "--namespace", tt.namespace)
+	}
+	args := append(argsWithoutName, tt.name)
+
 	tt.e.EXPECT().Execute(
-		tt.ctx,
-		"get", "--ignore-not-found", "--namespace", tt.namespace, "-o", "json", "--kubeconfig", tt.kubeconfig, tt.resourceType, tt.name,
+		tt.ctx, args...,
 	).Return(bytes.Buffer{}, errors.New("error in get"))
 
 	_, err := tt.getter(tt)

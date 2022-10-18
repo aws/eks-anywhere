@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -48,6 +49,9 @@ type kindExecConfig struct {
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
 	RegistryCACertPath     string
+	RegistryAuth           bool
+	RegistryUsername       string
+	RegistryPassword       string
 	ExtraPortMappings      []int
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
@@ -165,19 +169,6 @@ func (k *Kind) WithEnv(env map[string]string) bootstrapper.BootstrapClusterClien
 	}
 }
 
-func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
-	return func() error {
-		if k.execConfig == nil {
-			return errors.New("kind exec config is not ready")
-		}
-
-		k.execConfig.RegistryMirrorEndpoint = endpoint
-		k.execConfig.RegistryCACertPath = caCertFile
-
-		return nil
-	}
-}
-
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
@@ -211,6 +202,15 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+		}
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			k.execConfig.RegistryAuth = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			k.execConfig.RegistryUsername = username
+			k.execConfig.RegistryPassword = password
 		}
 	}
 	return nil
