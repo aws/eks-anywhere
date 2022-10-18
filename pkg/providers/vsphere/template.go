@@ -188,6 +188,13 @@ func buildTemplateMapCP(
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
+
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, _ := config.ReadCredentials()
+			values["registryUsername"] = username
+			values["registryPassword"] = password
+		}
 	}
 
 	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
@@ -286,6 +293,13 @@ func buildTemplateMapMD(
 		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
+		}
+
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			values["registryAuth"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, _ := config.ReadCredentials()
+			values["registryUsername"] = username
+			values["registryPassword"] = password
 		}
 	}
 

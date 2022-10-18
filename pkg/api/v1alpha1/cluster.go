@@ -17,6 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -290,6 +291,14 @@ func (c *Cluster) RegistryMirror() string {
 	}
 
 	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
+}
+
+// RegistryAuth returns whether registry requires authentication or not.
+func (c *Cluster) RegistryAuth() bool {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return false
+	}
+	return c.Spec.RegistryMirrorConfiguration.Authenticate
 }
 
 func (c *Cluster) ProxyConfiguration() map[string]string {
@@ -673,6 +682,17 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate && clusterConfig.Spec.DatacenterRef.Kind != VSphereDatacenterKind {
+		return errors.New("authenticated registry mirror is only supported for vSphere provider currently")
+	}
+
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Authenticate {
+		_, _, err := config.ReadCredentials()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
