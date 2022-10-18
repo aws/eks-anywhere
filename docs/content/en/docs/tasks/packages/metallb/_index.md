@@ -15,7 +15,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package metallb --source cluster > metallb.yaml
+   eksctl anywhere generate package metallb --cluster clusterName > metallb.yaml
    ```
 
 1. Add the desired configuration to `metallb.yaml`

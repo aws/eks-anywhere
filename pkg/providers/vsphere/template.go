@@ -51,7 +51,10 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 	}
-	values := buildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
+	values, err := buildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
+	if err != nil {
+		return nil, fmt.Errorf("error building template map from CP %v", err)
+	}
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -112,7 +115,7 @@ func buildTemplateMapCP(
 	clusterSpec *cluster.Spec,
 	datacenterSpec anywherev1.VSphereDatacenterConfigSpec,
 	controlPlaneMachineSpec, etcdMachineSpec anywherev1.VSphereMachineConfigSpec,
-) map[string]interface{} {
+) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
@@ -173,7 +176,6 @@ func buildTemplateMapCP(
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
-		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
 		"eksaVsphereUsername":                  vuc.EksaVsphereUsername,
 		"eksaVspherePassword":                  vuc.EksaVspherePassword,
@@ -183,6 +185,12 @@ func buildTemplateMapCP(
 		"eksaCSIPassword":                      vuc.EksaVsphereCSIPassword,
 		"disableCSI":                           datacenterSpec.DisableCSI,
 	}
+
+	auditPolicy, err := common.GetAuditPolicy(clusterSpec.Cluster.Spec.KubernetesVersion)
+	if err != nil {
+		return nil, err
+	}
+	values["auditPolicy"] = auditPolicy
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
@@ -249,7 +257,7 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
-	return values
+	return values, err
 }
 
 func buildTemplateMapMD(
