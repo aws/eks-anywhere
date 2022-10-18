@@ -41,7 +41,7 @@ func equivalentUsers(a, b []anywherev1.UserConfiguration) bool {
 }
 
 // equivalentSSHKeys compares two SSH keys slices
-// SSH keys comparison is no strict and equivalent keys are considered the same,
+// SSH keys comparison is not strict and equivalent keys are considered the same,
 // all comments are stripped before comparison
 // This useful when comparing VSphereMachineConfigs that have been inferred from a
 // vsphere machine template, since comments are lost in the conversion
