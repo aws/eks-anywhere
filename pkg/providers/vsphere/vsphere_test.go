@@ -631,7 +631,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeCP(t *testing.T) {
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -646,6 +646,11 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 			testName:          "with full oidc",
 			clusterconfigFile: "cluster_full_oidc.yaml",
 			wantCPFile:        "testdata/expected_results_full_oidc_cp.yaml",
+		},
+		{
+			testName:          "minimal_disable_csi",
+			clusterconfigFile: "cluster_minimal_disable_csi.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_disable_csi_cp.yaml",
 		},
 	}
 	for _, tt := range tests {
@@ -1020,6 +1025,16 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 	storageClassManifest := provider.GenerateStorageClass()
 	if storageClassManifest == nil {
 		t.Fatalf("Expected storageClassManifest")
+	}
+}
+
+func TestProviderGenerateStorageClassDisableCSI(t *testing.T) {
+	provider := givenProvider(t)
+	provider.datacenterConfig.Spec.DisableCSI = true
+
+	storageClassManifest := provider.GenerateStorageClass()
+	if storageClassManifest != nil {
+		t.Fatalf("Expected nil")
 	}
 }
 
