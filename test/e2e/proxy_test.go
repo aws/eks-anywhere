@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -17,16 +18,17 @@ func runProxyConfigFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetes123UbuntuProxyConfig(t *testing.T) {
+func TestVSphereKubernetes124UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu123(),
+		framework.NewVSphere(t, framework.WithUbuntu124(),
 			framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithProxy(framework.VsphereProxyRequiredEnvVars),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
