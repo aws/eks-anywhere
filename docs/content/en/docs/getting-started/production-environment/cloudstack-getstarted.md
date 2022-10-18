@@ -32,8 +32,8 @@ EKS Anywhere needs to:
 * Be run on an Admin machine that has certain [machine
 requirements]({{< relref "../install" >}}).
 * Have certain
-[resources from your CloudStack deployment]({{< relref "/docs/reference/cloudstack/cloudstack-prereq/" >}}) available.
-* Have some [preparation ]({{< relref "/docs/reference/cloudstack/cloudstack-preparation/" >}}) done before creating an EKS Anywhere cluster.
+[resources from your CloudStack deployment]({{< relref "/docs/reference/cloudstack/cloudstack-prereq/_index.md" >}}) available.
+* Have some [preparation ]({{< relref "/docs/reference/cloudstack/cloudstack-preparation/_index.md" >}}) done before creating an EKS Anywhere cluster.
 
 Also, see the [Ports and protocols]({{< relref "/docs/reference/ports.md" >}}) page for information on ports that need to be accessible from control plane, worker, and Admin machines.
 
