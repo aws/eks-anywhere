@@ -91,7 +91,7 @@ func checkImages(context context.Context, options *checkImagesOptions) error {
 	}
 	deps, err := factory.
 		WithManifestReader().
-		WithRegistryMirror(myRegistry, ociNamespace, packageOCINamespace).
+		WithRegistryMirror(myRegistry, ociNamespace, packageOCINamespace, false).
 		WithHelm(helmOpts...).
 		Build(context)
 	if err != nil {

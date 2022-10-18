@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
@@ -27,6 +29,9 @@ func init() {
 	generatePackageCommand.Flags().StringVar(&gpOptions.registry, "registry", "", "Used to specify an alternative registry for package generation")
 	generatePackageCommand.Flags().StringVar(&gpOptions.kubeConfig, "kubeconfig", "",
 		"Path to an optional kubeconfig file to use.")
+	if err := generatePackageCommand.MarkFlagRequired("cluster"); err != nil {
+		log.Fatalf("marking cluster flag as required: %s", err)
+	}
 }
 
 var generatePackageCommand = &cobra.Command{
@@ -46,7 +51,12 @@ var generatePackageCommand = &cobra.Command{
 }
 
 func runGeneratePackages(cmd *cobra.Command, args []string) error {
-	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, gpOptions.clusterName); err != nil {
+	clusterName := gpOptions.clusterName
+	if len(gpOptions.kubeVersion) > 0 {
+		// allow both
+		clusterName = ""
+	}
+	if err := curatedpackages.ValidateKubeVersion(gpOptions.kubeVersion, clusterName); err != nil {
 		return err
 	}
 	return generatePackages(cmd.Context(), args)

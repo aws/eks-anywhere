@@ -19,10 +19,7 @@ containerdConfigPatches:
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
         endpoint = ["https://registry-mirror.test:443"]
       [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".tls]
-        ca_file = "/etc/containerd/certs.d/registry-mirror.test:443/ca.crt"
-nodes:
-- role: control-plane
-  extraMounts:
-    - containerPath: /etc/containerd/certs.d
-      hostPath: test_cluster/generated/certs.d
-      readOnly: true
+        insecure_skip_verify = true
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".auth]
+        username = "username"
+        password = "password"

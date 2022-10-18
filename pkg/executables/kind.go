@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/docker"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -37,21 +38,24 @@ type Kind struct {
 // It's used by BootstrapClusterClientOption's to store/change information prior to a command execution
 // It must be cleaned after each execution to prevent side effects from past executions options
 type kindExecConfig struct {
-	env                     map[string]string
-	ConfigFile              string
-	KindImage               string
-	KubernetesRepository    string
-	EtcdRepository          string
-	EtcdVersion             string
-	CorednsRepository       string
-	CorednsVersion          string
-	KubernetesVersion       string
-	RegistryMirrorEndpoint  string
+	env                    map[string]string
+	ConfigFile             string
+	KindImage              string
+	KubernetesRepository   string
+	EtcdRepository         string
+	EtcdVersion            string
+	CorednsRepository      string
+	CorednsVersion         string
+	KubernetesVersion      string
+	RegistryMirrorEndpoint string
 	RegistryMirrorNamespace string
-	RegistryCACertPath      string
-	ExtraPortMappings       []int
-	DockerExtraMounts       bool
-	DisableDefaultCNI       bool
+	RegistryCACertPath     string
+	RegistryAuth           bool
+	RegistryUsername       string
+	RegistryPassword       string
+	ExtraPortMappings      []int
+	DockerExtraMounts      bool
+	DisableDefaultCNI      bool
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -214,6 +218,15 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
+		}
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate {
+			k.execConfig.RegistryAuth = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Authenticate
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			k.execConfig.RegistryUsername = username
+			k.execConfig.RegistryPassword = password
 		}
 	}
 	return nil

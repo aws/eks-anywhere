@@ -113,7 +113,7 @@ func (c ImportImagesCommand) Call(ctx context.Context) error {
 
 	deps, err = factory.
 		WithExecutableMountDirs(dirsToMount...).
-		WithRegistryMirror(c.RegistryEndpoint, c.OCINamespace, c.OCINamespace).
+		WithRegistryMirror(c.RegistryEndpoint, c.OCINamespace, c.OCINamespace, false).
 		UseExecutableImage(bundle.DefaultEksAToolsImage().VersionedImage()).
 		WithHelm(helmOpts...).
 		Build(ctx)
