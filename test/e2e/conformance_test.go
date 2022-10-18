@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -70,17 +71,6 @@ func TestDockerKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
-func TestDockerKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar("K8S_1_24_SUPPORT", "true"),
-	)
-	runConformanceFlow(test)
-}
-
 func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -124,10 +114,10 @@ func TestVSphereKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 func TestVSphereKubernetes124ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu123()),
+		framework.NewVSphere(t, framework.WithUbuntu124()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar("K8S_1_24_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -250,8 +240,8 @@ func TestSnowKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -262,8 +252,8 @@ func TestSnowKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
@@ -274,8 +264,8 @@ func TestSnowKubernetes123ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewSnow(t, framework.WithSnowUbuntu123()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar("SNOW_PROVIDER", "true"),
-		framework.WithEnvVar("FULL_LIFECYCLE_API", "true"),
+		framework.WithEnvVar(SnowProviderEnvVar, "true"),
+		framework.WithEnvVar(features.FullLifecycleAPIEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }
