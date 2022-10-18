@@ -2311,7 +2311,7 @@ func TestValidateMirrorConfig(t *testing.T) {
 		},
 		{
 			name:    "authenticate but not vsphere",
-			wantErr: "authenticated local registry is only supported for vsphere provider currently",
+			wantErr: "authenticated registry mirror is only supported for vSphere provider currently",
 			cluster: &Cluster{
 				Spec: ClusterSpec{
 					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
