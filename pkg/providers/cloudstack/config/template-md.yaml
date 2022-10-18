@@ -28,7 +28,7 @@ spec:
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
-          name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+          name: "{{`{{ ds.meta_data.hostname }}`}}"
 {{- if or .proxyConfig .registryMirrorConfiguration }}
       files:
 {{- end }}
@@ -68,11 +68,11 @@ spec:
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}
-      - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
-      - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
 {{- range $dir, $target := .cloudstackSymlinks}}
       - >-
         if [ ! -L {{$dir}} ] ;
