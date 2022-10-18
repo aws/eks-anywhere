@@ -14,7 +14,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package harbor --source cluster > harbor.yaml
+   eksctl anywhere generate package harbor --cluster clusterName > harbor.yaml
    ```
 
 1. Add the desired configuration to `harbor.yaml` 
