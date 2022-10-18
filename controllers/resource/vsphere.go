@@ -6,9 +6,9 @@ import (
 )
 
 // needsVSphereNewKubeadmConfigTemplate determines if a new KubeadmConfigTemplate is needed
-// based on the changes in  he worker node config and vsphere machine config.
-// SSH keys comparison is no strict and equivalent keys are considered the same.
-// This useful when comparing VSphereMachineConfigs that have been inferred from a
+// based on the changes in the worker node config and vsphere machine config.
+// SSH keys comparison is not strict and equivalent keys are considered the same.
+// This is useful when comparing VSphereMachineConfigs that have been inferred from a
 // vsphere machine template, since comments are lost in the conversion.
 func needsVSphereNewKubeadmConfigTemplate(
 	newWorkerNodeGroup, oldWorkerNodeGroup *anywherev1.WorkerNodeGroupConfiguration,
