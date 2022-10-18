@@ -106,6 +106,12 @@ description: >
    my-adot   adot   19h   installed   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef   0.21.1-1ba95f7be1f47c40a23956363d1eb836e60c0cef (latest)
    ```
 
+## Update
+To update package configuration, update adot.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f adot.yaml
+```
+
 ## Upgrade
 
 ADOT will automatically be upgraded when a new bundle is activated.
