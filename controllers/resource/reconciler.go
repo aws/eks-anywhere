@@ -81,6 +81,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:
 		vdc := &anywherev1.VSphereDatacenterConfig{}
+		// max len = len(workers) + CP + etcd
 		spec.VSphereMachineConfigs = make(map[string]*anywherev1.VSphereMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations)+2)
 		cpVmc := &anywherev1.VSphereMachineConfig{}
 		etcdVmc := &anywherev1.VSphereMachineConfig{}
