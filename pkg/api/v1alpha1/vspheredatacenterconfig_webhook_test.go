@@ -30,6 +30,15 @@ func TestVSphereDatacenterValidateUpdateDataCenterImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestVSphereDatacenterValidateUpdateDisableCSIImmutable(t *testing.T) {
+	vOld := vsphereDatacenterConfig()
+	c := vOld.DeepCopy()
+
+	c.Spec.DisableCSI = true
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
 func TestVSphereDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := vsphereDatacenterConfig()
 	vOld.Spec.Network = "OldNet"
