@@ -98,7 +98,7 @@ func TestEnableCuratedPackagesSuccess(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -170,7 +170,7 @@ func TestEnableCuratedPackagesWithProxy(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -207,7 +207,7 @@ func TestEnableCuratedPackagesWithEmptyProxy(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -227,7 +227,7 @@ func TestEnableCuratedPackagesFail(t *testing.T) {
 	clusterName := fmt.Sprintf("clusterName=%s", "billy")
 	values := []string{sourceRegistry, clusterName}
 
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(errors.New("login failed"))
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(errors.New("login failed"))
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -253,7 +253,7 @@ func TestEnableCuratedPackagesFailNoActiveBundle(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -279,7 +279,7 @@ func TestEnableCuratedPackagesSuccessWhenApplySecretFails(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, errors.New("error applying secrets"))
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -325,7 +325,7 @@ func TestEnableCuratedPackagesSuccessWhenCronJobFails(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -374,7 +374,7 @@ func TestDefaultEksaRegionSetWhenNoRegionSpecified(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, errors.New("error creating cron job"))
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -415,7 +415,7 @@ func TestEnableCuratedPackagesActiveBundleCustomTimeout(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -441,7 +441,7 @@ func TestEnableCuratedPackagesActiveBundleWaitLoops(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
@@ -491,7 +491,7 @@ func TestEnableCuratedPackagesActiveBundleTimesOut(t *testing.T) {
 	tt.kubectl.EXPECT().ExecuteFromYaml(tt.ctx, dat, params).Return(bytes.Buffer{}, nil)
 	params = []string{"create", "job", jobName, "--from=" + cronJobName, "--kubeconfig", tt.kubeConfig, "--namespace", constants.EksaPackagesName}
 	tt.kubectl.EXPECT().ExecuteCommand(tt.ctx, params).Return(bytes.Buffer{}, nil)
-	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "eksa-packages", values).Return(nil)
+	tt.chartInstaller.EXPECT().InstallChart(tt.ctx, tt.chartName, "oci://"+tt.ociUri, tt.chartVersion, tt.kubeConfig, "", values).Return(nil)
 	any := gomock.Any()
 	tt.kubectl.EXPECT().
 		GetObject(any, any, any, any, any, any).
