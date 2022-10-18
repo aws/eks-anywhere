@@ -168,7 +168,6 @@ type ControlPlaneConfiguration struct {
 	// Taints define the set of taints to be applied on control plane nodes
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
-	// NOTE: CAPC provider supports using 'ds.meta_data.failuredomain' as label value and replaces it with proper failuredomain value.
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
@@ -243,7 +242,6 @@ type WorkerNodeGroupConfiguration struct {
 	// Taints define the set of taints to be applied on worker nodes
 	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
-	// NOTE: CAPC provider supports using 'ds.meta_data.failuredomain' as label value and replaces it with proper failuredomain value.
 	Labels map[string]string `json:"labels,omitempty"`
 }
 

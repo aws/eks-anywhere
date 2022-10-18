@@ -16,11 +16,11 @@ package v1alpha1
 
 import (
 	"fmt"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"strings"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
