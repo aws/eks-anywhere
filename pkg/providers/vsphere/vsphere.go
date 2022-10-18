@@ -809,6 +809,9 @@ func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *type
 }
 
 func (p *vsphereProvider) GenerateStorageClass() []byte {
+	if p.datacenterConfig.Spec.DisableCSI {
+		return nil
+	}
 	return defaultStorageClass
 }
 

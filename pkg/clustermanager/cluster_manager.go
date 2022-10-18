@@ -490,6 +490,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		}
 	}
 
+	if err = c.InstallStorageClass(ctx, workloadCluster, provider); err != nil {
+		return fmt.Errorf("installing storage class during upgrade: %v", err)
+	}
+
 	return nil
 }
 

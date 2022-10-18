@@ -257,9 +257,9 @@ func TestNutanixProviderGenerateCAPISpecForUpgrade(t *testing.T) {
 	executable.EXPECT().Execute(gomock.Any(), "get",
 		"clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", "testdata/kubeconfig.yaml", "--field-selector=metadata.name=eksa-unit-test").Return(*bytes.NewBufferString(nutanixClusterConfigSpecJSON), nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",
-		"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil).AnyTimes()
+		"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil).AnyTimes()
 	executable.EXPECT().Execute(gomock.Any(), "get",
-		"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
+		"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test").Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",
 		"machinedeployments.cluster.x-k8s.io", "eksa-unit-test-eksa-unit-test", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "--namespace", "eksa-system").Return(*bytes.NewBufferString(nutanixMachineDeploymentSpecJSON), nil).Times(2)
 	executable.EXPECT().Execute(gomock.Any(), "get",
@@ -593,10 +593,10 @@ func TestNutanixProviderUpgradeNeeded(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	executable := mockexecutables.NewMockExecutable(ctrl)
 	executable.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixdatacenterconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixDatacenterConfigSpecJSON), nil)
 	executable.EXPECT().Execute(gomock.Any(), "get",
-		[]string{"--ignore-not-found", "--namespace", "default", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "eksa-unit-test"},
+		[]string{"--ignore-not-found", "-o", "json", "--kubeconfig", "testdata/kubeconfig.yaml", "nutanixmachineconfigs.anywhere.eks.amazonaws.com", "--namespace", "default", "eksa-unit-test"},
 		gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(*bytes.NewBufferString(nutanixMachineConfigSpecJSON), nil)
 	kubectl := executables.NewKubectl(executable)
 	mockClient := NewMockClient(ctrl)
