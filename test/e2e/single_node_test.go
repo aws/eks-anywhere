@@ -11,6 +11,17 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
+func runTinkerbellSingleNodeFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.PowerOnHardware()
+	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
+	test.DeleteCluster()
+	test.PowerOffHardware()
+	test.ValidateHardwareDecommissioned()
+}
+
 func TestTinkerbellKubernetes123BottleRocketSingleNode(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -24,14 +35,7 @@ func TestTinkerbellKubernetes123BottleRocketSingleNode(t *testing.T) {
 		framework.WithControlPlaneHardware(1),
 	)
 
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
-	test.DeleteCluster()
-	test.PowerOffHardware()
-	test.ValidateHardwareDecommissioned()
+	runTinkerbellSingleNodeFlow(test)
 }
 
 func TestTinkerbellKubernetes123UbuntuSingleNode(t *testing.T) {
@@ -47,12 +51,5 @@ func TestTinkerbellKubernetes123UbuntuSingleNode(t *testing.T) {
 		framework.WithControlPlaneHardware(1),
 	)
 
-	test.GenerateClusterConfig()
-	test.GenerateHardwareConfig()
-	test.PowerOnHardware()
-	test.CreateCluster(framework.WithControlPlaneWaitTimeout("20m"))
-	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneNoTaints, framework.ValidateControlPlaneLabels)
-	test.DeleteCluster()
-	test.PowerOffHardware()
-	test.ValidateHardwareDecommissioned()
+	runTinkerbellSingleNodeFlow(test)
 }
