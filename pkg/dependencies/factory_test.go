@@ -252,7 +252,19 @@ func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t, vsphere)
 	deps, err := dependencies.NewFactory().
 		WithLocalExecutables().
-		WithRegistryMirror("1.2.3.4:443").
+		WithRegistryMirror("1.2.3.4:443", false).
+		WithHelm(executables.WithInsecure()).
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
+}
+
+func TestFactoryBuildWithRegistryMirrorAuth(t *testing.T) {
+	tt := newTest(t, vsphere)
+	deps, err := dependencies.NewFactory().
+		WithLocalExecutables().
+		WithRegistryMirror("1.2.3.4:443", true).
 		WithHelm(executables.WithInsecure()).
 		Build(context.Background())
 
@@ -427,4 +439,8 @@ func (b dummyDockerClient) PullImage(ctx context.Context, image string) error {
 
 func (b dummyDockerClient) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	return bytes.Buffer{}, nil
+}
+
+func (b dummyDockerClient) Login(ctx context.Context, endpoint, username, password string) error {
+	return nil
 }
