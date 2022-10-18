@@ -9,7 +9,6 @@ import (
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
-	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -20,19 +19,32 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
-type Reconciler struct {
-	client    client.Client
-	validator *vsphere.Validator
-	defaulter *vsphere.Defaulter
-	tracker   *remote.ClusterCacheTracker
+// CNIReconciler is an interface for reconciling CNI in the VSphere cluster reconciler.
+type CNIReconciler interface {
+	Reconcile(ctx context.Context, logger logr.Logger, client client.Client, spec *c.Spec) (controller.Result, error)
 }
 
-func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, tracker *remote.ClusterCacheTracker) *Reconciler {
+// RemoteClientRegistry is an interface that defines methods for remote clients.
+type RemoteClientRegistry interface {
+	GetClient(ctx context.Context, cluster client.ObjectKey) (client.Client, error)
+}
+
+type Reconciler struct {
+	client               client.Client
+	validator            *vsphere.Validator
+	defaulter            *vsphere.Defaulter
+	cniReconciler        CNIReconciler
+	remoteClientRegistry RemoteClientRegistry
+}
+
+// New defines a new VSphere reconciler.
+func New(client client.Client, validator *vsphere.Validator, defaulter *vsphere.Defaulter, cniReconciler CNIReconciler, remoteClientRegistry RemoteClientRegistry) *Reconciler {
 	return &Reconciler{
-		client:    client,
-		validator: validator,
-		defaulter: defaulter,
-		tracker:   tracker,
+		client:               client,
+		validator:            validator,
+		defaulter:            defaulter,
+		cniReconciler:        cniReconciler,
+		remoteClientRegistry: remoteClientRegistry,
 	}
 }
 
@@ -139,8 +151,13 @@ func (r *Reconciler) ReconcileControlPlane(ctx context.Context, log logr.Logger,
 
 // ReconcileCNI takes the Cilium CNI in a cluster to the desired state defined in a cluster spec.
 func (r *Reconciler) ReconcileCNI(ctx context.Context, log logr.Logger, clusterSpec *c.Spec) (controller.Result, error) {
-	// TODO: implement CNI reconciliation phase
-	return controller.Result{}, nil
+	log = log.WithValues("phase", "reconcileCNI")
+	client, err := r.remoteClientRegistry.GetClient(ctx, controller.CapiClusterObjectKey(clusterSpec.Cluster))
+	if err != nil {
+		return controller.Result{}, err
+	}
+
+	return r.cniReconciler.Reconcile(ctx, log, client, clusterSpec)
 }
 
 // ReconcileWorkers applies the worker CAPI objects to the cluster.
