@@ -137,7 +137,7 @@ func UpdateBottlerocketTemplate123() api.VSphereFiller {
 	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR123Var, api.WithTemplateForAllMachines)
 }
 
-// UpdateBottlerocketTemplate124 
+// UpdateBottlerocketTemplate124 retusns vsphere filler for 1.24 BR.
 func UpdateBottlerocketTemplate124() api.VSphereFiller {
 	return api.WithVSphereStringFromEnvVar(vsphereTemplateBR124Var, api.WithTemplateForAllMachines)
 }
