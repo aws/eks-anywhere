@@ -215,6 +215,12 @@ Any pods that you run on the control plane nodes must tolerate the taints you pr
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
+For example, this label identifies a Cluster API failuredomain:
+
+```yaml
+    labels:
+      cluster.x-k8s.io/failure-domain: ds.meta_data.failuredomain
+```
 
 Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
 the existing nodes.
