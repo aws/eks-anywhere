@@ -397,7 +397,7 @@ func TestVSphereKubernetes122BottlerocketTo123StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -415,7 +415,7 @@ func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -432,7 +432,7 @@ func TestCloudStackKubernetesUnstacked120RedhatTo121Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -451,7 +451,7 @@ func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,

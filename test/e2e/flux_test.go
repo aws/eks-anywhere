@@ -231,7 +231,7 @@ func TestVSphereKubernetes123GitopsOptionsFluxLegacy(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120GitopsOptionsFluxLegacy(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,

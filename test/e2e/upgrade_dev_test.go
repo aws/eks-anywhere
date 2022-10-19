@@ -174,7 +174,7 @@ func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
-	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	provider := framework.NewCloudStack(t, framework.WithCloudStackRedhat120())
 	test := framework.NewE2ETest(
 		t,
 		provider,

@@ -153,7 +153,7 @@ func TestVSphereKubernetes123BottleRocketThreeWorkersConformanceFlow(t *testing.
 func TestCloudStackKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithRedhat120()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
