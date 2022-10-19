@@ -119,10 +119,9 @@ func TestSnowKubernetes121OIDC(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120OIDC(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewCloudStack(t, framework.WithRedhat120()),
+		framework.NewCloudStack(t, framework.WithCloudStackRedhat120()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
@@ -133,7 +132,6 @@ func TestCloudStackKubernetes120OIDC(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121OIDC(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat121()),
