@@ -30,7 +30,7 @@ Follow these steps to create the user's vSphere folder:
    For more details, see the [vSphere Create a Folder](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vcenterhost.doc/GUID-031BDB12-D3B2-4E2D-80E6-604F304B4D0C.html) documentation.
 
 ### Set up vSphere roles and user permission
-You need to get a vSphere username with the right privileges to let you creatie EKS Anywhere clusters on top of your vSphere cluster.
+You need to get a vSphere username with the right privileges to let you create EKS Anywhere clusters on top of your vSphere cluster.
 Then you would need to import the latest release of the EKS Anywhere OVA template to your VSphere cluster to use it to provision your Cluster nodes.
 
 #### Add a vCenter User
