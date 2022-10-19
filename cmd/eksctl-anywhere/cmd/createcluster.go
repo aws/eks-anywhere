@@ -170,8 +170,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
 
-		customComponentsDir, isSet := os.LookupEnv("EKSA_BOOTSTRAP_CLUSTER_CUSTOM_COMPONENTS_DIR")
-		if isSet {
+		customComponentsDir := os.Getenv("EKSA_BOOTSTRAP_CLUSTER_CUSTOM_COMPONENTS_DIR")
+		if customComponentsDir != "" {
 			wflw.WithHookRegistrar(bootstrap.NewCustomComponentInstaller(os.DirFS(customComponentsDir)))
 		}
 
