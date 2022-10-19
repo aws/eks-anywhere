@@ -15,7 +15,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package emissary --source cluster > emissary.yaml
+   eksctl anywhere generate package emissary --cluster clusterName > emissary.yaml
    ```
 
 1. Add the desired configuration to `emissary.yaml`
