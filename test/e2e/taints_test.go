@@ -91,29 +91,31 @@ func TestVSphereKubernetes124Taints(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes123TaintsBottlerocket(t *testing.T) {
-	provider := bottlerocket123ProviderWithTaints(t)
+func TestVSphereKubernetes124TaintsBottlerocket(t *testing.T) {
+	provider := bottlerocket124ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube123),
+			api.WithKubernetesVersion(v1alpha1.Kube124),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube123,
+		v1alpha1.Kube124,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
@@ -178,7 +180,7 @@ func ubuntu124ProviderWithTaints(t *testing.T) *framework.VSphere {
 	)
 }
 
-func bottlerocket123ProviderWithTaints(t *testing.T) *framework.VSphere {
+func bottlerocket124ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -192,6 +194,7 @@ func bottlerocket123ProviderWithTaints(t *testing.T) *framework.VSphere {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithBottleRocket123(),
+		framework.WithBottleRocket124(),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
