@@ -132,7 +132,7 @@ func WithCloudStackRedhat121() CloudStackOpt {
 	}
 }
 
-func WithRedhat120() CloudStackOpt {
+func WithCloudStackRedhat120() CloudStackOpt {
 	return func(c *CloudStack) {
 		c.fillers = append(c.fillers,
 			api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat120Var, api.WithCloudStackTemplateForAllMachines),
