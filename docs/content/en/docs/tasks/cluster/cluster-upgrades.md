@@ -205,6 +205,9 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `usernameClaim`
 - `usernamePrefix`
 
+`AWSIamConfig`:
+- `mapRoles`
+- `mapUsers`
 
 EKS Anywhere `upgrade` also supports adding more worker node groups post-creation.
 To add more worker node groups, modify your cluster config file to define the additional group(s).
