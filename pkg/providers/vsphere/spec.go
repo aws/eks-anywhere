@@ -17,18 +17,15 @@ func NewSpec(clusterSpec *cluster.Spec) *Spec {
 }
 
 func (s *Spec) controlPlaneMachineConfig() *anywherev1.VSphereMachineConfig {
-	return s.VSphereMachineConfigs[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	return controlPlaneMachineConfig(s.Spec)
 }
 
 func (s *Spec) workerMachineConfig(c anywherev1.WorkerNodeGroupConfiguration) *anywherev1.VSphereMachineConfig {
-	return s.VSphereMachineConfigs[c.MachineGroupRef.Name]
+	return workerMachineConfig(s.Spec, c)
 }
 
 func (s *Spec) etcdMachineConfig() *anywherev1.VSphereMachineConfig {
-	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-		return nil
-	}
-	return s.VSphereMachineConfigs[s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+	return etcdMachineConfig(s.Spec)
 }
 
 func (s *Spec) machineConfigs() []*anywherev1.VSphereMachineConfig {
@@ -38,4 +35,19 @@ func (s *Spec) machineConfigs() []*anywherev1.VSphereMachineConfig {
 	}
 
 	return machineConfigs
+}
+
+func etcdMachineConfig(s *cluster.Spec) *anywherev1.VSphereMachineConfig {
+	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+		return nil
+	}
+	return s.VSphereMachineConfigs[s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+}
+
+func controlPlaneMachineConfig(s *cluster.Spec) *anywherev1.VSphereMachineConfig {
+	return s.VSphereMachineConfigs[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+}
+
+func workerMachineConfig(s *cluster.Spec, workers anywherev1.WorkerNodeGroupConfiguration) *anywherev1.VSphereMachineConfig {
+	return s.VSphereMachineConfigs[workers.MachineGroupRef.Name]
 }

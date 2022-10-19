@@ -92,7 +92,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 		values, err := buildTemplateMapMD(
 			clusterSpec,
 			clusterSpec.VSphereDatacenter.Spec,
-			workersMachineConfig(clusterSpec, workerNodeGroupConfiguration).Spec,
+			workerMachineConfig(clusterSpec, workerNodeGroupConfiguration).Spec,
 			workerNodeGroupConfiguration,
 		)
 		if err != nil {
@@ -366,16 +366,4 @@ func buildTemplateMapMD(
 	}
 
 	return values, nil
-}
-
-func etcdMachineConfig(spec *cluster.Spec) *anywherev1.VSphereMachineConfig {
-	return spec.VSphereMachineConfigs[spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-}
-
-func controlPlaneMachineConfig(spec *cluster.Spec) *anywherev1.VSphereMachineConfig {
-	return spec.VSphereMachineConfigs[spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-}
-
-func workersMachineConfig(spec *cluster.Spec, workers anywherev1.WorkerNodeGroupConfiguration) *anywherev1.VSphereMachineConfig {
-	return spec.VSphereMachineConfigs[workers.MachineGroupRef.Name]
 }
