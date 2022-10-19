@@ -3,6 +3,7 @@ package cloudstack
 import (
 	"context"
 	"embed"
+	_ "embed"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -293,7 +294,7 @@ func TestProviderSetupAndValidateCreateClusterFailureOnInvalidUrl(t *testing.T) 
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
@@ -315,7 +316,7 @@ func TestProviderSetupAndValidateUpgradeClusterFailureOnInvalidUrl(t *testing.T)
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec, clusterSpec)
 	tt.Expect(err).NotTo(BeNil())
 }
@@ -337,7 +338,7 @@ func TestProviderSetupAndValidateDeleteClusterFailureOnInvalidUrl(t *testing.T) 
 		t.Fatalf("provider object is nil")
 	}
 
-	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
+	t.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, cloudStackCloudConfigWithInvalidUrl)
 	err := provider.SetupAndValidateDeleteCluster(ctx, cluster, nil)
 	tt.Expect(err).NotTo(BeNil())
 }

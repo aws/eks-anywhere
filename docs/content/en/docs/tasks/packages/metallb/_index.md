@@ -15,7 +15,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package metallb --source cluster > metallb.yaml
+   eksctl anywhere generate package metallb --cluster clusterName > metallb.yaml
    ```
 
 1. Add the desired configuration to `metallb.yaml`
@@ -90,6 +90,11 @@ description: >
    mylb   metallb   22h   installed   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06   0.12.1-ce5b5de19014202cebd4ab4c091830a3b6dfea06 (latest)
    ```
 
+## Update
+To update package configuration, update metallb.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f metallb.yaml
+```
 
 ## Upgrade
 

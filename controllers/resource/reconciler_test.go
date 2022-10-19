@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -894,7 +892,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
@@ -1100,7 +1097,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingCSDatacenterConfig, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
@@ -1171,8 +1167,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 }
 
 func TestClusterReconcilerReconcileNutanix(t *testing.T) {
-	err := os.Setenv(features.NutanixProviderEnvVar, "true")
-	require.NoError(t, err)
+	t.Setenv(features.NutanixProviderEnvVar, "true")
 	assert.True(t, features.NutanixProvider().IsActive())
 
 	type args struct {

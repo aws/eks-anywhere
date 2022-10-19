@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -62,18 +61,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, gitOpsManager, writer, eksdUpgrader, eksdInstaller)
 
 	for _, e := range featureEnvVars {
-		if err := os.Setenv(e, "true"); err != nil {
-			t.Fatal(err)
-		}
+		t.Setenv(e, "true")
 	}
-
-	t.Cleanup(func() {
-		for _, e := range featureEnvVars {
-			if err := os.Unsetenv(e); err != nil {
-				t.Fatal(err)
-			}
-		}
-	})
 
 	return &upgradeTestSetup{
 		t:                t,

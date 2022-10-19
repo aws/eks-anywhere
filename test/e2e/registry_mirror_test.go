@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -31,15 +32,16 @@ func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.ValidateHardwareDecommissioned()
 }
 
-func TestVSphereKubernetes123UbuntuRegistryMirrorAndCert(t *testing.T) {
+func TestVSphereKubernetes124UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu123(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithUbuntu124(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithRegistryMirrorEndpointAndCert(constants.VSphereProviderName),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runRegistryMirrorConfigFlow(test)
 }

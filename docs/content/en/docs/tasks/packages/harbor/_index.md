@@ -14,7 +14,7 @@ description: >
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate the package configuration
    ```bash
-   eksctl anywhere generate package harbor --source cluster > harbor.yaml
+   eksctl anywhere generate package harbor --cluster clusterName > harbor.yaml
    ```
 
 1. Add the desired configuration to `harbor.yaml` 
@@ -88,6 +88,12 @@ description: >
    Harbor web portal is accessible at whatever `externalURL` is set to. See [complete configuration options]({{< relref "../../../reference/packagespec/harbor" >}}) for all default values.
 
    ![Harbor web portal](/images/harbor-portal.png)
+
+## Update
+To update package configuration, update harbor.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f harbor.yaml
+```
 
 ## Upgrade
 {{% alert title="Note" color="primary" %}}

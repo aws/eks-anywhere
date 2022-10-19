@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -26,18 +27,19 @@ func runVSphereDisableCSIUpgradeFlow(test *framework.ClusterE2ETest, updateVersi
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetesDisableCSIUpgrade(t *testing.T) {
+func TestVSphereKubernetes124DisableCSIUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t,
-		framework.WithUbuntu123(),
+		framework.WithUbuntu124(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runVSphereDisableCSIUpgradeFlow(
 		test,
-		v1alpha1.Kube123,
+		v1alpha1.Kube124,
 		provider,
 	)
 }

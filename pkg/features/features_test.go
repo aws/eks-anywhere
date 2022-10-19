@@ -29,16 +29,10 @@ func fakeFeatureWithGate() Feature {
 }
 
 func setupContext(t *testing.T) {
-	envVarOrgValue, set := os.LookupEnv(fakeFeatureEnvVar)
 	t.Cleanup(func() {
 		// cleanup cache
 		globalFeatures.cache = newMutexMap()
 		globalFeatures.initGates = sync.Once{}
-		if set {
-			os.Setenv(fakeFeatureEnvVar, envVarOrgValue)
-		} else {
-			os.Unsetenv(fakeFeatureEnvVar)
-		}
 	})
 }
 
@@ -54,7 +48,7 @@ func TestIsActiveEnvVarSetFalse(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
 
-	os.Setenv(fakeFeatureEnvVar, "false")
+	t.Setenv(fakeFeatureEnvVar, "false")
 	g.Expect(IsActive(fakeFeature())).To(BeFalse())
 }
 
@@ -62,7 +56,7 @@ func TestIsActiveEnvVarSetTrue(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
 
-	g.Expect(os.Setenv(fakeFeatureEnvVar, "true")).To(Succeed())
+	t.Setenv(fakeFeatureEnvVar, "true")
 	g.Expect(IsActive(fakeFeature())).To(BeTrue())
 }
 
@@ -80,7 +74,7 @@ func TestWithNutanixFeatureFlag(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
 
-	g.Expect(os.Setenv(NutanixProviderEnvVar, "true")).To(Succeed())
+	t.Setenv(NutanixProviderEnvVar, "true")
 	g.Expect(IsActive(NutanixProvider())).To(BeTrue())
 }
 
@@ -88,6 +82,6 @@ func TestWithK8s124FeatureFlag(t *testing.T) {
 	g := NewWithT(t)
 	setupContext(t)
 
-	g.Expect(os.Setenv(K8s124SupportEnvVar, "true")).To(Succeed())
+	t.Setenv(K8s124SupportEnvVar, "true")
 	g.Expect(IsActive(K8s124Support())).To(BeTrue())
 }
