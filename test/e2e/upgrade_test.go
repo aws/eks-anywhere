@@ -227,11 +227,13 @@ func TestVSphereKubernetes123UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube123,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
+		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
 
