@@ -1983,9 +1983,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T)
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for control plane", err)
-	}
+	thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for control plane", err)
 }
 
 func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testing.T) {
@@ -1996,9 +1994,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testin
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for worker nodes", err)
-	}
+	thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for worker nodes", err)
 }
 
 func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.T) {
@@ -2009,9 +2005,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for etcd machines", err)
-	}
+	thenErrorExpected(t, "cannot find VSphereMachineConfig nonexistent for etcd machines", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
@@ -2019,14 +2013,12 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = "ec2-user"
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = "ec2-user"
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
-	}
+	thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyDifferentForEtcd(t *testing.T) {
@@ -2034,14 +2026,12 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferentForEtcd(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "bottlerocket"
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].Name = "ec2-user"
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.OSFamily = "bottlerocket"
+	clusterSpec.VSphereMachineConfigs[etcdMachineConfigName].Spec.Users[0].Name = "ec2-user"
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
-	}
+	thenErrorExpected(t, "all VSphereMachineConfigs must have the same osFamily specified", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
@@ -2087,13 +2077,11 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = "test"
+	clusterSpec.VSphereMachineConfigs[controlPlaneMachineConfigName].Spec.Template = "test"
 	setupContext(t)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "all VSphereMachineConfigs must have the same template specified", err)
-	}
+	thenErrorExpected(t, "all VSphereMachineConfigs must have the same template specified", err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
