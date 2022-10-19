@@ -354,4 +354,6 @@ These can be used for things like identifying sets of nodes that you want to add
 ### affinityGroupIDs (optional)
 Group ID to attach to the set of host systems to indicate how affinity is done for services on those systems.
  
-
+### affinity (optional)
+Allows you to set `pro` and `anti` affinity for the `CloudStackMachineConfig`.
+This can be used in a mutually exclusive fashion with the affinityGroupIDs field.
