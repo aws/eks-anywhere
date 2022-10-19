@@ -58,7 +58,7 @@ description: >
    ```
 
 ## Update
-To update package configuration, update adot.yaml file, and run the following command:
+To update package configuration, update cluster-autoscaler.yaml file, and run the following command:
 ```bash
 eksctl anywhere apply package -f cluster-autoscaler.yaml
 ```
