@@ -1,24 +1,20 @@
-package vsphere
+package vsphere_test
 
 import (
-	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/onsi/gomega"
-	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/utils/ptr"
 )
 
-func TestVsphereTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
-	type fields struct {
-		datacenterSpec          *v1alpha1.VSphereDatacenterConfigSpec
-		controlPlaneMachineSpec *v1alpha1.VSphereMachineConfigSpec
-	}
-
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneNoKubeVersion(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "test-cluster"
 		s.Cluster.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
@@ -63,48 +59,69 @@ func TestVsphereTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 			Kind: v1alpha1.VSphereDatacenterKind,
 			Name: "vsphere test",
 		}
+
+		s.VSphereMachineConfigs = map[string]*v1alpha1.VSphereMachineConfig{
+			"eksa-unit-test": {
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: v1alpha1.VSphereMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
+			},
+		}
 	})
 
-	vsphereMachineConfig := &v1alpha1.VSphereMachineConfigSpec{
-		Users: []v1alpha1.UserConfiguration{
-			{
-				Name:              "capv",
-				SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
-			},
-		},
-	}
+	g := NewWithT(t)
+	vs := vsphere.NewVsphereTemplateBuilder(time.Now, false)
+	_, err := vs.GenerateCAPISpecControlPlane(clusterSpec)
+	g.Expect(err).NotTo(MatchError(ContainSubstring("error building template map from CP")))
+}
 
-	tests := []struct {
-		name        string
-		fields      fields
-		wantContent []byte
-		wantErr     error
-	}{
-		{
-			name: "kube version not specified",
-			fields: fields{
-				datacenterSpec:          &clusterSpec.VSphereDatacenter.Spec,
-				controlPlaneMachineSpec: vsphereMachineConfig,
-			},
-			wantErr: fmt.Errorf("error building template map from CP"),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			g := NewWithT(t)
-			vs := &VsphereTemplateBuilder{
-				datacenterSpec:          tt.fields.datacenterSpec,
-				controlPlaneMachineSpec: tt.fields.controlPlaneMachineSpec,
-			}
-			gotContent, err := vs.GenerateCAPISpecControlPlane(clusterSpec)
-			if err != tt.wantErr && !assert.Contains(t, err.Error(), tt.wantErr.Error()) {
-				t.Errorf("Got VsphereTemplateBuilder.GenerateCAPISpecControlPlane() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+func TestVsphereTemplateBuilderGenerateCAPISpecWorkersInvalidSSHKey(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	firstMachineConfigName := spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	machineConfig := spec.VSphereMachineConfigs[firstMachineConfigName]
+	machineConfig.Spec.Users[0].SshAuthorizedKeys[0] = invalidSSHKey()
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now, false)
+	_, err := builder.GenerateCAPISpecWorkers(spec, nil, nil)
+	g.Expect(err).To(
+		MatchError(ContainSubstring("formatting ssh key for vsphere workers template: ssh")),
+	)
+}
 
-			if err == nil {
-				g.Expect(gotContent).NotTo(BeEmpty())
-			}
-		})
-	}
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidControlPlaneSSHKey(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	controlPlaneMachineConfigName := spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	machineConfig := spec.VSphereMachineConfigs[controlPlaneMachineConfigName]
+	machineConfig.Spec.Users[0].SshAuthorizedKeys[0] = invalidSSHKey()
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now, false)
+	_, err := builder.GenerateCAPISpecControlPlane(spec, nil, nil)
+	g.Expect(err).To(
+		MatchError(ContainSubstring("formatting ssh key for vsphere control plane template: ssh")),
+	)
+}
+
+func TestVsphereTemplateBuilderGenerateCAPISpecControlPlaneInvalidEtcdSSHKey(t *testing.T) {
+	g := NewWithT(t)
+	spec := test.NewFullClusterSpec(t, "testdata/cluster_main.yaml")
+	etcdMachineConfigName := spec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	machineConfig := spec.VSphereMachineConfigs[etcdMachineConfigName]
+	machineConfig.Spec.Users[0].SshAuthorizedKeys[0] = invalidSSHKey()
+	builder := vsphere.NewVsphereTemplateBuilder(time.Now, false)
+	_, err := builder.GenerateCAPISpecControlPlane(spec, nil, nil)
+	g.Expect(err).To(
+		MatchError(ContainSubstring("formatting ssh key for vsphere etcd template: ssh")),
+	)
+}
+
+func invalidSSHKey() string {
+	return "ssh-rsa AAAA    B3NzaC1K73CeQ== testemail@test.com"
 }

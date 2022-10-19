@@ -18,29 +18,18 @@ import (
 )
 
 func NewVsphereTemplateBuilder(
-	datacenterSpec *anywherev1.VSphereDatacenterConfigSpec,
-	controlPlaneMachineSpec, etcdMachineSpec *anywherev1.VSphereMachineConfigSpec,
-	workerNodeGroupMachineSpecs map[string]anywherev1.VSphereMachineConfigSpec,
 	now types.NowFunc,
 	fromController bool,
 ) *VsphereTemplateBuilder {
 	return &VsphereTemplateBuilder{
-		datacenterSpec:              datacenterSpec,
-		controlPlaneMachineSpec:     controlPlaneMachineSpec,
-		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-		etcdMachineSpec:             etcdMachineSpec,
-		now:                         now,
-		fromController:              fromController,
+		now:            now,
+		fromController: fromController,
 	}
 }
 
 type VsphereTemplateBuilder struct {
-	datacenterSpec              *anywherev1.VSphereDatacenterConfigSpec
-	controlPlaneMachineSpec     *anywherev1.VSphereMachineConfigSpec
-	WorkerNodeGroupMachineSpecs map[string]anywherev1.VSphereMachineConfigSpec
-	etcdMachineSpec             *anywherev1.VSphereMachineConfigSpec
-	now                         types.NowFunc
-	fromController              bool
+	now            types.NowFunc
+	fromController bool
 }
 
 func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
@@ -49,11 +38,16 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(
 ) (content []byte, err error) {
 	var etcdMachineSpec anywherev1.VSphereMachineConfigSpec
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineSpec = *vs.etcdMachineSpec
+		etcdMachineSpec = etcdMachineConfig(clusterSpec).Spec
 	}
-	values, err := buildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
+	values, err := buildTemplateMapCP(
+		clusterSpec,
+		clusterSpec.VSphereDatacenter.Spec,
+		controlPlaneMachineConfig(clusterSpec).Spec,
+		etcdMachineSpec,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("error building template map from CP %v", err)
+		return nil, err
 	}
 
 	for _, buildOption := range buildOptions {
@@ -95,7 +89,16 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(
 
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values, err := buildTemplateMapMD(
+			clusterSpec,
+			clusterSpec.VSphereDatacenter.Spec,
+			workerMachineConfig(clusterSpec, workerNodeGroupConfiguration).Spec,
+			workerNodeGroupConfiguration,
+		)
+		if err != nil {
+			return nil, err
+		}
+
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -132,6 +135,12 @@ func buildTemplateMapCP(
 
 	vuc := config.NewVsphereUserConfig()
 
+	firstControlPlaneMachinesUser := controlPlaneMachineSpec.Users[0]
+	controlPlaneSSHKey, err := common.StripSshAuthorizedKeyComment(firstControlPlaneMachinesUser.SshAuthorizedKeys[0])
+	if err != nil {
+		return nil, fmt.Errorf("formatting ssh key for vsphere control plane template: %v", err)
+	}
+
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -163,7 +172,8 @@ func buildTemplateMapCP(
 		"controlPlaneVMsMemoryMiB":             controlPlaneMachineSpec.MemoryMiB,
 		"controlPlaneVMsNumCPUs":               controlPlaneMachineSpec.NumCPUs,
 		"controlPlaneDiskGiB":                  controlPlaneMachineSpec.DiskGiB,
-		"controlPlaneSshUsername":              controlPlaneMachineSpec.Users[0].Name,
+		"controlPlaneSshUsername":              firstControlPlaneMachinesUser.Name,
+		"vsphereControlPlaneSshAuthorizedKey":  controlPlaneSSHKey,
 		"podCidrs":                             clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
@@ -229,6 +239,12 @@ func buildTemplateMapCP(
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		firstEtcdMachinesUser := etcdMachineSpec.Users[0]
+		etcdSSHKey, err := common.StripSshAuthorizedKeyComment(firstEtcdMachinesUser.SshAuthorizedKeys[0])
+		if err != nil {
+			return nil, fmt.Errorf("formatting ssh key for vsphere etcd template: %v", err)
+		}
+
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdVsphereDatastore"] = etcdMachineSpec.Datastore
@@ -238,7 +254,8 @@ func buildTemplateMapCP(
 		values["etcdVMsNumCPUs"] = etcdMachineSpec.NumCPUs
 		values["etcdVsphereResourcePool"] = etcdMachineSpec.ResourcePool
 		values["etcdVsphereStoragePolicyName"] = etcdMachineSpec.StoragePolicyName
-		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
+		values["etcdSshUsername"] = firstEtcdMachinesUser.Name
+		values["vsphereEtcdSshAuthorizedKey"] = etcdSSHKey
 	}
 
 	if controlPlaneMachineSpec.OSFamily == anywherev1.Bottlerocket {
@@ -257,7 +274,7 @@ func buildTemplateMapCP(
 		values["awsIamAuth"] = true
 	}
 
-	return values, err
+	return values, nil
 }
 
 func buildTemplateMapMD(
@@ -265,12 +282,18 @@ func buildTemplateMapMD(
 	datacenterSpec anywherev1.VSphereDatacenterConfigSpec,
 	workerNodeGroupMachineSpec anywherev1.VSphereMachineConfigSpec,
 	workerNodeGroupConfiguration anywherev1.WorkerNodeGroupConfiguration,
-) map[string]interface{} {
+) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf))
+
+	firstUser := workerNodeGroupMachineSpec.Users[0]
+	sshKey, err := common.StripSshAuthorizedKeyComment(firstUser.SshAuthorizedKeys[0])
+	if err != nil {
+		return nil, fmt.Errorf("formatting ssh key for vsphere workers template: %v", err)
+	}
 
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.Cluster.Name,
@@ -287,11 +310,11 @@ func buildTemplateMapMD(
 		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
 		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
 		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,
-		"workerSshUsername":              workerNodeGroupMachineSpec.Users[0].Name,
+		"workerSshUsername":              firstUser.Name,
+		"vsphereWorkerSshAuthorizedKey":  sshKey,
 		"format":                         format,
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
 		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
-		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerReplicas":                 *workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name),
 		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
@@ -342,5 +365,5 @@ func buildTemplateMapMD(
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
-	return values
+	return values, nil
 }
