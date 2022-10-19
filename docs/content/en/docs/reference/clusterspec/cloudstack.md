@@ -215,12 +215,13 @@ Any pods that you run on the control plane nodes must tolerate the taints you pr
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
-For example, this label identifies a Cluster API failuredomain, which causes CAPC to substitute the value for the actual AZ name as a label on the nodes:
 
+A special label value is supported by the CAPC provider:
 ```yaml
     labels:
       cluster.x-k8s.io/failure-domain: ds.meta_data.failuredomain
 ```
+The `ds.meta_data.failuredomain` value will be replaced with a failuredomain name where the node is deployed, such as `az-1`.
 
 Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
 the existing nodes.
@@ -264,12 +265,13 @@ At least one node group must not have `NoSchedule` or `NoExecute` taints applied
 ### workerNodeGroupConfigurations.labels
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
-For example, this label identifies a Cluster API failuredomain, which causes CAPC to substitute the value for the actual AZ name as a label on the nodes:
+A special label value is supported by the CAPC provider:
 
 ```yaml
     labels:
       cluster.x-k8s.io/failure-domain: ds.meta_data.failuredomain
 ```
+The `ds.meta_data.failuredomain` value will be replaced with a failuredomain name where the node is deployed, such as `az-1`.
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
@@ -278,35 +280,34 @@ the existing nodes associated with the configuration.
 
 ### availabilityZones.account (optional)
 Account used to access CloudStack.
-The default is `admin`.
 As long as you pass valid credentials, through `availabilityZones.credentialsRef`, this value is not required.
 
-### availabilityZones.credentialsRef (optional)
+### availabilityZones.credentialsRef (required)
 If you passed credentials through the environment variable `EKSA_CLOUDSTACK_B64ENCODED_SECRET` noted in [Create CloudStack production cluster]({{< relref "../../getting-started/production-environment/cloudstack.md" >}}), you can identify those credentials here.
-For that example, you would use the value `global`.
-You can also use a previously created Kubernetes secret.
+For that example, you would use the profile name `global`.
+You can instead use a previously created secret on the Kubernetes cluster in the `eksa-system` namespace.
 
-### availabilityZones.domain (required)
+### availabilityZones.domain (optional)
 CloudStack domain to deploy the cluster. The default is `ROOT`.
 
 ### availabilityZones.managementApiEndpoint (required)
 Location of the CloudStack API management endpoint. For example, `http://10.11.0.2:8080/client/api`.
 
-### availabilityZones.name (required)
-Name of the CloudStack zone on which to deploy the cluster.
-As an alternative, you could pass a Zone ID to `availabilityZones.id`.
+### availabilityZones.{id,name} (required)
+Name or ID of the CloudStack zone on which to deploy the cluster.
 
-### availabilityZones.zone.network.name (required)
-CloudStack network name to use with the cluster.
+### availabilityZones.zone.network.{id,name} (required)
+CloudStack network name or ID to use with the cluster.
 
 ## CloudStackMachineConfig
 In the example above, there are separate `CloudStackMachineConfig` sections for the control plane (`my-cluster-name-cp`), worker (`my-cluster-name`) and etcd (`my-cluster-name-etcd`) nodes.
 
-### computeOfferings (required)
+### computeOffering.{id,name} (required)
 Name or ID of the CloudStack compute instance.
 
 ### users[0].name (optional)
 The name of the user you want to configure to access your virtual machines through ssh.
+You can add as many users object as you want.
 
 The default is `capc`.
 
@@ -323,7 +324,7 @@ ssh -i <private-key-file> <user>@<VM-IP>
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value.
 
-### template (required)
+### template.{id,name} (required)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
 This can be a name or ID.
 See the [Artifacts]({{< relref "../artifacts" >}}) page for instructions for building RHEL-based images.
@@ -331,20 +332,26 @@ See the [Artifacts]({{< relref "../artifacts" >}}) page for instructions for bui
 ### diskOffering (optional)
 Name representing a disk you want to mount into nodes for this CloudStackMachineConfig
 
-### mountPath (optional)
+### diskOffering.mountPath (optional)
 Mount point on which to mount the disk.
 
-### device (optional)
+### diskOffering.device (optional)
 Device name of the disk partition to mount.
 
-### filesystem (optional)
+### diskOffering.filesystem (optional)
 File system type used to format the filesystem on the disk.
 
-### label (optional)
+### diskOffering.label (optional)
 Label to apply to the disk partition.
 
 ### symlinks (optional)
 Symbolic link of a directory or file you want to mount from the host filesystem to the mounted filesystem.
 
+### userCustomDetails (optional)
+Add key/value pairs to nodes in a `CloudStackMachineConfig`.
+These can be used for things like identifying sets of nodes that you want to add to a security group that opens selected ports.
+
 ### affinityGroupIDs (optional)
 Group ID to attach to the set of host systems to indicate how affinity is done for services on those systems.
+ 
+
