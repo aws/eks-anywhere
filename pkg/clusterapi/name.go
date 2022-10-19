@@ -90,8 +90,14 @@ func clusterWorkerNodeGroupName(clusterSpec *cluster.Spec, workerNodeGroupConfig
 	return fmt.Sprintf("%s-%s", clusterSpec.Cluster.Name, workerNodeGroupConfig.Name)
 }
 
-func ControlPlaneMachineTemplateName(clusterSpec *cluster.Spec) string {
-	return DefaultObjectName(fmt.Sprintf("%s-control-plane", clusterSpec.Cluster.Name))
+// ControlPlaneMachineTemplateName sets the default object name on the control plane machine template.
+func ControlPlaneMachineTemplateName(cluster *v1alpha1.Cluster) string {
+	return DefaultObjectName(fmt.Sprintf("%s-control-plane", cluster.Name))
+}
+
+// EtcdMachineTemplateName sets the default object name on the etcd machine template.
+func EtcdMachineTemplateName(cluster *v1alpha1.Cluster) string {
+	return DefaultObjectName(fmt.Sprintf("%s-etcd", cluster.Name))
 }
 
 func WorkerMachineTemplateName(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) string {

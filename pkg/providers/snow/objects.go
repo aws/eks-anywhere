@@ -25,7 +25,7 @@ func ControlPlaneObjects(ctx context.Context, clusterSpec *cluster.Spec, kubeCli
 
 	snowCluster := SnowCluster(clusterSpec, capasCredentialsSecret)
 
-	new := SnowMachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	new := SnowMachineTemplate(clusterapi.ControlPlaneMachineTemplateName(clusterSpec.Cluster), clusterSpec.SnowMachineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 
 	old, err := oldControlPlaneMachineTemplate(ctx, kubeClient, clusterSpec)
 	if err != nil {
