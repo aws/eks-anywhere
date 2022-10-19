@@ -51,6 +51,11 @@ description: >
    eksa-packages emissary   emissary   2m57s   installed   3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467   3.0.0-a507e09c2a92c83d65737835f6bac03b9b341467 (latest)
    ```
 
+## Update
+To update package configuration, update emissary.yaml file, and run the following command:
+```bash
+eksctl anywhere apply package -f emissary.yaml
+```
 
 ## Upgrade
 
