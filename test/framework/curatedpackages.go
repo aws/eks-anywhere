@@ -29,7 +29,6 @@ func WithPackageConfig(t *testing.T, bundleURI, chartName, chartURI,
 
 func CheckCuratedPackagesCredentials(t *testing.T) {
 	requiredEnvVars := []string{
-		"EKSA_AWS_REGION",
 		"EKSA_AWS_SECRET_ACCESS_KEY",
 		"EKSA_AWS_ACCESS_KEY_ID",
 	}

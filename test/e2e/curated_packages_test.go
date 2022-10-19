@@ -22,13 +22,11 @@ const (
 	EksaPackageControllerHelmChartName = "eks-anywhere-packages"
 	EksaPackagesSourceRegistry         = "public.ecr.aws/l0g8r8j6"
 	EksaPackageControllerHelmURI       = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages"
-	EksaPackageControllerHelmVersion   = "0.2.10-eks-a-v0.0.0-dev-build.4462"
+	EksaPackageControllerHelmVersion   = "0.2.13-eks-a-v0.0.0-dev-build.4532"
 	EksaPackageBundleURI               = "oci://" + EksaPackagesSourceRegistry + "/eks-anywhere-packages-bundles"
 )
 
-var EksaPackageControllerHelmValues = []string{
-	"sourceRegistry=public.ecr.aws/l0g8r8j6",
-}
+var EksaPackageControllerHelmValues = []string{"sourceRegistry=public.ecr.aws/l0g8r8j6"}
 
 type resourcePredicate func(string, error) bool
 
@@ -195,7 +193,7 @@ func TestCPackagesDockerUbuntuKubernetes120SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
@@ -219,7 +217,7 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithPackageConfig(t, packageBundleURI(v1alpha1.Kube121),
 			EksaPackageControllerHelmChartName, EksaPackageControllerHelmURI,
 			EksaPackageControllerHelmVersion, EksaPackageControllerHelmValues),
@@ -228,6 +226,7 @@ func TestCPackagesDockerUbuntuKubernetes122SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes120SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -239,6 +238,7 @@ func TestCPackagesVSphereKubernetes120SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes121SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -250,6 +250,7 @@ func TestCPackagesVSphereKubernetes121SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes121BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -261,6 +262,7 @@ func TestCPackagesVSphereKubernetes121BottleRocketSimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes122SimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
@@ -272,6 +274,7 @@ func TestCPackagesVSphereKubernetes122SimpleFlow(t *testing.T) {
 }
 
 func TestCPackagesVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
+	framework.CheckCuratedPackagesCredentials(t)
 	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),

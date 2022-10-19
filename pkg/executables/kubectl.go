@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	packagesv1alpha1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	rufiov1alpha1 "github.com/tinkerbell/rufio/api/v1alpha1"
@@ -34,7 +34,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
-
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -76,7 +75,7 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
-	eksaPackagesType                     = fmt.Sprintf("packages.%s", packagesv1alpha1.GroupVersion.Group)
+	eksaPackagesType                     = fmt.Sprintf("packages.%s", packagesv1.GroupVersion.Group)
 	kubectlConnectionRefusedRegex        = regexp.MustCompile("The connection to the server .* was refused")
 	kubectlIoTimeoutRegex                = regexp.MustCompile("Unable to connect to the server.*i/o timeout.*")
 )
@@ -361,6 +360,7 @@ func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster,
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "deployments/"+target, namespace)
 }
 
+// WaitForPod waits for a pod resource to reach desired condition before returning.
 func (k *Kubectl) WaitForPod(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, "pod/"+target, namespace)
 }
@@ -369,18 +369,18 @@ func (k *Kubectl) WaitForBaseboardManagements(ctx context.Context, cluster *type
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, condition, rufioBaseboardManagementResourceType, namespace, WithWaitAll())
 }
 
+// WaitForJobCompleted waits for a pod resource to reach desired condition before returning.
 func (k *Kubectl) WaitForJobCompleted(ctx context.Context, kubeconfig, timeout string, condition string, target string, namespace string) error {
 	return k.Wait(ctx, kubeconfig, timeout, condition, "job/"+target, namespace)
 }
 
+// WaitForJobCompleted waits for a package resource to reach installed state before returning.
 func (k *Kubectl) WaitForPackagesInstalled(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
-	//return k.WaitJsonPath(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
-	return k.CheckJsonPath(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
+	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.state", "installed", fmt.Sprintf("%s/%s", eksaPackagesType, name), namespace)
 }
 
 func (k *Kubectl) WaitForPodCompleted(ctx context.Context, cluster *types.Cluster, name string, timeout string, namespace string) error {
-	//return k.WaitJsonPath(ctx, cluster.KubeconfigFile, timeout, "status.containerStatuses[0].state.terminated.reason", "Completed", "pod/"+name, namespace)
-	return k.CheckJsonPath(ctx, cluster.KubeconfigFile, timeout, "status.containerStatuses[0].state.terminated.reason", "Completed", "pod/"+name, namespace)
+	return k.WaitJSONPathLoop(ctx, cluster.KubeconfigFile, timeout, "status.containerStatuses[0].state.terminated.reason", "Completed", "pod/"+name, namespace)
 }
 
 func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
@@ -388,10 +388,10 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
 	if err != nil {
-		return fmt.Errorf("unparsable timeout specified: %v", err)
+		return fmt.Errorf("unparsable timeout specified: %w", err)
 	}
 	if timeoutDuration < 0 {
-		return fmt.Errorf("negative timeout specified: %v", err)
+		return fmt.Errorf("negative timeout specified: %w", err)
 	}
 	timeoutTime := time.Now().Add(timeoutDuration)
 
@@ -402,58 +402,57 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("executing wait: %v", err)
+		return fmt.Errorf("executing wait: %w", err)
 	}
 	return nil
 }
 
-// CheckJsonPath will check a given JSONPath for a required state similar to wait command for objects without conditions.
-// This will be depreciated in favor of WaitJsonPath after version 1.23.
-func (k *Kubectl) CheckJsonPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+// WaitJSONPathLoop will wait for a given JSONPath to reach a required state similar to wait command for objects without conditions.
+// This will be deprecated in favor of WaitJSONPath after version 1.23.
+func (k *Kubectl) WaitJSONPathLoop(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
 	if err != nil {
-		return fmt.Errorf("unparsable timeout specified: %v", err)
+		return fmt.Errorf("unparsable timeout specified: %w", err)
 	}
 	if timeoutDuration < 0 {
-		return fmt.Errorf("negative timeout specified: %v", err)
+		return fmt.Errorf("timeout must be positive")
 	}
 	timeoutTime := time.Now().Add(timeoutDuration)
 
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.checkJsonPath(ctx, kubeconfig, timeoutTime, jsonpath, forCondition, property, namespace, opts...)
+			return k.waitJSONPathLoop(ctx, kubeconfig, timeoutTime, jsonpath, forCondition, property, namespace, opts...)
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("executing wait: %v", err)
+		return fmt.Errorf("executing wait: %w", err)
 	}
 	return nil
 }
 
-// CheckJsonPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+
-func (k *Kubectl) WaitJsonPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+// CheckJSONPath will wait for a given JSONPath of a required state. Only compatible on K8s 1.23+
+func (k *Kubectl) WaitJSONPath(ctx context.Context, kubeconfig string, timeout string, jsonpath, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	// On each retry kubectl wait timeout values will have to be adjusted to only wait for the remaining timeout duration.
 	//  Here we establish an absolute timeout time for this based on the caller-specified timeout.
 	timeoutDuration, err := time.ParseDuration(timeout)
 	if err != nil {
-		return fmt.Errorf("unparsable timeout specified: %v", err)
+		return fmt.Errorf("unparsable timeout specified: %w", err)
 	}
 	if timeoutDuration < 0 {
-		return fmt.Errorf("negative timeout specified: %v", err)
+		return fmt.Errorf("negative timeout specified: %w", err)
 	}
-	timeoutTime := time.Now().Add(timeoutDuration)
 
 	retrier := retrier.New(timeoutDuration, retrier.WithRetryPolicy(kubectlWaitRetryPolicy))
 	err = retrier.Retry(
 		func() error {
-			return k.waitJsonPath(ctx, kubeconfig, timeoutTime, jsonpath, forCondition, property, namespace, opts...)
+			return k.waitJSONPath(ctx, kubeconfig, timeout, jsonpath, forCondition, property, namespace, opts...)
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("executing wait: %v", err)
+		return fmt.Errorf("executing wait: %w", err)
 	}
 	return nil
 }
@@ -491,47 +490,44 @@ func (k *Kubectl) wait(ctx context.Context, kubeconfig string, timeoutTime time.
 	applyOpts(&params, opts...)
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("executing wait: %v", err)
+		return fmt.Errorf("executing wait: %w", err)
 	}
 	return nil
 }
 
-func (k *Kubectl) waitJsonPath(ctx context.Context, kubeconfig string, timeoutTime time.Time, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
-	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
-	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
-		return fmt.Errorf("error: timed out waiting for %s %v on %v", jsonpath, forCondition, property)
-	}
-	kubectlTimeoutString := fmt.Sprintf("%.*fs", timeoutPrecision, secondsRemainingUntilTimeout)
+func (k *Kubectl) waitJSONPath(ctx context.Context, kubeconfig, timeout string, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
 	params := []string{
-		"wait", "--timeout", kubectlTimeoutString, fmt.Sprintf("--for=jsonpath='{.%s}'=%s", jsonpath, forCondition), property, "--kubeconfig", kubeconfig, "-n", namespace,
+		"wait", "--timeout", timeout, fmt.Sprintf("--for=jsonpath='{.%s}'=%s", jsonpath, forCondition), property, "--kubeconfig", kubeconfig, "-n", namespace,
 	}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("executing wait: %v", err)
+		return fmt.Errorf("executing wait: %w", err)
 	}
 	return nil
 }
 
-// checkJsonPath will be depreciated in favor of waitJsonPath after version 1.23.
-func (k *Kubectl) checkJsonPath(ctx context.Context, kubeconfig string, timeoutTime time.Time, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
-	secondsRemainingUntilTimeout := time.Until(timeoutTime).Seconds()
-	if secondsRemainingUntilTimeout <= minimumWaitTimeout {
-		return fmt.Errorf("error: timed out waiting for %s %v on %v", jsonpath, forCondition, property)
-	}
-	params := []string{
-		"get", property, "-o", fmt.Sprintf("jsonpath='{.%s}'", jsonpath), "--kubeconfig", kubeconfig, "-n", namespace,
-	}
-	for i := 0.1; i <= secondsRemainingUntilTimeout; i++ {
-		stdout, err := k.Execute(ctx, params...)
-		if err != nil {
-			return fmt.Errorf("executing wait: %v", err)
+// waitJsonPathLoop will be deprecated in favor of waitJsonPath after version 1.23.
+func (k *Kubectl) waitJSONPathLoop(ctx context.Context, kubeconfig string, timeoutTime time.Time, jsonpath string, forCondition string, property string, namespace string, opts ...KubectlOpt) error {
+	for {
+		select {
+		case <-time.After(timeoutTime.Sub(time.Now())):
+			return fmt.Errorf("waiting for %s %s on %s: timed out", jsonpath, forCondition, property)
+		case <-time.Tick(time.Second):
+			params := []string{
+				"get", property,
+				"-o", fmt.Sprintf("jsonpath='{.%s}'", jsonpath),
+				"--kubeconfig", kubeconfig,
+				"-n", namespace,
+			}
+			stdout, err := k.Execute(ctx, params...)
+			if err != nil {
+				return fmt.Errorf("waiting for %s %s on %s: %w", jsonpath, forCondition, property, err)
+			}
+			if stdout.String() == fmt.Sprintf("'%s'", forCondition) {
+				return nil
+			}
 		}
-		if stdout.String() == fmt.Sprintf("'%s'", forCondition) {
-			return nil
-		}
-		time.Sleep(1 * time.Second)
 	}
-	return nil
 }
 
 func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
@@ -579,28 +575,24 @@ func (k *Kubectl) DeleteFluxConfig(ctx context.Context, managementCluster *types
 	return nil
 }
 
-func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1alpha1.PackageBundleController, error) {
+func (k *Kubectl) GetPackageBundleController(ctx context.Context, kubeconfigFile, clusterName string) (packagesv1.PackageBundleController, error) {
 	params := []string{"get", "pbc", clusterName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return packagesv1alpha1.PackageBundleController{}, fmt.Errorf("getting package bundle controller resource for %s: %v", clusterName, err)
+		return packagesv1.PackageBundleController{}, fmt.Errorf("getting package bundle controller resource for %s: %v", clusterName, err)
 	}
-	response := &packagesv1alpha1.PackageBundleController{}
+	response := &packagesv1.PackageBundleController{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	return *response, nil
 }
 
-type GetPackageBundleResponse struct {
-	Items []packagesv1alpha1.PackageBundle `json:"items,omitempty"`
-}
-
-func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile string) ([]packagesv1alpha1.PackageBundle, error) {
+func (k *Kubectl) GetPackageBundleList(ctx context.Context, kubeconfigFile string) ([]packagesv1.PackageBundle, error) {
 	params := []string{"get", "packagebundle", "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", "eksa-packages", "--ignore-not-found=true"}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("getting package bundle resource %v", err)
 	}
-	response := &GetPackageBundleResponse{}
+	response := &packagesv1.PackageBundleList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	return response.Items, nil
 }
@@ -872,11 +864,11 @@ func (k *Kubectl) ValidatePods(ctx context.Context, kubeconfig string) error {
 }
 
 // RunBusyBoxPod will run Kubectl run with a busybox curl image and the command you pass in.
-func (k *Kubectl) RunBusyBoxPod(namespace, name, kubeconfig string, command []string) (string, error) {
+func (k *Kubectl) RunBusyBoxPod(ctx context.Context, namespace, name, kubeconfig string, command []string) (string, error) {
 	randomname := fmt.Sprintf("%s-%s", name, utilrand.String(7))
 	params := []string{"run", randomname, "--image=yauritux/busybox-curl", "-o", "json", "--kubeconfig", kubeconfig, "--namespace", namespace, "--restart=Never"}
 	params = append(params, command...)
-	_, err := k.Execute(context.TODO(), params...)
+	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return "", err
 	}
@@ -884,31 +876,31 @@ func (k *Kubectl) RunBusyBoxPod(namespace, name, kubeconfig string, command []st
 }
 
 // GetPodLogs returns the logs of the specified container (namespace/pod/container).
-func (k *Kubectl) GetPodLogs(namespace, podName, containerName, kubeconfig string) (string, error) {
-	return k.getPodLogsInternal(namespace, podName, containerName, kubeconfig, nil, nil)
+func (k *Kubectl) GetPodLogs(ctx context.Context, namespace, podName, containerName, kubeconfig string) (string, error) {
+	return k.getPodLogs(ctx, namespace, podName, containerName, kubeconfig, nil, nil)
 }
 
 // GetPodLogsSince returns the logs of the specified container (namespace/pod/container) since a timestamp.
-func (k *Kubectl) GetPodLogsSince(namespace, podName, containerName, kubeconfig string, since time.Time) (string, error) {
+func (k *Kubectl) GetPodLogsSince(ctx context.Context, namespace, podName, containerName, kubeconfig string, since time.Time) (string, error) {
 	sinceTime := metav1.NewTime(since)
-	return k.getPodLogsInternal(namespace, podName, containerName, kubeconfig, &sinceTime, nil)
+	return k.getPodLogs(ctx, namespace, podName, containerName, kubeconfig, &sinceTime, nil)
 }
 
-func (k *Kubectl) getPodLogsInternal(namespace, podName, containerName, kubeconfig string, sinceTime *metav1.Time, tailLines *int) (string, error) {
+func (k *Kubectl) getPodLogs(ctx context.Context, namespace, podName, containerName, kubeconfig string, sinceTime *metav1.Time, tailLines *int) (string, error) {
 	params := []string{"logs", podName, containerName, "--kubeconfig", kubeconfig, "--namespace", namespace}
 	if sinceTime != nil {
-		params = append(params, "sinceTime", sinceTime.Format(time.RFC3339))
+		params = append(params, "--since-time", sinceTime.Format(time.RFC3339))
 	}
 	if tailLines != nil {
-		params = append(params, "tailLines", strconv.Itoa(*tailLines))
+		params = append(params, "--tail", strconv.Itoa(*tailLines))
 	}
-	stdOut, err := k.Execute(context.TODO(), params...)
+	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return "", err
 	}
 	logs := stdOut.String()
-	if strings.Contains(string(logs), "Internal Error") {
-		return "", fmt.Errorf("Fetched log contains \"Internal Error\": %q", string(logs))
+	if strings.Contains(logs, "Internal Error") {
+		return "", fmt.Errorf("Fetched log contains \"Internal Error\": %q", logs)
 	}
 	return logs, err
 }

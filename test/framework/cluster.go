@@ -1094,7 +1094,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	}
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(context.TODO(), ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
 	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
@@ -1104,7 +1104,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	}
 
 	e.T.Log("Checking Busybox pod logs", clientPod)
-	logs, err := e.KubectlClient.GetPodLogs(ns, clientPod, clientPod, e.kubeconfigFilePath())
+	logs, err := e.KubectlClient.GetPodLogs(context.TODO(), ns, clientPod, clientPod, e.kubeconfigFilePath())
 	if err != nil {
 		e.T.Fatalf("failure getting pod logs %s", err)
 	}
