@@ -894,7 +894,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
@@ -1099,7 +1098,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 						},
 					},
 				}
-
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingCSDatacenterConfig, nil)
