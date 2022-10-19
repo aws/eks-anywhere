@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
+	"github.com/aws/eks-anywhere/pkg/bootstrap"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -169,7 +170,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		}
 		wflw.WithHookRegistrar(awsiamauth.NewHookRegistrar(deps.AwsIamAuth, clusterSpec))
 
-		os.LookupEnv("EKSA_BOOTSTRAP_CLUSTER_CUSTOM_COMPONENTS_DIR")
+		customComponentsDir, isSet := os.LookupEnv("EKSA_BOOTSTRAP_CLUSTER_CUSTOM_COMPONENTS_DIR")
+		if isSet {
+			wflw.WithHookRegistrar(bootstrap.NewCustomComponentInstaller(os.DirFS(customComponentsDir)))
+		}
 
 		err = wflw.Run(ctx)
 	} else {

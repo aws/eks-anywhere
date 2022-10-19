@@ -23,18 +23,13 @@ type KubernetesClient interface {
 // cluster creation hook.
 type CustomComponentInstaller struct {
 	fs  fs.FS
-	dir string
 	k8s KubernetesClient
 }
 
-// NewCustomComponentInstaller returns a new CustomComponentInstaller. ManifestPath is a path
-// to a Kubernetes manifest that can be applied to a Kubernetes cluster.
-func NewCustomComponentInstaller(filesystem fs.FS, dir string) (*CustomComponentInstaller, error) {
-	if !fs.ValidPath(dir) {
-		return nil, fmt.Errorf("invalid dir: %v", dir)
-	}
-
-	return &CustomComponentInstaller{fs: filesystem, dir: dir}, nil
+// NewCustomComponentInstaller returns a new CustomComponentInstaller. Filsystem is expected to be
+// rooted at the directory containing the component manifests to install.
+func NewCustomComponentInstaller(filesystem fs.FS) *CustomComponentInstaller {
+	return &CustomComponentInstaller{fs: filesystem}
 }
 
 // RegisterCreateManagementClusterHooks satisfies management.CreateClusterHookRegistrar.
@@ -74,7 +69,8 @@ func (installer *CustomComponentInstaller) install(ctx context.Context, cluster 
 		}
 
 		if err := fh.Close(); err != nil {
-			// Log error
+			// TODO(chrisdoherty) Log error, we can't do anything else.
+			fmt.Println(err)
 		}
 	}
 
