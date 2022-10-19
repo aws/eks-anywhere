@@ -101,7 +101,7 @@ func (pc *PackageControllerClient) EnableCuratedPackages(ctx context.Context) er
 		values = append(values, httpProxy, httpsProxy, noProxy)
 	}
 
-	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, packagesNamespace, values)
+	err := pc.chartInstaller.InstallChart(ctx, pc.chartName, ociUri, pc.chartVersion, pc.kubeConfig, "", values)
 	if err != nil {
 		return err
 	}

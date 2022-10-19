@@ -56,6 +56,19 @@ spec:
     es6RXmsCj...
     -----END CERTIFICATE-----
   ```
+### __authenticate__ (optional)
+>**_NOTE:_** Authenticated private registries are only supported for Ubuntu on vSphere currently. 
+
+* __Description__: Optional field to authenticate with a private registry. When using private registries that 
+  require authentication, it is necessary to set this parameter to ```true``` in the cluster spec.
+* __Type__: boolean
+* __Example__: ```authenticate: true```
+
+To use an authenticated private registry, please also set the following environment variables:
+```bash
+export REGISTRY_USERNAME=<username>
+export REGISTRY_PASSWORD=<password>
+```
 
 ## Import images into a private registry
 You can use the `import-images` command to pull images from `public.ecr.aws` and push them to your

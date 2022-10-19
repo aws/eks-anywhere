@@ -135,6 +135,10 @@ EKS Anywhere now updates the role mappings for IAM authenticator in the cluster 
 #### GitOps
 If the cluster created has GitOps configured, then the `mapRoles` and `mapUsers` list in `AWSIamConfig` can be modified by the GitOps controller. For GitOps configuration details refer to [Manage Cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux" >}}).
 
+{{% alert title="Note" color="primary" %}}
+GitOps support for the `AWSIamConfig` is currently only on management or self-managed clusters.
+{{% /alert %}}
+
 1. Clone your git repo and modify the cluster specification.
    The default path for the cluster file is:
     ```
