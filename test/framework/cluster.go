@@ -1094,7 +1094,7 @@ func (e *ClusterE2ETest) VerifyHelloPackageInstalled(name string) {
 	}
 
 	svcAddress := name + "." + ns + ".svc.cluster.local"
-	clientPod, err := e.KubectlClient.RunBusyBoxPod(ns, "busybox-test", e.kubeconfigFilePath(), "curl", svcAddress)
+	clientPod, err := e.KubectlClient.RunBusyBoxPod(ns, "busybox-test", e.kubeconfigFilePath(), []string{"curl", svcAddress})
 	e.T.Log("Launching Busybox pod", clientPod, "to test Package", name)
 
 	err = e.KubectlClient.WaitForPodCompleted(ctx,
