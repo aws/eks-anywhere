@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -107,7 +108,6 @@ func TestVSphereKubernetes124BottlerocketAutoimport(t *testing.T) {
 		framework.WithVSphereFillers(
 			api.WithTemplateForAllMachines(""),
 			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
-			framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 		),
 	)
 	test := framework.NewClusterE2ETest(

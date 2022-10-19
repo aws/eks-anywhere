@@ -195,6 +195,5 @@ func bottlerocket124ProviderWithTaints(t *testing.T) *framework.VSphere {
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
 		framework.WithBottleRocket124(),
-		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 }
