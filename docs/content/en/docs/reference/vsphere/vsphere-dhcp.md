@@ -44,7 +44,7 @@ Add the main NIC device interface to this file, such as eth0 (this example uses 
 INTERFACESv4="ens160"
 ```
  
-# Restart DCHP
+# Restart DHCP
 
 ```
 service isc-dhcp-server restart
