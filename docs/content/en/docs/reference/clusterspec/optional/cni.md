@@ -101,7 +101,7 @@ its core components.  EKS Anywhere will create NetworkPolicy resources in the fo
     + etcdadm-bootstrap-provider-system
     + etcdadm-controller-system
     + cert-manager
-- Infrastruture provider's namespace (for instance, capd-system OR capv-system)
+- Infrastructure provider's namespace (for instance, capd-system OR capv-system)
 - If Gitops is enabled, then the gitops namespace (flux-system by default)
 
 This is the NetworkPolicy that will be created in these namespaces for the cluster:
