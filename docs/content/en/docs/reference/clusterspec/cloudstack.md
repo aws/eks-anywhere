@@ -325,6 +325,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 
 ### template (required)
 The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
+This can be a name or ID.
 See the [Artifacts]({{< relref "../artifacts" >}}) page for instructions for building RHEL-based images.
 
 ### diskOffering (optional)
