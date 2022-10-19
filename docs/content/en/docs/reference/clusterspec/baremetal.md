@@ -217,6 +217,13 @@ my-web-server
 └── ubuntu-v1.23.7-eks-a-12-amd64.gz
 ```
 
+### skipLoadBalancerDeployment
+Optional field to skip deploying the default load balancer for Tinkerbell stack.
+
+EKS Anywhere for Bare Metal uses `kube-vip` load balancer by default to expose the Tinkerbell stack externally.
+You can disable this feature by setting this field to `true`.
+>**_NOTE:_** If you skip load balancer deployment, you will have to ensure that the Tinkerbell stack is available at [tinkerbellIP]({{< relref "#tinkerbellip" >}}) once the cluster creation is finished. One way to achieve this is by using the [MetalLB]({{< relref "../../tasks/packages/metallb" >}}) package. 
+
 ## TinkerbellMachineConfig Fields
 In the example, there are `TinkerbellMachineConfig` sections for control plane (`my-cluster-name-cp`) and worker (`my-cluster-name`) machine groups.
 The following fields identify information needed to configure the nodes in each of those groups.
