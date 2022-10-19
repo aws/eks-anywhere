@@ -118,7 +118,6 @@ func TestSnowKubernetes121OIDC(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120OIDC(t *testing.T) {
-	//t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithCloudStackRedhat120()),
