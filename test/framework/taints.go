@@ -19,12 +19,24 @@ func ValidateControlPlaneTaints(controlPlane v1alpha1.ControlPlaneConfiguration,
 	if cpTaints == nil {
 		cpTaints = []corev1.Taint{ControlPlaneTaint()}
 	}
+
 	valid := v1alpha1.TaintsSliceEqual(cpTaints, node.Spec.Taints)
 	if !valid {
 		return fmt.Errorf("taints on control plane node %v and corresponding control plane configuration do not match; configured taints: %v; node taints: %v",
 			node.Name, cpTaints, node.Spec.Taints)
 	}
 	logger.V(4).Info("expected taints from cluster spec control plane configuration are present on corresponding node", "node", node.Name, "node taints", node.Spec.Taints, "control plane configuration taints", cpTaints)
+	return nil
+}
+
+// ValidateControlPlaneNoTaints will validate that a controlPlane has no taints, for example in the case of a single node cluster.
+func ValidateControlPlaneNoTaints(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) (err error) {
+	valid := len(controlPlane.Taints) == 0 && len(node.Spec.Taints) == 0
+	if !valid {
+		return fmt.Errorf("taints on control plane node %v or corresponding control plane configuration found; configured taints: %v; node taints: %v",
+			node.Name, controlPlane.Taints, node.Spec.Taints)
+	}
+	logger.V(4).Info("expected no taints on cluster spec control plane configuration and on corresponding node", "node", node.Name, "node taints", node.Spec.Taints, "control plane configuration taints", controlPlane.Taints)
 	return nil
 }
 
