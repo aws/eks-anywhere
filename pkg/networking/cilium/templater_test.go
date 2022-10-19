@@ -398,8 +398,8 @@ func TestTemplaterGenerateManifestForRegistryAuth(t *testing.T) {
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
 
-	os.Setenv("REGISTRY_USERNAME", "username")
-	os.Setenv("REGISTRY_PASSWORD", "password")
+	t.Setenv("REGISTRY_USERNAME", "username")
+	t.Setenv("REGISTRY_PASSWORD", "password")
 
 	tt.h.EXPECT().
 		RegistryLogin(gomock.Any(), "1.2.3.4:443", "username", "password").

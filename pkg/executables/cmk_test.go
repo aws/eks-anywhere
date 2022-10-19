@@ -257,9 +257,7 @@ func TestCmkCleanupVms(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 
-			var tctx testContext
-			tctx.SaveContext()
-			defer tctx.RestoreContext()
+			setupContext(t)
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			for _, argsList := range tt.argumentsExecCalls {
@@ -974,9 +972,7 @@ func TestCmkListOperations(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 
-			var tctx testContext
-			tctx.SaveContext()
-			defer tctx.RestoreContext()
+			setupContext(t)
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			if tt.argumentsExecCall != nil {
@@ -998,9 +994,7 @@ func TestCmkGetManagementApiEndpoint(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	tt := NewWithT(t)
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
+	setupContext(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	cmk := executables.NewCmk(executable, writer, execConfigWithMultipleProfiles.Profiles)

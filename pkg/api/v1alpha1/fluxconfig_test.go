@@ -3,7 +3,6 @@ package v1alpha1
 import (
 	"errors"
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -14,41 +13,6 @@ const (
 	EksaGitPrivateKeyTokenEnv = "EKSA_GIT_PRIVATE_KEY"
 	EksaGitKnownHostsFileEnv  = "EKSA_GIT_KNOWN_HOSTS"
 )
-
-type testContext struct {
-	privateKeyFile         string
-	isprivateKeyFileSet    bool
-	gitKnownHostsFile      string
-	isGitKnownHostsFileSet bool
-}
-
-func (tctx *testContext) SaveContext() {
-	tctx.privateKeyFile, tctx.isprivateKeyFileSet = os.LookupEnv(EksaGitPrivateKeyTokenEnv)
-	tctx.gitKnownHostsFile, tctx.isGitKnownHostsFileSet = os.LookupEnv(EksaGitKnownHostsFileEnv)
-	os.Setenv(EksaGitPrivateKeyTokenEnv, "my/private/key")
-	os.Setenv(EksaGitKnownHostsFileEnv, "my/known/hosts")
-}
-
-func (tctx *testContext) RestoreContext() {
-	if tctx.isprivateKeyFileSet {
-		os.Setenv(EksaGitPrivateKeyTokenEnv, tctx.privateKeyFile)
-	} else {
-		os.Unsetenv(EksaGitPrivateKeyTokenEnv)
-	}
-	if tctx.isGitKnownHostsFileSet {
-		os.Setenv(EksaGitKnownHostsFileEnv, tctx.gitKnownHostsFile)
-	} else {
-		os.Unsetenv(EksaGitKnownHostsFileEnv)
-	}
-}
-
-func setupContext(t *testing.T) {
-	var tctx testContext
-	tctx.SaveContext()
-	t.Cleanup(func() {
-		tctx.RestoreContext()
-	})
-}
 
 func TestValidateFluxConfig(t *testing.T) {
 	tests := []struct {
@@ -229,7 +193,8 @@ func TestValidateFluxConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			if tt.gitProvider {
-				setupContext(t)
+				t.Setenv(EksaGitPrivateKeyTokenEnv, "my/private/key")
+				t.Setenv(EksaGitKnownHostsFileEnv, "my/known/hosts")
 			}
 			err := tt.fluxConfig.Validate()
 			if (err != nil) != tt.wantErr {
