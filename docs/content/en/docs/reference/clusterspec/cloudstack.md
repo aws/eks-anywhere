@@ -215,7 +215,7 @@ Any pods that you run on the control plane nodes must tolerate the taints you pr
 ### controlPlaneConfiguration.labels
 A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
 EKS Anywhere will add by default.
-For example, this label identifies a Cluster API failuredomain:
+For example, this label identifies a Cluster API failuredomain, which causes CAPC to substitute the value for the actual AZ name as a label on the nodes:
 
 ```yaml
     labels:
@@ -264,6 +264,12 @@ At least one node group must not have `NoSchedule` or `NoExecute` taints applied
 ### workerNodeGroupConfigurations.labels
 A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
 EKS Anywhere will add by default.
+For example, this label identifies a Cluster API failuredomain, which causes CAPC to substitute the value for the actual AZ name as a label on the nodes:
+
+```yaml
+    labels:
+      cluster.x-k8s.io/failure-domain: ds.meta_data.failuredomain
+```
 
 Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
 the existing nodes associated with the configuration.
