@@ -17,9 +17,9 @@ To prepare a CloudStack environment to run EKS Anywhere, you need the following:
 
 * A CloudStack 4.14 or later environment. CloudStack 4.16 is used for examples in these docs.
 * Capacity to deploy 6-10 VMs.
-* One network in CloudStack to use for the cluster. EKS Anywhere clusters need access to CloudStack through the network to enable self-managing and storage capabilities.
-* A Red Hat Enterprise Linux ISO image built into a qcow2 image as described in [artifacts]({{< relref "../artifacts/" >}}).
-* User credentials to create VMs and attach networks in CloudStack.
+* One shared network in CloudStack to use for the cluster. EKS Anywhere clusters need access to CloudStack through the network to enable self-managing and storage capabilities.
+* A Red Hat Enterprise Linux qcow2 image built using the `image-builder` tool as described in [artifacts]({{< relref "../artifacts/" >}}).
+* User credentials (CloudStack API key and Secret key) to create VMs and attach networks in CloudStack.
 * One IP address routable from the cluster but excluded from DHCP offering. This IP address is to be used as the Control Plane Endpoint IP. Below are some suggestions to ensure that this IP address is never handed out by your DHCP server. You may need to contact your network engineer.
 
     * Pick an IP address reachable from the cluster subnet which is excluded from DHCP range OR
@@ -62,6 +62,6 @@ An IP address will be the value of the property controlPlaneConfiguration.endpoi
     * Management endpoint (managementApiEndpoint): Endpoint for a cloudstack client to make API calls to client. 
     * Zone network (zone.network): Either name or ID of the network. 
 * CloudStack machine configuration: For each set of machines (for example, you could configure separate set of machines for control plane, worker, and etcd nodes), obtain the following information. This must be predefined in the cloudStack instance and identified by name or ID:
-    * Compute offering (computeOffering): Choose an existing compute offering (such as m4-large), reflecting the amount of resources to apply to each VM.
+    * Compute offering (computeOffering): Choose an existing compute offering (such as `large-instance`), reflecting the amount of resources to apply to each VM.
     * Operating system (template): Identifies the operating system image to use (such as rhel8-k8s-118).
     * Users (users.name): Identifies users and SSH keys needed to access the VMs. 
