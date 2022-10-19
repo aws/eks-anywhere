@@ -2,6 +2,7 @@ package nutanix
 
 import (
 	_ "embed"
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -35,6 +36,14 @@ var nutanixMachineConfigSpecJSON string
 
 //go:embed testdata/machineDeployment.json
 var nutanixMachineDeploymentSpecJSON string
+
+func fakemarshal(v interface{}) ([]byte, error) {
+	return []byte{}, errors.New("marshalling failed")
+}
+
+func restoremarshal(replace func(v interface{}) ([]byte, error)) {
+	jsonMarshal = replace
+}
 
 func TestNewNutanixTemplateBuilder(t *testing.T) {
 	clusterConf := &anywherev1.Cluster{}
@@ -83,4 +92,24 @@ func TestNewNutanixTemplateBuilder(t *testing.T) {
 	expectedSecret, err := os.ReadFile("testdata/templated_secret.yaml")
 	require.NoError(t, err)
 	assert.Equal(t, expectedSecret, secretSpec)
+}
+
+func TestNewNutanixTemplateBuilderGenerateCAPISpecSecret(t *testing.T) {
+	storedMarshal := jsonMarshal
+	jsonMarshal = fakemarshal
+	defer restoremarshal(storedMarshal)
+
+	t.Setenv(nutanixUsernameKey, "admin")
+	t.Setenv(nutanixPasswordKey, "password")
+	creds := getCredsFromEnv()
+	builder := NewNutanixTemplateBuilder(nil, nil, nil, nil, creds, time.Now)
+	assert.NotNil(t, builder)
+
+	v := version.Info{GitVersion: "v0.0.1"}
+	buildSpec, err := cluster.NewSpecFromClusterConfig("testdata/eksa-cluster.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
+	assert.NoError(t, err)
+
+	secretSpec, err := builder.GenerateCAPISpecSecret(buildSpec)
+	assert.Nil(t, secretSpec)
+	assert.Error(t, err)
 }

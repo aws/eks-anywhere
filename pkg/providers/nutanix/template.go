@@ -16,6 +16,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+var jsonMarshal = json.Marshal
+
 // TemplateBuilder builds templates for nutanix
 type TemplateBuilder struct {
 	datacenterSpec              *v1alpha1.NutanixDatacenterConfigSpec
@@ -83,20 +85,20 @@ func (ntb *TemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, w
 }
 
 func (ntb *TemplateBuilder) GenerateCAPISpecSecret(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	encodedCreds, err := json.Marshal(ntb.creds)
+	encodedCreds, err := jsonMarshal(ntb.creds)
 	if err != nil {
 		return nil, err
 	}
-	nutanixCreds := credentials.NutanixCredentials{
-		Credentials: []credentials.Credential{{
-			Type: credentials.BasicAuthCredentialType,
-			Data: encodedCreds,
-		}},
-	}
-	credsJSON, err := json.Marshal(nutanixCreds.Credentials)
+
+	nutanixCreds := []credentials.Credential{{
+		Type: credentials.BasicAuthCredentialType,
+		Data: encodedCreds,
+	}}
+	credsJSON, err := jsonMarshal(nutanixCreds)
 	if err != nil {
 		return nil, err
 	}
+
 	values := buildTemplateMapSecret(clusterSpec, credsJSON)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
