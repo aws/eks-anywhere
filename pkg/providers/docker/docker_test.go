@@ -143,6 +143,21 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
 		},
 		{
+			testName: "valid config 1.24",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Cluster.Name = "test-cluster"
+				s.Cluster.Spec.KubernetesVersion = "1.24"
+				s.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Cluster.Spec.ControlPlaneConfiguration.Count = 3
+				s.VersionsBundle = versionsBundle
+				s.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: ptr.Int(3), MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}, Name: "md-0"}}
+			}),
+			wantCPFile: "testdata/valid_deployment_cp_expected_124onwards.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected_124onwards.yaml",
+		},
+		{
 			testName: "valid config with cp taints",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Cluster.Name = "test-cluster"
@@ -687,7 +702,7 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 				}),
 				buildOptions: nil,
 			},
-			wantErr: fmt.Errorf("error building template map from CP "),
+			wantErr: fmt.Errorf("error building template map for CP "),
 		},
 	}
 	for _, tt := range tests {
@@ -698,6 +713,43 @@ func TestDockerTemplateBuilderGenerateCAPISpecControlPlane(t *testing.T) {
 			gotContent, err := builder.GenerateCAPISpecControlPlane(tt.args.clusterSpec, tt.args.buildOptions...)
 			if err != tt.wantErr && !assert.Contains(t, err.Error(), tt.wantErr.Error()) {
 				t.Errorf("Got DockerTemplateBuilder.GenerateCAPISpecControlPlane() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil {
+				g.Expect(gotContent).NotTo(BeEmpty())
+			}
+		})
+	}
+}
+
+func TestDockerTemplateBuilderGenerateCAPISpecWorkers(t *testing.T) {
+	type args struct {
+		clusterSpec *cluster.Spec
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantContent []byte
+		wantErr     error
+	}{
+		{
+			name: "kube version not specified",
+			args: args{
+				clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+					s.Cluster.Name = "test-cluster"
+				}),
+			},
+			wantErr: fmt.Errorf("error building template map for MD "),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			builder := docker.NewDockerTemplateBuilder(time.Now)
+
+			gotContent, err := builder.GenerateCAPISpecWorkers(tt.args.clusterSpec, nil, nil)
+			if err != tt.wantErr && !assert.Contains(t, err.Error(), tt.wantErr.Error()) {
+				t.Errorf("Got DockerTemplateBuilder.GenerateCAPISpecWorkers() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err == nil {

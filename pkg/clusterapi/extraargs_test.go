@@ -310,6 +310,28 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 	}
 }
 
+func TestCgroupDriverExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cgroup-driver": "cgroupfs",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.CgroupDriverExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CgroupDriverExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNodeLabelsExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
