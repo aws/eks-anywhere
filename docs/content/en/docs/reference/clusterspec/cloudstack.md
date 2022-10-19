@@ -103,7 +103,7 @@ spec:
     name: "Small"
     mountPath: "/data-small"
     device: "/dev/vdb"
-    filesystem" "ext4"
+    filesystem: "ext4"
     label: "data_disk"
   symlinks:
     /var/log/kubernetes: /data-small/var/log/kubernetes
@@ -264,10 +264,15 @@ the existing nodes associated with the configuration.
 
 ## CloudStackDatacenterConfig
 
-### availabilityZones.account (required)
-Account used to access CloudStack. The default is `admin`.
+### availabilityZones.account (optional)
+Account used to access CloudStack.
+The default is `admin`.
+As long as you pass valid credentials, through `availabilityZones.credentialsRef`, this value is not required.
 
-### availabilityZones.credentialsRef (required)
+### availabilityZones.credentialsRef (optional)
+If you passed credentials through the environment variable `EKSA_CLOUDSTACK_B64ENCODED_SECRET` noted in [Create CloudStack production cluster]({{< relref "../../getting-started/production-environment/cloudstack.md" >}}), you can identify those credentials here.
+For that example, you would use the value `global`.
+You can also use a previously created Kubernetes secret.
 
 ### availabilityZones.domain (required)
 CloudStack domain to deploy the cluster. The default is `ROOT`.
@@ -277,15 +282,16 @@ Location of the CloudStack API management endpoint. For example, `http://10.11.0
 
 ### availabilityZones.name (required)
 Name of the CloudStack zone on which to deploy the cluster.
+As an alternative, you could pass a Zone ID to `availabilityZones.id`.
 
-### availabilityZones.zone.network (required)
+### availabilityZones.zone.network.name (required)
 CloudStack network name to use with the cluster.
 
 ## CloudStackMachineConfig
 In the example above, there are separate `CloudStackMachineConfig` sections for the control plane (`my-cluster-name-cp`), worker (`my-cluster-name`) and etcd (`my-cluster-name-etcd`) nodes.
 
-### computeOfferings
-Name of the CloudStack compute instance.
+### computeOfferings (required)
+Name or ID of the CloudStack compute instance.
 
 ### users[0].name (optional)
 The name of the user you want to configure to access your virtual machines through ssh.
@@ -305,8 +311,9 @@ ssh -i <private-key-file> <user>@<VM-IP>
 
 The default is generating a key in your `$(pwd)/<cluster-name>` folder when not specifying a value.
 
-### template (optional)
-The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.4 is required.
+### template (required)
+The VM template to use for your EKS Anywhere cluster. Currently, a VM based on RHEL 8.6 is required.
+See the [Artifacts]({{< relref "../artifacts" >}}) page for instructions for building RHEL-based images.
 
 ### diskOffering (optional)
 Name representing a disk you want to mount into nodes for this CloudStackMachineConfig
