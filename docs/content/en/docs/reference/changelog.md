@@ -60,7 +60,7 @@ weight: 35
 - Add support for Kubernetes 1.23 [#2159](https://github.com/aws/eks-anywhere/issues/2159)
 - Add support for Support Bundle for validating control plane IP with vSphere provider
 - Add support for aws-iam-authenticator on Bare Metal
-- Curated Packages General Availibilty
+- Curated Packages General Availability
 - Added Emissary Ingress Curated Package
 
 ### Changed

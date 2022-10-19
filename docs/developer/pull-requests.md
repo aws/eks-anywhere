@@ -132,7 +132,7 @@ Avoid explaining the _how_. Code should aim to be self-explanatory, and when it'
 
 #### Wrap the body at 72 characters
 
-This presents the test correctly in `git log` with the default colum width of 80 and the 4 chars of padding.
+This presents the test correctly in `git log` with the default column width of 80 and the 4 chars of padding.
 
 #### Resources
 
