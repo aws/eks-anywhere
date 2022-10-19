@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/config"
 	"net"
 	"path/filepath"
 	"strings"
@@ -45,6 +46,7 @@ type Docker interface {
 }
 
 type Helm interface {
+	RegistryLogin(ctx context.Context, endpoint, username, password string) error
 	InstallChartWithValuesFile(ctx context.Context, chart, ociURI, version, kubeconfigFilePath, valuesFilePath string) error
 }
 
@@ -211,6 +213,19 @@ func (s *Installer) Install(ctx context.Context, bundle releasev1alpha1.Tinkerbe
 		return fmt.Errorf("writing values override for Tinkerbell Installer helm chart: %s", err)
 	}
 
+	if s.registryMirror != nil {
+		if s.registryMirror.Authenticate {
+			username, password, err := config.ReadCredentials()
+			if err != nil {
+				return err
+			}
+			endpoint := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+			if err := s.helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+				return err
+			}
+		}
+	}
+
 	err = s.helm.InstallChartWithValuesFile(
 		ctx,
 		bundle.TinkerbellStack.TinkebellChart.Name,
@@ -272,6 +287,18 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
 		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		if s.registryMirror.Authenticate {
+			username, password, _ := config.ReadCredentials()
+			return map[string]string{
+				"DATA_MODEL_VERSION":        "kubernetes",
+				"TINKERBELL_TLS":            "false",
+				"TINKERBELL_GRPC_AUTHORITY": fmt.Sprintf("%s:%s", tinkServerIP, grpcPort),
+				"BOOTS_EXTRA_KERNEL_ARGS":   extraKernelArgs,
+				"DOCKER_REGISTRY":           localRegistry,
+				"REGISTRY_USERNAME":         username,
+				"REGISTRY_PASSWORD":         password,
+			}
+		}
 		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 	}
 

@@ -121,6 +121,20 @@ func (mr *MockHelmMockRecorder) InstallChartWithValuesFile(ctx, chart, ociURI, v
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallChartWithValuesFile", reflect.TypeOf((*MockHelm)(nil).InstallChartWithValuesFile), ctx, chart, ociURI, version, kubeconfigFilePath, valuesFilePath)
 }
 
+// RegistryLogin mocks base method.
+func (m *MockHelm) RegistryLogin(ctx context.Context, endpoint, username, password string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegistryLogin", ctx, endpoint, username, password)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RegistryLogin indicates an expected call of RegistryLogin.
+func (mr *MockHelmMockRecorder) RegistryLogin(ctx, endpoint, username, password interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegistryLogin", reflect.TypeOf((*MockHelm)(nil).RegistryLogin), ctx, endpoint, username, password)
+}
+
 // MockStackInstaller is a mock of StackInstaller interface.
 type MockStackInstaller struct {
 	ctrl     *gomock.Controller
