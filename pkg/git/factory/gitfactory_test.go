@@ -2,7 +2,6 @@ package gitfactory_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,9 +35,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			var tctx testContext
-			tctx.SaveContext(validPATValue)
-			defer tctx.RestoreContext()
+			setupContext(t)
 
 			gitProviderConfig := v1alpha1.GithubProviderConfig{
 				Owner:      "Jeff",
@@ -68,21 +65,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 	}
 }
 
-type testContext struct {
-	oldGithubToken   string
-	isGithubTokenSet bool
-}
-
-func (tctx *testContext) SaveContext(token string) {
-	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(github.EksaGithubTokenEnv)
-	os.Setenv(github.EksaGithubTokenEnv, validPATValue)
-	os.Setenv(github.GithubTokenEnv, validPATValue)
-}
-
-func (tctx *testContext) RestoreContext() {
-	if tctx.isGithubTokenSet {
-		os.Setenv(github.EksaGithubTokenEnv, tctx.oldGithubToken)
-	} else {
-		os.Unsetenv(github.EksaGithubTokenEnv)
-	}
+func setupContext(t *testing.T) {
+	t.Setenv(github.EksaGithubTokenEnv, validPATValue)
+	t.Setenv(github.GithubTokenEnv, validPATValue)
 }

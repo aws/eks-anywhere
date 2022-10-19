@@ -1,19 +1,17 @@
 package eksctl_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/eksctl"
 )
 
 func TestValidateVersionSuccess(t *testing.T) {
-	os.Setenv(eksctl.VersionEnvVar, "dev")
+	t.Setenv(eksctl.VersionEnvVar, "dev")
 	err := eksctl.ValidateVersion()
 	if err != nil {
 		t.Fatalf("ValidateVersion() error = %v, wantErr <nil>", err)
 	}
-	os.Unsetenv(eksctl.VersionEnvVar)
 }
 
 func TestValidateVersionError(t *testing.T) {
