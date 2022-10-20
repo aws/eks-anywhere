@@ -287,6 +287,7 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 	extraKernelArgs := fmt.Sprintf("tink_worker_image=%s", s.localRegistryURL(bundle.Tink.TinkWorker.URI))
 	if s.registryMirror != nil {
 		localRegistry := net.JoinHostPort(s.registryMirror.Endpoint, s.registryMirror.Port)
+		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 		if s.registryMirror.Authenticate {
 			username, password, _ := config.ReadCredentials()
 			return map[string]string{
@@ -299,7 +300,6 @@ func (s *Installer) getBootsEnv(bundle releasev1alpha1.TinkerbellStackBundle, ti
 				"REGISTRY_PASSWORD":         password,
 			}
 		}
-		extraKernelArgs = fmt.Sprintf("%s insecure_registries=%s", extraKernelArgs, localRegistry)
 	}
 
 	return map[string]string{
