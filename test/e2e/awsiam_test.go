@@ -175,7 +175,7 @@ func TestVSphereKubernetes123To124AWSIamAuthUpgrade(t *testing.T) {
 		t,
 		provider,
 		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube123)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube124)),
 		framework.WithEnvVar(features.K8s124SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithAWSIamAuth(
