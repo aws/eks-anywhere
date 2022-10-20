@@ -1498,6 +1498,27 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 	return nil
 }
 
+func (k *Kubectl) ValidateMachineAndNodeNamesMatch(ctx context.Context, kubeconfig string) error {
+	template := "{{range .items}}{{.spec.infrastructureRef.kind}},{{.metadata.name}},{{.status.nodeRef.name}}\n{{end}}"
+	params := []string{"get", "machines", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
+	buffer, err := k.Execute(ctx, params...)
+	if err != nil {
+		return err
+	}
+	scanner := bufio.NewScanner(strings.NewReader(buffer.String()))
+	for scanner.Scan() {
+		line := scanner.Text()
+		vars := strings.Split(line, ",")
+		kind, machineName, nodeName := vars[0], vars[1], vars[2]
+		if kind == "CloudStackMachine" && len(nodeName) > 0 {
+			if machineName != nodeName {
+				return fmt.Errorf("node name %s does not match CAPI machine name %s", nodeName, machineName)
+			}
+		}
+	}
+	return nil
+}
+
 func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	params := []string{"get", bundlesResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)

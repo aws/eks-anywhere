@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -117,6 +118,29 @@ func TestVSphereKubernetes123LabelsBottlerocket(t *testing.T) {
 			api.WithControlPlaneLabel(cpKey1, cpVal1),
 		),
 	)
+}
+
+func TestCloudStackKubernetes121LabelsRedhat(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewCloudStack(t,
+			framework.WithCloudStackRedhat121(),
+		),
+		framework.WithClusterFiller(
+			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithControlPlaneLabel(framework.FailureDomainLabel, framework.FailureDomainPlaceholder),
+			api.WithWorkerNodeGroup(constants.DefaultWorkerNodeGroupName,
+				api.WithCount(1),
+				api.WithLabel(framework.FailureDomainLabel, framework.FailureDomainPlaceholder),
+			),
+		),
+	)
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneFailureDomainLabels)
+	test.ValidateWorkerNodes(framework.ValidateWorkerNodeFailureDomainLabels)
+	test.ValidateCluster(v1alpha1.Kube121)
+	test.DeleteCluster()
 }
 
 func TestSnowKubernetes123LabelsUbuntu(t *testing.T) {
