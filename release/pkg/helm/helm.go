@@ -135,6 +135,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	err = d.HelmRegistryLogin(r, "destination")
 	if err != nil {
 		return fmt.Errorf("logging into the destination registry: %w", err)
+	}
 	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
