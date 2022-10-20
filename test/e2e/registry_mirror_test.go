@@ -25,7 +25,7 @@ func runTinkerbellRegistryMirrorFlow(test *framework.ClusterE2ETest) {
 	test.ImportImages()
 	test.GenerateHardwareConfig()
 	test.PowerOffHardware()
-	test.CreateCluster(framework.WithForce())
+	test.CreateCluster(framework.WithForce(), framework.WithControlPlaneWaitTimeout("20m"))
 	test.StopIfFailed()
 	test.DeleteCluster()
 	test.ValidateHardwareDecommissioned()
