@@ -70,6 +70,9 @@ func snowEntry() *ConfigManagerEntry {
 				}
 				return nil
 			},
+			func(c *Config) error {
+				return ValidateSnowMachineRefExists(c)
+			},
 		},
 	}
 }
@@ -191,4 +194,15 @@ func SetSnowDatacenterIndentityRefDefault(s *anywherev1.SnowDatacenterConfig) {
 			Name: fmt.Sprintf("%s-snow-credentials", s.GetName()),
 		}
 	}
+}
+
+// ValidateSnowMachineRefExists checks the cluster spec machine refs and makes sure
+// the snowmachineconfig object exists for each ref with kind == snowmachineconfig.
+func ValidateSnowMachineRefExists(c *Config) error {
+	for _, machineRef := range c.Cluster.MachineConfigRefs() {
+		if machineRef.Kind == anywherev1.SnowMachineConfigKind && c.SnowMachineConfig(machineRef.Name) == nil {
+			return fmt.Errorf("unable to find SnowMachineConfig %s", machineRef.Name)
+		}
+	}
+	return nil
 }

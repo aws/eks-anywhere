@@ -72,6 +72,13 @@ func (r *Reconciler) ValidateMachineConfigs(ctx context.Context, log logr.Logger
 		}
 	}
 
+	if err := cluster.ValidateSnowMachineRefExists(clusterSpec.Config); err != nil {
+		log.Error(err, "Invalid SnowMachineConfig")
+		failureMessage := err.Error()
+		clusterSpec.Cluster.Status.FailureMessage = &failureMessage
+		return controller.Result{}, err
+	}
+
 	return controller.Result{}, nil
 }
 

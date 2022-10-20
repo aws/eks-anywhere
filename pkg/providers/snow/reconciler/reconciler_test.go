@@ -87,6 +87,20 @@ func TestReconcilerValidateMachineConfigsInvalidControlPlaneMachineConfig(t *tes
 	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("Something wrong"))
 }
 
+func TestReconcilerValidateMachineConfigsSnowMachineRefNotExists(t *testing.T) {
+	tt := newReconcilerTest(t)
+	tt.withFakeClient()
+
+	spec := tt.buildSpec()
+	spec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "cp-machine-not-exists"
+
+	_, err := tt.reconciler().ValidateMachineConfigs(tt.ctx, test.NewNullLogger(), spec)
+
+	tt.Expect(err).To(MatchError(ContainSubstring("unable to find SnowMachineConfig cp-machine-not-exists")))
+	tt.Expect(tt.cluster.Status.FailureMessage).ToNot(BeZero())
+	tt.Expect(*tt.cluster.Status.FailureMessage).To(ContainSubstring("unable to find SnowMachineConfig cp-machine-not-exists"))
+}
+
 func TestReconcilerReconcileWorkers(t *testing.T) {
 	tt := newReconcilerTest(t)
 	tt.createAllObjs()
