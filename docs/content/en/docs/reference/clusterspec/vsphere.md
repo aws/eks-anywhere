@@ -167,14 +167,20 @@ the existing nodes.
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
 
-### workerNodeGroupConfigurations.count (required)
-Number of worker nodes
+### workerNodeGroupConfigurations.count
+Number of worker nodes. Optional if autoscalingConfiguration is used, in which case count will default to `autoscalingConfiguration.minCount`.
 
 ### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.minCount
+Minimum number of nodes for this node group's autoscaling configuration.
+
+### workerNodeGroupConfigurations.autoscalingConfiguration.maxCount
+Maximum number of nodes for this node group's autoscaling configuration.
 
 ### workerNodeGroupConfigurations.taints
 A list of taints to apply to the nodes in the worker node group.
