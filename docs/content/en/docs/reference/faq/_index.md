@@ -74,5 +74,5 @@ See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md
 
 ### Can I run EKS Anywhere on ESXi?
 
-No. EKS Anywhere is only supported on providers listed on the [Create production cluster]]({{< relref "../getting-started/production-environment/" >}}) page.
+No. EKS Anywhere is only supported on providers listed on the [Create production cluster]]({{< relref "../../getting-started/production-environment/" >}}) page.
 There would need to be a change to the upstream project to support ESXi.
