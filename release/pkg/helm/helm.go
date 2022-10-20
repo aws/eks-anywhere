@@ -74,7 +74,7 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	}
 
 	helmChart := strings.Split(ReleaseImageURI, ":")
-	HelmLog.Info("Starting to modifying helm chart %s", helmChart[1])
+	HelmLog.Info("Starting to modifying helm chart %s", helmChart[0])
 	HelmLog.Info("Pulling helm chart %s", ReleaseImageURI)
 	chartPath, err = d.PullHelmChart(helmChart[0], helmChart[1])
 	if err != nil {
