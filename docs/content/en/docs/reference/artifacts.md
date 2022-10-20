@@ -301,7 +301,7 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
     sudo tar xvf image-builder*.tar.gz
     sudo cp image-builder /usr/local/bin
     ```
-1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8 ISO image and related checksum and Red Hat subscription information:
+1. Create a Bare Metal configuration file (for example, `baremetal.json`) to identify the location of a Red Hat Enterprise Linux 8.6 ISO image and related checksum and Red Hat subscription information:
    ```json
    {
      "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
@@ -355,9 +355,62 @@ These steps use `image-builder` to create a Ubuntu-based or RHEL-based image for
 
 ### Build CloudStack node images
 
+These steps use `image-builder` to create a RHEL-based image for CloudStack.
 
----- INFORMATION TO COME ----
- 
+1. Create a linux user for running image-builder.
+   ```
+   sudo adduser image-builder
+   ```
+   Follow the prompt to provide a password for the image-builder user.
+1. Add image-builder user to the sudo group and change user as image-builder providing in the password from previous step when prompted.
+   ```
+   sudo usermod -aG sudo image-builder
+   su image-builder
+   ```
+1. Install packages and prepare environment:
+   ```
+   sudo apt update -y
+   sudo apt install jq make qemu-kvm libvirt-daemon-system libvirt-clients virtinst cpu-checker libguestfs-tools libosinfo-bin unzip ansible -y
+   sudo snap install yq
+   sudo usermod -a -G kvm $USER
+   sudo chmod 666 /dev/kvm
+   sudo chown root:kvm /dev/kvm
+   echo "HostKeyAlgorithms +ssh-rsa" >> /home/$USER/.ssh/config
+   echo "PubkeyAcceptedKeyTypes +ssh-rsa" >> /home/$USER/.ssh/config
+   ```
+1. Get `image-builder`:
+    ```bash
+    cd /tmp
+    sudo wget https://anywhere-assets.eks.amazonaws.com/releases/bundles/14/artifacts/image-builder/0.1.0/image-builder-linux-amd64.tar.gz
+    sudo tar xvf image-builder*.tar.gz
+    sudo cp image-builder /usr/local/bin
+    ```
+1. Create a CloudStack configuration file (for example, `cloudstack.json`) to identify the location of a Red Hat Enterprise Linux 8.6 ISO image and related checksum and Red Hat subscription information:
+   ```json
+   {
+     "iso_url": "<https://endpoint to RHEL ISO endpoint or path to file>",
+     "iso_checksum": "<for example: ea5f349d492fed819e5086d351de47261c470fc794f7124805d176d69ddf1fcd>",
+     "iso_checksum_type": "<for example: sha256>",
+     "rhel_username": "<rhsm username>",
+     "rhel_password": "<rhsm password>"
+     "extra_rpms": "<Space-separated list of RPM packages. Useful for adding required drivers or other packages>"
+   }
+   ```
+   >**_NOTE_**: To build the RHEL-based image, `image-builder` temporarily consumes a Red Hat subscription. That subscription is returned once the image is built.
+
+1. To create a RHEL-based image, run `image-builder` with the following options:
+
+      * `--os`: `redhat`
+      * `--hypervisor`: For CloudStack use `cloudstack`
+      * `--release-channel`: Supported EKS Distro releases include 1-20, 1-21, 1-22, and 1-23.
+      * `--cloudstack-config`: CloudStack configuration file (`cloudstack.json` in this example)
+
+      ```bash
+      image-builder build --os redhat --hypervisor cloudstack --release-channel 1-23 --cloudstack-config cloudstack.json
+      ```
+
+1. To consume the resulting RHEL-based image, add it as a template to your CloudStack setup as described in [Preparing Cloudstack]({{< relref "./cloudstack/cloudstack-preparation.md" >}}).
+
 ## Images
 
 The various images for EKS Anywhere can be found [in the EKS Anywhere ECR repository](https://gallery.ecr.aws/eks-anywhere/).
