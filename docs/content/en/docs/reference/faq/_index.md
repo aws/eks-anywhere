@@ -63,8 +63,8 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 
 ### Can I deploy EKS Anywhere on other clouds?
 
-EKS Anywhere can be installed on any infrastructure with the required Bare Metal or VMware vSphere components.
-See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}) or [vSphere]({{< relref "../vsphere" >}}) documentation.
+EKS Anywhere can be installed on any infrastructure with the required Bare Metal, Cloudstack, or VMware vSphere components.
+See EKS Anywhere [Baremetal]({{< relref "../baremetal" >}}), [CloudStack]({{< relref "../cloudstack" >}}), or [vSphere]({{< relref "../vsphere" >}}) documentation.
 
 ### How can I manage EKS Anywhere at scale?
 
@@ -74,5 +74,5 @@ See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md
 
 ### Can I run EKS Anywhere on ESXi?
 
-No. EKS Anywhere is only supported on Bare Metal and vSphere platforms.
+No. EKS Anywhere is only supported on providers listed on the [Create production cluster]]({{< relref "../getting-started/production-environment/" >}}) page.
 There would need to be a change to the upstream project to support ESXi.
