@@ -36,7 +36,7 @@ import (
 	releasetypes "github.com/aws/eks-anywhere/release/pkg/types"
 )
 
-var BundleLog = ctrl.Log.WithName("BundleGenerator")
+var HelmLog = ctrl.Log.WithName("HelmLog")
 
 // helmDriver implements PackageDriver to install packages from Helm charts.
 type helmDriver struct {
@@ -53,13 +53,13 @@ func NewHelm() (*helmDriver, error) {
 	}
 	cfg := &action.Configuration{RegistryClient: client}
 	err = cfg.Init(settings.RESTClientGetter(), settings.Namespace(),
-		os.Getenv("HELM_DRIVER"), helmLog(BundleLog))
+		os.Getenv("HELM_DRIVER"), helmLog(HelmLog))
 	if err != nil {
 		return nil, fmt.Errorf("initializing helm driver: %w", err)
 	}
 	return &helmDriver{
 		cfg:      cfg,
-		log:      BundleLog,
+		log:      HelmLog,
 		settings: settings,
 	}, nil
 }
@@ -74,6 +74,8 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	}
 
 	helmChart := strings.Split(ReleaseImageURI, ":")
+	HelmLog.Info("Starting to modifying helm chart %s", helmChart[0])
+	HelmLog.Info("Pulling helm chart %s", ReleaseImageURI)
 	chartPath, err = d.PullHelmChart(helmChart[0], helmChart[1])
 	if err != nil {
 		return "", fmt.Errorf("pulling the helm chart: %w", err)
@@ -83,6 +85,7 @@ func GetHelmDest(d *helmDriver, r *releasetypes.ReleaseConfig, ReleaseImageURI, 
 	if err != nil {
 		return "", fmt.Errorf("getting current working dir: %w", err)
 	}
+	HelmLog.Info("Untar helm chart %s into %s", chartPath, dest)
 	err = UnTarHelmChart(chartPath, assetName, dest)
 	if err != nil {
 		return "", fmt.Errorf("untar the helm chart: %w", err)
@@ -108,6 +111,7 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 	helmtag := helmChart[1]
 
 	// Overwrite Chart.yaml
+	HelmLog.Info("Checking inside helm chart for Chart.yaml %s", helmDest)
 	chart, err := HasChart(helmDest)
 	if err != nil {
 		return fmt.Errorf("finding the Chart.yaml: %w", err)
@@ -117,20 +121,21 @@ func ModifyAndPushChartYaml(i releasetypes.ImageArtifact, r *releasetypes.Releas
 		return fmt.Errorf("turning Chart.yaml to struct: %w", err)
 	}
 	chartYaml.Version = helmtag
+	HelmLog.Info("Overwriting helm chart.yaml version to new tag %s", chartYaml.Version)
 	err = OverwriteChartYaml(fmt.Sprintf("%s/%s", helmDest, "Chart.yaml"), chartYaml)
 	if err != nil {
 		return fmt.Errorf("overwriting the Chart.yaml version: %w", err)
 	}
+	HelmLog.Info("Re-Packaging modified helm chart %s", helmDest)
 	packaged, err := PackageHelmChart(helmDest)
 	if err != nil {
 		return fmt.Errorf("packaging the helm chart: %w", err)
 	}
-
+	HelmLog.Info("Pushing modified helm chart %s to %s", packaged, r.ReleaseContainerRegistry)
 	err = d.HelmRegistryLogin(r, "destination")
 	if err != nil {
 		return fmt.Errorf("logging into the destination registry: %w", err)
 	}
-
 	err = d.PushHelmChart(packaged, filepath.Dir(helmChart[0]))
 	if err != nil {
 		return fmt.Errorf("pushing the helm chart: %w", err)
