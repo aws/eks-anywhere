@@ -283,7 +283,7 @@ Account used to access CloudStack.
 As long as you pass valid credentials, through `availabilityZones.credentialsRef`, this value is not required.
 
 ### availabilityZones.credentialsRef (required)
-If you passed credentials through the environment variable `EKSA_CLOUDSTACK_B64ENCODED_SECRET` noted in [Create CloudStack production cluster]({{< relref "../../getting-started/production-environment/cloudstack/" >}}), you can identify those credentials here.
+If you passed credentials through the environment variable `EKSA_CLOUDSTACK_B64ENCODED_SECRET` noted in [Create CloudStack production cluster]({{< relref "../../getting-started/production-environment/cloudstack-getstarted/" >}}), you can identify those credentials here.
 For that example, you would use the profile name `global`.
 You can instead use a previously created secret on the Kubernetes cluster in the `eksa-system` namespace.
 
